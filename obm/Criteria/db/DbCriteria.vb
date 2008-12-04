@@ -6,6 +6,7 @@ Imports Worm.Database.Criteria.Values
 Imports Worm.Database.Criteria.Joins
 Imports Worm.Database.Criteria.Conditions
 Imports Worm.Database.Criteria.Core
+Imports Worm.Orm
 
 Namespace Database
     Namespace Criteria
@@ -13,8 +14,7 @@ Namespace Database
         Public Class Ctor
             Implements ICtor
 
-            Private _en As String
-            Private _t As Type
+            Private _os As ObjectSource
             Private _tbl As Worm.Orm.Meta.SourceFragment
             Private _stmtGen As SQLGenerator
 
@@ -35,7 +35,7 @@ Namespace Database
                     Throw New ArgumentNullException("t")
                 End If
 
-                _t = t
+                _os = New ObjectSource(t)
                 _stmtGen = stmtGen
             End Sub
 
@@ -50,51 +50,73 @@ Namespace Database
 
             Public Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String)
                 _stmtGen = stmtGen
-                _en = entityName
+                _os = New ObjectSource(entityName)
             End Sub
 
-            Protected Function _Field(ByVal fieldName As String) As Worm.Criteria.CriteriaField Implements ICtor.Field
-                If String.IsNullOrEmpty(fieldName) Then
+            Public Sub New(ByVal stmtGen As SQLGenerator, ByVal os As ObjectSource)
+                _stmtGen = stmtGen
+                _os = os
+            End Sub
+
+            Protected Function _Field(ByVal propertyAlias As String) As Worm.Criteria.CriteriaField Implements ICtor.Field
+                If String.IsNullOrEmpty(propertyAlias) Then
                     Throw New ArgumentNullException("fieldName")
                 End If
 
-                If _t Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
-                    Return New CriteriaField(_stmtGen, _en, fieldName)
-                Else
-                    Return New CriteriaField(_stmtGen, _t, fieldName)
-                End If
+                'If _t Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
+                '    Return New CriteriaField(_stmtGen, _en, propertyAlias)
+                'Else
+                '    Return New CriteriaField(_stmtGen, _t, propertyAlias)
+                'End If
+                Return New CriteriaField(_stmtGen, _os, propertyAlias)
             End Function
 
-            Public Function Field(ByVal fieldName As String) As Criteria.CriteriaField
-                Return CType(_Field(fieldName), CriteriaField)
+            Public Function Field(ByVal propertyAlias As String) As Criteria.CriteriaField
+                Return CType(_Field(propertyAlias), CriteriaField)
             End Function
 
-            Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As CriteriaField
-                Return Field(Nothing, t, fieldName)
+            Public Shared Function Field(ByVal t As Type, ByVal propertyAlias As String) As CriteriaField
+                Return Field(Nothing, t, propertyAlias)
             End Function
 
-            Public Shared Function Field(ByVal entityName As String, ByVal fieldName As String) As CriteriaField
-                Return Field(Nothing, entityName, fieldName)
+            Public Shared Function Field(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As CriteriaField
+                Return Field(Nothing, New ObjectSource([alias]), propertyAlias)
             End Function
 
-            Public Shared Function Field(ByVal objectField As ObjectField) As CriteriaField
-                Return Field(Nothing, objectField.EntityName, objectField.Field)
+            Public Shared Function Field(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
+                Return Field(Nothing, entityName, propertyAlias)
             End Function
 
-            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String) As CriteriaField
+            Public Shared Function Field(ByVal objectField As ObjectProperty) As CriteriaField
+                Return Field(Nothing, objectField.ObjectSource, objectField.Field)
+            End Function
+
+            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal propertyAlias As String) As CriteriaField
                 If t Is Nothing Then
                     Throw New ArgumentNullException("t")
                 End If
 
-                If String.IsNullOrEmpty(fieldName) Then
+                If String.IsNullOrEmpty(propertyAlias) Then
                     Throw New ArgumentNullException("fieldName")
                 End If
 
-                Return New CriteriaField(stmtGen, t, fieldName)
+                Return New CriteriaField(stmtGen, t, propertyAlias)
             End Function
 
-            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal objField As ObjectField) As CriteriaField
-                Return Field(stmtGen, objField.EntityName, objField.Field)
+            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal os As ObjectSource, ByVal propertyAlias As String) As CriteriaField
+                If os Is Nothing Then
+                    Throw New ArgumentNullException("os")
+                End If
+
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    Throw New ArgumentNullException("propertyAlias")
+                End If
+
+                Return New CriteriaField(stmtGen, os, propertyAlias)
+            End Function
+
+            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal objField As ObjectProperty) As CriteriaField
+                Return Field(stmtGen, objField.ObjectSource, objField.Field)
             End Function
 
             Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal fieldName As String) As CriteriaField
@@ -129,13 +151,13 @@ Namespace Database
                 Return New CriteriaColumn(stmtGen, table, columnName)
             End Function
 
-            Public Shared Function AutoTypeField(ByVal fieldName As String) As CriteriaField
-                If String.IsNullOrEmpty(fieldName) Then
-                    Throw New ArgumentNullException("fieldName")
-                End If
+            'Public Shared Function AutoTypeField(ByVal propertyAlias As String) As CriteriaField
+            '    If String.IsNullOrEmpty(propertyAlias) Then
+            '        Throw New ArgumentNullException("propertyAlias")
+            '    End If
 
-                Return New CriteriaField(Nothing, CType(Nothing, Type), fieldName)
-            End Function
+            '    Return New CriteriaField(Nothing, CType(Nothing, Type), propertyAlias)
+            'End Function
 
             Public Shared Function Exists(ByVal t As Type, ByVal gf As cc.IGetFilter) As CriteriaLink
                 Return New CriteriaLink(Nothing, New Condition.ConditionConstructor).AndExists(t, gf.Filter)
@@ -311,25 +333,36 @@ Namespace Database
 
             Private _stmtGen As SQLGenerator
 
-            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String)
-                MyBase.New(t, fieldName)
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal propertyAlias As String)
+                MyBase.New(t, propertyAlias)
                 _stmtGen = stmtGen
             End Sub
 
-            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal en As String, ByVal fieldName As String)
-                MyBase.New(en, fieldName)
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal os As ObjectSource, ByVal propertyAlias As String)
+                MyBase.New(os, propertyAlias)
                 _stmtGen = stmtGen
             End Sub
 
-            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String, _
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal en As String, ByVal propertyAlias As String)
+                MyBase.New(en, propertyAlias)
+                _stmtGen = stmtGen
+            End Sub
+
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal propertyAlias As String, _
                 ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
-                MyBase.New(t, fieldName, con, ct)
+                MyBase.New(t, propertyAlias, con, ct)
                 _stmtGen = stmtGen
             End Sub
 
-            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal fieldName As String, _
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal propertyAlias As String, _
                 ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
-                MyBase.New(entityName, fieldName, con, ct)
+                MyBase.New(entityName, propertyAlias, con, ct)
+                _stmtGen = stmtGen
+            End Sub
+
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal os As Orm.ObjectSource, ByVal fieldName As String, _
+                ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+                MyBase.New(os, fieldName, con, ct)
                 _stmtGen = stmtGen
             End Sub
 
@@ -338,11 +371,12 @@ Namespace Database
                     ConditionCtor = New Condition.ConditionConstructor
                 End If
                 ConditionCtor.AddFilter(fl, ConditionOper)
-                If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
-                    Return New CriteriaLink(_stmtGen, EntityName, CType(ConditionCtor, Condition.ConditionConstructor))
-                Else
-                    Return New CriteriaLink(_stmtGen, Type, CType(ConditionCtor, Condition.ConditionConstructor))
-                End If
+                'If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
+                '    Return New CriteriaLink(_stmtGen, EntityName, CType(ConditionCtor, Condition.ConditionConstructor))
+                'Else
+                '    Return New CriteriaLink(_stmtGen, Type, CType(ConditionCtor, Condition.ConditionConstructor))
+                'End If
+                Return New CriteriaLink(_stmtGen, ObjectSource, CType(ConditionCtor, Condition.ConditionConstructor))
             End Function
 
             Protected Function GetLink2(ByVal fl As Worm.Criteria.Core.IFilter) As CriteriaLink
@@ -350,36 +384,37 @@ Namespace Database
             End Function
 
             Protected Overrides Function CreateFilter(ByVal v As IParamFilterValue, ByVal oper As FilterOperation) As Worm.Criteria.Core.IFilter
-                If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
-                    Return New EntityFilter(EntityName, Field, v, oper)
-                Else
-                    Return New EntityFilter(Type, Field, v, oper)
-                End If
+                'If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
+                '    Return New EntityFilter(EntityName, Field, v, oper)
+                'Else
+                '    Return New EntityFilter(Type, Field, v, oper)
+                'End If
+                Return New EntityFilter(ObjectSource, Field, v, oper)
             End Function
 
             Public Overloads Function [In](ByVal t As Type) As CriteriaLink
-                Return GetLink2(New EntityFilter(Type, Field, New SubQuery(_stmtGen, t, Nothing), FilterOperation.In))
+                Return GetLink2(New EntityFilter(ObjectSource, Field, New SubQuery(_stmtGen, t, Nothing), FilterOperation.In))
             End Function
 
             Public Overloads Function NotIn(ByVal t As Type) As CriteriaLink
-                Return GetLink2(New EntityFilter(Type, Field, New SubQuery(_stmtGen, t, Nothing), FilterOperation.NotIn))
+                Return GetLink2(New EntityFilter(ObjectSource, Field, New SubQuery(_stmtGen, t, Nothing), FilterOperation.NotIn))
             End Function
 
             Public Overloads Function [In](ByVal t As Type, ByVal fieldName As String) As CriteriaLink
-                Return GetLink2(New EntityFilter(Type, Field, New SubQuery(_stmtGen, t, Nothing, fieldName), FilterOperation.In))
+                Return GetLink2(New EntityFilter(ObjectSource, Field, New SubQuery(_stmtGen, t, Nothing, fieldName), FilterOperation.In))
             End Function
 
             Public Overloads Function NotIn(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
-                Return GetLink2(New EntityFilter(Type, Field, New SubQuery(_stmtGen, t, Nothing, fieldName), FilterOperation.NotIn))
+                Return GetLink2(New EntityFilter(ObjectSource, Field, New SubQuery(_stmtGen, t, Nothing, fieldName), FilterOperation.NotIn))
             End Function
 
             Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
-                Dim j As New JoinFilter(Type, Field, t, joinField, FilterOperation.Equal)
+                Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
                 Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, j), FilterOperation.Exists))
             End Function
 
             Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
-                Dim j As New JoinFilter(Type, Field, t, joinField, FilterOperation.Equal)
+                Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
                 Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, j), FilterOperation.NotExists))
             End Function
 
@@ -557,6 +592,11 @@ Namespace Database
                 _stmtGen = stmtGen
             End Sub
 
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal os As ObjectSource, ByVal con As Condition.ConditionConstructor)
+                MyBase.New(os, con)
+                _stmtGen = stmtGen
+            End Sub
+
             Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal con As Condition.ConditionConstructor)
                 MyBase.New(entityName, con)
                 _stmtGen = stmtGen
@@ -572,13 +612,17 @@ Namespace Database
                 _stmtGen = stmtGen
             End Sub
 
-            Protected Overrides Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
-                Return New CriteriaField(_stmtGen, entityName, fieldName, CType(con, Condition.ConditionConstructor), oper)
+            Protected Overrides Function CreateCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
+                Return New Condition.ConditionConstructor
             End Function
 
-            Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
-                Return New CriteriaField(_stmtGen, t, fieldName, CType(con, Condition.ConditionConstructor), oper)
+            Protected Overrides Function CreateField(ByVal os As ObjectSource, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
+                Return New CriteriaField(_stmtGen, os, fieldName, CType(con, Condition.ConditionConstructor), oper)
             End Function
+
+            'Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
+            '    Return New CriteriaField(_stmtGen, t, fieldName, CType(con, Condition.ConditionConstructor), oper)
+            'End Function
 
             Public Function CustomAnd(ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As CriteriaBase
                 Return New CustomCF(_stmtGen, format, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
@@ -650,7 +694,7 @@ Namespace Database
                 If Table IsNot Nothing Then
                     Return New CriteriaLink(_stmtGen, Table, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
                 Else
-                    Return New CriteriaLink(_stmtGen, Type, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
+                    Return New CriteriaLink(_stmtGen, ObjectSource, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
                 End If
             End Function
 

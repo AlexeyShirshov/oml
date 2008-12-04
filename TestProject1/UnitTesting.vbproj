@@ -85,6 +85,13 @@
     <Import Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\Composite.vb" />
+    <Compile Include="Advanced\GuidPK.vb" />
+    <Compile Include="Advanced\MultiTable.vb" />
+    <Compile Include="Advanced\SimpleModel.vb" />
+    <Compile Include="Advanced\SimpleObj.vb" />
+    <Compile Include="Advanced\TestComplexEntities.vb" />
+    <Compile Include="Aliases\TestFilters.vb" />
     <Compile Include="App_Code\MyMembership.vb" />
     <Compile Include="App_Code\MyRoles.vb" />
     <Compile Include="App_Code\OrmSupp.vb" />
@@ -96,9 +103,8 @@
     <Compile Include="ASPHosting\TestRoles.vb" />
     <Compile Include="Query\fts.vb" />
     <Compile Include="Query\ImmCache.vb" />
+    <Compile Include="Query\Modification.vb" />
     <Compile Include="Query\SmartCache.vb" />
-    <Compile Include="TestComplexEntities.vb" />
-    <Compile Include="GuidPK.vb" />
     <Compile Include="My Project\Settings.Designer.vb">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -109,11 +115,8 @@
     <Compile Include="Query\Cache.vb" />
     <Compile Include="Query\QueryTest.vb" />
     <Compile Include="TestCriteria.vb" />
-    <Compile Include="TestRealSchema\Composite.vb" />
     <Compile Include="TestRealSchema\Table1to1.vb" />
     <Compile Include="TestRealSchema\TestExFilter.vb" />
-    <Compile Include="TestRealSchema\MultiTable.vb" />
-    <Compile Include="TestRealSchema\SimpleObj.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="OrmBaseTest.vb" />

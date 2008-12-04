@@ -35,7 +35,7 @@ Public Class TestDistinct
             Dim tt As Type = GetType(Table1)
             Dim t As Type = GetType(Table2)
             Dim tbl As SourceFragment = s.GetTables(tt)(0)
-            Dim col As ICollection(Of String) = s.GetFieldNameByType(t, tt)
+            Dim col As ICollection(Of String) = s.GetPropertyAliasByType(t, tt)
             Assert.AreEqual(1, col.Count)
             Dim field As String = String.Empty
             For Each fld As String In col

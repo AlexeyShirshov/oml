@@ -107,8 +107,8 @@ Imports Worm.Orm.Meta
         Dim e As New Entity(10, Nothing, schema)
 
         Dim el As New EditableList(10, New Object() {9, 10, 20}, Nothing, Nothing, Nothing)
-        el.Delete(10)
-        el.Add(234)
+        el.Delete(New Entity4(10, Nothing, schema))
+        el.Add(New Entity4(234, Nothing, schema))
 
         Dim m As M2MRelation = schema.GetM2MRelation(t, t2, True)
 
@@ -130,8 +130,8 @@ Imports Worm.Orm.Meta
         Dim e As New Entity5(10, Nothing, schema)
 
         Dim el As New EditableList(10, New Object() {9, 10, 20}, Nothing, Nothing, True, Nothing)
-        el.Delete(10)
-        el.Add(234)
+        el.Delete(New Entity5(10, Nothing, schema))
+        el.Add(New Entity5(234, Nothing, schema))
 
         Dim m As M2MRelation = schema.GetM2MRelation(t, t2, True)
 

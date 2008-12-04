@@ -62,7 +62,7 @@ Public Class TestSearch
     Public Sub TestSortSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                Sorting.Field("DT"), Nothing)
+                Sorting.Field(GetType(Table1), "DT"), Nothing)
 
             Assert.AreEqual(2, c.Count)
 
@@ -71,7 +71,7 @@ Public Class TestSearch
             Assert.AreEqual(2, l(0).Identifier)
             Assert.AreEqual(3, l(1).Identifier)
 
-            Dim c2 As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", Sorting.Field("DT"))
+            Dim c2 As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", Sorting.Field(GetType(Table2), "DT"))
 
             Assert.AreEqual(2, c.Count)
         End Using
@@ -90,7 +90,7 @@ Public Class TestSearch
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Using New Worm.OrmManager.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                    Sorting.Field("DT"), Nothing)
+                    Sorting.Field(GetType(Table1), "DT"), Nothing)
 
                 Assert.AreEqual(1, c.Count)
             End Using
@@ -102,7 +102,7 @@ Public Class TestSearch
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
 
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                Sorting.Field("DT"), Nothing, Criteria.Ctor.Field(GetType(Table1), "Code").Eq(45).Filter)
+                Sorting.Field(GetType(Table1), "DT"), Nothing, Criteria.Ctor.Field(GetType(Table1), "Code").Eq(45).Filter)
 
             Assert.AreEqual(1, c.Count)
 

@@ -2,6 +2,7 @@
 Imports Worm.Criteria.Values
 Imports System.Collections.Generic
 Imports Worm.Expressions
+Imports Worm.Orm
 
 'Imports Worm.Criteria.Core
 
@@ -235,19 +236,19 @@ Namespace Database
                     If Template.Table.Name = TempTable Then
                         Return Template.Column & Template.OperToStmt & GetParam(schema, pname)
                     Else
-                        Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+                        'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
-                        If almgr IsNot Nothing Then
-                            tableAliases = almgr.Aliases
-                        End If
+                        'If almgr IsNot Nothing Then
+                        '    tableAliases = almgr.Aliases
+                        'End If
 
                         Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
                         Dim [alias] As String = String.Empty
 
-                        If tableAliases IsNot Nothing Then
-                            Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                        If almgr IsNot Nothing Then
+                            Debug.Assert(almgr.ContainsKey(map._tableName, Nothing), "There is not alias for table " & map._tableName.RawName)
                             Try
-                                [alias] = tableAliases(map._tableName) & "."
+                                [alias] = almgr.GetAlias(map._tableName, Nothing) & "."
                             Catch ex As KeyNotFoundException
                                 Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                             End Try
@@ -298,20 +299,28 @@ Namespace Database
         Public Class OrmFilterTemplate
             Inherits Worm.Criteria.Core.OrmFilterTemplateBase
 
-            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation)
-                MyBase.New(t, fieldName, oper)
+            Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New(t, propertyAlias, oper)
             End Sub
 
-            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation)
-                MyBase.New(entityName, fieldName, oper)
+            Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New(entityName, propertyAlias, oper)
             End Sub
 
-            Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
-                Return New EntityFilter(t, fieldName, value, operation)
+            Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New([alias], propertyAlias, oper)
+            End Sub
+
+            Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New(os, propertyAlias, oper)
+            End Sub
+
+            Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal propertyAlias As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
+                Return New EntityFilter(t, propertyAlias, value, operation)
             End Function
 
-            Protected Overrides Function CreateEntityFilter(ByVal entityName As String, ByVal fieldName As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
-                Return New EntityFilter(entityName, fieldName, value, operation)
+            Protected Overrides Function CreateEntityFilter(ByVal entityName As String, ByVal propertyAlias As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
+                Return New EntityFilter(entityName, propertyAlias, value, operation)
             End Function
 
             Public Overrides ReadOnly Property OperToStmt() As String
@@ -319,6 +328,10 @@ Namespace Database
                     Return TemplateBase.Oper2String(Operation)
                 End Get
             End Property
+
+            Protected Overloads Overrides Function CreateEntityFilter(ByVal oa As Orm.ObjectAlias, ByVal propertyAlias As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
+                Return New EntityFilter(oa, propertyAlias, value, operation)
+            End Function
         End Class
 
         Public Class EntityFilter
@@ -327,12 +340,20 @@ Namespace Database
 
             'Private _dbFilter As Boolean
 
-            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
+            Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New OrmFilterTemplate(t, propertyAlias, operation))
             End Sub
 
-            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(value, New OrmFilterTemplate(entityName, fieldName, operation))
+            Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New OrmFilterTemplate(entityName, propertyAlias, operation))
+            End Sub
+
+            Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New OrmFilterTemplate([alias], propertyAlias, operation))
+            End Sub
+
+            Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New OrmFilterTemplate(os, propertyAlias, operation))
             End Sub
 
             'Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
@@ -373,7 +394,8 @@ Namespace Database
                 Return MakeQueryStmt(oschema, filterInfo, schema, almgr, pname, Nothing)
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, _
+                ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If _oschema Is Nothing Then
                     _oschema = oschema
                 End If
@@ -381,11 +403,11 @@ Namespace Database
                 Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
                 If pv Is Nothing OrElse pv.ShouldUse Then
-                    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+                    'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
-                    If almgr IsNot Nothing Then
-                        tableAliases = almgr.Aliases
-                    End If
+                    'If almgr IsNot Nothing Then
+                    '    tableAliases = almgr.Aliases
+                    'End If
 
                     If schema Is Nothing Then
                         Throw New ArgumentNullException("schema")
@@ -395,15 +417,15 @@ Namespace Database
                     Try
                         map = oschema.GetFieldColumnMap()(Template.PropertyAlias)
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.PropertyAlias, ex))
+                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.ObjectSource.ToStaticString & "." & Template.PropertyAlias, ex))
                     End Try
 
                     Dim [alias] As String = String.Empty
 
-                    If tableAliases IsNot Nothing Then
+                    If almgr IsNot Nothing Then
                         'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                         Try
-                            [alias] = tableAliases(map._tableName) & schema.Selector
+                            [alias] = almgr.GetAlias(map._tableName, Template.ObjectSource) & schema.Selector
                         Catch ex As KeyNotFoundException
                             Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                         End Try
@@ -430,11 +452,12 @@ Namespace Database
                 End If
 
                 If _oschema Is Nothing Then
-                    If Template.Type Is Nothing AndAlso Not String.IsNullOrEmpty(Template.EntityName) Then
-                        _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.EntityName))
-                    Else
-                        _oschema = schema.GetObjectSchema(Template.Type)
-                    End If
+                    'If Template.Type Is Nothing AndAlso Not String.IsNullOrEmpty(Template.EntityName) Then
+                    '    _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.EntityName))
+                    'Else
+                    '    _oschema = schema.GetObjectSchema(Template.Type)
+                    'End If
+                    _oschema = schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema))
                 End If
 
                 Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)

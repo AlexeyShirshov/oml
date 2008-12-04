@@ -258,19 +258,19 @@ Namespace Orm
             Dim s As ObjectMappingEngine = mgr.MappingEngine
             Dim cr As Criteria.CriteriaLink = Nothing
             If strong Then
-                cr = s.CreateCriteria(tt).Field(field).Eq(Name)
+                cr = s.CreateCriteria(New ObjectSource(tt)).Field(field).Eq(Name)
                 If Not String.IsNullOrEmpty(sec) Then
                     cr.Or(tt, sec).Eq(Name)
                 End If
             Else
-                cr = s.CreateCriteria(tt).Field(field).Like(Name & "%")
+                cr = s.CreateCriteria(New ObjectSource(tt)).Field(field).Like(Name & "%")
                 If Not String.IsNullOrEmpty(sec) Then
                     cr.Or(tt, sec).Like(Name & "%")
                 End If
             End If
 
             Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
-            con.AddFilter(cr.Filter(GetType(T))).AddFilter(Root.Filter)
+            con.AddFilter(cr.Filter()).AddFilter(Root.Filter)
             Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
         End Function
 
@@ -286,9 +286,9 @@ Namespace Orm
             con.AddFilter(Root.Filter)
 
             If strong Then
-                con.AddFilter(s.CreateCriteria(tt).Field(field).Eq(Name).Filter(GetType(T)))
+                con.AddFilter(s.CreateCriteria(New ObjectSource(tt)).Field(field).Eq(Name).Filter())
             Else
-                con.AddFilter(s.CreateCriteria(tt).Field(field).Like(Name & "%").Filter(GetType(T)))
+                con.AddFilter(s.CreateCriteria(New ObjectSource(tt)).Field(field).Like(Name & "%").Filter())
             End If
 
             If loadName Then

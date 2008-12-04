@@ -44,6 +44,53 @@ Namespace Database
                 Return True
             End Get
         End Property
+
+        Protected Overrides Function DeclareOutput(ByVal sb As System.Text.StringBuilder, _
+            ByVal pks As IEnumerable(Of Pair(Of String, Pair(Of String)))) As String
+            Dim tblName As String = "@tmp_tbl"
+            Dim clm As New StringBuilder
+            clm.Append("table(")
+            For Each p As Pair(Of String, Pair(Of String)) In pks
+                Dim s As Pair(Of String) = p.Second
+                clm.Append(s.First).Append(" ").Append(s.Second).Append(",")
+            Next
+            clm.Length -= 1
+            clm.Append(")")
+            sb.Append(DeclareVariable(tblName, clm.ToString))
+            Return tblName
+        End Function
+
+        Protected Overrides Function InsertOutput(ByVal table As String, _
+            ByVal syncInsertPK As IEnumerable(Of Pair(Of String, Pair(Of String))), _
+            ByVal notSyncInsertPK As List(Of Pair(Of String)), ByVal co As Orm.Meta.IChangeOutputOnInsert) As String
+            Dim sb As New StringBuilder
+            sb.Append("output ")
+            For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
+                Dim p As Pair(Of String) = pp.Second
+                Dim clm As String = p.First
+                If co IsNot Nothing Then
+                    clm = co.GetColumn(pp.First, clm)
+                End If
+                sb.Append("inserted.").Append(clm).Append(",")
+            Next
+            sb.Length -= 1
+            sb.Append(" INTO ").Append(table).Append("(")
+            For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
+                sb.Append(pp.Second.First).Append(",")
+
+                Dim propertyAlias As String = pp.First
+                Dim idx As Integer = notSyncInsertPK.FindIndex(Function(p As Pair(Of String)) p.First = propertyAlias)
+                If idx >= 0 Then
+                    notSyncInsertPK(idx) = New Pair(Of String)(propertyAlias, pp.Second.First)
+                Else
+                    notSyncInsertPK.Add(New Pair(Of String)(propertyAlias, pp.Second.First))
+                End If
+            Next
+            sb.Length -= 1
+            sb.Append(")")
+            Return sb.ToString
+        End Function
+
         '    Protected Overrides Function FormInsert(ByVal inserted_tables As System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.IList(Of OrmFilter)), ByVal ins_cmd As System.Text.StringBuilder, ByVal type As System.Type, ByVal sel_columns As System.Collections.Generic.List(Of ColumnAttribute), ByVal unions() As String, ByVal params As ICreateParam) As System.Collections.Generic.ICollection(Of System.Data.Common.DbParameter)
         '        If params Is Nothing Then
         '            params = New ParamMgr(Me, "p")

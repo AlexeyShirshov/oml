@@ -6,7 +6,7 @@ Imports Worm.Orm
 Imports Worm.Orm.Meta
 
 <TestClass()> Public Class TestManager
-    Implements Worm.OrmManager.INewObjects, Worm.ICreateManager
+    Implements INewObjectsStore, Worm.ICreateManager
 
     Private _schemas As New System.Collections.Hashtable
 
@@ -99,7 +99,7 @@ Imports Worm.Orm.Meta
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
+            c = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, False)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
@@ -116,7 +116,7 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(1)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)
@@ -127,7 +127,7 @@ Imports Worm.Orm.Meta
             Assert.AreEqual(1, l(3).Identifier)
             Assert.AreEqual("first", l(3).Title)
 
-            c = mgr.Find(Of Entity)(2).M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, True)
+            c = mgr.Find(Of Entity)(2).M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
@@ -145,12 +145,12 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, False)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
-            c = e.M2M.Find(Of Entity4)(2, Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
+            c = e.M2M.Find(Of Entity4)(2, Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, False)
 
             Assert.AreEqual(2, c.Count)
         End Using
@@ -177,13 +177,13 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").Eq("bt"), Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").Eq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(1, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
-            c = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Worm.Orm.Sorting.Field("Title").Asc, False)
+            c = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)
@@ -199,7 +199,7 @@ Imports Worm.Orm.Meta
 
             mgr.Find(Of Entity4)(12).EnsureLoaded()
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, False)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 If e4.ID = 12 Then
@@ -238,7 +238,7 @@ Imports Worm.Orm.Meta
 
             mgr.ConvertIds2Objects(Of Entity4)(New Object() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
@@ -253,10 +253,10 @@ Imports Worm.Orm.Meta
             Dim e As Entity = mgr.Find(Of Entity)(2)
             Dim e2 As Entity4 = mgr.Find(Of Entity4)(12)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             Dim c3 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -264,10 +264,10 @@ Imports Worm.Orm.Meta
 
             e.M2M.Delete(e2)
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -275,7 +275,7 @@ Imports Worm.Orm.Meta
 
             e.RejectChanges()
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
             c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -286,10 +286,10 @@ Imports Worm.Orm.Meta
                 e.M2M.Delete(e2)
                 e.SaveChanges(True)
 
-                c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+                c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
                 Assert.AreEqual(10, c.Count)
 
-                c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+                c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
                 Assert.AreEqual(9, c2.Count)
 
                 c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -306,10 +306,10 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             'mgr.Obj2ObjRelationDelete(e, GetType(Entity4))
@@ -359,16 +359,16 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
             Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                Sorting.Field("Title").Asc, True)
+                Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.M2M.Add(mgr.Find(Of Entity4)(5))
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(12, c.Count)
         End Using
     End Sub
@@ -386,11 +386,11 @@ Imports Worm.Orm.Meta
             Dim e As Entity = mgr.Find(Of Entity)(2)
             Dim e2 As Entity4 = mgr.Find(Of Entity4)(5)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
             Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                Sorting.Field("Title").Asc, True)
+                Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             Dim c3 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, True)
@@ -398,11 +398,11 @@ Imports Worm.Orm.Meta
 
             e.M2M.Add(e2)
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(12, c.Count)
 
             c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                Sorting.Field("Title").Asc, True)
+                Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             mgr.BeginTransaction()
@@ -411,7 +411,7 @@ Imports Worm.Orm.Meta
                 e.SaveChanges(True)
 
                 c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                    Sorting.Field("Title").Asc, True)
+                    Sorting.Field(GetType(Entity4), "Title").Asc, True)
                 Assert.AreEqual(11, c2.Count)
 
                 c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, True)
@@ -428,26 +428,26 @@ Imports Worm.Orm.Meta
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.M2M.Add(mgr.Find(Of Entity4)(5))
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(12, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.M2M.Cancel(GetType(Entity4))
 
-            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
+            c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
         End Using
     End Sub
@@ -459,7 +459,7 @@ Imports Worm.Orm.Meta
             Dim e2 As Entity4 = mgr.Find(Of Entity4)(5)
 
             Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                Sorting.Field("Title").Asc, True)
+                Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             Dim c3 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, True)
@@ -468,7 +468,7 @@ Imports Worm.Orm.Meta
             e.M2M.Add(e2)
 
             c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                Sorting.Field("Title").Asc, True)
+                Sorting.Field(GetType(Entity4), "Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             mgr.BeginTransaction()
@@ -477,7 +477,7 @@ Imports Worm.Orm.Meta
                 e.SaveChanges(True)
 
                 c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
-                    Sorting.Field("Title").Asc, True)
+                    Sorting.Field(GetType(Entity4), "Title").Asc, True)
                 Assert.AreEqual(11, c2.Count)
 
                 c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, True)
@@ -556,7 +556,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestAdd4()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
             Dim e As Entity = New Entity(Me.GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
@@ -596,26 +596,26 @@ Imports Worm.Orm.Meta
         Return CInt(GetIdentity(Nothing)(0).Value)
     End Function
 
-    Private Function GetIdentity(ByVal t As Type) As Meta.PKDesc() Implements Worm.OrmManager.INewObjects.GetPKForNewObject
+    Private Function GetIdentity(ByVal t As Type) As Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return New PKDesc() {New PKDesc("id", _id)}
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As OrmBase = Nothing
         _l.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
-    Private Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.AddNew
+    Private Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         _l.Add(CInt(CType(obj, OrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
     Public Sub TestAdd5()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
             Dim e As Entity = New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
@@ -744,7 +744,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestDeletaCacheVal()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As Worm.ReadOnlyList(Of Entity4) = mgr.Find(Of Entity4)(Criteria.Ctor.AutoTypeField("Title").Like("2%"), Nothing, False)
+            Dim c As Worm.ReadOnlyList(Of Entity4) = mgr.Find(Of Entity4)(Criteria.Ctor.Field(GetType(Entity4), "Title").Like("2%"), Nothing, False)
 
             Assert.AreEqual(3, c.Count)
 
@@ -757,7 +757,7 @@ Imports Worm.Orm.Meta
             mgr.BeginTransaction()
             Try
                 e2.SaveChanges(True)
-                c = mgr.Find(Of Entity4)(Criteria.Ctor.AutoTypeField("Title").Like("2%"), Nothing, False)
+                c = mgr.Find(Of Entity4)(Criteria.Ctor.Field(GetType(Entity4), "Title").Like("2%"), Nothing, False)
 
                 Assert.AreEqual(2, c.Count)
             Finally
@@ -957,7 +957,7 @@ Imports Worm.Orm.Meta
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestM2MReject2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
@@ -996,7 +996,7 @@ Imports Worm.Orm.Meta
     Public Sub TestM2MAddNew()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
@@ -1036,7 +1036,7 @@ Imports Worm.Orm.Meta
     Public Sub TestM2MAddNewBoth()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             Dim e As New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
             Dim id As Integer = e.ID
@@ -1316,11 +1316,11 @@ Imports Worm.Orm.Meta
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements Worm.OrmManager.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements INewObjectsStore.RemoveNew
 
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.RemoveNew
 
     End Sub
 

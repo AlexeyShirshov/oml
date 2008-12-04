@@ -99,7 +99,7 @@ Imports Worm.Database
             Loop While i < 10000
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(CType(mgr.MappingEngine, SQLGenerator), "p")
-            almgr.AddTable(mgr.SQLGenerator.GetTables(GetType(Entity))(0))
+            almgr.AddTable(mgr.SQLGenerator.GetTables(GetType(Entity))(0), Nothing)
             pa.GetFilters(l, "ID", almgr, params, GetType(Entity), False)
 
             pa.GetFilters(l, mgr.SQLGenerator.GetTables(GetType(Entity))(0), "ID", almgr, params, False)

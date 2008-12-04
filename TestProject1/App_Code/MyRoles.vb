@@ -8,19 +8,19 @@ Imports Worm.Database.Criteria
 Public Class MyRoles
     Inherits RoleBase
 
-    Protected Overloads Overrides Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As Worm.Orm.OrmBase, ByVal cascase As Boolean)
-        If cascase Then
-            Throw New NotSupportedException("Cascade delete is not supported")
-        End If
-        role.Delete()
-        role.SaveChanges(True)
-    End Sub
+    'Protected Overloads Overrides Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As Worm.Orm.IOrmBase, ByVal cascase As Boolean)
+    '    If cascase Then
+    '        Throw New NotSupportedException("Cascade delete is not supported")
+    '    End If
+    '    CType(role, ICachedEntity).Delete()
+    '    role.SaveChanges(True)
+    'End Sub
 
-    Protected Overrides Function FindRoles(ByVal mgr As OrmDBManager, ByVal f As CriteriaLink) As System.Collections.IList
-        Return CType(mgr.Find(Of MyRole)(f, Nothing, WithLoad), System.Collections.IList)
-    End Function
+    'Protected Overrides Function FindRoles(ByVal mgr As Worm.OrmManager, ByVal f As CriteriaLink) As System.Collections.IList
+    '    Return CType(mgr.Find(Of MyRole)(f, Nothing, WithLoad), System.Collections.IList)
+    'End Function
 
-    Protected Overrides Function GetRoleByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Orm.OrmBase
+    Protected Overrides Function GetRoleByName(ByVal mgr As Worm.OrmManager, ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Orm.IOrmBase
         Dim t As Type = GetRoleType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _rolenameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))

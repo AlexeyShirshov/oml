@@ -30,13 +30,23 @@ Namespace Criteria
         Function Column(ByVal columnName As String) As CriteriaColumn
     End Interface
 
-    Public Structure ObjectField
-        Public ReadOnly EntityName As String
+    Public Structure ObjectProperty
+        Public ReadOnly ObjectSource As ObjectSource
         Public ReadOnly Field As String
 
-        Public Sub New(ByVal entityName As String, ByVal field As String)
-            Me.EntityName = entityName
-            Me.Field = field
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource(entityName)
+            Me.Field = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource(t)
+            Me.Field = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource([alias])
+            Me.Field = propertyAlias
         End Sub
     End Structure
 
@@ -84,6 +94,14 @@ Namespace Criteria
 
         Protected MustOverride Function GetLink(ByVal fl As IFilter) As CriteriaLink
         Protected MustOverride Function CreateFilter(ByVal v As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
+
+        Public Function Eq(ByVal value As IParamFilterValue) As CriteriaLink
+            If value Is Nothing OrElse value Is DBNull.Value Then
+                Return IsNull()
+            Else
+                Return GetLink(CreateFilter(value, FilterOperation.Equal))
+            End If
+        End Function
 
         Public Function Eq(ByVal value As Object) As CriteriaLink
             If value Is Nothing OrElse value Is DBNull.Value Then
@@ -169,8 +187,7 @@ Namespace Criteria
     Public MustInherit Class CriteriaField
         Inherits CriteriaBase
 
-        Private _en As String
-        Private _t As Type
+        Private _os As ObjectSource
         Private _f As String
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String)
@@ -182,40 +199,58 @@ Namespace Criteria
             '    Throw New ArgumentNullException("fieldName")
             'End If
 
-            _t = t
+            _os = New ObjectSource(t)
             _f = propertyAlias
         End Sub
 
-        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
+        Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
-            _t = t
-            _f = fieldName
+            _os = New ObjectSource(t)
+            _f = propertyAlias
         End Sub
 
-        Protected Friend Sub New(ByVal en As String, ByVal fieldName As String)
-            _en = en
-            _f = fieldName
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            _os = os
+            _f = propertyAlias
         End Sub
 
-        Protected Friend Sub New(ByVal en As String, ByVal fieldName As String, _
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
-            _en = en
-            _f = fieldName
+            _os = os
+            _f = propertyAlias
         End Sub
 
-        Protected ReadOnly Property EntityName() As String
+        Protected Friend Sub New(ByVal en As String, ByVal propertyAlias As String)
+            _os = New ObjectSource(en)
+            _f = propertyAlias
+        End Sub
+
+        Protected Friend Sub New(ByVal en As String, ByVal propertyAlias As String, _
+            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
+            MyBase.New(con, ct)
+            _os = New ObjectSource(en)
+            _f = propertyAlias
+        End Sub
+
+        Protected ReadOnly Property ObjectSource() As ObjectSource
             Get
-                Return _en
+                Return _os
             End Get
         End Property
 
-        Protected ReadOnly Property Type() As Type
-            Get
-                Return _t
-            End Get
-        End Property
+        'Protected ReadOnly Property EntityName() As String
+        '    Get
+        '        Return _en
+        '    End Get
+        'End Property
+
+        'Protected ReadOnly Property Type() As Type
+        '    Get
+        '        Return _t
+        '    End Get
+        'End Property
 
         Protected ReadOnly Property Field() As String
             Get
@@ -267,9 +302,8 @@ Namespace Criteria
         Implements IGetFilter, ICloneable
 
         Private _con As Condition.ConditionConstructorBase
-        Private _t As Type
         Private _tbl As Meta.SourceFragment
-        Private _en As String
+        Private _os As ObjectSource
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructorBase)
             _con = con
@@ -280,12 +314,12 @@ Namespace Criteria
         End Sub
 
         Public Sub New(ByVal t As Type)
-            _t = t
+            _os = New ObjectSource(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal con As Condition.ConditionConstructorBase)
             _con = con
-            _t = t
+            _os = New ObjectSource(t)
         End Sub
 
         Public Sub New(ByVal table As Meta.SourceFragment)
@@ -298,18 +332,32 @@ Namespace Criteria
         End Sub
 
         Public Sub New(ByVal entityName As String)
-            _en = entityName
+            _os = New ObjectSource(entityName)
         End Sub
 
         Protected Friend Sub New(ByVal entityName As String, ByVal con As Condition.ConditionConstructorBase)
             _con = con
-            _en = entityName
+            _os = New ObjectSource(entityName)
         End Sub
 
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal con As Condition.ConditionConstructorBase)
+            _con = con
+            _os = os
+        End Sub
+
+        Protected Function CreateField(ByVal entityName As String, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+            Return CreateField(New ObjectSource(entityName), propertyAlias, con, oper)
+        End Function
+
+        Protected Function CreateField(ByVal t As Type, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+            Return CreateField(New ObjectSource(t), propertyAlias, con, oper)
+        End Function
+
         Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
-        Protected MustOverride Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
-        Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+        'Protected MustOverride Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+        Protected MustOverride Function CreateField(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
         Protected MustOverride Function CreateColumn(ByVal table As Meta.SourceFragment, ByVal columnName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaColumn
+        Protected MustOverride Function CreateCtor() As Condition.ConditionConstructorBase
 
         Public Function [And](ByVal t As Type, ByVal propertyAlias As String) As CriteriaField
             If String.IsNullOrEmpty(propertyAlias) Then
@@ -323,8 +371,20 @@ Namespace Criteria
             Return CreateField(t, propertyAlias, _con, ConditionOperator.And)
         End Function
 
-        Public Function [And](ByVal objField As ObjectField) As CriteriaField
-            Return [And](objField.EntityName, objField.Field)
+        Public Function [And](ByVal os As ObjectSource, ByVal propertyAlias As String) As CriteriaField
+            If String.IsNullOrEmpty(propertyAlias) Then
+                Throw New ArgumentNullException("fieldName")
+            End If
+
+            If os Is Nothing Then
+                Throw New ArgumentNullException("os")
+            End If
+
+            Return CreateField(os, propertyAlias, _con, ConditionOperator.And)
+        End Function
+
+        Public Function [And](ByVal objField As ObjectProperty) As CriteriaField
+            Return [And](objField.ObjectSource, objField.Field)
         End Function
 
         Public Function [And](ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
@@ -333,26 +393,38 @@ Namespace Criteria
             End If
 
             If String.IsNullOrEmpty(propertyAlias) Then
-                Throw New ArgumentNullException("fieldName")
+                Throw New ArgumentNullException("propertyAlias")
             End If
 
             Return CreateField(entityName, propertyAlias, _con, ConditionOperator.And)
         End Function
 
-        Public Function [Or](ByVal t As Type, ByVal fieldName As String) As CriteriaField
-            If String.IsNullOrEmpty(fieldName) Then
-                Throw New ArgumentNullException("fieldName")
+        Public Function [Or](ByVal t As Type, ByVal propertyAlias As String) As CriteriaField
+            If String.IsNullOrEmpty(propertyAlias) Then
+                Throw New ArgumentNullException("propertyAlias")
             End If
 
             If t Is Nothing Then
                 Throw New ArgumentNullException("t")
             End If
 
-            Return CreateField(t, fieldName, _con, ConditionOperator.Or)
+            Return CreateField(t, propertyAlias, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [Or](ByVal objField As ObjectField) As CriteriaField
-            Return [Or](objField.EntityName, objField.Field)
+        Public Function [Or](ByVal os As ObjectSource, ByVal propertyAlias As String) As CriteriaField
+            If String.IsNullOrEmpty(propertyAlias) Then
+                Throw New ArgumentNullException("propertyAlias")
+            End If
+
+            If os Is Nothing Then
+                Throw New ArgumentNullException("os")
+            End If
+
+            Return CreateField(os, propertyAlias, _con, ConditionOperator.Or)
+        End Function
+
+        Public Function [Or](ByVal objField As ObjectProperty) As CriteriaField
+            Return [Or](objField.ObjectSource, objField.Field)
         End Function
 
         Public Function [Or](ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
@@ -373,7 +445,7 @@ Namespace Criteria
             End If
 
             If table Is Nothing Then
-                Throw New ArgumentNullException("t")
+                Throw New ArgumentNullException("table")
             End If
 
             Return CreateColumn(table, columnName, _con, ConditionOperator.And)
@@ -385,7 +457,7 @@ Namespace Criteria
             End If
 
             If table Is Nothing Then
-                Throw New ArgumentNullException("t")
+                Throw New ArgumentNullException("table")
             End If
 
             Return CreateColumn(table, columnName, _con, ConditionOperator.Or)
@@ -393,25 +465,25 @@ Namespace Criteria
 
         Public Function [And](ByVal propertyAlias As String) As CriteriaBase
             If String.IsNullOrEmpty(propertyAlias) Then
-                Throw New ArgumentNullException("fieldName")
+                Throw New ArgumentNullException("propertyAlias")
             End If
 
             If _tbl IsNot Nothing Then
                 Return CreateColumn(_tbl, propertyAlias, _con, ConditionOperator.And)
             Else
-                Return CreateField(_t, propertyAlias, _con, ConditionOperator.And)
+                Return CreateField(_os, propertyAlias, _con, ConditionOperator.And)
             End If
         End Function
 
         Public Function [Or](ByVal propertyAlias As String) As CriteriaBase
             If String.IsNullOrEmpty(propertyAlias) Then
-                Throw New ArgumentNullException("fieldName")
+                Throw New ArgumentNullException("propertyAlias")
             End If
 
             If _tbl IsNot Nothing Then
                 Return CreateColumn(_tbl, propertyAlias, _con, ConditionOperator.Or)
             Else
-                Return CreateField(_t, propertyAlias, _con, ConditionOperator.Or)
+                Return CreateField(_os, propertyAlias, _con, ConditionOperator.Or)
             End If
         End Function
 
@@ -424,7 +496,22 @@ Namespace Criteria
         End Function
 
         Public Function [And](ByVal f As IGetFilter) As CriteriaLink
-            _con.AddFilter(f.Filter, ConditionOperator.And)
+            If f IsNot Nothing Then
+                If _con Is Nothing Then
+                    _con = CreateCtor()
+                End If
+                _con.AddFilter(f.Filter, ConditionOperator.And)
+            End If
+            Return Me
+        End Function
+
+        Public Function [Or](ByVal f As IGetFilter) As CriteriaLink
+            If f IsNot Nothing Then
+                If _con Is Nothing Then
+                    _con = CreateCtor()
+                End If
+                _con.AddFilter(f.Filter, ConditionOperator.Or)
+            End If
             Return Me
         End Function
 
@@ -446,20 +533,20 @@ Namespace Criteria
             End Get
         End Property
 
-        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter Implements IGetFilter.Filter
-            Get
-                If _con IsNot Nothing Then
-                    Dim f As IFilter = _con.Condition
-                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
-                    If ef IsNot Nothing Then
-                        ef.GetFilterTemplate.SetType(t)
-                    End If
-                    Return f
-                Else
-                    Return Nothing
-                End If
-            End Get
-        End Property
+        'Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter Implements IGetFilter.Filter
+        '    Get
+        '        If _con IsNot Nothing Then
+        '            Dim f As IFilter = _con.Condition
+        '            Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+        '            If ef IsNot Nothing Then
+        '                ef.GetFilterTemplate.SetType(New ObjectAlias(t))
+        '            End If
+        '            Return f
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        'End Property
 
         Protected ReadOnly Property ConditionCtor() As Condition.ConditionConstructorBase
             Get
@@ -467,18 +554,23 @@ Namespace Criteria
             End Get
         End Property
 
-        Protected ReadOnly Property Type() As Type
+        Protected ReadOnly Property ObjectSource() As ObjectSource
             Get
-                Return _t
+                Return _os
             End Get
         End Property
+
+        'Protected ReadOnly Property Type() As Type
+        '    Get
+        '        Return _t
+        '    End Get
+        'End Property
 
         Protected ReadOnly Property Table() As Meta.SourceFragment
             Get
                 Return _tbl
             End Get
         End Property
-
 
         Public Function Clone() As CriteriaLink
             Return CType(_Clone(), CriteriaLink)

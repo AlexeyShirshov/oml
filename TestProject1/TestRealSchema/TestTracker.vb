@@ -6,15 +6,16 @@ Imports System.Diagnostics
 Imports Worm.Orm
 Imports Worm.Database
 Imports Worm.Orm.Meta
+Imports Worm.Cache
 
 <TestClass()> _
 Public Class TestTracker
-    Implements Worm.OrmManager.INewObjects
+    Implements INewObjectsStore
 
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, OrmBase)
 
-    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.AddNew
+    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -26,24 +27,24 @@ Public Class TestTracker
         Return CInt(GetIdentity(Nothing)(0).Value)
     End Function
 
-    Public Function GetIdentity(ByVal t As Type) As PKDesc() Implements Worm.OrmManager.INewObjects.GetPKForNewObject
+    Public Function GetIdentity(ByVal t As Type) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return New PKDesc() {New PKDesc(OrmBaseT.PKName, i)}
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As OrmBase = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements Worm.OrmManager.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements INewObjectsStore.RemoveNew
         _new_objects.Remove(CInt(id(0).Value))
         Debug.WriteLine("removed: " & id.ToString)
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.RemoveNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -64,7 +65,7 @@ Public Class TestTracker
     Public Sub TestCreateObjects()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             _new_objects.Clear()
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
 
             mgr.BeginTransaction()
             Try
@@ -76,11 +77,12 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues))
 
                     Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsTrue(_new_objects.ContainsKey(t2.ID))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues))
+
                     t2.Money = 1000
 
                     tracker.AcceptModifications()
@@ -97,7 +99,7 @@ Public Class TestTracker
     Public Sub TestUpdate()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             _new_objects.Clear()
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
@@ -110,11 +112,12 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues))
 
                     Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsTrue(_new_objects.ContainsKey(t2.ID))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues))
+
                     t2.Money = 1000
 
                     tt.Code = 10
@@ -134,7 +137,7 @@ Public Class TestTracker
     <TestMethod()> _
     Public Sub TestNormal()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
@@ -144,7 +147,7 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues))
 
                     tt.Code = 10
 
@@ -163,7 +166,7 @@ Public Class TestTracker
     <TestMethod()> _
     Public Sub TestBatch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
@@ -219,7 +222,7 @@ Public Class TestTracker
     <TestMethod()> _
     Public Sub TestRecover2()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
-            mgr.NewObjectManager = Me
+            mgr.Cache.NewObjectManager = Me
             mgr.BeginTransaction()
             Try
                 Dim tt As Table2

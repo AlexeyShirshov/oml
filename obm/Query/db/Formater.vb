@@ -50,10 +50,10 @@ Namespace Database
                         Dim c As New Query.QueryCmd.svct(_q)
                         Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
                             If _q.SelectedType Is Nothing Then
-                                If String.IsNullOrEmpty(_q.EntityName) Then
+                                If String.IsNullOrEmpty(_q.SelectedEntityName) Then
                                     _q.SelectedType = _q.CreateType
                                 Else
-                                    _q.SelectedType = schema.GetTypeByEntityName(_q.EntityName)
+                                    _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
                                 End If
                             End If
 

@@ -489,7 +489,7 @@ Namespace Cache
         'Private _mask As Integer
         'Private _code As Integer
         Private _dic As HttpCacheDictionary(Of TValue)
-        Private _mc As OrmCache
+        Private _mc As CacheBase
         'Private _name As String = Guid.NewGuid.ToString
 
         Public Sub New(ByVal mediaCache As OrmCache)
@@ -501,7 +501,7 @@ Namespace Cache
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
         End Sub
 
-        Public Sub New(ByVal mediaCache As OrmCache, _
+        Public Sub New(ByVal mediaCache As CacheBase, _
             ByVal absolute_expiration As Date, ByVal sliding_expiration As TimeSpan, _
             ByVal priority As Caching.CacheItemPriority, ByVal dependency As Caching.CacheDependency)
 

@@ -47,7 +47,7 @@ Imports Worm.Criteria.Core
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t)
+        almgr.AddTable(t, Nothing)
         j.MakeSQLStmt(schema, Nothing, almgr, Nothing)
     End Sub
 
@@ -58,7 +58,7 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t)
+        almgr.AddTable(t, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
         j.MakeSQLStmt(schema, Nothing, almgr, pmgr)
     End Sub
@@ -70,8 +70,8 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t)
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
+        almgr.AddTable(t, Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual(" join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, Nothing, almgr, pmgr))
@@ -89,8 +89,8 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t)
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
+        almgr.AddTable(t, Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual(" join table1 t1 on t2.id = 1", j.MakeSQLStmt(schema, Nothing, almgr, pmgr))
@@ -110,8 +110,8 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t)
-        almgr.AddTable(t2)
+        almgr.AddTable(t, Nothing)
+        almgr.AddTable(t2, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual(" join table1 t1 on t2.ID = @p1", j.MakeSQLStmt(schema, Nothing, almgr, pmgr))
@@ -139,8 +139,8 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetTables(t)(0))
-        almgr.AddTable(tbl)
+        almgr.AddTable(schema.GetTables(t)(0), Nothing)
+        almgr.AddTable(tbl, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual(" join table1 t2 on (t2.id = t1.id and t2.s = @p1)", j.MakeSQLStmt(schema, Nothing, almgr, pmgr))
@@ -168,8 +168,8 @@ Imports Worm.Criteria.Core
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(tbl)
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
+        almgr.AddTable(tbl, Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual(" full join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, Nothing, almgr, pmgr))
@@ -246,7 +246,7 @@ End Class
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table, Nothing)
         c.MakeQueryStmt(schema, Nothing, almgr, Nothing, Nothing)
     End Sub
 
@@ -257,7 +257,7 @@ End Class
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
         Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
@@ -277,8 +277,8 @@ End Class
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table)
-        almgr.AddTable(tbl)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table, Nothing)
+        almgr.AddTable(tbl, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
@@ -293,8 +293,8 @@ End Class
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table)
-        almgr.AddTable(tbl)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table, Nothing)
+        almgr.AddTable(tbl, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
@@ -332,10 +332,10 @@ End Class
         Dim ct As New Criteria.Conditions.Condition.ConditionConstructor
         ct.AddFilter(f, ConditionOperator.Or)
         Dim j As New OrmJoin(schema.GetTables(GetType(Entity))(0), Worm.Criteria.Joins.JoinType.Join, f)
-        j.InjectJoinFilter(GetType(Entity), "ID", tbl, "onadg")
+        j.InjectJoinFilter(schema, GetType(Entity), "ID", tbl, "onadg")
 
         Dim j2 As New OrmJoin(schema.GetTables(GetType(Entity))(0), Worm.Criteria.Joins.JoinType.Join, f)
-        j2.InjectJoinFilter(GetType(Entity2), "oqwef", tbl, "onadg")
+        j2.InjectJoinFilter(schema, GetType(Entity2), "oqwef", tbl, "onadg")
     End Sub
 
     <TestMethod()> _
@@ -346,8 +346,8 @@ End Class
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table)
-        almgr.AddTable(schema.GetObjectSchema(GetType(Entity4)).Table)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).Table, Nothing)
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity4)).Table, Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
@@ -400,7 +400,7 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, Nothing, almgr, pmgr))
@@ -437,14 +437,14 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
-        JoinFilter.ChangeEntityJoinToParam(f, GetType(Entity2), "ID", New Worm.TypeWrap(Of Object)(345))
+        JoinFilter.ChangeEntityJoinToParam(schema, f, GetType(Entity2), "ID", New Worm.TypeWrap(Of Object)(345))
 
         Dim f2 As New JoinFilter(t, "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToParam(f2, GetType(Entity2), "ID", New Worm.TypeWrap(Of Object)(345))
-        JoinFilter.ChangeEntityJoinToParam(f2, t, "ID", New Worm.TypeWrap(Of Object)(345))
+        JoinFilter.ChangeEntityJoinToParam(schema, f2, GetType(Entity2), "ID", New Worm.TypeWrap(Of Object)(345))
+        JoinFilter.ChangeEntityJoinToParam(schema, f2, t, "ID", New Worm.TypeWrap(Of Object)(345))
 
         Dim f3 As New JoinFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToParam(f3, GetType(Entity), "ID", New Worm.TypeWrap(Of Object)(345))
+        JoinFilter.ChangeEntityJoinToParam(schema, f3, GetType(Entity), "ID", New Worm.TypeWrap(Of Object)(345))
     End Sub
 
     <TestMethod()> _
@@ -453,14 +453,14 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
-        JoinFilter.ChangeEntityJoinToLiteral(f, GetType(Entity2), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f, GetType(Entity2), "ID", "pmqer")
 
         Dim f2 As New JoinFilter(t, "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToLiteral(f2, GetType(Entity2), "ID", "pmqer")
-        JoinFilter.ChangeEntityJoinToLiteral(f2, t, "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f2, GetType(Entity2), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f2, t, "ID", "pmqer")
 
         Dim f3 As New JoinFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToLiteral(f3, GetType(Entity), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f3, GetType(Entity), "ID", "pmqer")
     End Sub
 
     <TestMethod()> _
@@ -469,14 +469,14 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
-        JoinFilter.ChangeEntityJoinToLiteral(f, GetType(Entity2), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f, GetType(Entity2), "ID", "pmqer")
 
         Dim f2 As New JoinFilter(t, "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToLiteral(f2, GetType(Entity2), "ID", "pmqer")
-        JoinFilter.ChangeEntityJoinToLiteral(f2, t, "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f2, GetType(Entity2), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f2, t, "ID", "pmqer")
 
         Dim f3 As New JoinFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
-        JoinFilter.ChangeEntityJoinToLiteral(f3, GetType(Entity), "ID", "pmqer")
+        JoinFilter.ChangeEntityJoinToLiteral(schema, f3, GetType(Entity), "ID", "pmqer")
     End Sub
 
     <TestMethod()> _

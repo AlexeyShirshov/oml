@@ -24,17 +24,20 @@ Namespace Cache
         Private _list_converter As IListObjectConverter
         Private _modifiedobjects As IDictionary
         Private _externalObjects As IDictionary
-
+        Private _newMgr As INewObjectsStore = New NewObjectStore
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
 
-        Public Event RegisterEntityCreation(ByVal e As IEntity)
-        Public Event RegisterObjectCreation(ByVal t As Type, ByVal id As Integer)
-        Public Event RegisterObjectRemoval(ByVal obj As ICachedEntity)
+        Public Event RegisterEntityCreation(ByVal sender As CacheBase, ByVal e As IEntity)
+        Public Event RegisterObjectCreation(ByVal sender As CacheBase, ByVal t As Type, ByVal id As Integer)
+        Public Event RegisterObjectRemoval(ByVal sender As CacheBase, ByVal obj As ICachedEntity)
 
-        Public Event RegisterCollectionCreation(ByVal t As Type)
-        Public Event RegisterCollectionRemoval(ByVal ce As OrmManager.CachedItem)
-        Public Event CacheHasModification As EventHandler
-        Public Event CacheHasnotModification As EventHandler
+        Public Event RegisterCollectionCreation(ByVal sender As CacheBase, ByVal t As Type)
+        Public Event RegisterCollectionRemoval(ByVal sender As CacheBase, ByVal ce As OrmManager.CachedItem)
+        Public Event CacheHasModification(ByVal sender As CacheBase)
+        Public Event CacheHasnotModification(ByVal sender As CacheBase)
+
+        Public Event BeginUpdate(ByVal sender As CacheBase, ByVal o As ICachedEntity)
+        Public Event BeginDelete(ByVal sender As CacheBase, ByVal o As ICachedEntity)
 
         Sub New()
             _filters = CreateRootDictionary4Queries()
@@ -75,11 +78,11 @@ Namespace Cache
         End Function
 
         Public Overridable Sub RegisterCreation(ByVal obj As IEntity)
-            RaiseEvent RegisterEntityCreation(obj)
+            RaiseEvent RegisterEntityCreation(Me, obj)
         End Sub
 
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
-            RaiseEvent RegisterObjectCreation(t, id)
+            RaiseEvent RegisterObjectCreation(Me, t, id)
 #If TraceCreation Then
             _added.add(new Pair(Of date,Pair(Of type,Integer))(Now,New Pair(Of type,Integer)(t,id)))
 #End If
@@ -110,7 +113,7 @@ Namespace Cache
 
         Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity)
             Debug.Assert(ShadowCopy(obj) Is Nothing)
-            RaiseEvent RegisterObjectRemoval(obj)
+            RaiseEvent RegisterObjectRemoval(Me, obj)
             obj.RemoveFromCache(Me)
 #If TraceCreation Then
             _removed.add(new Pair(Of date,ormbase)(Now,obj))
@@ -143,11 +146,11 @@ Namespace Cache
         End Property
 
         Public Overridable Sub RegisterCreationCacheItem(ByVal t As Type)
-            RaiseEvent RegisterCollectionCreation(t)
+            RaiseEvent RegisterCollectionCreation(Me, t)
         End Sub
 
         Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As OrmManager.CachedItem)
-            RaiseEvent RegisterCollectionRemoval(ce)
+            RaiseEvent RegisterCollectionRemoval(Me, ce)
         End Sub
 
         Public Overridable Sub RemoveEntry(ByVal key As String, ByVal id As String)
@@ -216,12 +219,12 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function ShadowCopy(ByVal t As Type, ByVal id As CacheKey) As ObjectModification
-            Using SyncRoot
-                Dim name As String = t.Name & ":" & id.ToString
-                Return CType(_modifiedobjects(name), ObjectModification)
-            End Using
-        End Function
+        'Public Function ShadowCopy(ByVal t As Type, ByVal key As Integer) As ObjectModification
+        '    Using SyncRoot
+        '        Dim name As String = GetModificationKey( t.Name & ":" & id.ToString
+        '        Return CType(_modifiedobjects(name), ObjectModification)
+        '    End Using
+        'End Function
 
         Public Function ShadowCopy(ByVal obj As _ICachedEntity) As ObjectModification
             Using SyncRoot
@@ -230,7 +233,7 @@ Namespace Cache
                 End If
 
                 If obj.IsPKLoaded Then
-                    Dim name As String = obj.GetType().Name & ":" & obj.Key
+                    Dim name As String = GetModificationKey(obj)
                     Return CType(_modifiedobjects(name), ObjectModification)
                 Else
                     Return Nothing
@@ -244,54 +247,89 @@ Namespace Cache
             If Not condition Then Throw New OrmCacheException(message)
         End Sub
 
-        Protected Friend Function RegisterModification(ByVal obj As _ICachedEntity, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
+        Protected Function GetModificationKey(ByVal obj As _ICachedEntity) As String
+            Return GetModificationKey(obj, obj.Key)
+        End Function
+
+        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal key As Integer) As String
+            Return obj.GetType().FullName & ":" & key
+        End Function
+
+        Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
+            Return RegisterModification(mgr, obj, Nothing, reason)
+        End Function
+
+        Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, _
+            ByVal pk() As PKDesc, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim mo As ObjectModification = Nothing
-                Dim name As String = obj.GetType().Name & ":" & obj.Key
+                Dim key As String = GetModificationKey(obj)
                 'Using SyncHelper.AcquireDynamicLock(name)
-                Assert(OrmManager.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
-                Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ObjectModification(obj, OrmManager.CurrentManager.CurrentUser, reason)
-                _modifiedobjects.Add(name, mo)
+                'Assert(mgr IsNot Nothing, "You have to create MediaContent object to perform this operation")
+                Assert(Not _modifiedobjects.Contains(key), "Key " & key & " already in collection")
+                Dim mo As New ObjectModification(obj, mgr.CurrentUser, reason, pk)
+                _modifiedobjects.Add(key, mo)
                 'End Using
                 If _modifiedobjects.Count = 1 Then
-                    RaiseEvent CacheHasModification(Me, EventArgs.Empty)
+                    RaiseEvent CacheHasModification(Me)
                 End If
+
+                Select Case reason
+                    Case ObjectModification.ReasonEnum.Delete
+                        RaiseBeginDelete(obj)
+                    Case ObjectModification.ReasonEnum.Edit
+                        If Not obj.IsLoading Then
+                            RaiseBeginUpdate(obj)
+                        End If
+                End Select
+
                 Return mo
             End Using
         End Function
 
-        Public Function GetModifiedObjects(Of T As {ICachedEntity})() As ICollection(Of T)
+        Public Function GetModifiedObjects(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
             Dim al As New Generic.List(Of T)
             Dim tt As Type = GetType(T)
-            For Each s As String In New ArrayList(_modifiedobjects.Keys)
-                If s.IndexOf(tt.Name & ":") >= 0 Then
-                    Dim mo As ObjectModification = CType(_modifiedobjects(s), ObjectModification)
-                    If mo IsNot Nothing Then
-                        al.Add(CType(mo.Obj, T))
-                    End If
+            'For Each s As String In New ArrayList(_modifiedobjects.Keys)
+            '    If s.IndexOf(tt.Name & ":") >= 0 Then
+            '        Dim mo As ObjectModification = CType(_modifiedobjects(s), ObjectModification)
+            '        If mo IsNot Nothing Then
+            '            al.Add(CType(mo.Obj, T))
+            '        End If
+            '    End If
+            'Next
+            For Each mo As ObjectModification In New ArrayList(_modifiedobjects.Values)
+                If tt Is mo.Proxy.EntityType Then
+                    al.Add(mgr.GetEntityOrOrmFromCacheOrCreate(Of T)(mo.Proxy.PK))
                 End If
             Next
             Return al
         End Function
 
-        Protected Friend Sub RegisterExistingModification(ByVal obj As ICachedEntity, ByVal key As Integer)
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                Dim name As String = obj.GetType().Name & ":" & key
-                _modifiedobjects.Add(name, obj.OriginalCopy)
-                If _modifiedobjects.Count = 1 Then
-                    RaiseEvent CacheHasModification(Me, EventArgs.Empty)
-                End If
-            End Using
+        Protected Friend Sub RaiseBeginUpdate(ByVal o As ICachedEntity)
+            RaiseEvent BeginUpdate(Me, o)
         End Sub
+
+        Protected Friend Sub RaiseBeginDelete(ByVal o As ICachedEntity)
+            RaiseEvent BeginDelete(Me, o)
+        End Sub
+
+        'Protected Friend Sub RegisterExistingModification(ByVal obj As _ICachedEntity, ByVal key As Integer)
+        '    Using SyncRoot
+        '        If obj Is Nothing Then
+        '            Throw New ArgumentNullException("obj")
+        '        End If
+
+        '        Dim moKey As String = GetModificationKey(obj, key)
+        '        _modifiedobjects.Add(moKey, ShadowCopy(obj).Obj)
+        '        If _modifiedobjects.Count = 1 Then
+        '            RaiseEvent CacheHasModification(Me, EventArgs.Empty)
+        '        End If
+        '    End Using
+        'End Sub
 
 #If TraceCreation Then
         Private _s As New List(Of Pair(Of String, _ICachedEntity))
@@ -310,14 +348,14 @@ Namespace Cache
                 End If
 
                 If _modifiedobjects.Count > 0 Then
-                    Dim name As String = obj.GetType().Name & ":" & obj.Key
-                    _modifiedobjects.Remove(name)
+                    Dim key As String = GetModificationKey(obj)
+                    _modifiedobjects.Remove(key)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
                     _s.Add(New Pair(Of String, _ICachedEntity)(Environment.StackTrace, obj))
 #End If
                     If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
-                        RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
+                        RaiseEvent CacheHasnotModification(Me)
                     End If
                     'If obj.ObjectState = ObjectState.Modified Then
                     '    Throw New OrmCacheException("Unregistered object must not be in modified state")
@@ -481,6 +519,220 @@ Namespace Cache
 
         End Function
 
+        Public Function GetKeyFromPK(Of T As {New, IOrmBase})(ByVal id As Object) As Integer
+            Dim o As T = OrmBase.CreateOrmBase(Of T)(id, Me, Nothing)
+            Return o.Key
+        End Function
+
+        Public Function GetKeyFromPK(ByVal pk() As PKDesc, ByVal type As Type) As Integer
+            Dim o As ICachedEntity = CachedEntity.CreateObject(pk, type, Me, Nothing)
+            Return o.Key
+        End Function
+
+        Public Function IsInCachePrecise(ByVal obj As ICachedEntity, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As Boolean
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            Dim t As Type = obj.GetType
+
+            Dim dic As IDictionary = GetOrmDictionary(filterInfo, t, schema)
+
+            If dic Is Nothing Then
+                ''todo: throw an exception when all collections will be implemented
+                'Return
+                Throw New OrmManagerException("Collection for " & t.Name & " not exists")
+            End If
+
+            Return ReferenceEquals(dic(New CacheKey(obj)), obj)
+        End Function
+
+        Public Function IsInCache(ByVal id As Object, ByVal t As Type, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As Boolean
+            Dim dic As IDictionary = GetOrmDictionary(filterInfo, t, schema)
+
+            If dic Is Nothing Then
+                ''todo: throw an exception when all collections will be implemented
+                'Return
+                Throw New OrmManagerException("Collection for " & t.Name & " not exists")
+            End If
+
+            Return dic.Contains(New CacheKey(OrmBase.CreateOrmBase(id, t, Me, schema)))
+        End Function
+
+        Public Property NewObjectManager() As INewObjectsStore
+            Get
+                Return _newMgr
+            End Get
+            Set(ByVal value As INewObjectsStore)
+                _newMgr = value
+            End Set
+        End Property
+
+        Public Function IsNewObject(ByVal t As Type, ByVal id() As PKDesc) As Boolean
+            Return NewObjectManager IsNot Nothing AndAlso NewObjectManager.GetNew(t, id) IsNot Nothing
+        End Function
+
+        'Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
+        '    ByVal load As Boolean, ByVal checkOnCreate As Boolean, _
+        '    ByVal addOnCreate As Boolean) As _ICachedEntity
+
+
+        '    Return NormalizeObject(obj, load, checkOnCreate, dic, addOnCreate)
+        'End Function
+
+        Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
+            ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary, _
+            ByVal addOnCreate As Boolean, ByVal mgr As OrmManager) As _ICachedEntity
+
+            Assert(obj.IsPKLoaded, "Primary key is not loaded")
+
+            Dim type As Type = obj.GetType
+
+#If DEBUG Then
+            If dic Is Nothing Then
+                Dim name As String = type.Name
+                Throw New OrmManagerException("Collection for " & name & " not exists")
+            End If
+#End If
+            Dim id As CacheKey = New CacheKey(obj)
+            Dim created As Boolean = False ', checked As Boolean = False
+            Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
+            If a Is Nothing AndAlso NewObjectManager IsNot Nothing Then
+                a = NewObjectManager.GetNew(type, obj.GetPKValues)
+                If a IsNot Nothing Then Return a
+                Dim oc As ObjectModification = ShadowCopy(obj)
+                If oc IsNot Nothing Then
+                    Dim oldpk() As PKDesc = oc.OlPK
+                    If oldpk IsNot Nothing Then
+                        a = NewObjectManager.GetNew(type, oldpk)
+                        If a IsNot Nothing Then Return a
+                    End If
+                End If
+            End If
+            Dim sync_key As String = "LoadType" & id.ToString & type.ToString
+            If a Is Nothing Then
+                Using SyncHelper.AcquireDynamicLock(sync_key)
+                    a = CType(dic(id), _ICachedEntity)
+                    If a Is Nothing Then
+                        If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
+                            Throw New NotSupportedException
+                        Else
+                            a = obj
+                            If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
+                                If GetType(IOrmBase).IsAssignableFrom(type) Then
+                                    Dim orm As IOrmBase = CType(a, IOrmBase)
+                                    orm.Init(orm.Identifier, Me, mgr.MappingEngine)
+                                Else
+                                    a.Init(a.GetPKValues, Me, mgr.MappingEngine)
+                                End If
+                            End If
+                        End If
+
+                        If load Then
+                            a.Load(mgr)
+                            If Not a.IsLoaded Then
+                                a = Nothing
+                            End If
+                        End If
+                        If a IsNot Nothing AndAlso checkOnCreate Then
+                            'checked = True
+                            If Not a.IsLoaded Then
+                                a.Load(mgr)
+                                If a.ObjectState = ObjectState.NotFoundInSource Then
+                                    a = Nothing
+                                End If
+                            End If
+                        End If
+                        created = True
+                        If a IsNot Nothing AndAlso addOnCreate Then
+                            AddObjectInternal(a, dic)
+                        End If
+                    End If
+                End Using
+            End If
+
+            If a IsNot Nothing Then
+                If Not created AndAlso load AndAlso Not a.IsLoaded Then
+                    a.Load(mgr)
+                End If
+            End If
+
+            Return a
+        End Function
+
+        Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
+            ByVal add2CacheOnCreate As Boolean) As IOrmBase
+
+            Return GetOrmBaseFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
+        End Function
+
+        Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
+            ByVal add2CacheOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As IOrmBase
+
+            Dim o As IOrmBase = OrmBase.CreateOrmBase(id, type, Me, schema)
+            o.SetObjectState(ObjectState.NotLoaded)
+
+            Dim obj As _ICachedEntity = NormalizeObject(o, False, False, _
+                GetOrmDictionary(filterInfo, type, schema), add2CacheOnCreate, Nothing)
+
+            If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
+                o.SetObjectState(ObjectState.Created)
+            End If
+
+            Return CType(obj, IOrmBase)
+        End Function
+
+        Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
+            ByVal pk() As PKDesc, ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
+
+            Dim o As T = CachedEntity.CreateObject(Of T)(pk, Me, schema)
+
+            o.SetObjectState(ObjectState.NotLoaded)
+
+            Return CType(NormalizeObject(o, False, False, _
+                CType(GetOrmDictionary(Of T)(filterInfo, schema), System.Collections.IDictionary), addOnCreate, Nothing), T)
+        End Function
+
+        Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
+            ByVal pk() As PKDesc, ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
+
+            Dim o As T = CachedEntity.CreateEntity(Of T)(pk, Me, schema)
+
+            o.SetObjectState(ObjectState.NotLoaded)
+
+            Return CType(NormalizeObject(o, False, False, _
+                CType(GetOrmDictionary(Of T)(filterInfo, schema), System.Collections.IDictionary), addOnCreate, Nothing), T)
+        End Function
+
+        Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type, _
+            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As ICachedEntity
+            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, Me, schema)
+
+            o.SetObjectState(ObjectState.NotLoaded)
+
+            Return NormalizeObject(o, False, False, GetOrmDictionary(filterInfo, type, schema), addOnCreate, Nothing)
+        End Function
+
+        Protected Friend Shared Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
+            Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
+            Dim trace As Boolean = False
+            Dim id As CacheKey = New CacheKey(obj)
+            SyncLock dic.SyncRoot
+                If Not dic.Contains(id) Then
+                    dic.Add(id, obj)
+#If TraceCreation Then
+                Diagnostics.Debug.WriteLine(String.Format("{2} - dt: {0}, {1}", Now, Environment.StackTrace, obj.GetName))
+#End If
+                Else
+                    trace = True
+                End If
+            End SyncLock
+
+            If trace AndAlso OrmManager._mcSwitch.TraceVerbose Then
+                Dim name As String = obj.GetType.Name
+                OrmManager.WriteLine("Attempt to add existing object " & name & " (" & obj.Key & ") to cashe")
+            End If
+        End Sub
     End Class
 
     Public Class ReadonlyCache

@@ -3,6 +3,7 @@ Imports Worm.Xml.Criteria.Conditions
 Imports Worm.Orm.Meta
 Imports Worm.Criteria.Core
 Imports Worm
+Imports Worm.Orm
 
 Namespace Xml
     Public Class XPathGenerator
@@ -28,12 +29,12 @@ Namespace Xml
             Return New Criteria.Conditions.Condition.ConditionConstructor
         End Function
 
-        Public Overloads Overrides Function CreateCriteria(ByVal t As System.Type) As Worm.Criteria.ICtor
-            Return New Criteria.Ctor(t)
+        Public Overloads Overrides Function CreateCriteria(ByVal os As ObjectSource) As Worm.Criteria.ICtor
+            Return New Criteria.Ctor(os)
         End Function
 
-        Public Overloads Overrides Function CreateCriteria(ByVal t As System.Type, ByVal fieldName As String) As Worm.Criteria.CriteriaField
-            Return New Criteria.Ctor(t).Field(fieldName)
+        Public Overloads Overrides Function CreateCriteria(ByVal os As ObjectSource, ByVal fieldName As String) As Worm.Criteria.CriteriaField
+            Return New Criteria.Ctor(os).Field(fieldName)
         End Function
 
         Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment) As Worm.Criteria.ICtor
@@ -85,8 +86,8 @@ Namespace Xml
 
         Public Function SelectID(ByVal original_type As Type) As String
             Dim selectcmd As New StringBuilder
-            Dim s As IOrmObjectSchema = CType(GetObjectSchema(original_type), IOrmObjectSchema)
-            selectcmd.Append(GetTableName(s.GetTables(0)))
+            Dim s As IObjectSchemaBase = GetObjectSchema(original_type)
+            selectcmd.Append(GetTableName(s.Table))
             Return selectcmd.ToString
         End Function
 

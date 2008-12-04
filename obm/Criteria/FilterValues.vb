@@ -103,7 +103,7 @@ Namespace Criteria.Values
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
-            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, almgr.Aliases, _v)
+            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, almgr, _v)
 
             Return String.Format(_f, values.ToArray)
         End Function
@@ -171,35 +171,35 @@ Namespace Criteria.Values
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
-            Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+            'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
-            If almgr IsNot Nothing Then
-                tableAliases = almgr.Aliases
-            End If
+            'If almgr IsNot Nothing Then
+            '    tableAliases = almgr.Aliases
+            'End If
 
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
 
-            If _p.Type IsNot Nothing Then
+            If _p.Table Is Nothing Then
 
-                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(_p.Type)
+                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(_p.ObjectSource.GetRealType(schema))
 
                 Dim map As MapField2Column = Nothing
                 Try
                     map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString & schema.Selector & _p.PropertyAlias, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
 
-                If tableAliases IsNot Nothing Then
+                If almgr IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    If tableAliases.ContainsKey(map._tableName) Then
-                        [alias] = tableAliases(map._tableName) & schema.Selector
+                    If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
+                        [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & schema.Selector
                     Else
-                        [alias] = schema.GetTableName(map._tableName) & schema.Selector
+                        [alias] = map._tableName.UniqueName(_p.ObjectSource) & schema.Selector
                     End If
                     'Try
                     '    [alias] = tableAliases(map._tableName) & schema.Selector
@@ -212,10 +212,10 @@ Namespace Criteria.Values
             Else
                 Dim [alias] As String = String.Empty
 
-                If tableAliases IsNot Nothing Then
+                If almgr IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                     Try
-                        [alias] = tableAliases(_p.Table) & schema.Selector
+                        [alias] = almgr.GetAlias(_p.Table, Nothing) & schema.Selector
                     Catch ex As KeyNotFoundException
                         Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
                     End Try
@@ -439,7 +439,9 @@ Namespace Criteria.Values
                         r = IEvaluableValue.EvalResult.Unknown
                 End Select
             Catch ex As InvalidCastException
-                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, template.Type), ex)
+                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", _
+                    template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, _
+                    If(template.ObjectSource.AnyType Is Nothing, template.ObjectSource.AnyEntityName, template.ObjectSource.AnyType.ToString), ex))
             End Try
             Return r
         End Function
@@ -926,10 +928,10 @@ Namespace Database
                 Dim dp As New Cache.DependentTypes
                 If _joins IsNot Nothing Then
                     For Each j As Worm.Criteria.Joins.OrmJoin In _joins
-                        Dim t As Type = j.Type
-                        If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
-                            t = mpe.GetTypeByEntityName(j.EntityName)
-                        End If
+                        Dim t As Type = j.ObjectSource.GetRealType(mpe)
+                        'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+                        '    t = mpe.GetTypeByEntityName(j.EntityName)
+                        'End If
                         'If t Is Nothing Then
                         '    Return New Cache.EmptyDependentTypes
                         'End If

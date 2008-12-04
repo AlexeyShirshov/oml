@@ -92,7 +92,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Dim fs As ICollection(Of String) = mc.Manager.MappingEngine.GetFieldNameByType(GetType(ChildType), GetType(T))
+                Dim fs As ICollection(Of String) = mc.Manager.MappingEngine.GetPropertyAliasByType(GetType(ChildType), GetType(T))
                 If fs.Count <> 1 Then
                     Throw New OrmManagerException("You must specify field")
                 End If

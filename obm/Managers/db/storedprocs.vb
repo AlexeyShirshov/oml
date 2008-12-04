@@ -113,14 +113,17 @@ Namespace Database.Storedprocs
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
                 InitInParams(schema, cmd)
-                For Each p As OutParam In GetOutParams()
-                    Dim pr As System.Data.Common.DbParameter = schema.CreateDBParameter()
-                    pr.ParameterName = p.Name
-                    pr.Direction = System.Data.ParameterDirection.Output
-                    pr.DbType = p.DbType
-                    pr.Size = p.Size
-                    cmd.Parameters.Add(pr)
-                Next
+                Dim op As IEnumerable(Of OutParam) = GetOutParams()
+                If op IsNot Nothing Then
+                    For Each p As OutParam In op
+                        Dim pr As System.Data.Common.DbParameter = schema.CreateDBParameter()
+                        pr.ParameterName = p.Name
+                        pr.Direction = System.Data.ParameterDirection.Output
+                        pr.DbType = p.DbType
+                        pr.Size = p.Size
+                        cmd.Parameters.Add(pr)
+                    Next
+                End If
                 Dim b As OrmReadOnlyDBManager.ConnAction = mgr.TestConn(cmd)
                 'Dim err As Boolean = True
                 Try
@@ -385,9 +388,12 @@ Namespace Database.Storedprocs
             _exec = et.GetTime
             Dim out As New Dictionary(Of String, Object)
             If CheckForReturnValue(r) Then
-                For Each p As OutParam In GetOutParams()
-                    out.Add(p.Name, cmd.Parameters(p.Name).Value)
-                Next
+                Dim op As IEnumerable(Of OutParam) = GetOutParams()
+                If op IsNot Nothing Then
+                    For Each p As OutParam In op
+                        out.Add(p.Name, cmd.Parameters(p.Name).Value)
+                    Next
+                End If
             End If
             Return out
         End Function

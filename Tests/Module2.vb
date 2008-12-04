@@ -489,9 +489,9 @@ Module Module2
                     Do
                         Try
                             If r.NextDouble > 0.5 Then
-                                mgr.Find(Of TestEditTable)(Ctor.AutoTypeField("Name").Like("e%"), Nothing, False)
+                                mgr.Find(Of TestEditTable)(Ctor.Field(GetType(TestEditTable), "Name").Like("e%"), Nothing, False)
                             Else
-                                mgr.Find(Of TestEditTable)(Ctor.AutoTypeField("Name").Like("e%"), Nothing, True)
+                                mgr.Find(Of TestEditTable)(Ctor.Field(GetType(TestEditTable), "Name").Like("e%"), Nothing, True)
                             End If
                             done = True
                             Threading.Thread.Sleep(0)

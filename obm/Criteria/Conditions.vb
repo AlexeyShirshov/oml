@@ -153,27 +153,27 @@ Namespace Criteria.Conditions
         '    Return ReplaceCondition(replacement, replacer)
         'End Function
 
-        Public Overridable Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
-            'If replacement.Template.Equals(CType(_left, ITemplateFilter).Template) Then
-            '    Return CreateMe(replacer, _right, _oper)
-            'ElseIf replacement.Template.Equals(CType(_right, ITemplateFilter).Template) Then
-            '    Return CreateMe(_left, replacer, _oper)
-            'Else
-            '    Dim r As ITemplateFilter = CType(_left, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
+        'Public Overridable Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
+        '    'If replacement.Template.Equals(CType(_left, ITemplateFilter).Template) Then
+        '    '    Return CreateMe(replacer, _right, _oper)
+        '    'ElseIf replacement.Template.Equals(CType(_right, ITemplateFilter).Template) Then
+        '    '    Return CreateMe(_left, replacer, _oper)
+        '    'Else
+        '    '    Dim r As ITemplateFilter = CType(_left, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
 
-            '    If r IsNot Nothing Then
-            '        Return CreateMe(r, _right, _oper)
-            '    Else
-            '        r = CType(_right, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
+        '    '    If r IsNot Nothing Then
+        '    '        Return CreateMe(r, _right, _oper)
+        '    '    Else
+        '    '        r = CType(_right, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
 
-            '        If r IsNot Nothing Then
-            '            Return CreateMe(_left, r, _oper)
-            '        End If
-            '    End If
-            'End If
+        '    '        If r IsNot Nothing Then
+        '    '            Return CreateMe(_left, r, _oper)
+        '    '        End If
+        '    '    End If
+        '    'End If
 
-            Return Nothing
-        End Function
+        '    Return Nothing
+        'End Function
 
         Public Overrides Function ToString() As String
             Return _ToString()
@@ -263,11 +263,11 @@ Namespace Criteria.Conditions
             End Get
         End Property
 
-        Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
-            Get
-                Return Me
-            End Get
-        End Property
+        'Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone
             Return CreateMe(_left, _right, _oper)
@@ -299,10 +299,10 @@ Namespace Criteria.Conditions
             '    Return e
             'End Function
 
-            Public Sub SetType(ByVal t As System.Type) Implements IOrmFilterTemplate.SetType
-                Con.Left.GetFilterTemplate.SetType(t)
+            Public Sub SetType(ByVal [alias] As ObjectAlias) Implements IOrmFilterTemplate.SetType
+                Con.Left.GetFilterTemplate.SetType([alias])
                 If Con._right IsNot Nothing Then
-                    Con.Right.GetFilterTemplate.SetType(t)
+                    Con.Right.GetFilterTemplate.SetType([alias])
                 End If
             End Sub
 

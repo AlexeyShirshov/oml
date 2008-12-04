@@ -166,17 +166,17 @@ Public Class TestSchema
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
+    <TestMethod(), ExpectedException(GetType(ArgumentException))> _
     Public Sub TestOrderWrong()
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field("DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field(GetType(Table1), "DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field("DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            t2 = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field(GetType(Table2), "DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(4, t2(0).Identifier)
             Assert.AreEqual(1, t2(1).Identifier)
@@ -188,14 +188,14 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, False), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
             Assert.IsFalse(t2(1).InternalProperties.IsLoaded)
 
-            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Desc, False), IList(Of Table1))
+            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
@@ -209,7 +209,7 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -223,8 +223,8 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field("DT").Asc, True), IList(Of Table1))
-            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field("Title").Asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, True), IList(Of Table1))
+            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field(GetType(Table1), "Title").Asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -247,7 +247,7 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Criteria.Ctor.Field(GetType(Table1), "EnumStr").Eq("sec"), _
-                    Sorting.Field("EnumStr").Asc, False), IList(Of Table1))
+                    Sorting.Field(GetType(Table1), "EnumStr").Asc, False), IList(Of Table1))
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
@@ -255,7 +255,7 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Criteria.Ctor.Field(GetType(Table1), "EnumStr").Eq("sec"), _
-                    Sorting.Field("EnumStr").NextField("Enum").Desc, False), IList(Of Table1))
+                    Sorting.Field(GetType(Table1), "EnumStr").NextField("Enum").Desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)

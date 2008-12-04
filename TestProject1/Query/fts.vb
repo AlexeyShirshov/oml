@@ -55,6 +55,12 @@ Imports Worm.Database.Criteria.Joins
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch2()
@@ -65,6 +71,13 @@ Imports Worm.Database.Criteria.Joins
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q = New QueryCmd(New Orm.Meta.SearchFragment(GetType(Table1), "xxx"), _
+                        Function() TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1")))
+
+        Assert.AreEqual(0, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch3()
@@ -74,13 +87,20 @@ Imports Worm.Database.Criteria.Joins
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
 
-        q.AddJoins(JCtor.Join(GetType(Table3)).On(GetType(Table3), "Ref").Eq(GetType(Table1), "ID"))
+        q.SetJoins(JCtor.Join(GetType(Table3)).On(GetType(Table3), "Ref").Eq(GetType(Table1), "ID"))
 
         Assert.AreEqual(2, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.AreEqual(2, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         q.Where(Ctor.Field(GetType(Table3), "Code").Eq(2))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch4()
@@ -89,10 +109,11 @@ Imports Worm.Database.Criteria.Joins
 
         Dim q As New QueryCmd(tbl, New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
-        q.AddJoins(JCtor.Join("Table3").On(GetType(Table1)))
+        q.SetJoins(JCtor.Join("Table3").OnM2M(GetType(Table1)))
         q.Where(Ctor.Field("Table3", "Code").Eq(2))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch5()
@@ -105,6 +126,7 @@ Imports Worm.Database.Criteria.Joins
         q.Where(Ctor.Field(GetType(Table1), "Code").Eq(2))
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2M()
@@ -112,7 +134,7 @@ Imports Worm.Database.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
-        q.Where(Ctor.AutoTypeField("ID").Eq(1))
+        q.Where(Ctor.Field(GetType(Table3), "ID").Eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
         Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("second", GetType(Table1)).ToList(Of Table1)()
@@ -120,6 +142,7 @@ Imports Worm.Database.Criteria.Joins
 
         r = t.M2MNew.Search("second").ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2MDyn()
@@ -127,10 +150,11 @@ Imports Worm.Database.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
-        q.Where(Ctor.AutoTypeField("ID").Eq(1))
+        q.Where(Ctor.Field(GetType(Table3), "ID").Eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
         Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("first").ToEntityList(Of Table1)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         Assert.AreEqual(1, r.Count)
     End Sub

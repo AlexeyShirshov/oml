@@ -49,12 +49,13 @@ Namespace Database
                                 Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
                                 Dim fields As List(Of String) = Nothing
-                                If c.GetUpdatedFields(tmpl.Type, fields) Then
+                                Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
+                                If c.GetUpdatedFields(rt, fields) Then
                                     Dim idx As Integer = fields.IndexOf(tmpl.PropertyAlias)
                                     If idx >= 0 Then
-                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
+                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                         c.ResetFieldDepends(p)
-                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
+                                        c.RemoveUpdatedFields(rt, tmpl.PropertyAlias)
                                         Return False
                                     End If
                                 End If
@@ -80,7 +81,8 @@ Namespace Database
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
                                 Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
-                                If tmpl.Type Is Nothing Then
+                                Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
+                                If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
@@ -90,11 +92,11 @@ Namespace Database
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
-                                If tt IsNot tmpl.Type Then
-                                    cache.AddJoinDepend(tmpl.Type, tt)
+                                If tt IsNot rt Then
+                                    cache.AddJoinDepend(rt, tt)
                                 End If
                             End If
                         Next
@@ -180,7 +182,7 @@ Namespace Database
                             AppendSelect(sb, original_type, almgr, params, arr)
                         Else
                             arr = New Generic.List(Of ColumnAttribute)
-                            arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                            arr.Add(Schema.GetPrimaryKeys(original_type)(0))
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
 
@@ -330,10 +332,11 @@ Namespace Database
                 Else
                     If f IsNot Nothing Then
                         For Each fl As EntityFilterBase In f.GetAllFilters
-                            If fl.Template.Type Is Nothing Then
+                            Dim rt As Type = fl.Template.ObjectSource.GetRealType(_mgr.MappingEngine)
+                            If rt Is Nothing Then
                                 Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                             End If
-                            If fl.Template.Type Is relation.Type Then
+                            If rt Is relation.Type Then
                                 _appendSecong = True
                                 Exit For
                             End If
@@ -532,7 +535,8 @@ Namespace Database
                             If f IsNot Nothing Then
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
                                 Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
-                                If tmpl.Type Is Nothing Then
+                                Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
+                                If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
                                 If v IsNot Nothing Then
@@ -541,7 +545,7 @@ Namespace Database
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
                                 'If tt IsNot f.Template.Type Then

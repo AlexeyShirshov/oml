@@ -53,7 +53,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
@@ -71,7 +71,7 @@ Imports Worm.Database.Criteria.Joins
             Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table1)).Table
 
             Dim q As QueryCmd = New QueryCmd(tbl).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
@@ -107,8 +107,8 @@ Imports Worm.Database.Criteria.Joins
             Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table3)).Table
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec))
-            q.AddJoins(JCtor.Join(tbl).On(tbl, "ref_id").Eq(GetType(Table1), "ID"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec))
+            q.SetJoins(JCtor.Join(tbl).On(tbl, "ref_id").Eq(GetType(Table1), "ID"))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
@@ -165,7 +165,7 @@ End Class
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
 
             Dim dic As New System.Collections.Hashtable
 
@@ -195,7 +195,7 @@ End Class
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
 
             Dim dic As New System.Collections.Hashtable
 

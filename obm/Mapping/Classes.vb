@@ -15,6 +15,7 @@
 
         Private _table As String
         Private _schema As String
+        Private _uqName As String = Guid.NewGuid.GetHashCode.ToString
 #If DEBUG Then
         Private _stack As String = Environment.StackTrace
 #End If
@@ -49,6 +50,16 @@
             Return Nothing
         End Function
 
+        Public ReadOnly Property UniqueName(ByVal os As ObjectSource) As String
+            Get
+                If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                    Return RawName & "^" & _uqName
+                Else
+                    Return os.ObjectAlias.UniqueName & "$" & RawName & "^" & _uqName
+                End If
+            End Get
+        End Property
+
         Public ReadOnly Property RawName() As String
             Get
                 Return _schema & "^" & _table
@@ -72,7 +83,8 @@
         End Function
 
         Public Overridable Function Clone() As Object
-            Return New SourceFragment(_schema, _table)
+            Dim t As New SourceFragment(_schema, _table)
+            Return t
         End Function
     End Class
 
@@ -102,11 +114,51 @@
             _searchString = searchString
         End Sub
 
+        Public Sub New(ByVal searchString As String, ByVal top As Integer)
+            _top = top
+            _searchString = searchString
+        End Sub
+
+        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType, ByVal top As Integer)
+            _top = top
+            _searchString = searchString
+            _st = searchType
+        End Sub
+
+        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType, _
+                       ByVal top As Integer, ByVal queryFields() As String)
+            _top = top
+            _searchString = searchString
+            _st = searchType
+            _queryFields = queryFields
+        End Sub
+
+        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType, _
+                       ByVal queryFields() As String)
+            _searchString = searchString
+            _st = searchType
+            _queryFields = queryFields
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String, ByVal top As Integer)
+            _type = searchType
+            _searchString = searchString
+            _top = top
+        End Sub
+
         Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
                        ByVal search As SearchType)
             _type = searchType
             _searchString = searchString
             _st = search
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+                       ByVal search As SearchType, ByVal top As Integer)
+            _type = searchType
+            _searchString = searchString
+            _st = search
+            _top = top
         End Sub
 
         Public Sub New(ByVal searchType As Type, ByVal searchString As String, _

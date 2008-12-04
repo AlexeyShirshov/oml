@@ -191,7 +191,7 @@ Namespace Orm
             Public Function FindDistinct(Of T As {New, IOrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Dim rel As M2MRelation = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
-                    Dim crit As CriteriaLink = mc.Manager.MappingEngine.CreateCriteria(_o.GetType, "ID").Eq(_o).And(CType(criteria, CriteriaLink))
+                    Dim crit As CriteriaLink = mc.Manager.MappingEngine.CreateCriteria(New ObjectSource(_o.GetType), OrmBaseT.PKName).Eq(_o).And(CType(criteria, CriteriaLink))
                     Return mc.Manager.FindDistinct(Of T)(rel, crit, sort, withLoad)
                 End Using
             End Function
@@ -293,15 +293,12 @@ Namespace Orm
             End Function
 
             Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
-                Using mc As IGetManager = _o.GetMgr()
-                    Dim s As ObjectMappingEngine = mc.Manager.MappingEngine
-                    Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
-                    If m2m Is Nothing Then
-                        Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
-                    Else
-                        Return m2m.Table
-                    End If
-                End Using
+                Dim m2m As M2MRelation = _o.MappingEngine.GetM2MRelation(_o.GetType, t, key)
+                If m2m Is Nothing Then
+                    Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+                Else
+                    Return m2m.Table
+                End If
             End Function
 
             Public Function GetTable(ByVal t As Type) As SourceFragment
@@ -436,8 +433,6 @@ Namespace Orm
         '<NonSerialized()> _
         'Protected _dontRaisePropertyChange As Boolean
         <NonSerialized()> _
-        Protected _alterLock As New Object
-        <NonSerialized()> _
         Protected _saved As Boolean
         '<NonSerialized()> _
         'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
@@ -473,18 +468,20 @@ Namespace Orm
         'End Property
 
 
-        Protected Overrides Function HasM2MChanges() As Boolean
-            If _needAccept IsNot Nothing AndAlso _needAccept.Count > 0 Then
-                Return True
-            End If
-
-            For Each el As EditableListBase In _m2m
-                If el.HasChanges Then
+        Protected Overrides ReadOnly Property HasM2MChanges() As Boolean
+            Get
+                If _needAccept IsNot Nothing AndAlso _needAccept.Count > 0 Then
                     Return True
                 End If
-            Next
-            Return MyBase.HasM2MChanges()
-        End Function
+
+                For Each el As EditableListBase In _m2m
+                    If el.HasChanges Then
+                        Return True
+                    End If
+                Next
+                Return MyBase.HasM2MChanges()
+            End Get
+        End Property
 
         'Protected Friend ReadOnly Property HasM2MChanges() As Boolean
         '    Get
@@ -649,12 +646,12 @@ Namespace Orm
         '    ObjectState = Orm.ObjectState.NotLoaded
         'End Sub
 
-        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IOrmBase.Init
-            MyBase._Init(cache, schema, mgrIdentityString)
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IOrmBase.Init
+            MyBase._Init(cache, schema)
             Identifier = id
             PKLoaded(1)
             CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, schema)
@@ -669,8 +666,12 @@ Namespace Orm
         <Runtime.Serialization.OnDeserialized()> _
         Private Overloads Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
             Init()
-            If OrmManager.CurrentManager IsNot Nothing AndAlso ObjectState <> Orm.ObjectState.Created Then
-                OrmManager.CurrentManager.RegisterInCashe(Me)
+            If ObjectState <> Orm.ObjectState.Created Then
+                Using mc As IGetManager = GetMgr()
+                    If mc IsNot Nothing Then
+                        mc.Manager.RegisterInCashe(Me)
+                    End If
+                End Using
             End If
         End Sub
 
@@ -786,9 +787,9 @@ Namespace Orm
         '        End Sub
 
         Protected Sub CheckCash()
-            If OrmCache Is Nothing Then
-                Throw New OrmObjectException(ObjName & "The object is floating and has not cashe that is needed to perform this operation")
-            End If
+            'If OrmCache Is Nothing Then
+            '    Throw New OrmObjectException(ObjName & "The object is floating and has not cashe that is needed to perform this operation")
+            'End If
             Using mc As IGetManager = GetMgr()
                 If mc Is Nothing Then
                     Throw New OrmObjectException(ObjName & "You have to create MediaContent object to perform this operation")
@@ -896,11 +897,11 @@ Namespace Orm
 
             For Each el As EditableListBase In _m2m
                 SyncLock "1efb139gf8bh"
-                    For Each id As Object In el.Added
-                        Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                    For Each o As _IOrmBase In el.Added
+                        'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
-                        m.Added.Remove(Identifier)
-                        m._savedIds.Remove(Identifier)
+                        m.Added.Remove(Me)
+                        m._savedIds.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(m)
                         Else
@@ -912,10 +913,10 @@ Namespace Orm
                     Next
                     el.Added.Clear()
 
-                    For Each id As Object In el.Deleted
-                        Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                    For Each o As _IOrmBase In el.Deleted
+                        'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
-                        m.Deleted.Remove(Identifier)
+                        m.Deleted.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
                         Else
@@ -1323,31 +1324,6 @@ Namespace Orm
         '    Invariant()
         'End Sub
 
-        Public Function BeginAlter() As IDisposable
-#If DebugLocks Then
-            Return New CSScopeMgr_Debug(_alterLock, "d:\temp")
-#Else
-            Return New CSScopeMgr(_alterLock)
-#End If
-        End Function
-
-        Public Function BeginEdit() As IDisposable
-#If DebugLocks Then
-            Dim d As IDisposable = New CSScopeMgr_Debug(_alterLock, "d:\temp")
-#Else
-            Dim d As IDisposable = New CSScopeMgr(_alterLock)
-#End If
-            If Not CanEdit Then
-                d.Dispose()
-                Throw New ObjectStateException(ObjName & "Object is not editable")
-            End If
-            Return d
-        End Function
-
-        Public Sub CheckEditOrThrow()
-            If Not CanEdit Then Throw New ObjectStateException(ObjName & "Object is not editable")
-        End Sub
-
         'Public ReadOnly Property CanEdit() As Boolean
         '    Get
         '        If _state = Orm.ObjectState.Deleted Then 'OrElse _state = Orm.ObjectState.NotFoundInSource Then
@@ -1423,28 +1399,28 @@ Namespace Orm
             End Using
         End Sub
 
-        Public Overrides Sub RejectRelationChanges()
+        Public Overrides Sub RejectRelationChanges(ByVal mc As OrmManager)
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
-                Using gmc As IGetManager = GetMgr()
-                    Dim mc As OrmManager = gmc.Manager
-                    Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
-                    Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
-                    If rel IsNot Nothing AndAlso cache IsNot Nothing Then
-                        Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
-                        cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
+                'Using gmc As IGetManager = GetMgr()
+                'Dim mc As OrmManager = gmc.Manager
+                Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
+                Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
+                If rel IsNot Nothing AndAlso cache IsNot Nothing Then
+                    Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
+                    cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
+                End If
+                For Each acs As AcceptState2 In _needAccept
+                    If acs.el IsNot Nothing Then
+                        acs.el.Reject(mc, True)
                     End If
-                    For Each acs As AcceptState2 In _needAccept
-                        If acs.el IsNot Nothing Then
-                            acs.el.Reject(mc, True)
-                        End If
-                    Next
-                    _needAccept.Clear()
+                Next
+                _needAccept.Clear()
 
-                    For Each el As EditableListBase In _m2m
-                        el.Reject(mc, True)
-                    Next
-                End Using
+                For Each el As EditableListBase In _m2m
+                    el.Reject(mc, True)
+                Next
+                'End Using
             End Using
         End Sub
 
@@ -2052,38 +2028,48 @@ Namespace Orm
                     End If
                 Next
                 If el Is Nothing Then
-                    el = New EditableListBase(Identifier, Me.GetType, t, key)
+                    el = New EditableListBase(Me, t, key)
                     _m2m.Add(el)
                 End If
             End Using
             Return el
         End Function
 
-        Protected Sub _Add(ByVal obj As _IOrmBase) Implements IM2M.Add
+        Protected Sub _Add(ByVal obj As IOrmBase) Implements IM2M.Add
             _Add(obj, Nothing)
         End Sub
 
-        Protected Sub _Add(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Add
-            Using mc As IGetManager = GetMgr()
-                Dim el As EditableListBase = GetM2M(obj.GetType, key)
-                Using el.SyncRoot
-                    If Not el.Added.Contains(obj.Identifier) Then
-                        Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
-                        SyncLock "1efb139gf8bh"
-                            If Not el2.Added.Contains(Identifier) Then
-                                If el.Deleted.Contains(obj.Identifier) Then
-                                    el.Deleted.Remove(obj.Identifier)
-                                    el2.Deleted.Remove(Identifier)
+        Protected Sub _Add(ByVal obj As IOrmBase, ByVal key As String) Implements IM2M.Add
+            Dim el As EditableListBase = GetM2M(obj.GetType, key)
+            Using el.SyncRoot
+                If Not el.Added.Contains(obj) Then
+                    Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
+                    SyncLock "1efb139gf8bh"
+                        If Not el2.Added.Contains(Me) Then
+                            If el.Deleted.Contains(obj) Then
+                                el.Deleted.Remove(obj)
+                                el2.Deleted.Remove(Me)
+                            Else
+                                el.Add(obj)
+                                el2.Add(Me)
+                                Dim mc As OrmManager = GetCurrent()
+                                If mc IsNot Nothing Then
+                                    mc.RaiseBeginUpdate(Me)
+                                    mc.RaiseBeginUpdate(obj)
+                                    mc.Cache.RaiseBeginUpdate(Me)
+                                    mc.Cache.RaiseBeginUpdate(obj)
                                 Else
-                                    el.Add(obj.Identifier)
-                                    el2.Add(Identifier)
-                                    mc.Manager.RaiseBeginUpdate(Me)
-                                    mc.Manager.RaiseBeginUpdate(obj)
+                                    Using gm As IGetManager = GetMgr()
+                                        If gm IsNot Nothing Then
+                                            gm.Manager.Cache.RaiseBeginUpdate(Me)
+                                            gm.Manager.Cache.RaiseBeginUpdate(obj)
+                                        End If
+                                    End Using
                                 End If
                             End If
-                        End SyncLock
-                    End If
-                End Using
+                        End If
+                    End SyncLock
+                End If
             End Using
         End Sub
 
@@ -2100,31 +2086,41 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As _IOrmBase) Implements IM2M.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IOrmBase) Implements IM2M.Delete
             _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Delete
-            Using mc As IGetManager = GetMgr()
-                Dim el As EditableListBase = GetM2M(obj.GetType, key)
-                Using el.SyncRoot
-                    If Not el.Deleted.Contains(obj.Identifier) Then
-                        Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
-                        SyncLock "1efb139gf8bh"
-                            If Not el2.Deleted.Contains(Identifier) Then
-                                If el.Added.Contains(obj.Identifier) Then
-                                    el.Added.Remove(obj.Identifier)
-                                    el2.Added.Remove(Identifier)
+        Protected Sub _DeleteM2M(ByVal obj As IOrmBase, ByVal key As String) Implements IM2M.Delete
+            Dim el As EditableListBase = GetM2M(obj.GetType, key)
+            Using el.SyncRoot
+                If Not el.Deleted.Contains(obj) Then
+                    Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
+                    SyncLock "1efb139gf8bh"
+                        If Not el2.Deleted.Contains(Me) Then
+                            If el.Added.Contains(obj) Then
+                                el.Added.Remove(obj)
+                                el2.Added.Remove(Me)
+                            Else
+                                el.Delete(obj)
+                                el2.Delete(Me)
+                                Dim mc As OrmManager = GetCurrent()
+                                If mc IsNot Nothing Then
+                                    mc.RaiseBeginDelete(Me)
+                                    mc.RaiseBeginDelete(obj)
+                                    mc.Cache.RaiseBeginUpdate(Me)
+                                    mc.Cache.RaiseBeginUpdate(obj)
                                 Else
-                                    el.Delete(obj.Identifier)
-                                    el2.Delete(Identifier)
-                                    mc.Manager.RaiseBeginUpdate(Me)
-                                    mc.Manager.RaiseBeginUpdate(obj)
+                                    Using gm As IGetManager = GetMgr()
+                                        If gm IsNot Nothing Then
+                                            gm.Manager.Cache.RaiseBeginUpdate(Me)
+                                            gm.Manager.Cache.RaiseBeginUpdate(obj)
+                                        End If
+                                    End Using
                                 End If
                             End If
-                        End SyncLock
-                    End If
-                End Using
+                        End If
+                    End SyncLock
+                End If
             End Using
         End Sub
 
@@ -2174,15 +2170,13 @@ Namespace Orm
         End Function
 
         Public Function GetRelationSchema(ByVal t As System.Type, ByVal key As String) As Meta.M2MRelation Implements IM2M.GetRelationSchema
-            Using mc As IGetManager = GetMgr()
-                Dim s As ObjectMappingEngine = mc.Manager.MappingEngine
-                Dim m2m As M2MRelation = s.GetM2MRelation(Me.GetType, t, key)
-                If m2m Is Nothing Then
-                    Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
-                Else
-                    Return m2m
-                End If
-            End Using
+            Dim s As ObjectMappingEngine = MappingEngine
+            Dim m2m As M2MRelation = s.GetM2MRelation(Me.GetType, t, key)
+            If m2m Is Nothing Then
+                Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+            Else
+                Return m2m
+            End If
         End Function
 
         Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.EditableListBase) Implements IM2M.GetAllRelation
@@ -2196,27 +2190,39 @@ Namespace Orm
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text, top)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text, type, top)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text, type, queryFields, top)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text, type, queryFields)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(t, text, type)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String) As Worm.Query.QueryCmd Implements IM2M.Search
@@ -2226,27 +2232,39 @@ Namespace Orm
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text, top)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text, type, top)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text, type)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text, type, top, queryFields)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
+            q.Table = New SearchFragment(text, type, queryFields)
+            Return q
         End Function
 
 #End Region
@@ -2322,13 +2340,13 @@ Namespace Orm
 
         Protected Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
             MyBase.New()
-            MyBase.Init(id, cache, schema, Nothing)
+            MyBase.Init(id, cache, schema)
             'SetObjectStateClear(Orm.ObjectState.Created)
             'Throw New NotSupportedException
         End Sub
 
-        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
-            MyBase.Init(id, cache, schema, mgrIdentityString)
+        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
+            MyBase.Init(id, cache, schema)
         End Sub
 
         Protected Overrides Sub Init()
@@ -2420,7 +2438,7 @@ Namespace Orm
                 _id = value
                 If Not CType(Me, _ICachedEntity).IsPKLoaded Then
                     PKLoaded(1)
-                    Dim schema As ObjectMappingEngine = OrmSchema
+                    Dim schema As ObjectMappingEngine = MappingEngine
                     If schema IsNot Nothing Then
                         CType(Me, _ICachedEntity).SetLoaded(GetPKValues()(0).PropertyAlias, True, True, schema)
                     End If
@@ -2456,11 +2474,11 @@ Namespace Orm
 
         End Sub
 
-        Protected Overrides Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
+        Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
             If propertyAlias = OrmBaseT.PKName Then
                 Return True
             Else
-                Return MyBase.IsFieldLoaded(propertyAlias)
+                Return MyBase.IsPropertyLoaded(propertyAlias)
             End If
         End Function
 

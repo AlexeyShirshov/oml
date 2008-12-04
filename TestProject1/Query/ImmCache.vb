@@ -51,10 +51,10 @@ Imports Worm
     <TestMethod()> Public Sub TestSortValidate()
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
-            mgr.NewObjectManager = tm
+            mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)).Sort(Sorting.Custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
@@ -83,7 +83,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
+            q.Filter = Ctor.Field(GetType(Table1), "ID").GreaterThan(2)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
@@ -110,7 +110,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -137,7 +137,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -164,7 +164,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             q.Sort(Sorting.Custom("id"))
             Assert.IsNotNull(q)
 
@@ -174,8 +174,9 @@ Imports Worm
             Try
                 Using s As New ModificationsTracker(mgr)
                     Dim t As Table1 = q.ToList(Of Table1)(mgr)(0)
+                    Assert.IsNull(t.InternalProperties.OriginalCopy)
                     t.EnumStr = Enum1.first
-
+                    Assert.IsNotNull(t.InternalProperties.OriginalCopy)
                     s.AcceptModifications()
                 End Using
 
@@ -192,7 +193,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -274,7 +275,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
 
             Dim q As New QueryCmd(GetType(Table2))
-            q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
+            q.Filter = Ctor.Field(GetType(Table2), "Money").GreaterThan(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
 
@@ -355,13 +356,13 @@ Imports Worm
     <TestMethod()> Public Sub TestSortValidate2()
         Dim tm As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            mgr.NewObjectManager = tm
+            mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
-                Ctor.AutoTypeField("ID").GreaterThan(5)).Sort(Orm.Sorting.Field("Title"))
+                Ctor.Field(GetType(Entity4), "ID").GreaterThan(5)).Sort(Orm.Sorting.Field(GetType(Entity4), "Title"))
 
             Dim q2 As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
-                Ctor.AutoTypeField("Title").Eq("djkg"))
+                Ctor.Field(GetType(Entity4), "Title").Eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(7, l.Count)

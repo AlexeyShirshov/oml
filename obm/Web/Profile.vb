@@ -7,23 +7,126 @@ Imports Worm.Database.Criteria
 Imports Worm.Orm.Meta
 
 Namespace Web
+    Public Interface IUserMapping
+        Function CreateManager() As OrmManager
+        Property ApplicationName() As String
+        ReadOnly Property LastActivityField() As String
+        ReadOnly Property IsAnonymousField() As String
+        ReadOnly Property UserNameField() As String
+        ReadOnly Property GetNow() As Date
+        Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As IOrmBase
+        Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal user As IOrmBase, ByVal cascade As Boolean)
+        Function GetUserType() As Type
+        Function FindUsers(ByVal mgr As OrmManager, ByVal criteria As Worm.Criteria.CriteriaLink) As IList
+    End Interface
+
+    Public MustInherit Class UserMapping
+        Implements IUserMapping
+
+        Protected _appName As String
+        Protected _lastActivityField As String
+        Protected _lastUpdateField As String
+        Protected _isAnonymousField As String
+        Protected _userNameField As String
+
+        Public Property ApplicationName() As String Implements IUserMapping.ApplicationName
+            Get
+                Return _appName
+            End Get
+            Set(ByVal value As String)
+                _appName = value
+            End Set
+        End Property
+
+        Public Sub DeleteUser(ByVal mgr As Database.OrmDBManager, ByVal user As Orm.IOrmBase, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
+            If cascade Then
+                Throw New NotSupportedException("Cascade delete is not supported")
+            End If
+            Using mt As New ModificationsTracker(mgr)
+                CType(user, ICachedEntity).Delete()
+                mt.AcceptModifications()
+            End Using
+        End Sub
+
+        Public Function FindUsers(ByVal mgr As OrmManager, ByVal criteria As Criteria.CriteriaLink) As System.Collections.IList Implements IUserMapping.FindUsers
+            Dim cmd As New Query.QueryCmd(GetUserType)
+            cmd.Where(criteria)
+            Return (cmd.ToList(mgr))
+        End Function
+
+        Public ReadOnly Property GetNow() As Date Implements IUserMapping.GetNow
+            Get
+                Return Now
+            End Get
+        End Property
+
+        Public ReadOnly Property IsAnonymousField() As String Implements IUserMapping.IsAnonymousField
+            Get
+                Return _isAnonymousField
+            End Get
+        End Property
+
+        Public ReadOnly Property LastActivityField() As String Implements IUserMapping.LastActivityField
+            Get
+                Return _lastActivityField
+            End Get
+        End Property
+
+        Public ReadOnly Property UserNameField() As String Implements IUserMapping.UserNameField
+            Get
+                Return _userNameField
+            End Get
+        End Property
+
+        Public MustOverride Function GetUserType() As System.Type Implements IUserMapping.GetUserType
+        Public MustOverride Function CreateManager() As OrmManager Implements IUserMapping.CreateManager
+        Public MustOverride Function CreateUser(ByVal mgr As Database.OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Orm.IOrmBase Implements IUserMapping.CreateUser
+
+    End Class
+
     Public MustInherit Class ProfileBase
         Inherits ProfileProvider
-
-        Friend Delegate Function GetDBManager() As OrmDBManager
+        Implements IUserMapping
 
         Private _appName As String
-        Friend _getMgr As GetDBManager
-        Friend _lastActivityField As String
+        Private _lastActivityField As String
         Private _lastUpdateField As String
-        Friend _isAnonymousField As String
-        Protected Friend _userNameField As String
-        Private _getm As IGetDBMgr
+        Private _isAnonymousField As String
+        Private _userNameField As String
+        Private _getm As ICreateManager
         Private _autoCreateProfileInDB As Boolean
         Private _updateLastActivity As Boolean
         Private _profileCookieTimeout As Integer = 7
 
-        Public Overrides Property ApplicationName() As String
+        Protected Overridable ReadOnly Property GetNow() As Date Implements IUserMapping.GetNow
+            Get
+                Return Now
+            End Get
+        End Property
+
+        Protected ReadOnly Property LastActivityField() As String Implements IUserMapping.LastActivityField
+            Get
+                Return _lastActivityField
+            End Get
+        End Property
+
+        Protected ReadOnly Property IsAnonymousField() As String Implements IUserMapping.IsAnonymousField
+            Get
+                Return _isAnonymousField
+            End Get
+        End Property
+
+        Protected ReadOnly Property UserNameField() As String Implements IUserMapping.UserNameField
+            Get
+                Return _userNameField
+            End Get
+        End Property
+
+        Protected Function _getMgr() As OrmManager Implements IUserMapping.CreateManager
+            Return _getm.CreateManager()
+        End Function
+
+        Public Overrides Property ApplicationName() As String Implements IUserMapping.ApplicationName
             Get
                 Return _appName
             End Get
@@ -63,7 +166,7 @@ Namespace Web
             End If
 
             If String.IsNullOrEmpty(config("GetDBMgr")) Then
-                Throw New ArgumentException("Implementation of IGetDBMgr is requred under GetDBMgr key")
+                Throw New ArgumentException("Implementation of ICreateManager is requred under GetDBMgr key")
             Else
                 'Dim t As Type = Type.GetType(config("GetDBMgr"))
                 'If t Is Nothing Then
@@ -72,12 +175,10 @@ Namespace Web
 
                 'Dim gm As IGetDBMgr = CType(t.InvokeMember(Nothing, _
                 '    Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IGetDBMgr)
-                Dim gm As IGetDBMgr = CreateDBMgr(config("GetDBMgr"))
-                If gm Is Nothing Then
-                    Throw New ArgumentException("Cannot create instance of IGetDBMgr from " & config("GetDBMgr"))
+                _getm = CreateDBMgr(config("GetDBMgr"))
+                If _getm Is Nothing Then
+                    Throw New ArgumentException("Cannot create instance of ICreateManager from " & config("GetDBMgr"))
                 End If
-
-                _getMgr = AddressOf gm.GetMgr
             End If
             MyBase.Initialize(name, config)
         End Sub
@@ -87,7 +188,7 @@ Namespace Web
                 Throw New InvalidOperationException("LastActivity or IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
                 Dim cl As Worm.Criteria.CriteriaLink = New Ctor(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
@@ -100,20 +201,20 @@ Namespace Web
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
                 End Select
                 Dim col As ICollection = FindUsers(mgr, cl)
-                For Each u As OrmBase In col
-                    DeleteProfile(mgr, u)
+                For Each u As IOrmBase In col
+                    DeleteProfile(CType(mgr, OrmDBManager), u)
                 Next
                 Return col.Count
             End Using
         End Function
 
         Public Overloads Overrides Function DeleteProfiles(ByVal usernames() As String) As Integer
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 Dim cnt As Integer = 0
                 For Each u As String In usernames
-                    Dim user As OrmBase = GetUserByName(mgr, u, True, _autoCreateProfileInDB)
+                    Dim user As IOrmBase = GetUserByName(mgr, u, True, _autoCreateProfileInDB)
                     If user IsNot Nothing Then
-                        DeleteProfile(mgr, user)
+                        DeleteProfile(CType(mgr, OrmDBManager), user)
                     Else
                         System.Web.Security.AnonymousIdentificationModule.ClearAnonymousIdentifier()
                         RemoveAnonymousStoreCookie()
@@ -125,12 +226,12 @@ Namespace Web
         End Function
 
         Public Overloads Overrides Function DeleteProfiles(ByVal profiles As System.Web.Profile.ProfileInfoCollection) As Integer
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 Dim cnt As Integer = 0
                 For Each p As ProfileInfo In profiles
-                    Dim user As OrmBase = GetUserByName(mgr, p.UserName, Not p.IsAnonymous, _autoCreateProfileInDB)
+                    Dim user As IOrmBase = GetUserByName(mgr, p.UserName, Not p.IsAnonymous, _autoCreateProfileInDB)
                     If user IsNot Nothing Then
-                        DeleteProfile(mgr, user)
+                        DeleteProfile(CType(mgr, OrmDBManager), user)
                     Else
                         System.Web.Security.AnonymousIdentificationModule.ClearAnonymousIdentifier()
                         RemoveAnonymousStoreCookie()
@@ -141,7 +242,7 @@ Namespace Web
             End Using
         End Function
 
-        Protected Function CreateProfileCollection(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByVal mgr As OrmDBManager, ByVal col As IList) As ProfileInfoCollection
+        Protected Function CreateProfileCollection(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByVal mgr As OrmManager, ByVal col As IList) As ProfileInfoCollection
             Dim profiles As New ProfileInfoCollection
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim start As Integer = pageIndex * pageSize
@@ -171,7 +272,7 @@ Namespace Web
                 Throw New InvalidOperationException("Username, LastActivity or IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
                 Dim cl As Worm.Criteria.CriteriaLink = New Ctor(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
@@ -196,7 +297,7 @@ Namespace Web
                 Throw New InvalidOperationException("UserName or IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 Dim cl As Worm.Criteria.CriteriaLink = New Ctor(GetUserType).Field(_userNameField).Like(usernameToMatch & "%")
                 Select Case authenticationOption
@@ -218,7 +319,7 @@ Namespace Web
                 Throw New InvalidOperationException("LastActivity or IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
                 Dim cl As Worm.Criteria.CriteriaLink = New Ctor(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
@@ -241,7 +342,7 @@ Namespace Web
                 Throw New InvalidOperationException("IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 Dim cl As Worm.Criteria.CriteriaLink = Nothing
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
@@ -262,7 +363,7 @@ Namespace Web
                 Throw New InvalidOperationException("LastActivity or IsAnonymous field is not specified")
             End If
 
-            Using mgr As OrmDBManager = _getMgr()
+            Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
                 Dim cl As Worm.Criteria.CriteriaLink = New Ctor(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
@@ -280,7 +381,7 @@ Namespace Web
         End Function
 
         'Private Function GetPropertyValuesOld(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyCollection) As System.Configuration.SettingsPropertyValueCollection
-        '    Using mgr As OrmDBManager = _getMgr()
+        '    Using mgr As OrmManager = _getMgr
         '        Dim col As New SettingsPropertyValueCollection
 
         '        Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
@@ -329,8 +430,15 @@ Namespace Web
 
         Public Overrides Function GetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyCollection) As System.Configuration.SettingsPropertyValueCollection
             Dim cok As HttpCookie = Nothing, cookieChecked As Boolean = False
-            Dim user As OrmBase = Nothing, userChecked As Boolean = False
+            Dim user As IOrmBase = Nothing, userChecked As Boolean = False
             Dim col As New SettingsPropertyValueCollection
+            Dim oschema As IObjectSchemaBase = Nothing
+            If user IsNot Nothing Then
+                Using mgr As OrmManager = _getMgr()
+                    oschema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                End Using
+            End If
+
             For Each p As SettingsProperty In collection
                 Dim incok As Boolean = False
                 If p.Attributes.Contains("CustomProviderData") Then
@@ -341,7 +449,7 @@ Namespace Web
                 End If
                 If Not incok Then
                     If Not userChecked Then
-                        Using mgr As OrmDBManager = _getMgr()
+                        Using mgr As OrmManager = _getMgr()
                             user = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
                         End Using
                         If user Is Nothing AndAlso _autoCreateProfileInDB Then
@@ -363,8 +471,8 @@ Namespace Web
                         newp.PropertyValue = p.DefaultValue
                     End If
                 Else
-                    Using mgr As OrmDBManager = _getMgr()
-                        newp.PropertyValue = user.GetValue(p.Name)
+                    Using mgr As OrmManager = _getMgr()
+                        newp.PropertyValue = user.GetValueOptimized(Nothing, p.Name, oschema)
                     End Using
                 End If
                 col.Add(newp)
@@ -372,8 +480,8 @@ Namespace Web
 
             If _updateLastActivity AndAlso Not String.IsNullOrEmpty(_lastActivityField) Then
                 If user IsNot Nothing Then
-                    Using mgr As OrmDBManager = _getMgr()
-                        Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                    Using mgr As OrmManager = _getMgr()
+                        'Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema()
                         mgr.MappingEngine.SetFieldValue(user, _lastActivityField, GetNow, oschema)
                     End Using
                 End If
@@ -390,7 +498,7 @@ Namespace Web
         Public Overrides Sub SetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyValueCollection)
             If Not context.ContainsKey("remove_profile") Then
                 Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
-                Dim user As OrmBase = Nothing, userChecked As Boolean
+                Dim user As IOrmBase = Nothing, userChecked As Boolean
                 Dim saveCookie As Boolean = False
                 For Each p As SettingsPropertyValue In collection
                     If Not p.Property.IsReadOnly Then
@@ -403,7 +511,7 @@ Namespace Web
                         End If
                         If Not incok Then
                             If Not userChecked Then
-                                Using mgr As OrmDBManager = _getMgr()
+                                Using mgr As OrmManager = _getMgr()
                                     user = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
                                 End Using
                                 If user Is Nothing AndAlso _autoCreateProfileInDB Then
@@ -422,7 +530,7 @@ Namespace Web
                                 saveCookie = True
                             End If
                         Else
-                            Using mgr As OrmDBManager = _getMgr()
+                            Using mgr As OrmManager = _getMgr()
                                 Using user.BeginEdit
                                     Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                                     mgr.MappingEngine.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
@@ -444,9 +552,9 @@ Namespace Web
                     HttpContext.Current.Response.Cookies.Add(cok)
                 End If
                 If user IsNot Nothing Then
-                    Using mgr As OrmDBManager = _getMgr()
+                    Using mgr As OrmManager = _getMgr()
                         Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
-                        Using st As New ModificationsTracker(mgr)
+                        Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
                                     mgr.MappingEngine.SetFieldValue(user, _lastActivityField, d, oschema)
@@ -464,7 +572,7 @@ Namespace Web
         End Sub
 
         'Private Sub SetPropertyValuesOld(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyValueCollection)
-        '    Using mgr As OrmDBManager = _getMgr()
+        '    Using mgr As OrmManager = _getMgr
         '        Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
 
         '        If user Is Nothing Then
@@ -531,12 +639,12 @@ Namespace Web
 
         Public Sub MigrateAnonymous(ByVal AnonymousId As String)
             Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
-            Using mgr As OrmDBManager = _getMgr()
-                Dim user As OrmBase = Nothing
+            Using mgr As OrmManager = _getMgr()
+                Dim user As IOrmBase = Nothing
                 Try
                     user = GetUserByName(mgr, HttpContext.Current.Profile.UserName, True, False) 'CreateUser(mgr, HttpContext.Current.Profile.UserName)
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
-                    user = CreateUser(mgr, HttpContext.Current.Profile.UserName, AnonymousId)
+                    user = CreateUser(CType(mgr, OrmDBManager), HttpContext.Current.Profile.UserName, AnonymousId, Nothing)
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
@@ -581,20 +689,37 @@ Namespace Web
             Return CBool(ctx("IsAuthenticated"))
         End Function
 
-        Protected Friend MustOverride Function GetUserByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As OrmBase
-        Protected Friend MustOverride Function GetUserType() As Type
-        Protected Friend MustOverride Function FindUsers(ByVal mgr As OrmDBManager, ByVal criteria As Worm.Criteria.CriteriaLink) As IList
-        'Protected Friend MustOverride Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As IList
-        Protected Friend MustOverride Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As OrmBase, ByVal cascade As Boolean)
-        Protected Friend MustOverride Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As OrmBase)
-        Protected Friend MustOverride Function GetNow() As Date
-        Protected Friend MustOverride Function CreateDBMgr(ByVal type As String) As IGetDBMgr
-        Protected Friend MustOverride Function GetAnonymousCookieName() As String
-        Protected Friend MustOverride Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String) As OrmBase
+        Protected Overridable Function CreateDBMgr(ByVal type As String) As ICreateManager
+            Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), ICreateManager)
+        End Function
+
+        Protected Overridable Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As IOrmBase)
+            Throw New NotImplementedException
+        End Sub
+
+        Protected Overridable Function GetAnonymousCookieName() As String
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overridable Function FindUsers(ByVal mgr As OrmManager, ByVal criteria As Worm.Criteria.CriteriaLink) As IList Implements IUserMapping.FindUsers
+            Dim cmd As New Query.QueryCmd(GetUserType)
+            cmd.Where(criteria)
+            Return (cmd.ToList(mgr))
+        End Function
+
+        Protected Overridable Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal user As IOrmBase, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
+            If cascade Then
+                Throw New NotSupportedException("Cascade delete is not supported")
+            End If
+            Using mt As New ModificationsTracker(mgr)
+                CType(user, ICachedEntity).Delete()
+                mt.AcceptModifications()
+            End Using
+        End Sub
+
+        Protected MustOverride Function GetUserType() As Type Implements IUserMapping.GetUserType
+        Protected MustOverride Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As IOrmBase Implements IUserMapping.CreateUser
+        Protected MustOverride Function GetUserByName(ByVal mgr As OrmManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As IOrmBase
 
     End Class
-
-    Public Interface IGetDBMgr
-        Function GetMgr() As OrmDBManager
-    End Interface
 End Namespace

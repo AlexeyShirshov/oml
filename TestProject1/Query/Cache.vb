@@ -55,7 +55,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
+            q.Filter = Ctor.Field(GetType(Table1), "ID").GreaterThan(2)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
@@ -81,7 +81,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -107,7 +107,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
-            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            q.Filter = Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -138,7 +138,7 @@ Imports Worm.Database.Criteria.Joins
             Assert.IsNotNull(t1)
 
             Dim q As New QueryCmd(GetType(Table2))
-            q.Filter = Ctor.AutoTypeField("Money").Eq(t1)
+            q.Filter = Ctor.Field(GetType(Table2), "Money").Eq(t1)
 
             Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
 
@@ -216,7 +216,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table2))
-            q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
+            q.Filter = Ctor.Field(GetType(Table2), "Money").GreaterThan(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
 
@@ -277,14 +277,14 @@ Imports Worm.Database.Criteria.Joins
         Dim q As New QueryCmd(t, New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New SQLGenerator("1"), cache)))
 
-        q.Top(2).Sort(Orm.Sorting.Field("DT"))
+        q.Top(2).Sort(Orm.Sorting.Field(t, "DT"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(2, r(1).ID)
 
-        q.Sort(Orm.Sorting.Field("Title"))
+        q.Sort(Orm.Sorting.Field(t, "Title"))
 
         r = q.ToList(Of Table1)()
 
@@ -300,7 +300,7 @@ Imports Worm.Database.Criteria.Joins
         c.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
 
         Dim q As QueryCmd = New QueryCmd(t, New CreateManager(Function() _
-            TestManager.CreateManager(c, New SQLGenerator("1")))).Sort(Orm.Sorting.Field("ID"))
+            TestManager.CreateManager(c, New SQLGenerator("1")))).Sort(Orm.Sorting.Field(t, "ID"))
 
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -308,11 +308,11 @@ Imports Worm.Database.Criteria.Joins
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Orm.Sorting.Field("Title"))
+        q.Sort(Orm.Sorting.Field(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Orm.Sorting.Field("ID"))
+        q.Sort(Orm.Sorting.Field(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
@@ -324,11 +324,11 @@ Imports Worm.Database.Criteria.Joins
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Orm.Sorting.Field("Title"))
+        q.Sort(Orm.Sorting.Field(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Orm.Sorting.Field("ID"))
+        q.Sort(Orm.Sorting.Field(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
     End Sub
@@ -336,7 +336,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestM2M()
         Dim tm As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            mgr.NewObjectManager = tm
+            mgr.Cache.NewObjectManager = tm
 
             Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
             Assert.IsNotNull(e)
@@ -386,14 +386,14 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestSortValidate()
         Dim tm As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            mgr.NewObjectManager = tm
+            mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim q As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
-                Ctor.AutoTypeField("ID").GreaterThan(5)).Sort(Orm.Sorting.Field("Title"))
+                Ctor.Field(GetType(Entity4), "ID").GreaterThan(5)).Sort(Orm.Sorting.Field(GetType(Entity4), "Title"))
 
             Dim q2 As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
-                Ctor.AutoTypeField("Title").Eq("djkg"))
+                Ctor.Field(GetType(Entity4), "Title").Eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(7, l.Count)
@@ -423,11 +423,11 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestSortValidate2()
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
-            mgr.NewObjectManager = tm
+            mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Orm.Sorting.Custom("name"))
+                Ctor.Field(GetType(Table1), "EnumStr").Eq(Enum1.sec)).Sort(Orm.Sorting.Custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
