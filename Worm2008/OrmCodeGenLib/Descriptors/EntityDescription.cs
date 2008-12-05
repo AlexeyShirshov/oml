@@ -84,7 +84,7 @@ namespace Worm.CodeGen.Core.Descriptors
                 int s = 0;
                 foreach (PropertyDescription pd in _properties)
                 {
-                    if (pd.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK))
+                    if (pd.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK))
                         s++;
                 }
                 return s > 1 || (BaseEntity == null?false:BaseEntity.HasCompositePK);

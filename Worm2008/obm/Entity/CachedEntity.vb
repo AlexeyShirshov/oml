@@ -1,11 +1,11 @@
-﻿Imports Worm.Orm.Meta
+﻿Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports System.ComponentModel
 Imports System.Collections.Generic
 Imports System.Xml
 Imports Worm.Query
 
-Namespace Orm
+Namespace Entities
     <Serializable()> _
     Public Class OrmObjectException
         Inherits Exception
@@ -56,7 +56,7 @@ Namespace Orm
         '<NonSerialized()> _
         'Protected Friend _needDelete As Boolean
         '<NonSerialized()> _
-        'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
+        'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilter)
         '<NonSerialized()> _
         'Protected Friend _valProcs As Boolean
         '<NonSerialized()> _
@@ -368,7 +368,7 @@ Namespace Orm
 
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Added
-        Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Deleted
+        Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntityEx.Deleted
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Updated
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements ICachedEntity.OriginalCopyRemoved
 
@@ -382,7 +382,7 @@ Namespace Orm
         Protected Overridable Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc) Implements _ICachedEntity.CreateCopyForSaveNewEntry
             Debug.Assert(_copy Is Nothing)
             Dim clone As CachedEntity = CType(CreateClone(), CachedEntity)
-            SetObjectState(Orm.ObjectState.Modified)
+            SetObjectState(Entities.ObjectState.Modified)
             _copy = clone
             'Using mc As IGetManager = GetMgr()
             Dim c As CacheBase = mgr.Cache
@@ -526,7 +526,7 @@ Namespace Orm
                     End If
                     'End Using
                 Else
-                    If ObjectState = Orm.ObjectState.Deleted OrElse ObjectState = Orm.ObjectState.Modified Then
+                    If ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Modified Then
                         Throw New OrmObjectException(ObjName & "Cannot load object while its state is deleted or modified!")
                     End If
                 End If
@@ -535,10 +535,10 @@ Namespace Orm
             'Using mc As IGetManager = GetMgr()
             mgr.LoadObject(Me)
             'End Using
-            If olds = Orm.ObjectState.Created AndAlso ObjectState = Orm.ObjectState.Modified Then
+            If olds = Entities.ObjectState.Created AndAlso ObjectState = Entities.ObjectState.Modified Then
                 AcceptChanges(True, True)
             ElseIf IsLoaded Then
-                SetObjectState(Orm.ObjectState.None)
+                SetObjectState(Entities.ObjectState.None)
             End If
             Invariant()
         End Sub
@@ -548,12 +548,12 @@ Namespace Orm
         Public Sub Invariant()
             Using SyncHelper(True)
                 If IsLoaded AndAlso _
-                    ObjectState <> Orm.ObjectState.None AndAlso ObjectState <> Orm.ObjectState.Modified AndAlso ObjectState <> Orm.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
+                    ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
-                   (ObjectState = Orm.ObjectState.None OrElse ObjectState = Orm.ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Orm.ObjectState.Modified AndAlso OrmCache.ShadowCopy(Me) Is Nothing Then
+                   (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
+                If ObjectState = Entities.ObjectState.Modified AndAlso OrmCache.ShadowCopy(Me) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
-                    SetObjectStateClear(Orm.ObjectState.None)
+                    SetObjectStateClear(Entities.ObjectState.None)
                     Load()
                 End If
             End Using
@@ -561,8 +561,8 @@ Namespace Orm
 
         Protected Overrides Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
-                Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
-                If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
+                Debug.Assert(value <> Entities.ObjectState.None OrElse IsLoaded)
+                If value = Entities.ObjectState.None AndAlso Not IsLoaded Then
                     Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                 End If
 
@@ -608,7 +608,7 @@ Namespace Orm
         Public Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity Implements ICachedEntity.AcceptChanges
             Dim mo As _ICachedEntity = Nothing
             Using SyncHelper(False)
-                If ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.Clone Then 'OrElse _state = Orm.ObjectState.NotLoaded Then
+                If ObjectState = Entities.ObjectState.Created OrElse ObjectState = Entities.ObjectState.Clone Then 'OrElse _state = Orm.ObjectState.NotLoaded Then
                     Throw New OrmObjectException(ObjName & "accepting changes allowed in state Modified, deleted or none")
                 End If
 
@@ -618,7 +618,7 @@ Namespace Orm
 
                     AcceptRelationalChanges(updateCache, mc)
 
-                    If (ObjectState <> Orm.ObjectState.None OrElse Not WrappedProperties) Then
+                    If (ObjectState <> Entities.ObjectState.None OrElse Not WrappedProperties) Then
                         mo = RemoveVersionData(mc.Cache, setState)
                         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
@@ -663,7 +663,7 @@ Namespace Orm
 
         Protected Overridable ReadOnly Property HasBodyChanges() As Boolean
             Get
-                Return ObjectState = Orm.ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Deleted OrElse ObjectState = Orm.ObjectState.Created
+                Return ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Created
             End Get
         End Property
 
@@ -700,7 +700,7 @@ Namespace Orm
 
             'unreg = unreg OrElse _state <> Orm.ObjectState.Created
             If setState Then
-                SetObjectStateClear(Orm.ObjectState.None)
+                SetObjectStateClear(Entities.ObjectState.None)
                 Debug.Assert(IsLoaded)
                 If Not IsLoaded Then
                     Throw New OrmObjectException(ObjName & "Cannot set state None while object is not loaded")
@@ -1052,7 +1052,7 @@ l1:
                             value = CStr(fv.CreateValue(c, obj, value))
                         End If
 
-                        If GetType(IOrmBase).IsAssignableFrom(pi.PropertyType) Then
+                        If GetType(IKeyEntity).IsAssignableFrom(pi.PropertyType) Then
                             'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                             '    CreateObject(.Name, value)
                             '    SetLoaded(c, True)
@@ -1067,7 +1067,7 @@ l1:
                                     Throw New OrmManagerException("Cannot find type for entity " & en)
                                 End If
                             End If
-                            Dim v As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(value, type_created)
+                            Dim v As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(value, type_created)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
                                 SetLoaded(.Name, True, True, schema)
@@ -1144,7 +1144,7 @@ l1:
             Get
                 Using SyncHelper(False)
                     If _copy Is Nothing Then
-                        If (ObjectState = Orm.ObjectState.Modified OrElse Not WrappedProperties) AndAlso ObjectState <> Orm.ObjectState.Created Then
+                        If (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) AndAlso ObjectState <> Entities.ObjectState.Created Then
                             Using gm As IGetManager = GetMgr()
                                 _copy = CType(gm.Manager.GetObjectFromStorage(Me), CachedEntity)
                             End Using
@@ -1169,7 +1169,7 @@ l1:
             Get
                 Dim sb As New StringBuilder
                 sb.Append("Attributes:").Append(vbCrLf)
-                If ObjectState = Orm.ObjectState.Modified Then
+                If ObjectState = Entities.ObjectState.Modified Then
                     For Each c As ColumnAttribute In Changes(OriginalCopy)
                         sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
                     Next
@@ -1223,13 +1223,13 @@ l1:
 
         Protected Overrides Sub _PrepareUpdate(ByVal mgr As OrmManager)
             If Not IsLoaded Then
-                If ObjectState = Orm.ObjectState.None Then
+                If ObjectState = Entities.ObjectState.None Then
                     Throw New InvalidOperationException(String.Format("Object {0} is not loaded while the state is None", ObjName))
                 End If
 
-                If ObjectState = Orm.ObjectState.NotLoaded Then
+                If ObjectState = Entities.ObjectState.NotLoaded Then
                     Load()
-                    If ObjectState = Orm.ObjectState.NotFoundInSource Then
+                    If ObjectState = Entities.ObjectState.NotFoundInSource Then
                         Throw New OrmObjectException(ObjName & "Object is not editable 'cause it is not found in source")
                     End If
                 Else
@@ -1244,7 +1244,7 @@ l1:
                     Throw New OrmObjectException(ObjName & "Object has already altered by another user")
                 End If
                 'End Using
-                If ObjectState = Orm.ObjectState.Deleted Then SetObjectState(ObjectState.Modified)
+                If ObjectState = Entities.ObjectState.Deleted Then SetObjectState(ObjectState.Modified)
             Else
                 'Debug.Assert(ObjectState = Orm.ObjectState.None) ' OrElse state = Obm.ObjectState.Created)
                 'CreateModified(_id)
@@ -1265,7 +1265,7 @@ l1:
         Protected Sub CreateClone4Edit(ByVal mgr As OrmManager)
             If _copy Is Nothing Then
                 Dim clone As Entity = CreateClone()
-                SetObjectState(Orm.ObjectState.Modified)
+                SetObjectState(Entities.ObjectState.Modified)
                 _copy = CType(clone, CachedEntity)
                 'Using mc As IGetManager = GetMgr()
 
@@ -1282,7 +1282,7 @@ l1:
         End Sub
 
         Protected Sub CreateClone4Delete(ByVal mgr As OrmManager)
-            SetObjectState(Orm.ObjectState.Deleted)
+            SetObjectState(Entities.ObjectState.Deleted)
             mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete)
             Dim mgrLocal As OrmManager = GetCurrent()
             If mgrLocal IsNot Nothing Then
@@ -1316,7 +1316,7 @@ l1:
         Private ReadOnly Property IsReadOnly(ByVal mgr As OrmManager) As Boolean
             Get
                 Using SyncHelper(True)
-                    If ObjectState = Orm.ObjectState.Modified Then
+                    If ObjectState = Entities.ObjectState.Modified Then
                         'Using mc As IGetManager = GetMgr()
                         Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
                         'If mo Is Nothing Then mo = _mo
@@ -1350,15 +1350,15 @@ l1:
             Using SyncHelper(False)
                 RejectRelationChanges(mgr)
 
-                If ObjectState = ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Deleted OrElse ObjectState = Orm.ObjectState.Created Then
+                If ObjectState = ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Created Then
                     If IsReadOnly(mgr) Then
                         Throw New OrmObjectException(ObjName & " object in readonly state")
                     End If
 
                     Dim oc As ICachedEntity = OriginalCopy()
-                    If ObjectState <> Orm.ObjectState.Deleted Then
+                    If ObjectState <> Entities.ObjectState.Deleted Then
                         If oc Is Nothing Then
-                            If ObjectState <> Orm.ObjectState.Created Then
+                            If ObjectState <> Entities.ObjectState.Created Then
                                 Throw New OrmObjectException(ObjName & ": When object is in modified state it has to have an original copy")
                             End If
                             Return
@@ -1366,13 +1366,13 @@ l1:
                     End If
 
                     Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
-                    If ObjectState = Orm.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
+                    If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
                         'Debug.Assert(False)
                         'Throw New OrmObjectException
                         Return
                     End If
 
-                    If ObjectState = Orm.ObjectState.Modified AndAlso (mo.Reason = ObjectModification.ReasonEnum.Delete) Then
+                    If ObjectState = Entities.ObjectState.Modified AndAlso (mo.Reason = ObjectModification.ReasonEnum.Delete) Then
                         Debug.Assert(False)
                         Throw New OrmObjectException
                     End If
@@ -1382,7 +1382,7 @@ l1:
                     '_needDelete = False
                     _upd = New UpdateCtx
 
-                    Dim olds As ObjectState = Orm.ObjectState.None
+                    Dim olds As ObjectState = Entities.ObjectState.None
                     If oc IsNot Nothing Then
                         olds = oc.GetOldState
                     End If
@@ -1397,7 +1397,7 @@ l1:
                         newid = oc.GetPKValues()
                     End If
 
-                    If olds <> Orm.ObjectState.Created Then
+                    If olds <> Entities.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
                         RemoveVersionData(mgr.Cache, False)
@@ -1412,7 +1412,7 @@ l1:
 #Else
                     SetObjectStateClear(olds)
 #End If
-                    If ObjectState = Orm.ObjectState.Created Then
+                    If ObjectState = Entities.ObjectState.Created Then
                         If oldkey.HasValue Then
                             'Using gmc As IGetManager = GetMgr()
                             'Dim mc As OrmManager = gmc.Manager
@@ -1474,7 +1474,7 @@ l1:
             End If
 
             Dim r As Boolean = True
-            If ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.NotFoundInSource Then
+            If ObjectState = Entities.ObjectState.Created OrElse ObjectState = Entities.ObjectState.NotFoundInSource Then
                 If IsPKLoaded AndAlso OriginalCopy() IsNot Nothing Then
                     Throw New OrmObjectException(ObjName & " already exists.")
                 End If
@@ -1482,10 +1482,10 @@ l1:
                 If o Is Nothing Then
                     r = False
                 Else
-                    Debug.Assert(ObjectState = Orm.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
+                    Debug.Assert(ObjectState = Entities.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
                     _upd.Added = True
                 End If
-            ElseIf ObjectState = Orm.ObjectState.Deleted Then
+            ElseIf ObjectState = Entities.ObjectState.Deleted Then
 #If TraceSetState Then
                 Dim mo As ModifiedObject = mc.Cache.Modified(Me)
                 If mo Is Nothing OrElse (mo.Reason <> ModifiedObject.ReasonEnum.Delete AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Edit) Then
@@ -1495,7 +1495,7 @@ l1:
 #End If
                 mc.DeleteObject(Me)
                 _upd.Deleted = True
-            ElseIf (ObjectState = Orm.ObjectState.Modified OrElse Not WrappedProperties) Then
+            ElseIf (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) Then
 #If TraceSetState Then
                 Dim mo As ObjectModification = mc.Cache.ShadowCopy(Me)
                 If mo Is Nothing OrElse mo.Reason = ObjectModification.ReasonEnum.Delete Then
@@ -1514,12 +1514,12 @@ l1:
 
         Protected Shared Function _Delete(ByVal mgr As OrmManager, ByVal obj As CachedEntity) As Boolean
             Using obj.SyncHelper(False)
-                If obj.ObjectState = Orm.ObjectState.Deleted Then Return False
+                If obj.ObjectState = Entities.ObjectState.Deleted Then Return False
 
-                If obj.ObjectState = Orm.ObjectState.Clone Then
+                If obj.ObjectState = Entities.ObjectState.Clone Then
                     Throw New OrmObjectException(obj.ObjName & "Deleting clone is not allowed")
                 End If
-                If obj.ObjectState <> Orm.ObjectState.Modified AndAlso obj.ObjectState <> Orm.ObjectState.None AndAlso obj.ObjectState <> Orm.ObjectState.NotLoaded Then
+                If obj.ObjectState <> Entities.ObjectState.Modified AndAlso obj.ObjectState <> Entities.ObjectState.None AndAlso obj.ObjectState <> Entities.ObjectState.NotLoaded Then
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
@@ -1533,14 +1533,14 @@ l1:
                     'End Using
                     Debug.Assert(mo.Reason <> ObjectModification.ReasonEnum.Delete)
                 Else
-                    If obj.ObjectState = Orm.ObjectState.NotLoaded Then
+                    If obj.ObjectState = Entities.ObjectState.NotLoaded Then
                         obj.Load(mgr)
-                        If obj.ObjectState = Orm.ObjectState.NotFoundInSource Then
+                        If obj.ObjectState = Entities.ObjectState.NotFoundInSource Then
                             Return False
                         End If
                     End If
 
-                    Debug.Assert(obj.ObjectState <> Orm.ObjectState.Modified)
+                    Debug.Assert(obj.ObjectState <> Entities.ObjectState.Modified)
                     obj.CreateClone4Delete(mgr)
                     'OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
                     'Dim modified As OrmBase = CloneMe()
@@ -1573,19 +1573,19 @@ l1:
 
         Protected ReadOnly Property CanEdit() As Boolean
             Get
-                If ObjectState = Orm.ObjectState.Deleted Then 'OrElse _state = Orm.ObjectState.NotFoundInSource Then
+                If ObjectState = Entities.ObjectState.Deleted Then 'OrElse _state = Orm.ObjectState.NotFoundInSource Then
                     Return False
                 End If
-                If ObjectState = Orm.ObjectState.NotLoaded Then
+                If ObjectState = Entities.ObjectState.NotLoaded Then
                     Load()
                 End If
-                Return ObjectState <> Orm.ObjectState.NotFoundInSource
+                Return ObjectState <> Entities.ObjectState.NotFoundInSource
             End Get
         End Property
 
         Protected ReadOnly Property CanLoad() As Boolean
             Get
-                Return ObjectState <> Orm.ObjectState.Deleted AndAlso ObjectState <> Orm.ObjectState.Modified
+                Return ObjectState <> Entities.ObjectState.Deleted AndAlso ObjectState <> Entities.ObjectState.Modified
             End Get
         End Property
 
@@ -1599,7 +1599,7 @@ l1:
             If _upd.UpdatedFields IsNot Nothing Then
                 If c IsNot Nothing Then
                     Dim l As List(Of String) = New List(Of String)
-                    For Each f As Criteria.Core.EntityFilterBase In _upd.UpdatedFields
+                    For Each f As Criteria.Core.EntityFilter In _upd.UpdatedFields
                         '    Assert(f.Type Is t, "")
 
                         '    Cache.AddUpdatedFields(obj, f.FieldName)
@@ -1660,9 +1660,9 @@ l1:
         End Function
 
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
-            If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None)) Then
+            If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None)) Then
                 d = SyncHelper(True)
-                If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) AndAlso Not IsPropertyLoaded(propertyAlias) Then
+                If Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None) AndAlso Not IsPropertyLoaded(propertyAlias) Then
                     Load()
                 End If
             End If

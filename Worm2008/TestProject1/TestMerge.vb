@@ -1,6 +1,7 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Collections.Generic
 Imports Worm.Database
+Imports Worm.Entities.Meta
 
 <TestClass()> Public Class TestMerge
 
@@ -82,7 +83,7 @@ Imports Worm.Database
 
     <TestMethod()> _
     Public Sub RealMergeTest()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Worm.ObjectMappingEngine("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Object)
@@ -98,17 +99,17 @@ Imports Worm.Database
                 l.Add(i)
             Loop While i < 10000
             Dim almgr As AliasMgr = AliasMgr.Create
-            Dim params As New ParamMgr(CType(mgr.MappingEngine, SQLGenerator), "p")
-            almgr.AddTable(mgr.SQLGenerator.GetTables(GetType(Entity))(0), Nothing)
+            Dim params As New ParamMgr(CType(mgr.SQLGenerator, SQLGenerator), "p")
+            almgr.AddTable(mgr.MappingEngine.GetTables(GetType(Entity))(0), Nothing)
             pa.GetFilters(l, "ID", almgr, params, GetType(Entity), False)
 
-            pa.GetFilters(l, mgr.SQLGenerator.GetTables(GetType(Entity))(0), "ID", almgr, params, False)
+            pa.GetFilters(l, mgr.MappingEngine.GetTables(GetType(Entity))(0), "ID", almgr, params, False)
         End Using
     End Sub
 
     <TestMethod()> _
     Public Sub RealMergeTest2()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Worm.ObjectMappingEngine("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Object)

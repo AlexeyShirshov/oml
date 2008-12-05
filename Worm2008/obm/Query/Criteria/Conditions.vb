@@ -1,7 +1,7 @@
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
-Imports Worm.Orm.Meta
-Imports Worm.Orm
+Imports Worm.Entities.Meta
+Imports Worm.Entities
 Imports cc = Worm.Criteria.Conditions
 Imports Worm.Criteria.Values
 Imports Worm.Criteria
@@ -13,10 +13,10 @@ Namespace Criteria.Conditions
         [Or]
     End Enum
 
-    Public MustInherit Class Condition
+    Public Class Condition
         Implements ITemplateFilter
 
-        Public MustInherit Class ConditionConstructorBase
+        Public Class ConditionConstructor
             Implements ICloneable
 
             Protected _cond As Condition
@@ -28,11 +28,11 @@ Namespace Criteria.Conditions
                 _cond = cond
             End Sub
 
-            Public Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator) As ConditionConstructorBase
+            Public Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator) As ConditionConstructor
                 Return AddFilter(f, [operator], True)
             End Function
 
-            Protected Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator, ByVal useOper As Boolean) As ConditionConstructorBase
+            Protected Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator, ByVal useOper As Boolean) As ConditionConstructor
                 If _cond Is Nothing AndAlso f IsNot Nothing Then
                     If GetType(IEntityFilter).IsAssignableFrom(CObj(f).GetType) Then
                         _cond = CreateEntityCondition(CType(f, IEntityFilter), Nothing, [operator])
@@ -59,7 +59,7 @@ Namespace Criteria.Conditions
                 Return Me
             End Function
 
-            Public Function AddFilter(ByVal f As IFilter) As ConditionConstructorBase
+            Public Function AddFilter(ByVal f As IFilter) As ConditionConstructor
                 Return AddFilter(f, ConditionOperator.And, False)
             End Function
 
@@ -81,18 +81,25 @@ Namespace Criteria.Conditions
                 End Get
             End Property
 
-            Protected MustOverride Function CreateCondition(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
-            Protected MustOverride Function CreateEntityCondition(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
-            Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+            Protected Function CreateCondition(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
+                Return New Condition(left, right, [operator])
+            End Function
 
-            Public Function Clone() As ConditionConstructorBase
-                Return CType(_Clone(), ConditionConstructorBase)
+            Protected Function CreateEntityCondition(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
+                Return New EntityCondition(left, right, [operator])
+            End Function
+
+            Protected Function _Clone() As Object Implements System.ICloneable.Clone
+                Return New ConditionConstructor(CType(_cond.Clone, Worm.Criteria.Conditions.Condition))
+            End Function
+
+            Public Function Clone() As ConditionConstructor
+                Return CType(_Clone(), ConditionConstructor)
             End Function
         End Class
 
-        Protected MustInherit Class ConditionTemplateBase
+        Protected Class ConditionTemplate
             Inherits TemplateBase
-
             Protected _con As Condition
 
             Public Sub New(ByVal con As Condition)
@@ -145,9 +152,26 @@ Namespace Criteria.Conditions
         'End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
-        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal colums As List(Of String)) As String Implements IFilter.MakeQueryStmt
-        Protected MustOverride Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
-        Public MustOverride ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal colums As List(Of String)) As String Implements IFilter.MakeQueryStmt
+            If _right Is Nothing Then
+                Return _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums)
+            End If
+            Return "(" & _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums) & Condition2String() & _right.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums) & ")"
+        End Function
+
+        Protected Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
+            If TryCast(left, IEntityFilter) Is Nothing OrElse TryCast(right, IEntityFilter) Is Nothing Then
+                Return New Condition(left, right, [operator])
+            Else
+                Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+            End If
+        End Function
+
+        Public Overridable ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
+            Get
+                Return New ConditionTemplate(Me)
+            End Get
+        End Property
 
         'Private Function _ReplaceTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
         '    Return ReplaceCondition(replacement, replacer)
@@ -235,7 +259,7 @@ Namespace Criteria.Conditions
             Return Nothing
         End Function
 
-        Public Function MakeSingleStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+        Public Function MakeSingleStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
             Throw New NotSupportedException
         End Function
 
@@ -278,12 +302,12 @@ Namespace Criteria.Conditions
         End Function
     End Class
 
-    Public MustInherit Class EntityCondition
+    Public Class EntityCondition
         Inherits Condition
         Implements IEntityFilter
 
-        Protected MustInherit Class EntityConditionTemplateBase
-            Inherits Condition.ConditionTemplateBase
+        Protected Class EntityConditionTemplate
+            Inherits Condition.ConditionTemplate
             Implements IOrmFilterTemplate
 
             Public Sub New(ByVal con As EntityCondition)
@@ -326,7 +350,7 @@ Namespace Criteria.Conditions
                 Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If Con._right IsNot Nothing Then
                     Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
-                    If r = EntityFilterBase.EmptyHash Then
+                    If r = EntityFilter.EmptyHash Then
                         If Con._oper <> ConditionOperator.And Then
                             l = r
                         End If
@@ -356,7 +380,11 @@ Namespace Criteria.Conditions
             End Get
         End Property
 
-        'Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
+        Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate
+            Get
+                Return New EntityConditionTemplate(Me)
+            End Get
+        End Property
 
         Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
@@ -431,7 +459,7 @@ Namespace Criteria.Conditions
             Dim l As String = Left.MakeHash
             If _right IsNot Nothing Then
                 Dim r As String = Right.MakeHash
-                If r = EntityFilterBase.EmptyHash Then
+                If r = EntityFilter.EmptyHash Then
                     If _oper <> ConditionOperator.And Then
                         l = r
                     End If

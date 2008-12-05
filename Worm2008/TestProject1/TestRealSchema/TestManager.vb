@@ -5,23 +5,26 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Cache
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Database.Criteria
 Imports Worm.Sorting
 Imports Worm.Criteria.Values
-Imports Worm.Database.Criteria.Joins
-Imports Worm.Database.Criteria.Core
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Conditions
+Imports Worm.Criteria
+Imports Worm.Criteria.Joins
+Imports Worm.Query
 
 <TestClass()> _
 Public Class TestManagerRS
     Implements INewObjectsStore, Worm.ICreateManager
 
     Private _schemas As New Collections.Hashtable
-    Public Function GetSchema(ByVal v As String) As SQLGenerator
-        Dim s As SQLGenerator = CType(_schemas(v), SQLGenerator)
+    Public Function GetSchema(ByVal v As String) As Worm.ObjectMappingEngine
+        Dim s As Worm.ObjectMappingEngine = CType(_schemas(v), Worm.ObjectMappingEngine)
         If s Is Nothing Then
-            s = New SQLGenerator(v)
+            s = New Worm.ObjectMappingEngine(v)
             _schemas.Add(v, s)
         End If
         Return s
@@ -51,57 +54,57 @@ Public Class TestManagerRS
         End If
     End Function
 
-    Public Shared Function CreateManagerSharedFullText(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
-        Return New OrmReadOnlyDBManager(New ReadonlyCache, schema, My.Settings.FullTextEnabledConn)
+    Public Shared Function CreateManagerSharedFullText(ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
+        Return New OrmReadOnlyDBManager(New ReadonlyCache, schema, New SQLGenerator, My.Settings.FullTextEnabledConn)
     End Function
 
-    Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+    Public Shared Function CreateManagerShared(ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
         Return CreateManagerShared(schema, New ReadonlyCache)
     End Function
 
-    Public Shared Function CreateWriteManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+    Public Shared Function CreateWriteManagerShared(ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
         Return CreateWriteManagerShared(schema, New OrmCache)
     End Function
 
-    Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator, ByVal cache As ReadonlyCache) As OrmReadOnlyDBManager
+    Public Shared Function CreateManagerShared(ByVal schema As Worm.ObjectMappingEngine, ByVal cache As ReadonlyCache) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Return New OrmReadOnlyDBManager(cache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmReadOnlyDBManager(cache, schema, New SQLGenerator, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Return New OrmReadOnlyDBManager(cache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
 #End If
     End Function
 
-    Public Shared Function CreateWriteManagerShared(ByVal schema As SQLGenerator, ByVal cache As OrmCache) As OrmDBManager
+    Public Shared Function CreateWriteManagerShared(ByVal schema As Worm.ObjectMappingEngine, ByVal cache As OrmCache) As OrmDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Return New OrmDBManager(cache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmDBManager(cache, schema, New SQLGenerator, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmDBManager(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Return New OrmDBManager(cache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
 #End If
     End Function
 
     Public Function CreateManager() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
-        Return CreateManagerShared(New SQLGenerator("1"))
+        Return CreateManagerShared(New Worm.ObjectMappingEngine("1"))
     End Function
 
-    Public Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+    Public Function CreateManager(ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Dim mgr As New OrmReadOnlyDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Dim mgr As New OrmReadOnlyDBManager(GetCache, schema, New SQLGenerator, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Dim mgr As New OrmReadOnlyDBManager(getCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Dim mgr As New OrmReadOnlyDBManager(getCache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr
     End Function
 
-    Public Function CreateWriteManager(ByVal schema As SQLGenerator) As OrmDBManager
+    Public Function CreateWriteManager(ByVal schema As Worm.ObjectMappingEngine) As OrmDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Dim mgr As New OrmDBManager(GetRWCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Dim mgr As New OrmDBManager(GetRWCache, schema, New SQLGenerator, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Dim mgr As New OrmDBManager(getrwCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Dim mgr As New OrmDBManager(getrwCache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr
@@ -178,7 +181,7 @@ Public Class TestManagerRS
     Public Sub TestValidateCache()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
-            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
 
             t2.Tbl = mgr.Find(Of Table1)(2)
@@ -187,7 +190,7 @@ Public Class TestManagerRS
             Try
                 t2.SaveChanges(True)
 
-                tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+                tt = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(1, tt.Count)
 
             Finally
@@ -202,7 +205,7 @@ Public Class TestManagerRS
             'Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.ObjectSchema)
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
 
-            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
 
             Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
@@ -212,7 +215,7 @@ Public Class TestManagerRS
             Try
                 t2.SaveChanges(True)
 
-                tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+                tt = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(3, tt.Count)
 
             Finally
@@ -225,7 +228,7 @@ Public Class TestManagerRS
     Public Sub TestValidateCache3()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.MappingEngine)
-            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
 
             Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
@@ -235,7 +238,7 @@ Public Class TestManagerRS
             Try
                 t2.SaveChanges(True)
 
-                tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+                tt = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(2, tt.Count)
 
             Finally
@@ -247,7 +250,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestFindField()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(2), Nothing, WithLoad)
 
             Assert.AreEqual(1, c.Count)
         End Using
@@ -291,7 +294,7 @@ Public Class TestManagerRS
 
             Assert.AreEqual(New Guid("7c78c40a-fd96-44fe-861f-0f87b8d04bd5"), t.GUID)
 
-            Dim cc As ICollection(Of Table4) = mgr.Find(Of Table4)(New Criteria.Ctor(GetType(Table4)).Field("Col").Eq(False), Nothing, True)
+            Dim cc As ICollection(Of Table4) = mgr.Find(Of Table4)(New PCtor(GetType(Table4)).prop("Col").eq(False), Nothing, True)
 
             Assert.AreEqual(1, cc.Count)
         End Using
@@ -335,16 +338,16 @@ Public Class TestManagerRS
     Public Sub TestSwitchCache()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Using New Worm.OrmManager.CacheListBehavior(mgr, False)
-                Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
+                Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(2), Nothing, WithLoad)
 
                 Assert.AreEqual(1, c2.Count)
             End Using
 
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(2), Nothing, WithLoad)
 
             Assert.AreEqual(1, c.Count)
 
-            c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
+            c = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(2), Nothing, WithLoad)
 
             Assert.AreEqual(1, c.Count)
         End Using
@@ -361,7 +364,7 @@ Public Class TestManagerRS
                 End If
 
                 Using New Worm.OrmManager.CacheListBehavior(mgr, need)
-                    Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
+                    Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(2), Nothing, WithLoad)
 
                     Assert.AreEqual(1, c2.Count)
                 End Using
@@ -372,13 +375,13 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestDeleteFromCache()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
 
-            Dim t3 As Worm.ReadOnlyList(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad)
+            Dim t3 As Worm.ReadOnlyList(Of Table2) = mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad)
             mgr.LoadObjects(t3)
             Assert.AreEqual(2, t3.Count)
 
@@ -391,7 +394,7 @@ Public Class TestManagerRS
 
                 mgr.RemoveObjectFromCache(t1)
 
-                t3 = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad)
+                t3 = mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad)
 
                 Assert.AreEqual(2, t3.Count)
             Finally
@@ -402,7 +405,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -438,7 +441,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M2()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -472,13 +475,13 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M3()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(2)
             Dim t As Type = schema.GetTypeByEntityName("Table3")
-            Dim f As CriteriaLink = CType(New Criteria.Ctor(t).Field("Code").Eq(2), CriteriaLink)
+            Dim f As PredicateLink = CType(New PCtor(t).prop("Code").eq(2), PredicateLink)
             Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(f, _
                 Nothing, WithLoad)
 
@@ -503,7 +506,7 @@ Public Class TestManagerRS
 
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestComplexM2M4()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -525,7 +528,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M5()
-        Dim schema As SQLGenerator = GetSchema("1")
+        Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -572,10 +575,10 @@ Public Class TestManagerRS
 
             Assert.AreEqual(3, t10s.Count)
 
-            Dim t1 As ICollection(Of Table10) = mgr.Find(Of Table10)(New Criteria.Ctor(GetType(Table10)).Field("Table1").Eq(tt1), Nothing, WithLoad)
+            Dim t1 As ICollection(Of Table10) = mgr.Find(Of Table10)(New PCtor(GetType(Table10)).prop("Table1").eq(tt1), Nothing, WithLoad)
             Assert.AreEqual(2, t1.Count)
 
-            Dim t2 As ICollection(Of Table10) = mgr.Find(Of Table10)(New Criteria.Ctor(GetType(Table10)).Field("Table1").Eq(tt2), Nothing, WithLoad)
+            Dim t2 As ICollection(Of Table10) = mgr.Find(Of Table10)(New PCtor(GetType(Table10)).prop("Table1").eq(tt2), Nothing, WithLoad)
             Assert.AreEqual(1, t2.Count)
 
             t10s = mgr.LoadObjects(Of Table10)("Table1", Nothing, CType(t1s, Collections.ICollection))
@@ -588,14 +591,14 @@ Public Class TestManagerRS
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
-            Dim t1 As ICollection(Of Table10) = mgr.Find(Of Table10)(New Criteria.Ctor(GetType(Table10)).Field("Table1").Eq(tt1), Nothing, WithLoad)
+            Dim t1 As ICollection(Of Table10) = mgr.Find(Of Table10)(New PCtor(GetType(Table10)).prop("Table1").eq(tt1), Nothing, WithLoad)
             Assert.AreEqual(2, t1.Count)
 
             Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
             Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", Nothing, CType(t1s, Collections.ICollection))
             Assert.AreEqual(3, t10s.Count)
 
-            Dim t2 As ICollection(Of Table10) = mgr.Find(Of Table10)(New Criteria.Ctor(GetType(Table10)).Field("Table1").Eq(tt2), Nothing, WithLoad)
+            Dim t2 As ICollection(Of Table10) = mgr.Find(Of Table10)(New PCtor(GetType(Table10)).prop("Table1").eq(tt2), Nothing, WithLoad)
             Assert.AreEqual(1, t2.Count)
 
         End Using
@@ -608,7 +611,7 @@ Public Class TestManagerRS
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
             Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
-            Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", New Criteria.Ctor(GetType(Table10)).Field("ID").Eq(1), CType(t1s, Collections.ICollection))
+            Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", New PCtor(GetType(Table10)).prop("ID").eq(1), CType(t1s, Collections.ICollection))
             Assert.AreEqual(1, t10s.Count)
 
         End Using
@@ -659,7 +662,7 @@ Public Class TestManagerRS
             Dim t As Type = mgr.MappingEngine.GetTypeByEntityName("Table3")
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
             'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
-            Dim c As ICollection(Of Table33) = tt1.M2M.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
+            Dim c As ICollection(Of Table33) = tt1.M2M.Find(Of Table33)(New PCtor(t).prop("Code").eq(2), Nothing, WithLoad)
 
             Assert.AreEqual(2, c.Count)
             mgr.BeginTransaction()
@@ -669,7 +672,7 @@ Public Class TestManagerRS
                 tt2.Code = 2
                 tt2.SaveChanges(True)
 
-                c = tt1.M2M.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
+                c = tt1.M2M.Find(Of Table33)(New PCtor(t).prop("Code").eq(2), Nothing, WithLoad)
 
                 Assert.AreEqual(3, c.Count)
             Finally
@@ -738,7 +741,7 @@ Public Class TestManagerRS
     <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
     Public Sub TestMultipleDelete()
         Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
-            Dim f As New Core.EntityFilter(GetType(Table3), "Code", New ScalarValue(1), Worm.Criteria.FilterOperation.LessEqualThan)
+            Dim f As New EntityFilter(GetType(Table3), "Code", New ScalarValue(1), Worm.Criteria.FilterOperation.LessEqualThan)
             mgr.BeginTransaction()
 
             Try
@@ -876,7 +879,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestCompositeInsert()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As New Composite(1, mgr.Cache, mgr.SQLGenerator)
+            Dim e As New Composite(1, mgr.Cache, mgr.MappingEngine)
             e.Message = "don"
             e.Message2 = "dionsd"
             mgr.BeginTransaction()
@@ -909,8 +912,8 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").Eq(1), Nothing, False)
-            Dim c2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").Eq(2), Nothing, False)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").eq(1), Nothing, False)
+            Dim c2 As ICollection(Of Table2) = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").eq(2), Nothing, False)
 
             Assert.AreEqual(1, c.Count)
             Assert.AreEqual(1, c2.Count)
@@ -923,8 +926,8 @@ Public Class TestManagerRS
                 t.Money = 2
                 t.SaveChanges(True)
 
-                c = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").Eq(1), Nothing, False)
-                c2 = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").Eq(2), Nothing, False)
+                c = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").eq(1), Nothing, False)
+                c2 = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").eq(2), Nothing, False)
 
                 Assert.AreEqual(0, c.Count)
                 Assert.AreEqual(2, c2.Count)
@@ -981,16 +984,16 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestIsNull()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Worm.ReadOnlyList(Of Table3) = mgr.Find(Of Table3)(Criteria.Ctor.Field(GetType(Table3), "XML").IsNull, Nothing, False)
+            Dim t As Worm.ReadOnlyList(Of Table3) = mgr.Find(Of Table3)(PCtor.prop(GetType(Table3), "XML").is_null, Nothing, False)
 
             Assert.AreEqual(1, t.Count)
 
-            Dim t2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Table1").IsNull, Nothing, False)
+            Dim t2 As ICollection(Of Table2) = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Table1").is_null, Nothing, False)
 
             Assert.AreEqual(0, t2.Count)
 
             Dim r As Boolean
-            Dim f As Worm.Criteria.Core.IFilter = Criteria.Ctor.Field(GetType(Table3), "XML").IsNull.Filter()
+            Dim f As Worm.Criteria.Core.IFilter = PCtor.prop(GetType(Table3), "XML").is_null.Filter()
             Assert.AreEqual(1, mgr.ApplyFilter(t, f, r).Count)
 
         End Using
@@ -999,13 +1002,13 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestIn()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Worm.ReadOnlyObjectList(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "EnumStr").In( _
+            Dim t As Worm.ReadOnlyObjectList(Of Table1) = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "EnumStr").[in]( _
                 New String() {"first", "sec"}), Nothing, False)
 
             Assert.AreEqual(3, t.Count)
 
             Dim r As Boolean
-            t = mgr.ApplyFilter(t, CType(New Criteria.Ctor(GetType(Table1)).Field("Code").In( _
+            t = mgr.ApplyFilter(t, CType(New PCtor(GetType(Table1)).prop("Code").[in]( _
                 New Integer() {45, 8923}).Filter, Worm.Criteria.Core.IEntityFilter), r)
 
             Assert.AreEqual(2, t.Count)
@@ -1015,12 +1018,12 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestNotIn()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As ICollection(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "EnumStr").NotIn( _
+            Dim t As ICollection(Of Table1) = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "EnumStr").not_in( _
                 New String() {"sec"}), Nothing, False)
 
             Assert.AreEqual(1, t.Count)
 
-            t = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "EnumStr").NotIn( _
+            t = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "EnumStr").not_in( _
                 New String() {}), Nothing, False)
 
             Assert.AreNotEqual(1, t.Count)
@@ -1030,30 +1033,30 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestInSubQuery()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Table1").In( _
+            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Table1").[in]( _
                 GetType(Table1)), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
 
-            t = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").In( _
+            t = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").[in]( _
                 GetType(Table1), "Code"), Nothing, False)
 
             Assert.AreEqual(1, t.Count)
             Assert.AreEqual(2D, GetList(t)(0).Money)
 
-            t = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").In( _
+            t = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").[in]( _
                 GetType(Table1), "Code"), Nothing, False)
 
             Assert.AreEqual(1, t.Count)
 
             mgr.BeginTransaction()
             Try
-                Dim t2 As New Table2(1934, mgr.Cache, mgr.SQLGenerator)
+                Dim t2 As New Table2(1934, mgr.Cache, mgr.MappingEngine)
                 t2.Tbl = mgr.Find(Of Table1)(1)
                 t2.Money = 2
                 t2.SaveChanges(True)
 
-                t = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Money").In( _
+                t = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Money").[in]( _
                     GetType(Table1), "Code"), Nothing, False)
 
                 Assert.AreEqual(2, t.Count)
@@ -1068,38 +1071,38 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim tt2 As Type = GetType(Table2)
 
-            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(tt2).Field("Table1").Exists( _
+            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New PCtor(tt2).prop("Table1").exists( _
                 GetType(Table1)), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
 
-            t = mgr.Find(Of Table2)(New Criteria.Ctor(tt2).Field("Table1").NotExists( _
+            t = mgr.Find(Of Table2)(New PCtor(tt2).prop("Table1").not_exists( _
                 GetType(Table1)), Nothing, False)
 
             Assert.AreEqual(0, t.Count)
 
-            Dim c As New Conditions.Condition.ConditionConstructor
+            Dim c As New Condition.ConditionConstructor
             c.AddFilter(New JoinFilter(tt2, "Table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal))
             c.AddFilter(New EntityFilter(GetType(Table1), "Code", New ScalarValue(45), Worm.Criteria.FilterOperation.Equal))
             Dim f As Worm.Criteria.Core.IFilter = CType(c.Condition, Worm.Criteria.Core.IFilter)
 
-            t = mgr.Find(Of Table2)(Criteria.Ctor.NotExists( _
+            t = mgr.Find(Of Table2)(PCtor.not_exists( _
                 GetType(Table1), f), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
 
-            t = mgr.Find(Of Table2)(Criteria.Ctor.NotExists( _
+            t = mgr.Find(Of Table2)(PCtor.not_exists( _
                 GetType(Table1), f), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
 
             mgr.BeginTransaction()
             Try
-                Dim t2 As New Table2(1934, mgr.Cache, mgr.SQLGenerator)
+                Dim t2 As New Table2(1934, mgr.Cache, mgr.MappingEngine)
                 t2.Tbl = mgr.Find(Of Table1)(1)
                 t2.SaveChanges(True)
 
-                t = mgr.Find(Of Table2)(Criteria.Ctor.Field(GetType(Table2), "Table1").NotExists( _
+                t = mgr.Find(Of Table2)(PCtor.prop(GetType(Table2), "Table1").not_exists( _
                     GetType(Table1), f), Nothing, False)
 
                 Assert.AreEqual(3, t.Count)
@@ -1112,7 +1115,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestBetween()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "Code").Between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
 
             Assert.AreEqual(2, c.Count)
 
@@ -1124,7 +1127,7 @@ Public Class TestManagerRS
                 GetList(c)(0).Code = 100
                 GetList(c)(0).SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "Code").Between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
 
                 Assert.AreEqual(1, c.Count)
 
@@ -1133,7 +1136,7 @@ Public Class TestManagerRS
                 t.CreatedAt = Now
                 t.SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(Criteria.Ctor.Field(GetType(Table1), "Code").Between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
 
                 Assert.AreEqual(2, c.Count)
                 Assert.AreEqual(30, GetList(c)(0).Code)
@@ -1148,7 +1151,7 @@ Public Class TestManagerRS
     Public Sub TestCustomFilter()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
-                Criteria.Ctor.Custom("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).GreaterThan(1000), _
+                PCtor.custom("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).greater_than(1000), _
                 Sorting.Field(GetType(Table1), "Code"), False)
 
             Assert.AreEqual(2, c.Count)
@@ -1156,8 +1159,8 @@ Public Class TestManagerRS
             Assert.AreEqual(3, GetList(c)(0).Identifier)
             Assert.AreEqual(2, GetList(c)(1).Identifier)
 
-            c = mgr.Find(Of Table1)(CType(Criteria.Ctor.Field(GetType(Table1), "Enum").Eq(2), CriteriaLink). _
-                CustomAnd("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).GreaterThan(1000), Nothing, True)
+            c = mgr.Find(Of Table1)(CType(PCtor.prop(GetType(Table1), "Enum").eq(2), PredicateLink). _
+                [and]("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).greater_than(1000), Nothing, True)
 
             Assert.AreEqual(1, c.Count)
         End Using
@@ -1222,7 +1225,7 @@ Public Class TestManagerRS
             Dim l As Table1_x = mgr.Find(Of Table1_x)(1)
             l.Load()
 
-            Dim r As Worm.ReadOnlyList(Of Table1_x) = mgr.FindDistinct(Of Table1_x)(Ctor.Field(GetType(Table1_x), "ID").Eq(1), Sorting.Field(GetType(Table1_x), "Title"), True)
+            Dim r As Worm.ReadOnlyList(Of Table1_x) = mgr.FindDistinct(Of Table1_x)(PCtor.prop(GetType(Table1_x), "ID").eq(1), Sorting.Field(GetType(Table1_x), "Title"), True)
             Assert.AreEqual(1, r.Count)
 
         End Using
@@ -1260,7 +1263,7 @@ Public Class TestManagerRS
                 mgr.QueryObjects(Of Table1)(cmd, True, l, _
                     New List(Of ColumnAttribute)(New ColumnAttribute() { _
                         New ColumnAttribute("ID"), New ColumnAttribute("Code")}), _
-                    Nothing, SelectExpression.GetMapping(FCtor.Column(Nothing, "id", "ID").Add(Nothing, "code", "Code").GetAllProperties))
+                    Nothing, SelectExpression.GetMapping(SCtor.column(Nothing, "id", "ID").Add(Nothing, "code", "Code").GetAllProperties))
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(1, l(0).ID)
@@ -1292,19 +1295,19 @@ Public Class TestManagerRS
     '    End Using
     'End Sub
 
-    Private Function GetList(Of T As {OrmBase})(ByVal col As ICollection(Of T)) As IList(Of T)
+    Private Function GetList(Of T As {KeyEntity})(ByVal col As ICollection(Of T)) As IList(Of T)
         Return CType(col, Global.System.Collections.Generic.IList(Of T))
     End Function
 
     Private _id As Integer = -100
-    Private _new_objects As New Dictionary(Of Integer, OrmBase)
+    Private _new_objects As New Dictionary(Of Integer, KeyEntity)
 
     Public Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(CInt(CType(obj, IOrmBase).Identifier), CType(obj, OrmBase))
+        _new_objects.Add(CInt(CType(obj, IKeyEntity).Identifier), CType(obj, KeyEntity))
     End Sub
 
     Public Function GetIdentity(ByVal type As Type) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
@@ -1318,7 +1321,7 @@ Public Class TestManagerRS
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
-        Dim o As OrmBase = Nothing
+        Dim o As KeyEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
@@ -1332,6 +1335,6 @@ Public Class TestManagerRS
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(CInt(CType(obj, IOrmBase).Identifier))
+        _new_objects.Remove(CInt(CType(obj, IKeyEntity).Identifier))
     End Sub
 End Class

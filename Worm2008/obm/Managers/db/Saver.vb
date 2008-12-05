@@ -1,7 +1,7 @@
-﻿Imports Worm.Orm
+﻿Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Cache
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
 Namespace Database
 
@@ -508,7 +508,7 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                    Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(Me, o)
@@ -537,7 +537,7 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                    Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
@@ -576,7 +576,7 @@ l1:
             For Each o As Pair(Of ICachedEntity) In copies
                 o.First.CopyBody(o.Second, o.First)
                 o.First.SetObjectState(o.Second.GetOldState)
-                Dim orm As _IOrmBase = TryCast(o.First, _IOrmBase)
+                Dim orm As _IKeyEntity = TryCast(o.First, _IKeyEntity)
                 If orm IsNot Nothing Then
                     orm.RejectM2MIntermidiate()
                 End If
@@ -586,7 +586,7 @@ l1:
                 Dim o As ICachedEntity = p.Second
                 If Not rejectList.Contains(o) Then
                     RaiseEvent ObjectRejecting(Me, o)
-                    Dim orm As _IOrmBase = TryCast(o, _IOrmBase)
+                    Dim orm As _IKeyEntity = TryCast(o, _IKeyEntity)
                     If orm IsNot Nothing Then
                         orm.RejectM2MIntermidiate()
                     End If
@@ -743,7 +743,7 @@ l1:
             'End If
         End Sub
 
-        Public Function CreateNewObject(Of T As {IOrmBase, New})() As T
+        Public Function CreateNewObject(Of T As {IKeyEntity, New})() As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -774,7 +774,7 @@ l1:
             Return o
         End Function
 
-        Public Overridable Function CreateNewObject(Of T As {IOrmBase, New})(ByVal id As Object) As T
+        Public Overridable Function CreateNewObject(Of T As {IKeyEntity, New})(ByVal id As Object) As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -788,7 +788,7 @@ l1:
             Return o
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type) As IOrmBase
+        Public Function CreateNewObject(ByVal t As Type) As IKeyEntity
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -796,12 +796,12 @@ l1:
             Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t))
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IOrmBase
+        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IKeyEntity
             For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
                 Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
                 If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
                     mi = mi.MakeGenericMethod(New Type() {t})
-                    Return CType(mi.Invoke(Me, New Object() {id}), IOrmBase)
+                    Return CType(mi.Invoke(Me, New Object() {id}), IKeyEntity)
                 End If
             Next
             Throw New InvalidOperationException("Cannot find method CreateNewObject")

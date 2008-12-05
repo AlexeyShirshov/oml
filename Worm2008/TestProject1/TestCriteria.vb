@@ -1,34 +1,38 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
+Imports Worm.Entities.Meta
+Imports Worm.Criteria
+Imports Worm.Query
 
 <TestClass()> Public Class TestCriteria
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim cr As Worm.Criteria.CriteriaLink = Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](GetType(Entity4), "Title").Eq("lsd")
+        Dim cr As Worm.Criteria.PredicateLink = PCtor.prop(GetType(Entity4), "ID").eq(56). _
+            [and](GetType(Entity4), "Title").eq("lsd")
 
-        Dim cr2 As Database.Criteria.CriteriaLink = CType(cr.Clone, Database.Criteria.CriteriaLink)
-        cr2.And(GetType(Entity4), "Title").In(New String() {"a"})
+        Dim cr2 As PredicateLink = CType(cr.Clone, PredicateLink)
+        cr2.[and](GetType(Entity4), "Title").[in](New String() {"a"})
 
         Dim f As IEntityFilter = CType(cr.Filter, IEntityFilter)
 
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim pmgr As New ParamMgr(schema, "p")
+        Dim pmgr As New ParamMgr(gen, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
 
         Dim f2 As IEntityFilter = CType(cr2.Filter, IEntityFilter)
-        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -38,17 +42,18 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = CType(Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter(), IEntityFilter)
+        Dim f As IEntityFilter = CType(PCtor.prop(GetType(Entity4), "ID").eq(56). _
+            [and]("Title").eq("lsd").Filter(), IEntityFilter)
 
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim pmgr As New ParamMgr(schema, "p")
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -59,17 +64,18 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IEntityFilter = CType(Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](Database.Criteria.Ctor.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(PCtor.prop(GetType(Entity4), "ID").eq(56). _
+            [and](PCtor.prop(GetType(Entity4), "Title").eq(56).[or](GetType(Entity), "ID").eq(483)).Filter, IEntityFilter)
 
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim pmgr As New ParamMgr(schema, "p")
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -79,17 +85,18 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = CType(New Database.Criteria.Ctor(GetType(Entity4)).Field("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(New PCtor(GetType(Entity4)).prop("ID").eq(56). _
+            [and]("Title").eq("lsd").Filter, IEntityFilter)
 
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim pmgr As New ParamMgr(schema, "p")
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -99,17 +106,18 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = CType(New Database.Criteria.Ctor(GetType(Entity4)).Field("ID").Eq(56). _
-            [And](New Database.Criteria.Ctor(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(New PCtor(GetType(Entity4)).prop("ID").eq(56). _
+            [and](New PCtor(GetType(Entity4)).prop("Title").eq(56).[or]("ID").eq(483)).Filter, IEntityFilter)
 
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim pmgr As New ParamMgr(schema, "p")
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr, Nothing))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 

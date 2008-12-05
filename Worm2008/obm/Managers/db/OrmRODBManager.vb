@@ -1,13 +1,15 @@
 Imports Worm
 Imports Worm.Sorting
 Imports System.Collections.Generic
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Criteria.Core
 Imports Worm.Cache
-Imports Worm.Orm.Query
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Query
+Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Values
+Imports cc = Worm.Criteria.Core
+Imports Worm.Criteria.Conditions
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -33,12 +35,12 @@ Namespace Database
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-                Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
+                Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
                 Dim inv As Boolean
                 Using obj.GetSyncRoot()
                     Dim cmdtext As String = Nothing
                     Try
-                        cmdtext = mgr.SQLGenerator.Update(obj, mgr.GetFilterInfo, params, cols, upd)
+                        cmdtext = mgr.SQLGenerator.Update(mgr.MappingEngine, obj, mgr.GetFilterInfo, params, cols, upd)
                     Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
                         Return False
                     End Try
@@ -89,7 +91,7 @@ Namespace Database
                                                 Continue For
                                             End If
                                         ElseIf prev_error Then
-                                            Throw mgr.SQLGenerator.PrepareConcurrencyException(obj)
+                                            Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
                                         End If
 
                                         prev_error = False
@@ -152,7 +154,7 @@ Namespace Database
                     Using obj.GetSyncRoot()
                         Dim cmdtext As String = Nothing
                         Try
-                            cmdtext = mgr.SQLGenerator.Insert(obj, mgr.GetFilterInfo, params, cols)
+                            cmdtext = mgr.SQLGenerator.Insert(mgr.MappingEngine, obj, mgr.GetFilterInfo, params, cols)
                         Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
                             Return False
                         End Try
@@ -226,7 +228,7 @@ Namespace Database
                 Return True
             End Function
 
-            Public Sub M2MSave(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
+            Public Sub M2MSave(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
@@ -237,7 +239,7 @@ Namespace Database
 
                 Dim tt As Type = obj.GetType
                 Dim p As New ParamMgr(mgr.SQLGenerator, "p")
-                Dim cmd_text As String = mgr.SQLGenerator.SaveM2M(obj, mgr.SQLGenerator.GetM2MRelationForEdit(tt, t, direct), el, p)
+                Dim cmd_text As String = mgr.SQLGenerator.SaveM2M(mgr.MappingEngine, obj, mgr.MappingEngine.GetM2MRelationForEdit(tt, t, direct), el, p)
 
                 If Not String.IsNullOrEmpty(cmd_text) Then
                     Dim [error] As Boolean = True
@@ -283,7 +285,7 @@ Namespace Database
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
                 Using obj.GetSyncRoot()
-                    Dim cmdtext As String = mgr.SQLGenerator.Delete(obj, params, mgr.GetFilterInfo)
+                    Dim cmdtext As String = mgr.SQLGenerator.Delete(mgr.MappingEngine, obj, params, mgr.GetFilterInfo)
                     If cmdtext.Length > 0 Then
                         Dim [error] As Boolean = True
                         Dim tran As System.Data.Common.DbTransaction = mgr.Transaction
@@ -344,7 +346,7 @@ Namespace Database
 
                         If [error] Then
                             Debug.Assert(False)
-                            Throw mgr.SQLGenerator.PrepareConcurrencyException(obj)
+                            Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
                         End If
                     End If
                 End Using
@@ -353,7 +355,7 @@ Namespace Database
             Public Function Delete(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter) As Integer
                 Dim t As Type = Nothing
 #If DEBUG Then
-                For Each fl As Worm.Database.Criteria.Core.EntityFilter In f.GetAllFilters
+                For Each fl As cc.EntityFilter In f.GetAllFilters
                     Dim rt As Type = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
                     If t Is Nothing Then
                         t = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
@@ -365,7 +367,7 @@ Namespace Database
                 Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
                     Dim params As New ParamMgr(mgr.SQLGenerator, "p")
                     With cmd
-                        .CommandText = mgr.SQLGenerator.Delete(t, f, params)
+                        .CommandText = mgr.SQLGenerator.Delete(mgr.MappingEngine, t, f, params)
                         .CommandType = System.Data.CommandType.Text
                         params.AppendParams(.Parameters)
                     End With
@@ -388,22 +390,21 @@ Namespace Database
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
         Friend _batchSaver As ObjectListSaver
-        Private _stmtHelper As SQLGenerator
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
         Private _timeout As Nullable(Of Integer)
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
-        Public Sub New(ByVal cache As CacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
-            MyBase.New(cache, schema)
-            _stmtHelper = schema
+        Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
+            MyBase.New(cache, mpe)
+            StmtGenerator = generator
             _connStr = connectionString
         End Sub
 
-        Protected Sub New(ByVal schema As SQLGenerator, ByVal connectionString As String)
-            MyBase.New(schema)
-            _stmtHelper = schema
+        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
+            MyBase.New(mpe)
+            StmtGenerator = generator
             _connStr = connectionString
         End Sub
 
@@ -444,7 +445,7 @@ l1:
 
         Public ReadOnly Property SQLGenerator() As SQLGenerator
             Get
-                Return _stmtHelper
+                Return CType(StmtGenerator, Database.SQLGenerator)
             End Get
         End Property
 
@@ -550,27 +551,27 @@ l1:
             End Get
         End Property
 
-        Protected Friend Overrides Sub SetSchema(ByVal schema As ObjectMappingEngine)
-            _stmtHelper = CType(schema, Database.SQLGenerator)
-            MyBase.SetSchema(schema)
-        End Sub
+        'Protected Friend Overrides Sub SetSchema(ByVal schema As ObjectMappingEngine)
+        '    _stmtHelper = CType(schema, Database.SQLGenerator)
+        '    MyBase.SetSchema(schema)
+        'End Sub
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, IFilter), sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect, cols)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICacheItemProvoder(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -578,7 +579,7 @@ l1:
             Dim l As New List(Of ColumnAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = SQLGenerator.GetColumnByPropertyAlias(GetType(T), c)
+                Dim col As ColumnAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
@@ -599,14 +600,14 @@ l1:
         '    Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
         'End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
+            ByVal obj As _IKeyEntity, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
+            ByVal obj As _IKeyEntity, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
         End Function
@@ -620,9 +621,9 @@ l1:
 
         Public Function CreateDBCommand() As System.Data.Common.DbCommand
             If _timeout.HasValue Then
-                Return _stmtHelper.CreateDBCommand(_timeout.Value)
+                Return SQLGenerator.CreateDBCommand(_timeout.Value)
             Else
-                Return _stmtHelper.CreateDBCommand()
+                Return SQLGenerator.CreateDBCommand()
             End If
         End Function
 
@@ -638,17 +639,17 @@ l1:
 
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    Dim schema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectedType)
+                    Dim schema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectedType)
                     Dim ctx_schema2 As IContextObjectSchema = TryCast(schema2, IContextObjectSchema)
                     Dim mt_schema2 As IMultiTableObjectSchema = TryCast(schema2, IMultiTableObjectSchema)
-                    Dim cs As IObjectSchemaBase = SQLGenerator.GetObjectSchema(ct)
+                    Dim cs As IObjectSchemaBase = MappingEngine.GetObjectSchema(ct)
                     Dim mms As IConnectedFilter = TryCast(cs, IConnectedFilter)
                     Dim cfi As Object = GetFilterInfo()
                     If mms IsNot Nothing Then
                         cfi = mms.ModifyFilterInfo(cfi, selectedType, filterType)
                     End If
                     'Dim r1 As M2MRelation = Schema.GetM2MRelation(selectedType, filterType)
-                    Dim r2 As M2MRelation = SQLGenerator.GetM2MRelation(filterType, selectedType, True)
+                    Dim r2 As M2MRelation = MappingEngine.GetM2MRelation(filterType, selectedType, True)
                     Dim id_clm As String = r2.Column
 
                     Dim sb As New StringBuilder
@@ -659,10 +660,10 @@ l1:
                         'Dim js As New List(Of OrmJoin)
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
-                        Dim columns As String = SQLGenerator.GetSelectColumnList(selectedType, Nothing, Nothing, schema2, Nothing)
-                        sb.Append(SQLGenerator.Select(ct, almgr, params, q, arr, columns, cfi))
+                        Dim columns As String = MappingEngine.GetSelectColumnList(selectedType, MappingEngine, Nothing, Nothing, schema2, Nothing)
+                        sb.Append(SQLGenerator.Select(MappingEngine, ct, almgr, params, q, arr, columns, cfi))
                     Else
-                        sb.Append(SQLGenerator.Select(ct, almgr, params, q, arr, Nothing, cfi))
+                        sb.Append(SQLGenerator.Select(MappingEngine, ct, almgr, params, q, arr, Nothing, cfi))
                     End If
                     'If withLoad Then
                     '    arr = DatabaseSchema.GetSortedFieldList(ct)
@@ -676,26 +677,26 @@ l1:
                         OrElse (ctx_schema2 IsNot Nothing AndAlso ctx_schema2.GetContextFilter(GetFilterInfo) IsNot Nothing) _
                         OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
-                    SQLGenerator.AppendNativeTypeJoins(selectedType, almgr, If(mt_schema2 IsNot Nothing, mt_schema2.GetTables, Nothing), sb, params, cs.Table, id_clm, appendMainTable, GetFilterInfo, schema2)
+                    SQLGenerator.AppendNativeTypeJoins(MappingEngine, selectedType, almgr, If(mt_schema2 IsNot Nothing, mt_schema2.GetTables, Nothing), sb, params, cs.Table, id_clm, appendMainTable, GetFilterInfo, schema2)
                     If withLoad AndAlso mt_schema2 IsNot Nothing Then
                         For Each tbl As SourceFragment In mt_schema2.GetTables
                             If almgr.ContainsKey(tbl, Nothing) Then
                                 'Dim [alias] As String = almgr.Aliases(tbl)
                                 'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
-                                almgr.Replace(SQLGenerator, tbl, Nothing, sb)
+                                almgr.Replace(MappingEngine, SQLGenerator, tbl, Nothing, sb)
                             End If
                         Next
                     End If
-                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+                    Dim con As New Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
                     If ctx_schema2 IsNot Nothing Then
                         con.AddFilter(ctx_schema2.GetContextFilter(GetFilterInfo))
                     End If
-                    SQLGenerator.AppendWhere(ct, con.Condition, almgr, sb, cfi, params)
+                    SQLGenerator.AppendWhere(MappingEngine, ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                        SQLGenerator.AppendOrder(selectedType, sort, almgr, sb, True, Nothing, Nothing)
+                        SQLGenerator.AppendOrder(MappingEngine, selectedType, sort, almgr, sb, True, Nothing, Nothing)
                     End If
 
                     params.AppendParams(.Parameters)
@@ -761,11 +762,11 @@ l1:
             'Dim values As IList
             'values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
             If first_cols Is Nothing Then
-                first_cols = SQLGenerator.GetSortedFieldList(firstType)
+                first_cols = MappingEngine.GetSortedFieldList(firstType)
             End If
 
             If sec_cols Is Nothing Then
-                sec_cols = SQLGenerator.GetSortedFieldList(secondType)
+                sec_cols = MappingEngine.GetSortedFieldList(secondType)
             End If
 
             Dim b As ConnAction = TestConn(cmd)
@@ -780,7 +781,7 @@ l1:
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim firstidx As Integer = 0
-                    Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, False, Nothing, Nothing, Nothing)
+                    Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, MappingEngine, False, Nothing, Nothing, Nothing)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -796,7 +797,7 @@ l1:
                     End Try
 
                     Dim secidx As Integer = 0
-                    ss = MappingEngine.GetPrimaryKeysName(secondType, False, Nothing, Nothing, Nothing)
+                    ss = MappingEngine.GetPrimaryKeysName(secondType, MappingEngine, False, Nothing, Nothing, Nothing)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -813,8 +814,8 @@ l1:
 
                     Dim dic1 As IDictionary = GetDictionary(firstType)
                     Dim dic2 As IDictionary = GetDictionary(secondType)
-                    Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(firstType)
-                    Dim oschema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(secondType)
+                    Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(firstType)
+                    Dim oschema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(secondType)
                     Dim props As IDictionary = MappingEngine.GetProperties(firstType, oschema)
                     Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
@@ -824,7 +825,7 @@ l1:
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(firstidx)
-                        Dim obj1 As IOrmBase = GetOrmBaseFromCacheOrCreate(id1, firstType)
+                        Dim obj1 As IKeyEntity = GetOrmBaseFromCacheOrCreate(id1, firstType)
                         If (ec Is Nothing OrElse Not ec.IsDeleted(obj1)) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
@@ -844,21 +845,21 @@ l1:
                         End If
 
                         Dim id2 As Object = dr.GetValue(secidx)
-                        Dim obj2 As IOrmBase = GetOrmBaseFromCacheOrCreate(id2, secondType)
+                        Dim obj2 As IKeyEntity = GetOrmBaseFromCacheOrCreate(id2, secondType)
                         If (ec Is Nothing OrElse Not ec.IsDeleted(obj2)) AndAlso obj2.ObjectState <> ObjectState.Modified Then
-                                Using obj2.GetSyncRoot()
-                                    'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                    Dim lock As IDisposable = Nothing
-                                    Try
-                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock, oschema2, cm2, props2)
-                                        AfterLoadingProcess(dic2, obj2, lock, ro2)
-                                    Finally
-                                        If lock IsNot Nothing Then
-                                            'Threading.Monitor.Exit(dic2)
-                                            lock.Dispose()
-                                        End If
-                                    End Try
-                                End Using
+                            Using obj2.GetSyncRoot()
+                                'If obj2.IsLoaded Then obj2.IsLoaded = False
+                                Dim lock As IDisposable = Nothing
+                                Try
+                                    Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock, oschema2, cm2, props2)
+                                    AfterLoadingProcess(dic2, obj2, lock, ro2)
+                                Finally
+                                    If lock IsNot Nothing Then
+                                        'Threading.Monitor.Exit(dic2)
+                                        lock.Dispose()
+                                    End If
+                                End Try
+                            End Using
                         End If
                     Loop
                     _fetch = ft.GetTime
@@ -995,7 +996,7 @@ l1:
 
         'End Function
 
-        Protected Overrides Function GetObjects(Of T As {IOrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
+        Protected Overrides Function GetObjects(Of T As {IKeyEntity, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
             ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, EditableList)
             Invariant()
 
@@ -1012,7 +1013,7 @@ l1:
             'Dim arr As Generic.List(Of ColumnAttribute) = Nothing
             Dim sb As New StringBuilder
             Dim type2load As Type = GetType(T)
-            Dim ct As Type = SQLGenerator.GetConnectedType(type, type2load)
+            Dim ct As Type = MappingEngine.GetConnectedType(type, type2load)
             Dim direct As String = relation.Key
 
             'Dim dt As New System.Data.DataTable()
@@ -1028,25 +1029,25 @@ l1:
 
                 'Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 'Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
-                Dim f1 As String = SQLGenerator.GetConnectedTypeField(ct, type, M2MRelation.GetRevKey(direct))
-                Dim f2 As String = SQLGenerator.GetConnectedTypeField(ct, type2load, direct)
+                Dim f1 As String = MappingEngine.GetConnectedTypeField(ct, type, M2MRelation.GetRevKey(direct))
+                Dim f2 As String = MappingEngine.GetConnectedTypeField(ct, type2load, direct)
                 'Dim col1 As String = type.Name & "ID"
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
                 'dt.Columns.Add(col2, GetType(Integer))
-                Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(ct)
+                Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(ct)
 
-                For Each o As IOrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
+                For Each o As IKeyEntity In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
                     'Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
-                    Dim o1 As IOrmBase = CType(o.GetValueOptimized(Nothing, f1, oschema), IOrmBase)
-                    Dim o2 As IOrmBase = CType(o.GetValueOptimized(Nothing, f2, oschema), IOrmBase)
+                    Dim o1 As IKeyEntity = CType(o.GetValueOptimized(Nothing, f1, oschema), IKeyEntity)
+                    Dim o2 As IKeyEntity = CType(o.GetValueOptimized(Nothing, f2, oschema), IKeyEntity)
 
                     Dim id1 As Object = o1.Identifier
                     Dim id2 As Object = o2.Identifier
                     'Dim k As Integer = o1.Identifier
                     'Dim v As Integer = o2.Identifier
-                    Dim toAdd As IOrmBase = o1
+                    Dim toAdd As IKeyEntity = o1
                     If o2.GetType Is type Then
                         id1 = o2.Identifier
                         id2 = o1.Identifier
@@ -1064,14 +1065,14 @@ l1:
                     End If
                 Next
             Else
-                Dim oschema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2load)
+                Dim oschema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2load)
                 Dim ctx_oschema2 As IContextObjectSchema = TryCast(oschema2, IContextObjectSchema)
-                Dim r2 As M2MRelation = SQLGenerator.GetM2MRelation(type2load, type, direct)
+                Dim r2 As M2MRelation = MappingEngine.GetM2MRelation(type2load, type, direct)
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse _
                     (ctx_oschema2 IsNot Nothing AndAlso ctx_oschema2.GetContextFilter(GetFilterInfo) IsNot Nothing)
-                sb.Append(SQLGenerator.SelectM2M(type2load, type, New QueryAspect() {}, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
+                sb.Append(SQLGenerator.SelectM2M(MappingEngine, type2load, type, New QueryAspect() {}, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
-                If Not SQLGenerator.AppendWhere(type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
+                If Not SQLGenerator.AppendWhere(MappingEngine, type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")
                 End If
                 Dim dic As IDictionary = CType(GetDictionary(Of T)(), System.Collections.IDictionary)
@@ -1098,7 +1099,7 @@ l1:
                         End With
                         Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
                         If withLoad Then
-                            arr = SQLGenerator.GetSortedFieldList(type2load)
+                            arr = MappingEngine.GetSortedFieldList(type2load)
                         End If
                         Dim ec As OrmCache = TryCast(_cache, OrmCache)
 
@@ -1178,15 +1179,15 @@ l1:
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = MappingEngine.GetSortedFieldList(original_type)
-                sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
+                sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
                 'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
-                sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
+                sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
             End If
 
-            If Not SQLGenerator.AppendWhere(original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
+            If Not SQLGenerator.AppendWhere(MappingEngine, original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1221,7 +1222,7 @@ l1:
             Return values
         End Function
 
-        Protected Overrides Function GetObjects(Of T As {IOrmBase, New})(ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, ByVal objs As List(Of T), _
+        Protected Overrides Function GetObjects(Of T As {IKeyEntity, New})(ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, ByVal objs As List(Of T), _
             ByVal withLoad As Boolean, ByVal propertyAlias As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
             Invariant()
 
@@ -1240,15 +1241,15 @@ l1:
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = MappingEngine.GetSortedFieldList(original_type)
-                sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
+                sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
                 'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
-                sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
+                sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
             End If
 
-            If Not SQLGenerator.AppendWhere(original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
+            If Not SQLGenerator.AppendWhere(MappingEngine, original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1331,11 +1332,11 @@ l1:
 
             Dim original_type As Type = obj.GetType
 
-            'Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
+            'Dim filter As New cc.EntityFilter(original_type, "ID", _
             '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
-            Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+            Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
             For Each p As PKDesc In obj.GetPKValues
-                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
+                c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
             Next
             Dim filter As IFilter = c.Condition
 
@@ -1348,8 +1349,8 @@ l1:
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
                     Dim sb As New StringBuilder
-                    sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
-                    SQLGenerator.AppendWhere(original_type, filter, almgr, sb, GetFilterInfo, params)
+                    sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
+                    SQLGenerator.AppendWhere(MappingEngine, original_type, filter, almgr, sb, GetFilterInfo, params)
 
                     params.AppendParams(.Parameters)
                     .CommandText = sb.ToString
@@ -1418,7 +1419,7 @@ l1:
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
-                        Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(obj.GetType)
+                        Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(obj.GetType)
                         Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
                         Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                         'obj = NormalizeObject(obj, dic)
@@ -1454,7 +1455,7 @@ l1:
                             loaded = True
                         Loop
                         If dr.RecordsAffected = 0 Then
-                            Throw SQLGenerator.PrepareConcurrencyException(obj)
+                            Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, obj)
                         End If
 
                         If Not obj.IsLoaded AndAlso loaded Then
@@ -1667,7 +1668,7 @@ l1:
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
-            If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
+            If GetType(IKeyEntity).IsAssignableFrom(GetType(T)) Then
             Else
             End If
             'Dim obj As _ICachedEntity = CType(CreateEntity(Of T)(), _ICachedEntity)
@@ -1937,7 +1938,7 @@ l1:
                                     '    '    obj.SetValue(pi, c, o)
                                     '    '    obj.SetLoaded(c, True)
                                     '    'End If
-                                ElseIf GetType(IOrmBase).IsAssignableFrom(propType) Then
+                                ElseIf GetType(IKeyEntity).IsAssignableFrom(propType) Then
                                     Dim type_created As Type = propType
                                     Dim en As String = MappingEngine.GetEntityNameByType(type_created)
                                     If Not String.IsNullOrEmpty(en) Then
@@ -1947,7 +1948,7 @@ l1:
                                             Throw New OrmManagerException("Cannot find type for entity " & en)
                                         End If
                                     End If
-                                    Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
+                                    Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValueOptimized(pi, propertyAlias, oschema, o)
                                     If o IsNot Nothing Then
                                         o.SetCreateManager(obj.CreateManager)
@@ -2336,7 +2337,7 @@ l1:
         '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
         'End Function
 
-        Public Overrides Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})( _
+        Public Overrides Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
@@ -2366,8 +2367,8 @@ l1:
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(SQLGenerator, "p")
             Dim sb As New StringBuilder
-            sb.Append(SQLGenerator.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
-            If Not SQLGenerator.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
+            sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, columns, Nothing, GetFilterInfo))
+            If Not SQLGenerator.AppendWhere(MappingEngine, original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
             Dim values As New Generic.List(Of T2)
@@ -2486,7 +2487,7 @@ l1:
             'Return New ReadOnlyList(Of T)(values)
         End Function
 
-        Public Overrides Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, _
+        Public Overrides Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
@@ -2516,8 +2517,8 @@ l1:
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(SQLGenerator, "p")
             Dim sb As New StringBuilder
-            sb.Append(SQLGenerator.Select(realType, almgr, params, columns, Nothing, GetFilterInfo))
-            If Not SQLGenerator.AppendWhere(realType, Nothing, almgr, sb, GetFilterInfo, params) Then
+            sb.Append(SQLGenerator.Select(MappingEngine, realType, almgr, params, columns, Nothing, GetFilterInfo))
+            If Not SQLGenerator.AppendWhere(MappingEngine, realType, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
             Dim values As New Generic.List(Of T2)
@@ -2621,8 +2622,8 @@ l1:
                         sb.Append(o.ToString).Append(",")
                     Next
                     sb.Length -= 1
-                    Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params), params.Params.Count))
+                    Dim f As New cc.EntityFilter(original_type, fieldName, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing), params.Params.Count))
                 End If
             End If
 
@@ -2630,13 +2631,13 @@ l1:
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
-                    con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
+                    Dim con As New Condition.ConditionConstructor
+                    con.AddFilter(New cc.EntityFilter(original_type, fieldName, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New cc.EntityFilter(original_type, fieldName, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     Dim bf As IFilter = con.Condition
-                    'Dim f As IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
+                    'Dim f As IFilter = TryCast(bf, Worm.cc.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params, Nothing))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2657,9 +2658,9 @@ l1:
                         If sb2.Length > SQLGenerator.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
+                            Dim f As New cc.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params, Nothing))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2671,8 +2672,8 @@ l1:
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params))
+                        Dim f As New cc.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
+                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2710,8 +2711,8 @@ l1:
                         sb.Append(o.ToString).Append(",")
                     Next
                     sb.Length -= 1
-                    Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params), params.Params.Count))
+                    Dim f As New cc.TableFilter(table, column, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params), params.Params.Count))
                 End If
             End If
 
@@ -2719,13 +2720,13 @@ l1:
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
-                    con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
+                    Dim con As New Condition.ConditionConstructor
+                    con.AddFilter(New cc.TableFilter(table, column, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New cc.TableFilter(table, column, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     Dim bf As IFilter = con.Condition
                     'Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params, Nothing))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2746,9 +2747,9 @@ l1:
                         If sb2.Length > SQLGenerator.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
+                            Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params, Nothing))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params, Nothing))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2760,8 +2761,8 @@ l1:
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(SQLGenerator, GetFilterInfo, almgr, params))
+                        Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
+                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetFilterInfo, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2781,20 +2782,20 @@ l1:
             Return l
         End Function
 
-        Protected Overrides Function Search(Of T As {New, IOrmBase})(ByVal type2search As Type, _
+        Protected Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal frmt As IFtsStringFormater, Optional ByVal js() As OrmJoin = Nothing) As ReadOnlyList(Of T)
+            ByVal frmt As IFtsStringFormater, Optional ByVal js() As QueryJoin = Nothing) As ReadOnlyList(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
-            Dim searchSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2search)
+            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
             Dim selectType As System.Type = GetType(T)
-            Dim selSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectType)
+            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
             Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
             Dim queryFields As String() = Nothing
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
 
-            Dim joins As New List(Of OrmJoin)
+            Dim joins As New List(Of QueryJoin)
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
@@ -2805,7 +2806,7 @@ l1:
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    .CommandText = SQLGenerator.MakeSearchStatement(type2search, selectType, frmt, fields, _
+                    .CommandText = SQLGenerator.MakeSearchStatement(MappingEngine, type2search, selectType, frmt, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, _
                         "containstable", sort, appendMain, CType(filter, IFilter), contextKey, _
@@ -2831,7 +2832,7 @@ l1:
                         .CommandType = System.Data.CommandType.Text
 
                         Dim params As New ParamMgr(SQLGenerator, "p")
-                        .CommandText = SQLGenerator.MakeSearchStatement(type2search, selectType, frmt, fields, _
+                        .CommandText = SQLGenerator.MakeSearchStatement(MappingEngine, type2search, selectType, frmt, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
                             "freetexttable", sort, appendMain, CType(filter, IFilter), _
                             contextKey, selSchema, searchSchema)
@@ -2978,18 +2979,18 @@ l2:
             Return New ReadOnlyList(Of T)(res)
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {IOrmBase, New})(ByVal type2search As Type, _
+        Protected Overrides Function SearchEx(Of T As {IKeyEntity, New})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
             ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ReadOnlyList(Of T)
 
             Dim selectType As System.Type = GetType(T)
             Dim fields As New List(Of Pair(Of String, Type))
-            Dim joins As New List(Of OrmJoin)
+            Dim joins As New List(Of QueryJoin)
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim queryFields As String() = Nothing
 
-            Dim searchSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2search)
-            Dim selSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectType)
+            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
+            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
 
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
@@ -3000,7 +3001,7 @@ l2:
 
         Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
-            ByVal joins As IList(Of OrmJoin), ByVal selCols As IList(Of ColumnAttribute), _
+            ByVal joins As IList(Of QueryJoin), ByVal selCols As IList(Of ColumnAttribute), _
             ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
             ByVal searchSchema As IObjectSchemaBase, ByVal selSchema As IObjectSchemaBase) As Boolean
 
@@ -3096,7 +3097,7 @@ l2:
                 For Each f As IFilter In filter.GetAllFilters
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
-                        Dim ot As OrmFilterTemplateBase = CType(ef.GetFilterTemplate, OrmFilterTemplateBase)
+                        Dim ot As OrmFilterTemplate = CType(ef.GetFilterTemplate, OrmFilterTemplate)
                         Dim type2join As System.Type = ot.ObjectSource.GetRealType(MappingEngine)
 
                         'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
@@ -3130,7 +3131,7 @@ l2:
                             End If
                         End If
                     Else
-                        Dim tf As Database.Criteria.Core.TableFilter = TryCast(f, Database.Criteria.Core.TableFilter)
+                        Dim tf As cc.TableFilter = TryCast(f, cc.TableFilter)
                         If tf IsNot Nothing Then
                             If tf.Template.Table IsNot selSchema.Table Then
                                 Throw New NotImplementedException
@@ -3170,9 +3171,9 @@ l2:
             Return appendMain
         End Function
 
-        Public Function MakeSqlStmtSearch(Of T As {IOrmBase, New})(ByVal type2search As Type, _
+        Public Function MakeSqlStmtSearch(Of T As {IKeyEntity, New})(ByVal type2search As Type, _
             ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
-            ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
+            ByVal joins() As QueryJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
             ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
@@ -3185,7 +3186,7 @@ l2:
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    .CommandText = SQLGenerator.MakeSearchStatement(type2search, selectType, fts, fields, _
+                    .CommandText = SQLGenerator.MakeSearchStatement(MappingEngine, type2search, selectType, fts, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         limit, ftsText, sort, appendMain, CType(filter, IFilter), contextkey, selSchema, searchSchema)
                     params.AppendParams(.Parameters)
@@ -3219,11 +3220,11 @@ l2:
             Return cnt < _length
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(SQLGenerator, "p")
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                cmd.CommandText = SQLGenerator.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo)
+                cmd.CommandText = SQLGenerator.GetDictionarySelect(MappingEngine, GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
@@ -3238,12 +3239,12 @@ l2:
             End Using
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, _
-            ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, _
+            ByVal filter As IFilter, ByVal joins() As QueryJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(SQLGenerator, "p")
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                cmd.CommandText = SQLGenerator.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo, firstField, secondField)
+                cmd.CommandText = SQLGenerator.GetDictionarySelect(MappingEngine, GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo, firstField, secondField)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
@@ -3258,7 +3259,7 @@ l2:
             End Using
         End Function
 
-        Protected Shared Function BuildDictionaryInternal(Of T As {New, IOrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
+        Protected Shared Function BuildDictionaryInternal(Of T As {New, IKeyEntity})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
             ByVal firstField As String, ByVal secField As String) As DicIndex(Of T)
             Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secField)
             Dim root As DicIndex(Of T) = last
@@ -3308,7 +3309,7 @@ l2:
         '    Throw New NotImplementedException()
         'End Sub
 
-        Protected Overrides Sub M2MSave(ByVal obj As Orm.IOrmBase, ByVal t As System.Type, ByVal key As String, ByVal el As EditableListBase)
+        Protected Overrides Sub M2MSave(ByVal obj As Entities.IKeyEntity, ByVal t As System.Type, ByVal key As String, ByVal el As EditableListBase)
             Throw New NotImplementedException
         End Sub
 
@@ -3332,8 +3333,8 @@ l2:
             End Get
         End Property
 
-        Protected Friend Function LoadM2M(Of T As {IOrmBase, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
-            ByVal obj As IOrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
+        Protected Friend Function LoadM2M(Of T As {IKeyEntity, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
+            ByVal obj As IKeyEntity, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
             Dim b As ConnAction = TestConn(cmd)
             Dim tt As Type = GetType(T)
             Dim c As OrmCache = TryCast(_cache, OrmCache)
@@ -3393,7 +3394,7 @@ l2:
 
                 If sort IsNot Nothing AndAlso sort.IsExternal Then
                     Dim l2 As New List(Of Object)
-                    For Each o As T In SQLGenerator.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False).List)
+                    For Each o As T In MappingEngine.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False).List)
                         l2.Add(o.Identifier)
                     Next
                     l = l2
@@ -3407,7 +3408,7 @@ l2:
             End Try
         End Function
 
-        Public Overrides Function GetObjectFromStorage(ByVal obj As Orm._ICachedEntity) As Orm.ICachedEntity
+        Public Overrides Function GetObjectFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
             Invariant()
 
             If obj Is Nothing Then
@@ -3416,11 +3417,11 @@ l2:
 
             Dim original_type As Type = obj.GetType
 
-            'Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
+            'Dim filter As New cc.EntityFilter(original_type, "ID", _
             '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
-            Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+            Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
             For Each p As PKDesc In obj.GetPKValues
-                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
+                c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
             Next
             Dim filter As IFilter = c.Condition
 
@@ -3433,8 +3434,8 @@ l2:
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
                     Dim sb As New StringBuilder
-                    sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
-                    SQLGenerator.AppendWhere(original_type, filter, almgr, sb, GetFilterInfo, params)
+                    sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
+                    SQLGenerator.AppendWhere(MappingEngine, original_type, filter, almgr, sb, GetFilterInfo, params)
 
                     params.AppendParams(.Parameters)
                     .CommandText = sb.ToString

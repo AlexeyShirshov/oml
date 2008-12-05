@@ -1,4 +1,4 @@
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
 Public MustInherit Class ObjectSchemaBaseImplementationWeb
     Implements IOrmObjectSchema, IOrmSchemaInit
@@ -14,7 +14,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return Nothing
     End Function
 
-    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IOrmObjectSchema.GetJoins
+    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IOrmObjectSchema.GetJoins
         Return Nothing
     End Function
 
@@ -48,7 +48,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         _schema = schema
     End Sub
 
-    Public ReadOnly Property Table() As Worm.Orm.Meta.SourceFragment Implements Worm.Orm.Meta.IObjectSchemaBase.Table
+    Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IObjectSchemaBase.Table
         Get
             Return GetTables(0)
         End Get

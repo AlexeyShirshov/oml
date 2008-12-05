@@ -2,7 +2,7 @@
 Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm
 Imports Worm.Database
 
@@ -58,7 +58,7 @@ Imports Worm.Database
     Private _mgr As OrmReadOnlyDBManager
     Private Sub ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         If _mgr Is Nothing Then
-            _mgr = TestManager.CreateWriteManager(New MSSQL2005Generator("1"))
+            _mgr = TestManager.CreateWriteManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             _mgr.BeginTransaction()
         End If
         args.Manager = _mgr

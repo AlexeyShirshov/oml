@@ -1,15 +1,16 @@
-﻿Imports Worm.Orm
+﻿Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 Imports Worm.Cache
 Imports Worm.Criteria.Values
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
+Imports Worm.Criteria.Conditions
 
 Namespace Xml
     Partial Public Class QueryManager
 
-        Protected MustInherit Class BaseDataProvider(Of T As {New, IOrmBase})
+        Protected MustInherit Class BaseDataProvider(Of T As {New, IKeyEntity})
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
@@ -38,10 +39,10 @@ Namespace Xml
                 If _f IsNot Nothing Then
                     Dim c As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If c IsNot Nothing Then
-                    For Each fl As IFilter In _f.GetAllFilters
-                        Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
-                        If f IsNot Nothing Then
-                            Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                        For Each fl As IFilter In _f.GetAllFilters
+                            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                            If f IsNot Nothing Then
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
 
                                 Dim fields As List(Of String) = Nothing
                                 Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
@@ -75,12 +76,12 @@ Namespace Xml
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
                                 Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
                                 If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                     'If GetType(OrmBase).IsAssignableFrom(tp) Then
@@ -143,7 +144,7 @@ Namespace Xml
         End Class
 
 
-        Protected Class FilterCustDelegate(Of T As {New, IOrmBase})
+        Protected Class FilterCustDelegate(Of T As {New, IKeyEntity})
             Inherits BaseDataProvider(Of T)
 
             Private _cols As List(Of ColumnAttribute)
@@ -181,27 +182,27 @@ Namespace Xml
 
                 AppendSelectID(sb, original_type)
 
-                Dim c As New Criteria.Conditions.Condition.ConditionConstructor
+                Dim c As New Condition.ConditionConstructor
                 c.AddFilter(_f)
                 c.AddFilter(AppendWhere)
-                Schema.AppendWhere(original_type, c.Condition, sb, _mgr.GetFilterInfo)
+                _mgr.XPathGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, sb, _mgr.GetFilterInfo)
                 If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                    Schema.AppendOrder(original_type, _sort, sb)
+                    _mgr.XPathGenerator.AppendOrder(original_type, _sort, sb)
                 End If
 
                 Dim r As ReadOnlyList(Of T) = CType(_mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing), Global.Worm.ReadOnlyList(Of T))
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                    r = CType(Schema.ExternalSort(Of T)(_mgr, _sort, r.List), Global.Worm.ReadOnlyList(Of T))
+                    r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), Global.Worm.ReadOnlyList(Of T))
                 End If
                 Return r
             End Function
 
-            Protected ReadOnly Property Schema() As XPathGenerator
-                Get
-                    Return CType(_mgr.MappingEngine, XPathGenerator)
-                End Get
-            End Property
+            'Protected ReadOnly Property Schema() As XPathGenerator
+            '    Get
+            '        Return CType(_mgr.s, XPathGenerator)
+            '    End Get
+            'End Property
 
             'Protected ReadOnly Property Mgr() As 
             '    Get
@@ -218,7 +219,7 @@ Namespace Xml
             End Sub
 
             Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type)
-                sb.Append(Schema.SelectID(t))
+                sb.Append(_mgr.XPathGenerator.SelectID(_mgr.MappingEngine, t))
             End Sub
         End Class
 

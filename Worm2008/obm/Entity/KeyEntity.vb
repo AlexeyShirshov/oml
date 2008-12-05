@@ -1,7 +1,7 @@
 Imports System.Xml
 Imports Worm.Sorting
 Imports Worm.Cache
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports System.Collections.Generic
 Imports System.ComponentModel
@@ -9,7 +9,7 @@ Imports Worm.Criteria.Core
 
 #Const TraceSetState = False
 
-Namespace Orm
+Namespace Entities
 
     <Serializable()> _
     Public Class ObjectStateException
@@ -39,14 +39,14 @@ Namespace Orm
     ''' <remarks>
     ''' Класс является потокобезопасным как на чтение так и на запись.
     ''' Предоставляет следующий функционал:
-    ''' XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="OrmBase.ReadXml" /> и <see cref="OrmBase.WriteXml"/>.
+    ''' XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="KeyEntity.ReadXml" /> и <see cref="KeyEntity.WriteXml"/>.
     ''' <code lang="vb">Это код</code>
     ''' <example>Это пример</example>
     ''' </remarks>
     <Serializable()> _
-    Public MustInherit Class OrmBase
+    Public MustInherit Class KeyEntity
         Inherits CachedEntity
-        Implements _IOrmBase
+        Implements _IKeyEntity
 
 #Region " Classes "
         'Public Class ObjectSavedArgs
@@ -98,9 +98,9 @@ Namespace Orm
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class M2MClass
-            Private _o As OrmBase
+            Private _o As KeyEntity
 
-            Friend Sub New(ByVal o As OrmBase)
+            Friend Sub New(ByVal o As KeyEntity)
                 _o = o
             End Sub
 
@@ -113,42 +113,42 @@ Namespace Orm
             Public Function Find(ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
                 Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
                 Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                    New Type() {GetType(PredicateLink), GetType(Sort), GetType(Boolean)}, Nothing)
                 Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
                 Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.DirKey, withLoad)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(direct), withLoad)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})() As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})() As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelation.DirKey, False)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal direct As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal direct As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelation.GetKey(direct), False)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal sort As Sort) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal sort As Sort) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelation.DirKey, False)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal sort As Sort, ByVal direct As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal sort As Sort, ByVal direct As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelation.GetKey(direct), False)
                 End Using
@@ -157,18 +157,18 @@ Namespace Orm
             Public Function Find(ByVal top As Integer, ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
                 Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
                 Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                    New Type() {GetType(PredicateLink), GetType(Sort), GetType(Boolean)}, Nothing)
                 Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
                 Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {top, criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(True), withLoad, top)
                 End Using
             End Function
 
-            Public Function Find(Of T As {New, IOrmBase})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, IKeyEntity})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(direct), withLoad, top)
                 End Using
@@ -177,32 +177,32 @@ Namespace Orm
             Public Function FindDistinct(ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
                 Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
                 Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("FindDistinct", flags, Nothing, Reflection.CallingConventions.Any, _
-                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                    New Type() {GetType(PredicateLink), GetType(Sort), GetType(Boolean)}, Nothing)
                 Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
                 Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function FindDistinct(Of T As {New, IOrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function FindDistinct(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 'Dim rel As M2MRelation = GetMgr.ObjectSchema.GetM2MRelation(Me.GetType, GetType(T), True)
                 'Return GetMgr.FindDistinct(Of T)(rel, criteria, sort, withLoad)
                 Return FindDistinct(Of T)(criteria, sort, True, withLoad)
             End Function
 
-            Public Function FindDistinct(Of T As {New, IOrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function FindDistinct(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Dim rel As M2MRelation = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
-                    Dim crit As CriteriaLink = mc.Manager.MappingEngine.CreateCriteria(New ObjectSource(_o.GetType), OrmBaseT.PKName).Eq(_o).And(CType(criteria, CriteriaLink))
+                    Dim crit As PredicateLink = New PropertyPredicate(New ObjectSource(_o.GetType), OrmBaseT.PKName).eq(_o).[and](CType(criteria, PredicateLink))
                     Return mc.Manager.FindDistinct(Of T)(rel, crit, sort, withLoad)
                 End Using
             End Function
 
-            Public Sub Add(ByVal obj As _IOrmBase)
+            Public Sub Add(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
                     mc.Manager.M2MAdd(_o, obj, M2MRelation.DirKey)
                 End Using
             End Sub
 
-            Public Sub Add(ByVal obj As _IOrmBase, ByVal direct As Boolean)
+            Public Sub Add(ByVal obj As _IKeyEntity, ByVal direct As Boolean)
                 Using mc As IGetManager = GetMgr
                     mc.Manager.M2MAdd(_o, obj, M2MRelation.GetKey(direct))
                 End Using
@@ -220,13 +220,13 @@ Namespace Orm
                 End Using
             End Sub
 
-            Public Sub Delete(ByVal obj As _IOrmBase)
+            Public Sub Delete(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
                     mc.Manager.M2MDelete(_o, obj, M2MRelation.DirKey)
                 End Using
             End Sub
 
-            Public Sub Delete(ByVal obj As _IOrmBase, ByVal direct As Boolean)
+            Public Sub Delete(ByVal obj As _IKeyEntity, ByVal direct As Boolean)
                 Using mc As IGetManager = GetMgr
                     mc.Manager.M2MDelete(_o, obj, M2MRelation.GetKey(direct))
                 End Using
@@ -238,7 +238,7 @@ Namespace Orm
                 End Using
             End Sub
 
-            Public Sub Merge(Of T As {_IOrmBase, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean)
+            Public Sub Merge(Of T As {_IKeyEntity, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean)
                 If removeNotInList Then
                     For Each o As T In Find(Of T)(Nothing, Nothing, False)
                         If Not col.Contains(o) Then
@@ -253,7 +253,7 @@ Namespace Orm
                 Next
             End Sub
 
-            Public Sub Merge(Of T As {_IOrmBase, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean, ByVal direct As Boolean)
+            Public Sub Merge(Of T As {_IKeyEntity, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean, ByVal direct As Boolean)
                 If removeNotInList Then
                     For Each o As T In Find(Of T)(Nothing, Nothing, False)
                         If Not col.Contains(o) Then
@@ -268,27 +268,27 @@ Namespace Orm
                 Next
             End Sub
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+            Public Function Search(Of T As {IKeyEntity, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
 
@@ -366,10 +366,10 @@ Namespace Orm
 
             Private _value As Object
             Private _fieldName As String
-            Private _obj As OrmBase
+            Private _obj As KeyEntity
             Private _d As IDisposable
 
-            Public Sub New(ByVal obj As OrmBase, ByVal propertyAlias As String, ByVal d As IDisposable)
+            Public Sub New(ByVal obj As KeyEntity, ByVal propertyAlias As String, ByVal d As IDisposable)
                 _fieldName = propertyAlias
                 _obj = obj
                 _value = obj.GetValue(propertyAlias)
@@ -435,7 +435,7 @@ Namespace Orm
         <NonSerialized()> _
         Protected _saved As Boolean
         '<NonSerialized()> _
-        'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
+        'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilter)
         '<NonSerialized()> _
         'Protected Friend _valProcs As Boolean
         <NonSerialized()> _
@@ -650,7 +650,7 @@ Namespace Orm
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IOrmBase.Init
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IKeyEntity.Init
             MyBase._Init(cache, schema)
             Identifier = id
             PKLoaded(1)
@@ -666,7 +666,7 @@ Namespace Orm
         <Runtime.Serialization.OnDeserialized()> _
         Private Overloads Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
             Init()
-            If ObjectState <> Orm.ObjectState.Created Then
+            If ObjectState <> Entities.ObjectState.Created Then
                 Using mc As IGetManager = GetMgr()
                     If mc IsNot Nothing Then
                         mc.Manager.RegisterInCashe(Me)
@@ -897,7 +897,7 @@ Namespace Orm
 
             For Each el As EditableListBase In _m2m
                 SyncLock "1efb139gf8bh"
-                    For Each o As _IOrmBase In el.Added
+                    For Each o As _IKeyEntity In el.Added
                         'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Added.Remove(Me)
@@ -913,7 +913,7 @@ Namespace Orm
                     Next
                     el.Added.Clear()
 
-                    For Each o As _IOrmBase In el.Deleted
+                    For Each o As _IKeyEntity In el.Deleted
                         'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Deleted.Remove(Me)
@@ -1181,11 +1181,11 @@ Namespace Orm
         '    Return CompareTo(TryCast(obj, OrmBase))
         'End Function
 
-        Private Function GetName() As String Implements _IOrmBase.GetName
+        Private Function GetName() As String Implements _IKeyEntity.GetName
             Return Me.GetType.Name & Identifier.ToString
         End Function
 
-        Private Function GetOldName(ByVal id As Object) As String Implements _IOrmBase.GetOldName
+        Private Function GetOldName(ByVal id As Object) As String Implements _IKeyEntity.GetOldName
             Return Me.GetType.Name & id.ToString
         End Function
 
@@ -1201,7 +1201,7 @@ Namespace Orm
 
         'End Sub
 
-        Private Function AddAccept(ByVal acs As AcceptState2) As Boolean Implements _IOrmBase.AddAccept
+        Private Function AddAccept(ByVal acs As AcceptState2) As Boolean Implements _IKeyEntity.AddAccept
             Using SyncHelper(False)
                 For Each a As AcceptState2 In _needAccept
                     If a.el Is acs.el Then
@@ -1213,7 +1213,7 @@ Namespace Orm
             Return True
         End Function
 
-        Private Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2 Implements _IOrmBase.GetAccept
+        Private Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2 Implements _IKeyEntity.GetAccept
             Using SyncHelper(False)
                 For Each a As AcceptState2 In _needAccept
                     If a.CacheItem Is m Then
@@ -1236,7 +1236,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public MustOverride Property Identifier() As Object Implements IOrmBase.Identifier
+        Public MustOverride Property Identifier() As Object Implements IKeyEntity.Identifier
 
 #End Region
 
@@ -1353,7 +1353,7 @@ Namespace Orm
         Public Overloads Overrides Function Equals(ByVal obj As Object) As System.Boolean
             If obj Is Nothing Then Return False
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
-                Return Equals(CType(obj, OrmBase))
+                Return Equals(CType(obj, KeyEntity))
             Else
                 Return Identifier.Equals(obj)
             End If
@@ -1363,7 +1363,7 @@ Namespace Orm
         '    Return Me.Identifier = other_id
         'End Function
 
-        Public Overridable Overloads Function Equals(ByVal obj As OrmBase) As Boolean
+        Public Overridable Overloads Function Equals(ByVal obj As KeyEntity) As Boolean
             If obj Is Nothing Then Return False
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
                 Return Me.Identifier.Equals(obj.Identifier)
@@ -1385,7 +1385,7 @@ Namespace Orm
 
         'Protected MustOverride Function GetNew() As OrmBase
 
-        Private Sub _RejectM2MIntermidiate() Implements _IOrmBase.RejectM2MIntermidiate
+        Private Sub _RejectM2MIntermidiate() Implements _IKeyEntity.RejectM2MIntermidiate
             Using SyncHelper(False)
                 For Each acs As AcceptState2 In _needAccept
                     If acs.el IsNot Nothing Then
@@ -1820,7 +1820,7 @@ Namespace Orm
 
 #Region " Operators "
 
-        Public Shared Operator <>(ByVal obj1 As OrmBase, ByVal obj2 As OrmBase) As Boolean
+        Public Shared Operator <>(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return False
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -1829,7 +1829,7 @@ Namespace Orm
             Return Not obj1.Equals(obj2)
         End Operator
 
-        Public Shared Operator =(ByVal obj1 As OrmBase, ByVal obj2 As OrmBase) As Boolean
+        Public Shared Operator =(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return True
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -1838,7 +1838,7 @@ Namespace Orm
             Return obj1.Equals(obj2)
         End Operator
 
-        Public Shared Operator <(ByVal obj1 As OrmBase, ByVal obj2 As OrmBase) As Boolean
+        Public Shared Operator <(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then
                     Return False
@@ -1848,7 +1848,7 @@ Namespace Orm
             Return obj1.CompareTo(obj2) < 0
         End Operator
 
-        Public Shared Operator >(ByVal obj1 As OrmBase, ByVal obj2 As OrmBase) As Boolean
+        Public Shared Operator >(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then
                     Return False
@@ -2035,11 +2035,11 @@ Namespace Orm
             Return el
         End Function
 
-        Protected Sub _Add(ByVal obj As IOrmBase) Implements IM2M.Add
+        Protected Sub _Add(ByVal obj As IKeyEntity) Implements IM2M.Add
             _Add(obj, Nothing)
         End Sub
 
-        Protected Sub _Add(ByVal obj As IOrmBase, ByVal key As String) Implements IM2M.Add
+        Protected Sub _Add(ByVal obj As IKeyEntity, ByVal key As String) Implements IM2M.Add
             Dim el As EditableListBase = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
@@ -2086,11 +2086,11 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IOrmBase) Implements IM2M.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IM2M.Delete
             _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IOrmBase, ByVal key As String) Implements IM2M.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IM2M.Delete
             Dim el As EditableListBase = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then
@@ -2328,7 +2328,7 @@ Namespace Orm
 
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
-        Inherits OrmBase
+        Inherits KeyEntity
         Implements IComparable(Of T), IFactory
         'Implements IComparable(Of T), IOrmProxy(Of T)
 

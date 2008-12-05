@@ -2,9 +2,9 @@ Imports System
 Imports System.Configuration.Install
 Imports System.Diagnostics
 Imports System.ComponentModel
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Sorting
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
 Namespace Cache
 

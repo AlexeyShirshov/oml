@@ -6,10 +6,11 @@ using System.Reflection;
 using System.Text;
 using Worm.CodeGen.Core.CodeDomExtensions;
 using Worm.CodeGen.Core.Descriptors;
-using Worm.Orm;
+using Worm.Entities;
 using Worm.Collections;
-using Worm.Orm.Meta;
+using Worm.Entities.Meta;
 using Worm.Cache;
+using Worm.Criteria.Joins;
 
 namespace Worm.CodeGen.Core
 {
@@ -342,10 +343,10 @@ namespace Worm.CodeGen.Core
 			            if (_ormObjectsDefinition.EntityBaseType == null)
 			            {
 			                if (entity.HasCompositePK)
-			                    entityType = new CodeTypeReference(typeof (Worm.Orm.CachedEntity));
+			                    entityType = new CodeTypeReference(typeof (Worm.Entities.CachedEntity));
 			                else
 			                {
-			                    entityType = new CodeTypeReference(typeof (Worm.Orm.OrmBaseT<>));
+			                    entityType = new CodeTypeReference(typeof (Worm.Entities.OrmBaseT<>));
 			                    entityType.TypeArguments.Add(
 			                        new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity)));
 			                }
@@ -901,7 +902,7 @@ namespace Worm.CodeGen.Core
 			            entitySchemaDefClass.Members.Add(method);
 			            method.Name = "GetJoins";
 			            // тип возвращаемого значения
-			            method.ReturnType = new CodeTypeReference(typeof (Worm.Criteria.Joins.OrmJoin));
+			            method.ReturnType = new CodeTypeReference(typeof (Worm.Criteria.Joins.QueryJoin));
 			            // модификаторы доступа
 			            method.Attributes = MemberAttributes.Public;
 			            // реализует метод базового класса
@@ -939,7 +940,7 @@ namespace Worm.CodeGen.Core
 			                method.Statements.Add(
 			                    new CodeMethodReturnStatement(
 			                        new CodeDefaultValueExpression(
-			                            new CodeTypeReference(typeof (Worm.Database.Criteria.Joins.OrmJoin)))
+			                            new CodeTypeReference(typeof (QueryJoin)))
 			                        )
 			                    );
 			            }
@@ -1231,7 +1232,7 @@ namespace Worm.CodeGen.Core
 			                (entity.BaseEntity == null)
 			                    ?
 			                        (CodeExpression) new CodeObjectCreateExpression(
-			                                             new CodeTypeReference(typeof (Worm.Orm.Meta.OrmObjectIndex))
+			                                             new CodeTypeReference(typeof (Worm.Entities.Meta.OrmObjectIndex))
 			                                             )
 			                    :
 			                        new CodeMethodInvokeExpression(
@@ -1786,7 +1787,7 @@ namespace Worm.CodeGen.Core
 			entityInterface.TypeAttributes = entityPropertiesInterface.TypeAttributes = TypeAttributes.Public | TypeAttributes.Interface;
     		
             entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
-            entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IOrmBase)));
+            entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IKeyEntity)));
 
     		entityClass.EntityInterfaceDeclaration = entityInterface;
     		entityClass.EntityPropertiesInterfaceDeclaration = entityPropertiesInterface;

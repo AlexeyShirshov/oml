@@ -1,10 +1,9 @@
 Imports Worm
 Imports System.Collections.Generic
 Imports Worm.Cache
-Imports Worm.Orm
-Imports Worm.Database.Criteria.Core
+Imports Worm.Entities
 Imports Worm.Sorting
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports cc = Worm.Criteria.Core
 
 Namespace Database
@@ -13,12 +12,12 @@ Namespace Database
 
         Private _upd As New DBUpdater
 
-        Public Sub New(ByVal cache As OrmCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
-            MyBase.New(cache, schema, connectionString)
+        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As SQLGenerator, ByVal connectionString As String)
+            MyBase.New(cache, mpe, stmtGen, connectionString)
         End Sub
 
-        Protected Sub New(ByVal schema As SQLGenerator, ByVal connectionString As String)
-            MyBase.New(schema, connectionString)
+        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal stmtgen As SQLGenerator, ByVal connectionString As String)
+            MyBase.New(mpe, stmtgen, connectionString)
         End Sub
 
         Protected Friend Overrides ReadOnly Property IdentityString() As String
@@ -40,7 +39,7 @@ Namespace Database
 
             'Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             'Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-            'Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
+            'Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             'Dim inv As Boolean
             'Using obj.GetSyncRoot()
             '    Dim cmdtext As String = Nothing
@@ -234,7 +233,7 @@ Namespace Database
             'Return True
         End Function
 
-        Protected Overrides Sub M2MSave(ByVal obj As IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
+        Protected Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
             _upd.M2MSave(Me, obj, t, direct, el)
             'If obj Is Nothing Then
             '    Throw New ArgumentNullException("obj")

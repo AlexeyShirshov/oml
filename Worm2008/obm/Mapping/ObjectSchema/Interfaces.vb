@@ -2,12 +2,12 @@ Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Criteria.Joins
 Imports Worm.Cache
 
-Namespace Orm.Meta
+Namespace Entities.Meta
 
     Public Interface IRelation
         Structure RelationDesc
@@ -67,7 +67,7 @@ Namespace Orm.Meta
     Public Interface IMultiTableObjectSchema
         Inherits IObjectSchemaBase
         Function GetTables() As SourceFragment()
-        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin
+        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As QueryJoin
     End Interface
 
     Public Interface IMultiTableWithM2MSchema
@@ -141,7 +141,7 @@ Namespace Orm.Meta
         Function GetEntityTypeKey(ByVal filterInfo As Object) As Object
     End Interface
 
-    Public Interface IOrmEditable(Of T As {OrmBase})
+    Public Interface IOrmEditable(Of T As {KeyEntity})
         Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface
 
@@ -156,7 +156,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IGetJoinsWithContext
-        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
+        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As QueryJoin
     End Interface
 
     Public Interface IConnectedFilter

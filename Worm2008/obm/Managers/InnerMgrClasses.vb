@@ -1,5 +1,5 @@
-﻿Imports Worm.Orm.Meta
-Imports Worm.Orm
+﻿Imports Worm.Entities.Meta
+Imports Worm.Entities
 Imports Worm.Cache
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
@@ -12,10 +12,10 @@ Partial Public Class OrmManager
         'Public ReadOnly obj As OrmBase
         Dim p1 As IRelation.RelationDesc 'Pair(Of String, Type)
         Dim p2 As IRelation.RelationDesc 'Pair(Of String, Type)
-        Dim o1 As IOrmBase
-        Dim o2 As IOrmBase
+        Dim o1 As IKeyEntity
+        Dim o2 As IKeyEntity
 
-        Public Sub New(ByVal r As IRelation, ByVal obj As IOrmBase, ByVal schema As ObjectMappingEngine)
+        Public Sub New(ByVal r As IRelation, ByVal obj As IKeyEntity, ByVal schema As ObjectMappingEngine)
             Me.o = r
             'Me.obj = obj
             p1 = o.GetFirstType
@@ -23,8 +23,8 @@ Partial Public Class OrmManager
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
             Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
-            o1 = CType(obj.GetValueOptimized(Nothing, p1.PropertyName, oschema), IOrmBase)
-            o2 = CType(obj.GetValueOptimized(Nothing, p2.PropertyName, oschema), IOrmBase)
+            o1 = CType(obj.GetValueOptimized(Nothing, p1.PropertyName, oschema), IKeyEntity)
+            o2 = CType(obj.GetValueOptimized(Nothing, p2.PropertyName, oschema), IKeyEntity)
         End Sub
 
         Public Function Add(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
@@ -33,8 +33,8 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            Dim obj As IOrmBase = Nothing, subobj As IOrmBase = Nothing
-            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim obj As IKeyEntity = Nothing, subobj As IKeyEntity = Nothing
+            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If Main.Equals(o1) Then
                 obj = o1
                 subobj = o2
@@ -77,7 +77,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) Then
                 el.Delete(o2)
             ElseIf main.Equals(o2) Then
@@ -92,7 +92,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 Return el.Accept(mgr)
             End If
@@ -105,7 +105,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 el.Reject(mgr, False)
             End If
@@ -822,7 +822,7 @@ Partial Public Class OrmManager
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
     End Class
 
-    Public MustInherit Class CustDelegate(Of T As {IOrmBase, New})
+    Public MustInherit Class CustDelegate(Of T As {IKeyEntity, New})
         Inherits CustDelegateBase(Of T)
 
         Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T)

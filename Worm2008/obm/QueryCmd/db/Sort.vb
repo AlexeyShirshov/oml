@@ -4,7 +4,7 @@ Imports Worm.Query.Database
 Imports Worm.Criteria.Joins
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
 'Namespace Database.Sorting
 '    Public Class DbSort

@@ -1,5 +1,5 @@
-﻿Imports Worm.Orm.Meta
-Imports Worm.Orm
+﻿Imports Worm.Entities.Meta
+Imports Worm.Entities
 Imports System.Collections.Generic
 
 Namespace Cache

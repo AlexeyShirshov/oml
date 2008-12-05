@@ -1,8 +1,8 @@
 ﻿Imports System.Collections.Generic
 Imports System.ComponentModel
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
-Namespace Orm
+Namespace Entities
 
     <DefaultProperty("Item")> _
     Public Class AnonymousEntity

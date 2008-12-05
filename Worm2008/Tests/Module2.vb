@@ -3,19 +3,21 @@ Imports Worm.Cache
 Imports Worm
 Imports Worm.Database.Criteria
 Imports Worm.Database.OrmReadOnlyDBManager
+Imports Worm.Criteria
+Imports Worm.Query
 
 Module Module2
 
     Public Class States
-        Public FromState As Orm.ObjectState
-        Public ToState As Orm.ObjectState
+        Public FromState As Entities.ObjectState
+        Public ToState As Entities.ObjectState
         Public Dt As Date
     End Class
 
     Public Class StatesList
         Inherits List(Of States)
 
-        Public Overloads Sub Add(ByVal oldState As Orm.ObjectState, ByVal newState As Orm.ObjectState)
+        Public Overloads Sub Add(ByVal oldState As Entities.ObjectState, ByVal newState As Entities.ObjectState)
             Dim os As New States
             os.Dt = Now
             os.FromState = oldState
@@ -24,10 +26,10 @@ Module Module2
         End Sub
     End Class
 
-    <Orm.Meta.Entity("junk", "id", "1")> _
+    <Entities.Meta.Entity("junk", "id", "1")> _
     Public Class TestEditTable
-        Inherits Orm.OrmBaseT(Of TestEditTable)
-        Implements Orm.Meta.IOrmEditable(Of TestEditTable)
+        Inherits Entities.OrmBaseT(Of TestEditTable)
+        Implements Entities.Meta.IOrmEditable(Of TestEditTable)
 
         Private _dt As Date
         Public ReadOnly Property Dt() As Date
@@ -51,7 +53,7 @@ Module Module2
             End Get
         End Property
 
-        Protected Sub ChangeState(ByVal state As Worm.Orm.ObjectState)
+        Protected Sub ChangeState(ByVal state As Worm.Entities.ObjectState)
             _changes.Add(state, ObjectState)
         End Sub
 
@@ -62,12 +64,12 @@ Module Module2
             End Get
         End Property
 
-        Protected Sub OnDeleted(ByVal o As Orm.OrmBase, ByVal e As EventArgs)
+        Protected Sub OnDeleted(ByVal o As Entities.KeyEntity, ByVal e As EventArgs)
             _deleted = True
         End Sub
 
-        Protected _s As Orm.ObjectState
-        Public ReadOnly Property SavingState() As Orm.ObjectState
+        Protected _s As Entities.ObjectState
+        Public ReadOnly Property SavingState() As Entities.ObjectState
             Get
                 Return _s
             End Get
@@ -108,7 +110,7 @@ Module Module2
         End Sub
 
         Private _name As String
-        <Orm.Meta.Column(column:="name")> Public Property Name() As String
+        <Entities.Meta.Column(column:="name")> Public Property Name() As String
             Get
                 Using Read("Name")
                     Return _name
@@ -122,7 +124,7 @@ Module Module2
         End Property
 
         Private _code As Nullable(Of Integer)
-        <Orm.Meta.Column(column:="code")> Public Property Code() As Nullable(Of Integer)
+        <Entities.Meta.Column(column:="code")> Public Property Code() As Nullable(Of Integer)
             Get
                 Using Read("Code")
                     Return _code
@@ -135,7 +137,7 @@ Module Module2
             End Set
         End Property
 
-        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Orm.Meta.IOrmEditable(Of TestEditTable).CopyBody
+        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Entities.Meta.IOrmEditable(Of TestEditTable).CopyBody
             With [to]
                 ._name = from._name
                 ._code = from._code
@@ -144,7 +146,7 @@ Module Module2
     End Class
 
     Private _cache As New OrmCache
-    Private _schema As New Database.SQLGenerator("1")
+    Private _schema As New Worm.ObjectMappingEngine("1")
     Private _exCount As Integer
     Private _identity As Integer = -100
     Private _deleted As ArrayList = ArrayList.Synchronized(New ArrayList)
@@ -269,7 +271,7 @@ Module Module2
     End Sub
 
     Private _saved As ArrayList = ArrayList.Synchronized(New ArrayList)
-    Sub ObjectSaved(ByVal sebder As ObjectListSaver, ByVal o As Orm.ICachedEntity)
+    Sub ObjectSaved(ByVal sebder As ObjectListSaver, ByVal o As Entities.ICachedEntity)
         _saved.Add(o)
     End Sub
 
@@ -297,11 +299,11 @@ Module Module2
                                         Using t.BeginAlter
                                             'If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
                                             done = t.Delete()
-                                            Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                            Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                             If Not done Then
                                                 Debug.Assert(st.Saver.AffectedObjects.Count = 0)
                                                 Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t)
-                                                Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Orm.ObjectState.NotFoundInSource)
+                                                Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Entities.ObjectState.NotFoundInSource)
                                                 Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
                                             End If
                                             'End If
@@ -313,17 +315,17 @@ Module Module2
                                         'Debug.Assert(Not done OrElse st.Saver.AffectedObjects.Count > 0)
                                         'Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                         st.AcceptModifications()
-                                        Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                         AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
                                         AddHandler st.Saver.ObjectSaved, AddressOf ObjectSaved
                                     End Using
                                     If done Then
                                         Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
                                         Dim s, s2, s3 As String
-                                        If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                        If t.InternalProperties.ObjectState <> Entities.ObjectState.Deleted Then
                                             s = sw.GetStringBuilder.ToString
                                         End If
-                                        Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        Debug.Assert(t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                         _deleted.Add(t)
                                         Dim b As Boolean = mgr.IsInCachePrecise(t)
                                         Debug.Assert(Not b)
@@ -437,7 +439,7 @@ Module Module2
         Next
     End Sub
 
-    Sub throwEx(ByVal sender As ObjectListSaver, ByVal o As Orm.ICachedEntity)
+    Sub throwEx(ByVal sender As ObjectListSaver, ByVal o As Entities.ICachedEntity)
         Throw New Exception("xxx")
     End Sub
 
@@ -489,9 +491,9 @@ Module Module2
                     Do
                         Try
                             If r.NextDouble > 0.5 Then
-                                mgr.Find(Of TestEditTable)(Ctor.Field(GetType(TestEditTable), "Name").Like("e%"), Nothing, False)
+                                mgr.Find(Of TestEditTable)(PCtor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, False)
                             Else
-                                mgr.Find(Of TestEditTable)(Ctor.Field(GetType(TestEditTable), "Name").Like("e%"), Nothing, True)
+                                mgr.Find(Of TestEditTable)(PCtor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, True)
                             End If
                             done = True
                             Threading.Thread.Sleep(0)
@@ -511,7 +513,7 @@ Module Module2
 
     Public Function CreateManager() As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
+        Return New OrmDBManager(_cache, _schema, New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
         'Return New OrmDBManager(_cache, _schema, "data source=.\sqlexpress;Initial catalog=test;Integrated security=true;Connection timeout=60;")
     End Function
 End Module

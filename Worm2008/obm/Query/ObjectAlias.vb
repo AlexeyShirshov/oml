@@ -1,4 +1,4 @@
-﻿Namespace Orm
+﻿Namespace Entities
 
     Public Class ObjectAlias
         Private _t As Type
@@ -198,4 +198,25 @@
             Return rt
         End Function
     End Class
+
+    Public Structure ObjectProperty
+        Public ReadOnly ObjectSource As ObjectSource
+        Public ReadOnly Field As String
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource(entityName)
+            Me.Field = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource(t)
+            Me.Field = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+            Me.ObjectSource = New ObjectSource([alias])
+            Me.Field = propertyAlias
+        End Sub
+    End Structure
+
 End Namespace

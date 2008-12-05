@@ -1,18 +1,19 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Query
 Imports Worm.Database.Criteria
+Imports Worm.Criteria
 
 <TestClass()> Public Class TestComplexEntities
 
     <TestMethod()> _
     Public Sub TestGuid()
-        Using mgr As OrmManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim o As GuidPK = mgr.Find(Of GuidPK)(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"))
 
             Assert.IsNotNull(o)
@@ -27,7 +28,7 @@ Imports Worm.Database.Criteria
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestGuidCreateWrong()
-        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim o As GuidPK = Nothing
             Using mt As New ModificationsTracker(mgr)
                 o = New GuidPK
@@ -49,7 +50,7 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> _
     Public Sub TestGuidCreate()
-        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New MSSQL2005Generator("1"))
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             Dim o As GuidPK = Nothing
 
             mgr.BeginTransaction()
@@ -78,12 +79,13 @@ Imports Worm.Database.Criteria
     <TestMethod()> _
     Public Sub TestCPK()
         Dim cache As New Worm.Cache.OrmCache
-        Dim gen As New SQLGenerator("1")
+        Dim gen As New ObjectMappingEngine("1")
 
         Dim q As QueryCmd = New QueryCmd(GetType(ComplexPK)).Where _
-            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345))
+            (PCtor.prop(GetType(ComplexPK), "Int").eq(345))
 
-        Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+        Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)( _
+            Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(2, l.Count)
 
@@ -100,7 +102,7 @@ Imports Worm.Database.Criteria
         Assert.IsTrue(f.InternalProperties.IsLoaded)
 
         l = New QueryCmd(GetType(ComplexPK)).Where _
-            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+            (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
         Assert.IsTrue(l(0).InternalProperties.IsLoaded)
@@ -109,9 +111,9 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> _
     Public Sub TestCPKUpdate()
-        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim l As ReadOnlyEntityList(Of ComplexPK) = New QueryCmd(GetType(ComplexPK)).Where _
-                            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
+                            (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
 
             Dim f As ComplexPK = l(0)
 
@@ -124,7 +126,7 @@ Imports Worm.Database.Criteria
                 End Using
 
                 Dim f2 As ComplexPK = New QueryCmd(GetType(ComplexPK)).Where _
-                             (Ctor.Field(GetType(ComplexPK), "Name").Eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
+                             (PCtor.prop(GetType(ComplexPK), "Name").eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
 
                 Assert.AreSame(f, f2)
             Finally

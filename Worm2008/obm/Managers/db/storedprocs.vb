@@ -2,8 +2,8 @@ Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
 Imports Worm.Cache
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 Namespace Database.Storedprocs
     <Flags()> _
@@ -108,7 +108,7 @@ Namespace Database.Storedprocs
 
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
             _reseted(GetKey) = False
-            Dim schema As SQLGenerator = CType(mgr.MappingEngine, SQLGenerator)
+            Dim schema As SQLGenerator = mgr.SQLGenerator
             Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
@@ -887,7 +887,7 @@ Namespace Database.Storedprocs
                 Return _name
             End Function
 
-            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)
+            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute)
                 Dim l As New List(Of ColumnAttribute)
                 For i As Integer = 0 To _cols.Length - 1
                     Dim c As String = _cols(i)
@@ -1013,7 +1013,7 @@ Namespace Database.Storedprocs
                 End If
                 If _l Is Nothing Then
                     _l = New List(Of T)
-                    _oschema = mgr.SQLGenerator.GetObjectSchema(GetType(T))
+                    _oschema = mgr.MappingEngine.GetObjectSchema(GetType(T))
                     _props = mgr.MappingEngine.GetProperties(GetType(T), _oschema)
                     _cm = _oschema.GetFieldColumnMap
                 End If

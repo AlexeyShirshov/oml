@@ -3,24 +3,26 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Database
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Cache
+Imports Worm.Criteria
+Imports Worm.Query
 
 <TestClass()> _
 Public Class TestTracker
     Implements INewObjectsStore
 
     Private _id As Integer = -100
-    Private _new_objects As New Dictionary(Of Integer, OrmBase)
+    Private _new_objects As New Dictionary(Of Integer, KeyEntity)
 
     Public Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(CInt(CType(obj, OrmBase).Identifier), CType(obj, OrmBase))
+        _new_objects.Add(CInt(CType(obj, KeyEntity).Identifier), CType(obj, KeyEntity))
     End Sub
 
     Public Function GetIdentity() As Integer
@@ -34,7 +36,7 @@ Public Class TestTracker
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
-        Dim o As OrmBase = Nothing
+        Dim o As KeyEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
@@ -49,8 +51,8 @@ Public Class TestTracker
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(CInt(CType(obj, OrmBase).Identifier))
-        Debug.WriteLine("removed: " & CType(obj, OrmBase).Identifier.ToString)
+        _new_objects.Remove(CInt(CType(obj, KeyEntity).Identifier))
+        Debug.WriteLine("removed: " & CType(obj, KeyEntity).Identifier.ToString)
     End Sub
 
     Protected Sub Objr(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inloaq As Boolean)
@@ -63,7 +65,7 @@ Public Class TestTracker
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestCreateObjects()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             _new_objects.Clear()
             mgr.Cache.NewObjectManager = Me
 
@@ -97,7 +99,7 @@ Public Class TestTracker
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             _new_objects.Clear()
             mgr.Cache.NewObjectManager = Me
 
@@ -136,7 +138,7 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestNormal()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
@@ -165,15 +167,15 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestBatch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
             mgr.Find(Of Table1)(10)
-            mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(100), Nothing, True)
-            mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("DT").Eq(Now), Nothing, True)
+            mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(100), Nothing, True)
+            mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("DT").eq(Now), Nothing, True)
 
             mgr.BeginTransaction()
             Try
@@ -199,7 +201,7 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestRecover()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim tt As Table2 = mgr.Find(Of Table2)(1)
             Assert.AreEqual(Of Decimal)(1, tt.Money)
 
@@ -221,7 +223,7 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestRecover2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = Me
             mgr.BeginTransaction()
             Try

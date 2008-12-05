@@ -1,4 +1,4 @@
-﻿Namespace Orm.Meta
+﻿Namespace Entities.Meta
 
     Public Class PKDesc
         Public ReadOnly PropertyAlias As String
@@ -236,4 +236,96 @@
             End If
         End Function
     End Class
+
+    Public Class AliasMgr
+        Implements IPrepareTable
+
+        Private _defaultAliases As Generic.IDictionary(Of SourceFragment, String)
+        Private _objectAlises As Generic.IDictionary(Of ObjectAlias, Generic.IDictionary(Of SourceFragment, String))
+        Private _cnt As Integer
+
+        Private Sub New(ByVal aliases As Generic.IDictionary(Of SourceFragment, String))
+            _defaultAliases = aliases
+            _objectAlises = New Generic.Dictionary(Of ObjectAlias, Generic.IDictionary(Of SourceFragment, String))
+        End Sub
+
+        Public Shared Function Create() As AliasMgr
+            Return New AliasMgr(New Generic.Dictionary(Of SourceFragment, String))
+        End Function
+
+        Public Function AddTable(ByRef table As SourceFragment, ByVal os As Entities.ObjectSource) As String Implements IPrepareTable.AddTable
+            Return AddTable(table, os, CType(Nothing, ICreateParam))
+        End Function
+
+        Public Function AddTable(ByRef table As SourceFragment, ByVal os As Entities.ObjectSource, ByVal pmgr As ICreateParam) As String Implements IPrepareTable.AddTable
+            'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
+            Dim t As SourceFragment = table
+            Dim tt As SourceFragment = table.OnTableAdd(pmgr)
+            If tt IsNot Nothing Then
+                '    Dim f As SourceFragment = tf.GetFunction(table, pmgr)
+                '    If f IsNot Nothing Then
+                table = tt
+                '    End If
+            End If
+            Dim i As Integer = _cnt + 1
+            Dim [alias] As String = "t" & i
+            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                _defaultAliases.Add(t, [alias])
+            Else
+                Dim dic As Generic.IDictionary(Of SourceFragment, String) = Nothing
+                If Not _objectAlises.TryGetValue(os.ObjectAlias, dic) Then
+                    dic = New Generic.Dictionary(Of SourceFragment, String)
+                    _objectAlises.Add(os.ObjectAlias, dic)
+                End If
+                dic.Add(t, [alias])
+            End If
+            _cnt += 1
+            Return [alias]
+        End Function
+
+        Friend Sub AddTable(ByVal tbl As SourceFragment, ByVal [alias] As String)
+            _defaultAliases.Add(tbl, [alias])
+        End Sub
+
+        'Public Function GetAlias(ByVal table As String) As String
+        '    Return _aliases(table)
+        'End Function
+
+        'Public ReadOnly Property Aliases() As IDictionary(Of SourceFragment, String) Implements IPrepareTable.Aliases
+        '    Get
+        '        Return _aliases
+        '    End Get
+        'End Property
+
+        'Public ReadOnly Property IsEmpty() As Boolean
+        '    Get
+        '        Return _defaultAliases Is Nothing
+        '    End Get
+        'End Property
+
+        Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As ObjectSource, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                sb.Replace(table.UniqueName(Nothing) & schema.Delimiter, _defaultAliases(table) & gen.Selector)
+            Else
+                sb.Replace(table.UniqueName(os) & schema.Delimiter, _objectAlises(os.ObjectAlias)(table) & gen.Selector)
+            End If
+        End Sub
+
+        Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As Entities.ObjectSource) As String Implements IPrepareTable.GetAlias
+            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                Return _defaultAliases(table)
+            Else
+                Return _objectAlises(os.ObjectAlias)(table)
+            End If
+        End Function
+
+        Public Function ContainsKey(ByVal table As Entities.Meta.SourceFragment, ByVal os As Entities.ObjectSource) As Boolean Implements IPrepareTable.ContainsKey
+            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                Return _defaultAliases.ContainsKey(table)
+            Else
+                Return _objectAlises(os.ObjectAlias).ContainsKey(table)
+            End If
+        End Function
+    End Class
+
 End Namespace

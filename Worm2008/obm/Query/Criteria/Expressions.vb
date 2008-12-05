@@ -1,7 +1,7 @@
 ﻿Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria
 Imports System.Collections.Generic
@@ -86,10 +86,10 @@ Public Class Expressions
             Return ToString.GetHashCode()
         End Function
 
-        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, _
+        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
             ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
-            ByVal filterInfo As Object) As String
-            Return FormatOper() & FormatParam(s, pmgr, almgr, columns, filterInfo)
+            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+            Return FormatOper() & FormatParam(s, stmt, pmgr, almgr, columns, filterInfo, inSelect)
         End Function
 
         Protected Function FormatOper() As String
@@ -114,9 +114,9 @@ Public Class Expressions
         End Function
 
         Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, _
-            ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal columns As List(Of String), ByVal filterInfo As Object) As String
-            Return _v.GetParam(s, pmgr, almgr, Nothing, columns, filterInfo)
+            ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
+            ByVal columns As List(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+            Return _v.GetParam(s, stmt, pmgr, almgr, Nothing, columns, filterInfo, inSelect)
             'Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
             'If p IsNot Nothing Then
             '    Return p.GetParam(s, pmgr, Nothing)
@@ -154,9 +154,9 @@ Public Class Expressions
                         If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
                             Dim lv As EntityPropValue = CType(leftValue, EntityPropValue)
                             If lv.OrmProp.Table IsNot Nothing Then
-                                Return schema.CreateCriteria(lv.OrmProp.Table, lv.OrmProp.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return New ColumnPredicate(lv.OrmProp.Table, lv.OrmProp.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             Else
-                                Return schema.CreateCriteria(lv.OrmProp.ObjectSource, lv.OrmProp.PropertyAlias).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(lv.OrmProp.ObjectSource, lv.OrmProp.PropertyAlias).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             End If
                         Else
                             GoTo l1
@@ -164,7 +164,7 @@ Public Class Expressions
                     ElseIf leftValue.GetType Is GetType(CustomValue) Then
                         Dim lv As CustomValue = CType(leftValue, CustomValue)
                         If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
-                            Return schema.CreateCustom(lv.Format, CType(rightValue, IParamFilterValue), fo, lv.Values)
+                            Return New CustomFilter(lv.Format, CType(rightValue, IParamFilterValue), fo, lv.Values)
                         Else
                             GoTo l1
                         End If
@@ -172,13 +172,13 @@ Public Class Expressions
                         If rightValue.GetType Is GetType(EntityPropValue) Then
                             Dim rv As EntityPropValue = CType(rightValue, EntityPropValue)
                             If rv.OrmProp.Table IsNot Nothing Then
-                                Return schema.CreateCriteria(rv.OrmProp.Table, rv.OrmProp.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return New ColumnPredicate(rv.OrmProp.Table, rv.OrmProp.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             Else
-                                Return schema.CreateCriteria(rv.OrmProp.ObjectSource, rv.OrmProp.PropertyAlias).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(rv.OrmProp.ObjectSource, rv.OrmProp.PropertyAlias).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             End If
                         ElseIf rightValue.GetType Is GetType(CustomValue) Then
                             Dim rv As CustomValue = CType(rightValue, CustomValue)
-                            Return schema.CreateCustom(rv.Format, CType(leftValue, IParamFilterValue), Invert(fo), rv.Values)
+                            Return New CustomFilter(rv.Format, CType(leftValue, IParamFilterValue), Invert(fo), rv.Values)
                         Else
                             GoTo l1
                         End If
@@ -190,7 +190,7 @@ Public Class Expressions
                 End If
             Else
 l1:
-                Return New Database.Criteria.Core.ExpressionFilter(lf, rf, fo)
+                Return New ExpressionFilter(lf, rf, fo)
                 '               Throw New NotImplementedException
             End If
         End Function
@@ -224,10 +224,10 @@ l1:
             End Get
         End Property
 
-        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, _
-            ByVal pmgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
-            ByVal filterInfo As Object) As String
-            Return "(" & _left.MakeStmt(s, pmgr, almgr, columns, filterInfo) & FormatOper() & _right.MakeStmt(s, pmgr, almgr, columns, filterInfo) & ")"
+        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal pmgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
+            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+            Return "(" & _left.MakeStmt(s, stmt, pmgr, almgr, columns, filterInfo, inSelect) & FormatOper() & _right.MakeStmt(s, stmt, pmgr, almgr, columns, filterInfo, inSelect) & ")"
         End Function
 
         Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String

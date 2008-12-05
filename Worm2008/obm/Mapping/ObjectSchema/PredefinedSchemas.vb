@@ -3,7 +3,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 
-Namespace Orm.Meta
+Namespace Entities.Meta
     Public NotInheritable Class SimpleObjectSchema
         Implements IObjectSchemaBase
 

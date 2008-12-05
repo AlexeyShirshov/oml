@@ -1,9 +1,9 @@
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Sorting
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 
-Namespace Orm
+Namespace Entities
     Public Enum SortType
         Asc
         Desc
@@ -229,29 +229,29 @@ Namespace Sorting
             Return CreateCustom(sortexpression, Me, values)
         End Function
 
-        Public ReadOnly Property Asc() As Orm.Sorting
+        Public ReadOnly Property Asc() As Entities.Sorting
             Get
                 If IsCustom Then
                     Throw New InvalidOperationException("Sort is custom")
                 End If
                 _order = SortType.Asc
-                Return New Orm.Sorting(_os, Me)
+                Return New Entities.Sorting(_os, Me)
                 'Return New Sort(_f, SortType.Asc, _ext)
             End Get
         End Property
 
-        Public ReadOnly Property Desc() As Orm.Sorting
+        Public ReadOnly Property Desc() As Entities.Sorting
             Get
                 'If IsCustom Then
                 '    Throw New InvalidOperationException("Sort is custom")
                 'End If
                 _order = SortType.Desc
-                Return New Orm.Sorting(_os, Me)
+                Return New Entities.Sorting(_os, Me)
                 'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
 
-        Public Function Order(ByVal asc As Boolean) As Orm.Sorting
+        Public Function Order(ByVal asc As Boolean) As Entities.Sorting
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
@@ -263,13 +263,13 @@ Namespace Sorting
             End If
         End Function
 
-        Public Function Order(ByVal orderParam As String) As Orm.Sorting
+        Public Function Order(ByVal orderParam As String) As Entities.Sorting
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
 
             _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
-            Return New Orm.Sorting(_os, Me) 'New Sort(_f, _, _ext)
+            Return New Entities.Sorting(_os, Me) 'New Sort(_f, _, _ext)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort
@@ -666,7 +666,7 @@ Namespace Sorting
         '    End If
         'End Function
 
-        Protected Overrides Function _Equals(ByVal p As Orm.SelectExpression) As Boolean
+        Protected Overrides Function _Equals(ByVal p As Entities.SelectExpression) As Boolean
             Dim s As Sort = TryCast(p, Sort)
             If s Is Nothing Then
                 Return False

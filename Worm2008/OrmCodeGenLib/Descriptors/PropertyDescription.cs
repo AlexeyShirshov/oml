@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Worm.Orm.Meta;
+using Worm.Entities.Meta;
 
 namespace Worm.CodeGen.Core.Descriptors
 {

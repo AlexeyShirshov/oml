@@ -1,5 +1,5 @@
-﻿Imports Worm.Orm
-Imports Worm.Orm.Meta
+﻿Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 
 Namespace Query
@@ -38,9 +38,9 @@ Namespace Query
 
         Function CreateByEntityName(ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal obj As IOrmBase) As QueryCmd
+        Function Create(ByVal obj As IKeyEntity) As QueryCmd
 
-        Function Create(ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
+        Function Create(ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
 
         Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -48,9 +48,9 @@ Namespace Query
 
         Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As IOrmBase) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
     End Interface
 
     Public Class Top
@@ -112,7 +112,7 @@ Namespace Query
         End Sub
     End Class
 
-    Public Class QueryIterator
+    Public Class RevQueryIterator
         Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)
 
         Private _q As QueryCmd
@@ -137,8 +137,8 @@ Namespace Query
         Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
             If _c Is Nothing Then
                 _c = _q
-            Else
-                _c = _c.OuterQuery
+            ElseIf _c.FromClaus IsNot Nothing Then
+                _c = _c.FromClaus.Query
             End If
             Return _c IsNot Nothing
         End Function
@@ -173,6 +173,75 @@ Namespace Query
 
         Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
             Return Me
+        End Function
+
+        Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
+        End Function
+    End Class
+
+    Public Class QueryIterator
+        Implements IEnumerable(Of QueryCmd)
+
+        Private _l As New List(Of QueryCmd)
+
+        Public Sub New(ByVal query As QueryCmd)
+            For Each q As QueryCmd In New RevQueryIterator(query)
+                _l.Insert(0, q)
+            Next
+        End Sub
+
+        'Public ReadOnly Property Current() As QueryCmd Implements System.Collections.Generic.IEnumerator(Of QueryCmd).Current
+        '    Get
+        '        Return _l.GetEnumerator.Current
+        '    End Get
+        'End Property
+
+        'Private ReadOnly Property _Current() As Object Implements System.Collections.IEnumerator.Current
+        '    Get
+        '        Return Current
+        '    End Get
+        'End Property
+
+        'Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
+        '    If _c Is Nothing Then
+        '        _c = _q
+        '    Else
+        '        _c = _c.OuterQuery
+        '    End If
+        '    Return _c IsNot Nothing
+        'End Function
+
+        'Public Sub Reset() Implements System.Collections.IEnumerator.Reset
+        '    _c = Nothing
+        'End Sub
+
+        '#Region " IDisposable Support "
+        '        Private disposedValue As Boolean = False        ' To detect redundant calls
+
+        '        ' IDisposable
+        '        Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+        '            If Not Me.disposedValue Then
+        '                If disposing Then
+        '                    ' TODO: free other state (managed objects).
+        '                End If
+
+        '                ' TODO: free your own state (unmanaged objects).
+        '                ' TODO: set large fields to null.
+        '            End If
+        '            Me.disposedValue = True
+        '        End Sub
+
+        '        ' This code added by Visual Basic to correctly implement the disposable pattern.
+        '        Public Sub Dispose() Implements IDisposable.Dispose
+        '            ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+        '            Dispose(True)
+        '            GC.SuppressFinalize(Me)
+        '        End Sub
+        '#End Region
+
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
+            Return _l.GetEnumerator
         End Function
 
         Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator

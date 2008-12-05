@@ -1,5 +1,5 @@
-﻿Imports Worm.Orm.Meta
-Imports Worm.Orm
+﻿Imports Worm.Entities.Meta
+Imports Worm.Entities
 Imports System.Collections.Generic
 
 Namespace Cache
@@ -51,19 +51,19 @@ Namespace Cache
             End SyncLock
         End Function
 
-        Public Sub AddNew(ByVal obj As Orm._ICachedEntity) Implements INewObjectsStore.AddNew
+        Public Sub AddNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.AddNew
             Dim pk As New PKWrapper(obj.GetPKValues)
             GetDic(obj.GetType).Add(pk, obj)
         End Sub
 
-        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk() As Orm.Meta.PKDesc) As Orm._ICachedEntity Implements INewObjectsStore.GetNew
+        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk() As Entities.Meta.PKDesc) As Entities._ICachedEntity Implements INewObjectsStore.GetNew
             Dim pks As New PKWrapper(pk)
             Dim o As _ICachedEntity = Nothing
             GetDic(t).TryGetValue(pks, o)
             Return o
         End Function
 
-        Public Function GetPKForNewObject(ByVal t As System.Type) As Orm.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
+        Public Function GetPKForNewObject(ByVal t As System.Type) As Entities.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
             Dim dic As IDictionary = ObjectMappingEngine.GetMappedProperties(t)
             Dim l As New List(Of PKDesc)
             For Each de As DictionaryEntry In dic
@@ -101,19 +101,19 @@ Namespace Cache
             End If
         End Function
 
-        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk() As Orm.Meta.PKDesc) Implements INewObjectsStore.RemoveNew
+        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk() As Entities.Meta.PKDesc) Implements INewObjectsStore.RemoveNew
             GetDic(t).Remove(New PKWrapper(pk))
         End Sub
 
-        Public Sub RemoveNew(ByVal obj As Orm._ICachedEntity) Implements INewObjectsStore.RemoveNew
+        Public Sub RemoveNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.RemoveNew
             RemoveNew(obj.GetType, obj.GetPKValues)
         End Sub
 
-        Public Overloads Function GetNew(ByVal t As System.Type) As System.Collections.Generic.IList(Of Orm._ICachedEntity) Implements INewObjectsStoreEx.GetNewObjects
+        Public Overloads Function GetNew(ByVal t As System.Type) As System.Collections.Generic.IList(Of Entities._ICachedEntity) Implements INewObjectsStoreEx.GetNewObjects
             Return New List(Of _ICachedEntity)(GetDic(t).Values)
         End Function
 
-        Public Overloads Function GetNew(Of T As Orm._ICachedEntity)() As System.Collections.Generic.IList(Of T) Implements INewObjectsStoreEx.GetNewObjects
+        Public Overloads Function GetNew(Of T As Entities._ICachedEntity)() As System.Collections.Generic.IList(Of T) Implements INewObjectsStoreEx.GetNewObjects
             Dim l As New List(Of T)()
             For Each o As T In GetDic(GetType(T)).Values
                 l.Add(o)

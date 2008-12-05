@@ -2,7 +2,7 @@ Imports System.Collections
 Imports System.Collections.Generic
 Imports System.Web
 Imports System.Runtime.CompilerServices
-Imports Worm.Orm
+Imports Worm.Entities
 
 Namespace Cache
 
@@ -535,7 +535,7 @@ Namespace Cache
 
         Protected Overridable Sub CacheItemRemovedCallback1(ByVal key As String, ByVal value As Object, _
             ByVal reason As Caching.CacheItemRemovedReason)
-            _mc.RegisterRemoval(CType(value, OrmBase))
+            _mc.RegisterRemoval(CType(value, KeyEntity))
         End Sub
 
         Protected ReadOnly Property collection() As ICollection(Of KeyValuePair(Of String, TValue))

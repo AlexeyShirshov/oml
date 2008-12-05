@@ -1,10 +1,12 @@
 Imports System.Runtime.CompilerServices
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
+Imports Worm.Criteria.Conditions
+Imports Worm.Query
 
-Namespace Orm
+Namespace Entities
 
     Class myCultureComparer
         Implements IEqualityComparer
@@ -52,7 +54,7 @@ Namespace Orm
         Protected childs As ArrayList
         Protected _filter As IFilter
         Protected _root As DicIndexBase
-        Protected _joins() As OrmJoin
+        Protected _joins() As QueryJoin
         'Protected _complex As Boolean
 
         'Protected Friend Property Complex() As Boolean
@@ -209,17 +211,17 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property Join() As OrmJoin()
+        Public Property Join() As QueryJoin()
             Get
                 Return _joins
             End Get
-            Protected Friend Set(ByVal value() As OrmJoin)
+            Protected Friend Set(ByVal value() As QueryJoin)
                 _joins = value
             End Set
         End Property
     End Class
 
-    Public Class DicIndex(Of T As {New, IOrmBase})
+    Public Class DicIndex(Of T As {New, IKeyEntity})
         Inherits DicIndexBase
 
         Private _firstField As String
@@ -256,20 +258,20 @@ Namespace Orm
             End If
 
             Dim s As ObjectMappingEngine = mgr.MappingEngine
-            Dim cr As Criteria.CriteriaLink = Nothing
+            Dim cr As Criteria.PredicateLink = Nothing
             If strong Then
-                cr = s.CreateCriteria(New ObjectSource(tt)).Field(field).Eq(Name)
+                cr = New PCtor(New ObjectSource(tt)).prop(field).eq(Name)
                 If Not String.IsNullOrEmpty(sec) Then
-                    cr.Or(tt, sec).Eq(Name)
+                    cr.[or](tt, sec).eq(Name)
                 End If
             Else
-                cr = s.CreateCriteria(New ObjectSource(tt)).Field(field).Like(Name & "%")
+                cr = New PCtor(New ObjectSource(tt)).prop(field).[like](Name & "%")
                 If Not String.IsNullOrEmpty(sec) Then
-                    cr.Or(tt, sec).Like(Name & "%")
+                    cr.[or](tt, sec).[like](Name & "%")
                 End If
             End If
 
-            Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+            Dim con As New Condition.ConditionConstructor
             con.AddFilter(cr.Filter()).AddFilter(Root.Filter)
             Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
         End Function
@@ -282,13 +284,13 @@ Namespace Orm
 
             Dim col As ReadOnlyList(Of T)
             Dim s As ObjectMappingEngine = mgr.MappingEngine
-            Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+            Dim con As New Condition.ConditionConstructor
             con.AddFilter(Root.Filter)
 
             If strong Then
-                con.AddFilter(s.CreateCriteria(New ObjectSource(tt)).Field(field).Eq(Name).Filter())
+                con.AddFilter(New PCtor(New ObjectSource(tt)).prop(field).eq(Name).Filter())
             Else
-                con.AddFilter(s.CreateCriteria(New ObjectSource(tt)).Field(field).Like(Name & "%").Filter())
+                con.AddFilter(New PCtor(New ObjectSource(tt)).prop(field).[like](Name & "%").Filter())
             End If
 
             If loadName Then
@@ -405,7 +407,7 @@ Namespace Orm
         End Property
 
         Public Shadows Function FindById(ByVal id As Integer) As DicIndex(Of T)
-            Return CType(MyBase.FindById(id), Global.Worm.Orm.DicIndex(Of T))
+            Return CType(MyBase.FindById(id), Global.Worm.Entities.DicIndex(Of T))
         End Function
     End Class
 

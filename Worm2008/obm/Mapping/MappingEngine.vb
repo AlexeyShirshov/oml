@@ -1,9 +1,9 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Sorting
 'Namespace Schema
 
@@ -46,32 +46,32 @@ Public NotInheritable Class ObjectMappingException
     End Sub
 End Class
 
-''' <summary>
-''' Интерфейс расширяющий схему для работы с объдинениями (joins)
-''' </summary>
-''' <remarks></remarks>
-Public Interface ISchemaWithJoins
-    'Function GetSharedTable(ByVal tableName As String) As SourceFragment
-    'Function GetTables(ByVal type As Type) As SourceFragment()
-    ''' <summary>
-    ''' Метод используется для получения объекта типа <see cref="OrmJoin" /> для определеной таблицы определеного типа
-    ''' </summary>
-    ''' <param name="type">Тип объекта</param>
-    ''' <param name="left">Левая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
-    ''' <param name="right">Правая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
-    ''' <param name="filterInfo">Произвольный объект, используемый реализацией. Передается из <see cref="OrmManager.GetFilterInfo" /></param>
-    ''' <returns>Объекта типа <see cref="OrmJoin" /></returns>
-    ''' <remarks>Используется для генерации запросов</remarks>
-    Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
-End Interface
+'''' <summary>
+'''' Интерфейс расширяющий схему для работы с объдинениями (joins)
+'''' </summary>
+'''' <remarks></remarks>
+'Public Interface ISchemaWithJoins
+'    'Function GetSharedTable(ByVal tableName As String) As SourceFragment
+'    'Function GetTables(ByVal type As Type) As SourceFragment()
+'    ''' <summary>
+'    ''' Метод используется для получения объекта типа <see cref="QueryJoin" /> для определеной таблицы определеного типа
+'    ''' </summary>
+'    ''' <param name="type">Тип объекта</param>
+'    ''' <param name="left">Левая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
+'    ''' <param name="right">Правая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
+'    ''' <param name="filterInfo">Произвольный объект, используемый реализацией. Передается из <see cref="OrmManager.GetFilterInfo" /></param>
+'    ''' <returns>Объекта типа <see cref="QueryJoin" /></returns>
+'    ''' <remarks>Используется для генерации запросов</remarks>
+'    Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As QueryJoin
+'End Interface
 
 ''' <summary>
 ''' Класс хранения и управления схемами объектов <see cref="IObjectSchemaBase"/>
 ''' </summary>
 ''' <remarks>Класс управляет версиями схем объектов, предоставляет удобные обертки для методов
 ''' <see cref="IObjectSchemaBase"/> через тип объекта.</remarks>
-Public MustInherit Class ObjectMappingEngine
-    Implements ISchemaWithJoins
+Public Class ObjectMappingEngine
+    'Implements ISchemaWithJoins
 
     Public Delegate Function ResolveEntity(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
     Public Delegate Function ResolveEntityName(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
@@ -294,40 +294,6 @@ Public MustInherit Class ObjectMappingEngine
         Next
 
         Throw New ObjectMappingException("Cannot find column: " & columnName)
-    End Function
-
-    Public Function GetColumnNameByPropertyAlias(ByVal schema As IObjectSchemaBase, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
-
-        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
-
-        Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-
-        Dim p As MapField2Column = Nothing
-        If coll.TryGetValue(propertyAlias, p) Then
-            Dim c As String = Nothing
-            If add_alias AndAlso ShouldPrefix(p._columnName) Then
-                c = p._tableName.UniqueName(os) & Selector & p._columnName
-            Else
-                c = p._columnName
-            End If
-            If columnAliases IsNot Nothing Then
-                columnAliases.Add(p._columnName)
-            End If
-            Return c
-        End If
-
-        Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
-    End Function
-
-    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
-
-        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
-
-        Dim schema As IObjectSchemaBase = GetObjectSchema(type)
-
-        Return GetColumnNameByPropertyAlias(schema, propertyAlias, add_alias, columnAliases, os)
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")> _
@@ -640,8 +606,8 @@ Public MustInherit Class ObjectMappingEngine
             Return v
         End If
 
-        If GetType(OrmBase).IsAssignableFrom(ot) Then
-            Return CType(o, OrmBase).Identifier
+        If GetType(KeyEntity).IsAssignableFrom(ot) Then
+            Return CType(o, KeyEntity).Identifier
         End If
 
         If GetType(System.Xml.XmlDocument) Is ot Then
@@ -669,7 +635,7 @@ Public MustInherit Class ObjectMappingEngine
     'End Function
 
     <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-    Protected Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As SourceFragment
+    Public Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As SourceFragment
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
         End If
@@ -714,7 +680,7 @@ Public MustInherit Class ObjectMappingEngine
         Return r.Mapping
     End Function
 
-    Protected Function GetDBType(ByVal type As Type, ByVal os As IObjectSchemaBase, _
+    Public Function GetDBType(ByVal type As Type, ByVal os As IObjectSchemaBase, _
                                          ByVal c As ColumnAttribute) As DBType
         Dim db As DBType = os.GetFieldColumnMap()(c.PropertyAlias).DBType
         If db.IsEmpty Then
@@ -743,23 +709,6 @@ Public MustInherit Class ObjectMappingEngine
 #End Region
 
 #Region " Helpers "
-    Protected Friend Sub GetPKList(ByVal type As Type, ByVal schema As IObjectSchemaBase, ByVal ids As StringBuilder, ByVal columnAliases As List(Of String), ByVal os As ObjectSource)
-        If ids Is Nothing Then
-            Throw New ArgumentNullException("ids")
-        End If
-
-        For Each pk As String In GetPrimaryKeysName(type, True, columnAliases, schema, os)
-            ids.Append(pk).Append(",")
-        Next
-        ids.Length -= 1
-
-        'Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
-        'ids.Append(GetTableName(p._tableName)).Append(Selector).Append(p._columnName)
-        'If columnAliases IsNot Nothing Then
-        '    columnAliases.Add(p._columnName)
-        'End If
-    End Sub
-
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
         If String.IsNullOrEmpty(field) Then Return False
 
@@ -852,38 +801,6 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
     '<MethodImpl(MethodImplOptions.Synchronized)> _
-    Public Function GetPrimaryKeysName(ByVal original_type As Type, ByVal add_alias As Boolean, _
-        ByVal columnAliases As List(Of String), ByVal schema As IObjectSchemaBase, ByVal os As ObjectSource) As String()
-        If original_type Is Nothing Then
-            Throw New ArgumentNullException("original_type")
-        End If
-
-        Dim cl_type As String = "pklist" & original_type.ToString & add_alias
-
-        Dim arr As Generic.List(Of String) = CType(map(cl_type), Generic.List(Of String))
-
-        If arr Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(cl_type)
-                arr = CType(map(cl_type), Generic.List(Of String))
-                If arr Is Nothing Then
-                    arr = New Generic.List(Of String)
-                    If schema Is Nothing Then
-                        schema = GetObjectSchema(original_type)
-                    End If
-
-                    For Each c As ColumnAttribute In GetSortedFieldList(original_type, schema)
-                        If (GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            arr.Add(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, add_alias, columnAliases, os))
-                        End If
-                    Next
-
-                    map.Add(cl_type, arr)
-                End If
-            End Using
-        End If
-
-        Return arr.ToArray
-    End Function
 
     Public Function GetPrimaryKeys(ByVal original_type As Type, Optional ByVal schema As IObjectSchemaBase = Nothing) As List(Of ColumnAttribute)
         Dim cl_type As String = "clm_pklist" & original_type.ToString
@@ -1078,50 +995,6 @@ Public MustInherit Class ObjectMappingEngine
     '    Return GetColumnValue(obj, pk_name)
     'End Function
 
-    Protected Friend Function GetSelectColumns(ByVal props As IEnumerable(Of SelectExpression), ByVal columnAliases As List(Of String)) As String
-        Dim sb As New StringBuilder
-        For Each pr As SelectExpression In props
-            If pr.PropType = PropType.TableColumn Then
-                sb.Append(pr.Table.UniqueName(Nothing)).Append(Selector).Append(pr.Column).Append(", ")
-            ElseIf pr.PropType = PropType.CustomValue Then
-                sb.Append(String.Format(pr.Computed, ExtractValues(Me, Nothing, pr.Values).ToArray))
-                If Not String.IsNullOrEmpty(pr.Column) Then
-                    sb.Append(" ").Append(pr.Column)
-                End If
-                sb.Append(", ")
-            Else
-                sb.Append(GetColumnNameByPropertyAlias(GetObjectSchema(pr.ObjectSource.GetRealType(Me)), pr.PropertyAlias, True, columnAliases, pr.ObjectSource)).Append(", ")
-            End If
-        Next
-
-        sb.Length -= 2
-
-        Return sb.ToString
-    End Function
-
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IObjectSchemaBase, ByVal os As ObjectSource) As String
-        'Dim add_c As Boolean = False
-        'If arr Is Nothing Then
-        '    Dim s As String = CStr(sel(original_type))
-        '    If Not String.IsNullOrEmpty(s) Then
-        '        Return s
-        '    End If
-        '    add_c = True
-        'End If
-        Dim sb As New StringBuilder
-        If arr Is Nothing Then arr = GetSortedFieldList(original_type, schema)
-        For Each c As ColumnAttribute In arr
-            sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
-        Next
-
-        sb.Length -= 2
-
-        'If add_c Then
-        '    sel(original_type) = sb.ToString
-        'End If
-        Return sb.ToString
-    End Function
-
     'Protected Function GetSelectColumnList(ByVal type As Type, ByVal table As String) As String
     '    Dim sb As New StringBuilder
     '    For Each c As ColumnAttribute In GetSortedFieldList(type)
@@ -1160,9 +1033,9 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
     Public Function GetJoinObj(ByVal oschema As IObjectSchemaBase, _
-        ByVal obj As _IEntity, ByVal subType As Type) As IOrmBase
+        ByVal obj As _IEntity, ByVal subType As Type) As IKeyEntity
         Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
-        Dim r As IOrmBase = Nothing
+        Dim r As IKeyEntity = Nothing
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = Nothing
             If obj.IsPropertyLoaded(c) Then
@@ -1170,7 +1043,7 @@ Public MustInherit Class ObjectMappingEngine
             Else
                 id = GetFieldValue(obj, c, oschema)
             End If
-            r = TryCast(id, OrmBase)
+            r = TryCast(id, KeyEntity)
             If r Is Nothing AndAlso id IsNot Nothing Then
                 Try
                     'Dim id As Integer = Convert.ToInt32(o)
@@ -1180,14 +1053,6 @@ Public MustInherit Class ObjectMappingEngine
             End If
         End If
         Return r
-    End Function
-
-    Protected Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
-        Return GetColumnNameByPropertyAlias(type, propertyAlias, True, os, columnAliases)
-    End Function
-
-    Protected Function GetColumnNameByPropertyAlias(ByVal os As IObjectSchemaBase, ByVal propertyAlias As String, ByVal osrc As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
-        Return GetColumnNameByPropertyAlias(os, propertyAlias, True, columnAliases, osrc)
     End Function
 
     Public Function GetPropertyTypeByName(ByVal type As Type, ByVal propertyAlias As String) As Type
@@ -1242,8 +1107,21 @@ Public MustInherit Class ObjectMappingEngine
     '    Return GetColumnNameByFieldNameInternal(type, field, table_alias)
     'End Function
 
-    Protected Function GetColumns4Select(ByVal type As Type, ByVal propertyAlias As String, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
-        Return GetColumnNameByPropertyAlias(type, propertyAlias, os, columnAliases)
+    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String) As String
+        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
+
+        Dim schema As IObjectSchemaBase = GetObjectSchema(type)
+
+        Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+
+        Dim p As MapField2Column = Nothing
+        If coll.TryGetValue(propertyAlias, p) Then
+            Dim c As String = Nothing
+            c = p._columnName
+            Return c
+        End If
+
+        Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
     End Function
 
     Protected Function GetColumnsFromPropertyAlias(ByVal main As Type, ByVal propertyType As Type) As ColumnAttribute()
@@ -1667,7 +1545,7 @@ Public MustInherit Class ObjectMappingEngine
     End Property
 #End Region
 
-    Protected Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin Implements ISchemaWithJoins.GetJoins
+    Protected Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As QueryJoin
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1677,7 +1555,7 @@ Public MustInherit Class ObjectMappingEngine
         Return GetJoins(schema, left, right, filterInfo)
     End Function
 
-    Protected Friend Function GetJoins(ByVal schema As IMultiTableObjectSchema, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
+    Protected Friend Function GetJoins(ByVal schema As IMultiTableObjectSchema, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As QueryJoin
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1711,7 +1589,7 @@ Public MustInherit Class ObjectMappingEngine
 
     Public Function GetSharedSourceFragment(ByVal schema As String, ByVal tableName As String, ByVal key As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
         If String.IsNullOrEmpty(key) Then
-            key = schema & Selector & tableName
+            key = schema & Delimiter & tableName
         End If
         Dim t As SourceFragment = CType(_sharedTables(key), SourceFragment)
         If t Is Nothing Then
@@ -1746,7 +1624,7 @@ Public MustInherit Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
+    Public Function ApplyFilter(Of T As KeyEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
         r = True
         Dim f As Criteria.Core.IEntityFilter = TryCast(filter, Criteria.Core.IEntityFilter)
         If f Is Nothing Then
@@ -1771,10 +1649,14 @@ Public MustInherit Class ObjectMappingEngine
         End If
     End Function
 
-    Public Shared Function ExtractValues(ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
+    Public Shared Function ExtractValues(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal aliases As IPrepareTable, _
         ByVal _values() As Pair(Of Object, String)) As List(Of String)
         Dim values As New List(Of String)
         'Dim lastt As Type = Nothing
+        Dim d As String = schema.Delimiter
+        If stmt IsNot Nothing Then
+            d = stmt.Selector
+        End If
         For Each p As Pair(Of Object, String) In _values
             Dim o As Object = p.First
             If o Is Nothing Then
@@ -1788,7 +1670,7 @@ Public MustInherit Class ObjectMappingEngine
                 'End If
                 'lastt = t
 
-                FormatType(t, p, schema, aliases, values, Nothing)
+                FormatType(t, stmt, p, schema, aliases, values, Nothing)
             ElseIf TypeOf o Is SourceFragment Then
                 Dim tbl As SourceFragment = CType(o, SourceFragment)
                 Dim [alias] As String = Nothing
@@ -1801,7 +1683,7 @@ Public MustInherit Class ObjectMappingEngine
                     End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & schema.Selector & p.Second)
+                    values.Add([alias] & d & p.Second)
                 Else
                     values.Add(p.Second)
                 End If
@@ -1809,7 +1691,7 @@ Public MustInherit Class ObjectMappingEngine
                 Dim src As ObjectSource = CType(o, ObjectSource)
                 Dim t As Type = src.GetRealType(schema)
 
-                FormatType(t, p, schema, aliases, values, src)
+                FormatType(t, stmt, p, schema, aliases, values, src)
             ElseIf o Is Nothing Then
                 values.Add(p.Second)
             Else
@@ -1819,11 +1701,16 @@ Public MustInherit Class ObjectMappingEngine
         Return values
     End Function
 
-    Private Shared Sub FormatType(ByVal t As Type, ByVal p As Pair(Of Object, String), _
+    Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal p As Pair(Of Object, String), _
                                   ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
                                   ByVal values As List(Of String), ByVal os As ObjectSource)
         If Not GetType(IEntity).IsAssignableFrom(t) Then
             Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
+        End If
+
+        Dim d As String = schema.Delimiter
+        If stmt IsNot Nothing Then
+            d = stmt.Selector
         End If
 
         Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(t)
@@ -1840,31 +1727,162 @@ Public MustInherit Class ObjectMappingEngine
         If aliases IsNot Nothing Then
             Debug.Assert(aliases.ContainsKey(tbl, os), "There is not alias for table " & tbl.RawName)
             Try
-                values.Add(aliases.GetAlias(tbl, os) & schema.Selector & fld)
+                values.Add(aliases.GetAlias(tbl, os) & d & fld)
             Catch ex As KeyNotFoundException
                 Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
             End Try
         Else
-            values.Add(tbl.UniqueName(os) & schema.Selector & fld)
+            values.Add(tbl.UniqueName(os) & d & fld)
         End If
     End Sub
 
-    Public MustOverride ReadOnly Property Selector() As String
-    Public MustOverride Function CreateCriteria(ByVal os As ObjectSource) As Criteria.ICtor
-    Public MustOverride Function CreateCriteria(ByVal os As ObjectSource, ByVal propertyAlias As String) As Criteria.CriteriaField
-    Public MustOverride Function CreateCriteria(ByVal table As SourceFragment) As Criteria.ICtor
-    Public MustOverride Function CreateCriteria(ByVal table As SourceFragment, ByVal columnName As String) As Criteria.CriteriaColumn
-    Public MustOverride Function CreateCustom(ByVal format As String, ByVal value As Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
-    Public MustOverride Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
-    Public MustOverride Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Criteria.CriteriaLink
-    Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Orm.Query.TopAspect
-    Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
-    Public MustOverride Function GetTableName(ByVal t As SourceFragment) As String
-    Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
-    Public MustOverride Function CreateSelectExpressionFormater() As ISelectExpressionFormater
-    Protected Friend MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
-    Protected Friend MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
+    Public ReadOnly Property Delimiter() As String
+        Get
+            Return "_"
+        End Get
+    End Property
+
+#Region " Gen "
+    Public Function GetColumnNameByPropertyAlias(ByVal schema As IObjectSchemaBase, ByVal propertyAlias As String, _
+        ByVal add_alias As Boolean, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
+
+        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
+
+        Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+
+        Dim p As MapField2Column = Nothing
+        If coll.TryGetValue(propertyAlias, p) Then
+            Dim c As String = Nothing
+            If add_alias AndAlso ShouldPrefix(p._columnName) Then
+                c = p._tableName.UniqueName(os) & Delimiter & p._columnName
+            Else
+                c = p._columnName
+            End If
+            If columnAliases IsNot Nothing Then
+                columnAliases.Add(p._columnName)
+            End If
+            Return c
+        End If
+
+        Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
+    End Function
+
+    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, _
+        ByVal add_alias As Boolean, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+
+        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
+
+        Dim schema As IObjectSchemaBase = mpe.GetObjectSchema(type)
+
+        Return GetColumnNameByPropertyAlias(schema, propertyAlias, add_alias, columnAliases, os)
+    End Function
+
+    Public Function GetPrimaryKeysName(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal add_alias As Boolean, _
+        ByVal columnAliases As List(Of String), ByVal schema As IObjectSchemaBase, ByVal os As ObjectSource) As String()
+        If original_type Is Nothing Then
+            Throw New ArgumentNullException("original_type")
+        End If
+
+        Dim cl_type As String = "pklist" & original_type.ToString & add_alias
+
+        Dim arr As Generic.List(Of String) = CType(map(cl_type), Generic.List(Of String))
+
+        If arr Is Nothing Then
+            Using SyncHelper.AcquireDynamicLock(cl_type)
+                arr = CType(map(cl_type), Generic.List(Of String))
+                If arr Is Nothing Then
+                    arr = New Generic.List(Of String)
+                    If schema Is Nothing Then
+                        schema = mpe.GetObjectSchema(original_type)
+                    End If
+
+                    For Each c As ColumnAttribute In mpe.GetSortedFieldList(original_type, schema)
+                        If (mpe.GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            arr.Add(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, add_alias, columnAliases, os))
+                        End If
+                    Next
+
+                    map.Add(cl_type, arr)
+                End If
+            End Using
+        End If
+
+        Return arr.ToArray
+    End Function
+
+    Protected Friend Sub GetPKList(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal schema As IObjectSchemaBase, ByVal ids As StringBuilder, ByVal columnAliases As List(Of String), ByVal os As ObjectSource)
+        If ids Is Nothing Then
+            Throw New ArgumentNullException("ids")
+        End If
+
+        For Each pk As String In GetPrimaryKeysName(type, mpe, True, columnAliases, schema, os)
+            ids.Append(pk).Append(",")
+        Next
+        ids.Length -= 1
+
+        'Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
+        'ids.Append(GetTableName(p._tableName)).Append(Selector).Append(p._columnName)
+        'If columnAliases IsNot Nothing Then
+        '    columnAliases.Add(p._columnName)
+        'End If
+    End Sub
+
+    Protected Friend Function GetSelectColumns(ByVal mpe As ObjectMappingEngine, ByVal props As IEnumerable(Of SelectExpression), ByVal columnAliases As List(Of String)) As String
+        Dim sb As New StringBuilder
+        For Each pr As SelectExpression In props
+            If pr.PropType = PropType.TableColumn Then
+                sb.Append(pr.Table.UniqueName(Nothing)).Append(Delimiter).Append(pr.Column).Append(", ")
+            ElseIf pr.PropType = PropType.CustomValue Then
+                sb.Append(String.Format(pr.Computed, ObjectMappingEngine.ExtractValues(mpe, Nothing, Nothing, pr.Values).ToArray))
+                If Not String.IsNullOrEmpty(pr.Column) Then
+                    sb.Append(" ").Append(pr.Column)
+                End If
+                sb.Append(", ")
+            Else
+                sb.Append(GetColumnNameByPropertyAlias(mpe.GetObjectSchema(pr.ObjectSource.GetRealType(mpe)), pr.PropertyAlias, True, columnAliases, pr.ObjectSource)).Append(", ")
+            End If
+        Next
+
+        sb.Length -= 2
+
+        Return sb.ToString
+    End Function
+
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IObjectSchemaBase, ByVal os As ObjectSource) As String
+        'Dim add_c As Boolean = False
+        'If arr Is Nothing Then
+        '    Dim s As String = CStr(sel(original_type))
+        '    If Not String.IsNullOrEmpty(s) Then
+        '        Return s
+        '    End If
+        '    add_c = True
+        'End If
+        Dim sb As New StringBuilder
+        If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
+        For Each c As ColumnAttribute In arr
+            sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
+        Next
+
+        sb.Length -= 2
+
+        'If add_c Then
+        '    sel(original_type) = sb.ToString
+        'End If
+        Return sb.ToString
+    End Function
+
+    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, True, os, columnAliases)
+    End Function
+
+    Public Function GetColumnNameByPropertyAlias(ByVal os As IObjectSchemaBase, ByVal propertyAlias As String, ByVal osrc As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        Return GetColumnNameByPropertyAlias(os, propertyAlias, True, columnAliases, osrc)
+    End Function
+
+    Protected Function GetColumns4Select(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
+        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, os, columnAliases)
+    End Function
+#End Region
 End Class
 
 'End Namespace

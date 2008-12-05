@@ -1,20 +1,20 @@
 Imports Worm
 Imports System.Collections.Generic
-Imports Worm.Orm
+Imports Worm.Entities
 'Imports Worm.Database.Criteria.Core
 Imports Worm.Sorting
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Criteria.Values
-Imports Worm.Database.Criteria.Joins
-Imports Worm.Orm.Query
+Imports Worm.Entities.Query
 Imports Worm.Criteria.Core
+Imports Worm.Criteria.Conditions
 
 Namespace Database
 
     Partial Public Class OrmReadOnlyDBManager
 
-        Protected MustInherit Class BaseDataProvider(Of T As {New, IOrmBase})
+        Protected MustInherit Class BaseDataProvider(Of T As {New, IKeyEntity})
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
@@ -46,7 +46,7 @@ Namespace Database
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
 
                                 Dim fields As List(Of String) = Nothing
                                 Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
@@ -80,12 +80,12 @@ Namespace Database
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
                                 Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
                                 If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                     'If GetType(OrmBase).IsAssignableFrom(tp) Then
@@ -147,7 +147,7 @@ Namespace Database
             End Function
         End Class
 
-        Protected Class FilterCustDelegate(Of T As {New, IOrmBase})
+        Protected Class FilterCustDelegate(Of T As {New, IKeyEntity})
             Inherits BaseDataProvider(Of T)
 
             Private _cols As List(Of ColumnAttribute)
@@ -186,12 +186,12 @@ Namespace Database
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
 
-                        Dim c As New Criteria.Conditions.Condition.ConditionConstructor
+                        Dim c As New Condition.ConditionConstructor
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
-                        _mgr.SQLGenerator.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
+                        _mgr.SQLGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(original_type, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, original_type, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         params.AppendParams(.Parameters)
@@ -202,15 +202,15 @@ Namespace Database
                     _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, r, arr)
 
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                        r = CType(_mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, r.List), ReadOnlyList(Of T))
+                        r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), ReadOnlyList(Of T))
                     End If
                     Return r
                 End Using
             End Function
 
-            Protected ReadOnly Property Schema() As SQLGenerator
+            Protected ReadOnly Property Schema() As ObjectMappingEngine
                 Get
-                    Return _mgr.SQLGenerator
+                    Return _mgr.MappingEngine
                 End Get
             End Property
 
@@ -225,21 +225,21 @@ Namespace Database
             End Function
 
             Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.SQLGenerator.Select(t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
+                sb.Append(_mgr.SQLGenerator.Select(_mgr.MappingEngine, t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
             End Sub
 
             Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.SQLGenerator.SelectID(t, almgr, pmgr, _mgr.GetFilterInfo))
+                sb.Append(_mgr.SQLGenerator.SelectID(_mgr.MappingEngine, t, almgr, pmgr, _mgr.GetFilterInfo))
             End Sub
         End Class
 
-        Protected Class JoinCustDelegate(Of T As {New, IOrmBase})
+        Protected Class JoinCustDelegate(Of T As {New, IKeyEntity})
             Inherits FilterCustDelegate(Of T)
 
-            Private _join() As Worm.Criteria.Joins.OrmJoin
+            Private _join() As Worm.Criteria.Joins.QueryJoin
             Private _asc() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -248,14 +248,14 @@ Namespace Database
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -264,7 +264,7 @@ Namespace Database
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean, ByVal cols As List(Of ColumnAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
@@ -273,14 +273,14 @@ Namespace Database
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer, ByVal cols As List(Of ColumnAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect, ByVal cols As List(Of ColumnAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
@@ -290,11 +290,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetFilterInfo, arr))
+                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetFilterInfo, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, False, _asc, Nothing, _mgr.GetFilterInfo, Nothing))
+                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, False, _asc, Nothing, _mgr.GetFilterInfo, Nothing))
             End Sub
 
             Public Overrides Sub CreateDepends()
@@ -309,7 +309,7 @@ Namespace Database
             End Sub
         End Class
 
-        Protected Class DistinctRelationFilterCustDelegate(Of T As {New, IOrmBase})
+        Protected Class DistinctRelationFilterCustDelegate(Of T As {New, IKeyEntity})
             Inherits FilterCustDelegate(Of T)
 
             Private _rel As M2MRelation
@@ -331,7 +331,7 @@ Namespace Database
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
-                        For Each fl As EntityFilterBase In f.GetAllFilters
+                        For Each fl As EntityFilter In f.GetAllFilters
                             Dim rt As Type = fl.Template.ObjectSource.GetRealType(_mgr.MappingEngine)
                             If rt Is Nothing Then
                                 Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
@@ -346,11 +346,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetFilterInfo, arr))
+                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetFilterInfo, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetFilterInfo, Nothing))
+                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetFilterInfo, Nothing))
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
@@ -365,17 +365,17 @@ Namespace Database
 
         End Class
 
-        Protected Class M2MDataProvider(Of T As {New, IOrmBase})
+        Protected Class M2MDataProvider(Of T As {New, IKeyEntity})
             Inherits BaseDataProvider(Of T)
 
-            Private _obj As _IOrmBase
+            Private _obj As _IKeyEntity
             Private _direct As String
             'Private _sync As String
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
             Private _qa() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As _IOrmBase, ByVal filter As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As _IKeyEntity, ByVal filter As IFilter, _
                 ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
                 ByVal id As String, ByVal key As String, ByVal direct As String)
                 MyBase.New(mgr, filter, sort, key, id)
@@ -399,10 +399,10 @@ Namespace Database
                         Dim almgr As AliasMgr = AliasMgr.Create
 
                         Dim sb As New StringBuilder
-                        sb.Append(_mgr.SQLGenerator.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
+                        sb.Append(_mgr.SQLGenerator.SelectM2M(_mgr.MappingEngine, almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(t, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, t, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         .CommandText = sb.ToString
@@ -412,7 +412,7 @@ Namespace Database
                     End With
                     Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
                     If withLoad Then
-                        arr = _mgr.SQLGenerator.GetSortedFieldList(t)
+                        arr = _mgr.MappingEngine.GetSortedFieldList(t)
                     End If
                     Return _mgr.LoadM2M(Of T)(cmd, withLoad, _obj, _sort, arr)
                     '              Dim b As ConnAction = _mgr.TestConn(cmd)
@@ -468,14 +468,14 @@ Namespace Database
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
                 Dim mt As Type = _obj.GetType
                 Dim t As Type = GetType(T)
-                Dim ct As Type = _mgr.SQLGenerator.GetConnectedType(mt, t)
+                Dim ct As Type = _mgr.MappingEngine.GetConnectedType(mt, t)
                 If ct IsNot Nothing Then
                     'If Not _direct Then
                     '    Throw New NotSupportedException("Tag is not supported with connected type")
                     'End If
-                    Dim f1 As String = _mgr.SQLGenerator.GetConnectedTypeField(ct, mt, M2MRelation.GetRevKey(_direct))
-                    Dim f2 As String = _mgr.SQLGenerator.GetConnectedTypeField(ct, t, _direct)
-                    Dim fl As New Worm.Database.Criteria.Core.EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
+                    Dim f1 As String = _mgr.MappingEngine.GetConnectedTypeField(ct, mt, M2MRelation.GetRevKey(_direct))
+                    Dim f2 As String = _mgr.MappingEngine.GetConnectedTypeField(ct, t, _direct)
+                    Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
                     Dim l As New List(Of Object)
                     'Dim external_sort As Boolean = False
 
@@ -483,11 +483,11 @@ Namespace Database
                     '    external_sort = True
                     'End If
                     Dim oschema As IObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(ct)
-                    For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
+                    For Each o As IKeyEntity In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
-                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, f1, oschema), IOrmBase).Identifier
-                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, f2, oschema), IOrmBase).Identifier
+                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, f1, oschema), IKeyEntity).Identifier
+                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, f2, oschema), IKeyEntity).Identifier
 
                         If Not id1.Equals(_obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
@@ -498,7 +498,7 @@ Namespace Database
 
                     If _sort IsNot Nothing AndAlso Sort.IsExternal Then
                         Dim l2 As New List(Of Object)
-                        For Each o As T In _mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False).List)
+                        For Each o As T In _mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False).List)
                             l2.Add(o.Identifier)
                         Next
                         l = l2
@@ -533,8 +533,8 @@ Namespace Database
                         For Each bf As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(bf, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
-                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
                                 Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
                                 If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
@@ -556,7 +556,7 @@ Namespace Database
                     End If
 
                     Dim mt As Type = _obj.GetType
-                    Dim ct As Type = _mgr.SQLGenerator.GetConnectedType(mt, tt)
+                    Dim ct As Type = _mgr.MappingEngine.GetConnectedType(mt, tt)
                     If ct Is Nothing Then
                         _mgr.Cache.AddM2MObjDependent(_obj, _key, _id)
                     End If

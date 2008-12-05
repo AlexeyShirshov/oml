@@ -1,6 +1,6 @@
-﻿Imports Worm.Orm.Meta
+﻿Imports Worm.Entities.Meta
 
-Namespace Orm
+Namespace Entities
     Public Class Grouping
         Inherits SelectExpression
 

@@ -1,9 +1,11 @@
 Imports System.Web
 Imports System.Web.Security
 Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Database
 Imports Worm.Database.Criteria
+Imports Worm.Criteria
+Imports Worm.Query
 
 Namespace Web
     Public MustInherit Class RoleBase
@@ -79,7 +81,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
                 Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
-                For Each u As IOrmBase In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
+                For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
                     users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
                 Next
                 Return users.ToArray
@@ -92,7 +94,7 @@ Namespace Web
                 Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 'Dim col As IEnumerable = FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
                 Dim col As IEnumerable = New Query.QueryCmd(GetRoleType).ToList(mgr)
-                For Each r As IOrmBase In col
+                For Each r As IKeyEntity In col
                     roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
                 Next
                 Return roles.ToArray
@@ -107,7 +109,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim roles As New Generic.List(Of String)
                 Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
-                For Each r As IOrmBase In GetRolesForUserInternal(mgr, username)
+                For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
                 Next
                 Return roles.ToArray
@@ -122,7 +124,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
                 Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
-                For Each u As IOrmBase In FindUsersInRoleInternal(mgr, roleName, Nothing)
+                For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, Nothing)
                     users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
                 Next
                 Return users.ToArray
@@ -132,7 +134,7 @@ Namespace Web
         Public Overrides Function IsUserInRole(ByVal username As String, ByVal roleName As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
-                For Each r As IOrmBase In GetRolesForUserInternal(mgr, username)
+                For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     If CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)) = roleName Then
                         Return True
                     End If
@@ -143,7 +145,7 @@ Namespace Web
 
         Public Overrides Function RoleExists(ByVal roleName As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim r As IOrmBase = GetRoleByName(mgr, roleName, False)
+                Dim r As IKeyEntity = GetRoleByName(mgr, roleName, False)
                 Return r IsNot Nothing
             End Using
         End Function
@@ -154,10 +156,10 @@ Namespace Web
         Public Overrides Sub AddUsersToRoles(ByVal usernames() As String, ByVal roleNames() As String)
             Using mgr As OrmManager = UserMapper.CreateManager
                 For Each username As String In usernames
-                    Dim u As IOrmBase = MembershipProvider.FindUserByName(mgr, username, Nothing)
+                    Dim u As IKeyEntity = MembershipProvider.FindUserByName(mgr, username, Nothing)
                     If u IsNot Nothing Then
                         For Each role As String In roleNames
-                            Dim r As IOrmBase = GetRoleByName(mgr, role, False)
+                            Dim r As IKeyEntity = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
                                 u.Add(r)
                             End If
@@ -176,7 +178,7 @@ Namespace Web
 
         Public Overrides Function DeleteRole(ByVal roleName As String, ByVal throwOnPopulatedRole As Boolean) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim r As IOrmBase = GetRoleByName(mgr, roleName, False)
+                Dim r As IKeyEntity = GetRoleByName(mgr, roleName, False)
                 DeleteRole(CType(mgr, OrmDBManager), r, Not throwOnPopulatedRole)
             End Using
         End Function
@@ -184,10 +186,10 @@ Namespace Web
         Public Overrides Sub RemoveUsersFromRoles(ByVal usernames() As String, ByVal roleNames() As String)
             Using mgr As OrmManager = UserMapper.CreateManager
                 For Each username As String In usernames
-                    Dim u As IOrmBase = MembershipProvider.FindUserByName(mgr, username, Nothing)
+                    Dim u As IKeyEntity = MembershipProvider.FindUserByName(mgr, username, Nothing)
                     If u IsNot Nothing Then
                         For Each role As String In roleNames
-                            Dim r As IOrmBase = GetRoleByName(mgr, role, False)
+                            Dim r As IKeyEntity = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
                                 CType(u, IM2M).Delete(r)
                             End If
@@ -201,12 +203,12 @@ Namespace Web
 #End Region
 
         Protected Friend Function FindUsersInRoleInternal(ByVal mgr As OrmManager, ByVal roleName As String, ByVal usernameToMatch As String) As IList
-            Dim r As IOrmBase = GetRoleByName(mgr, roleName, False)
+            Dim r As IKeyEntity = GetRoleByName(mgr, roleName, False)
             'Dim users As New Generic.List(Of String)
             If r IsNot Nothing Then
-                Dim f As CriteriaLink = Nothing
+                Dim f As PredicateLink = Nothing
                 If usernameToMatch IsNot Nothing Then
-                    f = CType(New Ctor(UserMapper.GetUserType).Field(UserMapper.UserNameField).Like(usernameToMatch), CriteriaLink)
+                    f = CType(New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
                 Dim cmd As New Query.QueryCmd(r)
                 cmd.Where(f).WithLoad(WithLoad)
@@ -214,28 +216,28 @@ Namespace Web
                 Return cmd.ToList(mgr)
                 'Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
-            Return New IOrmBase() {}
+            Return New IKeyEntity() {}
         End Function
 
         Protected Friend Function GetRolesForUserInternal(ByVal mgr As OrmManager, ByVal username As String) As IList
-            Dim u As IOrmBase = MembershipProvider.FindUserByName(mgr, username, Nothing)
+            Dim u As IKeyEntity = MembershipProvider.FindUserByName(mgr, username, Nothing)
             If u IsNot Nothing Then
                 Return CType(u.Find(GetRoleType).ToList(mgr), IList)
             End If
-            Return New IOrmBase() {}
+            Return New IKeyEntity() {}
         End Function
 
         Protected MustOverride Function GetRoleType() As Type
-        Protected MustOverride Function GetRoleByName(ByVal mgr As OrmManager, ByVal name As String, ByVal createIfNotExist As Boolean) As IOrmBase
+        Protected MustOverride Function GetRoleByName(ByVal mgr As OrmManager, ByVal name As String, ByVal createIfNotExist As Boolean) As IKeyEntity
         Protected MustOverride ReadOnly Property WithLoad() As Boolean
 
-        Protected Overridable Function FindRoles(ByVal mgr As OrmManager, ByVal f As CriteriaLink) As IList
+        Protected Overridable Function FindRoles(ByVal mgr As OrmManager, ByVal f As PredicateLink) As IList
             Dim cmd As New Query.QueryCmd(GetRoleType)
             cmd.Where(f)
             Return cmd.ToList(mgr)
         End Function
 
-        Protected Overridable Overloads Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As IOrmBase, ByVal cascade As Boolean)
+        Protected Overridable Overloads Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As IKeyEntity, ByVal cascade As Boolean)
             If cascade Then
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If

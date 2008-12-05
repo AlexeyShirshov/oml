@@ -1,7 +1,7 @@
 ﻿Imports System.Linq.Expressions
 Imports System.Collections.ObjectModel
 Imports System.Reflection
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Criteria
 
 Namespace Linq
@@ -379,6 +379,7 @@ Namespace Linq
         Inherits ExpressionVisitor
 
         Protected _schema As ObjectMappingEngine
+        Protected _gen As StmtGenerator
 
         Public Sub New(ByVal schema As ObjectMappingEngine)
             _schema = schema

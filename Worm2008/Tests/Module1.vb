@@ -1,5 +1,7 @@
 Imports Worm.Database
 Imports Worm.Cache
+Imports Worm.Criteria
+Imports Worm.Query
 
 Module Module1
 
@@ -48,14 +50,14 @@ Module Module1
     End Class
 
     Sub main()
-        Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New SQLGenerator("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
+        Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
             For i As Integer = 0 To 10000
-                mgr.Find(Of TestProject1.Table1)(Criteria.Ctor.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
+                mgr.Find(Of TestProject1.Table1)(PCtor.prop(GetType(TestProject1.Table1), "ID").eq(i + 1000), Nothing, False)
                 If i Mod 1000 = 0 Then
                     Console.WriteLine(i / 1000)
                 End If
             Next
-            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.SQLGenerator)
+            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.MappingEngine)
             t.CreatedAt = Now
             mgr.BeginTransaction()
             Try
@@ -140,7 +142,7 @@ Module Module1
     End Sub
 
     Sub withoutload()
-        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
                 Dim c As Worm.ReadOnlyList(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, False)
                 mc.LoadObjects(c)
@@ -149,7 +151,7 @@ Module Module1
     End Sub
 
     Sub withload()
-        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
                 Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, True)
             Next

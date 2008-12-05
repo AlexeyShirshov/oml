@@ -1,6 +1,7 @@
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Cache
+Imports Worm.Criteria.Joins
 
 <Entity(GetType(CompositeSchema), "1")> _
 Public Class Composite
@@ -82,9 +83,9 @@ Public Class CompositeSchema
         Return _tables
     End Function
 
-    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin
+    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
         If left.Equals(GetTables()(Tables.First)) AndAlso right.Equals(GetTables()(Tables.Second)) Then
-            Return New Worm.Database.Criteria.Joins.OrmJoin(right, Worm.Criteria.Joins.JoinType.Join, New Worm.Database.Criteria.Joins.JoinFilter(right, "id", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
+            Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "id", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
@@ -114,7 +115,7 @@ Public Class CompositeEditableSchema
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IMultiTableWithM2MSchema.GetJoins
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableWithM2MSchema.GetJoins
         Return Nothing
     End Function
 
@@ -122,20 +123,20 @@ Public Class CompositeEditableSchema
         Return _tables
     End Function
 
-    Public Function GetM2MRelations() As Worm.Orm.Meta.M2MRelation() Implements Worm.Orm.Meta.IMultiTableWithM2MSchema.GetM2MRelations
+    Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelation() Implements Worm.Entities.Meta.IMultiTableWithM2MSchema.GetM2MRelations
         Return Nothing
     End Function
 
-    Public Function GetSuppressedFields() As String() Implements Worm.Orm.Meta.IObjectSchemaBase.GetSuppressedFields
+    Public Function GetSuppressedFields() As String() Implements Worm.Entities.Meta.IObjectSchemaBase.GetSuppressedFields
         Return Nothing
     End Function
 
-    Public Function ChangeValueType(ByVal c As Worm.Orm.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Orm.Meta.IObjectSchemaBase.ChangeValueType
+    Public Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Entities.Meta.IObjectSchemaBase.ChangeValueType
         newvalue = value
         Return False
     End Function
 
-    Public ReadOnly Property Table() As Worm.Orm.Meta.SourceFragment Implements Worm.Orm.Meta.IObjectSchemaBase.Table
+    Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IObjectSchemaBase.Table
         Get
             Return _tables(0)
         End Get

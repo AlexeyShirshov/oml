@@ -1,6 +1,6 @@
 Imports Worm
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 <Entity("dbo.table1", "id", "1")> _
 Public Class SimpleObj
