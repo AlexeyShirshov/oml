@@ -1,45 +1,9 @@
 Imports System.Collections.Generic
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
-Imports Worm.Orm
+Imports Worm.Entities
 
 Namespace Criteria.Values
-
-    Public Interface IQueryElement
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
-        Function _ToString() As String
-    End Interface
-
-    Public Interface INonTemplateValue
-        Inherits IQueryElement
-    End Interface
-
-    Public Interface IFilterValue
-        Inherits IQueryElement
-        Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
-                          ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String
-    End Interface
-
-    Public Delegate Function PrepareValueDelegate(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
-
-    Public Interface IParamFilterValue
-        Inherits IFilterValue
-        ReadOnly Property ShouldUse() As Boolean
-    End Interface
-
-    Public Interface IEvaluableValue
-        Inherits IParamFilterValue
-
-        Enum EvalResult
-            Found
-            NotFound
-            Unknown
-        End Enum
-
-        ReadOnly Property Value() As Object
-        Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As EvalResult
-    End Interface
 
     Public Class RefValue
         Implements IFilterValue
@@ -54,9 +18,9 @@ Namespace Criteria.Values
             Return _num.ToString
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             Return aliases(_num)
         End Function
 
@@ -100,10 +64,10 @@ Namespace Criteria.Values
             Return String.Format(_f, l.ToArray)
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
-            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, almgr, _v)
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
             Return String.Format(_f, values.ToArray)
         End Function
@@ -132,7 +96,7 @@ Namespace Criteria.Values
             Return _alias
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal aliases As System.Collections.Generic.IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal aliases As System.Collections.Generic.IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             Return [Alias]
         End Function
 
@@ -168,9 +132,9 @@ Namespace Criteria.Values
             Return _p.ToString
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
             'If almgr IsNot Nothing Then
@@ -181,6 +145,11 @@ Namespace Criteria.Values
                 Throw New ArgumentNullException("schema")
             End If
 
+            Dim d As String = schema.Delimiter
+            If Not inSelect Then
+                d = stmt.Selector
+            End If
+
             If _p.Table Is Nothing Then
 
                 Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(_p.ObjectSource.GetRealType(schema))
@@ -189,7 +158,7 @@ Namespace Criteria.Values
                 Try
                     map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString & schema.Selector & _p.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString & schema.Delimiter & _p.PropertyAlias, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
@@ -197,9 +166,9 @@ Namespace Criteria.Values
                 If almgr IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                     If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
-                        [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & schema.Selector
+                        [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & d
                     Else
-                        [alias] = map._tableName.UniqueName(_p.ObjectSource) & schema.Selector
+                        [alias] = map._tableName.UniqueName(_p.ObjectSource) & d
                     End If
                     'Try
                     '    [alias] = tableAliases(map._tableName) & schema.Selector
@@ -215,7 +184,7 @@ Namespace Criteria.Values
                 If almgr IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                     Try
-                        [alias] = almgr.GetAlias(_p.Table, Nothing) & schema.Selector
+                        [alias] = almgr.GetAlias(_p.Table, Nothing) & d
                     Catch ex As KeyNotFoundException
                         Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
                     End Try
@@ -254,31 +223,36 @@ Namespace Criteria.Values
             _case = caseSensitive
         End Sub
 
-        Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IEvaluableValue.GetParam
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IEvaluableValue.GetParam
 
             Dim v As Object = _v
             If prepare IsNot Nothing Then
                 v = prepare(schema, v)
             End If
 
-            If paramMgr Is Nothing Then
-                Throw New ArgumentNullException("paramMgr")
+            If stmt.SupportParams Then
+                If paramMgr Is Nothing Then
+                    Throw New ArgumentNullException("paramMgr")
+                End If
+                'Dim p As String = _pname
+                'If String.IsNullOrEmpty(p) Then
+                '    p = paramMgr.CreateParam(v)
+                '    If paramMgr.NamedParams Then
+                '        _pname = p
+                '    End If
+                'Else
+                '    p = paramMgr.AddParam(_pname, v)
+                '    _pname = p
+                'End If
+                'Return p
+                _pname = paramMgr.AddParam(_pname, v)
+                Return _pname
+            Else
+                Return "'" & v.ToString & "'"
             End If
-            'Dim p As String = _pname
-            'If String.IsNullOrEmpty(p) Then
-            '    p = paramMgr.CreateParam(v)
-            '    If paramMgr.NamedParams Then
-            '        _pname = p
-            '    End If
-            'Else
-            '    p = paramMgr.AddParam(_pname, v)
-            '    _pname = p
-            'End If
-            'Return p
-            _pname = paramMgr.AddParam(_pname, v)
-            Return _pname
+
         End Function
 
         'Protected Property Value() As Object
@@ -316,12 +290,12 @@ Namespace Criteria.Values
             _v = v
         End Sub
 
-        Protected Overridable Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
+        Protected Overridable Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
             Return Value
         End Function
 
-        Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             Dim r As IEvaluableValue.EvalResult
 
             Dim filterValue As Object = GetValue(evaluatedValue, template, r)
@@ -466,9 +440,9 @@ Namespace Criteria.Values
             _pname = literal
         End Sub
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IParamFilterValue.GetParam
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IParamFilterValue.GetParam
             Return _pname
         End Function
 
@@ -495,7 +469,7 @@ Namespace Criteria.Values
             MyBase.New("null")
         End Sub
 
-        Public Function Eval(ByVal v As Object, ByVal template As Core.OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Function Eval(ByVal v As Object, ByVal template As Core.OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             If template.Operation = FilterOperation.Is Then
                 If v Is Nothing Then
                     Return IEvaluableValue.EvalResult.Found
@@ -525,22 +499,22 @@ Namespace Criteria.Values
 
         Private _t As Type
 
-        Public Sub New(ByVal o As IOrmBase)
+        Public Sub New(ByVal o As IKeyEntity)
             MyBase.New()
             If o IsNot Nothing Then
                 _t = o.GetType
                 SetValue(o.Identifier)
             Else
-                _t = GetType(IOrmBase)
+                _t = GetType(IKeyEntity)
             End If
         End Sub
 
-        Public Sub New(ByVal o As IOrmBase, ByVal caseSensitive As Boolean)
+        Public Sub New(ByVal o As IKeyEntity, ByVal caseSensitive As Boolean)
             MyClass.New(o)
             Me.CaseSensitive = caseSensitive
         End Sub
 
-        Public Function GetOrmValue(ByVal mgr As OrmManager) As IOrmBase
+        Public Function GetOrmValue(ByVal mgr As OrmManager) As IKeyEntity
             Return mgr.GetOrmBaseFromCacheOrCreate(Value, _t)
         End Function
 
@@ -550,9 +524,9 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
+        Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
-            Dim orm As IOrmBase = TryCast(v, IOrmBase)
+            Dim orm As IKeyEntity = TryCast(v, IKeyEntity)
             If orm IsNot Nothing Then
                 Dim ov As EntityValue = TryCast(Me, EntityValue)
                 If ov Is Nothing Then
@@ -609,7 +583,7 @@ Namespace Criteria.Values
             Return _str
         End Function
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
 
             'Dim val As Object = GetValue(v, template, r)
@@ -647,9 +621,9 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
 
             Dim sb As New StringBuilder
             Dim idx As Integer
@@ -709,7 +683,7 @@ Namespace Criteria.Values
             End If
         End Sub
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult
 
             Dim val As Object = GetValue(v, template, r)
@@ -735,9 +709,9 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
 
             If paramMgr Is Nothing Then
                 Throw New ArgumentNullException("paramMgr")
@@ -765,193 +739,244 @@ Namespace Criteria.Values
             End Get
         End Property
     End Class
-End Namespace
 
-Namespace Database
-    Namespace Criteria.Values
-        'Public Interface IDatabaseFilterValue
-        '    Inherits Worm.Criteria.Values.IFilterValue
-        '    Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable) As String
-        'End Interface
+    Public Class SubQuery
+        Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+        Cache.IQueryDependentTypes
 
-        Public Class SubQuery
-            Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
-            Cache.IQueryDependentTypes
+        Private _t As Type
+        Private _tbl As SourceFragment
+        Private _f As IFilter
+        Private _field As String
+        Private _joins() As Worm.Criteria.Joins.QueryJoin
 
-            Private _t As Type
-            Private _tbl As SourceFragment
-            Private _f As IFilter
-            Private _field As String
-            Private _joins() As Worm.Criteria.Joins.OrmJoin
-            Private _stmtGen As SQLGenerator
+        Public Sub New(ByVal t As Type, ByVal f As IFilter)
+            _t = t
+            _f = f
+        End Sub
 
-            Public Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal f As IFilter)
-                _stmtGen = stmtGen
-                _t = t
-                _f = f
-            End Sub
+        Public Sub New(ByVal table As SourceFragment, ByVal f As IFilter)
+            _tbl = table
+            _f = f
+        End Sub
 
-            Public Sub New(ByVal stmtGen As SQLGenerator, ByVal table As SourceFragment, ByVal f As IFilter)
-                _stmtGen = stmtGen
-                _tbl = table
-                _f = f
-            End Sub
-
-            Public Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
-                '_tbl = CType(OrmManager.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
-                _stmtGen = stmtGen
-                _t = t
-                _f = f
-                _field = field
-            End Sub
+        Public Sub New(ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
+            '_tbl = CType(OrmManager.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
+            _t = t
+            _f = f
+            _field = field
+        End Sub
 
 #Region " Properties "
 
-            Public Property Joins() As Worm.Criteria.Joins.OrmJoin()
-                Get
-                    Return _joins
-                End Get
-                Set(ByVal value As Worm.Criteria.Joins.OrmJoin())
-                    _joins = value
-                End Set
-            End Property
+        Public Property Joins() As Worm.Criteria.Joins.QueryJoin()
+            Get
+                Return _joins
+            End Get
+            Set(ByVal value As Worm.Criteria.Joins.QueryJoin())
+                _joins = value
+            End Set
+        End Property
 
-            Public ReadOnly Property Filter() As IFilter
-                Get
-                    Return _f
-                End Get
-            End Property
+        Public ReadOnly Property Filter() As IFilter
+            Get
+                Return _f
+            End Get
+        End Property
 
-            Public ReadOnly Property Table() As SourceFragment
-                Get
-                    Return _tbl
-                End Get
-            End Property
+        Public ReadOnly Property Table() As SourceFragment
+            Get
+                Return _tbl
+            End Get
+        End Property
 
-            Public ReadOnly Property Type() As Type
-                Get
-                    Return _t
-                End Get
-            End Property
+        Public ReadOnly Property Type() As Type
+            Get
+                Return _t
+            End Get
+        End Property
 
 #End Region
 
-            Public Overridable Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
-                Dim r As String = Nothing
-                If _t IsNot Nothing Then
-                    r = _t.ToString()
-                Else
-                    r = _tbl.RawName
-                End If
-                If _joins IsNot Nothing Then
-                    r &= "$"
-                    For Each join As Worm.Criteria.Joins.OrmJoin In _joins
-                        If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
-                            r &= join._ToString
-                        End If
-                    Next
-                End If
-                If _f IsNot Nothing Then
-                    r &= "$" & _f._ToString
-                End If
-                If Not String.IsNullOrEmpty(_field) Then
-                    r &= "$" & _field
-                End If
-                Return r
-            End Function
-
-            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As StringBuilder)
-                If _t Is Nothing Then
-                    sb.Append(dbschema.SelectWithJoin(Nothing, New SourceFragment() {_tbl}, _
-                        almgr, paramMgr, _joins, _
-                        False, Nothing, Nothing, Nothing, Nothing, filterInfo))
-                Else
-                    Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
-                    If Not String.IsNullOrEmpty(_field) Then
-                        arr = New Generic.List(Of ColumnAttribute)
-                        arr.Add(New ColumnAttribute(_field))
+        Public Overridable Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
+            Dim r As String = Nothing
+            If _t IsNot Nothing Then
+                r = _t.ToString()
+            Else
+                r = _tbl.RawName
+            End If
+            If _joins IsNot Nothing Then
+                r &= "$"
+                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
+                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
+                        r &= join._ToString
                     End If
-                    sb.Append(dbschema.SelectWithJoin(_t, almgr, paramMgr, _joins, _
-                        arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))
-                End If
+                Next
+            End If
+            If _f IsNot Nothing Then
+                r &= "$" & _f._ToString
+            End If
+            If Not String.IsNullOrEmpty(_field) Then
+                r &= "$" & _field
+            End If
+            Return r
+        End Function
 
-                dbschema.AppendWhere(_t, _f, almgr, sb, filterInfo, paramMgr)
-            End Sub
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+                      ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
+                      ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+            Dim sb As New StringBuilder
+            'Dim dbschema As DbSchema = CType(schema, DbSchema)
+            sb.Append("(")
 
-            Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+            'If _stmtGen Is Nothing Then
+            '    _stmtGen = TryCast(schema, SQLGenerator)
+            'End If
+
+            stmt.FormStmt(schema, filterInfo, paramMgr, almgr, sb, _t, _tbl, _joins, _field, _f)
+
+            sb.Append(")")
+
+            Return sb.ToString
+        End Function
+
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Dim r As String = Nothing
+            If _t IsNot Nothing Then
+                r = _t.ToString()
+            Else
+                r = _tbl.RawName
+            End If
+            If _joins IsNot Nothing Then
+                r &= "$"
+                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
+                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
+                        r &= join.GetStaticString(mpe)
+                    End If
+                Next
+            End If
+            If _f IsNot Nothing Then
+                r &= "$" & _f.GetStaticString(mpe)
+            End If
+            If Not String.IsNullOrEmpty(_field) Then
+                r &= "$" & _field
+            End If
+            Return r
+        End Function
+
+        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+            'If _t Is Nothing Then
+            '    Return New Cache.EmptyDependentTypes
+            'End If
+
+            Dim dp As New Cache.DependentTypes
+            If _joins IsNot Nothing Then
+                For Each j As Worm.Criteria.Joins.QueryJoin In _joins
+                    Dim t As Type = j.ObjectSource.GetRealType(mpe)
+                    'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+                    '    t = mpe.GetTypeByEntityName(j.EntityName)
+                    'End If
+                    'If t Is Nothing Then
+                    '    Return New Cache.EmptyDependentTypes
+                    'End If
+                    dp.AddBoth(t)
+                Next
+            End If
+
+            If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
+                For Each f As IFilter In _f.Filter.GetAllFilters
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
+                    If Cache.IsCalculated(fdp) Then
+                        dp.Merge(fdp)
+                        'Else
+                        '    Return fdp
+                    End If
+                Next
+            End If
+
+            Return dp.Get
+        End Function
+    End Class
+
+    Public Class SubQueryCmd
+        Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+        Cache.IQueryDependentTypes
+
+        Private _q As Query.QueryCmd
+
+        'Public Sub New(ByVal q As Query.QueryCmd)
+        '    MyClass.New(q)
+        'End Sub
+
+        Public Sub New(ByVal q As Query.QueryCmd)
+            _q = q
+        End Sub
+
+        Public Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
+            Return _q._ToString()
+        End Function
+
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
-                Dim sb As New StringBuilder
-                'Dim dbschema As DbSchema = CType(schema, DbSchema)
-                sb.Append("(")
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+            Dim sb As New StringBuilder
+            'Dim dbschema As DbSchema = CType(schema, DbSchema)
+            sb.Append("(")
 
-                If _stmtGen Is Nothing Then
-                    _stmtGen = TryCast(schema, SQLGenerator)
+            Dim c As New Query.QueryCmd.svct(_q)
+            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                If _q.SelectedType Is Nothing Then
+                    If String.IsNullOrEmpty(_q.SelectedEntityName) Then
+                        _q.SelectedType = _q.CreateType
+                    Else
+                        _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
+                    End If
                 End If
 
-                FormStmt(_stmtGen, filterInfo, paramMgr, almgr, sb)
-
-                sb.Append(")")
-
-                Return sb.ToString
-            End Function
-
-            Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-                Dim r As String = Nothing
-                If _t IsNot Nothing Then
-                    r = _t.ToString()
-                Else
-                    r = _tbl.RawName
-                End If
-                If _joins IsNot Nothing Then
-                    r &= "$"
-                    For Each join As Worm.Criteria.Joins.OrmJoin In _joins
-                        If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
-                            r &= join.GetStaticString(mpe)
-                        End If
-                    Next
-                End If
-                If _f IsNot Nothing Then
-                    r &= "$" & _f.GetStaticString(mpe)
-                End If
-                If Not String.IsNullOrEmpty(_field) Then
-                    r &= "$" & _field
-                End If
-                Return r
-            End Function
-
-            Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-                'If _t Is Nothing Then
-                '    Return New Cache.EmptyDependentTypes
-                'End If
-
-                Dim dp As New Cache.DependentTypes
-                If _joins IsNot Nothing Then
-                    For Each j As Worm.Criteria.Joins.OrmJoin In _joins
-                        Dim t As Type = j.ObjectSource.GetRealType(mpe)
-                        'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
-                        '    t = mpe.GetTypeByEntityName(j.EntityName)
-                        'End If
-                        'If t Is Nothing Then
-                        '    Return New Cache.EmptyDependentTypes
-                        'End If
-                        dp.AddBoth(t)
-                    Next
+                If GetType(Entities.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
+                    _q.SelectedType = Nothing
                 End If
 
-                If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
-                    For Each f As IFilter In _f.Filter.GetAllFilters
-                        Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
-                        If Cache.IsCalculated(fdp) Then
-                            dp.Merge(fdp)
-                            'Else
-                            '    Return fdp
-                        End If
-                    Next
+                If _q.CreateType Is Nothing Then
+                    _q.CreateType = _q.SelectedType
                 End If
 
-                Return dp.Get
-            End Function
-        End Class
-    End Namespace
+                Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
+                Dim sl As List(Of Entities.SelectExpression) = Nothing
+                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, _q.SelectedType, sl)
+
+                sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, _
+                     _q.SelectedType, j, f, almgr, sl))
+            End Using
+
+            sb.Append(")")
+
+            Return sb.ToString
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString(mpe)
+        End Function
+
+        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+            Dim qp As Cache.IDependentTypes = CType(_q, Cache.IQueryDependentTypes).Get(mpe)
+            If Cache.IsEmpty(qp) Then
+                Dim dt As New Cache.DependentTypes
+                dt.AddBoth(_q.SelectedType)
+                qp = dt
+            End If
+            Return qp
+        End Function
+    End Class
 End Namespace
+
+'Namespace Database
+'    Namespace Criteria.Values
+'        'Public Interface IDatabaseFilterValue
+'        '    Inherits Worm.Criteria.Values.IFilterValue
+'        '    Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable) As String
+'        'End Interface
+
+
+'    End Namespace
+'End Namespace

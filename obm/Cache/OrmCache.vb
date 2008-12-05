@@ -1,10 +1,10 @@
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
-Imports Worm.Orm.Query
+Imports Worm.Entities.Query
 
 #Const TraceCreation = False
 
@@ -24,7 +24,7 @@ Namespace Cache
             Private _default As New Dictionary(Of String, Object)
 
             Public Function GetIds(ByVal hash As String) As IEnumerable(Of String)
-                'If hash = EntityFilterBase.EmptyHash Then
+                'If hash = EntityFilter.EmptyHash Then
                 '    Return _default
                 'Else
                 '    Dim h As List(Of String) = Nothing
@@ -38,7 +38,7 @@ Namespace Cache
             End Function
 
             Public Function GetIds2(ByVal hash As String) As Dictionary(Of String, Object)
-                If hash = EntityFilterBase.EmptyHash Then
+                If hash = EntityFilter.EmptyHash Then
                     Return _default
                 Else
                     Dim h As Dictionary(Of String, Object) = Nothing
@@ -73,7 +73,7 @@ Namespace Cache
                 If Not def Then
                     Return p.First.GetIds2(f.MakeHash)
                 Else
-                    Return p.First.GetIds2(EntityFilterBase.EmptyHash)
+                    Return p.First.GetIds2(EntityFilter.EmptyHash)
                 End If
             End Function
 
@@ -799,7 +799,7 @@ Namespace Cache
 
                 If f IsNot Nothing Then
                     For Each fl As IEntityFilter In f.GetAllFilters
-                        Dim tmpl As OrmFilterTemplateBase = CType(fl.Template, OrmFilterTemplateBase)
+                        Dim tmpl As OrmFilterTemplate = CType(fl.Template, OrmFilterTemplate)
                         Dim fields As List(Of String) = Nothing
                         Dim rt As Type = tmpl.ObjectSource.GetRealType(schema)
                         If GetUpdatedFields(rt, fields) Then
@@ -901,7 +901,7 @@ Namespace Cache
                                 End Using
 
                                 If Not removed Then
-                                    For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
+                                    For Each f As EntityFilter In obj.UpdateCtx.UpdatedFields
                                         Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
                                         _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
                                         _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
@@ -945,7 +945,7 @@ Namespace Cache
                         End Using
 
                         If Not removed Then
-                            For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
+                            For Each f As EntityFilter In obj.UpdateCtx.UpdatedFields
                                 Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
                                 _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
                                 _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
@@ -1091,7 +1091,7 @@ l1:
                                   ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary, _
                                   ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2, _
                                   ByVal forseEval As Boolean, ByVal mgr As OrmManager)
-            Dim h As String = EntityFilterBase.EmptyHash
+            Dim h As String = EntityFilter.EmptyHash
             If p.Value.Second IsNot Nothing Then
                 Try
                     h = p.Value.Second.MakeHash(schema, oschema, obj)
@@ -1174,7 +1174,7 @@ l1:
             Next
 
             If obj.UpdateCtx.UpdatedFields IsNot Nothing AndAlso oldObj IsNot Nothing Then
-                h = EntityFilterBase.EmptyHash
+                h = EntityFilter.EmptyHash
                 If p.Value.Second IsNot Nothing Then
                     Try
                         h = p.Value.Second.MakeHash(schema, oschema, oldObj)
@@ -1256,7 +1256,7 @@ l1:
                                 Throw New ArgumentException("Collection contains different types")
                             End If
 
-                            Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, t)
+                            Dim o As IKeyEntity = schema.GetJoinObj(oschema, obj, t)
 
                             If o IsNot Nothing Then
                                 UpdateCache(schema, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(o, Nothing)}, mgr, afterDelegate, contextKey, callbacks, True, False)
@@ -1405,7 +1405,7 @@ l1:
             End Using
         End Sub
 
-        Public Overrides Sub RegisterRemoval(ByVal obj As Orm._ICachedEntity)
+        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity)
             MyBase.RegisterRemoval(obj)
             RemoveDepends(obj)
         End Sub

@@ -1,12 +1,14 @@
 Imports System.Web
 Imports Worm.Web
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Collections.Generic
 Imports System.Collections
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Database
 Imports Worm
+Imports Worm.Criteria
+Imports Worm.Query
 
 #Const UseUserInstance = True
 
@@ -16,9 +18,9 @@ Public Class GetMgr
     Public Function GetMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(OrmCache, New SQLGenerator("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmDBManager(OrmCache, New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
+        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
 #End If
     End Function
 
@@ -69,12 +71,12 @@ Public Class MyProfile
     '    Return Now
     'End Function
 
-    Protected Overrides Function GetUserByName(ByVal mgr As OrmManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Orm.IOrmBase
+    Protected Overrides Function GetUserByName(ByVal mgr As OrmManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
         Dim t As Type = GetUserType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New Worm.Database.Criteria.Ctor(t).Field(UserNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(mgr, New PCtor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -94,7 +96,7 @@ Public Class MyProfile
                 End If
             End If
         End If
-        Return CType(col(0), IOrmBase)
+        Return CType(col(0), IKeyEntity)
     End Function
 
     Protected Overrides Function GetUserType() As System.Type
@@ -109,7 +111,7 @@ Public Class MyProfile
         Return ".TESTPROJECTANONYMCOOKIE"
     End Function
 
-    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Orm.IOrmBase
+    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
         Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
         u.UserName = name
         Return u

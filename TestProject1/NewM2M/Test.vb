@@ -5,6 +5,8 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Database
 Imports Worm.Query
 Imports Worm.Database.Criteria
+Imports Worm
+Imports Worm.Criteria
 
 <TestClass()> Public Class Test
 
@@ -46,26 +48,26 @@ Imports Worm.Database.Criteria
 #End Region
 
     <TestMethod()> Public Sub TestAdd()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
-            q.Filter = Ctor.Field(GetType(Entity), "ID").Eq(1)
+            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Entities.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd(GetType(Entity4))
-            q2.Filter = Ctor.Field(GetType(Entity4), "ID").Eq(2)
+            q2.Filter = PCtor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToList(Of Entity4)(mgr)(0)
 
             Assert.IsFalse(l.Contains(e2))
 
-            Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
+            Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Entities.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
             Assert.IsFalse(l2.Contains(e))
 
             mgr.BeginTransaction()
@@ -73,7 +75,7 @@ Imports Worm.Database.Criteria
                 Assert.IsFalse(e.InternalProperties.HasChanges())
                 Assert.IsFalse(e2.InternalProperties.HasChanges())
 
-                CType(e, Worm.Orm.IM2M).Add(e2)
+                CType(e, Worm.Entities.IM2M).Add(e2)
 
                 Assert.IsTrue(e.InternalProperties.HasChanges)
                 Assert.IsTrue(e2.InternalProperties.HasChanges)
@@ -82,13 +84,13 @@ Imports Worm.Database.Criteria
                 Assert.IsFalse(e.InternalProperties.HasChanges)
                 Assert.IsFalse(e2.InternalProperties.HasChanges)
 
-                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
+                l = CType(e, Worm.Entities.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
 
-                l2 = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
+                l2 = CType(e2, Worm.Entities.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
                 Assert.IsTrue(l2.Contains(e))
             Finally
                 mgr.Rollback()
@@ -97,20 +99,20 @@ Imports Worm.Database.Criteria
     End Sub
 
     <TestMethod()> Public Sub TestAddScope()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
-            q.Filter = Ctor.Field(GetType(Entity), "ID").Eq(1)
+            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Entities.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd(GetType(Entity4))
-            q2.Filter = Ctor.Field(GetType(Entity4), "ID").Eq(2)
+            q2.Filter = PCtor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToEntityList(Of Entity4)(mgr)(0)
 
@@ -142,16 +144,16 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> Public Sub TestAddNew()
         Dim t As New TestManager
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = t
             Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
-            q.Filter = Ctor.Field(GetType(Entity), "ID").Eq(1)
+            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Entities.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
@@ -164,20 +166,20 @@ Imports Worm.Database.Criteria
 
                     e2 = s.CreateNewObject(Of Entity4)()
 
-                    CType(e, Worm.Orm.IM2M).Add(e2)
+                    CType(e, Worm.Entities.IM2M).Add(e2)
 
-                    Assert.IsFalse(CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr).Contains(e))
+                    Assert.IsFalse(CType(e2, Worm.Entities.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr).Contains(e))
 
                     s.AcceptModifications()
                 End Using
 
-                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
+                l = CType(e, Worm.Entities.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
 
-                Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
+                Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Entities.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
                 Assert.IsTrue(l2.Contains(e))
             Finally
                 mgr.Rollback()
@@ -187,8 +189,8 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            Dim q As QueryCmd = New QueryCmd(GetType(Entity)).Where(Ctor.Field(GetType(Entity), "ID").Eq(1))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity)).Where(PCtor.prop(GetType(Entity), "ID").eq(1))
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 

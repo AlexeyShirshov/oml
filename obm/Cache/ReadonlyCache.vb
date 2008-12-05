@@ -1,6 +1,6 @@
 ﻿Imports System.Collections.Generic
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 Namespace Cache
     Public Enum CacheListBehavior
@@ -417,7 +417,7 @@ Namespace Cache
             _externalObjects.Remove(objectStoreName)
         End Sub
 
-        Protected Friend Sub AddM2MObjDependent(ByVal obj As _IOrmBase, ByVal key As String, ByVal id As String)
+        Protected Friend Sub AddM2MObjDependent(ByVal obj As _IKeyEntity, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -450,7 +450,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEntries(ByVal obj As _IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As _IKeyEntity, ByVal name As String) As ICollection(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -487,7 +487,7 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub UpdateM2MEntries(ByVal obj As _IOrmBase, ByVal oldId As Object, ByVal name As String)
+        Protected Friend Sub UpdateM2MEntries(ByVal obj As _IKeyEntity, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -519,8 +519,8 @@ Namespace Cache
 
         End Function
 
-        Public Function GetKeyFromPK(Of T As {New, IOrmBase})(ByVal id As Object) As Integer
-            Dim o As T = OrmBase.CreateOrmBase(Of T)(id, Me, Nothing)
+        Public Function GetKeyFromPK(Of T As {New, IKeyEntity})(ByVal id As Object) As Integer
+            Dim o As T = KeyEntity.CreateOrmBase(Of T)(id, Me, Nothing)
             Return o.Key
         End Function
 
@@ -556,7 +556,7 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return dic.Contains(New CacheKey(OrmBase.CreateOrmBase(id, t, Me, schema)))
+            Return dic.Contains(New CacheKey(KeyEntity.CreateOrmBase(id, t, Me, schema)))
         End Function
 
         Public Property NewObjectManager() As INewObjectsStore
@@ -619,8 +619,8 @@ Namespace Cache
                         Else
                             a = obj
                             If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
-                                If GetType(IOrmBase).IsAssignableFrom(type) Then
-                                    Dim orm As IOrmBase = CType(a, IOrmBase)
+                                If GetType(IKeyEntity).IsAssignableFrom(type) Then
+                                    Dim orm As IKeyEntity = CType(a, IKeyEntity)
                                     orm.Init(orm.Identifier, Me, mgr.MappingEngine)
                                 Else
                                     a.Init(a.GetPKValues, Me, mgr.MappingEngine)
@@ -661,15 +661,15 @@ Namespace Cache
         End Function
 
         Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
-            ByVal add2CacheOnCreate As Boolean) As IOrmBase
+            ByVal add2CacheOnCreate As Boolean) As IKeyEntity
 
             Return GetOrmBaseFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
         End Function
 
         Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
-            ByVal add2CacheOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As IOrmBase
+            ByVal add2CacheOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As IKeyEntity
 
-            Dim o As IOrmBase = OrmBase.CreateOrmBase(id, type, Me, schema)
+            Dim o As IKeyEntity = KeyEntity.CreateOrmBase(id, type, Me, schema)
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim obj As _ICachedEntity = NormalizeObject(o, False, False, _
@@ -679,7 +679,7 @@ Namespace Cache
                 o.SetObjectState(ObjectState.Created)
             End If
 
-            Return CType(obj, IOrmBase)
+            Return CType(obj, IKeyEntity)
         End Function
 
         Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _

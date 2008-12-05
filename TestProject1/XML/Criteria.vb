@@ -3,11 +3,12 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Cache
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm
 Imports System.Reflection
 Imports wx = Worm.Xml
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
+Imports Worm.Query
 
 <TestClass()> Public Class TestXmlCriteria
 
@@ -51,7 +52,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> Public Sub TestQuery()
         Using mgr As OrmManager = CreateManager()
             Dim col As ICollection(Of Entity4) = mgr.Find(Of Entity4)( _
-                mgr.MappingEngine.CreateCriteria(New ObjectSource(GetType(Entity4)), "Title").Eq("first"))
+                PCtor.prop(New ObjectSource(GetType(Entity4)), "Title").eq("first"))
 
             Assert.AreEqual(1, col.Count)
 
@@ -63,7 +64,7 @@ Imports Worm.Orm.Meta
     End Sub
 
     Public Shared Function CreateManager() As OrmManager
-        Return New wx.QueryManager(New wx.XPathGenerator("xml"), GetFileFromStream("data.xml"))
+        Return New wx.QueryManager(New Worm.ObjectMappingEngine("xml"), New wx.XPathGenerator, GetFileFromStream("data.xml"))
     End Function
 
     Public Shared Function GetFileFromStream(ByVal file As String) As IO.Stream
@@ -88,7 +89,7 @@ Imports Worm.Orm.Meta
             Main
         End Enum
 
-        Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Orm.Meta.MapField2Column)
+        Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
                 idx.Add(New MapField2Column("ID", "@id", GetTables()(Tables.Main)))
@@ -98,7 +99,7 @@ Imports Worm.Orm.Meta
             Return _idx
         End Function
 
-        Public Overrides Function GetTables() As Worm.Orm.Meta.SourceFragment()
+        Public Overrides Function GetTables() As Worm.Entities.Meta.SourceFragment()
             Return _tables
         End Function
     End Class

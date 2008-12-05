@@ -1,5 +1,5 @@
 Imports Worm.Web
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Collections.Generic
 Imports System.Collections
 

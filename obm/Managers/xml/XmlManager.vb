@@ -1,8 +1,8 @@
 ﻿Imports Worm.Cache
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports System.Xml.XPath
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Criteria.Joins
 
 Namespace Xml
@@ -11,32 +11,39 @@ Namespace Xml
 
         Private _fileName As String
         Private _stream As IO.Stream
-
+        Private _stmt As StmtGenerator
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
 
-        Public Sub New(ByVal cache As OrmCache, ByVal schema As XPathGenerator, ByVal fileName As String)
-            MyBase.New(cache, schema)
+        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal fileName As String)
+            MyBase.New(cache, mpe)
             _fileName = fileName
+            _stmt = gen
         End Sub
 
-        Public Sub New(ByVal schema As XPathGenerator, ByVal filename As String)
-            MyBase.New(schema)
-
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal filename As String)
+            MyBase.New(mpe)
+            _stmt = gen
             _fileName = filename
         End Sub
 
-        Public Sub New(ByVal cache As OrmCache, ByVal schema As XPathGenerator, ByVal stream As IO.Stream)
-            MyBase.New(cache, schema)
+        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal stream As IO.Stream)
+            MyBase.New(cache, mpe)
+            _stream = stream
+            _stmt = gen
+        End Sub
+
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal stream As IO.Stream)
+            MyBase.New(mpe)
+            _stmt = gen
             _stream = stream
         End Sub
 
-        Public Sub New(ByVal schema As XPathGenerator, ByVal stream As IO.Stream)
-            MyBase.New(schema)
-
-            _stream = stream
-        End Sub
-
+        Public ReadOnly Property XPathGenerator() As XPathGenerator
+            Get
+                Return CType(_stmt, XPathGenerator)
+            End Get
+        End Property
 #Region " Overrides "
 
         'Public Overrides Function AddObject(ByVal obj As Orm.OrmBase) As Orm.OrmBase
@@ -47,7 +54,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overloads Overrides Sub M2MSave(ByVal obj As IOrmBase, ByVal t As System.Type, ByVal direct As String, ByVal el As EditableListBase)
+        Protected Overloads Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As EditableListBase)
             Throw New NotImplementedException
         End Sub
 
@@ -63,11 +70,11 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.OrmJoin) As Orm.DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.QueryJoin) As Entities.DicIndex(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal firstField As String, ByVal secondField As String) As Orm.DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal firstField As String, ByVal secondField As String) As Entities.DicIndex(Of T)
             Throw New NotImplementedException
         End Function
 
@@ -83,13 +90,13 @@ Namespace Xml
             End Get
         End Property
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICacheItemProvoder(Of T)
             If cols Is Nothing Then
@@ -114,36 +121,36 @@ Namespace Xml
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
-            ByVal relation As Orm.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
+            ByVal relation As Entities.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
+            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
+            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal queryAspect() As Entities.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
         End Function
 
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
-            ByVal aspect As Orm.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
+            ByVal aspect As Entities.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetObjects(Of T As {New, IOrmBase})( _
+        Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
             ByVal ids As System.Collections.Generic.IList(Of Object), ByVal f As Worm.Criteria.Core.IFilter, _
             ByVal objs As System.Collections.Generic.List(Of T), ByVal withLoad As Boolean, _
             ByVal fieldName As String, ByVal idsSorted As Boolean) As System.Collections.Generic.IList(Of T)
@@ -151,9 +158,9 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetObjects(Of T As {New, IOrmBase})( _
+        Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
             ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Object), _
-            ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Orm.Meta.M2MRelation, _
+            ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Entities.Meta.M2MRelation, _
             ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Cache.EditableList)
 
             Throw New NotImplementedException
@@ -177,15 +184,15 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase}, T2 As IOrmBase)( _
+        Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IKeyEntity}, T2 As IKeyEntity)( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 
-        Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IOrmBase)(ByVal realType As Type, _
+        Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IKeyEntity)(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 
@@ -197,11 +204,11 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, IOrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
+        Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormater, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {New, IOrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
+        Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
@@ -326,7 +333,7 @@ Namespace Xml
             obj.CheckIsAllLoaded(MappingEngine, columns.Count)
         End Function
 
-        Public Overrides Function GetObjectFromStorage(ByVal obj As Orm._ICachedEntity) As Orm.ICachedEntity
+        Public Overrides Function GetObjectFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
             Throw New NotImplementedException
         End Function
     End Class

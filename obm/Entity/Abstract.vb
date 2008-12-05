@@ -1,7 +1,7 @@
-﻿Imports Worm.Orm.Meta
+﻿Imports Worm.Entities.Meta
 Imports Worm.Cache
 
-Namespace Orm
+Namespace Entities
     Public Class ObjectSavedArgs
         Inherits EventArgs
 
@@ -17,7 +17,6 @@ Namespace Orm
             End Get
         End Property
     End Class
-
 
     Public Interface _IEntity
         Inherits IEntity
@@ -127,10 +126,10 @@ Namespace Orm
         Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
-        Sub Add(ByVal o As IOrmBase)
-        Sub Add(ByVal o As IOrmBase, ByVal key As String)
-        Sub Delete(ByVal o As IOrmBase)
-        Sub Delete(ByVal o As IOrmBase, ByVal key As String)
+        Sub Add(ByVal o As IKeyEntity)
+        Sub Add(ByVal o As IKeyEntity, ByVal key As String)
+        Sub Delete(ByVal o As IKeyEntity)
+        Sub Delete(ByVal o As IKeyEntity, ByVal key As String)
         'Sub Delete(ByVal t As Type)
         'Sub Delete(ByVal t As Type, ByVal key As String)
         Sub Cancel(ByVal t As Type)
@@ -142,7 +141,7 @@ Namespace Orm
         Function GetAllRelation() As Generic.IList(Of EditableListBase)
     End Interface
 
-    Public Interface IOrmBase
+    Public Interface IKeyEntity
         Inherits _ICachedEntity, IM2M
         Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
@@ -152,8 +151,8 @@ Namespace Orm
         'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
 
-    Public Interface _IOrmBase
-        Inherits IOrmBase
+    Public Interface _IKeyEntity
+        Inherits IKeyEntity
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2
         'Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
@@ -220,7 +219,7 @@ Namespace Orm
     End Class
 
     Public Class UpdateCtx
-        Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilterBase)
+        Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilter)
         Public Relations As New Generic.List(Of EditableListBase)
         Public Added As Boolean
         Public Deleted As Boolean

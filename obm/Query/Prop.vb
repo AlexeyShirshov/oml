@@ -1,74 +1,8 @@
-﻿Imports Worm.Orm.Meta
+﻿Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports Worm.Query
 
-Namespace Orm
-    Public Class FCtor
-        Public Shared Function Field(ByVal t As Type, ByVal typeField As String) As FCtor
-            Dim f As New FCtor
-            f.GetAllProperties.Add(New SelectExpression(t, typeField))
-            Return f
-        End Function
-
-        Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String) As FCtor
-            Dim f As New FCtor
-            f.GetAllProperties.Add(New SelectExpression(table, tableColumn))
-            Return f
-        End Function
-
-        Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String) As FCtor
-            Dim f As New FCtor
-            f.GetAllProperties.Add(New SelectExpression(table, tableColumn, [alias]))
-            Return f
-        End Function
-
-        Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
-            Dim f As New FCtor
-            Dim p As New SelectExpression(table, tableColumn, [alias])
-            p.Attributes = attr
-            f.GetAllProperties.Add(p)
-            Return f
-        End Function
-
-        Private _l As List(Of SelectExpression)
-
-        Public Function Add(ByVal t As Type, ByVal typeField As String) As FCtor
-            GetAllProperties.Add(New SelectExpression(t, typeField))
-            Return Me
-        End Function
-
-        Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String) As FCtor
-            GetAllProperties.Add(New SelectExpression(table, tableColumn))
-            Return Me
-        End Function
-
-        Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String) As FCtor
-            GetAllProperties.Add(New SelectExpression(table, tableColumn, [alias]))
-            Return Me
-        End Function
-
-        Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
-            Dim p As New SelectExpression(table, tableColumn, [alias])
-            p.Attributes = attr
-            GetAllProperties.Add(p)
-            Return Me
-        End Function
-
-        Public Function GetAllProperties() As List(Of SelectExpression)
-            If _l Is Nothing Then
-                _l = New List(Of SelectExpression)
-            End If
-            Return _l
-        End Function
-
-        Public Shared Widening Operator CType(ByVal f As FCtor) As SelectExpression()
-            Return f.GetAllProperties.ToArray
-        End Operator
-
-        Public Shared Widening Operator CType(ByVal f As FCtor) As Grouping()
-            Return f.GetAllProperties.ConvertAll(Function(p As SelectExpression) New Grouping(p)).ToArray
-        End Operator
-    End Class
+Namespace Entities
 
     Public Enum PropType
         ObjectProperty
@@ -168,18 +102,18 @@ Namespace Orm
         Public ReadOnly Property PropType() As PropType
             Get
                 If _osrc IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then
-                    Return Orm.PropType.ObjectProperty
+                    Return Entities.PropType.ObjectProperty
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
-                    Return Orm.PropType.TableColumn
+                    Return Entities.PropType.TableColumn
                 Else
                     If Not String.IsNullOrEmpty(_custom) Then
-                        Return Orm.PropType.CustomValue
+                        Return Entities.PropType.CustomValue
                     ElseIf Not String.IsNullOrEmpty(_column) Then
-                        Return Orm.PropType.TableColumn
+                        Return Entities.PropType.TableColumn
                     ElseIf _q IsNot Nothing Then
-                        Return Orm.PropType.Subquery
+                        Return Entities.PropType.Subquery
                     Else
-                        Return Orm.PropType.Aggregate
+                        Return Entities.PropType.Aggregate
                     End If
                 End If
             End Get
@@ -314,8 +248,8 @@ Namespace Orm
             End If
         End Function
 
-        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable) As String()
-            Return ObjectMappingEngine.ExtractValues(schema, almgr, _values).ToArray
+        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable) As String()
+            Return ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _values).ToArray
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean

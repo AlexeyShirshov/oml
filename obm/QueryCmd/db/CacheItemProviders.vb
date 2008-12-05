@@ -1,8 +1,7 @@
 ﻿Imports Worm.Database
 Imports System.Collections.Generic
-Imports Worm.Orm
-Imports Worm.Orm.Meta
-Imports Worm.Database.Criteria.Joins
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.OrmManager
 
@@ -34,13 +33,13 @@ Namespace Query.Database
             'Private _sync As String
             'Private _dic As IDictionary
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
 
                 Reset(mgr, j, f, q.SelectedType, sl, q)
             End Sub
 
-            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
 
                 Reset(mgr, j, f, t, sl, q)
@@ -50,7 +49,7 @@ Namespace Query.Database
                 _stmt = Nothing
             End Sub
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                              ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
                 _j = j
                 _f = f
@@ -102,7 +101,7 @@ Namespace Query.Database
                 End Using
 
                 If Sort IsNot Nothing AndAlso Sort.IsExternal Then
-                    r = CType(dbm.SQLGenerator.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
+                    r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
                 End If
 
                 Return r
@@ -141,14 +140,14 @@ Namespace Query.Database
                 Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 For Each q As QueryCmd In New QueryIterator(_q)
                     Dim columnAliases As New List(Of String)
-                    Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
+                    Dim j As List(Of Worm.Criteria.Joins.QueryJoin) = _j(i)
                     Dim f As IFilter = Nothing
                     If _f.Length > i Then
                         f = _f(i)
                     End If
-                    inner = MakeQueryStatement(fi, stmtGen, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
+                    inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
                     innerColumns = New List(Of String)(columnAliases)
-                    q = q.OuterQuery
+                    'q = q.OuterQuery
                     i += 1
                 Next
                 'Loop
@@ -177,9 +176,9 @@ Namespace Query.Database
                 If t Is Nothing Then
                     t = SelectedType
                 End If
-                oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                oschema = dbm.MappingEngine.GetObjectSchema(t, False)
 
-                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.SQLGenerator, SelectedType, _q, True, _sl(0)), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, SelectedType, _q, True, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -291,7 +290,7 @@ Namespace Query.Database
         Class ProviderAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})
             Inherits ProviderAnonym(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, q.SelectedType, sl)
             End Sub
@@ -313,10 +312,10 @@ Namespace Query.Database
                     t = SelectedType
                 End If
                 If t IsNot SelectedType AndAlso t IsNot Nothing Then
-                    oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -339,7 +338,7 @@ Namespace Query.Database
             'Private _sync As String
             'Private _dic As IDictionary
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, sl)
                 '_mgr = mgr
@@ -348,7 +347,7 @@ Namespace Query.Database
                 'Reset(j, f, q.SelectedType)
             End Sub
 
-            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, t, sl)
                 '_mgr = mgr
@@ -510,7 +509,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(_q.CreateType, cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
+                dbm.LoadMultipleObjects(_q.CreateType, cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -583,7 +582,7 @@ Namespace Query.Database
                 '            For Each fl As IFilter In f_.GetAllFilters
                 '                Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                 '                If f IsNot Nothing Then
-                '                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                '                    Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
 
                 '                    Dim fields As List(Of String) = Nothing
                 '                    If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
@@ -611,7 +610,7 @@ Namespace Query.Database
         Class ProviderT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
             Inherits Provider(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, q.SelectedType, sl)
             End Sub
@@ -633,10 +632,10 @@ Namespace Query.Database
                     t = SelectedType
                 End If
                 If t IsNot SelectedType AndAlso t IsNot Nothing Then
-                    oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

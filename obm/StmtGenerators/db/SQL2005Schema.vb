@@ -7,23 +7,23 @@ Namespace Database
     Public Class MSSQL2005Generator
         Inherits SQLGenerator
 
-        Public Sub New(ByVal version As String)
-            MyBase.New(version)
-        End Sub
+        'Public Sub New(ByVal version As String)
+        '    MyBase.New(version)
+        'End Sub
 
-        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
-            MyBase.New(version, resolveEntity)
-        End Sub
+        'Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
+        '    MyBase.New(version, resolveEntity)
+        'End Sub
 
-        Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
-            MyBase.New(version, resolveName)
-        End Sub
+        'Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
+        '    MyBase.New(version, resolveName)
+        'End Sub
 
-        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
-            MyBase.New(version, resolveEntity, resolveName)
-        End Sub
+        'Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
+        '    MyBase.New(version, resolveEntity, resolveName)
+        'End Sub
 
-        Protected Friend Overrides Function TopStatement(ByVal top As Integer) As String
+        Public Overrides Function TopStatement(ByVal top As Integer) As String
             Return "top (" & top & ") "
         End Function
 
@@ -62,7 +62,7 @@ Namespace Database
 
         Protected Overrides Function InsertOutput(ByVal table As String, _
             ByVal syncInsertPK As IEnumerable(Of Pair(Of String, Pair(Of String))), _
-            ByVal notSyncInsertPK As List(Of Pair(Of String)), ByVal co As Orm.Meta.IChangeOutputOnInsert) As String
+            ByVal notSyncInsertPK As List(Of Pair(Of String)), ByVal co As Entities.Meta.IChangeOutputOnInsert) As String
             Dim sb As New StringBuilder
             sb.Append("output ")
             For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK

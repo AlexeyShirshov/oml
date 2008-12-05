@@ -5,8 +5,10 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm.Database.Criteria
 Imports Worm.Database
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
+Imports Worm
+Imports Worm.Criteria
 
 <TestClass()> Public Class Modification
 
@@ -49,9 +51,9 @@ Imports Worm.Orm.Meta
 
     <TestMethod()> Public Sub TestModification()
         Dim q As New QueryCmd(Function() _
-           TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1")))
+           TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1")))
 
-        Dim t As Table1 = q.Where(Ctor.Field(GetType(Table1), "ID").Eq(1)).Single(Of Table1)()
+        Dim t As Table1 = q.Where(PCtor.prop(GetType(Table1), "ID").eq(1)).Single(Of Table1)()
 
         Assert.IsNull(t.InternalProperties.OriginalCopy)
         Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
@@ -61,7 +63,7 @@ Imports Worm.Orm.Meta
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
         Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
 
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
             mgr.BeginTransaction()
             Try
                 Using mt As New ModificationsTracker(mgr)
@@ -82,7 +84,7 @@ Imports Worm.Orm.Meta
 
     <Entity("1", Tablename:="dbo.guid_table")> _
     Public Class RawObj
-        Inherits OrmBase
+        Inherits KeyEntity
 
         Private _id As Guid
 
@@ -118,10 +120,10 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestRawObjectUpdate()
         Dim q As New QueryCmd(Function() _
-           TestManager.CreateWriteManager(New SQLGenerator("1")))
+           TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
 
         Dim t As RawObj = q.Top(1).WithLoad(True).Single(Of RawObj)()
-        
+
         Assert.IsNotNull(t)
         Dim oldCode As Integer = t.Code
 
@@ -139,7 +141,7 @@ Imports Worm.Orm.Meta
         Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
         Assert.AreEqual(oldCode, q.Top(1).WithLoad(True).Single(Of RawObj)().Code)
 
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.BeginTransaction()
             Try
                 Using mt As New ModificationsTracker(mgr)
@@ -167,7 +169,7 @@ Imports Worm.Orm.Meta
 
         Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
 
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New MSSQL2005Generator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             mgr.BeginTransaction()
             Try
                 Using mt As New ModificationsTracker(mgr)
@@ -186,7 +188,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestRawObjectDelete()
         Dim q As New QueryCmd(Function() _
-           TestManager.CreateWriteManager(New SQLGenerator("1")))
+           TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
 
         Dim t As RawObj = q.Top(1).WithLoad(True).Single(Of RawObj)()
 

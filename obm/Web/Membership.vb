@@ -1,11 +1,13 @@
 Imports System.Web
 Imports System.Web.Security
 Imports System.Web.Profile
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Configuration
 Imports Worm.Database
 Imports Worm.Database.Criteria
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
+Imports Worm.Criteria
+Imports Worm.Query
 
 Namespace Web
     Public Class MembershipBase
@@ -146,7 +148,7 @@ Namespace Web
             End If
 
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, username, Nothing)
                 Else
@@ -215,7 +217,7 @@ Namespace Web
                 End If
 
 
-                Dim u As IOrmBase = UserMapper.CreateUser(CType(mgr, OrmDBManager), username, Nothing, providerUserKey)
+                Dim u As IKeyEntity = UserMapper.CreateUser(CType(mgr, OrmDBManager), username, Nothing, providerUserKey)
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(u.GetType)
 
@@ -260,7 +262,7 @@ Namespace Web
 
         Public Overrides Function DeleteUser(ByVal username As String, ByVal deleteAllRelatedData As Boolean) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, username, Nothing)
                 Else
@@ -288,7 +290,7 @@ Namespace Web
             End If
 
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, username, Nothing)
                 Else
@@ -316,7 +318,7 @@ Namespace Web
 
         Public Overrides Function UnlockUser(ByVal userName As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, userName, Nothing)
                 Else
@@ -347,7 +349,7 @@ Namespace Web
         Public Overrides Sub UpdateUser(ByVal user As System.Web.Security.MembershipUser)
             If _treatUsernameAsEmail Then
                 Using mgr As OrmManager = UserMapper.CreateManager
-                    Dim u As IOrmBase = FindUserByEmail(mgr, user.Email, Nothing)
+                    Dim u As IKeyEntity = FindUserByEmail(mgr, user.Email, Nothing)
                     If u IsNot Nothing Then
                         Dim schema As ObjectMappingEngine = mgr.MappingEngine
                         Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(u.GetType)
@@ -364,7 +366,7 @@ Namespace Web
 
         Public Overrides Function ValidateUser(ByVal username As String, ByVal password As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, username, Nothing)
                 Else
@@ -439,7 +441,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim c As CriteriaLink = CType(New Worm.Database.Criteria.Ctor(UserMapper.GetUserType).Field(MapField("Email")).Like(emailToMatch), CriteriaLink)
+                Dim c As PredicateLink = CType(New PCtor(UserMapper.GetUserType).prop(MapField("Email")).[like](emailToMatch), PredicateLink)
                 Dim users As IList = UserMapper.FindUsers(mgr, c)
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
@@ -452,7 +454,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(UserMapper.UserNameField).Like(usernameToMatch))
+                Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -479,7 +481,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._lastActivityField, New TypeWrap(Of Object)(compareTime), FilterOperation.GreaterThan))
-                Return UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(UserMapper.LastActivityField).GreaterThan(compareTime)).Count
+                Return UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.LastActivityField).greater_than(compareTime)).Count
             End Using
         End Function
 
@@ -492,11 +494,11 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(schema.GetPrimaryKeys(UserMapper.GetUserType)(0).PropertyAlias).Eq(providerUserKey))
+                Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(schema.GetPrimaryKeys(UserMapper.GetUserType)(0).PropertyAlias).eq(providerUserKey))
                 If users.Count <> 1 Then
                     Return Nothing
                 End If
-                Dim u As IOrmBase = CType(users(0), IOrmBase)
+                Dim u As IKeyEntity = CType(users(0), IKeyEntity)
                 If userIsOnline Then
                     If Not IsUserOnline(schema, u) Then
                         Return Nothing
@@ -509,7 +511,7 @@ Namespace Web
         Public Overloads Overrides Function GetUser(ByVal username As String, ByVal userIsOnline As Boolean) As System.Web.Security.MembershipUser
             If Not String.IsNullOrEmpty(username) Then
                 Using mgr As OrmManager = UserMapper.CreateManager
-                    Dim u As IOrmBase = Nothing
+                    Dim u As IKeyEntity = Nothing
                     If _treatUsernameAsEmail Then
                         u = FindUserByEmail(mgr, username, userIsOnline)
                     Else
@@ -528,7 +530,7 @@ Namespace Web
         Public Overrides Function GetUserNameByEmail(ByVal email As String) As String
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim u As IOrmBase = FindUserByEmail(mgr, email, Nothing)
+                Dim u As IKeyEntity = FindUserByEmail(mgr, email, Nothing)
                 If u Is Nothing Then
                     Return Nothing
                 End If
@@ -556,7 +558,7 @@ Namespace Web
             End Get
         End Property
 
-        Protected Function CreateMembershipUser(ByVal schema As ObjectMappingEngine, ByVal u As IOrmBase) As MembershipUser
+        Protected Function CreateMembershipUser(ByVal schema As ObjectMappingEngine, ByVal u As IKeyEntity) As MembershipUser
             Dim lf As String = GetField("IsLockedOut")
             Dim islockedout As Boolean = False
             Dim ut As System.Type = u.GetType
@@ -620,7 +622,7 @@ Namespace Web
 
         Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As ObjectMappingEngine) As MembershipUserCollection
             Dim uc As New MembershipUserCollection
-            For Each u As IOrmBase In users
+            For Each u As IKeyEntity In users
                 uc.Add(CreateMembershipUser(schema, u))
             Next
             Return uc
@@ -635,7 +637,7 @@ Namespace Web
                     [end] = Math.Min(pageIndex * pageSize, users.Count)
                 End If
                 For i As Integer = start To [end] - 1
-                    Dim u As IOrmBase = CType(users(i), IOrmBase)
+                    Dim u As IKeyEntity = CType(users(i), IKeyEntity)
                     uc.Add(CreateMembershipUser(schema, u))
                 Next
             End If
@@ -664,15 +666,15 @@ Namespace Web
         '    'End Using
         'End Function
 
-        Protected Function FindUserByEmail(ByVal mgr As OrmManager, ByVal email As String, ByVal userIsOnline As Nullable(Of Boolean)) As IOrmBase
+        Protected Function FindUserByEmail(ByVal mgr As OrmManager, ByVal email As String, ByVal userIsOnline As Nullable(Of Boolean)) As IKeyEntity
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(GetField("Email")).Eq(email))
+            Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(GetField("Email")).eq(email))
             If users.Count <> 1 Then
                 Return Nothing
             End If
-            Dim u As IOrmBase = CType(users(0), IOrmBase)
+            Dim u As IKeyEntity = CType(users(0), IKeyEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _
                 AndAlso IsUserOnline(schema, u) <> userIsOnline.Value Then
                 Return Nothing
@@ -680,15 +682,15 @@ Namespace Web
             Return u
         End Function
 
-        Protected Friend Function FindUserByName(ByVal mgr As OrmManager, ByVal username As String, ByVal userIsOnline As Nullable(Of Boolean)) As IOrmBase
+        Protected Friend Function FindUserByName(ByVal mgr As OrmManager, ByVal username As String, ByVal userIsOnline As Nullable(Of Boolean)) As IKeyEntity
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(UserMapper.UserNameField).Eq(username))
+            Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
             If users.Count <> 1 Then
                 Return Nothing
             End If
-            Dim u As IOrmBase = CType(users(0), IOrmBase)
+            Dim u As IKeyEntity = CType(users(0), IKeyEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _
                 AndAlso IsUserOnline(schema, u) <> userIsOnline.Value Then
                 Return Nothing
@@ -702,7 +704,7 @@ Namespace Web
 
         Protected Overridable Sub UpdateLastActivity()
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim u As IOrmBase = Nothing
+                Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then
                     u = FindUserByEmail(mgr, HttpContext.Current.User.Identity.Name, Nothing)
                 Else
@@ -729,7 +731,7 @@ Namespace Web
             End Using
         End Sub
 
-        Protected Function IsUserOnline(ByVal schema As ObjectMappingEngine, ByVal u As IOrmBase) As Boolean
+        Protected Function IsUserOnline(ByVal schema As ObjectMappingEngine, ByVal u As IKeyEntity) As Boolean
             If String.IsNullOrEmpty(UserMapper.LastActivityField) Then
                 Throw New InvalidOperationException("LastActivity field is not specified")
             End If
@@ -740,7 +742,7 @@ Namespace Web
             Return last > compareTime
         End Function
 
-        Protected Sub UpdateFailureCount(ByVal mgr As OrmManager, ByVal u As IOrmBase)
+        Protected Sub UpdateFailureCount(ByVal mgr As OrmManager, ByVal u As IKeyEntity)
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim ut As System.Type = u.GetType
 
@@ -801,7 +803,7 @@ l1:
             End Using
         End Function
 
-        Protected Overridable Function CanLogin(ByVal mgr As OrmManager, ByVal user As IOrmBase) As Boolean
+        Protected Overridable Function CanLogin(ByVal mgr As OrmManager, ByVal user As IKeyEntity) As Boolean
             Return True
         End Function
 
@@ -812,15 +814,15 @@ l1:
         End Property
 #End Region
 
-        Protected Overridable Sub PasswordChanged(ByVal user As IOrmBase)
+        Protected Overridable Sub PasswordChanged(ByVal user As IKeyEntity)
 
         End Sub
 
-        Protected Overridable Sub UserCreated(ByVal user As IOrmBase)
+        Protected Overridable Sub UserCreated(ByVal user As IKeyEntity)
 
         End Sub
 
-        Protected Overridable Sub UserBlocked(ByVal user As IOrmBase)
+        Protected Overridable Sub UserBlocked(ByVal user As IKeyEntity)
 
         End Sub
     End Class

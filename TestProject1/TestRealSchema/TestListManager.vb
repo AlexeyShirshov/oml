@@ -1,16 +1,18 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Collections.Generic
 Imports Worm.Database
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Criteria
+Imports Worm.Query
 
 <TestClass()> Public Class TestListManager
 
     <TestMethod()> _
     Public Sub TestAddWithSort()
-        Dim schema As SQLGenerator = New SQLGenerator("1")
+        Dim schema As Worm.ObjectMappingEngine = New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -27,7 +29,7 @@ Imports Worm.Orm
 
                 n.SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -41,7 +43,7 @@ Imports Worm.Orm
 
                 n.SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -56,10 +58,10 @@ Imports Worm.Orm
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Dim schema As SQLGenerator = New SQLGenerator("1")
+        Dim schema As Worm.ObjectMappingEngine = New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -77,14 +79,14 @@ Imports Worm.Orm
 
                 n.SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
                 l(1).Delete()
                 l(1).SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("EnumStr").eq(Enum1.sec), Sorting.Field(GetType(Table1), "Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
 
             Finally

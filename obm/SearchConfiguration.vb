@@ -1,5 +1,5 @@
 Imports System.Configuration
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 
 Namespace Configuration
     Public MustInherit Class SearchSection

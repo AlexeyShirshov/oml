@@ -28,6 +28,16 @@ Namespace Linq
             End Set
         End Property
 
+        Private _gen As StmtGenerator
+        Public Property StmtGenerator() As StmtGenerator
+            Get
+                Return _gen
+            End Get
+            Set(ByVal value As StmtGenerator)
+                _gen = value
+            End Set
+        End Property
+
         Public Function CreateQueryWrapper(ByVal t As Type) As QueryWrapper
             Return New QueryWrapper(t, Me)
         End Function
@@ -51,21 +61,22 @@ Namespace Linq
         Private _conn As String
 
         Public Sub New(ByVal conn As String)
-            MyClass.New(New Cache.ReadonlyCache, New SQLGenerator("1"), conn)
+            MyClass.New(New Cache.ReadonlyCache, New ObjectMappingEngine("1"), New SQLGenerator, conn)
         End Sub
 
-        Public Sub New(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal conn As String)
+        Public Sub New(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal conn As String)
             _conn = conn
             Me.Cache = cache
             Me.MappingEngine = schema
+            Me.StmtGenerator = gen
         End Sub
 
         Public Overrides Function GetManager() As ICreateManager
-            Return New CreateManager(Function() New OrmDBManager(CType(Cache, Worm.Cache.OrmCache), CType(MappingEngine, SQLGenerator), _conn))
+            Return New CreateManager(Function() New OrmDBManager(CType(Cache, Worm.Cache.OrmCache), MappingEngine, CType(StmtGenerator, SQLGenerator), _conn))
         End Function
 
         Public Overrides Function GetReadonlyManager() As ICreateManager
-            Return New CreateManager(Function() New OrmReadOnlyDBManager(Cache, CType(MappingEngine, SQLGenerator), _conn))
+            Return New CreateManager(Function() New OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, SQLGenerator), _conn))
         End Function
     End Class
 
@@ -73,7 +84,7 @@ Namespace Linq
         Inherits WormDBContext
 
         Public Sub New(ByVal conn As String)
-            MyBase.New(New Cache.OrmCache, New MSSQL2005Generator("1"), conn)
+            MyBase.New(New Cache.OrmCache, New ObjectMappingEngine("1"), New MSSQL2005Generator, conn)
         End Sub
     End Class
 

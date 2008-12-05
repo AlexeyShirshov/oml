@@ -1,6 +1,6 @@
 Imports Worm.Cache
-Imports Worm.Orm.Meta
-Imports Worm.Orm
+Imports Worm.Entities.Meta
+Imports Worm.Entities
 
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
@@ -8,7 +8,7 @@ Public Class Table3
     Inherits OrmBaseT(Of Table3)
     Implements IOrmEditable(Of Table3)
 
-    Private _obj As IOrmBase
+    Private _obj As IKeyEntity
     Private _code As Byte
     Private _trigger As Boolean
     Private _id As Integer
@@ -77,7 +77,7 @@ Public Class Table3
         ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
         Select Case fieldName
             Case "Ref"
-                RefObject = CType(value, OrmBase)
+                RefObject = CType(value, KeyEntity)
             Case "Code"
                 Code = CByte(value)
             Case "Version"
@@ -90,13 +90,13 @@ Public Class Table3
     End Sub
 
     <Column("Ref", Field2DbRelations.Factory)> _
-    Public Property RefObject() As IOrmBase
+    Public Property RefObject() As IKeyEntity
         Get
             Using SyncHelper(True, "Ref")
                 Return _obj
             End Using
         End Get
-        Set(ByVal value As IOrmBase)
+        Set(ByVal value As IKeyEntity)
             Using SyncHelper(False, "Ref")
                 _obj = value
             End Using

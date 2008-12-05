@@ -4,85 +4,89 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
-Imports Worm.Orm.Meta
-Imports Worm.Orm
-Imports Worm.Database.Criteria.Core
+Imports Worm.Entities.Meta
+Imports Worm.Entities
 
 <TestClass()> Public Class OrmSchemaTest
 
     <TestMethod()> _
     Public Sub TestSelect()
-        Dim schemaV1 As New SQLGenerator("1")
+        Dim schemaV1 As New SQLGenerator
 
         Assert.AreEqual("SQL Server 2000", schemaV1.Name)
 
         Assert.IsTrue(schemaV1.SupportFullTextSearch)
 
-        Dim o As New Entity(10, Nothing, schemaV1)
+        Dim s As New Worm.ObjectMappingEngine("1")
+        Dim o As New Entity(10, Nothing, s)
         Dim t As Type = GetType(Entity)
 
-        Assert.AreEqual(1, schemaV1.GetTables(t).Length)
+        Assert.AreEqual(1, s.GetTables(t).Length)
 
         Dim almgr As AliasMgr = AliasMgr.Create
         Dim params As New ParamMgr(schemaV1, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.Select(t, almgr, params, Nothing, Nothing, Nothing))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.Select(s, t, almgr, params, Nothing, Nothing, Nothing))
 
-        Dim schemaV2 As New SQLGenerator("2")
+        Dim schemaV2 As New SQLGenerator
+        Dim s2 As New Worm.ObjectMappingEngine("2")
         almgr = AliasMgr.Create
         Dim params2 As New ParamMgr(schemaV2, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2, Nothing, Nothing, Nothing))
-        Assert.AreEqual(2, schemaV2.GetTables(t).Length)
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.Select(s2, t, almgr, params2, Nothing, Nothing, Nothing))
+        Assert.AreEqual(2, s2.GetTables(t).Length)
 
         t = GetType(Entity2)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(t, almgr, params, Nothing, Nothing, Nothing))
-        Assert.AreEqual(2, schemaV1.GetTables(t).Length)
+        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(s, t, almgr, params, Nothing, Nothing, Nothing))
+        Assert.AreEqual(2, s.GetTables(t).Length)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2, Nothing, Nothing, Nothing))
-        Assert.AreEqual(2, schemaV2.GetTables(t).Length)
+        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(s2, t, almgr, params2, Nothing, Nothing, Nothing))
+        Assert.AreEqual(2, s2.GetTables(t).Length)
 
-        Dim schemaV3 As New SQLGenerator("3")
+        Dim schemaV3 As New SQLGenerator
+        Dim s3 As New Worm.ObjectMappingEngine("3")
         Dim params3 As New ParamMgr(schemaV3, "p")
         almgr = AliasMgr.Create
         t = GetType(Entity)
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on (t2.i = t1.id and t2.s = @p1)", schemaV3.Select(t, almgr, params3, Nothing, Nothing, Nothing))
-        Assert.AreEqual(2, schemaV3.GetTables(t).Length)
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on (t2.i = t1.id and t2.s = @p1)", schemaV3.Select(s3, t, almgr, params3, Nothing, Nothing, Nothing))
+        Assert.AreEqual(2, s3.GetTables(t).Length)
     End Sub
 
     <TestMethod()> _
     Public Sub TestSelectID()
-        Dim schemaV1 As New SQLGenerator("1")
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Dim o As New Entity(10, Nothing, schemaV1)
         Dim t As Type = GetType(Entity)
 
         Assert.AreEqual(1, schemaV1.GetTables(t).Length)
 
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim params As New ParamMgr(schemaV1, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.SelectID(t, almgr, params, Nothing))
+        Dim params As New ParamMgr(gen, "p")
+        Assert.AreEqual("select t1.id from dbo.ent1 t1", gen.SelectID(schemaV1, t, almgr, params, Nothing))
 
 
-        Dim schemaV2 As New SQLGenerator("2")
+        Dim schemaV2 As New Worm.ObjectMappingEngine("2")
         almgr = AliasMgr.Create
-        Dim params2 As New ParamMgr(schemaV2, "p")
+        Dim params2 As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2, Nothing))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
 
         t = GetType(Entity2)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.SelectID(t, almgr, params, Nothing))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV1, t, almgr, params, Nothing))
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2, Nothing))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
 
     End Sub
 
     <TestMethod()> _
     Public Sub TestInsert()
-        Dim schemaV1 As New SQLGenerator("1")
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Dim o As New Entity(10, Nothing, schemaV1)
         Dim t As Type = GetType(Entity)
 
@@ -95,7 +99,7 @@ Imports Worm.Database.Criteria.Core
             "select @rcount = @@rowcount, @pk_id = scope_identity()" & vbCrLf & _
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
-        Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
+        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)
@@ -106,7 +110,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestInsert2()
-        Dim schemaV1 As New SQLGenerator("1")
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Dim o As New Entity2(10, Nothing, schemaV1)
         Dim t As Type = GetType(Entity)
 
@@ -121,7 +126,7 @@ Imports Worm.Database.Criteria.Core
             "if @err = 0 insert into dbo.t1 (s,i)  values(@p1,@pk_id)" & vbCrLf & _
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
-        Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
+        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)
@@ -181,7 +186,7 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Dim schemaV1 As New SQLGenerator("1")
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(1, mgr.Cache, schemaV1)
@@ -196,8 +201,8 @@ Imports Worm.Database.Criteria.Core
             Dim expected As String = "declare @id_ID int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id_ID"
-
-            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
+            Dim gen As New SQLGenerator
+            Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -209,8 +214,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
     Public Sub TestDelete2()
-        Dim schemaV1 As New SQLGenerator("2")
-
+        Dim schemaV1 As New Worm.ObjectMappingEngine("2")
+        Dim gen As New SQLGenerator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -227,7 +232,7 @@ Imports Worm.Database.Criteria.Core
                 "delete from dbo.ent1 where id = @id_ID" & vbCrLf & _
                 "delete from dbo.t1 where i = @id_ID"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
+            Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -239,8 +244,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestDelete3()
-        Dim schemaV1 As New SQLGenerator("2")
-
+        Dim schemaV1 As New Worm.ObjectMappingEngine("2")
+        Dim gen As New SQLGenerator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(2, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -260,7 +265,7 @@ Imports Worm.Database.Criteria.Core
                 "delete from dbo.t1 where i = @id_ID" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id_ID"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
+            Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -272,8 +277,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestDelete4()
-        Dim schemaV1 As New SQLGenerator("1")
-
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity5(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity5)
@@ -292,7 +297,7 @@ Imports Worm.Database.Criteria.Core
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.ent3 where (id = @id_ID and version = @p2)"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
+            Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -309,8 +314,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestUpdate()
-        Dim schemaV1 As New SQLGenerator("1")
-
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(2, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -319,8 +324,8 @@ Imports Worm.Database.Criteria.Core
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of ColumnAttribute) = Nothing
-            Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
-            Assert.AreEqual(String.Empty, schemaV1.Update(o, Nothing, params, sel, upd))
+            Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
+            Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, params, sel, upd))
 
             Dim o2 As New Entity2(2, mgr.Cache, schemaV1)
 
@@ -336,7 +341,7 @@ Imports Worm.Database.Criteria.Core
             Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
                 "if @@rowcount = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
 
-            Assert.AreEqual(expected, schemaV1.Update(o2, Nothing, params, sel, upd))
+            Assert.AreEqual(expected, gen.Update(schemaV1, o2, Nothing, params, sel, upd))
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params
@@ -354,8 +359,8 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestUpdate2()
-        Dim schemaV1 As New SQLGenerator("1")
-
+        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity5(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity5)
@@ -374,8 +379,8 @@ Imports Worm.Database.Criteria.Core
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of ColumnAttribute) = Nothing
-            Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
-            Assert.AreEqual(expected, schemaV1.Update(o, Nothing, params, sel, upd))
+            Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
+            Assert.AreEqual(expected, gen.Update(schemaV1, o, Nothing, params, sel, upd))
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params
@@ -396,7 +401,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetTables()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
         Assert.AreEqual("1", schema.Version)
 
@@ -405,19 +410,19 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetObjectSchema()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
         schema.GetObjectSchema(Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentException))> _
     Public Sub TestGetObjectSchema2()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
         schema.GetObjectSchema(GetType(SByte))
     End Sub
 
     <TestMethod()> _
     Public Sub TestGetObjectSchema3()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
         Assert.IsNotNull(schema.GetObjectSchema(GetType(Entity3)))
     End Sub
 
@@ -430,19 +435,19 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetUnions()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
         Worm.ObjectMappingEngine.GetUnions(Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetColumnValue()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
         schema.GetFieldValue(Nothing, "ID")
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetColumnValue2()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
         Dim o As New Entity(10, Nothing, schema)
 
@@ -451,7 +456,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestGetColumnValue3()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
         Dim o As New Entity(10, Nothing, schema)
 
@@ -460,7 +465,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentException))> _
     Public Sub TestGetColumnValue4()
-        Dim schema As New SQLGenerator("1")
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
         Dim o As New Entity(10, Nothing, schema)
 
@@ -469,35 +474,35 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect()
-        Dim schema As New SQLGenerator("1")
-
-        schema.Select(Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
+        Dim schema As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
+        gen.Select(schema, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect2()
-        Dim schema As New SQLGenerator("1")
-
-        schema.Select(GetType(Entity), Nothing, Nothing, Nothing, Nothing, Nothing)
+        Dim schema As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
+        gen.Select(schema, GetType(Entity), Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestSelect3()
-        Dim schema As New SQLGenerator("1")
-
-        schema.Select(GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
+        Dim schema As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
+        gen.Select(schema, GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect4()
-        Dim schema As New SQLGenerator("3")
-
-        schema.Select(GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
+        Dim schema As New Worm.ObjectMappingEngine("3")
+        Dim gen As New SQLGenerator
+        gen.Select(schema, GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestAlter()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             'Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Object() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Dim e As Entity4 = mgr.GetOrmBaseFromCacheOrCreate(Of Entity4)(2)
             Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
@@ -512,7 +517,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestEquality()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
             Dim e3 As Entity4 = mgr.Find(Of Entity4)(1)

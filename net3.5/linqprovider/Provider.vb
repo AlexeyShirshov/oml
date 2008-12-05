@@ -1,14 +1,14 @@
 ﻿Imports System.Linq.Expressions
 Imports System.Collections.ObjectModel
-Imports Worm.Database.Criteria.Core
-Imports Worm.Database.Criteria.Conditions
 Imports Worm.Criteria.Values
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Reflection
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports Worm.Sorting
 Imports Worm.Query
 Imports Worm.Expressions
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Conditions
 
 Namespace Linq
     Enum Constr
@@ -88,7 +88,7 @@ Namespace Linq
                 Dim rt As Type = GetType(TResult)
                 If GetType(IEnumerator).IsAssignableFrom(rt) Then
                     Dim t As Type = rt.GetGenericArguments(0)
-                    If GetType(OrmBase).IsAssignableFrom(t) Then
+                    If GetType(KeyEntity).IsAssignableFrom(t) Then
                         q.SelectedType = t
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Return CType(e, TResult)
@@ -99,7 +99,7 @@ Namespace Linq
                         q.SelectedType = ev.T
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Do While e.MoveNext
-                            Dim o As OrmBase = CType(e.Current, OrmBase)
+                            Dim o As KeyEntity = CType(e.Current, KeyEntity)
                             l.Add(ev.GetNew(o))
                         Loop
                         Return CType(l.GetEnumerator, TResult)
@@ -112,13 +112,13 @@ Namespace Linq
                     If rt.IsValueType OrElse rt Is GetType(String) Then
                         l = q.ToSimpleListDyn(Of TResult)(mgr)
                     Else
-                        If GetType(OrmBase).IsAssignableFrom(rt) Then
+                        If GetType(KeyEntity).IsAssignableFrom(rt) Then
                             l = CType(q.ToList(mgr), IList(Of TResult))
                         Else
                             l = New List(Of TResult)
                             Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                             Do While e.MoveNext
-                                Dim o As OrmBase = CType(e.Current, OrmBase)
+                                Dim o As KeyEntity = CType(e.Current, KeyEntity)
                                 l.Add(CType(ev.GetNew(o), TResult))
                             Loop
                         End If
@@ -423,7 +423,7 @@ Namespace Linq
                 If m.Type Is GetType(Date) Then
                     Select Case m.Member.Name
                         Case "Now"
-                            _exp = New UnaryExp(New LiteralValue(CType(_schema, Database.SQLGenerator).GetDate))
+                            _exp = New UnaryExp(New LiteralValue(_gen.GetDate))
                         Case Else
                             Throw New NotImplementedException(String.Format( _
                                 "Method {0} of type {1} is not implemented", m.Member.Name, m.Type.FullName))
@@ -436,7 +436,7 @@ Namespace Linq
                 b.Visit(m.Expression)
                 If Not b._cannotEval Then
                     Dim v As Object = Eval(m)
-                    Dim o As IOrmBase = TryCast(v, IOrmBase)
+                    Dim o As IKeyEntity = TryCast(v, IKeyEntity)
                     If o IsNot Nothing Then
                         _exp = New UnaryExp(New EntityValue(o))
                     Else
@@ -468,7 +468,7 @@ Namespace Linq
                                     Else
                                         p = New Pair(Of Object, String)(pr.Table, pr.Column)
                                     End If
-                                    _exp = New UnaryExp(New CustomValue(CType(_schema, Database.SQLGenerator).GetYear, _
+                                    _exp = New UnaryExp(New CustomValue(_gen.GetYear, _
                                         New Pair(Of Object, String)() {p}))
                                 Case Else
                                     Throw New NotImplementedException(String.Format( _
@@ -515,7 +515,7 @@ Namespace Linq
 
         Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
             _cannotEval = True
-            If GetType(OrmBase).IsAssignableFrom(p.Type) Then
+            If GetType(KeyEntity).IsAssignableFrom(p.Type) Then
                 _exp = New UnaryExp(_mem, New EntityPropValue(p.Type, GetField(p.Type, _mem)))
                 _mem = Nothing
                 '_t = p.Type
@@ -575,12 +575,12 @@ Namespace Linq
         Protected Function GetSO(ByVal exp As UnaryExp) As SortOrder
             Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
             If e IsNot Nothing Then
-                Return Orm.Sorting.Field(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
+                Return Entities.Sorting.Field(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
                     Dim p As SelectExpression = _q.GetProperty(ce.Alias)
-                    Return Orm.Sorting.Field(p.ObjectSource, p.PropertyAlias)
+                    Return Entities.Sorting.Field(p.ObjectSource, p.PropertyAlias)
                 Else
                     Throw New NotSupportedException
                 End If
@@ -600,7 +600,7 @@ Namespace Linq
         End Sub
 
         Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
-            If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
+            If GetType(KeyEntity).IsAssignableFrom(m.Expression.Type) Then
                 Dim p As ParameterExpression = CType(m.Expression, ParameterExpression)
                 Dim field As String = GetField(p.Type, m.Member.Name)
                 _sort.Add(New UnaryExp(m.Member.Name, New EntityPropValue(p.Type, field)))
@@ -894,7 +894,7 @@ Namespace Linq
             Return exp
         End Function
 
-        Protected Friend Function GetProperty(ByVal name As String) As Orm.SelectExpression
+        Protected Friend Function GetProperty(ByVal name As String) As Entities.SelectExpression
             If _sel Is Nothing Then
                 Throw New InvalidOperationException
             End If
@@ -1042,7 +1042,7 @@ Namespace Linq
                     Dim v = New FilterVisitor(_schema, Me)
                     v.Visit(m.Arguments(1))
                     If _q.Filter IsNot Nothing Then
-                        Dim cnd As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
+                        Dim cnd As New Condition.ConditionConstructor
                         cnd.AddFilter(_q.Filter.Filter)
                         cnd.AddFilter(v.Filter, Criteria.Conditions.ConditionOperator.And)
                         _q.Filter = cnd.Condition
@@ -1141,7 +1141,8 @@ Namespace Linq
                     'Dim num As Integer
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
-                    _q.OuterQuery = aq
+                    aq.From(_q)
+                    '_q.OuterQuery = aq
                     Dim ev As EntityPropValue = TryCast(ag.Exp.Value, EntityPropValue)
                     Dim pr As SelectExpression = Nothing
                     If ev IsNot Nothing Then
@@ -1208,7 +1209,7 @@ Namespace Linq
             End If
         End Sub
 
-        Public Function GetNew(ByVal o As OrmBase) As Object
+        Public Function GetNew(ByVal o As KeyEntity) As Object
             If _new Is Nothing Then
                 If _sel IsNot Nothing Then
                     Return o.GetValue(CType(_sel(0).Value, EntityPropValue).OrmProp.PropertyAlias)
@@ -1226,7 +1227,7 @@ Namespace Linq
             Return _new.Constructor.Invoke(GetArgsO(_new.Arguments, o))
         End Function
 
-        Protected Shared Function GetArgs(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As OrmBase) As Expression()
+        Protected Shared Function GetArgs(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As KeyEntity) As Expression()
             Dim l As New List(Of ConstantExpression)
             For Each Exp In args
                 Dim mem As MemberExpression = TryCast(Exp, MemberExpression)
@@ -1244,7 +1245,7 @@ Namespace Linq
             Return l.ToArray
         End Function
 
-        Protected Shared Function GetArgsO(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As OrmBase) As Object()
+        Protected Shared Function GetArgsO(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As KeyEntity) As Object()
             Dim l As New List(Of Object)
             For Each Exp In args
                 Dim mem As MemberExpression = TryCast(Exp, MemberExpression)

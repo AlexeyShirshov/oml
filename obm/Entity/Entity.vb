@@ -1,8 +1,8 @@
-﻿Imports Worm.Orm.Meta
+﻿Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Query
 
-Namespace Orm
+Namespace Entities
 
     <Serializable()> _
     Public Class Entity
@@ -114,11 +114,11 @@ Namespace Orm
 
         Protected Sub PrepareUpdate()
             If Not _loading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
-                If _state = Orm.ObjectState.Clone Then
+                If _state = Entities.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & ": Altering clone is not allowed")
                 End If
 
-                If _state = Orm.ObjectState.Deleted Then
+                If _state = Entities.ObjectState.Deleted Then
                     Throw New OrmObjectException(ObjName & ": Altering deleted object is not allowed")
                 End If
 
@@ -297,8 +297,8 @@ Namespace Orm
 
         Protected Overridable Sub SetObjectState(ByVal value As ObjectState) Implements _IEntity.SetObjectState
             Using SyncHelper(False)
-                Debug.Assert(_state <> Orm.ObjectState.Deleted)
-                If _state = Orm.ObjectState.Deleted Then
+                Debug.Assert(_state <> Entities.ObjectState.Deleted)
+                If _state = Entities.ObjectState.Deleted Then
                     Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 End If
 
@@ -325,7 +325,7 @@ Namespace Orm
         Protected Overridable Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
 
-            _state = Orm.ObjectState.Created
+            _state = Entities.ObjectState.Created
         End Sub
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
@@ -366,10 +366,10 @@ Namespace Orm
 
         Protected Function CreateClone() As Entity Implements IEntity.CreateClone
             Dim clone As Entity = CreateObject()
-            clone.SetObjectState(Orm.ObjectState.NotLoaded)
+            clone.SetObjectState(Entities.ObjectState.NotLoaded)
             CopyBody(Me, clone)
             clone._old_state = ObjectState
-            clone.SetObjectState(Orm.ObjectState.Clone)
+            clone.SetObjectState(Entities.ObjectState.Clone)
             Return clone
         End Function
 
@@ -389,7 +389,7 @@ Namespace Orm
 
         Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
             If objectWasCreated Then
-                If ObjectState = Orm.ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Created Then
+                If ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Created Then
                     If IsLoaded Then
                         SetObjectState(ObjectState.None)
                     Else
@@ -400,7 +400,7 @@ Namespace Orm
                     '    SetObjectState(ObjectState.NotLoaded)
                 ElseIf ObjectState = ObjectState.NotLoaded Then
                     If IsLoaded Then SetObjectState(ObjectState.None)
-                ElseIf ObjectState = Orm.ObjectState.None Then
+                ElseIf ObjectState = Entities.ObjectState.None Then
                 Else
                     Debug.Assert(False)
                 End If
@@ -484,20 +484,20 @@ Namespace Orm
 #End Region
 
 #Region " Create methods "
-        Public Shared Function CreateOrmBase(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IOrmBase
-            Dim o As IOrmBase = CType(Activator.CreateInstance(t), IOrmBase)
+        Public Shared Function CreateOrmBase(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IKeyEntity
+            Dim o As IKeyEntity = CType(Activator.CreateInstance(t), IKeyEntity)
             o.Init(id, cache, schema)
             Return o
         End Function
 
-        Public Shared Function CreateOrmBase(Of T As {IOrmBase, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateOrmBase(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
             Dim o As New T
             o.Init(id, cache, schema)
             Return o
         End Function
 
         Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
-            If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
+            If GetType(IKeyEntity).IsAssignableFrom(GetType(T)) Then
                 Return CType(CreateOrmBase(pk(0).Value, GetType(T), cache, schema), T)
             Else
                 Return CreateEntity(Of T)(pk, cache, schema)
@@ -505,7 +505,7 @@ Namespace Orm
         End Function
 
         Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _ICachedEntity
-            If GetType(IOrmBase).IsAssignableFrom(type) Then
+            If GetType(IKeyEntity).IsAssignableFrom(type) Then
                 Return CreateOrmBase(pk(0).Value, type, cache, schema)
             Else
                 Return CreateEntity(pk, type, cache, schema)

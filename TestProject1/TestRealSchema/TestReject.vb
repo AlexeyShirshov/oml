@@ -4,15 +4,17 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.Database.Criteria
+Imports Worm.Criteria
+Imports Worm.Query
 
 <TestClass()> _
 Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestAdd()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
 
             mgr.BeginTransaction()
@@ -33,7 +35,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestAdd2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
 
             mgr.BeginTransaction()
@@ -58,7 +60,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As Table1 = mgr.Find(Of Table1)(3)
 
             mgr.BeginTransaction()
@@ -79,7 +81,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestDelete2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As Table1 = mgr.Find(Of Table1)(3)
 
             mgr.BeginTransaction()
@@ -104,7 +106,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestSaver()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t2 As Table1 = mgr.Find(Of Table1)(1)
             Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
             Assert.IsNull(t2.InternalProperties.OriginalCopy)
@@ -133,7 +135,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             mgr.BeginTransaction()
@@ -159,7 +161,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             mgr.BeginTransaction()
@@ -192,7 +194,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestUpdate3()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)
             Assert.IsNotNull(t1)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
@@ -227,7 +229,7 @@ Public Class TestReject
     End Sub
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> Public Sub TestDeleteOrderWrong()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             Dim t3 As Table3 = mgr.Find(Of Table3)(2)
 
@@ -249,7 +251,7 @@ Public Class TestReject
     End Sub
 
     <TestMethod()> Public Sub TestDeleteOrder()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             Dim t3 As Table3 = mgr.Find(Of Table3)(2)
 
@@ -262,7 +264,7 @@ Public Class TestReject
                     t3.Delete()
 
                     For Each tt As Tables1to3 In New Worm.Query.QueryCmd(). _
-                        Where(Ctor.Field(GetType(Tables1to3), "Table3").Eq(t3)).ToList(Of Tables1to3)(mgr)
+                        Where(PCtor.prop(GetType(Tables1to3), "Table3").eq(t3)).ToList(Of Tables1to3)(mgr)
                         tt.Delete()
                     Next
 

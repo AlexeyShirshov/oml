@@ -1,4 +1,4 @@
-﻿Namespace Orm.Meta
+﻿Namespace Entities.Meta
 
     Public Structure DBType
         Public Size As Integer

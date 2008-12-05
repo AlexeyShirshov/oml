@@ -69,7 +69,7 @@ namespace TestsCodeGenLib
 			CodeTypeParameter baseClassTypePrm = new CodeTypeParameter("T");
 
 				
-			CodeTypeReference baseClassBase = new CodeTypeReference("Worm.Orm.OrmBaseT");
+			CodeTypeReference baseClassBase = new CodeTypeReference("Worm.Entities.OrmBaseT");
 			baseClassBase.TypeArguments.Add("T");
 			baseClassTypePrm.HasConstructorConstraint = true;
 			baseClass.TypeParameters.Add(baseClassTypePrm);

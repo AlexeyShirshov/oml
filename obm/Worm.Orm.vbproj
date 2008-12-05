@@ -108,8 +108,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Diagrams\Mapping.cd" />
-    <None Include="Diagrams\OrmBase.cd" />
-    <None Include="Diagrams\OrmManager.cd" />
+    <None Include="Diagrams\Entities.cd" />
+    <None Include="Diagrams\Managers.cd" />
     <None Include="Diagrams\Schema.cd" />
     <None Include="Diagrams\schema_ext.cd" />
     <None Include="My Project\Settings.settings">
@@ -139,25 +139,28 @@
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />
     <Compile Include="Collections\SyncGenericDictionary.vb" />
-    <Compile Include="Criteria\Criteria.vb" />
-    <Compile Include="Criteria\db\DbConditions.vb" />
-    <Compile Include="Criteria\db\DbCriteria.vb" />
-    <Compile Include="Criteria\db\DbFilters.vb" />
-    <Compile Include="Criteria\db\DbJoins.vb" />
-    <Compile Include="Criteria\Expressions.vb" />
-    <Compile Include="Criteria\FilterValues.vb" />
-    <Compile Include="Criteria\Conditions.vb" />
-    <Compile Include="Criteria\Joins.vb" />
+    <Compile Include="Query\Criteria\Filters\Abstract.vb" />
+    <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
+    <Compile Include="Query\Criteria\Filters\Templates.vb" />
+    <Compile Include="Query\Builders\PredicateBuilder.vb" />
+    <Compile Include="Query\Criteria\Predicates\Predicates.vb" />
+    <Compile Include="Query\Criteria\Predicates\PredicateLink.vb" />
+    <Compile Include="Query\Criteria\Expressions.vb" />
+    <Compile Include="Query\Criteria\Values\Abstract.vb" />
+    <Compile Include="Query\Criteria\Values\FilterValues.vb" />
+    <Compile Include="Query\Criteria\Conditions.vb" />
+    <Compile Include="Query\Builders\JoinBuilder.vb" />
+    <Compile Include="Query\Criteria\Joins\JoinCriteria.vb" />
+    <Compile Include="Query\Criteria\Joins\JoinFilter.vb" />
+    <Compile Include="Query\Criteria\Joins\QueryJoin.vb" />
     <Compile Include="Managers\db\Saver.vb" />
     <Compile Include="QueryCmd\CacheItemBaseProvider.vb" />
     <Compile Include="QueryCmd\classes.vb" />
+    <Compile Include="Query\Builders\SelectListBuilder.vb" />
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\ObjectAlias.vb" />
     <Compile Include="Query\Sorting.vb" />
-    <Compile Include="Criteria\Xml\XmlConditions.vb" />
-    <Compile Include="Criteria\Xml\XmlCriteria.vb" />
-    <Compile Include="Criteria\Xml\XmlFilters.vb" />
     <Compile Include="Entity\Abstract.vb" />
     <Compile Include="Entity\Anonym.vb" />
     <Compile Include="Entity\CachedEntity.vb" />
@@ -189,8 +192,9 @@
     <Compile Include="Entity\Relation.vb" />
     <Compile Include="StmtGenerators\db\DbSchema.vb" />
     <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
-    <Compile Include="Criteria\OrmFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\Filters.vb" />
     <Compile Include="Mapping\MappingEngine.vb" />
+    <Compile Include="StmtGenerators\StmtGenerator.vb" />
     <Compile Include="StmtGenerators\xml\XmlSchema.vb" />
     <Compile Include="Web\HttpCacheDic.vb" />
     <Compile Include="Cache\OrmCache.vb" />
@@ -209,7 +213,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Entity\OrmBase.vb" />
+    <Compile Include="Entity\KeyEntity.vb" />
     <Compile Include="other.vb" />
     <Compile Include="SearchConfiguration.vb" />
     <Compile Include="StmtGenerators\db\SQL2005Schema.vb" />

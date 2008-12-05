@@ -1,6 +1,6 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Criteria.Core
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm.OrmManager
 Imports Worm.Criteria.Joins
 
@@ -16,7 +16,7 @@ Namespace Query
         End Sub
 
         Protected _mgr As OrmManager
-        Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+        Protected _j As List(Of List(Of Worm.Criteria.Joins.QueryJoin))
         Protected _f() As IFilter
         Protected _sl As List(Of List(Of SelectExpression))
         Protected _q As QueryCmd
@@ -26,13 +26,13 @@ Namespace Query
         Protected _dic As IDictionary
         Private _dp() As Cache.IDependentTypes
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+        Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
 
             Reset(mgr, j, f, q.SelectedType, sl, q)
         End Sub
 
-        Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+        Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
 
             Reset(mgr, j, f, t, sl, q)
@@ -54,8 +54,8 @@ Namespace Query
                 Dim notPreciseDependsAD As Boolean
                 Dim notPreciseDependsU As Boolean
                 If _j IsNot Nothing Then
-                    For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
-                        For Each j As OrmJoin In js
+                    For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
+                        For Each j As QueryJoin In js
                             If j.ObjectSource IsNot Nothing Then
                                 Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
                                 notPreciseDependsAD = True
@@ -132,7 +132,7 @@ Namespace Query
                                             notPreciseDependsU = True
                                         End If
                                     Else
-                                        Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+                                        Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
                                         Dim t As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
                                         If t Is Nothing Then
                                             Throw New NullReferenceException("Type or entity name for OrmFilterTemplate must be specified")
@@ -167,7 +167,7 @@ Namespace Query
                                         notPreciseDependsU = True
                                     End If
                                 Else
-                                    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+                                    Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
                                     Dim rt As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
 
                                     If rt Is Nothing Then
@@ -236,7 +236,7 @@ Namespace Query
         End Property
 
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
+        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 
         Protected Function GetExternalDic(ByVal key As String) As IDictionary
             Dim args As New QueryCmd.ExternalDictionaryEventArgs(key)
@@ -316,8 +316,8 @@ Namespace Query
                 Dim l As New List(Of Type)
 
                 If _j IsNot Nothing Then
-                    For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
-                        For Each j As OrmJoin In js
+                    For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
+                        For Each j As QueryJoin In js
                             l.Add(j.ObjectSource.GetRealType(MappingEngine))
                             'If j.Type IsNot Nothing Then
                             '    l.Add(j.Type)

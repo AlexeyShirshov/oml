@@ -47,14 +47,14 @@ Imports System.Collections
 
     <TestMethod()> _
     Public Sub TestExternalSort()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             Dim r As ReadOnlyList(Of Entity) = mgr.FindTop(Of Entity)(10, Nothing, Nothing, False)
             Assert.AreEqual(10, r.Count)
 
-            r = mgr.FindTop(Of Entity)(10, Nothing, Orm.Sorting.External("xxx", AddressOf ExternalSort), False)
+            r = mgr.FindTop(Of Entity)(10, Nothing, Entities.Sorting.External("xxx", AddressOf ExternalSort), False)
             Assert.AreEqual(1, r.Count)
 
-            r = mgr.FindTop(Of Entity)(10, Nothing, Orm.Sorting.External("yyy", AddressOf ExternalSort).Desc, False)
+            r = mgr.FindTop(Of Entity)(10, Nothing, Entities.Sorting.External("yyy", AddressOf ExternalSort).Desc, False)
             Assert.AreEqual(2, r.Count)
         End Using
     End Sub

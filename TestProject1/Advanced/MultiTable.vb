@@ -4,10 +4,11 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Database
+Imports Worm
 
 <Entity(GetType(MultiTableEn), "en")> _
 <Entity(GetType(MultiTableRu), "ru")> _
@@ -87,8 +88,8 @@ Public Class TestMultiTable
         Return entities(0)
     End Function
 
-    Protected Function GetSchema(ByVal version As String) As SQLGenerator
-        Return New SQLGenerator(version, AddressOf ResolveVersion, Nothing)
+    Protected Function GetSchema(ByVal version As String) As ObjectMappingEngine
+        Return New ObjectMappingEngine(version, AddressOf ResolveVersion, Nothing)
     End Function
 
     <TestMethod()> _

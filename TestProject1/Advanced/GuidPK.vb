@@ -1,9 +1,9 @@
-﻿Imports Worm.Orm
-Imports Worm.Orm.Meta
+﻿Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 <Entity("1", Tablename:="dbo.guid_table")> _
 Public Class GuidPK
-    Inherits OrmBase
+    Inherits KeyEntity
 
     Private _code As Integer
     Private _id As Guid
@@ -100,7 +100,7 @@ End Class
 
 <Entity("1", Tablename:="dbo.guid_table")> _
 Public Class NonCache
-    Inherits Worm.Orm.Entity
+    Inherits Worm.Entities.Entity
 
     Private _code As Integer
     Private _id As Guid

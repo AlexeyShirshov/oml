@@ -35,11 +35,11 @@ Public Interface ICreateManager
 End Interface
 
 Public Interface IAdminManager
-    Function UpdateObject(ByVal obj As Orm._ICachedEntity) As Boolean
-    Function InsertObject(ByVal obj As Orm._ICachedEntity) As Boolean
-    Sub DeleteObject(ByVal obj As Orm.ICachedEntity)
+    Function UpdateObject(ByVal obj As Entities._ICachedEntity) As Boolean
+    Function InsertObject(ByVal obj As Entities._ICachedEntity) As Boolean
+    Sub DeleteObject(ByVal obj As Entities.ICachedEntity)
     Function Delete(ByVal f As Criteria.Core.IEntityFilter) As Integer
-    Sub M2MSave(ByVal obj As Orm.IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As Cache.EditableListBase)
+    Sub M2MSave(ByVal obj As Entities.IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As Cache.EditableListBase)
 End Interface
 
 Class GetManagerDisposable
@@ -154,7 +154,7 @@ Public Class CreateManager
     End Function
 End Class
 
-Namespace Orm.Query
+Namespace Entities.Query
 
     Public MustInherit Class QueryAspect
         Public Enum AspectType
@@ -171,7 +171,7 @@ Namespace Orm.Query
 
         Public MustOverride Function GetStaticKey() As String
         Public MustOverride Function GetDynamicKey() As String
-        Public MustOverride Function MakeStmt(ByVal s As ObjectMappingEngine) As String
+        Public MustOverride Function MakeStmt(ByVal s As StmtGenerator) As String
 
         Public Sub New(ByVal type As AspectType)
             _type = type
@@ -193,7 +193,7 @@ Namespace Orm.Query
             Return "distinct"
         End Function
 
-        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine) As String
+        Public Overrides Function MakeStmt(ByVal s As StmtGenerator) As String
             Return "distinct "
         End Function
     End Class
@@ -237,7 +237,7 @@ End Namespace
 
 Namespace Database
     Public Class TopAspect
-        Inherits Orm.Query.TopAspect
+        Inherits Entities.Query.TopAspect
 
         Public Sub New(ByVal top As Integer)
             MyBase.New(top)
@@ -247,8 +247,8 @@ Namespace Database
             MyBase.New(top, sort)
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine) As String
-            Return CType(s, SQLGenerator).TopStatement(Top)
+        Public Overrides Function MakeStmt(ByVal s As StmtGenerator) As String
+            Return s.TopStatement(Top)
         End Function
     End Class
 

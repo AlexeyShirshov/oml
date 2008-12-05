@@ -3,9 +3,9 @@ Imports Worm.Criteria.Core
 
 Friend Interface IListEdit
     Inherits IList
-    Overloads Sub Add(ByVal o As Orm.IEntity)
-    Overloads Sub Remove(ByVal o As Orm.IEntity)
-    Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.IEntity)
+    Overloads Sub Add(ByVal o As Entities.IEntity)
+    Overloads Sub Remove(ByVal o As Entities.IEntity)
+    Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
     ReadOnly Property List() As IList
 End Interface
 
@@ -14,7 +14,7 @@ Friend Interface ILoadableList
     Sub LoadObjects()
 End Interface
 
-Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
+Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     Inherits ReadOnlyEntityList(Of T)
 
     Private _rt As Type
@@ -88,7 +88,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         Return New ReadOnlyList(Of T)(l.Keys)
     End Function
 
-    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})() As ReadOnlyList(Of ChildType)
+    Public Function LoadChilds(Of ChildType As {New, Entities.IKeyEntity})() As ReadOnlyList(Of ChildType)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
@@ -104,7 +104,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         Return New ReadOnlyList(Of ChildType)
     End Function
 
-    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})(ByVal childField As String) As ReadOnlyList(Of ChildType)
+    Public Function LoadChilds(Of ChildType As {New, Entities.IKeyEntity})(ByVal childField As String) As ReadOnlyList(Of ChildType)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
@@ -125,7 +125,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
 
 End Class
 
-Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
+Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     Inherits ReadOnlyObjectList(Of T)
     Implements ILoadableList
 
@@ -223,7 +223,7 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
     End Function
 End Class
 
-Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})
+Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
     Implements IListEdit
 
@@ -273,15 +273,15 @@ Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})
         _l.Sort(cs)
     End Sub
 
-    Private Sub _Add(ByVal o As Orm.IEntity) Implements IListEdit.Add
+    Private Sub _Add(ByVal o As Entities.IEntity) Implements IListEdit.Add
         CType(_l, IList).Add(o)
     End Sub
 
-    Private Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.IEntity) Implements IListEdit.Insert
+    Private Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity) Implements IListEdit.Insert
         CType(_l, IList).Insert(pos, o)
     End Sub
 
-    Private Overloads Sub Remove(ByVal o As Orm.IEntity) Implements IListEdit.Remove
+    Private Overloads Sub Remove(ByVal o As Entities.IEntity) Implements IListEdit.Remove
         CType(_l, IList).Remove(o)
     End Sub
 

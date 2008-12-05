@@ -4,13 +4,13 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Database
 Imports Worm.Query
-Imports Worm.Database.Criteria.Joins
-Imports Worm.Orm.Meta
+Imports Worm.Entities.Meta
 Imports System.Collections
-Imports Worm.Orm
+Imports Worm.Entities
 Imports Worm
 Imports Worm.Database.Criteria
-Imports Worm.Database.Criteria.Core
+Imports Worm.Criteria.Joins
+
 'Imports Worm.Database.Sorting
 
 <TestClass()> Public Class TestAgreegates
@@ -53,7 +53,7 @@ Imports Worm.Database.Criteria.Core
 #End Region
 
     <TestMethod()> Public Sub TestMax()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
@@ -67,7 +67,7 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestCount()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd(GetType(Entity4))
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
@@ -81,10 +81,10 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestOrder()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(t, GetType(Entity), True)
-            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(GetType(Entity), t, True)
+            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), True)
+            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table
@@ -115,7 +115,7 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestGroup()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd(GetType(Entity4))
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
@@ -124,11 +124,11 @@ Imports Worm.Database.Criteria.Core
             q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
-            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
+            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
+            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
-            q.Joins = New OrmJoin() {New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.Joins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
             Assert.AreEqual(39, q.ToSimpleListDyn(Of Integer)(mgr)(0))
 
@@ -157,7 +157,7 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestDic()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd(t)
@@ -182,12 +182,12 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestOrder2()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim typeE As Type = GetType(Entity)
             Dim typeE4 As Type = GetType(Entity4)
 
-            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(typeE4, typeE, True)
-            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(typeE, typeE4, True)
+            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(typeE4, typeE, True)
+            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(typeE, typeE4, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table
@@ -196,7 +196,7 @@ Imports Worm.Database.Criteria.Core
             q.propSort = New Worm.Sorting.Sort( _
                 New QueryCmd(table). _
                     SelectAgg(AggCtor.Count). _
-                    Where(JoinCondition.Create(table, r2.Column).Eq(typeE4, "ID")), SortType.Desc)
+                    Where(JoinCondition.Create(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
 
             Assert.AreEqual(12, q.ToList(Of Entity4)(mgr).Count)
         End Using

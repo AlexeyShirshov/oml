@@ -1,5 +1,5 @@
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 
 <Entity(GetType(Table2Implementation), "1")> _

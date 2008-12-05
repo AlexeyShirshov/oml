@@ -1,6 +1,6 @@
 Imports Worm.Cache
-Imports Worm.Orm
-Imports Worm.Orm.Meta
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3

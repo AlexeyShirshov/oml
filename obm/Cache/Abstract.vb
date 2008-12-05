@@ -1,4 +1,4 @@
-﻿Imports Worm.Orm
+﻿Imports Worm.Entities
 Imports System.Collections.Generic
 
 Namespace Cache

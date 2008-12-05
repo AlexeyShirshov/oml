@@ -4,7 +4,9 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Criteria
+Imports Worm.Query
 
 <TestClass()> _
 Public Class TestDic
@@ -12,13 +14,14 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestStmt()
 
-        Dim s As New SQLGenerator("1")
-        Dim p As New ParamMgr(s, "p")
-        Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, Nothing)
+        Dim s As New Worm.ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
+        Dim p As New ParamMgr(gen, "p")
+        Dim stmt As String = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing)
         Dim checkedStmt As String = "select left(t1.name,1) name,count(*) cnt from dbo.Table1 t1 group by left(t1.name,1) order by left(t1.name,1)"
         Assert.AreEqual(checkedStmt, stmt)
 
-        stmt = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, Nothing, "Title", Nothing)
+        stmt = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing, "Title", Nothing)
 
         Assert.AreEqual(checkedStmt, stmt)
     End Sub
@@ -26,9 +29,9 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestLike()
 
-        Dim s As New SQLGenerator("1")
+        Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As Worm.OrmManager = TestManagerRS.CreateManagerShared(s)
-            Dim f As Worm.Criteria.CriteriaLink = New Criteria.Ctor(GetType(Table1)).Field("Title").Like("f%")
+            Dim f As Worm.Criteria.PredicateLink = New PCtor(GetType(Table1)).prop("Title").[like]("f%")
             Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, False)
 
             Assert.AreEqual(2, col.Count)
@@ -39,7 +42,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuild()
 
-        Dim s As New SQLGenerator("1")
+        Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -56,7 +59,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildComplex()
 
-        Dim s As New SQLGenerator("2")
+        Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -73,7 +76,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildComplex2()
 
-        Dim s As New SQLGenerator("2")
+        Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -90,7 +93,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildWithSort()
 
-        Dim s As New SQLGenerator("1")
+        Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -107,7 +110,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildComplexWithSort()
 
-        Dim s As New SQLGenerator("2")
+        Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
