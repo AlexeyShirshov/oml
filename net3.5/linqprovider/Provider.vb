@@ -1194,7 +1194,8 @@ Namespace Linq
 
                     Dim aq As New Query.QueryCmd(CType(Nothing, Type))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
-                    _q.OuterQuery = aq
+                    aq.From(_q)
+                    '_q.OuterQuery = aq
                     _q.Select(New SelectExpression() {CType(_sel(0).Value, EntityPropValue).OrmProp})
                 Else
                     'Dim tt As Type = _mem.Member.DeclaringType
