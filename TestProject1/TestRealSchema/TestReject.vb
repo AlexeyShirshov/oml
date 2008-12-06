@@ -167,7 +167,7 @@ Public Class TestReject
             mgr.BeginTransaction()
             Dim a As Byte() = Nothing
             Try
-                Dim xdoc As New Xml.XmlDocument
+                Dim xdoc As New System.Xml.XmlDocument
                 xdoc.LoadXml("<root a='b'/>")
                 t1.Xml = xdoc
                 t2.Money = 1000
@@ -203,7 +203,7 @@ Public Class TestReject
             mgr.BeginTransaction()
             Dim a As Byte() = Nothing
             Try
-                Dim xdoc As New Xml.XmlDocument
+                Dim xdoc As New System.Xml.XmlDocument
                 xdoc.LoadXml("<root a='b'/>")
                 t1.Xml = xdoc
                 t2.Money = 10

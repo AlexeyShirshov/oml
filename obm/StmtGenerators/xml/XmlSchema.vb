@@ -107,7 +107,7 @@ Namespace Xml
         End Property
 
         Public Overrides Function CreateExecutor() As Query.IExecutor
-            Throw New NotImplementedException
+            Return New Query.Xml.XmlQueryExecutor
         End Function
 
         'Protected Friend Overrides Function MakeJoin(ByVal type2join As System.Type, ByVal selectType As System.Type, ByVal field As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Worm.Criteria.Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin

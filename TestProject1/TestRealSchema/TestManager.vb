@@ -262,7 +262,7 @@ Public Class TestManagerRS
             Dim t As Table3 = mgr.Find(Of Table3)(2)
 
             Assert.AreEqual("root", t.Xml.DocumentElement.Name)
-            Dim attr As Xml.XmlAttribute = t.Xml.CreateAttribute("first")
+            Dim attr As System.Xml.XmlAttribute = t.Xml.CreateAttribute("first")
             attr.Value = "hi!"
             t.Xml.DocumentElement.Attributes.Append(attr)
 
