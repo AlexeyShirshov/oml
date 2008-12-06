@@ -11,37 +11,36 @@ Namespace Xml
 
         Private _fileName As String
         Private _stream As IO.Stream
-        Private _stmt As StmtGenerator
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
 
         Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal fileName As String)
             MyBase.New(cache, mpe)
             _fileName = fileName
-            _stmt = gen
+            StmtGenerator = gen
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal filename As String)
             MyBase.New(mpe)
-            _stmt = gen
+            StmtGenerator = gen
             _fileName = filename
         End Sub
 
         Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal stream As IO.Stream)
             MyBase.New(cache, mpe)
             _stream = stream
-            _stmt = gen
+            StmtGenerator = gen
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal gen As XPathGenerator, ByVal stream As IO.Stream)
             MyBase.New(mpe)
-            _stmt = gen
+            StmtGenerator = gen
             _stream = stream
         End Sub
 
         Public ReadOnly Property XPathGenerator() As XPathGenerator
             Get
-                Return CType(_stmt, XPathGenerator)
+                Return CType(StmtGenerator, XPathGenerator)
             End Get
         End Property
 #Region " Overrides "
@@ -214,7 +213,7 @@ Namespace Xml
 
 #End Region
 
-        Protected Friend Function LoadMultipleObjects(Of T As {New, _ICachedEntity})(ByVal xpath As String, ByVal withLoad As Boolean, _
+        Protected Friend Function LoadMultipleObjects(Of T As {New, ICachedEntity})(ByVal xpath As String, ByVal withLoad As Boolean, _
             ByRef values As Generic.IList(Of T)) As ReadOnlyEntityList(Of T)
 
             Dim original_type As Type = GetType(T)

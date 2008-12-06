@@ -139,6 +139,8 @@
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />
     <Compile Include="Collections\SyncGenericDictionary.vb" />
+    <Compile Include="QueryCmd\xml\CacheItemPropviders.vb" />
+    <Compile Include="QueryCmd\xml\XmlQueryExecutor.vb" />
     <Compile Include="Query\Criteria\Filters\Abstract.vb" />
     <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
     <Compile Include="Query\Criteria\Filters\Templates.vb" />

@@ -375,7 +375,7 @@ Namespace Query.Database
             ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
             ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
 
-            Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
+            'Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
 
             Dim key As String = Nothing
             Dim dic As IDictionary = Nothing

@@ -1,0 +1,42 @@
+﻿Imports Worm.Entities
+Imports Worm.Criteria.Core
+Imports System.Collections.Generic
+Imports Worm.Entities.Meta
+Imports Worm.Xml
+Imports System.Xml.XPath
+
+Namespace Query.Xml
+    Partial Public Class XmlQueryExecutor
+        Class ProviderT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
+            Inherits CacheItemBaseProvider
+
+            Public Sub New(ByVal mgr As QueryManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
+                MyBase.New(mgr, j, f, q, q.SelectedType, sl)
+            End Sub
+
+            Public Function GetEntities() As ReadOnlyObjectList(Of ReturnType)
+                Dim r As ReadOnlyObjectList(Of ReturnType)
+                Dim dbm As QueryManager = CType(_mgr, QueryManager)
+
+                Dim values As New List(Of ReturnType)
+                Dim xpath As String = Nothing
+                dbm.LoadMultipleObjects(Of CreateType)(xpath, _q.propWithLoad, values)
+
+                If Sort IsNot Nothing AndAlso Sort.IsExternal Then
+                    r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
+                End If
+
+                Return r
+            End Function
+
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+                Return New OrmManager.CachedItem(GetEntities(), _mgr.Cache)
+            End Function
+
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As System.Collections.Generic.List(Of System.Collections.Generic.List(Of Criteria.Joins.QueryJoin)), ByVal f() As Criteria.Core.IFilter, ByVal t As System.Type, ByVal sl As System.Collections.Generic.List(Of System.Collections.Generic.List(Of Entities.SelectExpression)), ByVal q As QueryCmd)
+                Throw New NotImplementedException
+            End Sub
+        End Class
+    End Class
+End Namespace
