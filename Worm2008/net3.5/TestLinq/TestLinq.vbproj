@@ -68,10 +68,6 @@
       <Project>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</Project>
       <Name>UnitTesting</Name>
     </ProjectReference>
-    <ProjectReference Include="..\linqprovider\Worm.Linq.vbproj">
-      <Project>{C479F776-A580-4451-813F-2D151635996D}</Project>
-      <Name>Worm.Linq</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
