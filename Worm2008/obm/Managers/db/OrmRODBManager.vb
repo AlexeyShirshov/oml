@@ -639,10 +639,10 @@ l1:
 
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    Dim schema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectedType)
+                    Dim schema2 As IEntitySchema = MappingEngine.GetObjectSchema(selectedType)
                     Dim ctx_schema2 As IContextObjectSchema = TryCast(schema2, IContextObjectSchema)
                     Dim mt_schema2 As IMultiTableObjectSchema = TryCast(schema2, IMultiTableObjectSchema)
-                    Dim cs As IObjectSchemaBase = MappingEngine.GetObjectSchema(ct)
+                    Dim cs As IEntitySchema = MappingEngine.GetObjectSchema(ct)
                     Dim mms As IConnectedFilter = TryCast(cs, IConnectedFilter)
                     Dim cfi As Object = GetFilterInfo()
                     If mms IsNot Nothing Then
@@ -696,7 +696,7 @@ l1:
                     SQLGenerator.AppendWhere(MappingEngine, ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                        SQLGenerator.AppendOrder(MappingEngine, selectedType, sort, almgr, sb, True, Nothing, Nothing)
+                        SQLGenerator.AppendOrder(MappingEngine, sort, almgr, sb, True, Nothing, Nothing)
                     End If
 
                     params.AppendParams(.Parameters)
@@ -814,8 +814,8 @@ l1:
 
                     Dim dic1 As IDictionary = GetDictionary(firstType)
                     Dim dic2 As IDictionary = GetDictionary(secondType)
-                    Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(firstType)
-                    Dim oschema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(secondType)
+                    Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(firstType)
+                    Dim oschema2 As IEntitySchema = MappingEngine.GetObjectSchema(secondType)
                     Dim props As IDictionary = MappingEngine.GetProperties(firstType, oschema)
                     Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
@@ -906,7 +906,7 @@ l1:
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
-            ByVal oschema As IObjectSchemaBase, _
+            ByVal oschema As IEntitySchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
@@ -1035,7 +1035,7 @@ l1:
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
                 'dt.Columns.Add(col2, GetType(Integer))
-                Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(ct)
+                Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(ct)
 
                 For Each o As IKeyEntity In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
@@ -1065,7 +1065,7 @@ l1:
                     End If
                 Next
             Else
-                Dim oschema2 As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2load)
+                Dim oschema2 As IEntitySchema = MappingEngine.GetObjectSchema(type2load)
                 Dim ctx_oschema2 As IContextObjectSchema = TryCast(oschema2, IContextObjectSchema)
                 Dim r2 As M2MRelation = MappingEngine.GetM2MRelation(type2load, type, direct)
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse _
@@ -1419,7 +1419,7 @@ l1:
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
-                        Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(obj.GetType)
+                        Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(obj.GetType)
                         Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
                         Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                         'obj = NormalizeObject(obj, dic)
@@ -1530,16 +1530,51 @@ l1:
             ByVal withLoad As Boolean, ByVal values As IList, _
             ByVal selectList As Generic.List(Of ColumnAttribute))
 
-            Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(GetType(T))
+            Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
             QueryObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
         End Sub
 
+        Public Sub QueryMultiTypeObjects( _
+            ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal values As IList(Of IList), ByVal types As IDictionary(Of Type, IEntitySchema), _
+            ByVal selectList As IEnumerable(Of SelectExpression))
+
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                _loadedInLastFetch = 0
+                If c IsNot Nothing Then
+                    For Each original_type As Type In types.Keys
+                        c.BeginTrackDelete(original_type)
+                    Next
+                End If
+
+                Dim et As New PerfCounter
+                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    _exec = et.GetTime
+
+                    Dim ft As New PerfCounter
+                    Do While dr.Read
+                        LoadMultiFromResultSet(values, selectList, dr, types, _loadedInLastFetch)
+                    Loop
+                    _fetch = ft.GetTime
+                End Using
+            Finally
+                If c IsNot Nothing Then
+                    For Each original_type As Type In types.Keys
+                        c.EndTrackDelete(original_type)
+                    Next
+                End If
+                CloseConn(b)
+            End Try
+        End Sub
+
         Public Sub QueryObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IObjectSchemaBase, _
+            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IEntitySchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             If values Is Nothing Then
@@ -1622,21 +1657,21 @@ l1:
             End Try
         End Sub
 
-        Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
-            Throw New NotSupportedException
-            'Dim idx As Integer = -1
-            'Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False, Nothing, Nothing, Nothing)(0)
-            'Try
-            '    idx = dr.GetOrdinal(pk_name)
-            'Catch ex As IndexOutOfRangeException
-            '    If _mcSwitch.TraceError Then
-            '        Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
-            '        Trace.WriteLine(Environment.StackTrace)
-            '    End If
-            '    Throw New OrmManagerException("Cannot get primary key ordinal", ex)
-            'End Try
-            'Return idx
-        End Function
+        'Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
+        '    Throw New NotSupportedException
+        '    'Dim idx As Integer = -1
+        '    'Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False, Nothing, Nothing, Nothing)(0)
+        '    'Try
+        '    '    idx = dr.GetOrdinal(pk_name)
+        '    'Catch ex As IndexOutOfRangeException
+        '    '    If _mcSwitch.TraceError Then
+        '    '        Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
+        '    '        Trace.WriteLine(Environment.StackTrace)
+        '    '    End If
+        '    '    Throw New OrmManagerException("Cannot get primary key ordinal", ex)
+        '    'End Try
+        '    'Return idx
+        'End Function
 
         Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
             Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
@@ -1663,7 +1698,7 @@ l1:
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
-            ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), _
             ByVal props As IDictionary)
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
@@ -1685,9 +1720,12 @@ l1:
                 Dim ce As CachedEntity = TryCast(ro, CachedEntity)
                 If ce IsNot Nothing Then ce.Invariant()
 #End If
-                values.Add(ro)
-                If ro.IsLoaded Then
-                    loaded += 1
+                Dim orm As _ICachedEntity = TryCast(ro, _ICachedEntity)
+                If orm Is Nothing OrElse orm.IsPKLoaded Then
+                    values.Add(ro)
+                    If ro.IsLoaded Then
+                        loaded += 1
+                    End If
                 End If
             Finally
                 If lock IsNot Nothing Then
@@ -1728,8 +1766,12 @@ l1:
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IObjectSchemaBase, _
+            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal props As IDictionary) As _IEntity
+
+            If selectList.Count + displacement > dr.FieldCount Then
+                Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", dr.FieldCount, selectList.Count))
+            End If
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
@@ -2065,10 +2107,9 @@ l1:
 
             If ce IsNot Nothing Then
                 ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
-                RaiseObjectLoaded(ce)
             End If
 
-
+            RaiseObjectLoaded(obj)
             Return obj
         End Function
 
@@ -2787,9 +2828,9 @@ l1:
             ByVal frmt As IFtsStringFormater, Optional ByVal js() As QueryJoin = Nothing) As ReadOnlyList(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
-            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
+            Dim searchSchema As IEntitySchema = MappingEngine.GetObjectSchema(type2search)
             Dim selectType As System.Type = GetType(T)
-            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
+            Dim selSchema As IEntitySchema = MappingEngine.GetObjectSchema(selectType)
             Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
             Dim queryFields As String() = Nothing
             Dim selCols, searchCols As New List(Of ColumnAttribute)
@@ -2989,8 +3030,8 @@ l2:
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim queryFields As String() = Nothing
 
-            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
-            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
+            Dim searchSchema As IEntitySchema = MappingEngine.GetObjectSchema(type2search)
+            Dim selSchema As IEntitySchema = MappingEngine.GetObjectSchema(selectType)
 
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
@@ -3003,7 +3044,7 @@ l2:
             ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
             ByVal joins As IList(Of QueryJoin), ByVal selCols As IList(Of ColumnAttribute), _
             ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
-            ByVal searchSchema As IObjectSchemaBase, ByVal selSchema As IObjectSchemaBase) As Boolean
+            ByVal searchSchema As IEntitySchema, ByVal selSchema As IEntitySchema) As Boolean
 
             'Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
             'Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
@@ -3052,11 +3093,11 @@ l2:
             Dim appendMain As Boolean = False
             If sort IsNot Nothing Then
                 For Each ns As Sort In New Sort.Iterator(sort)
-                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(MappingEngine, selectType)
+                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(MappingEngine)
                     appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
-                            Dim srtschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(sortType)
+                            Dim srtschema As IEntitySchema = MappingEngine.GetObjectSchema(sortType)
                             Dim field As String = MappingEngine.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
@@ -3177,8 +3218,8 @@ l2:
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
             ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
-            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
-            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
+            Dim selSchema As IEntitySchema = MappingEngine.GetObjectSchema(selectType)
+            Dim searchSchema As IEntitySchema = MappingEngine.GetObjectSchema(type2search)
 
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
 
@@ -3344,7 +3385,7 @@ l2:
                 End If
                 _loadedInLastFetch = 0
                 Dim dic As IDictionary = CType(GetDictionary(Of T)(), System.Collections.IDictionary)
-                Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(tt)
+                Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(tt)
                 Dim props As IDictionary = MappingEngine.GetProperties(tt, oschema)
                 Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                 Dim l As New List(Of Object)

@@ -55,7 +55,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table1))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
             q.Filter = PCtor.prop(GetType(Table1), "ID").greater_than(2)
             Assert.IsNotNull(q)
 
@@ -81,7 +82,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table1))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
             q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -107,7 +109,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table1))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
             q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -138,7 +141,8 @@ Imports Worm.Criteria.Joins
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(3)
             Assert.IsNotNull(t1)
 
-            Dim q As New QueryCmd(GetType(Table2))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table2))
             q.Filter = PCtor.prop(GetType(Table2), "Money").eq(t1)
 
             Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
@@ -163,7 +167,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table1))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
             q.Filter = PCtor.column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
 
@@ -189,7 +194,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table1))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
             q.Filter = PCtor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -216,7 +222,8 @@ Imports Worm.Criteria.Joins
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-            Dim q As New QueryCmd(GetType(Table2))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table2))
             q.Filter = PCtor.prop(GetType(Table2), "Money").greater_than(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
@@ -243,12 +250,14 @@ Imports Worm.Criteria.Joins
             Dim tt1 As Type = GetType(Table1)
             Dim tt2 As Type = GetType(Table2)
 
-            Dim cq As QueryCmd = New QueryCmd(tt1). _
+            Dim cq As QueryCmd = New QueryCmd(). _
                 Where(JoinCondition.Create(tt2, "Table1").eq(tt1, "Enum").[and]( _
                       PCtor.prop(tt1, "Code").eq(45)))
+            cq.Select(tt1)
 
-            Dim q As QueryCmd = New QueryCmd(tt2). _
+            Dim q As QueryCmd = New QueryCmd(). _
                 Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
+            q.Select(tt2)
 
             Dim r As ReadOnlyList(Of Table2) = q.ToOrmList(Of Table2)(mgr)
             Assert.AreEqual(2, r.Count)
@@ -275,17 +284,16 @@ Imports Worm.Criteria.Joins
         Dim cache As New Cache.OrmCache
         cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
 
-        Dim q As New QueryCmd(t, New CreateManager(Function() _
+        Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
-
-        q.Top(2).Sort(Entities.Sorting.Field(t, "DT"))
+        q.Select(t).Top(2).Sort(SCtor.prop(t, "DT"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(2, r(1).ID)
 
-        q.Sort(Entities.Sorting.Field(t, "Title"))
+        q.Sort(SCtor.prop(t, "Title"))
 
         r = q.ToList(Of Table1)()
 
@@ -300,8 +308,9 @@ Imports Worm.Criteria.Joins
         Dim c As New Cache.OrmCache
         c.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
 
-        Dim q As QueryCmd = New QueryCmd(t, New CreateManager(Function() _
-            TestManager.CreateManager(c, New ObjectMappingEngine("1")))).Sort(Entities.Sorting.Field(t, "ID"))
+        Dim q As QueryCmd = New QueryCmd(New CreateManager(Function() _
+            TestManager.CreateManager(c, New ObjectMappingEngine("1")))).Sort(SCtor.prop(t, "ID"))
+        q.Select(t)
 
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -309,11 +318,11 @@ Imports Worm.Criteria.Joins
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Entities.Sorting.Field(t, "Title"))
+        q.Sort(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Entities.Sorting.Field(t, "ID"))
+        q.Sort(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
@@ -325,11 +334,11 @@ Imports Worm.Criteria.Joins
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Entities.Sorting.Field(t, "Title"))
+        q.Sort(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.Sort(Entities.Sorting.Field(t, "ID"))
+        q.Sort(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
     End Sub
@@ -390,10 +399,10 @@ Imports Worm.Criteria.Joins
             mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
-                PCtor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(Entities.Sorting.Field(GetType(Entity4), "Title"))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
+                PCtor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(SCtor.prop(GetType(Entity4), "Title"))
 
-            Dim q2 As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
+            Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
                 PCtor.prop(GetType(Entity4), "Title").eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -427,8 +436,8 @@ Imports Worm.Criteria.Joins
             mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(Entities.Sorting.Custom("name"))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)

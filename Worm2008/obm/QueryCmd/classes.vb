@@ -32,21 +32,25 @@ Namespace Query
     End Interface
 
     Public Interface ICreateQueryCmd
-        Function Create(ByVal table As SourceFragment) As QueryCmd
+        'Function Create(ByVal table As SourceFragment) As QueryCmd
 
-        Function Create(ByVal selectType As Type) As QueryCmd
+        'Function Create(ByVal selectType As Type) As QueryCmd
 
-        Function CreateByEntityName(ByVal entityName As String) As QueryCmd
+        'Function CreateByEntityName(ByVal entityName As String) As QueryCmd
 
         Function Create(ByVal obj As IKeyEntity) As QueryCmd
 
         Function Create(ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
+        'Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal selectType As Type) As QueryCmd
+        'Function Create(ByVal name As String, ByVal selectType As Type) As QueryCmd
 
-        Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+        'Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+
+        Function Create() As QueryCmd
+
+        Function Create(ByVal name As String) As QueryCmd
 
         Function Create(ByVal name As String, ByVal obj As IKeyEntity) As QueryCmd
 
@@ -139,6 +143,8 @@ Namespace Query
                 _c = _q
             ElseIf _c.FromClaus IsNot Nothing Then
                 _c = _c.FromClaus.Query
+            ElseIf _c.FromClaus Is Nothing Then
+                _c = Nothing
             End If
             Return _c IsNot Nothing
         End Function

@@ -65,7 +65,7 @@ Public Class TestSearch
     Public Sub TestSortSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("1"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                Sorting.Field(GetType(Table1), "DT"), Nothing)
+                SCtor.prop(GetType(Table1), "DT"), Nothing)
 
             Assert.AreEqual(2, c.Count)
 
@@ -74,7 +74,7 @@ Public Class TestSearch
             Assert.AreEqual(2, l(0).Identifier)
             Assert.AreEqual(3, l(1).Identifier)
 
-            Dim c2 As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", Sorting.Field(GetType(Table2), "DT"))
+            Dim c2 As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", SCtor.prop(GetType(Table2), "DT"))
 
             Assert.AreEqual(2, c.Count)
         End Using
@@ -84,7 +84,7 @@ Public Class TestSearch
     Public Sub TestSortSearchWrong()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("Search"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("first", _
-                Sorting.Field(GetType(Table2), "Money"), Nothing)
+                SCtor.prop(GetType(Table2), "Money"), Nothing)
         End Using
     End Sub
 
@@ -93,7 +93,7 @@ Public Class TestSearch
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("1"))
             Using New Worm.OrmManager.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                    Sorting.Field(GetType(Table1), "DT"), Nothing)
+                    SCtor.prop(GetType(Table1), "DT"), Nothing)
 
                 Assert.AreEqual(1, c.Count)
             End Using
@@ -105,7 +105,7 @@ Public Class TestSearch
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("1"))
 
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                Sorting.Field(GetType(Table1), "DT"), Nothing, PCtor.prop(GetType(Table1), "Code").eq(45).Filter)
+                SCtor.prop(GetType(Table1), "DT"), Nothing, PCtor.prop(GetType(Table1), "Code").eq(45).Filter)
 
             Assert.AreEqual(1, c.Count)
 

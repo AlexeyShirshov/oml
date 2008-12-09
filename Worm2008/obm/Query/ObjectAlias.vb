@@ -184,19 +184,19 @@
             Return rt
         End Function
 
-        Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type
-            Dim rt As Type = AnyType
-            If rt Is Nothing Then
-                Dim en As String = AnyEntityName
-                If Not String.IsNullOrEmpty(en) Then
-                    rt = schema.GetTypeByEntityName(en)
-                End If
-            End If
-            If rt Is Nothing Then
-                rt = defaultType
-            End If
-            Return rt
-        End Function
+        'Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type
+        '    Dim rt As Type = AnyType
+        '    If rt Is Nothing Then
+        '        Dim en As String = AnyEntityName
+        '        If Not String.IsNullOrEmpty(en) Then
+        '            rt = schema.GetTypeByEntityName(en)
+        '        End If
+        '    End If
+        '    If rt Is Nothing Then
+        '        rt = defaultType
+        '    End If
+        '    Return rt
+        'End Function
     End Class
 
     Public Structure ObjectProperty

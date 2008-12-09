@@ -32,12 +32,13 @@ Namespace Entities
         Sub SetCreateManager(ByVal createManager As ICreateManager)
         ReadOnly Property IsLoading() As Boolean
         Sub SetMgrString(ByVal str As String)
+        Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
     End Interface
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal value As Object)
-        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase) As Object
+        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object)
+        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
@@ -62,7 +63,6 @@ Namespace Entities
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
-        Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
         Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
         Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
@@ -112,6 +112,8 @@ Namespace Entities
     Public Interface IM2M
         Function Find(ByVal t As Type) As Worm.Query.QueryCmd
         Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Find(ByVal entityName As String) As Worm.Query.QueryCmd
+        Function Find(ByVal entityName As String, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
@@ -301,5 +303,6 @@ Namespace Entities
             Return _str
         End Function
     End Class
+
 End Namespace
 

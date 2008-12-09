@@ -53,11 +53,11 @@ Imports Worm.Criteria.Joins
         Dim t1 As New ObjectAlias(GetType(Table1))
         Dim t2 As New ObjectAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(t1, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.SetJoins(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).SelectAgg(AggCtor.Count)
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q.Select(t1).SetJoins(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).SelectAgg(AggCtor.Count)
 
-        Dim q2 As New QueryCmd(t1, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q2.SelectAgg(AggCtor.Count)
+        Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q2.Select(t1).SelectAgg(AggCtor.Count)
 
         Assert.AreEqual(2, q.SingleSimpleDyn(Of Integer))
         Assert.AreEqual(3, q2.SingleSimpleDyn(Of Integer))
@@ -67,9 +67,9 @@ Imports Worm.Criteria.Joins
     Public Sub TestFilterWrong()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(t1.Type, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
+        q.Select(t1.Type).Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
         Assert.AreEqual(2, q.SingleSimpleDyn(Of Integer))
     End Sub
@@ -78,9 +78,9 @@ Imports Worm.Criteria.Joins
     Public Sub TestFilter()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(t1, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
+        q.Select(t1).Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
         Assert.AreEqual(1, q.SingleSimpleDyn(Of Integer))
     End Sub
@@ -89,9 +89,9 @@ Imports Worm.Criteria.Joins
     Public Sub TestFilterWrong2()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(t1, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Where(PCtor.prop(GetType(Table1), "Enum").eq(2)).SelectAgg(AggCtor.Count)
+        q.Select(t1).Where(PCtor.prop(GetType(Table1), "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
         Assert.AreEqual(1, q.SingleSimpleDyn(Of Integer))
     End Sub
@@ -100,9 +100,9 @@ Imports Worm.Criteria.Joins
     Public Sub TestSort()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(t1, Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Where(PCtor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).Sort(Sorting.Field(t1, "DT"))
+        q.Select(t1).Where(PCtor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).Sort(SCtor.prop(t1, "DT"))
 
         Assert.AreEqual(2, q.Single(Of Table1).ID)
     End Sub

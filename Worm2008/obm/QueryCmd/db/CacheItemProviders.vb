@@ -36,21 +36,21 @@ Namespace Query.Database
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
 
-                Reset(mgr, j, f, q.SelectedType, sl, q)
+                Reset(mgr, j, f, sl, q)
             End Sub
 
-            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
+            'Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+            '    ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
 
-                Reset(mgr, j, f, t, sl, q)
-            End Sub
+            '    Reset(mgr, j, f, sl, q)
+            'End Sub
 
             Public Sub ResetStmt()
                 _stmt = Nothing
             End Sub
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
+                             ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
                 _j = j
                 _f = f
                 _sl = sl
@@ -65,7 +65,7 @@ Namespace Query.Database
                     str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
                 End If
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
 
                 If _dic Is Nothing Then
                     _dic = GetExternalDic(_key)
@@ -126,10 +126,6 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Return _MakeStatement(SelectedType)
-            End Function
-
-            Protected Function _MakeStatement(ByVal t As Type) As String
                 Dim almgr As AliasMgr = AliasMgr.Create
                 Dim fi As Object = _mgr.GetFilterInfo
                 Dim i As Integer = 0
@@ -145,7 +141,7 @@ Namespace Query.Database
                     If _f.Length > i Then
                         f = _f(i)
                     End If
-                    inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
+                    inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, j, f, almgr, columnAliases, inner, innerColumns, i, _sl(i))
                     innerColumns = New List(Of String)(columnAliases)
                     'q = q.OuterQuery
                     i += 1
@@ -154,17 +150,17 @@ Namespace Query.Database
                 Return inner
             End Function
 
-            Protected Overridable ReadOnly Property WithLoad() As Boolean
-                Get
-                    Return True
-                End Get
-            End Property
+            'Protected Overridable ReadOnly Property WithLoad() As Boolean
+            '    Get
+            '        Return True
+            '    End Get
+            'End Property
 
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -172,13 +168,13 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                Dim t As Type = _q.CreateType
-                If t Is Nothing Then
-                    t = SelectedType
-                End If
+                Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                'If t Is Nothing Then
+                '    t = SelectedType
+                'End If
                 oschema = dbm.MappingEngine.GetObjectSchema(t, False)
 
-                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, SelectedType, _q, True, _sl(0)), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -292,14 +288,14 @@ Namespace Query.Database
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-                MyBase.New(mgr, j, f, q, q.SelectedType, sl)
+                MyBase.New(mgr, j, f, q, sl)
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -307,15 +303,15 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                Dim t As Type = _q.CreateType
-                If t Is Nothing Then
-                    t = SelectedType
-                End If
+                Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                'If t Is Nothing Then
+                '    t = SelectedType
+                'End If
                 If t IsNot SelectedType AndAlso t IsNot Nothing Then
                     oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -347,14 +343,14 @@ Namespace Query.Database
                 'Reset(j, f, q.SelectedType)
             End Sub
 
-            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
-                MyBase.New(mgr, j, f, q, t, sl)
-                '_mgr = mgr
-                '_q = q
+            'Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+            '    ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
+            '    MyBase.New(mgr, j, f, q, sl)
+            '    '_mgr = mgr
+            '    '_q = q
 
-                'Reset(j, f, t)
-            End Sub
+            '    'Reset(j, f, t)
+            'End Sub
 
             'Public Sub ResetDic()
             '    If Not String.IsNullOrEmpty(_key) Then
@@ -402,10 +398,11 @@ Namespace Query.Database
             End Function
 
             Public Overridable Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
-                Return _GetCacheItem(col, SelectedType)
+                Return _GetCacheItem(col)
             End Function
 
-            Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType), ByVal t As Type) As OrmManager.CachedItem
+            Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
+
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -499,17 +496,17 @@ Namespace Query.Database
             '    Return l
             'End Function
 
-            Protected Overrides ReadOnly Property WithLoad() As Boolean
-                Get
-                    Return _q.propWithLoad
-                End Get
-            End Property
+            'Protected Overrides ReadOnly Property WithLoad() As Boolean
+            '    Get
+            '        Return _q.propWithLoad
+            '    End Get
+            'End Property
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(_q.CreateType, cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
+                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -612,14 +609,14 @@ Namespace Query.Database
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-                MyBase.New(mgr, j, f, q, q.SelectedType, sl)
+                MyBase.New(mgr, j, f, q, sl)
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -627,15 +624,15 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                Dim t As Type = _q.CreateType
-                If t Is Nothing Then
-                    t = SelectedType
-                End If
+                Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                'If t Is Nothing Then
+                '    t = SelectedType
+                'End If
                 If t IsNot SelectedType AndAlso t IsNot Nothing Then
                     oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

@@ -414,7 +414,7 @@ Public Class TestManagerRS
 
             Assert.AreEqual(3, c.Count)
 
-            Dim c2 As ICollection(Of Table1) = t3.M2M.Find(Of Table1)(Nothing, Sorting.Field(GetType(Table1), "Enum").Asc, WithLoad)
+            Dim c2 As ICollection(Of Table1) = t3.M2M.Find(Of Table1)(Nothing, SCtor.prop(GetType(Table1), "Enum").asc, WithLoad)
 
             Assert.AreEqual(1, c2.Count)
 
@@ -430,7 +430,7 @@ Public Class TestManagerRS
 
                 Assert.AreEqual(3, c.Count)
 
-                c2 = t3.M2M.Find(Of Table1)(Nothing, Sorting.Field(GetType(Table1), "Enum").Asc, WithLoad)
+                c2 = t3.M2M.Find(Of Table1)(Nothing, SCtor.prop(GetType(Table1), "Enum").asc, WithLoad)
 
                 Assert.AreEqual(2, c2.Count)
             Finally
@@ -689,7 +689,7 @@ Public Class TestManagerRS
             Dim t As Type = mgr.MappingEngine.GetTypeByEntityName("Table3")
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
             'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
-            Dim s As Sort = Sorting.Field(GetType(Table33), "Code").Desc
+            Dim s As Sort = SCtor.prop(GetType(Table33), "Code").desc
             Dim c As Worm.ReadOnlyList(Of Table33) = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
             Assert.AreEqual(3, c.Count)
             'Assert.AreEqual(Of Byte)(2, c(0).Code)
@@ -942,22 +942,22 @@ Public Class TestManagerRS
     Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt() As Table10 = New Table10() {mgr.Find(Of Table10)(2), mgr.Find(Of Table10)(1), mgr.Find(Of Table10)(3)}
-            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, Sorting.Field(GetType(Table10), "Table1"))
+            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1"))
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, Sorting.Field(GetType(Table10), "Table1").Desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").desc)
             Assert.AreEqual(3, GetList(Of Table10)(c)(0).Identifier)
             'Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             'Assert.AreEqual(1, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, Sorting.Field(GetType(Table10), "Table1").NextField("ID"))
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").next_prop("ID"))
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, Sorting.Field(GetType(Table10), "Table1").NextField("ID").Desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").next_prop("ID").desc)
             Assert.AreEqual(2, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(1, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
@@ -968,12 +968,12 @@ Public Class TestManagerRS
     Public Sub TestSortEx()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt() As Table10 = New Table10() {mgr.Find(Of Table10)(2), mgr.Find(Of Table10)(1), mgr.Find(Of Table10)(3)}
-            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, Sorting.Field(GetType(Table1), "Title"))
+            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table1), "Title"))
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            Dim c2 As System.Collections.ICollection = Worm.OrmManager.ApplySortT(tt, Sorting.Field(GetType(Table1), "Title"))
+            Dim c2 As System.Collections.ICollection = Worm.OrmManager.ApplySortT(tt, SCtor.prop(GetType(Table1), "Title"))
             Dim l2 As System.Collections.IList = CType(c2, Collections.IList)
             Assert.AreEqual(1, CType(l2(0), Table10).Identifier)
             Assert.AreEqual(2, CType(l2(1), Table10).Identifier)
@@ -1115,7 +1115,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestBetween()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), SCtor.prop(GetType(Table1), "Code"), False)
 
             Assert.AreEqual(2, c.Count)
 
@@ -1127,7 +1127,7 @@ Public Class TestManagerRS
                 GetList(c)(0).Code = 100
                 GetList(c)(0).SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), SCtor.prop(GetType(Table1), "Code"), False)
 
                 Assert.AreEqual(1, c.Count)
 
@@ -1136,7 +1136,7 @@ Public Class TestManagerRS
                 t.CreatedAt = Now
                 t.SaveChanges(True)
 
-                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), Sorting.Field(GetType(Table1), "Code"), False)
+                c = mgr.Find(Of Table1)(PCtor.prop(GetType(Table1), "Code").between(2, 45), SCtor.prop(GetType(Table1), "Code"), False)
 
                 Assert.AreEqual(2, c.Count)
                 Assert.AreEqual(30, GetList(c)(0).Code)
@@ -1152,7 +1152,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
                 PCtor.custom("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).greater_than(1000), _
-                Sorting.Field(GetType(Table1), "Code"), False)
+                SCtor.prop(GetType(Table1), "Code"), False)
 
             Assert.AreEqual(2, c.Count)
 
@@ -1225,7 +1225,7 @@ Public Class TestManagerRS
             Dim l As Table1_x = mgr.Find(Of Table1_x)(1)
             l.Load()
 
-            Dim r As Worm.ReadOnlyList(Of Table1_x) = mgr.FindDistinct(Of Table1_x)(PCtor.prop(GetType(Table1_x), "ID").eq(1), Sorting.Field(GetType(Table1_x), "Title"), True)
+            Dim r As Worm.ReadOnlyList(Of Table1_x) = mgr.FindDistinct(Of Table1_x)(PCtor.prop(GetType(Table1_x), "ID").eq(1), SCtor.prop(GetType(Table1_x), "Title"), True)
             Assert.AreEqual(1, r.Count)
 
         End Using
@@ -1263,7 +1263,7 @@ Public Class TestManagerRS
                 mgr.QueryObjects(Of Table1)(cmd, True, l, _
                     New List(Of ColumnAttribute)(New ColumnAttribute() { _
                         New ColumnAttribute("ID"), New ColumnAttribute("Code")}), _
-                    Nothing, SelectExpression.GetMapping(SCtor.column(Nothing, "id", "ID").Add(Nothing, "code", "Code").GetAllProperties))
+                    Nothing, SelectExpression.GetMapping(FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).Add(Nothing, "code", "Code").GetAllProperties))
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(1, l(0).ID)

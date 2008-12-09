@@ -5,7 +5,7 @@ Imports System.Collections.Generic
 
 Namespace Entities.Meta
     Public NotInheritable Class SimpleObjectSchema
-        Implements IObjectSchemaBase
+        Implements IEntitySchema
 
         'Private _tables(-1) As SourceFragment
         Private _table As SourceFragment
@@ -83,12 +83,12 @@ Namespace Entities.Meta
         '    Return New SourceFragment() {_table}
         'End Function
 
-        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IObjectSchemaBase.ChangeValueType
+        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
             newvalue = value
             Return False
         End Function
 
-        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IObjectSchemaBase.GetFieldColumnMap
+        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
             Return _cols
         End Function
 
@@ -101,12 +101,12 @@ Namespace Entities.Meta
         '    Return New M2MRelation() {}
         'End Function
 
-        Public Function GetSuppressedFields() As String() Implements IObjectSchemaBase.GetSuppressedFields
+        Public Function GetSuppressedFields() As String() Implements IEntitySchema.GetSuppressedFields
             'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
             Return Nothing
         End Function
 
-        Public ReadOnly Property Table() As SourceFragment Implements IObjectSchemaBase.Table
+        Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
             Get
                 Return _table
             End Get

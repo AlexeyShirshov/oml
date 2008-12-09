@@ -191,7 +191,7 @@ Namespace Database
                         c.AddFilter(AppendWhere)
                         _mgr.SQLGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, original_type, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         params.AppendParams(.Parameters)
@@ -324,7 +324,7 @@ Namespace Database
                 End If
 
                 _rel = relation
-                Dim s As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(relation.Type)
+                Dim s As IEntitySchema = mgr.MappingEngine.GetObjectSchema(relation.Type)
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
 
                 If s IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetFilterInfo) IsNot Nothing Then
@@ -354,7 +354,7 @@ Namespace Database
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Dim s As IObjectSchemaBase = Mgr.MappingEngine.GetObjectSchema(_rel.Type)
+                Dim s As IEntitySchema = Mgr.MappingEngine.GetObjectSchema(_rel.Type)
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
                 If cs IsNot Nothing Then
                     Return CType(cs.GetContextFilter(Mgr.GetFilterInfo), IFilter)
@@ -402,7 +402,7 @@ Namespace Database
                         sb.Append(_mgr.SQLGenerator.SelectM2M(_mgr.MappingEngine, almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, t, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         .CommandText = sb.ToString
@@ -482,7 +482,7 @@ Namespace Database
                     'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
                     '    external_sort = True
                     'End If
-                    Dim oschema As IObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(ct)
+                    Dim oschema As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(ct)
                     For Each o As IKeyEntity In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier

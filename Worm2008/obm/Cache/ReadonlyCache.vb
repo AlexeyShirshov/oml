@@ -53,9 +53,9 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
 
-        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.IDictionary
+        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema) As System.Collections.Generic.IDictionary(Of Object, T)
 
         Public Overridable Sub Reset()
             _filters = CreateRootDictionary4Queries()
@@ -765,7 +765,7 @@ Namespace Cache
         End Function
 
         Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
-            ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.IDictionary
+            ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t, oschema)
@@ -788,7 +788,7 @@ Namespace Cache
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
         End Function
 

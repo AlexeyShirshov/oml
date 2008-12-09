@@ -74,7 +74,7 @@ Public Class Table1
     'End Function
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
         Select Case fieldName
             Case "Title"
                 Name = CStr(value)
@@ -96,7 +96,7 @@ Public Class Table1
     End Sub
 
     Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase) As Object
+        ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object
         If fieldName = "ddd" Then
             Return Name
         Else

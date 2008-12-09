@@ -1986,36 +1986,40 @@ Namespace Entities
         End Sub
 
 #Region " M2M "
-        Public Function CreateM2MCmd(ByVal t As Type) As Worm.Query.QueryCmd
+        Public Function CreateM2MCmd() As Worm.Query.QueryCmd
             If CreateManager IsNot Nothing Then
                 Dim q As New Worm.Query.QueryCmd(Me, CreateManager)
-                q.SelectedType = t
                 Return q
             Else
                 Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me)
-                q.SelectedType = t
                 Return q
             End If
         End Function
 
-        Public Function CreateM2MCmd(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Public Function CreateM2MCmd(ByVal key As String) As Worm.Query.QueryCmd
             If CreateManager IsNot Nothing Then
                 Dim q As New Worm.Query.QueryCmd(Me, key, CreateManager)
-                q.SelectedType = t
                 Return q
             Else
                 Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me, key)
-                q.SelectedType = t
                 Return q
             End If
         End Function
 
         Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd(t)
+            Return CreateM2MCmd().Select(t)
         End Function
 
         Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd(t, key)
+            Return CreateM2MCmd(key).Select(t)
+        End Function
+
+        Protected Function _Find(ByVal entityName As String) As Worm.Query.QueryCmd Implements IM2M.Find
+            Return CreateM2MCmd().Select(entityName)
+        End Function
+
+        Protected Function _Find(ByVal entityName As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
+            Return CreateM2MCmd(key).Select(entityName)
         End Function
 
         Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase 'Implements _IOrmBase.GetM2M
@@ -2184,86 +2188,71 @@ Namespace Entities
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing)
-            q.Table = New SearchFragment(t, text)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(t, text))
             Return q
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text, top)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, top))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text, type, top)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, top))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text, type, queryFields, top)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields, top))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text, type, queryFields)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields))
             Return q
         End Function
-
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(t, text, type)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type))
             Return q
         End Function
 
         Public Function Search(ByVal text As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing)
-            q.Table = New SearchFragment(text)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(text))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text, top)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, top))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text, type, top)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text, type)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text, type, top, queryFields)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top, queryFields))
             Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing, key)
-            q.Table = New SearchFragment(text, type, queryFields)
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, queryFields))
             Return q
         End Function
 
@@ -2483,7 +2472,7 @@ Namespace Entities
         End Function
 
         Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
+            ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
             If propertyAlias = OrmBaseT.PKName Then
                 _id = value
             Else
@@ -2492,7 +2481,7 @@ Namespace Entities
         End Sub
 
         Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IObjectSchemaBase) As Object
+            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
             If propertyAlias = OrmBaseT.PKName Then
                 Return _id
             Else

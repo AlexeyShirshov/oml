@@ -333,7 +333,7 @@ Namespace Cache
             Else
                 Dim arr As ArrayList = Nothing
                 If lo.CanSort(mc, arr, sort) Then
-                    Dim schema As IObjectSchemaBase = mc.MappingEngine.GetObjectSchema(obj.GetType)
+                    Dim schema As IEntitySchema = mc.MappingEngine.GetObjectSchema(obj.GetType)
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     Dim c As IComparer = Nothing
                     If st IsNot Nothing Then

@@ -102,7 +102,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         _objectType = t
     End Sub
 
-    Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IObjectSchemaBase.Table
+    Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
         Get
             Return GetTables(0)
         End Get

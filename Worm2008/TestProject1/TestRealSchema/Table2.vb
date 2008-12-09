@@ -52,7 +52,7 @@ Public Class Table2
     End Sub
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
         Select Case fieldName
             Case "Table1"
                 Tbl = CType(value, Table1)

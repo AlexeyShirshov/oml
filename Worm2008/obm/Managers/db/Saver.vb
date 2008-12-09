@@ -321,7 +321,7 @@ Namespace Database
 
         Protected Overridable Function CheckObj(ByVal main As _ICachedEntity, ByVal o As ICachedEntity) As Boolean
             If o.ObjectState <> ObjectState.Deleted Then Return False
-            Dim oSchema As IObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(o.GetType)
+            Dim oSchema As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(o.GetType)
             For Each m As MapField2Column In _mgr.MappingEngine.GetMappedFields(oSchema)
                 If main.Equals(o.GetValueOptimized(Nothing, m._propertyAlias, oSchema)) Then
                     Return True

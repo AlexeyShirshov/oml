@@ -10,6 +10,7 @@ Imports Worm.Entities
 Imports Worm
 Imports Worm.Database.Criteria
 Imports Worm.Criteria.Joins
+Imports Worm.Sorting
 
 'Imports Worm.Database.Sorting
 
@@ -68,10 +69,11 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> Public Sub TestCount()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            Dim q As New QueryCmd(GetType(Entity4))
+            Dim q As New QueryCmd()
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
+            q.Select(GetType(Entity4))
 
             Dim i As Integer = q.SingleSimpleDyn(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
 
@@ -89,14 +91,16 @@ Imports Worm.Criteria.Joins
 
             Dim table As SourceFragment = r.Table
 
-            Dim inner As QueryCmd = New QueryCmd(table)
+            Dim inner As QueryCmd = New QueryCmd()
+            inner.From(table)
             inner.Filter = New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             inner.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim q As New QueryCmd(GetType(Entity4))
+            Dim q As New QueryCmd()
             q.propSort = New Worm.Sorting.Sort(inner, SortType.Desc)
+            q.Select(GetType(Entity4))
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
 
@@ -116,11 +120,11 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> Public Sub TestGroup()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            Dim q As New QueryCmd(GetType(Entity4))
+            Dim q As New QueryCmd()
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
-
+            q.Select(GetType(Entity4))
             q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
@@ -140,7 +144,7 @@ Imports Worm.Criteria.Joins
 
             Assert.AreEqual(11, l.Count)
 
-            q.propSort = Sorting.Custom("cnt desc")
+            q.propSort = SCtor.Custom("cnt desc")
             l = q.ToSimpleList(Of Entity4, Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -160,15 +164,16 @@ Imports Worm.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
-            Dim q As New QueryCmd(t)
+            Dim q As New QueryCmd()
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count, "Count") _
             })
-            Dim o As New Grouping("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
-            q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(Sorting.Custom("Count desc"))
+            q.Select(t)
 
-            q.CreateType = GetType(AnonymousEntity)
-            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+            Dim o As New Grouping("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
+            q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(SCtor.Custom("Count desc"))
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
             Assert.AreEqual(5, l.Count)
 
@@ -192,9 +197,10 @@ Imports Worm.Criteria.Joins
 
             Dim table As SourceFragment = r.Table
 
-            Dim q As New QueryCmd(typeE4)
+            Dim q As New QueryCmd()
+            q.Select(typeE4)
             q.propSort = New Worm.Sorting.Sort( _
-                New QueryCmd(table). _
+                New QueryCmd().From(table). _
                     SelectAgg(AggCtor.Count). _
                     Where(JoinCondition.Create(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
 

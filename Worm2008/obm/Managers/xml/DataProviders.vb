@@ -190,7 +190,8 @@ Namespace Xml
                     _mgr.XPathGenerator.AppendOrder(original_type, _sort, sb)
                 End If
 
-                Dim r As ReadOnlyList(Of T) = CType(_mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing), Global.Worm.ReadOnlyList(Of T))
+                Dim r As New ReadOnlyList(Of T)
+                _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, CType(r.List, System.Collections.IList))
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                     r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), Global.Worm.ReadOnlyList(Of T))

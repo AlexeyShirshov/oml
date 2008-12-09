@@ -51,10 +51,10 @@ Imports System.Collections
             Dim r As ReadOnlyList(Of Entity) = mgr.FindTop(Of Entity)(10, Nothing, Nothing, False)
             Assert.AreEqual(10, r.Count)
 
-            r = mgr.FindTop(Of Entity)(10, Nothing, Entities.Sorting.External("xxx", AddressOf ExternalSort), False)
+            r = mgr.FindTop(Of Entity)(10, Nothing, Worm.Query.SCtor.External("xxx", AddressOf ExternalSort), False)
             Assert.AreEqual(1, r.Count)
 
-            r = mgr.FindTop(Of Entity)(10, Nothing, Entities.Sorting.External("yyy", AddressOf ExternalSort).Desc, False)
+            r = mgr.FindTop(Of Entity)(10, Nothing, Worm.Query.SCtor.External("yyy", AddressOf ExternalSort).desc, False)
             Assert.AreEqual(2, r.Count)
         End Using
     End Sub

@@ -1002,7 +1002,7 @@ Namespace Database.Storedprocs
             Private _o As Object
             Private _count As Integer
             Private _loaded As Integer
-            Private _oschema As IObjectSchemaBase
+            Private _oschema As IEntitySchema
             Private _props As IDictionary
             Private _cm As Collections.IndexedCollection(Of String, MapField2Column)
 
@@ -1025,7 +1025,6 @@ Namespace Database.Storedprocs
 
             Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
             Protected MustOverride Function GetWithLoad() As Boolean
-            Protected MustOverride Function GetPrimaryKeyIndex() As Integer
 
             Public Function GetObjects(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
                 If _o Is Nothing Then

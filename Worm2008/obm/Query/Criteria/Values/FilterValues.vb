@@ -152,7 +152,7 @@ Namespace Criteria.Values
 
             If _p.Table Is Nothing Then
 
-                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(_p.ObjectSource.GetRealType(schema))
+                Dim oschema As IEntitySchema = schema.GetObjectSchema(_p.ObjectSource.GetRealType(schema))
 
                 Dim map As MapField2Column = Nothing
                 Try
@@ -925,28 +925,28 @@ Namespace Criteria.Values
 
             Dim c As New Query.QueryCmd.svct(_q)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                If _q.SelectedType Is Nothing Then
-                    If String.IsNullOrEmpty(_q.SelectedEntityName) Then
-                        _q.SelectedType = _q.CreateType
-                    Else
-                        _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
-                    End If
-                End If
+                'If _q.SelectedType Is Nothing Then
+                '    If String.IsNullOrEmpty(_q.SelectedEntityName) Then
+                '        _q.SelectedType = _q.CreateType
+                '    Else
+                '        _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
+                '    End If
+                'End If
 
-                If GetType(Entities.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
-                    _q.SelectedType = Nothing
-                End If
+                'If GetType(Entities.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
+                '    _q.SelectedType = Nothing
+                'End If
 
-                If _q.CreateType Is Nothing Then
-                    _q.CreateType = _q.SelectedType
-                End If
+                'If _q.CreateType Is Nothing AndAlso _q.SelectedType IsNot Nothing Then
+                '    _q.Into(_q.SelectedType)
+                'End If
 
                 Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 Dim sl As List(Of Entities.SelectExpression) = Nothing
-                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, _q.SelectedType, sl)
+                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, sl)
 
                 sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, _
-                     _q.SelectedType, j, f, almgr, sl))
+                     j, f, almgr, sl))
             End Using
 
             sb.Append(")")
@@ -962,7 +962,10 @@ Namespace Criteria.Values
             Dim qp As Cache.IDependentTypes = CType(_q, Cache.IQueryDependentTypes).Get(mpe)
             If Cache.IsEmpty(qp) Then
                 Dim dt As New Cache.DependentTypes
-                dt.AddBoth(_q.SelectedType)
+                Dim types As IEnumerable(Of Type) = Nothing
+                If _q.GetSelectedTypes(mpe, types) Then
+                    dt.AddBoth(types)
+                End If
                 qp = dt
             End If
             Return qp

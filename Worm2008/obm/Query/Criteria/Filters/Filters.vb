@@ -12,7 +12,7 @@ Namespace Criteria.Core
 
         'Private _templ As OrmFilterTemplate
         Private _str As String
-        Protected _oschema As IObjectSchemaBase
+        Protected _oschema As IEntitySchema
         Private _prep As Boolean = True
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
@@ -59,7 +59,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             Dim evval As IEvaluableValue = TryCast(Val(), IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
@@ -136,7 +136,7 @@ Namespace Criteria.Core
 
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
-        Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As List(Of String)) As String
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As List(Of String)) As String
             If _oschema Is Nothing Then
                 _oschema = oschema
             End If
@@ -183,11 +183,11 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
             Return MakeQueryStmt(oschema, stmt, filterInfo, schema, almgr, pname, Nothing)
         End Function
 
-        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IObjectSchemaBase, _
+        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IEntitySchema, _
             ByVal stmt As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
             If _oschema Is Nothing Then
                 _oschema = oschema

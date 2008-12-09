@@ -346,7 +346,7 @@ Namespace Criteria.Conditions
             '    Return s.ToString
             'End Function
 
-            Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+            Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
                 Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If Con._right IsNot Nothing Then
                     Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
@@ -386,7 +386,7 @@ Namespace Criteria.Conditions
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If

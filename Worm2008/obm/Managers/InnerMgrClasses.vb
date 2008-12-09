@@ -22,7 +22,7 @@ Partial Public Class OrmManager
             p2 = o.GetSecondType
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-            Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
+            Dim oschema As IEntitySchema = schema.GetObjectSchema(obj.GetType)
             o1 = CType(obj.GetValueOptimized(Nothing, p1.PropertyName, oschema), IKeyEntity)
             o2 = CType(obj.GetValueOptimized(Nothing, p2.PropertyName, oschema), IKeyEntity)
         End Sub
@@ -131,8 +131,8 @@ Partial Public Class OrmManager
             MyClass.New(schema, OrmManager.CurrentManager)
         End Sub
 
-        Private Sub ObjectCreated(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
-            CType(obj, _ICachedEntity).SetSpecificSchema(mgr.MappingEngine)
+        Private Sub ObjectCreated(ByVal mgr As OrmManager, ByVal obj As IEntity)
+            CType(obj, _IEntity).SetSpecificSchema(mgr.MappingEngine)
         End Sub
 
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)

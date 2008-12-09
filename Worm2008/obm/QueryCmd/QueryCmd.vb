@@ -68,19 +68,19 @@ Namespace Query
         End Class
 
         Class svct
-            Private _oldct As Type
-            Private _oldst As ObjectSource
+            Private _oldct As ObjectSource
+            'Private _oldst As ObjectSource
             Private _cmd As QueryCmd
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
-                _oldst = cmd._selectSrc
+                '_oldst = cmd._selectSrc
                 _cmd = cmd
             End Sub
 
             Public Sub SetCT2Nothing()
                 _cmd._createType = _oldct
-                _cmd._selectSrc = _oldst
+                '_cmd._selectSrc = _oldst
             End Sub
         End Class
 
@@ -104,12 +104,12 @@ Namespace Query
             '    End If
             'End Sub
 
-            Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As ICachedEntity)
+            Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
                 'AddHandler o.ManagerRequired, AddressOf GetManager
                 If _m Is Nothing Then
-                    o.SetCreateManager(_gm)
+                    CType(o, _IEntity).SetCreateManager(_gm)
                 Else
-                    o.SetCreateManager(New CreateManager(_m))
+                    CType(o, _IEntity).SetCreateManager(New CreateManager(_m))
                 End If
             End Sub
         End Class
@@ -147,7 +147,7 @@ Namespace Query
         Protected _rn As TableFilter
         'Protected _outer As QueryCmd
         Private _er As OrmManager.ExecutionResult
-        Private _selectSrc As ObjectSource
+        'Private _selectSrc As ObjectSource
         Friend _resDic As Boolean
         Private _appendMain As Boolean?
         Protected _getMgr As ICreateManager
@@ -157,19 +157,19 @@ Namespace Query
         Private _cacheSort As Boolean
         Private _autoFields As Boolean
         Private _timeout As Nullable(Of Integer)
-        Private _oschema As IObjectSchemaBase
+        Private _oschema As IEntitySchema
+        Private _createType As ObjectSource
 
-        Private _createType As Type
-        Public Property CreateType() As Type
+        Public ReadOnly Property CreateType() As ObjectSource
             Get
-                Return _createType
+                Return Nothing
             End Get
-            Set(ByVal value As Type)
-                If _createType IsNot Nothing AndAlso _execCnt > 0 Then
-                    Throw New QueryCmdException("Cannot change CreateType", Me)
-                End If
-                _createType = value
-            End Set
+            'Set(ByVal value As Type)
+            '    If _createType IsNot Nothing AndAlso _execCnt > 0 Then
+            '        Throw New QueryCmdException("Cannot change CreateType", Me)
+            '    End If
+            '    _createType = value
+            'End Set
         End Property
 
         Public Property AutoFields() As Boolean
@@ -292,17 +292,17 @@ Namespace Query
             _getMgr = getMgr
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment)
-            _from = New FromClause(table)
-        End Sub
+        'Public Sub New(ByVal table As SourceFragment)
+        '    _from = New FromClause(table)
+        'End Sub
 
-        Public Sub New(ByVal selectType As Type)
-            _selectSrc = New ObjectSource(selectType)
-        End Sub
+        'Public Sub New(ByVal selectType As Type)
+        '    _selectSrc = New ObjectSource(selectType)
+        'End Sub
 
-        Public Sub New(ByVal entityName As String)
-            _selectSrc = New ObjectSource(entityName)
-        End Sub
+        'Public Sub New(ByVal entityName As String)
+        '    _selectSrc = New ObjectSource(entityName)
+        'End Sub
 
         Public Sub New(ByVal obj As IKeyEntity)
             _m2mObject = obj
@@ -313,45 +313,45 @@ Namespace Query
             _m2mKey = key
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
-            _from = New FromClause(table)
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
+        '    _from = New FromClause(table)
+        '    _getMgr = getMgr
+        'End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal getMgr As CreateManagerDelegate)
-            _from = New FromClause(table)
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal table As SourceFragment, ByVal getMgr As CreateManagerDelegate)
+        '    _from = New FromClause(table)
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 
-        Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
-            _selectSrc = New ObjectSource(selectType)
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
+        '    _selectSrc = New ObjectSource(selectType)
+        '    _getMgr = getMgr
+        'End Sub
 
-        Public Sub New(ByVal selectType As Type, ByVal getMgr As CreateManagerDelegate)
-            _selectSrc = New ObjectSource(selectType)
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal selectType As Type, ByVal getMgr As CreateManagerDelegate)
+        '    _selectSrc = New ObjectSource(selectType)
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
-            _selectSrc = New ObjectSource(entityName)
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
+        '    _selectSrc = New ObjectSource(entityName)
+        '    _getMgr = getMgr
+        'End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal getMgr As CreateManagerDelegate)
-            _selectSrc = New ObjectSource(entityName)
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal entityName As String, ByVal getMgr As CreateManagerDelegate)
+        '    _selectSrc = New ObjectSource(entityName)
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As CreateManagerDelegate)
-            _selectSrc = New ObjectSource([alias])
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As CreateManagerDelegate)
+        '    _selectSrc = New ObjectSource([alias])
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As ICreateManager)
-            _selectSrc = New ObjectSource([alias])
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As ICreateManager)
+        '    _selectSrc = New ObjectSource([alias])
+        '    _getMgr = getMgr
+        'End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As ICreateManager)
             _m2mObject = obj
@@ -385,14 +385,14 @@ Namespace Query
         End Sub
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal selectType As Type, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal cs As List(Of List(Of SelectExpression))) As IFilter()
 
             Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 Dim c As List(Of SelectExpression) = Nothing
-                Dim f As IFilter = q.Prepare(j, schema, filterInfo, selectType, c)
+                Dim f As IFilter = q.Prepare(j, schema, filterInfo, c)
                 If f IsNot Nothing Then
                     fs.Add(f)
                 End If
@@ -405,7 +405,7 @@ Namespace Query
         End Function
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal selectType As Type, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByRef cl As List(Of SelectExpression)) As IFilter
 
             If Joins IsNot Nothing Then
@@ -418,21 +418,21 @@ Namespace Query
                 f = Filter.Filter()
             End If
 
-            For Each s As Sort In New Sort.Iterator(_order)
-                'If s.Type Is Nothing AndAlso s.Table Is Nothing Then
-                '    s.Type = selectType
-                'End If
-                If s.ObjectSource IsNot Nothing Then
-                    If s.ObjectSource.GetRealType(schema, Nothing) Is Nothing AndAlso s.Table Is Nothing Then
-                        s.ObjectSource = New ObjectSource(selectType)
-                    End If
+            'For Each s As Sort In New Sort.Iterator(_order)
+            '    'If s.Type Is Nothing AndAlso s.Table Is Nothing Then
+            '    '    s.Type = selectType
+            '    'End If
+            '    If s.ObjectSource IsNot Nothing Then
+            '        If s.ObjectSource.GetRealType(schema) Is Nothing AndAlso s.Table Is Nothing Then
+            '            s.ObjectSource = New ObjectSource(selectType)
+            '        End If
 
-                    If s.ObjectSource.GetRealType(schema, Nothing) IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
-                        s.PropertyAlias = s.Column
-                        s.Column = Nothing
-                    End If
-                End If
-            Next
+            '        If s.ObjectSource.GetRealType(schema, Nothing) IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
+            '            s.PropertyAlias = s.Column
+            '            s.Column = Nothing
+            '        End If
+            '    End If
+            'Next
 
             If AutoJoins OrElse _m2mObject IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
@@ -561,7 +561,7 @@ Namespace Query
         End Function
 
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of QueryJoin)), _
-            ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
+            ByVal fs() As IFilter, ByVal cb As Cache.CacheListBehavior, _
             ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String, _
             ByVal mpe As ObjectMappingEngine, ByRef dic As IDictionary) As String
             Dim key As New StringBuilder
@@ -580,12 +580,12 @@ Namespace Query
                     f = fs(i)
                 End If
 
-                Dim rt As Type = q.SelectedType
-                If rt Is Nothing AndAlso Not String.IsNullOrEmpty(q.SelectedEntityName) Then
-                    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
-                End If
+                'Dim rt As Type = q.SelectedType
+                'If rt Is Nothing AndAlso Not String.IsNullOrEmpty(q.SelectedEntityName) Then
+                '    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
+                'End If
 
-                If Not q.GetStaticKey(key, js(i), f, If(rt Is Nothing, realType, rt), cb_, sl(i), mpe) Then
+                If Not q.GetStaticKey(key, js(i), f, cb_, sl(i), mpe) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
                         RaiseEvent CacheDictionaryRequired(Me, ca)
@@ -597,7 +597,7 @@ Namespace Query
                             End If
                         End If
                     End If
-                    q.GetStaticKey(key, js(i), f, If(rt Is Nothing, realType, rt), Cache.CacheListBehavior.CacheAll, sl(i), mpe)
+                    q.GetStaticKey(key, js(i), f, Cache.CacheListBehavior.CacheAll, sl(i), mpe)
                     cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
@@ -616,7 +616,7 @@ Namespace Query
         End Function
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of QueryJoin), _
-            ByVal f As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
+            ByVal f As IFilter, ByVal cb As Cache.CacheListBehavior, _
             ByVal sl As List(Of SelectExpression), ByVal mpe As ObjectMappingEngine) As Boolean
             Dim sb2 As New StringBuilder
 
@@ -671,8 +671,11 @@ Namespace Query
             End If
 
             If sb2.Length = 0 Then
-                If realType IsNot Nothing Then
-                    sb2.Append(realType.ToString)
+                Dim rt As IEnumerable(Of Type) = Nothing
+                If GetSelectedTypes(mpe, rt) Then
+                    For Each t As Type In rt
+                        sb2.Append(t.ToString)
+                    Next
                 ElseIf _from IsNot Nothing Then
                     If _from.Table IsNot Nothing Then
                         Select Case cb
@@ -819,14 +822,30 @@ Namespace Query
             If _fields IsNot Nothing Then
                 l = New List(Of SelectExpression)(_fields)
             End If
-            Dim rt As Type = SelectedType
-            If rt Is Nothing AndAlso Not String.IsNullOrEmpty(SelectedEntityName) Then
-                rt = mpe.GetTypeByEntityName(SelectedEntityName)
-            End If
-            GetStaticKey(sb, _joins, _filter.Filter, rt, Cache.CacheListBehavior.CacheAll, l, mpe)
+            GetStaticKey(sb, _joins, _filter.Filter, Cache.CacheListBehavior.CacheAll, l, mpe)
             Return sb.ToString
         End Function
 
+        Public Function GetSelectedTypes(ByVal mpe As ObjectMappingEngine, ByRef ts As IEnumerable(Of Type)) As Boolean
+            Dim l As New List(Of Type)
+            ts = Nothing
+            For Each s As SelectExpression In SelectList
+                If s.ObjectSource Is Nothing Then
+                    l = Nothing
+                    Exit For
+                Else
+                    Dim t As Type = s.ObjectSource.GetRealType(mpe)
+                    If t Is Nothing OrElse GetType(_ICachedEntity).IsAssignableFrom(t) Then
+                        l = Nothing
+                        Exit For
+                    ElseIf Not l.Contains(t) Then
+                        l.Add(t)
+                    End If
+                End If
+            Next
+            ts = l
+            Return l IsNot Nothing AndAlso l.Count > 0
+        End Function
 
 #Region " Properties "
         Public ReadOnly Property IsFTS() As Boolean
@@ -839,20 +858,20 @@ Namespace Query
             End Get
         End Property
 
-        Public Property SelectedEntityName() As String
-            Get
-                If _selectSrc Is Nothing Then
-                    Return Nothing
-                End If
-                Return _selectSrc.AnyEntityName
-            End Get
-            Set(ByVal value As String)
-                If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
-                    Throw New QueryCmdException("Cannot change SelectedType", Me)
-                End If
-                _selectSrc = New ObjectSource(value)
-            End Set
-        End Property
+        'Public Property SelectedEntityName() As String
+        '    Get
+        '        If _selectSrc Is Nothing Then
+        '            Return Nothing
+        '        End If
+        '        Return _selectSrc.AnyEntityName
+        '    End Get
+        '    Set(ByVal value As String)
+        '        If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
+        '            Throw New QueryCmdException("Cannot change SelectedType", Me)
+        '        End If
+        '        _selectSrc = New ObjectSource(value)
+        '    End Set
+        'End Property
 
         Public Property FromClaus() As FromClause
             Get
@@ -901,39 +920,39 @@ Namespace Query
             End Set
         End Property
 
-        Public Overridable Property SelectedType() As Type
-            Get
-                If _selectSrc Is Nothing Then
-                    Return Nothing
-                End If
-                Return _selectSrc.AnyType
-            End Get
-            Set(ByVal value As Type)
-                If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
-                    Throw New QueryCmdException("Cannot change SelectedType", Me)
-                End If
-                If value Is Nothing Then
-                    _selectSrc = Nothing
-                Else
-                    _selectSrc = New ObjectSource(value)
-                End If
-            End Set
-        End Property
+        'Public Overridable Property SelectedType() As Type
+        '    Get
+        '        If _selectSrc Is Nothing Then
+        '            Return Nothing
+        '        End If
+        '        Return _selectSrc.AnyType
+        '    End Get
+        '    Set(ByVal value As Type)
+        '        If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
+        '            Throw New QueryCmdException("Cannot change SelectedType", Me)
+        '        End If
+        '        If value Is Nothing Then
+        '            _selectSrc = Nothing
+        '        Else
+        '            _selectSrc = New ObjectSource(value)
+        '        End If
+        '    End Set
+        'End Property
 
-        Public ReadOnly Property [Alias]() As ObjectAlias
-            Get
-                If _selectSrc Is Nothing Then
-                    Return Nothing
-                End If
-                Return _selectSrc.ObjectAlias
-            End Get
-        End Property
+        'Public ReadOnly Property [Alias]() As ObjectAlias
+        '    Get
+        '        If _selectSrc Is Nothing Then
+        '            Return Nothing
+        '        End If
+        '        Return _selectSrc.ObjectAlias
+        '    End Get
+        'End Property
 
-        Protected Friend ReadOnly Property Src() As ObjectSource
-            Get
-                Return _selectSrc
-            End Get
-        End Property
+        'Protected Friend ReadOnly Property Src() As ObjectSource
+        '    Get
+        '        Return _selectSrc
+        '    End Get
+        'End Property
 
         Public ReadOnly Property Mark() As Guid
             Get
@@ -957,17 +976,17 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Table() As SourceFragment
+        Public ReadOnly Property Table() As SourceFragment
             Get
                 If _from Is Nothing Then
                     Return Nothing
                 End If
                 Return _from.Table
             End Get
-            Protected Friend Set(ByVal value As SourceFragment)
-                _from = New FromClause(value)
-                RenewMark()
-            End Set
+            'Protected Friend Set(ByVal value As SourceFragment)
+            '    _from = New FromClause(value)
+            '    RenewMark()
+            'End Set
         End Property
 
         Public Property ClientPaging() As Paging
@@ -1164,9 +1183,40 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function Into(ByVal t As Type) As QueryCmd
+            _createType = New ObjectSource(t)
+            Return Me
+        End Function
+
+        Public Function Into(ByVal entityName As String) As QueryCmd
+            _createType = New ObjectSource(entityName)
+            Return Me
+        End Function
+
         Public Function From(ByVal q As QueryCmd) As QueryCmd
             _from = New FromClause(q)
             RenewMark()
+            Return Me
+        End Function
+
+        Public Function [Select](ByVal ParamArray t() As Type) As QueryCmd
+            SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)( _
+                Array.ConvertAll(Of Type, SelectExpression)(t, _
+                    Function(item As Type) New SelectExpression(item)))
+            Return Me
+        End Function
+
+        Public Function [Select](ByVal ParamArray entityNames() As String) As QueryCmd
+            SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)( _
+                Array.ConvertAll(Of String, SelectExpression)(entityNames, _
+                    Function(item As String) New SelectExpression(item)))
+            Return Me
+        End Function
+
+        Public Function [Select](ByVal ParamArray aliases() As ObjectAlias) As QueryCmd
+            SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)( _
+                Array.ConvertAll(Of ObjectAlias, SelectExpression)(aliases, _
+                    Function(item As ObjectAlias) New SelectExpression(item)))
             Return Me
         End Function
 
@@ -1185,10 +1235,10 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function SelectEntityName(ByVal entityName As String) As QueryCmd
-            SelectedEntityName = entityName
-            Return Me
-        End Function
+        'Public Function SelectEntityName(ByVal entityName As String) As QueryCmd
+        '    SelectedEntityName = entityName
+        '    Return Me
+        'End Function
 
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))
@@ -1874,7 +1924,7 @@ Namespace Query
 #End Region
 
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
-                                   ByRef pk As Boolean) As IObjectSchemaBase
+                                   ByRef pk As Boolean) As IEntitySchema
             If SelectList Is Nothing Then
                 Dim selList As New OrmObjectIndex
                 For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
@@ -1887,7 +1937,7 @@ Namespace Query
             End If
         End Function
 
-        Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IObjectSchemaBase
+        Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             If SelectedType IsNot Nothing Then
                 Return mpe.GetObjectSchema(SelectedType, False)
             Else
@@ -1932,7 +1982,7 @@ Namespace Query
                 ._order = _order
                 ._page = _page
                 ._statementMark = _statementMark
-                ._selectSrc = _selectSrc
+                '._selectSrc = _selectSrc
                 ._from = _from
                 ._top = _top
                 ._rn = _rn
@@ -2084,16 +2134,19 @@ Namespace Query
                 Next
             End If
 
-            If SelectedType IsNot Nothing AndAlso Not dp.IsEmpty Then
-                dp.AddBoth(SelectedType)
+            Dim types As IEnumerable(Of Type) = Nothing
+            Dim rt As Boolean = GetSelectedTypes(mpe, types)
+
+            If rt AndAlso Not dp.IsEmpty Then
+                dp.AddBoth(types)
             End If
 
             If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
                 For Each f As IFilter In _filter.Filter.GetAllFilters
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                     If Cache.IsCalculated(fdp) Then
-                        If SelectedType IsNot Nothing Then
-                            dp.AddBoth(SelectedType)
+                        If rt Then
+                            dp.AddBoth(types)
                         End If
                         dp.Merge(fdp)
                         'Else
@@ -2106,8 +2159,8 @@ Namespace Query
                 For Each s As Sort In New Sort.Iterator(_order)
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, s)
                     If Cache.IsCalculated(fdp) Then
-                        If SelectedType IsNot Nothing Then
-                            dp.AddUpdated(SelectedType)
+                        If rt Then
+                            dp.AddBoth(types)
                         End If
                         dp.Merge(fdp)
                         'Else
@@ -2146,13 +2199,13 @@ Namespace Query
 
 #Region " Create methods "
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                q = New QueryCmd(table)
+                q = New QueryCmd()
             Else
-                q = f.Create(table)
+                q = f.Create()
             End If
             Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
             If cm IsNot Nothing Then
@@ -2163,38 +2216,38 @@ Namespace Query
 
         Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
-            Return Create(selectType, mgr).GetOrmCommand(Of T)(mgr)
+            Return Create(mgr).GetOrmCommand(Of T)(mgr)
         End Function
 
-        Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(selectType)
-            Else
-                q = f.Create(selectType)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
+        'Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
+        '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+        '    Dim q As QueryCmd = Nothing
+        '    If f Is Nothing Then
+        '        q = New QueryCmd(selectType)
+        '    Else
+        '        q = f.Create(selectType)
+        '    End If
+        '    Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+        '    If cm IsNot Nothing Then
+        '        q._getMgr = cm
+        '    End If
+        '    Return q
+        'End Function
 
-        Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(entityName)
-            Else
-                q = f.CreateByEntityName(entityName)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
+        'Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
+        '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+        '    Dim q As QueryCmd = Nothing
+        '    If f Is Nothing Then
+        '        q = New QueryCmd(entityName)
+        '    Else
+        '        q = f.CreateByEntityName(entityName)
+        '    End If
+        '    Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+        '    If cm IsNot Nothing Then
+        '        q._getMgr = cm
+        '    End If
+        '    Return q
+        'End Function
 
         Public Shared Function Create(ByVal obj As IKeyEntity, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
@@ -2226,35 +2279,35 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(table)
-                q.Name = name
-            Else
-                q = f.Create(name, table)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
+        'Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
+        '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+        '    Dim q As QueryCmd = Nothing
+        '    If f Is Nothing Then
+        '        q = New QueryCmd(table)
+        '        q.Name = name
+        '    Else
+        '        q = f.Create(name, table)
+        '    End If
+        '    Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+        '    If cm IsNot Nothing Then
+        '        q._getMgr = cm
+        '    End If
+        '    Return q
+        'End Function
 
         Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
-            Return Create(name, selectType, mgr).GetOrmCommand(Of T)(mgr)
+            Return Create(name, mgr).GetOrmCommand(Of T)(mgr)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal name As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                q = New QueryCmd(selectType)
+                q = New QueryCmd()
                 q.Name = name
             Else
-                q = f.Create(name, selectType)
+                q = f.Create(name)
             End If
             Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
             If cm IsNot Nothing Then
@@ -2263,21 +2316,21 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(entityName)
-                q.Name = name
-            Else
-                q = f.CreateByEntityName(name, entityName)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
+        'Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
+        '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+        '    Dim q As QueryCmd = Nothing
+        '    If f Is Nothing Then
+        '        q = New QueryCmd(entityName)
+        '        q.Name = name
+        '    Else
+        '        q = f.CreateByEntityName(name, entityName)
+        '    End If
+        '    Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+        '    If cm IsNot Nothing Then
+        '        q._getMgr = cm
+        '    End If
+        '    Return q
+        'End Function
 
         Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
@@ -2311,21 +2364,21 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment) As QueryCmd
-            Return Create(table, OrmManager.CurrentManager)
+        Public Shared Function Create() As QueryCmd
+            Return Create(OrmManager.CurrentManager)
         End Function
 
         Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
             Return CreateAndGetOrmCommand(Of T)(OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal selectType As Type) As QueryCmd
-            Return Create(selectType, OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function Create(ByVal selectType As Type) As QueryCmd
+        '    Return Create(selectType, OrmManager.CurrentManager)
+        'End Function
 
-        Public Shared Function CreateByEntityName(ByVal entityName As String) As QueryCmd
-            Return CreateByEntityName(entityName, OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function CreateByEntityName(ByVal entityName As String) As QueryCmd
+        '    Return CreateByEntityName(entityName, OrmManager.CurrentManager)
+        'End Function
 
         Public Shared Function Create(ByVal obj As IKeyEntity) As QueryCmd
             Return Create(obj, OrmManager.CurrentManager)
@@ -2335,21 +2388,21 @@ Namespace Query
             Return Create(obj, key, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
-            Return Create(name, table, OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
+        '    Return Create(name, table, OrmManager.CurrentManager)
+        'End Function
 
         Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String) As OrmQueryCmd(Of T)
             Return CreateAndGetOrmCommand(Of T)(name, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal selectType As Type) As QueryCmd
-            Return Create(name, selectType, OrmManager.CurrentManager)
+        Public Shared Function Create(ByVal name As String) As QueryCmd
+            Return Create(name, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
-            Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+        '    Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
+        'End Function
 
         Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity) As QueryCmd
             Return Create(name, obj, OrmManager.CurrentManager)
@@ -2361,19 +2414,19 @@ Namespace Query
 
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
             Dim q As New QueryCmd(New CreateManager(getMgr))
-            q.Table = New SearchFragment(t, searchText)
+            q.From(New SearchFragment(t, searchText))
             Return q
         End Function
 
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
             Dim q As New QueryCmd(getMgr)
-            q.Table = New SearchFragment(t, searchText)
+            q.From(New SearchFragment(t, searchText))
             Return q
         End Function
 
         Public Shared Function Search(ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
             Dim q As New QueryCmd(getMgr)
-            q.Table = New SearchFragment(searchText)
+            q.From(New SearchFragment(searchText))
             Return q
         End Function
 #End Region
@@ -2415,17 +2468,17 @@ Namespace Query
         Public Sub New()
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment)
-            MyBase.New(table)
-        End Sub
+        'Public Sub New(ByVal table As SourceFragment)
+        '    MyBase.New(table)
+        'End Sub
 
-        Public Sub New(ByVal selectType As Type)
-            MyBase.New(selectType)
-        End Sub
+        'Public Sub New(ByVal selectType As Type)
+        '    MyBase.New(selectType)
+        'End Sub
 
-        Public Sub New(ByVal entityName As String)
-            MyBase.New(entityName)
-        End Sub
+        'Public Sub New(ByVal entityName As String)
+        '    MyBase.New(entityName)
+        'End Sub
 
         Public Sub New(ByVal obj As IKeyEntity)
             MyBase.New(obj)
@@ -2435,17 +2488,17 @@ Namespace Query
             MyBase.New(obj, key)
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
-            MyBase.New(table, getMgr)
+        Public Sub New(ByVal getMgr As ICreateManager)
+            MyBase.New(getMgr)
         End Sub
 
-        Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
-            MyBase.New(selectType, getMgr)
-        End Sub
+        'Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
+        '    MyBase.New(selectType, getMgr)
+        'End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
-            MyBase.New(entityName, getMgr)
-        End Sub
+        'Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
+        '    MyBase.New(entityName, getMgr)
+        'End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
             MyBase.New(obj, getMgr)
@@ -2465,18 +2518,18 @@ Namespace Query
             Return GetEnumerator()
         End Function
 
-        Public Overrides Property SelectedType() As System.Type
-            Get
-                If MyBase.SelectedType Is Nothing Then
-                    Return GetType(T)
-                Else
-                    Return MyBase.SelectedType
-                End If
-            End Get
-            Set(ByVal value As System.Type)
-                MyBase.SelectedType = value
-            End Set
-        End Property
+        'Public Overrides Property SelectedType() As System.Type
+        '    Get
+        '        If MyBase.SelectedType Is Nothing Then
+        '            Return GetType(T)
+        '        Else
+        '            Return MyBase.SelectedType
+        '        End If
+        '    End Get
+        '    Set(ByVal value As System.Type)
+        '        MyBase.SelectedType = value
+        '    End Set
+        'End Property
     End Class
 
     'Public Class QueryCmd(Of ReturnType As {_ICachedEntity, New})

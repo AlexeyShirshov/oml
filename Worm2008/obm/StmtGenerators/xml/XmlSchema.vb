@@ -87,7 +87,7 @@ Namespace Xml
 
         Public Function SelectID(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type) As String
             Dim selectcmd As New StringBuilder
-            Dim s As IObjectSchemaBase = mpe.GetObjectSchema(original_type)
+            Dim s As IEntitySchema = mpe.GetObjectSchema(original_type)
             selectcmd.Append(GetTableName(s.Table))
             Return selectcmd.ToString
         End Function
@@ -169,7 +169,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal queryType As System.Type, ByVal joins As System.Collections.Generic.List(Of QueryJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As System.Collections.Generic.IEnumerable(Of Entities.SelectExpression)) As String
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal joins As System.Collections.Generic.List(Of QueryJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As System.Collections.Generic.IEnumerable(Of Entities.SelectExpression)) As String
             Throw New NotImplementedException
         End Function
 

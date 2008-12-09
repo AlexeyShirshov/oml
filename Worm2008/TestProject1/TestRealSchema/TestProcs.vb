@@ -427,17 +427,13 @@ Public Class MultiR
         Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
             Dim l As New List(Of ColumnAttribute)
             Dim mgr As Worm.OrmManager = Worm.OrmManager.CurrentManager
-            l.Add(New ColumnAttribute("ID"))
+            l.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
             l.Add(New ColumnAttribute("Custom"))
             Return l
         End Function
 
         Protected Overrides Function GetWithLoad() As Boolean
             Return True
-        End Function
-
-        Protected Overrides Function GetPrimaryKeyIndex() As Integer
-            Return 0
         End Function
     End Class
 

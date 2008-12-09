@@ -37,19 +37,19 @@ Namespace Entities.Meta
         Function GetSecondType() As RelationDesc
     End Interface
 
-    Public Interface IOrmPropertyMap
+    Public Interface IPropertyMap
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
-    Public Interface IObjectSchemaBase
-        Inherits IOrmPropertyMap
+    Public Interface IEntitySchema
+        Inherits IPropertyMap
         ReadOnly Property Table() As SourceFragment
-        Function GetSuppressedFields() As String()
-        Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        'Function GetSuppressedFields() As String()
+        'Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
 
     Public Interface IContextObjectSchema
-        Inherits IObjectSchemaBase
+        Inherits IEntitySchema
         Function GetContextFilter(ByVal context As Object) As IFilter
     End Interface
 
@@ -65,7 +65,7 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IMultiTableObjectSchema
-        Inherits IObjectSchemaBase
+        Inherits IEntitySchema
         Function GetTables() As SourceFragment()
         Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As QueryJoin
     End Interface
@@ -161,6 +161,12 @@ Namespace Entities.Meta
 
     Public Interface IConnectedFilter
         Function ModifyFilterInfo(ByVal filterInfo As Object, ByVal selectedType As Type, ByVal filterType As Type) As Object
+    End Interface
+
+    Public Interface IObjectSchemaBase
+        Inherits Worm.Entities.Meta.IEntitySchema
+        Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        Function GetSuppressedFields() As String()
     End Interface
 
 End Namespace
