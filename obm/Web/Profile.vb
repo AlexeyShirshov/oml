@@ -51,9 +51,9 @@ Namespace Web
         End Sub
 
         Public Function FindUsers(ByVal mgr As OrmManager, ByVal criteria As Criteria.PredicateLink) As System.Collections.IList Implements IUserMapping.FindUsers
-            Dim cmd As New Query.QueryCmd(GetUserType)
-            cmd.Where(criteria)
-            Return (cmd.ToList(mgr))
+            Dim cmd As New Query.QueryCmd()
+            cmd.Where(criteria).Select(GetUserType)
+            Return cmd.ToList(mgr)
         End Function
 
         Public ReadOnly Property GetNow() As Date Implements IUserMapping.GetNow
@@ -434,7 +434,7 @@ Namespace Web
             Dim cok As HttpCookie = Nothing, cookieChecked As Boolean = False
             Dim user As IKeyEntity = Nothing, userChecked As Boolean = False
             Dim col As New SettingsPropertyValueCollection
-            Dim oschema As IObjectSchemaBase = Nothing
+            Dim oschema As IEntitySchema = Nothing
             If user IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr()
                     oschema = mgr.MappingEngine.GetObjectSchema(user.GetType)
@@ -534,7 +534,7 @@ Namespace Web
                         Else
                             Using mgr As OrmManager = _getMgr()
                                 Using user.BeginEdit
-                                    Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
                                     mgr.MappingEngine.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
                                 End Using
                             End Using
@@ -555,7 +555,7 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmManager = _getMgr()
-                        Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                        Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
@@ -648,7 +648,7 @@ Namespace Web
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(CType(mgr, OrmDBManager), HttpContext.Current.Profile.UserName, AnonymousId, Nothing)
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then
@@ -704,8 +704,8 @@ Namespace Web
         End Function
 
         Protected Overridable Function FindUsers(ByVal mgr As OrmManager, ByVal criteria As Worm.Criteria.PredicateLink) As IList Implements IUserMapping.FindUsers
-            Dim cmd As New Query.QueryCmd(GetUserType)
-            cmd.Where(criteria)
+            Dim cmd As New Query.QueryCmd()
+            cmd.Where(criteria).Select(GetUserType)
             Return (cmd.ToList(mgr))
         End Function
 

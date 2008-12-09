@@ -3,6 +3,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities
 Imports Worm.OrmManager
 Imports Worm.Criteria.Joins
+Imports Worm.Sorting
 
 Namespace Query
     Public MustInherit Class CacheItemBaseProvider
@@ -29,14 +30,14 @@ Namespace Query
         Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
 
-            Reset(mgr, j, f, q.SelectedType, sl, q)
+            Reset(mgr, j, f, sl, q)
         End Sub
 
-        Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-            ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
+        'Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+        '    ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
 
-            Reset(mgr, j, f, t, sl, q)
-        End Sub
+        '    Reset(mgr, j, f, sl, q)
+        'End Sub
 
         Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.Created
             Get
@@ -51,18 +52,18 @@ Namespace Query
             Dim cache As Cache.OrmCache = TryCast(Me.Cache, Cache.OrmCache)
 
             If cache IsNot Nothing AndAlso Not String.IsNullOrEmpty(_key) Then
-                Dim notPreciseDependsAD As Boolean
-                Dim notPreciseDependsU As Boolean
+                'Dim notPreciseDependsAD As Boolean
+                'Dim notPreciseDependsU As Boolean
                 If _j IsNot Nothing Then
                     For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
                         For Each j As QueryJoin In js
                             If j.ObjectSource IsNot Nothing Then
                                 Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
-                                notPreciseDependsAD = True
-                                notPreciseDependsU = True
+                                'notPreciseDependsAD = True
+                                'notPreciseDependsU = True
                                 '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
-                                cache.validate_AddDeleteType(jt, _key, _id)
-                                cache.validate_UpdateType(jt, _key, _id)
+                                cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                                cache.validate_UpdateType(New Type() {jt}, _key, _id)
                             End If
                             'If j.Type IsNot Nothing Then
                             '    notPreciseDependsAD = True
@@ -86,7 +87,8 @@ Namespace Query
                 '    CreateDepends(q, i)
                 '    i += 1
                 'Next
-                Dim rightType As Boolean = SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType)
+                'Dim types As IEnumerable(Of Type)
+                'Dim rightType As Boolean = _q.GetSelectedTypes(MappingEngine, types)
                 Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New QueryIterator(_q)
@@ -95,6 +97,9 @@ Namespace Query
                     ldp.Add(dp)
 
                     Worm.Cache.Add2Cache(cache, dp, _key, _id)
+
+                    Dim types As IEnumerable(Of Type)
+                    Dim rightType As Boolean = q.GetSelectedTypes(MappingEngine, types)
 
                     If _f IsNot Nothing AndAlso _f.Length > i Then
                         Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
@@ -112,12 +117,12 @@ Namespace Query
                     'End If
 
                     If cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Immediate Then
-                        notPreciseDependsAD = notPreciseDependsAD OrElse Not Worm.Cache.IsEmpty(dp)
-                        notPreciseDependsU = notPreciseDependsAD
+                        'notPreciseDependsAD = notPreciseDependsAD OrElse Not Worm.Cache.IsEmpty(dp)
+                        'notPreciseDependsU = notPreciseDependsAD
                         If _f IsNot Nothing AndAlso _f.Length > i Then
                             Dim added As Boolean = False
-                            If rightType AndAlso Not notPreciseDependsAD Then
-                                added = cache.validate_AddCalculatedType(q.SelectedType, _key, _id, _f(i), MappingEngine.GetObjectSchema(q.SelectedType), Mgr.GetFilterInfo)
+                            If rightType Then
+                                added = cache.validate_AddCalculatedType(types, _key, _id, _f(i), MappingEngine, Mgr.GetFilterInfo)
                             End If
 
                             If Not added Then
@@ -125,11 +130,11 @@ Namespace Query
                                     Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                     If ef Is Nothing Then
-                                        If rightType AndAlso Not notPreciseDependsAD Then
-                                            cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                                            cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                            notPreciseDependsAD = True
-                                            notPreciseDependsU = True
+                                        If rightType Then
+                                            cache.validate_AddDeleteType(types, _key, _id)
+                                            cache.validate_UpdateType(types, _key, _id)
+                                            'notPreciseDependsAD = True
+                                            'notPreciseDependsU = True
                                         End If
                                     Else
                                         Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
@@ -148,13 +153,13 @@ Namespace Query
                                     End If
                                 Next
                             End If
-                        ElseIf rightType AndAlso Not notPreciseDependsAD Then
-                            cache.validate_AddDeleteType(q.SelectedType, _key, _id)
+                        ElseIf rightType Then
+                            cache.validate_AddDeleteType(types, _key, _id)
                         End If
                     Else
                         If rightType Then
-                            cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                            notPreciseDependsAD = True
+                            cache.validate_AddDeleteType(types, _key, _id)
+                            'notPreciseDependsAD = True
                         End If
 
                         If _f IsNot Nothing AndAlso _f.Length > i Then
@@ -162,9 +167,9 @@ Namespace Query
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
-                                    If rightType AndAlso Not notPreciseDependsU Then
-                                        cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                        notPreciseDependsU = True
+                                    If rightType Then
+                                        cache.validate_UpdateType(types, _key, _id)
+                                        'notPreciseDependsU = True
                                     End If
                                 Else
                                     Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
@@ -181,24 +186,21 @@ Namespace Query
                         End If
                     End If
 
-                    For Each s As Sorting.Sort In New Sorting.Sort.Iterator(q.propSort)
+                    For Each s As Sort In New Sort.Iterator(q.propSort)
                         If Not String.IsNullOrEmpty(s.SortBy) Then
-                            Dim t As Type = s.ObjectSource.GetRealType(MappingEngine, Nothing)
-                            If t Is Nothing AndAlso s.Table Is Nothing AndAlso String.IsNullOrEmpty(s.CustomSortExpression) Then
-                                t = SelectedType
-                            End If
+                            Dim t As Type = s.ObjectSource.GetRealType(MappingEngine)
                             If t Is Nothing Then
-                                If rightType AndAlso Not notPreciseDependsU Then
-                                    cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                    notPreciseDependsU = True
+                                If rightType Then
+                                    cache.validate_UpdateType(types, _key, _id)
+                                    'notPreciseDependsU = True
                                 End If
                             Else
                                 Dim p As New Pair(Of String, Type)(s.SortBy, t)
                                 cache.validate_AddDependentSortField(p, _key, _id)
                             End If
-                        ElseIf rightType AndAlso Not notPreciseDependsU Then
-                            cache.validate_UpdateType(q.SelectedType, _key, _id)
-                            notPreciseDependsU = True
+                        ElseIf rightType Then
+                            cache.validate_UpdateType(types, _key, _id)
+                            'notPreciseDependsU = True
                         End If
                     Next
 
@@ -207,15 +209,16 @@ Namespace Query
                             If Not String.IsNullOrEmpty(g.PropertyAlias) Then
                                 Dim p As New Pair(Of String, Type)(g.PropertyAlias, g.ObjectSource.GetRealType(MappingEngine))
                                 cache.validate_AddDependentGroupField(p, _key, _id)
-                            ElseIf rightType AndAlso Not notPreciseDependsU Then
-                                cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                notPreciseDependsU = True
+                            ElseIf rightType Then
+                                cache.validate_UpdateType(types, _key, _id)
+                                'notPreciseDependsU = True
                             End If
                         Next
                     End If
 
                     If q.Obj IsNot Nothing Then
-                        cache.AddM2MSimpleQuery(q.Obj.GetRelation(q.SelectedType, q.M2MKey), _key, _id)
+                        Debug.Assert(types IsNot Nothing AndAlso CType(types, IList(Of Type)).Count = 1)
+                        cache.AddM2MSimpleQuery(q.Obj.GetRelation(CType(types, IList(Of Type))(0), q.M2MKey), _key, _id)
                     End If
 
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
@@ -236,7 +239,8 @@ Namespace Query
         End Property
 
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
+        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
+                                      ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 
         Protected Function GetExternalDic(ByVal key As String) As IDictionary
             Dim args As New QueryCmd.ExternalDictionaryEventArgs(key)
@@ -292,7 +296,7 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property Sort() As Sorting.Sort Implements OrmManager.ICacheItemProvoderBase.Sort
+        Public ReadOnly Property Sort() As Sort Implements OrmManager.ICacheItemProvoderBase.Sort
             Get
                 Return _q.propSort
             End Get
@@ -304,11 +308,11 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property SelectedType() As Type
-            Get
-                Return _q.SelectedType
-            End Get
-        End Property
+        'Public ReadOnly Property SelectedType() As Type
+        '    Get
+        '        Return _q.SelectedType
+        '    End Get
+        'End Property
 
         Protected Function ValidateFromCache() As Boolean
             Dim cache As Cache.OrmCache = TryCast(Mgr.Cache, Cache.OrmCache)
@@ -337,8 +341,12 @@ Namespace Query
                     End If
                 Next
 
-                If SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType) Then
-                    l.Add(SelectedType)
+                'If SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType) Then
+                '    l.Add(SelectedType)
+                'End If
+                Dim el As IEnumerable(Of Type) = Nothing
+                If _q.GetSelectedTypes(Mgr.MappingEngine, el) Then
+                    l.AddRange(el)
                 End If
 
                 Dim f As IEntityFilter = Nothing
@@ -346,7 +354,7 @@ Namespace Query
                     f = TryCast(_f(0), IEntityFilter)
                 End If
 
-                Return cache.UpdateCacheDeferred(Mgr.MappingEngine, SelectedType, l, f, Sort, Group)
+                Return cache.UpdateCacheDeferred(Mgr.MappingEngine, l, f, Sort, Group)
             End If
             Return True
         End Function

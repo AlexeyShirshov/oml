@@ -49,9 +49,9 @@ Imports Worm.Criteria
 
     <TestMethod()> Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As New QueryCmd(GetType(Entity))
+            Dim q As New QueryCmd()
             Assert.IsNotNull(q)
-
+            q.Select(GetType(Entity))
             q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToList(Of Entity)(mgr)(0)
@@ -60,7 +60,8 @@ Imports Worm.Criteria
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
-            Dim q2 As New QueryCmd(GetType(Entity4))
+            Dim q2 As New QueryCmd()
+            q2.Select(GetType(Entity4))
             q2.Filter = PCtor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToList(Of Entity4)(mgr)(0)
@@ -100,7 +101,8 @@ Imports Worm.Criteria
 
     <TestMethod()> Public Sub TestAddScope()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As New QueryCmd(GetType(Entity))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
@@ -111,7 +113,8 @@ Imports Worm.Criteria
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
-            Dim q2 As New QueryCmd(GetType(Entity4))
+            Dim q2 As New QueryCmd()
+            q2.Select(GetType(Entity4))
             q2.Filter = PCtor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToEntityList(Of Entity4)(mgr)(0)
@@ -146,7 +149,8 @@ Imports Worm.Criteria
         Dim t As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = t
-            Dim q As New QueryCmd(GetType(Entity))
+            Dim q As New QueryCmd()
+            q.Select(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
@@ -190,7 +194,7 @@ Imports Worm.Criteria
     <TestMethod()> _
     Public Sub TestDelete()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd(GetType(Entity)).Where(PCtor.prop(GetType(Entity), "ID").eq(1))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity)).Where(PCtor.prop(GetType(Entity), "ID").eq(1))
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 

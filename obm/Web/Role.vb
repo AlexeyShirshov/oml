@@ -80,7 +80,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
-                Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
                     users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
                 Next
@@ -91,9 +91,9 @@ Namespace Web
         Public Overrides Function GetAllRoles() As String()
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim roles As New Generic.List(Of String)
-                Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 'Dim col As IEnumerable = FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
-                Dim col As IEnumerable = New Query.QueryCmd(GetRoleType).ToList(mgr)
+                Dim col As IEnumerable = New Query.QueryCmd().Select(GetRoleType).ToList(mgr)
                 For Each r As IKeyEntity In col
                     roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
                 Next
@@ -108,7 +108,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim roles As New Generic.List(Of String)
-                Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
                 Next
@@ -123,7 +123,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
-                Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, Nothing)
                     users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
                 Next
@@ -133,7 +133,7 @@ Namespace Web
 
         Public Overrides Function IsUserInRole(ByVal username As String, ByVal roleName As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim oschema As Meta.IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     If CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)) = roleName Then
                         Return True
@@ -211,8 +211,7 @@ Namespace Web
                     f = CType(New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
                 Dim cmd As New Query.QueryCmd(r)
-                cmd.Where(f).WithLoad(WithLoad)
-                cmd.SelectedType = UserMapper.GetUserType
+                cmd.Where(f).WithLoad(WithLoad).Select(UserMapper.GetUserType)
                 Return cmd.ToList(mgr)
                 'Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
@@ -232,8 +231,8 @@ Namespace Web
         Protected MustOverride ReadOnly Property WithLoad() As Boolean
 
         Protected Overridable Function FindRoles(ByVal mgr As OrmManager, ByVal f As PredicateLink) As IList
-            Dim cmd As New Query.QueryCmd(GetRoleType)
-            cmd.Where(f)
+            Dim cmd As New Query.QueryCmd()
+            cmd.Where(f).Select(GetRoleType)
             Return cmd.ToList(mgr)
         End Function
 

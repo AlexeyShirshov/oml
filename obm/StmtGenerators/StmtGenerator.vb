@@ -46,7 +46,7 @@ Public MustInherit Class StmtGenerator
                                    ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
 
     Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
+            ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal joins As Generic.List(Of QueryJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As Generic.IEnumerable(Of SelectExpression)) As String
 
     Public MustOverride ReadOnly Property SupportParams() As Boolean

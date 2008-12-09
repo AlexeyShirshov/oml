@@ -106,7 +106,7 @@ Namespace Criteria.Core
             _fieldname = propertyAlias
         End Sub
 
-        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -191,7 +191,7 @@ Namespace Criteria.Core
             Return _os.ToStaticString & _fieldname & OperToString()
         End Function
 
-        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
                 Return MakeFilter(schema, oschema, obj).MakeHash
             Else

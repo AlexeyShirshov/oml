@@ -427,48 +427,54 @@ Namespace Cache
             Return rv
         End Function
 
-        Public Sub validate_AddDeleteType(ByVal t As Type, ByVal key As String, ByVal id As String)
+        Public Sub validate_AddDeleteType(ByVal ts As IEnumerable(Of Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
 #Else
             Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
 #End If
-                _addDeleteTypes.Add(t, key, id)
+                For Each t As Type In ts
+                    _addDeleteTypes.Add(t, key, id)
+                Next
             End Using
         End Sub
 
-        Public Sub validate_UpdateType(ByVal t As Type, ByVal key As String, ByVal id As String)
+        Public Sub validate_UpdateType(ByVal ts As IEnumerable(Of Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
 #Else
             Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
 #End If
-                _updateTypes.Add(t, key, id)
+                For Each t As Type In ts
+                    _updateTypes.Add(t, key, id)
+                Next
             End Using
         End Sub
 
-        Protected Friend Function validate_AddCalculatedType(ByVal t As Type, _
+        Protected Friend Sub validate_AddCalculatedType(ByVal ts As IEnumerable(Of Type), _
             ByVal key As String, ByVal id As String, ByVal f As IFilter, _
-            ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object) As Boolean
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
 #Else
             Using SyncHelper.AcquireDynamicLock("BLK$E&80erfvhbdvdksv")
 #End If
-                Dim tkey As Object = t
-                Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
-                If c IsNot Nothing Then
-                    tkey = c.GetEntityKey(filterInfo)
-                End If
-                Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
-                Return l.Add(f, key, id)
+                For Each t As Type In ts
+                    Dim tkey As Object = t
+                    Dim c As ICacheBehavior = TryCast(schema.GetObjectSchema(t), ICacheBehavior)
+                    If c IsNot Nothing Then
+                        tkey = c.GetEntityKey(filterInfo)
+                    End If
+                    Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
+                    l.Add(f, key, id)
+                Next
                 'Dim h As List(Of String) = l.GetIds(key, f)
                 'If Not h.Contains(id) Then
                 '    h.Add(id)
                 'End If
             End Using
-        End Function
+        End Sub
 
         Protected Friend Sub validate_AddDependentObject(ByVal o As ICachedEntity, ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
@@ -745,7 +751,8 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, ByVal selType As Type, ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, _
+            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
@@ -819,7 +826,7 @@ Namespace Cache
 
                 For Each sort As Sorting.Sort In New Sorting.Sort.Iterator(s)
                     If Not String.IsNullOrEmpty(sort.SortBy) Then
-                        Dim t As Type = s.ObjectSource.GetRealType(schema, selType)
+                        Dim t As Type = s.ObjectSource.GetRealType(schema)
                         Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(t, fields) Then
                             If fields.Contains(sort.SortBy) Then
@@ -847,7 +854,7 @@ Namespace Cache
             End If
 
             Dim tkey As Object = tt
-            Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(tt)
+            Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             If c IsNot Nothing Then
                 tkey = c.GetEntityKey(mgr.GetFilterInfo)
@@ -1011,7 +1018,7 @@ Namespace Cache
             End If
 
             If Not fromUpdate Then
-                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(tt)
+                Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
                 Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                 Dim k As Object = tt
                 If c IsNot Nothing Then
@@ -1087,7 +1094,7 @@ l1:
         End Sub
 
         Private Sub UpdateFilters(ByVal p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)), _
-                                  ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, _
+                                  ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
                                   ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary, _
                                   ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2, _
                                   ByVal forseEval As Boolean, ByVal mgr As OrmManager)
@@ -1235,7 +1242,7 @@ l1:
         End Sub
 
         Private Sub UpdateJoins(ByVal tt As Type, ByVal objs As IList, ByVal schema As ObjectMappingEngine, _
-                                ByVal oschema As IObjectSchemaBase, ByVal mgr As OrmManager, ByVal contextKey As Object, _
+                                ByVal oschema As IEntitySchema, ByVal mgr As OrmManager, ByVal contextKey As Object, _
                                 ByVal afterDelegate As OnUpdated, ByVal callbacks As IUpdateCacheCallbacks)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")

@@ -11,12 +11,12 @@ Namespace Entities
         Private _props As New Dictionary(Of String, Object)
 
         Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IObjectSchemaBase) As Object
+            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
             Return _props(propertyAlias)
         End Function
 
         Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
+            ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
             _props(propertyAlias) = value
         End Sub
 
@@ -159,9 +159,9 @@ Namespace Entities
 
         End Sub
 
-        Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
+        'Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
 
-        End Sub
+        'End Sub
 
         Public Function BeginAlter() As System.IDisposable Implements ICachedEntity.BeginAlter
 

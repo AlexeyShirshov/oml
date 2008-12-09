@@ -19,24 +19,41 @@ Namespace Entities
         Private _osrc As ObjectSource
         Private _table As SourceFragment
         Private _column As String
-        Private _custom As String
+        'Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _attr As Field2DbRelations
         Private _q As Worm.Query.QueryCmd
         Private _agr As AggregateBase
+        Private _falias As String
+        Private _dst As ObjectSource
 
         Public Event OnChange()
 
         Protected Sub New()
         End Sub
 
-        Protected Sub New(ByVal propertyAlias As String)
-            _field = propertyAlias
-        End Sub
+        'Protected Sub New(ByVal propertyAlias As String)
+        '    _field = propertyAlias
+        'End Sub
 
         Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
             _field = propertyAlias
             _osrc = os
+        End Sub
+
+#Region " Public ctors "
+
+#Region " Type ctors "
+        Public Sub New(ByVal t As Type)
+            _osrc = New ObjectSource(t)
+        End Sub
+
+        Public Sub New(ByVal entityName As String)
+            _osrc = New ObjectSource(entityName)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias)
+            _osrc = New ObjectSource([alias])
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
@@ -54,21 +71,82 @@ Namespace Entities
             _osrc = New ObjectSource([alias])
         End Sub
 
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal fieldAlias As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource(t)
+            _falias = fieldAlias
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal fieldAlias As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource(entityName)
+            _falias = fieldAlias
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource([alias])
+            _falias = fieldAlias
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
+            _field = propertyAlias
+            _osrc = New ObjectSource(t)
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(into)
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource(t)
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(intoEntityName)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
+            _field = propertyAlias
+            _osrc = New ObjectSource(entityName)
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(into)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource(entityName)
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(intoEntityName)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
+            _field = propertyAlias
+            _osrc = New ObjectSource([alias])
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(into)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource([alias])
+            _falias = intoPropertyAlias
+            _dst = New ObjectSource(intoEntityName)
+        End Sub
+#End Region
+
         Public Sub New(ByVal t As SourceFragment, ByVal column As String)
             _column = column
             _table = t
         End Sub
 
-        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal field As String)
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal fieldAlias As String)
             _column = column
             _table = t
-            _field = field
+            _falias = fieldAlias
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String), ByVal [alias] As String)
-            _custom = computed
+        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String), ByVal fieldAlias As String)
+            _column = computed
             _values = values
-            _column = [alias]
+            _falias = fieldAlias
         End Sub
 
         Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String))
@@ -76,12 +154,26 @@ Namespace Entities
         End Sub
 
         Public Sub New(ByVal q As QueryCmd)
+            '_osrc = New ObjectSource(New ObjectAlias(q))
             _q = q
+        End Sub
+
+        Public Sub New(ByVal q As QueryCmd, ByVal fieldAlias As String)
+            '_osrc = New ObjectSource(New ObjectAlias(q))
+            _q = q
+            _falias = fieldAlias
         End Sub
 
         Public Sub New(ByVal agr As AggregateBase)
             _agr = agr
         End Sub
+
+        Public Sub New(ByVal agr As AggregateBase, ByVal fieldAlias As String)
+            _agr = agr
+            _falias = fieldAlias
+        End Sub
+#End Region
+
 
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
@@ -106,7 +198,7 @@ Namespace Entities
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
                     Return Entities.PropType.TableColumn
                 Else
-                    If Not String.IsNullOrEmpty(_custom) Then
+                    If _values IsNot Nothing Then
                         Return Entities.PropType.CustomValue
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return Entities.PropType.TableColumn
@@ -182,15 +274,14 @@ Namespace Entities
             End Set
         End Property
 
-        'Public Property Type() As Type
-        '    Get
-        '        Return _type
-        '    End Get
-        '    Protected Friend Set(ByVal value As Type)
-        '        _type = value
-        '        RaiseOnChange()
-        '    End Set
-        'End Property
+        Public Property FieldAlias() As String
+            Get
+                Return _falias
+            End Get
+            Protected Friend Set(ByVal value As String)
+                _falias = value
+            End Set
+        End Property
 
         Public Property Table() As SourceFragment
             Get
@@ -203,17 +294,17 @@ Namespace Entities
 
         Public Property Computed() As String
             Get
-                Return _custom
+                Return _column
             End Get
             Protected Set(ByVal value As String)
-                _custom = value
+                _column = value
                 RaiseOnChange()
             End Set
         End Property
 
         Public ReadOnly Property IsCustom() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_custom)
+                Return _values IsNot Nothing
             End Get
         End Property
 
@@ -233,8 +324,8 @@ Namespace Entities
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
                 Else
-                    If Not String.IsNullOrEmpty(_custom) Then
-                        Return _custom
+                    If _values IsNot Nothing Then
+                        Return _column
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then
@@ -261,8 +352,8 @@ Namespace Entities
                 Return False
             Else
                 Dim b As Boolean
-                If Not String.IsNullOrEmpty(_custom) Then
-                    b = _custom = s._custom
+                If _values IsNot Nothing Then
+                    b = _column = s._column
                 ElseIf Not String.IsNullOrEmpty(_field) Then
                     b = _field = s._field AndAlso _osrc.Equals(s._osrc)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
@@ -294,8 +385,8 @@ Namespace Entities
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
                 Else
-                    If Not String.IsNullOrEmpty(_custom) Then
-                        Return _custom
+                    If _values IsNot Nothing Then
+                        Return _column
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then

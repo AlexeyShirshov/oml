@@ -230,12 +230,8 @@ Namespace Cache
 
         Public Sub Add2Cache(ByVal cache As OrmCache, ByVal dp As IDependentTypes, ByVal key As String, ByVal id As String)
             If dp IsNot Nothing Then
-                For Each t As Type In dp.GetAddDelete
-                    cache.validate_AddDeleteType(t, key, id)
-                Next
-                For Each t As Type In dp.GetUpdate
-                    cache.validate_UpdateType(t, key, id)
-                Next
+                cache.validate_AddDeleteType(dp.GetAddDelete, key, id)
+                cache.validate_UpdateType(dp.GetUpdate, key, id)
             End If
         End Sub
 
@@ -269,6 +265,13 @@ Namespace Cache
         Public Sub AddBoth(ByVal t As Type)
             AddDeleted(t)
             AddUpdated(t)
+        End Sub
+
+        Public Sub AddBoth(ByVal ts As IEnumerable(Of Type))
+            For Each t As Type In ts
+                AddDeleted(t)
+                AddUpdated(t)
+            Next
         End Sub
 
         Public Sub AddDeleted(ByVal t As Type)

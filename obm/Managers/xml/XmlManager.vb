@@ -213,8 +213,9 @@ Namespace Xml
 
 #End Region
 
-        Protected Friend Function LoadMultipleObjects(Of T As {New, ICachedEntity})(ByVal xpath As String, ByVal withLoad As Boolean, _
-            ByRef values As Generic.IList(Of T)) As ReadOnlyEntityList(Of T)
+        Protected Friend Sub LoadMultipleObjects(Of T As {New, _IEntity})( _
+            ByVal xpath As String, ByVal withLoad As Boolean, _
+            ByVal values As IList)
 
             Dim original_type As Type = GetType(T)
             Dim nav As XPathNavigator = GetNavigator()
@@ -222,20 +223,20 @@ Namespace Xml
             Dim nodes As XPathNodeIterator = nav.Select(xpath)
             _exec = et.GetTime
 
-            If values Is Nothing Then
-                values = New Generic.List(Of T)
-            End If
+            'If values Is Nothing Then
+            '    values = New Generic.List(Of T)
+            'End If
 
             Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
-            Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(original_type)
+            Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(original_type)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema, withLoad)
             Loop
             _fetch = ft.GetTime
-            Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
+            'Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
             'Return New ReadOnlyList(Of T)(CType(values, List(Of T)))
-        End Function
+        End Sub
 
         Protected Function GetNavigator() As XPathNavigator
             Dim d As New System.Xml.XmlDocument
@@ -247,18 +248,19 @@ Namespace Xml
             Return d.CreateNavigator
         End Function
 
-        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
-            ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IObjectSchemaBase, ByVal withLoad As Boolean)
+        Protected Sub LoadFromNodeIterator(Of T As {New, _IEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
+            ByVal values As IList, ByRef loaded As Integer, ByVal oschema As IEntitySchema, ByVal withLoad As Boolean)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Dim oo As T = obj
+            Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
-                Dim pk() As PKDesc = obj.GetPKValues
-                If LoadPK(oschema, node, obj) Then
-                    obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
+                Dim pk() As PKDesc = orm.GetPKValues
+                If LoadPK(oschema, node, orm) Then
+                    obj = CType(NormalizeObject(orm, CType(dic, System.Collections.IDictionary)), T)
                     If obj.ObjectState = ObjectState.Created Then
-                        obj.CreateCopyForSaveNewEntry(Me, pk)
+                        orm.CreateCopyForSaveNewEntry(Me, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 
@@ -283,7 +285,7 @@ Namespace Xml
             End Using
         End Sub
 
-        Protected Function LoadPK(ByVal oschema As IObjectSchemaBase, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
+        Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
             For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(original_type)
@@ -306,9 +308,10 @@ Namespace Xml
             Return cnt > 0
         End Function
 
-        Protected Function LoadData(ByVal oschema As IObjectSchemaBase, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
+        Protected Function LoadData(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _IEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim columns As List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
+            Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -322,14 +325,16 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
                         obj.SetValueOptimized(pi, c.PropertyAlias, oschema, nodes.Current.Value)
-                        obj.SetLoaded(c, True, True, MappingEngine)
+                        If orm IsNot Nothing Then orm.SetLoaded(c, True, True, MappingEngine)
                         sn = True
                     Loop
                 Else
-                    obj.SetLoaded(c, True, True, MappingEngine)
+                    If orm IsNot Nothing Then orm.SetLoaded(c, True, True, MappingEngine)
                 End If
             Next
-            obj.CheckIsAllLoaded(MappingEngine, columns.Count)
+            If orm IsNot Nothing Then
+                orm.CheckIsAllLoaded(MappingEngine, columns.Count)
+            End If
         End Function
 
         Public Overrides Function GetObjectFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity

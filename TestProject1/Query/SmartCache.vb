@@ -53,8 +53,8 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
@@ -71,7 +71,7 @@ Imports Worm.Criteria.Joins
 
             Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table1)).Table
 
-            Dim q As QueryCmd = New QueryCmd(tbl).Where( _
+            Dim q As QueryCmd = New QueryCmd().From(tbl).Where( _
                 PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
@@ -89,7 +89,7 @@ Imports Worm.Criteria.Joins
 
             Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table1)).Table
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
                 PCtor.column(tbl, "enum_str").eq(Enum1.sec.ToString))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
@@ -107,7 +107,7 @@ Imports Worm.Criteria.Joins
 
             Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table3)).Table
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
                 PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
             q.SetJoins(JCtor.join(tbl).[on](tbl, "ref_id").eq(GetType(Table1), "ID"))
 
@@ -165,8 +165,8 @@ End Class
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
 
             Dim dic As New System.Collections.Hashtable
 
@@ -195,8 +195,8 @@ End Class
     <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestSortThrow()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
-                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(Sorting.Custom("name"))
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
 
             Dim dic As New System.Collections.Hashtable
 

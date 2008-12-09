@@ -7,7 +7,7 @@
         End Function
 
         Public Function Exec(Of CreateType As {New, Entities._ICachedEntity}, ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
-
+            Throw New NotImplementedException
         End Function
 
         Public Function ExecEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity

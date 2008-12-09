@@ -100,7 +100,7 @@ Namespace Entities
                     Dim mgr As OrmManager = mc.Manager
                     Dim dt As Type = _dst.GetType
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(dt)
+                    Dim oschema As IEntitySchema = schema.GetObjectSchema(dt)
                     Dim pk As Boolean, pk_old As PKDesc() = _dst.GetPKValues
                     For Each p As Pair(Of String) In _props
                         'If p = "ID" Then
@@ -769,7 +769,7 @@ Namespace Entities
             'Using m As IGetManager = GetMgr()
             Dim tt As Type = Me.GetType
             Dim schema As ObjectMappingEngine = MappingEngine
-            Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(tt)
+            Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
             BeginLoading()
             For Each p As PKDesc In pk
                 'Dim c As New ColumnAttribute(p.PropertyAlias)
@@ -978,7 +978,7 @@ l1:
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
-                Dim oschema As IObjectSchemaBase = Nothing
+                Dim oschema As IEntitySchema = Nothing
                 If schema IsNot Nothing Then
                     oschema = schema.GetObjectSchema(t)
                 End If
@@ -1122,7 +1122,7 @@ l1:
             Dim l As New List(Of PKDesc)
             'Using mc As IGetManager = GetMgr()
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
+            Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
             For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
@@ -1193,7 +1193,7 @@ l1:
                 Dim t As Type = obj.GetType
                 'Using mc As IGetManager = GetMgr()
                 Dim schema As ObjectMappingEngine = MappingEngine
-                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(t)
+                Dim oschema As IEntitySchema = schema.GetObjectSchema(t)
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -1755,10 +1755,6 @@ l1:
             End If
             Return l
         End Function
-
-        Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
-            _schema = mpe
-        End Sub
     End Class
 
 End Namespace

@@ -173,12 +173,12 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field(GetType(Table1), "DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), SCtor.prop(GetType(Table1), "DT").asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field(GetType(Table2), "DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            t2 = CType(mgr.Find(Of Table2)(New PCtor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), SCtor.prop(GetType(Table2), "DTs").desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(4, t2(0).Identifier)
             Assert.AreEqual(1, t2(1).Identifier)
@@ -190,14 +190,14 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").asc, False), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
             Assert.IsFalse(t2(1).InternalProperties.IsLoaded)
 
-            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Desc, False), IList(Of Table1))
+            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
@@ -211,7 +211,7 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -225,8 +225,8 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field(GetType(Table1), "DT").Asc, True), IList(Of Table1))
-            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field(GetType(Table1), "Title").Asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, SCtor.prop(GetType(Table1), "DT").asc, True), IList(Of Table1))
+            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, SCtor.prop(GetType(Table1), "Title").asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -249,7 +249,7 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     PCtor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    Sorting.Field(GetType(Table1), "EnumStr").Asc, False), IList(Of Table1))
+                    SCtor.prop(GetType(Table1), "EnumStr").asc, False), IList(Of Table1))
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
@@ -257,7 +257,7 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     PCtor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    Sorting.Field(GetType(Table1), "EnumStr").NextField("Enum").Desc, False), IList(Of Table1))
+                    SCtor.prop(GetType(Table1), "EnumStr").next_prop("Enum").desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)
@@ -272,7 +272,7 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     PCtor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    Sorting.Custom("{0} asc", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}), False), IList(Of Table1))
+                    SCtor.Custom("{0} asc", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}), False), IList(Of Table1))
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
@@ -280,7 +280,7 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     PCtor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    Sorting.Custom("{0}", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}). _
+                    SCtor.Custom("{0}", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}). _
                     NextCustom("{0} desc", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "Enum")}), False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)

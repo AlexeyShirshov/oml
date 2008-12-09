@@ -106,7 +106,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Public Event ObjectLoaded(ByVal sender As OrmManager, ByVal o As ICachedEntity)
+    Public Event ObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
     Public Event BeginUpdate(ByVal sender As OrmManager, ByVal o As ICachedEntity)
     Public Event BeginDelete(ByVal sender As OrmManager, ByVal o As ICachedEntity)
 
@@ -289,7 +289,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Protected Sub RaiseObjectLoaded(ByVal obj As ICachedEntity)
+    Protected Sub RaiseObjectLoaded(ByVal obj As IEntity)
         RaiseEvent ObjectLoaded(Me, obj)
     End Sub
 
@@ -401,7 +401,7 @@ Partial Public MustInherit Class OrmManager
             '    col = New ArrayList(ecol)
         End If
 
-        Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
+        Dim oschema As IEntitySchema = _schema.GetObjectSchema(tt)
 #If DEBUG Then
         Dim ft As Type = _schema.GetPropertyTypeByName(tt, oschema, propertyAlias)
         For Each o As IKeyEntity In ecol
@@ -1871,7 +1871,7 @@ l1:
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)(ByVal oschema As IObjectSchemaBase) As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else
@@ -2487,7 +2487,7 @@ l1:
             Return col
         Else
             Dim l As IListEdit = CreateReadonlyList(GetType(T))
-            Dim oschema As IObjectSchemaBase = Nothing
+            Dim oschema As IEntitySchema = Nothing
             Dim i As Integer = 0
             For Each o As T In col
                 If oschema Is Nothing Then
@@ -2912,7 +2912,7 @@ l1:
         Dim prop_objs(fields.Length - 1) As IListEdit
 
         'Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
-        Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
+        Dim oschema As IEntitySchema = _schema.GetObjectSchema(GetType(T))
 
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
@@ -3657,7 +3657,7 @@ l1:
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As QueryJoin, _
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of QueryJoin)
-        Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(selectType)
+        Dim oschema As IEntitySchema = schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters
@@ -3697,7 +3697,7 @@ l1:
 
                         types.Add(type2join)
 
-                        Dim sh As IObjectSchemaBase = schema.GetObjectSchema(type2join)
+                        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
                         Dim ts As IOrmObjectSchema = TryCast(sh, IOrmObjectSchema)
                         If ts IsNot Nothing Then
                             Dim pk_table As SourceFragment = sh.Table
@@ -3733,7 +3733,7 @@ l1:
         If s IsNot Nothing Then
             For Each ns As Sort In New Sort.Iterator(s)
                 If ns.ObjectSource IsNot Nothing Then
-                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(schema, Nothing)
+                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(schema)
                     If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
                         Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
 

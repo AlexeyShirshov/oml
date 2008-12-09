@@ -75,7 +75,7 @@ Namespace Entities
         <NonSerialized()> _
         Private _cm As ICreateManager
         <NonSerialized()> _
-        Protected _schema As ObjectMappingEngine
+        Private _schema As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
@@ -248,7 +248,7 @@ Namespace Entities
             If schema Is Nothing Then
                 sb.Append("Cannot get object dump")
             Else
-                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
+                Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
                 Dim olr As Boolean = _readRaw
                 _readRaw = True
                 Try
@@ -273,7 +273,7 @@ Namespace Entities
         End Function
 
         Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValueOptimized
+            ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized
             If pi Is Nothing Then
                 Dim s As ObjectMappingEngine = MappingEngine
                 If s Is Nothing Then
@@ -313,7 +313,7 @@ Namespace Entities
         End Sub
 
         Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValueOptimized
+            ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object) Implements IEntity.SetValueOptimized
 
             If pi Is Nothing Then
                 pi = MappingEngine.GetProperty(Me.GetType, schema, propertyAlias)
@@ -347,7 +347,7 @@ Namespace Entities
             End Using
         End Function
 
-        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IObjectSchemaBase)
+        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
             For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
@@ -357,7 +357,7 @@ Namespace Entities
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
+                Dim oschema As IEntitySchema = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
                 CopyProperties([from], [to], mc.Manager, oschema)
                 [to].EndLoading()
@@ -427,60 +427,64 @@ Namespace Entities
             _mgrStr = str
         End Sub
 
+        Protected Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _IEntity.SetSpecificSchema
+            _schema = mpe
+        End Sub
+
 #Region " CreateCmd "
-        Public Function CreateCmd(ByVal table As SourceFragment) As QueryCmd
+        Public Function CreateCmd() As QueryCmd
             If _cm IsNot Nothing Then
-                Return New QueryCmd(table, _cm)
+                Return New QueryCmd(_cm)
             Else
-                Return QueryCmd.Create(table)
+                Return QueryCmd.Create()
             End If
         End Function
 
-        Public Function CreateCmd(ByVal selectType As Type) As QueryCmd
-            If _cm IsNot Nothing Then
-                Return New QueryCmd(selectType, _cm)
-            Else
-                Return QueryCmd.Create(selectType)
-            End If
-        End Function
+        'Public Function CreateCmd(ByVal selectType As Type) As QueryCmd
+        '    If _cm IsNot Nothing Then
+        '        Return New QueryCmd(selectType, _cm)
+        '    Else
+        '        Return QueryCmd.Create(selectType)
+        '    End If
+        'End Function
 
-        Public Function CreateCmdByEntityName(ByVal entityName As String) As QueryCmd
-            If _cm IsNot Nothing Then
-                Return New QueryCmd(entityName, _cm)
-            Else
-                Return QueryCmd.CreateByEntityName(entityName)
-            End If
-        End Function
+        'Public Function CreateCmdByEntityName(ByVal entityName As String) As QueryCmd
+        '    If _cm IsNot Nothing Then
+        '        Return New QueryCmd(entityName, _cm)
+        '    Else
+        '        Return QueryCmd.CreateByEntityName(entityName)
+        '    End If
+        'End Function
 
-        Public Function CreateCmd(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
+        Public Function CreateCmd(ByVal name As String) As QueryCmd
             If _cm IsNot Nothing Then
-                Dim q As New QueryCmd(table, _cm)
+                Dim q As New QueryCmd(_cm)
                 q.Name = name
                 Return q
             Else
-                Return QueryCmd.Create(name, table)
+                Return QueryCmd.Create(name)
             End If
         End Function
 
-        Public Function CreateCmd(ByVal name As String, ByVal selectType As Type) As QueryCmd
-            If _cm IsNot Nothing Then
-                Dim q As New QueryCmd(selectType, _cm)
-                q.Name = name
-                Return q
-            Else
-                Return QueryCmd.Create(name, selectType)
-            End If
-        End Function
+        'Public Function CreateCmd(ByVal name As String, ByVal selectType As Type) As QueryCmd
+        '    If _cm IsNot Nothing Then
+        '        Dim q As New QueryCmd(selectType, _cm)
+        '        q.Name = name
+        '        Return q
+        '    Else
+        '        Return QueryCmd.Create(name, selectType)
+        '    End If
+        'End Function
 
-        Public Function CreateCmdByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
-            If _cm IsNot Nothing Then
-                Dim q As New QueryCmd(entityName, _cm)
-                q.Name = name
-                Return q
-            Else
-                Return QueryCmd.CreateByEntityName(name, entityName)
-            End If
-        End Function
+        'Public Function CreateCmdByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+        '    If _cm IsNot Nothing Then
+        '        Dim q As New QueryCmd(entityName, _cm)
+        '        q.Name = name
+        '        Return q
+        '    Else
+        '        Return QueryCmd.CreateByEntityName(name, entityName)
+        '    End If
+        'End Function
 #End Region
 
 #Region " Create methods "
@@ -536,6 +540,7 @@ Namespace Entities
             Return o
         End Function
 #End Region
+
     End Class
 
 End Namespace

@@ -128,23 +128,23 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestSort()
         Dim t As Type = GetType(Type)
-        Dim s As Sort = Sorting.Field(t, "sdgfn").Asc
+        Dim s As Sort = SCtor.prop(t, "sdgfn").asc
         Assert.AreEqual("sdgfn", s.SortBy)
         Assert.AreEqual(SortType.Asc, s.Order)
 
-        Dim s2 As Sort = Sorting.Field(t, "sdgfn").Desc
+        Dim s2 As Sort = SCtor.prop(t, "sdgfn").desc
         Assert.AreEqual("sdgfn", s2.SortBy)
         Assert.AreEqual(SortType.Desc, s2.Order)
 
-        Dim s3 As Sort = Sorting.Field(t, "sdgfn").Order(False)
+        Dim s3 As Sort = SCtor.prop(t, "sdgfn").Order(False)
         Assert.AreEqual("sdgfn", s3.SortBy)
         Assert.AreEqual(SortType.Desc, s3.Order)
 
-        Dim s4 As Sort = Sorting.Field(t, "sdgfn").Order(True)
+        Dim s4 As Sort = SCtor.prop(t, "sdgfn").Order(True)
         Assert.AreEqual("sdgfn", s4.SortBy)
         Assert.AreEqual(SortType.Asc, s4.Order)
 
-        Dim s5 As Sort = Sorting.Field(t, "sdgfn").Order("desc")
+        Dim s5 As Sort = SCtor.prop(t, "sdgfn").Order("desc")
         Assert.AreEqual("sdgfn", s5.SortBy)
         Assert.AreEqual(SortType.Desc, s5.Order)
     End Sub

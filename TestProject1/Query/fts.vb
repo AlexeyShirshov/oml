@@ -68,14 +68,15 @@ Imports Worm.Criteria.Joins
 
         Dim tbl As New Entities.Meta.SearchFragment(GetType(Table1), "second")
 
-        Dim q As New QueryCmd(tbl, New CreateManager(Function() _
+        Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
+        q.From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q = New QueryCmd(New Entities.Meta.SearchFragment(GetType(Table1), "xxx"), _
-                        Function() TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1")))
+        q = New QueryCmd(Function() TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1")))
+        q.From(New Entities.Meta.SearchFragment(GetType(Table1), "xxx"))
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -108,10 +109,10 @@ Imports Worm.Criteria.Joins
 
         Dim tbl As New Entities.Meta.SearchFragment(GetType(Table1), "first")
 
-        Dim q As New QueryCmd(tbl, New CreateManager(Function() _
+        Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
         q.SetJoins(JCtor.join("Table3").onM2M(GetType(Table1)))
-        q.Where(PCtor.prop("Table3", "Code").eq(2))
+        q.Where(PCtor.prop("Table3", "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -121,10 +122,10 @@ Imports Worm.Criteria.Joins
 
         Dim tbl As New Entities.Meta.SearchFragment(GetType(Table1), "second")
 
-        Dim q As New QueryCmd(tbl, New CreateManager(Function() _
+        Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
 
-        q.Where(PCtor.prop(GetType(Table1), "Code").eq(2))
+        q.Where(PCtor.prop(GetType(Table1), "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)

@@ -70,9 +70,9 @@ Namespace Linq
         '    args.Manager = _ctx.CreateReadonlyManager
         'End Sub
 
-        Protected Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As ICachedEntity)
+        Protected Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
             'AddHandler o.ManagerRequired, AddressOf GetManager
-            o.SetCreateManager(_ctx.GetReadonlyManager)
+            CType(o, _IEntity).SetCreateManager(_ctx.GetReadonlyManager)
         End Sub
 
         Public Function Execute(Of TResult)(ByVal expression As System.Linq.Expressions.Expression) As TResult Implements System.Linq.IQueryProvider.Execute
@@ -89,14 +89,14 @@ Namespace Linq
                 If GetType(IEnumerator).IsAssignableFrom(rt) Then
                     Dim t As Type = rt.GetGenericArguments(0)
                     If GetType(KeyEntity).IsAssignableFrom(t) Then
-                        q.SelectedType = t
+                        q.Select(t)
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Return CType(e, TResult)
                     Else
                         Dim lt As Type = GetType(List(Of ))
                         Dim glt As Type = lt.MakeGenericType(New Type() {t})
                         Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
-                        q.SelectedType = ev.T
+                        q.Select(ev.T)
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Do While e.MoveNext
                             Dim o As KeyEntity = CType(e.Current, KeyEntity)
@@ -105,7 +105,7 @@ Namespace Linq
                         Return CType(l.GetEnumerator, TResult)
                     End If
                 Else
-                    q.SelectedType = ev.T
+                    q.Select(ev.T)
                     Dim l As IList(Of TResult) = Nothing
 
                     'Else
@@ -559,9 +559,9 @@ Namespace Linq
         Inherits FilterVisitorBase
 
         Private _sort As New List(Of UnaryExp)
-        Public ReadOnly Property Sort() As SortOrder
+        Public ReadOnly Property Sort() As SortLink
             Get
-                Dim so As SortOrder = GetSO(_sort(0))
+                Dim so As SortLink = GetSO(_sort(0))
                 For i As Integer = 1 To _sort.Count - 1
                     so = so.NextSort(GetSO(_sort(i)))
                 Next
@@ -572,15 +572,15 @@ Namespace Linq
             'End Set
         End Property
 
-        Protected Function GetSO(ByVal exp As UnaryExp) As SortOrder
+        Protected Function GetSO(ByVal exp As UnaryExp) As SortLink
             Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
             If e IsNot Nothing Then
-                Return Entities.Sorting.Field(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
+                Return Worm.Query.SCtor.prop(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
                     Dim p As SelectExpression = _q.GetProperty(ce.Alias)
-                    Return Entities.Sorting.Field(p.ObjectSource, p.PropertyAlias)
+                    Return Worm.Query.SCtor.prop(p.ObjectSource, p.PropertyAlias)
                 Else
                     Throw New NotSupportedException
                 End If
@@ -745,7 +745,7 @@ Namespace Linq
         Inherits MyExpressionVisitor
 
         Private _q As Query.QueryCmd
-        Private _so As SortOrder
+        Private _so As SortLink
         Private _new As NewExpression
         'Private _mem As MemberExpression
         Private _t As Type
@@ -802,7 +802,7 @@ Namespace Linq
 
         Sub New(ByVal schema As ObjectMappingEngine)
             MyBase.new(schema)
-            _q = New Query.QueryCmd(CType(Nothing, Type))
+            _q = New Query.QueryCmd()
         End Sub
 
         'Sub New(ByVal q As Query.QueryCmdBase)
@@ -1136,7 +1136,7 @@ Namespace Linq
                 Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
                 If IsSubQueryRequired() Then
-                    Dim aq As New Query.QueryCmd(CType(Nothing, Type))
+                    Dim aq As New Query.QueryCmd()
                     'Dim al As String = Nothing
                     'Dim num As Integer
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
@@ -1192,7 +1192,7 @@ Namespace Linq
                     '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
                     'End If
 
-                    Dim aq As New Query.QueryCmd(CType(Nothing, Type))
+                    Dim aq As New Query.QueryCmd()
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
                     aq.From(_q)
                     '_q.OuterQuery = aq

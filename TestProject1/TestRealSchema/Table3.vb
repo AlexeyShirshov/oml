@@ -74,7 +74,7 @@ Public Class Table3
     End Sub
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
         Select Case fieldName
             Case "Ref"
                 RefObject = CType(value, KeyEntity)

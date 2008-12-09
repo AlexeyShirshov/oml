@@ -103,6 +103,7 @@
     <Compile Include="ASPHosting\TestRoles.vb" />
     <Compile Include="Query\fts.vb" />
     <Compile Include="Query\ImmCache.vb" />
+    <Compile Include="Query\InnerCmds.vb" />
     <Compile Include="Query\Modification.vb" />
     <Compile Include="Query\SmartCache.vb" />
     <Compile Include="My Project\Settings.Designer.vb">

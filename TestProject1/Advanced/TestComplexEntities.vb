@@ -81,7 +81,7 @@ Imports Worm.Criteria
         Dim cache As New Worm.Cache.OrmCache
         Dim gen As New ObjectMappingEngine("1")
 
-        Dim q As QueryCmd = New QueryCmd(GetType(ComplexPK)).Where _
+        Dim q As QueryCmd = New QueryCmd().Select(GetType(ComplexPK)).Where _
             (PCtor.prop(GetType(ComplexPK), "Int").eq(345))
 
         Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)( _
@@ -101,7 +101,7 @@ Imports Worm.Criteria
         Assert.AreEqual("wf0pvmdb", f.Name)
         Assert.IsTrue(f.InternalProperties.IsLoaded)
 
-        l = New QueryCmd(GetType(ComplexPK)).Where _
+        l = New QueryCmd().Select(GetType(ComplexPK)).Where _
             (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
@@ -112,7 +112,7 @@ Imports Worm.Criteria
     <TestMethod()> _
     Public Sub TestCPKUpdate()
         Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim l As ReadOnlyEntityList(Of ComplexPK) = New QueryCmd(GetType(ComplexPK)).Where _
+            Dim l As ReadOnlyEntityList(Of ComplexPK) = New QueryCmd().Select(GetType(ComplexPK)).Where _
                             (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
 
             Dim f As ComplexPK = l(0)
@@ -125,7 +125,7 @@ Imports Worm.Criteria
                     s.AcceptModifications()
                 End Using
 
-                Dim f2 As ComplexPK = New QueryCmd(GetType(ComplexPK)).Where _
+                Dim f2 As ComplexPK = New QueryCmd().Select(GetType(ComplexPK)).Where _
                              (PCtor.prop(GetType(ComplexPK), "Name").eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
 
                 Assert.AreSame(f, f2)

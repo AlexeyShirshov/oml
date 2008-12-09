@@ -37,7 +37,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IObjectSchemaBase) As IEvaluableValue.EvalResult
+        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         'Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String
@@ -57,7 +57,7 @@ Namespace Criteria.Core
 
     Public Interface IOrmFilterTemplate
         Inherits ITemplate
-        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String
+        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal [alias] As ObjectAlias)
     End Interface
