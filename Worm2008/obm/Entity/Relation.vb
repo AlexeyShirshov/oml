@@ -206,7 +206,7 @@ Namespace Cache
         'End Property
 
         Protected Sub RejectRelated(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity, ByVal add As Boolean)
-            'Dim m As OrmManager.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
+            'Dim m As M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As EditableListBase = GetRevert(mgr, obj)
 
             Dim l As IList(Of IKeyEntity) = el.Added
@@ -709,7 +709,7 @@ Namespace Cache
         Protected Overrides Function GetRevert(ByVal mgr As OrmManager) As IList(Of EditableListBase)
             Dim l As New List(Of EditableListBase)
             For Each id As Object In _mainList
-                Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id, _subType, _mainType, GetRealDirect)
+                Dim m As M2MCache = mgr.GetM2MNonGeneric(id, _subType, _mainType, GetRealDirect)
                 If m IsNot Nothing Then
                     l.Add(m.Entry)
                 End If
@@ -718,7 +718,7 @@ Namespace Cache
         End Function
 
         Protected Overrides Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As EditableListBase
-            Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(obj, _mainType, GetRealDirect)
+            Dim m As M2MCache = mgr.GetM2MNonGeneric(obj, _mainType, GetRealDirect)
             If m IsNot Nothing Then
                 Return m.Entry
             End If
@@ -728,7 +728,7 @@ Namespace Cache
         'Protected Sub AcceptDual()
         '    Dim mgr As OrmManager = OrmManager.CurrentManager
         '    For Each id As Integer In _mainList
-        '        Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+        '        Dim m As M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
         '        If m IsNot Nothing Then
         '            If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
         '                If Not m.Entry.Accept(mgr, _mainId) Then
@@ -741,7 +741,7 @@ Namespace Cache
         'End Sub
 
         Protected Overrides Function CheckDual(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As Boolean
-            Dim m As OrmManager.M2MCache = mgr.FindM2MNonGeneric(obj, MainType, Key).First
+            Dim m As M2MCache = mgr.FindM2MNonGeneric(obj, MainType, Key).First
             Dim c As Boolean = True
             For Each i As Object In m.Entry.Original
                 If i.Equals(_mainId) Then

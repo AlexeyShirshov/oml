@@ -36,11 +36,11 @@ Namespace Query
         '    Return SortOrder.CreateCustom(sortExpression, Nothing, values)
         'End Function
 
-        Public Shared Function Custom(ByVal sortExpression As String) As SortLink
-            Return SortLink.CreateCustom(sortExpression, Nothing, Nothing)
-        End Function
+        'Public Shared Function Custom(ByVal sortExpression As String) As SortLink
+        '    Return SortLink.CreateCustom(sortExpression, Nothing, Nothing)
+        'End Function
 
-        Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortLink
+        Public Shared Function Custom(ByVal sortExpression As String, ByVal ParamArray values() As FieldReference) As SortLink
             Return SortLink.CreateCustom(sortExpression, Nothing, values)
         End Function
 
@@ -81,7 +81,7 @@ Namespace Query
         Private _order As SortType
         Private _os As ObjectSource
         Private _custom As String
-        Private _values() As Pair(Of Object, String)
+        Private _values() As FieldReference
         Private _del As ExternalSortDelegate
         Private _table As SourceFragment
 
@@ -90,7 +90,7 @@ Namespace Query
         End Sub
 
         Protected Friend Shared Function CreateCustom(ByVal sortExpression As String, _
-           ByVal prev As SortLink, ByVal values() As Pair(Of Object, String)) As SortLink
+           ByVal prev As SortLink, ByVal values() As FieldReference) As SortLink
             Dim s As New SortLink(prev, sortExpression, values)
             's._custom = sortExpression
             's._values = values
@@ -176,7 +176,8 @@ Namespace Query
 
 #End Region
 
-        Protected Friend Sub New(ByVal prev As SortLink, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
+        Protected Friend Sub New(ByVal prev As SortLink, ByVal sortExpression As String, _
+                                 ByVal values() As FieldReference)
             _prev = prev
             _custom = sortExpression
             _values = values
@@ -236,7 +237,7 @@ Namespace Query
             Return New SortLink(t, propertyAlias, Me)
         End Function
 
-        Public Function NextCustom(ByVal sortexpression As String, ByVal values() As Pair(Of Object, String)) As SortLink
+        Public Function NextCustom(ByVal sortexpression As String, ByVal ParamArray values() As FieldReference) As SortLink
             Return CreateCustom(sortexpression, Me, values)
         End Function
 

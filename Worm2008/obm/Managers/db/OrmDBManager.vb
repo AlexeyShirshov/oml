@@ -537,7 +537,7 @@ Namespace Database
         '                            processedType.Add(acp.el.SubType)
         '                        Next
         '                    End If
-        '                    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
+        '                    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
         '                        'Dim m As M2MCache = o.First
         '                        'If Not Schema.IsMany2ManyReadonly(t, m.Entry.SubType) AndAlso Not processedType.Contains(m.Entry.SubType) Then
         '                        '    'Dim r As M2MRelation = Schema.GetM2MRelation(t, m.Entry.SubType, m.Entry.Direct)

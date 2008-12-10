@@ -62,6 +62,7 @@ Namespace Criteria
         End Sub
 
 #End Region
+
         Protected Function CreateField(ByVal entityName As String, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
             Return CreateField(New ObjectSource(entityName), propertyAlias, con, oper)
         End Function
@@ -279,12 +280,12 @@ Namespace Criteria
             Return Me
         End Function
 
-        Public Function [and](ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As PredicateBase
-            Return New CustomPredicate(format, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
+        Public Function [and](ByVal custom As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
         End Function
 
-        Public Function [or](ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As PredicateBase
-            Return New CustomPredicate(format, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
+        Public Function [or](ByVal custom As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
         End Function
 
         'Public Function CustomAnd(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField

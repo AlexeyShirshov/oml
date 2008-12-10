@@ -10,6 +10,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Values
 Imports cc = Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
+Imports System.Collections.ObjectModel
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -778,7 +779,7 @@ l1:
                 End If
 
                 Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim firstidx As Integer = 0
                     Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, MappingEngine, False, Nothing, Nothing, Nothing)
@@ -1109,7 +1110,7 @@ l1:
                                 ec.BeginTrackDelete(type2load)
                             End If
                             Dim et As New PerfCounter
-                            Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                            Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                                 _exec = et.GetTime
 
                                 Dim props As IDictionary = MappingEngine.GetProperties(type2load, oschema2)
@@ -1407,7 +1408,7 @@ l1:
                     ec.BeginTrackDelete(obj.GetType)
                 End If
                 Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     Dim k As String = String.Empty
                     If obj.IsPKLoaded Then
                         k = obj.Key.ToString
@@ -1525,6 +1526,34 @@ l1:
             End Try
         End Function
 
+        Public Function GetSimpleValues(ByVal cmd As System.Data.Common.DbCommand, ByVal t As Type) As IList
+            Dim l As New ArrayList
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                Dim n As Boolean = t.FullName.StartsWith("System.Nullable")
+                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    Do While dr.Read
+                        'l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
+                        If dr.IsDBNull(0) Then
+                            l.Add(Nothing)
+                        Else
+                            If n Then
+                                Dim rt As Type = t.GetGenericArguments(0)
+                                Dim o As Object = Convert.ChangeType(dr.GetValue(0), rt)
+                                l.Add(o)
+                            Else
+                                l.Add(dr.GetValue(0))
+                            End If
+                        End If
+
+                    Loop
+                    Return l
+                End Using
+            Finally
+                CloseConn(b)
+            End Try
+        End Function
+
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
@@ -1538,37 +1567,239 @@ l1:
 
         Public Sub QueryMultiTypeObjects( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal values As IList(Of IList), ByVal types As IDictionary(Of Type, IEntitySchema), _
-            ByVal selectList As IEnumerable(Of SelectExpression))
+            ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
+            ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
+            ByVal pdic As Dictionary(Of Type, IDictionary), _
+            ByVal selectList As IList(Of SelectExpression))
 
             Dim c As OrmCache = TryCast(_cache, OrmCache)
             Dim b As ConnAction = TestConn(cmd)
             Try
                 _loadedInLastFetch = 0
                 If c IsNot Nothing Then
-                    For Each original_type As Type In types.Keys
+                    For Each os As ObjectSource In types.Keys
+                        Dim original_type As Type = os.GetRealType(MappingEngine)
                         c.BeginTrackDelete(original_type)
                     Next
                 End If
 
+                Dim objDic As New Dictionary(Of ObjectSource, IDictionary)
+                For Each k As KeyValuePair(Of ObjectSource, IEntitySchema) In types
+                    objDic.Add(k.Key, GetDictionary(k.Key.GetRealType(MappingEngine), k.Value))
+                Next
+
                 Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
 
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadMultiFromResultSet(values, selectList, dr, types, _loadedInLastFetch)
+                        LoadMultiFromResultSet(values, selectList, dr, types, pdic, objDic, _loadedInLastFetch)
                     Loop
                     _fetch = ft.GetTime
                 End Using
             Finally
                 If c IsNot Nothing Then
-                    For Each original_type As Type In types.Keys
+                    For Each os As ObjectSource In types.Keys
+                        Dim original_type As Type = os.GetRealType(MappingEngine)
                         c.EndTrackDelete(original_type)
                     Next
                 End If
                 CloseConn(b)
             End Try
+        End Sub
+
+        Protected Sub LoadMultiFromResultSet(ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
+            ByVal selectList As IList(Of SelectExpression), _
+            ByVal dr As System.Data.Common.DbDataReader, _
+            ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
+            ByVal pdic As Dictionary(Of Type, IDictionary), _
+            ByVal objDic As Dictionary(Of ObjectSource, IDictionary), _
+            ByRef loaded As Integer)
+
+            Dim odic As New Specialized.OrderedDictionary '(Of ObjectSource, _IEntity)
+            Dim dfac As New Dictionary(Of ObjectSource, List(Of Pair(Of String, Object)))
+            Dim pkdic As New Dictionary(Of ObjectSource, Integer)
+            Dim l As New List(Of _IEntity)
+
+            For i As Integer = 0 To selectList.Count - 1
+                Dim se As SelectExpression = selectList(i)
+                Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
+                Dim oschema As IEntitySchema = types(se.ObjectSource)
+
+                Dim pi As Reflection.PropertyInfo = Nothing
+                Dim c As ColumnAttribute = Nothing
+                For Each de As DictionaryEntry In pdic(t)
+                    c = CType(de.Key, ColumnAttribute)
+                    If c.PropertyAlias = se.PropertyAlias Then
+                        pi = CType(de.Value, Reflection.PropertyInfo)
+                        Exit For
+                    End If
+                Next
+
+                Dim att As Field2DbRelations = MappingEngine.GetAttributes(oschema, c)
+
+                If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
+                    If obj Is Nothing Then
+                        obj = CType(Activator.CreateInstance(t), _IEntity)
+                        obj.SetMgrString(IdentityString)
+                        odic.Add(se.ObjectSource, obj)
+                    End If
+
+                    Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+
+                    Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                    Dim value As Object = dr.GetValue(i)
+                    If fv IsNot Nothing Then
+                        value = fv.CreateValue(se.PropertyAlias, obj, value)
+                    End If
+
+                    obj.BeginLoading()
+                    ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
+                                     False, Nothing, c)
+
+                    obj.EndLoading()
+
+                    Dim cnt As Integer
+                    pkdic.TryGetValue(se.ObjectSource, cnt)
+                    pkdic(se.ObjectSource) = cnt + 1
+                End If
+            Next
+
+            For Each de As DictionaryEntry In odic
+                Dim obj As _IEntity = CType(de.Value, _IEntity)
+                Dim os As ObjectSource = CType(de.Key, ObjectSource)
+                Dim pk_count As Integer
+                pkdic.TryGetValue(os, pk_count)
+                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+
+                If pk_count > 0 Then
+                    If ce IsNot Nothing Then
+                        ce.PKLoaded(pk_count)
+
+                        Dim c As OrmCache = TryCast(_cache, OrmCache)
+                        If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
+                            l.Add(obj)
+                        End If
+
+                        'Threading.Monitor.Enter(dic)
+                        'lock = True
+                        Dim fromRS As Boolean = True
+                        Dim dic As IDictionary = Nothing
+                        objDic.TryGetValue(os, dic)
+                        If dic IsNot Nothing Then
+                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
+                            Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
+
+                            obj = robj
+                            ce = CType(obj, _ICachedEntity)
+                            'SyncLock dic
+                            If fromCache Then
+                                If obj.ObjectState = ObjectState.Created Then
+                                    'Using obj.GetSyncRoot
+                                    l.Add(obj)
+                                    'End Using
+                                ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                                    l.Add(obj)
+                                    'Else
+                                    '    obj.BeginLoading()
+                                End If
+                                'Else
+                                '    If fromRS Then
+                                '        'Else
+                                '        '    If obj.ObjectState = ObjectState.Created Then
+                                '        '        ce.CreateCopyForSaveNewEntry(Me, oldpk)
+                                '        '        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                '        '    End If
+                                '    End If
+                            End If
+                            'End SyncLock
+                        End If
+                    End If
+                    'ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso obj.ObjectState = ObjectState.Created Then
+                    '    ce.CreateCopyForSaveNewEntry(Me, Nothing)
+                End If
+            Next
+
+            If l.Count = odic.Count Then
+                values.Add(New ReadOnlyObjectList(Of _IEntity)(l))
+                Return
+            End If
+
+            For i As Integer = 0 To selectList.Count - 1
+                Dim se As SelectExpression = selectList(i)
+                Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
+                Dim oschema As IEntitySchema = types(se.ObjectSource)
+
+                Dim pi As Reflection.PropertyInfo = Nothing
+                Dim c As ColumnAttribute = Nothing
+                For Each de As DictionaryEntry In pdic(t)
+                    c = CType(de.Key, ColumnAttribute)
+                    If c.PropertyAlias = se.PropertyAlias Then
+                        pi = CType(de.Value, Reflection.PropertyInfo)
+                        Exit For
+                    End If
+                Next
+
+                Dim att As Field2DbRelations = MappingEngine.GetAttributes(oschema, c)
+                If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
+                    Dim fac As List(Of Pair(Of String, Object)) = Nothing
+                    If Not dfac.TryGetValue(se.ObjectSource, fac) Then
+                        fac = New List(Of Pair(Of String, Object))
+                        dfac.Add(se.ObjectSource, fac)
+                    End If
+
+                    Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+
+                    Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                    Dim value As Object = dr.GetValue(i)
+                    If fv IsNot Nothing Then
+                        value = fv.CreateValue(se.PropertyAlias, obj, value)
+                    End If
+
+                    obj.BeginLoading()
+                    ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
+                                     False, fac, c)
+
+                    obj.EndLoading()
+
+                    Dim cnt As Integer
+                    pkdic.TryGetValue(se.ObjectSource, cnt)
+                    pkdic(se.ObjectSource) = cnt + 1
+
+                    Dim f As IFactory = TryCast(obj, IFactory)
+                    If f IsNot Nothing Then
+                        For Each p As Pair(Of String, Object) In fac
+                            Dim e As _IEntity = f.CreateObject(p.First, p.Second)
+                            If e IsNot Nothing Then
+                                e.SetMgrString(IdentityString)
+                                If obj.CreateManager IsNot Nothing Then
+                                    e.SetCreateManager(obj.CreateManager)
+                                End If
+                            End If
+                        Next
+                    End If
+
+                End If
+            Next
+
+            For Each de As DictionaryEntry In odic
+                Dim obj As _IEntity = CType(de.Value, _IEntity)
+                Dim os As ObjectSource = CType(de.Key, ObjectSource)
+                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+
+                If ce IsNot Nothing Then
+                    ce.CheckIsAllLoaded(MappingEngine, pkdic(os))
+                End If
+
+                RaiseObjectLoaded(obj)
+
+                l.Add(obj)
+            Next
+
+            values.Add(New ReadOnlyObjectList(Of _IEntity)(l))
         End Sub
 
         Public Sub QueryObjects(Of T As {_IEntity, New})( _
@@ -1599,7 +1830,7 @@ l1:
                 End If
 
                 Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
 
                     'If idx = -1 Then
@@ -1657,22 +1888,6 @@ l1:
             End Try
         End Sub
 
-        'Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
-        '    Throw New NotSupportedException
-        '    'Dim idx As Integer = -1
-        '    'Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False, Nothing, Nothing, Nothing)(0)
-        '    'Try
-        '    '    idx = dr.GetOrdinal(pk_name)
-        '    'Catch ex As IndexOutOfRangeException
-        '    '    If _mcSwitch.TraceError Then
-        '    '        Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
-        '    '        Trace.WriteLine(Environment.StackTrace)
-        '    '    End If
-        '    '    Throw New OrmManagerException("Cannot get primary key ordinal", ex)
-        '    'End Try
-        '    'Return idx
-        'End Function
-
         Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
             Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
             ro.CorrectStateAfterLoading(notFromCache)
@@ -1696,7 +1911,7 @@ l1:
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
-            ByVal dr As System.Data.IDataReader, _
+            ByVal dr As System.Data.Common.DbDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
             ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), _
             ByVal props As IDictionary)
@@ -1764,7 +1979,7 @@ l1:
             'End If
         End Sub
 
-        Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
+        Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.Common.DbDataReader, _
             ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal props As IDictionary) As _IEntity
@@ -1819,7 +2034,7 @@ l1:
                             pk_count += 1
                             Dim value As Object = dr.GetValue(idx + displacement)
                             If fv IsNot Nothing Then
-                                value = fv.CreateValue(c, obj, value)
+                                value = fv.CreateValue(propertyAlias, obj, value)
                             End If
 
                             If Not dr.IsDBNull(idx + displacement) Then
@@ -1935,7 +2150,7 @@ l1:
 
                         Dim value As Object = dr.GetValue(idx + displacement)
                         If fv IsNot Nothing Then
-                            value = fv.CreateValue(c, obj, value)
+                            value = fv.CreateValue(propertyAlias, obj, value)
                         End If
 
                         If String.IsNullOrEmpty(propertyAlias) Then
@@ -1946,153 +2161,164 @@ l1:
                             Continue For
                         End If
 
-                        If pi Is Nothing Then
-                            If dr.IsDBNull(idx + displacement) Then
-                                obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
-                            Else
-                                obj.SetValueOptimized(pi, propertyAlias, oschema, value)
-                            End If
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
-                        Else
-                            Dim att As Field2DbRelations = attrs(idx)
-                            Dim propType As Type = pi.PropertyType
-                            If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                Dim v As Object = pi.GetValue(obj, Nothing)
-                                If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
-                                    value = Convert.ChangeType(value, propType)
-                                End If
-                                If Not v.Equals(value) Then
-                                    Throw New OrmManagerException("PK values is not equals (" & dr.GetName(idx + displacement) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
-                                End If
-                            ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                                If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-                                    fac.Add(New Pair(Of String, Object)(propertyAlias, value))
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    '    'obj.CreateObject(c.FieldName, value)
-                                    '    obj.SetValue(pi, c, )
-                                    '    obj.SetLoaded(c, True, True)
-                                    '    'If GetType(OrmBase) Is pi.PropertyType Then
-                                    '    '    obj.CreateObject(CInt(value))
-                                    '    '    obj.SetLoaded(c, True)
-                                    '    'Else
-                                    '    '    Dim type_created As Type = pi.PropertyType
-                                    '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
-                                    '    '    obj.SetValue(pi, c, o)
-                                    '    '    obj.SetLoaded(c, True)
-                                    '    'End If
-                                ElseIf GetType(IKeyEntity).IsAssignableFrom(propType) Then
-                                    Dim type_created As Type = propType
-                                    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-                                    If Not String.IsNullOrEmpty(en) Then
-                                        type_created = MappingEngine.GetTypeByEntityName(en)
+                        Dim att As Field2DbRelations = attrs(idx + displacement)
 
-                                        If type_created Is Nothing Then
-                                            Throw New OrmManagerException("Cannot find type for entity " & en)
-                                        End If
-                                    End If
-                                    Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
-                                    obj.SetValueOptimized(pi, propertyAlias, oschema, o)
-                                    If o IsNot Nothing Then
-                                        o.SetCreateManager(obj.CreateManager)
-                                    End If
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
-                                    Dim o As New System.Xml.XmlDocument
-                                    o.LoadXml(CStr(value))
-                                    obj.SetValueOptimized(pi, propertyAlias, oschema, o)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
-                                    Dim svalue As String = CStr(value).Trim
-                                    If svalue = String.Empty Then
-                                        obj.SetValueOptimized(pi, propertyAlias, oschema, 0)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    Else
-                                        obj.SetValueOptimized(pi, propertyAlias, oschema, [Enum].Parse(propType, svalue, True))
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    End If
-                                ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
-                                    Dim t As Type = propType.GetGenericArguments()(0)
-                                    Dim v As Object = Nothing
-                                    If t.IsPrimitive Then
-                                        v = Convert.ChangeType(value, t)
-                                    ElseIf t.IsEnum Then
-                                        If TypeOf (value) Is String Then
-                                            Dim svalue As String = CStr(value).Trim
-                                            If svalue = String.Empty Then
-                                                v = [Enum].ToObject(t, 0)
-                                            Else
-                                                v = [Enum].Parse(t, svalue, True)
-                                            End If
-                                        Else
-                                            v = [Enum].ToObject(t, value)
-                                        End If
-                                    ElseIf t Is value.GetType Then
-                                        v = value
-                                    Else
-                                        Try
-                                            v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                                                Nothing, Nothing, New Object() {value})
-                                        Catch ex As MissingMethodException
-                                            'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
-                                            'v = Convert.ChangeType(value, t)
-                                        End Try
-                                    End If
-                                    Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                                        Nothing, Nothing, New Object() {v})
-                                    obj.SetValueOptimized(pi, propertyAlias, oschema, v2)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                Else
-                                    Try
-                                        If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-                                            Dim v As Object = Convert.ChangeType(value, propType)
-                                            obj.SetValueOptimized(pi, propertyAlias, oschema, v)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                            Dim dt As DateTime = CDate(value)
-                                            Dim l As Long = dt.ToBinary
-                                            Using ms As New IO.MemoryStream
-                                                Dim sw As New IO.StreamWriter(ms)
-                                                sw.Write(l)
-                                                sw.Flush()
-                                                'pi.SetValue(obj, ms.ToArray, Nothing)
-                                                obj.SetValueOptimized(pi, propertyAlias, oschema, ms.ToArray)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                            End Using
-                                            'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
-                                            '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
-                                            '        Nothing, New Object() {value}))
-                                            '    obj.SetLoaded(c, True)
-                                        Else
-                                            obj.SetValueOptimized(pi, propertyAlias, oschema, value)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        End If
-                                        'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                        '    Dim dt As DateTime = CDate(value)
-                                        '    Dim l As Long = dt.ToBinary
-                                        '    Using ms As New IO.MemoryStream
-                                        '        Dim sw As New IO.StreamWriter(ms)
-                                        '        sw.Write(l)
-                                        '        sw.Flush()
-                                        '        obj.SetValue(pi, c, ms.ToArray)
-                                        '        obj.SetLoaded(c, True)
-                                        '    End Using
-                                    Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                        Dim v As Object = Convert.ChangeType(value, propType)
-                                        obj.SetValueOptimized(pi, propertyAlias, oschema, v)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    End Try
-                                End If
-                            ElseIf dr.IsDBNull(idx + displacement) Then
-                                obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                            End If
-                        End If
+                        ParseValueFromDb(dr, att, idx + displacement, obj, pi, propertyAlias, oschema, value, _
+                                         ce, check_pk, fac, c)
+                        'If pi Is Nothing Then
+                        '    If dr.IsDBNull(idx + displacement) Then
+                        '        obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
+                        '    Else
+                        '        obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                        '    End If
+                        '    If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
+                        'Else
+                        '    Dim att As Field2DbRelations = attrs(idx)
+                        '    Dim propType As Type = pi.PropertyType
+                        '    If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        '        Dim v As Object = pi.GetValue(obj, Nothing)
+                        '        If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
+                        '            value = Convert.ChangeType(value, propType)
+                        '        End If
+                        '        If Not v.Equals(value) Then
+                        '            Throw New OrmManagerException("PK values is not equals (" & dr.GetName(idx + displacement) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
+                        '        End If
+                        '    ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                        '        If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                        '            fac.Add(New Pair(Of String, Object)(propertyAlias, value))
+                        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '            '    'obj.CreateObject(c.FieldName, value)
+                        '            '    obj.SetValue(pi, c, )
+                        '            '    obj.SetLoaded(c, True, True)
+                        '            '    'If GetType(OrmBase) Is pi.PropertyType Then
+                        '            '    '    obj.CreateObject(CInt(value))
+                        '            '    '    obj.SetLoaded(c, True)
+                        '            '    'Else
+                        '            '    '    Dim type_created As Type = pi.PropertyType
+                        '            '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                        '            '    '    obj.SetValue(pi, c, o)
+                        '            '    '    obj.SetLoaded(c, True)
+                        '            '    'End If
+                        '        ElseIf GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                        '            Dim type_created As Type = propType
+                        '            Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                        '            If Not String.IsNullOrEmpty(en) Then
+                        '                type_created = MappingEngine.GetTypeByEntityName(en)
+
+                        '                If type_created Is Nothing Then
+                        '                    Throw New OrmManagerException("Cannot find type for entity " & en)
+                        '                End If
+                        '            End If
+                        '            Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
+                        '            obj.SetValueOptimized(pi, propertyAlias, oschema, o)
+                        '            If o IsNot Nothing Then
+                        '                o.SetCreateManager(obj.CreateManager)
+                        '            End If
+                        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '        ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
+                        '            Dim o As New System.Xml.XmlDocument
+                        '            o.LoadXml(CStr(value))
+                        '            obj.SetValueOptimized(pi, propertyAlias, oschema, o)
+                        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '        ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
+                        '            Dim svalue As String = CStr(value).Trim
+                        '            If svalue = String.Empty Then
+                        '                obj.SetValueOptimized(pi, propertyAlias, oschema, 0)
+                        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '            Else
+                        '                obj.SetValueOptimized(pi, propertyAlias, oschema, [Enum].Parse(propType, svalue, True))
+                        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '            End If
+                        '        ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
+                        '            Dim t As Type = propType.GetGenericArguments()(0)
+                        '            Dim v As Object = Nothing
+                        '            If t.IsPrimitive Then
+                        '                v = Convert.ChangeType(value, t)
+                        '            ElseIf t.IsEnum Then
+                        '                If TypeOf (value) Is String Then
+                        '                    Dim svalue As String = CStr(value).Trim
+                        '                    If svalue = String.Empty Then
+                        '                        v = [Enum].ToObject(t, 0)
+                        '                    Else
+                        '                        v = [Enum].Parse(t, svalue, True)
+                        '                    End If
+                        '                Else
+                        '                    v = [Enum].ToObject(t, value)
+                        '                End If
+                        '            ElseIf t Is value.GetType Then
+                        '                v = value
+                        '            Else
+                        '                Try
+                        '                    v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                        '                        Nothing, Nothing, New Object() {value})
+                        '                Catch ex As MissingMethodException
+                        '                    'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
+                        '                    'v = Convert.ChangeType(value, t)
+                        '                End Try
+                        '            End If
+                        '            Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                        '                Nothing, Nothing, New Object() {v})
+                        '            obj.SetValueOptimized(pi, propertyAlias, oschema, v2)
+                        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '        Else
+                        '            Try
+                        '                If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+                        '                    Dim v As Object = Convert.ChangeType(value, propType)
+                        '                    obj.SetValueOptimized(pi, propertyAlias, oschema, v)
+                        '                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '                ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                        '                    Dim dt As DateTime = CDate(value)
+                        '                    Dim l As Long = dt.ToBinary
+                        '                    Using ms As New IO.MemoryStream
+                        '                        Dim sw As New IO.StreamWriter(ms)
+                        '                        sw.Write(l)
+                        '                        sw.Flush()
+                        '                        'pi.SetValue(obj, ms.ToArray, Nothing)
+                        '                        obj.SetValueOptimized(pi, propertyAlias, oschema, ms.ToArray)
+                        '                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '                    End Using
+                        '                    'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
+                        '                    '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
+                        '                    '        Nothing, New Object() {value}))
+                        '                    '    obj.SetLoaded(c, True)
+                        '                Else
+                        '                    obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                        '                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '                End If
+                        '                'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                        '                '    Dim dt As DateTime = CDate(value)
+                        '                '    Dim l As Long = dt.ToBinary
+                        '                '    Using ms As New IO.MemoryStream
+                        '                '        Dim sw As New IO.StreamWriter(ms)
+                        '                '        sw.Write(l)
+                        '                '        sw.Flush()
+                        '                '        obj.SetValue(pi, c, ms.ToArray)
+                        '                '        obj.SetLoaded(c, True)
+                        '                '    End Using
+                        '            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                        '                Dim v As Object = Convert.ChangeType(value, propType)
+                        '                obj.SetValueOptimized(pi, propertyAlias, oschema, v)
+                        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '            End Try
+                        '        End If
+                        '    ElseIf dr.IsDBNull(idx + displacement) Then
+                        '        obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
+                        '        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '    End If
+                        'End If
                     Next
 
                     Dim f As IFactory = TryCast(obj, IFactory)
                     If f IsNot Nothing Then
                         For Each p As Pair(Of String, Object) In fac
-                            f.CreateObject(p.First, p.Second)
+                            Dim e As _IEntity = f.CreateObject(p.First, p.Second)
+                            If e IsNot Nothing Then
+                                e.SetMgrString(IdentityString)
+                                RaiseObjectLoaded(e)
+                                'If obj.CreateManager IsNot Nothing Then
+                                '    e.SetCreateManager(obj.CreateManager)
+                                'End If
+                            End If
                         Next
                     End If
                     'Finally
@@ -2113,128 +2339,153 @@ l1:
             Return obj
         End Function
 
-        'Public Function ParseValueFromDb(ByVal dr As System.Data.Common.DbDataReader, _
-        '    ByVal att As Field2DbRelations) As Object
-        '    If Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-        '        If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-        '            fac.Add(New Pair(Of String, Object)(propertyAlias, value))
-        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '            '    'obj.CreateObject(c.FieldName, value)
-        '            '    obj.SetValue(pi, c, )
-        '            '    obj.SetLoaded(c, True, True)
-        '            '    'If GetType(OrmBase) Is pi.PropertyType Then
-        '            '    '    obj.CreateObject(CInt(value))
-        '            '    '    obj.SetLoaded(c, True)
-        '            '    'Else
-        '            '    '    Dim type_created As Type = pi.PropertyType
-        '            '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
-        '            '    '    obj.SetValue(pi, c, o)
-        '            '    '    obj.SetLoaded(c, True)
-        '            '    'End If
-        '        ElseIf GetType(IOrmBase).IsAssignableFrom(PropType) Then
-        '            Dim type_created As Type = PropType
-        '            Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-        '            If Not String.IsNullOrEmpty(en) Then
-        '                type_created = MappingEngine.GetTypeByEntityName(en)
+        Public Function ParseValueFromDb(ByVal dr As System.Data.Common.DbDataReader, _
+            ByVal att As Field2DbRelations, ByVal i As Integer, ByVal obj As _IEntity, _
+            ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, _
+            ByVal oschema As IEntitySchema, ByVal value As Object, ByVal ce As _ICachedEntity, _
+            ByVal check_pk As Boolean, ByVal fac As List(Of Pair(Of String, Object)), _
+            ByVal c As ColumnAttribute) As Object
+            If pi Is Nothing Then
+                If dr.IsDBNull(i) Then
+                    obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
+                Else
+                    obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                End If
+                If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
+            Else
+                Dim propType As Type = pi.PropertyType
+                If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    Dim v As Object = pi.GetValue(obj, Nothing)
+                    If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
+                        value = Convert.ChangeType(value, propType)
+                    End If
+                    If Not v.Equals(value) Then
+                        Throw New OrmManagerException("PK values is not equals (" & dr.GetName(i) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
+                    End If
+                ElseIf Not dr.IsDBNull(i) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                        fac.Add(New Pair(Of String, Object)(propertyAlias, value))
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        '    'obj.CreateObject(c.FieldName, value)
+                        '    obj.SetValue(pi, c, )
+                        '    obj.SetLoaded(c, True, True)
+                        '    'If GetType(OrmBase) Is pi.PropertyType Then
+                        '    '    obj.CreateObject(CInt(value))
+                        '    '    obj.SetLoaded(c, True)
+                        '    'Else
+                        '    '    Dim type_created As Type = pi.PropertyType
+                        '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                        '    '    obj.SetValue(pi, c, o)
+                        '    '    obj.SetLoaded(c, True)
+                        '    'End If
+                    ElseIf GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                        Dim type_created As Type = propType
+                        Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                        If Not String.IsNullOrEmpty(en) Then
+                            type_created = MappingEngine.GetTypeByEntityName(en)
 
-        '                If type_created Is Nothing Then
-        '                    Throw New OrmManagerException("Cannot find type for entity " & en)
-        '                End If
-        '            End If
-        '            Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
-        '            obj.SetValueOptimized(pi, propertyAlias, oschema, o)
-        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '        ElseIf GetType(System.Xml.XmlDocument) Is PropType AndAlso TypeOf (value) Is String Then
-        '            Dim o As New System.Xml.XmlDocument
-        '            o.LoadXml(CStr(value))
-        '            obj.SetValueOptimized(pi, propertyAlias, oschema, o)
-        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '        ElseIf PropType.IsEnum AndAlso TypeOf (value) Is String Then
-        '            Dim svalue As String = CStr(value).Trim
-        '            If svalue = String.Empty Then
-        '                obj.SetValueOptimized(pi, propertyAlias, oschema, 0)
-        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '            Else
-        '                obj.SetValueOptimized(pi, propertyAlias, oschema, [Enum].Parse(PropType, svalue, True))
-        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '            End If
-        '        ElseIf PropType.IsGenericType AndAlso GetType(Nullable(Of )).Name = PropType.Name Then
-        '            Dim t As Type = PropType.GetGenericArguments()(0)
-        '            Dim v As Object = Nothing
-        '            If t.IsPrimitive Then
-        '                v = Convert.ChangeType(value, t)
-        '            ElseIf t.IsEnum Then
-        '                If TypeOf (value) Is String Then
-        '                    Dim svalue As String = CStr(value).Trim
-        '                    If svalue = String.Empty Then
-        '                        v = [Enum].ToObject(t, 0)
-        '                    Else
-        '                        v = [Enum].Parse(t, svalue, True)
-        '                    End If
-        '                Else
-        '                    v = [Enum].ToObject(t, value)
-        '                End If
-        '            ElseIf t Is value.GetType Then
-        '                v = value
-        '            Else
-        '                Try
-        '                    v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-        '                        Nothing, Nothing, New Object() {value})
-        '                Catch ex As MissingMethodException
-        '                    'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
-        '                    'v = Convert.ChangeType(value, t)
-        '                End Try
-        '            End If
-        '            Dim v2 As Object = PropType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-        '                Nothing, Nothing, New Object() {v})
-        '            obj.SetValueOptimized(pi, propertyAlias, oschema, v2)
-        '            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '        Else
-        '            Try
-        '                If (PropType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (PropType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-        '                    Dim v As Object = Convert.ChangeType(value, PropType)
-        '                    obj.SetValueOptimized(pi, propertyAlias, oschema, v)
-        '                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '                ElseIf PropType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-        '                    Dim dt As DateTime = CDate(value)
-        '                    Dim l As Long = dt.ToBinary
-        '                    Using ms As New IO.MemoryStream
-        '                        Dim sw As New IO.StreamWriter(ms)
-        '                        sw.Write(l)
-        '                        sw.Flush()
-        '                        'pi.SetValue(obj, ms.ToArray, Nothing)
-        '                        obj.SetValueOptimized(pi, propertyAlias, oschema, ms.ToArray)
-        '                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '                    End Using
-        '                    'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
-        '                    '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
-        '                    '        Nothing, New Object() {value}))
-        '                    '    obj.SetLoaded(c, True)
-        '                Else
-        '                    obj.SetValueOptimized(pi, propertyAlias, oschema, value)
-        '                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '                End If
-        '                'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-        '                '    Dim dt As DateTime = CDate(value)
-        '                '    Dim l As Long = dt.ToBinary
-        '                '    Using ms As New IO.MemoryStream
-        '                '        Dim sw As New IO.StreamWriter(ms)
-        '                '        sw.Write(l)
-        '                '        sw.Flush()
-        '                '        obj.SetValue(pi, c, ms.ToArray)
-        '                '        obj.SetLoaded(c, True)
-        '                '    End Using
-        '            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-        '                Dim v As Object = Convert.ChangeType(value, PropType)
-        '                obj.SetValueOptimized(pi, propertyAlias, oschema, v)
-        '                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '            End Try
-        '        End If
-        '    ElseIf dr.IsDBNull(idx + displacement) Then
-        '        obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
-        '        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-        '    End If
-        'End Function
+                            If type_created Is Nothing Then
+                                Throw New OrmManagerException("Cannot find type for entity " & en)
+                            End If
+                        End If
+                        Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
+                        obj.SetValueOptimized(pi, propertyAlias, oschema, o)
+                        If o IsNot Nothing Then
+                            o.SetCreateManager(obj.CreateManager)
+                        End If
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
+                        Dim o As New System.Xml.XmlDocument
+                        o.LoadXml(CStr(value))
+                        obj.SetValueOptimized(pi, propertyAlias, oschema, o)
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
+                        Dim svalue As String = CStr(value).Trim
+                        If svalue = String.Empty Then
+                            obj.SetValueOptimized(pi, propertyAlias, oschema, 0)
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        Else
+                            obj.SetValueOptimized(pi, propertyAlias, oschema, [Enum].Parse(propType, svalue, True))
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        End If
+                    ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
+                        Dim t As Type = propType.GetGenericArguments()(0)
+                        Dim v As Object = Nothing
+                        If t.IsPrimitive Then
+                            v = Convert.ChangeType(value, t)
+                        ElseIf t.IsEnum Then
+                            If TypeOf (value) Is String Then
+                                Dim svalue As String = CStr(value).Trim
+                                If svalue = String.Empty Then
+                                    v = [Enum].ToObject(t, 0)
+                                Else
+                                    v = [Enum].Parse(t, svalue, True)
+                                End If
+                            Else
+                                v = [Enum].ToObject(t, value)
+                            End If
+                        ElseIf t Is value.GetType Then
+                            v = value
+                        Else
+                            Try
+                                v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                                    Nothing, Nothing, New Object() {value})
+                            Catch ex As MissingMethodException
+                                'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
+                                'v = Convert.ChangeType(value, t)
+                            End Try
+                        End If
+                        Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                            Nothing, Nothing, New Object() {v})
+                        obj.SetValueOptimized(pi, propertyAlias, oschema, v2)
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    Else
+                        Try
+                            If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+                                Dim v As Object = Convert.ChangeType(value, propType)
+                                obj.SetValueOptimized(pi, propertyAlias, oschema, v)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                            ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                Dim dt As DateTime = CDate(value)
+                                Dim l As Long = dt.ToBinary
+                                Using ms As New IO.MemoryStream
+                                    Dim sw As New IO.StreamWriter(ms)
+                                    sw.Write(l)
+                                    sw.Flush()
+                                    'pi.SetValue(obj, ms.ToArray, Nothing)
+                                    obj.SetValueOptimized(pi, propertyAlias, oschema, ms.ToArray)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                                End Using
+                                'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
+                                '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
+                                '        Nothing, New Object() {value}))
+                                '    obj.SetLoaded(c, True)
+                            Else
+                                obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                            End If
+                            'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                            '    Dim dt As DateTime = CDate(value)
+                            '    Dim l As Long = dt.ToBinary
+                            '    Using ms As New IO.MemoryStream
+                            '        Dim sw As New IO.StreamWriter(ms)
+                            '        sw.Write(l)
+                            '        sw.Flush()
+                            '        obj.SetValue(pi, c, ms.ToArray)
+                            '        obj.SetLoaded(c, True)
+                            '    End Using
+                        Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                            Dim v As Object = Convert.ChangeType(value, propType)
+                            obj.SetValueOptimized(pi, propertyAlias, oschema, v)
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        End Try
+                    End If
+                ElseIf dr.IsDBNull(i) Then
+                    obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
+                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                End If
+            End If
+        End Function
 
         Protected Friend Function TestConn(ByVal cmd As System.Data.Common.DbCommand) As ConnAction
             Invariant()
@@ -3391,7 +3642,7 @@ l2:
                 Dim l As New List(Of Object)
 
                 Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim ft As New PerfCounter
                     Do While dr.Read

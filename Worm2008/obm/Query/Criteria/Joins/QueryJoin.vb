@@ -256,23 +256,23 @@ Namespace Criteria.Joins
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 Dim tm As Core.TemplateBase = Nothing
-                If fl._e1 IsNot Nothing AndAlso fl._e1.First.GetRealType(schema) Is t AndAlso fl._e1.Second = propertyAlias Then
-                    If fl._e2 IsNot Nothing Then
-                        f = CreateJoin(table, column, fl._e2.First, fl._e2.Second, fl._oper)
-                        tm = CreateOrmFilter(fl._e2.First, fl._e2.Second, fl._oper)
+                If fl.Left.Property.ObjectSource IsNot Nothing AndAlso fl.Left.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl.Left.Property.Field = propertyAlias Then
+                    If fl.Right.Property.ObjectSource IsNot Nothing Then
+                        f = CreateJoin(table, column, fl.Right.Property, fl._oper)
+                        tm = CreateOrmFilter(fl.Right.Property, fl._oper)
                     Else
-                        f = CreateJoin(table, column, fl._t2.First, fl._t2.Second, fl._oper)
-                        tm = CreateTableFilter(fl._t2.First, fl._t2.Second, fl._oper)
+                        f = CreateJoin(table, column, fl.Right.Column, fl._oper)
+                        tm = CreateTableFilter(fl.Right.Column, fl._oper)
                     End If
                 End If
                 If f Is Nothing Then
-                    If fl._e2 IsNot Nothing AndAlso fl._e2.First.GetRealType(schema) Is t AndAlso fl._e2.Second = propertyAlias Then
-                        If fl._e1 IsNot Nothing Then
-                            f = CreateJoin(table, column, fl._e1.First, fl._e1.Second, fl._oper)
-                            tm = CreateOrmFilter(fl._e1.First, fl._e1.Second, fl._oper)
+                    If fl.Right.Property.ObjectSource IsNot Nothing AndAlso fl.Right.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl.Right.Property.Field = propertyAlias Then
+                        If fl.Left.Property.ObjectSource IsNot Nothing Then
+                            f = CreateJoin(table, column, fl.Left.Property, fl._oper)
+                            tm = CreateOrmFilter(fl.Left.Property, fl._oper)
                         Else
-                            f = CreateJoin(table, column, fl._t1.First, fl._t1.Second, fl._oper)
-                            tm = CreateTableFilter(fl._t1.First, fl._t1.Second, fl._oper)
+                            f = CreateJoin(table, column, fl.Right.Column, fl._oper)
+                            tm = CreateTableFilter(fl.Right.Column, fl._oper)
                         End If
                     End If
                 End If
@@ -289,6 +289,14 @@ Namespace Criteria.Joins
             Return New TableFilterTemplate(table, column, oper)
         End Function
 
+        Protected Function CreateTableFilter(ByVal p As Pair(Of SourceFragment, String), ByVal oper As FilterOperation) As Core.TemplateBase
+            Return New TableFilterTemplate(p.First, p.Second, oper)
+        End Function
+
+        Protected Function CreateOrmFilter(ByVal op As ObjectProperty, ByVal oper As FilterOperation) As Core.TemplateBase
+            Return New OrmFilterTemplate(op, oper)
+        End Function
+
         Protected Function CreateOrmFilter(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As Core.TemplateBase
             Return New OrmFilterTemplate(os, propertyAlias, oper)
         End Function
@@ -297,8 +305,17 @@ Namespace Criteria.Joins
             Return New JoinFilter(table, column, os, propertyAlias, oper)
         End Function
 
+        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal op As ObjectProperty, ByVal oper As FilterOperation) As JoinFilter
+            Return New JoinFilter(table, column, op, oper)
+        End Function
+
         Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal oper As FilterOperation) As JoinFilter
             Return New JoinFilter(table, column, table2, column2, oper)
+        End Function
+
+        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, _
+                                      ByVal p As Pair(Of SourceFragment, String), ByVal oper As FilterOperation) As JoinFilter
+            Return New JoinFilter(table, column, p.First, p.Second, oper)
         End Function
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone

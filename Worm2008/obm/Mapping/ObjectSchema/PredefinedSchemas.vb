@@ -83,10 +83,10 @@ Namespace Entities.Meta
         '    Return New SourceFragment() {_table}
         'End Function
 
-        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
-            newvalue = value
-            Return False
-        End Function
+        'Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
+        '    newvalue = value
+        '    Return False
+        'End Function
 
         Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
             Return _cols
@@ -101,10 +101,10 @@ Namespace Entities.Meta
         '    Return New M2MRelation() {}
         'End Function
 
-        Public Function GetSuppressedFields() As String() Implements IEntitySchema.GetSuppressedFields
-            'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
-            Return Nothing
-        End Function
+        'Public Function GetSuppressedFields() As String() Implements IEntitySchema.GetSuppressedFields
+        '    'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
+        '    Return Nothing
+        'End Function
 
         Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
             Get

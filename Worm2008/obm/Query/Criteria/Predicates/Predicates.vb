@@ -231,8 +231,11 @@ Namespace Criteria
     Public Class PropertyPredicate
         Inherits PredicateBase
 
-        Private _os As ObjectSource
-        Private _f As String
+        Private _op As ObjectProperty
+
+        Protected Friend Sub New(ByVal op As ObjectProperty)
+            _op = op
+        End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String)
             'If t Is Nothing Then
@@ -243,55 +246,67 @@ Namespace Criteria
             '    Throw New ArgumentNullException("fieldName")
             'End If
 
-            _os = New ObjectSource(t)
-            _f = propertyAlias
+            '_os = New ObjectSource(t)
+            '_f = propertyAlias
+            _op = New ObjectProperty(t, propertyAlias)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
-            _os = New ObjectSource(t)
-            _f = propertyAlias
+            '_os = New ObjectSource(t)
+            '_f = propertyAlias
+            _op = New ObjectProperty(t, propertyAlias)
         End Sub
 
         Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
-            _os = os
-            _f = propertyAlias
+            '_os = os
+            '_f = propertyAlias
+            _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
         Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
-            _os = os
-            _f = propertyAlias
+            '_os = os
+            '_f = propertyAlias
+            _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
         Protected Friend Sub New(ByVal en As String, ByVal propertyAlias As String)
-            _os = New ObjectSource(en)
-            _f = propertyAlias
+            '_os = New ObjectSource(en)
+            '_f = propertyAlias
+            _op = New ObjectProperty(en, propertyAlias)
         End Sub
 
         Protected Friend Sub New(ByVal en As String, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
-            _os = New ObjectSource(en)
-            _f = propertyAlias
+            '_os = New ObjectSource(en)
+            '_f = propertyAlias
+            _op = New ObjectProperty(en, propertyAlias)
         End Sub
 
-        Protected ReadOnly Property ObjectSource() As ObjectSource
-            Get
-                Return _os
-            End Get
-        End Property
+        'Protected ReadOnly Property ObjectSource() As ObjectSource
+        '    Get
+        '        Return _os
+        '    End Get
+        'End Property
 
-        Protected ReadOnly Property Field() As String
+        'Protected ReadOnly Property Field() As String
+        '    Get
+        '        Return _f
+        '    End Get
+        'End Property
+
+        Protected ReadOnly Property ObjectProp() As ObjectProperty
             Get
-                Return _f
+                Return _op
             End Get
         End Property
 
         Protected Overrides Function CreateFilter(ByVal v As Values.IFilterValue, ByVal oper As FilterOperation) As Core.IFilter
-            Return New EntityFilter(ObjectSource, Field, v, oper)
+            Return New EntityFilter(_op, v, oper)
         End Function
 
         Protected Overrides Function GetLink(ByVal fl As Core.IFilter) As PredicateLink
@@ -299,11 +314,11 @@ Namespace Criteria
                 ConditionCtor = New Condition.ConditionConstructor
             End If
             ConditionCtor.AddFilter(fl, ConditionOper)
-            Return New PredicateLink(ObjectSource, CType(ConditionCtor, Condition.ConditionConstructor))
+            Return New PredicateLink(_op.ObjectSource, CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As System.Type, ByVal joinField As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
+            Dim j As New JoinFilter(ObjectProp, t, joinField, FilterOperation.Equal)
             Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
         End Function
     End Class
@@ -372,15 +387,15 @@ Namespace Criteria
         Inherits PredicateBase
 
         Private _format As String
-        Private _values() As Pair(Of Object, String)
+        Private _values() As FieldReference
 
-        Protected Friend Sub New(ByVal format As String, ByVal values() As Pair(Of Object, String))
+        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As FieldReference)
             MyBase.New(Nothing, Nothing)
             _format = format
             _values = values
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal values() As Pair(Of Object, String), _
+        Protected Friend Sub New(ByVal format As String, ByVal values() As FieldReference, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             _format = format

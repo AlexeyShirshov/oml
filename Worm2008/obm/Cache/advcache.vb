@@ -5,6 +5,7 @@ Imports System.ComponentModel
 Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
+Imports System.Collections.Generic
 
 Namespace Cache
 
@@ -14,6 +15,11 @@ Namespace Cache
             NeedLoad
             CantApplyFilter
         End Enum
+
+        Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, _
+            ByVal start As Integer, ByVal length As Integer, _
+            ByVal withLoad() As Boolean, _
+            ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadonlyMatrix
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
         Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
@@ -156,6 +162,19 @@ Namespace Cache
         Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = CType(weak_list, ReadOnlyEntityList(Of T))
             Return c
+        End Function
+
+        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
+            Dim m As ReadonlyMatrix = CType(weak_list, ReadonlyMatrix)
+            If Not (start = 0 AndAlso (m.Count = length OrElse length = Integer.MaxValue)) Then
+                Dim l As New List(Of ObjectModel.ReadOnlyCollection(Of _IEntity))
+                For i As Integer = start To Math.Min(start + length, m.Count) - 1
+                    l.Add(m(i))
+                Next
+                Return New ReadonlyMatrix(l)
+            Else
+                Return m
+            End If
         End Function
     End Class
 
@@ -385,6 +404,10 @@ Namespace Cache
                 End If
             Next
             Return CType(OrmManager.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
+        End Function
+
+        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
+            Throw New NotImplementedException
         End Function
     End Class
 

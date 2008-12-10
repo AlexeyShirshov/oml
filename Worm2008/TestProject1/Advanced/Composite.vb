@@ -90,13 +90,13 @@ Public Class CompositeSchema
         Return MyBase.GetJoins(left, right)
     End Function
 
-    Public Function GetEditableSchema() As IMultiTableWithM2MSchema Implements IReadonlyObjectSchema.GetEditableSchema
+    Public Function GetEditableSchema() As IEntitySchema Implements IReadonlyObjectSchema.GetEditableSchema
         Return New CompositeEditableSchema
     End Function
 End Class
 
 Public Class CompositeEditableSchema
-    Implements IMultiTableWithM2MSchema
+    Implements IEntitySchema
 
     Private _idx As OrmObjectIndex
     Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
@@ -105,36 +105,36 @@ Public Class CompositeEditableSchema
         First
     End Enum
 
-    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IMultiTableWithM2MSchema.GetFieldColumnMap
+    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
-            idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "msg", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableWithM2MSchema.GetJoins
-        Return Nothing
-    End Function
+    'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableWithM2MSchema.GetJoins
+    '    Return Nothing
+    'End Function
 
-    Public Function GetTables() As SourceFragment() Implements IMultiTableWithM2MSchema.GetTables
-        Return _tables
-    End Function
+    'Public Function GetTables() As SourceFragment() Implements IMultiTableWithM2MSchema.GetTables
+    '    Return _tables
+    'End Function
 
-    Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelation() Implements Worm.Entities.Meta.IMultiTableWithM2MSchema.GetM2MRelations
-        Return Nothing
-    End Function
+    'Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelation() Implements Worm.Entities.Meta.ISchemaWithM2M.GetM2MRelations
+    '    Return Nothing
+    'End Function
 
-    Public Function GetSuppressedFields() As String() Implements Worm.Entities.Meta.IEntitySchema.GetSuppressedFields
-        Return Nothing
-    End Function
+    'Public Function GetSuppressedFields() As String() Implements Worm.Entities.Meta.IEntitySchema.GetSuppressedFields
+    '    Return Nothing
+    'End Function
 
-    Public Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Entities.Meta.IEntitySchema.ChangeValueType
-        newvalue = value
-        Return False
-    End Function
+    'Public Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Entities.Meta.IEntitySchem.ChangeValueType
+    '    newvalue = value
+    '    Return False
+    'End Function
 
     Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
         Get

@@ -66,7 +66,7 @@ Namespace Database
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
                 Return True
             End Function
 
@@ -122,7 +122,7 @@ Namespace Database
             '    End Get
             'End Property
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -134,7 +134,7 @@ Namespace Database
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -465,7 +465,7 @@ Namespace Database
                 End Using
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
                 Dim mt As Type = _obj.GetType
                 Dim t As Type = GetType(T)
                 Dim ct As Type = _mgr.MappingEngine.GetConnectedType(mt, t)
@@ -515,7 +515,7 @@ Namespace Database
                 End If
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
                 Dim ids As New List(Of Object)
                 For Each o As T In col
                     ids.Add(o.Identifier)
@@ -564,7 +564,7 @@ Namespace Database
 
             End Sub
 
-            'Public Overrides Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean
+            'Public Overrides Function Validate(ByVal ce As CachedItem) As Boolean
             '    Dim m As M2MCache = CType(ce, M2MCache)
             'End Function
         End Class

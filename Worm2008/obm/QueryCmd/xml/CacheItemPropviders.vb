@@ -5,6 +5,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Xml
 Imports System.Xml.XPath
 Imports Worm.Criteria.Joins
+Imports Worm.Cache
 
 Namespace Query.Xml
     Partial Public Class XmlQueryExecutor
@@ -33,8 +34,8 @@ Namespace Query.Xml
                 Return r
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
-                Return New OrmManager.CachedItem(GetEntities(), _mgr.Cache)
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
+                Return New CachedItem(GetEntities(), _mgr.Cache)
             End Function
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _

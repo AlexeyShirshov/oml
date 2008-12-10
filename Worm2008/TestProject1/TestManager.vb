@@ -1321,7 +1321,7 @@ Imports Worm.Query
             _prev = s
         End Sub
 
-        Public Sub changed(ByVal sender As IEntity, ByVal args As Worm.Entities.Entity.PropertyChangedEventArgs)
+        Public Sub changed(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
             Assert.AreEqual("34f0asdofmasdf", args.CurrentValue)
             Assert.AreEqual(_prev, args.PreviousValue)
             Assert.AreEqual("Str", args.PropertyAlias)

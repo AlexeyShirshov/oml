@@ -54,7 +54,7 @@ Imports Worm.Criteria.Joins
         Dim t2 As New ObjectAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.Select(t1).SetJoins(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).SelectAgg(AggCtor.Count)
+        q.Select(t1).Join(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).SelectAgg(AggCtor.Count)
 
         Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q2.Select(t1).SelectAgg(AggCtor.Count)

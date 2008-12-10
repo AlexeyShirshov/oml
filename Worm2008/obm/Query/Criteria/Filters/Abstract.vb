@@ -59,6 +59,6 @@ Namespace Criteria.Core
         Inherits ITemplate
         Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
-        Sub SetType(ByVal [alias] As ObjectAlias)
+        'Sub SetType(ByVal [alias] As ObjectAlias)
     End Interface
 End Namespace

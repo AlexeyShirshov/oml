@@ -455,7 +455,7 @@ Namespace Linq
                         ElseIf m.Expression.Type Is GetType(Date) Then
                             Select Case m.Member.Name
                                 Case "Year"
-                                    Dim p As Pair(Of Object, String) = Nothing
+                                    Dim p As FieldReference = Nothing
                                     Dim ev As EntityPropValue = TryCast(b._exp.Value, EntityPropValue)
                                     Dim pr As SelectExpression = Nothing
                                     If ev Is Nothing Then
@@ -464,12 +464,11 @@ Namespace Linq
                                         pr = ev.OrmProp
                                     End If
                                     If pr.Table Is Nothing Then
-                                        p = New Pair(Of Object, String)(pr.ObjectSource, pr.PropertyAlias)
+                                        p = New FieldReference(pr.ObjectProperty)
                                     Else
-                                        p = New Pair(Of Object, String)(pr.Table, pr.Column)
+                                        p = New FieldReference(pr.Table, pr.Column)
                                     End If
-                                    _exp = New UnaryExp(New CustomValue(_gen.GetYear, _
-                                        New Pair(Of Object, String)() {p}))
+                                    _exp = New UnaryExp(New CustomValue(_gen.GetYear, p))
                                 Case Else
                                     Throw New NotImplementedException(String.Format( _
                                         "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
@@ -575,12 +574,12 @@ Namespace Linq
         Protected Function GetSO(ByVal exp As UnaryExp) As SortLink
             Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
             If e IsNot Nothing Then
-                Return Worm.Query.SCtor.prop(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
+                Return Worm.Query.SCtor.prop(e.OrmProp.ObjectProperty)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
                     Dim p As SelectExpression = _q.GetProperty(ce.Alias)
-                    Return Worm.Query.SCtor.prop(p.ObjectSource, p.PropertyAlias)
+                    Return Worm.Query.SCtor.prop(p.ObjectProperty)
                 Else
                     Throw New NotSupportedException
                 End If

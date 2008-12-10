@@ -132,7 +132,7 @@ Imports Worm.Sorting
             Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
-            q.Joins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.propJoins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
             Assert.AreEqual(39, q.ToSimpleListDyn(Of Integer)(mgr)(0))
 
@@ -170,7 +170,7 @@ Imports Worm.Sorting
             })
             q.Select(t)
 
-            Dim o As New Grouping("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
+            Dim o As New Grouping("left({0},1)", "Pref", New FieldReference(t, "Title"))
             q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(SCtor.Custom("Count desc"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)

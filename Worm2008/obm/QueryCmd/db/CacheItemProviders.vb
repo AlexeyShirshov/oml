@@ -4,6 +4,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.OrmManager
+Imports Worm.Cache
 
 Namespace Query.Database
 
@@ -59,10 +60,10 @@ Namespace Query.Database
                 _dic = Nothing
 
                 Dim str As String
-                If t Is Nothing Then
+                If _q.Table IsNot Nothing Then
                     str = _q.Table.RawName
                 Else
-                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
+                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
                 End If
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
@@ -196,6 +197,23 @@ Namespace Query.Database
                 Return l
             End Function
 
+            Public Function GetSimpleValues(ByVal t As Type) As IList
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+
+                Using cmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                    ', dbm, Query, GetType(ReturnType), _j, _f
+                    MakeStatement(cmd)
+
+                    Return ExecStmt(cmd, t)
+                End Using
+            End Function
+
+            Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand, ByVal t As Type) As IList
+                Dim l As IList = CType(_mgr, OrmReadOnlyDBManager).GetSimpleValues(cmd, t)
+                _q.ExecCount += 1
+                Return l
+            End Function
+
             Protected Function GetFieldsIdx(ByVal q As QueryCmd) As Collections.IndexedCollection(Of String, MapField2Column)
                 Dim c As New OrmObjectIndex
 
@@ -278,7 +296,7 @@ Namespace Query.Database
             '    End If
             'End Sub
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
                 Return New CachedItem(GetEntities(), _mgr.Cache)
             End Function
         End Class
@@ -392,16 +410,16 @@ Namespace Query.Database
             '    End Get
             'End Property
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
                 Dim r As ReadOnlyEntityList(Of ReturnType) = CType(GetEntities(), ReadOnlyEntityList(Of ReturnType))
                 Return GetCacheItem(r)
             End Function
 
-            Public Overridable Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
+            Public Overridable Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
                 Return _GetCacheItem(col)
             End Function
 
-            Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
+            Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As CachedItem
 
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
                 Dim s As Date = Nothing
@@ -415,7 +433,7 @@ Namespace Query.Database
                 If _f.Length > 0 Then
                     f = _f(0)
                 End If
-                Return New OrmManager.CachedItem(Sort, s, f, col, _mgr)
+                Return New CachedItem(Sort, s, f, col, _mgr)
             End Function
 
             'Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
@@ -599,7 +617,7 @@ Namespace Query.Database
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
                 Return ValidateFromCache()
             End Function
         End Class
@@ -641,7 +659,7 @@ Namespace Query.Database
             '    Return _MakeStatement(SelectedType)
             'End Function
 
-            'Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
+            'Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As CachedItem
             '    Return _GetCacheItem(col, SelectedType)
             'End Function
         End Class
@@ -674,7 +692,7 @@ Namespace Query.Database
         '        Throw New NotSupportedException
         '    End Function
 
-        '    Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManager.CachedItem
+        '    Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As CachedItem
         '        Dim ids As New List(Of Object)
         '        For Each o As ReturnType In col
         '            ids.Add(o.Identifier)
@@ -682,12 +700,12 @@ Namespace Query.Database
         '        Return GetCacheItem(ids)
         '    End Function
 
-        '    Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+        '    Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
         '        Return GetCacheItem(GetValuesInternal(withLoad))
         '    End Function
 
-        '    Protected Overloads Function GetCacheItem(ByVal ids As List(Of Object)) As OrmManager.CachedItem
-        '        Return New OrmManager.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
+        '    Protected Overloads Function GetCacheItem(ByVal ids As List(Of Object)) As CachedItem
+        '        Return New M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
         '    End Function
 
         '    Protected Function GetValuesInternal(ByVal withLoad As Boolean) As List(Of Object)

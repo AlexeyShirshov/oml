@@ -165,7 +165,7 @@ Imports Worm.Criteria.Joins
             Dim q As New QueryCmd()
             q.Select(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
-            q.Joins = New QueryJoin() {New QueryJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.propJoins = New QueryJoin() {New QueryJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
             q.Select(New SelectExpression() {New SelectExpression(t_entity4, "ID"), New SelectExpression(t_entity4, "Title")})
 
             q.Sort(SCtor.prop(t_entity4, "Title").desc)
@@ -190,15 +190,15 @@ Imports Worm.Criteria.Joins
             Dim t_entity5 As Type = GetType(Entity5)
             Dim q As New QueryCmd()
             q.Select(t_entity4)
-            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID")
+            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID")
 
             Assert.AreEqual(12, q.ToAnonymList(mgr).Count)
 
-            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
+            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
 
             Assert.AreEqual(3, q.ToAnonymList(mgr).Count)
 
-            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").left_join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
+            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").left_join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
 
             Assert.AreEqual(12, q.ToAnonymList(mgr).Count)
         End Using
@@ -228,7 +228,7 @@ Imports Worm.Criteria.Joins
             Dim t_entity5 As Type = GetType(Entity5)
 
             Dim q As New QueryCmd()
-            q.Joins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
+            q.propJoins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
             q = q.Where(PCtor.prop(t_entity4, "Title").[like]("%b")). _
                 Select(FCtor.prop(t_entity, "ID").Add(t_entity4, "Title"))
 
@@ -246,7 +246,7 @@ Imports Worm.Criteria.Joins
             Dim q As New QueryCmd()
             q = q.Where(PCtor.exists( _
                         New QueryCmd().Select("Table3"). _
-                            SetJoins(JCtor.join(t1).onM2M("Table3")). _
+                            Join(JCtor.join(t1).onM2M("Table3")). _
                             Where(PCtor.prop("Table3", "Code").eq(2)))).Select(t1)
 
             Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
@@ -1022,4 +1022,5 @@ Imports Worm.Criteria.Joins
             Assert.IsTrue(t.InternalProperties.IsLoaded)
         Next
     End Sub
+
 End Class

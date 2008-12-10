@@ -746,7 +746,7 @@ Namespace Database.Storedprocs
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
             _donthit = True
-            'Dim ce As New OrmManager.CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
+            'Dim ce As New CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
             mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, rr, GetColumns)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
@@ -770,7 +770,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyObjectList(Of T)
-            'Dim ce As OrmManager.CachedItem = CType(MyBase.GetResult(mgr), OrmManager.CachedItem)
+            'Dim ce As CachedItem = CType(MyBase.GetResult(mgr), CachedItem)
             '_count = ce.GetCount(mgr)
             Dim wl As Object = MyBase.GetResult(mgr)
             Dim tt As Type = GetType(T)

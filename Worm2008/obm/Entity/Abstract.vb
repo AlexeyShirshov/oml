@@ -18,6 +18,37 @@ Namespace Entities
         End Property
     End Class
 
+    Public Class PropertyChangedEventArgs
+        Inherits EventArgs
+
+        Private _prev As Object
+        Public ReadOnly Property PreviousValue() As Object
+            Get
+                Return _prev
+            End Get
+        End Property
+
+        Private _current As Object
+        Public ReadOnly Property CurrentValue() As Object
+            Get
+                Return _current
+            End Get
+        End Property
+
+        Private _fieldName As String
+        Public ReadOnly Property PropertyAlias() As String
+            Get
+                Return _fieldName
+            End Get
+        End Property
+
+        Public Sub New(ByVal propertyAlias As String, ByVal prevValue As Object, ByVal currentValue As Object)
+            _fieldName = propertyAlias
+            _prev = prevValue
+            _current = currentValue
+        End Sub
+    End Class
+
     Public Interface _IEntity
         Inherits IEntity
         Sub BeginLoading()
@@ -47,6 +78,7 @@ Namespace Entities
         ReadOnly Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
+        Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
     End Interface
 
     Public Interface _ICachedEntity
@@ -102,7 +134,7 @@ Namespace Entities
     End Interface
 
     Public Interface IFactory
-        Sub CreateObject(ByVal field As String, ByVal value As Object)
+        Function CreateObject(ByVal field As String, ByVal value As Object) As _IEntity
     End Interface
 
     Public Interface _ICachedEntityEx
@@ -156,7 +188,7 @@ Namespace Entities
     Public Interface _IKeyEntity
         Inherits IKeyEntity
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
-        Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2
+        Function GetAccept(ByVal m As M2MCache) As AcceptState2
         'Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
         'Function GetAllEditable() As Generic.IList(Of EditableListBase)
         Sub RejectM2MIntermidiate()
@@ -170,7 +202,7 @@ Namespace Entities
 
         Private _key As String
         Private _id As String
-        Private _e As OrmManager.M2MCache
+        Private _e As M2MCache
         'Public Sub New(ByVal el As EditableList, ByVal sort As Sort, ByVal key As String, ByVal id As String)
         '    Me.el = el
         '    Me.sort = sort
@@ -178,7 +210,7 @@ Namespace Entities
         '    _id = id
         'End Sub
 
-        Public ReadOnly Property CacheItem() As OrmManager.M2MCache
+        Public ReadOnly Property CacheItem() As M2MCache
             Get
                 Return _e
             End Get
@@ -190,7 +222,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Sub New(ByVal e As OrmManager.M2MCache, ByVal key As String, ByVal id As String)
+        Public Sub New(ByVal e As M2MCache, ByVal key As String, ByVal id As String)
             _e = e
             _key = key
             _id = id
@@ -209,8 +241,8 @@ Namespace Entities
             '        Return False
             '    End If
             'End If
-            'For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
-            '    Dim m As OrmManager.M2MCache = o.First
+            'For Each o As Pair(Of M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
+            '    Dim m As M2MCache = o.First
             '    If m.Entry.SubType Is el.SubType AndAlso m.Filter IsNot Nothing Then
             '        Dim dic As IDictionary = OrmManager.GetDic(mgr.Cache, o.Second.First)
             '        dic.Remove(o.Second.Second)

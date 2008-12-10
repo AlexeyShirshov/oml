@@ -89,7 +89,7 @@ Imports Worm.Criteria.Joins
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
 
-        q.SetJoins(JCtor.join(GetType(Table3)).[on](GetType(Table3), "Ref").eq(GetType(Table1), "ID"))
+        q.Join(JCtor.join(GetType(Table3)).[on](GetType(Table3), "Ref").eq(GetType(Table1), "ID"))
 
         Assert.AreEqual(2, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -111,7 +111,7 @@ Imports Worm.Criteria.Joins
 
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
-        q.SetJoins(JCtor.join("Table3").onM2M(GetType(Table1)))
+        q.Join(JCtor.join("Table3").onM2M(GetType(Table1)))
         q.Where(PCtor.prop("Table3", "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)

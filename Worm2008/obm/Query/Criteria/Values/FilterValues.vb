@@ -39,27 +39,28 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Private _v() As Pair(Of Object, String)
-        Public ReadOnly Property Values() As Pair(Of Object, String)()
+        Private _v() As FieldReference
+        Public ReadOnly Property Values() As FieldReference()
             Get
                 Return _v
             End Get
         End Property
 
-        Public Sub New(ByVal format As String, ByVal values() As Pair(Of Object, String))
+        Public Sub New(ByVal format As String, ByVal ParamArray values() As FieldReference)
             _f = format
             _v = values
         End Sub
 
         Public Function _ToString() As String Implements IFilterValue._ToString
             Dim l As New List(Of String)
-            For Each v As Pair(Of Object, String) In _v
-                Dim t As SourceFragment = TryCast(v.First, SourceFragment)
-                If t IsNot Nothing Then
-                    l.Add(t.RawName & "$" & v.Second)
-                Else
-                    l.Add(t.ToString & "$" & v.Second)
-                End If
+            For Each v As FieldReference In _v
+                'Dim t As SourceFragment = TryCast(v.First, SourceFragment)
+                'If t IsNot Nothing Then
+                '    l.Add(t.RawName & "$" & v.Second)
+                'Else
+                '    l.Add(t.ToString & "$" & v.Second)
+                'End If
+                l.Add(v.ToString)
             Next
             Return String.Format(_f, l.ToArray)
         End Function
@@ -962,7 +963,7 @@ Namespace Criteria.Values
             Dim qp As Cache.IDependentTypes = CType(_q, Cache.IQueryDependentTypes).Get(mpe)
             If Cache.IsEmpty(qp) Then
                 Dim dt As New Cache.DependentTypes
-                Dim types As IEnumerable(Of Type) = Nothing
+                Dim types As ICollection(Of Type) = Nothing
                 If _q.GetSelectedTypes(mpe, types) Then
                     dt.AddBoth(types)
                 End If

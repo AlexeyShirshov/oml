@@ -9,123 +9,229 @@ Namespace Criteria.Joins
         Implements Core.IFilter
 
         'Friend _d1 As Pair(Of String)
-        Friend _e1 As Pair(Of ObjectSource, String)
-        Friend _t1 As Pair(Of SourceFragment, String)
+        'Friend _e1 As Pair(Of ObjectSource, String)
+        'Friend _t1 As Pair(Of SourceFragment, String)
 
         'Friend _d2 As Pair(Of String)
-        Friend _e2 As Pair(Of ObjectSource, String)
-        Friend _t2 As Pair(Of SourceFragment, String)
+        'Friend _e2 As Pair(Of ObjectSource, String)
+        'Friend _t2 As Pair(Of SourceFragment, String)
+
+        Private _l As FieldReference
+        Private _r As FieldReference
 
         Friend _oper As FilterOperation
 
-        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If t IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(t), propertyAlias)
-            End If
-            _e1 = p
+#Region " Ctors "
 
-            p = Nothing
-            If t2 IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If t IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(t), propertyAlias)
+            'End If
+            '_e1 = p
+
+            'p = Nothing
+            'If t2 IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'End If
+            '_e2 = p
+
+            Dim f As FieldReference = Nothing
+            If t IsNot Nothing Then
+                f = New FieldReference(t, propertyAlias)
             End If
-            _e2 = p
+            _l = f
+
+            If t2 IsNot Nothing Then
+                f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If os IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(os, propertyAlias)
-            End If
-            _e1 = p
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If os IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(os, propertyAlias)
+            'End If
+            '_e1 = p
 
-            p = Nothing
-            If t2 IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'p = Nothing
+            'If t2 IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If os IsNot Nothing Then
+                f = New FieldReference(os, propertyAlias)
             End If
-            _e2 = p
+            _l = f
+
+            If t2 IsNot Nothing Then
+                f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal op As ObjectProperty, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If op.ObjectSource IsNot Nothing Then
+                f = New FieldReference(op)
+            End If
+            _l = f
+
+            If t2 IsNot Nothing Then
+                f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If Not String.IsNullOrEmpty(entityName) Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName), propertyAlias)
-            End If
-            _e1 = p
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If Not String.IsNullOrEmpty(entityName) Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName), propertyAlias)
+            'End If
+            '_e1 = p
 
-            p = Nothing
-            If Not String.IsNullOrEmpty(entityName2) Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
+            'p = Nothing
+            'If Not String.IsNullOrEmpty(entityName2) Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If Not String.IsNullOrEmpty(entityName) Then
+                f = New FieldReference(entityName, propertyAlias)
             End If
-            _e2 = p
+            _l = f
+
+            If Not String.IsNullOrEmpty(entityName2) Then
+                f = New FieldReference(entityName2, propertyAlias2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim t As Pair(Of SourceFragment, String) = Nothing
-            If table IsNot Nothing Then
-                t = New Pair(Of SourceFragment, String)(table, column)
-            End If
-            _t1 = t
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If t2 IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If t2 IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
             End If
-            _e2 = p
+            _l = f
+
+            If t2 IsNot Nothing Then
+                f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim t As Pair(Of SourceFragment, String) = Nothing
-            If table IsNot Nothing Then
-                t = New Pair(Of SourceFragment, String)(table, column)
-            End If
-            _t1 = t
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If os IsNot Nothing Then
-                p = New Pair(Of ObjectSource, String)(os, propertyAlias2)
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If os IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(os, propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
             End If
-            _e2 = p
+            _l = f
+
+            If os IsNot Nothing Then
+                f = New FieldReference(os, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal prop As ObjectProperty, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
+            End If
+            _l = f
+
+            If prop.ObjectSource IsNot Nothing Then
+                f = New FieldReference(prop)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim t As Pair(Of SourceFragment, String) = Nothing
-            If table IsNot Nothing Then
-                t = New Pair(Of SourceFragment, String)(table, column)
-            End If
-            _t1 = t
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
-            Dim p As Pair(Of ObjectSource, String) = Nothing
-            If Not String.IsNullOrEmpty(entityName2) Then
-                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If Not String.IsNullOrEmpty(entityName2) Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
             End If
-            _e2 = p
+            _l = f
+
+            If Not String.IsNullOrEmpty(entityName2) Then
+                f = New FieldReference(entityName2, propertyAlias2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal operation As FilterOperation)
-            Dim t As Pair(Of SourceFragment, String) = Nothing
-            If table IsNot Nothing Then
-                t = New Pair(Of SourceFragment, String)(table, column)
-            End If
-            _t1 = t
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
-            t = Nothing
-            If table2 IsNot Nothing Then
-                t = New Pair(Of SourceFragment, String)(table2, column2)
+            't = Nothing
+            'If table2 IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table2, column2)
+            'End If
+            '_t2 = t
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
             End If
-            _t2 = t
+            _l = f
+
+            If table2 IsNot Nothing Then
+                f = New FieldReference(table2, column2)
+            End If
+            _r = f
 
             _oper = operation
         End Sub
@@ -142,9 +248,26 @@ Namespace Criteria.Joins
         Protected Sub New()
         End Sub
 
+#End Region
+
         'Public Function GetStaticString() As String Implements IFilter.GetStaticString
         '    Throw New NotSupportedException
         'End Function
+
+        Public ReadOnly Property Left() As FieldReference
+            Get
+                Return _l
+            End Get
+        End Property
+
+        Public Property Right() As FieldReference
+            Get
+                Return _r
+            End Get
+            Set(ByVal value As FieldReference)
+                _r = value
+            End Set
+        End Property
 
         Public Function ReplaceFilter(ByVal replacement As Core.IFilter, ByVal replacer As Core.IFilter) As Core.IFilter Implements Core.IFilter.ReplaceFilter
             If Not Equals(replacement) Then
@@ -166,34 +289,37 @@ Namespace Criteria.Joins
             '    ) OrElse ( _
             '    (Equals(_t1, obj._t1) AndAlso Equals(_t2, obj._t2)) OrElse (Equals(_t1, obj._t2) AndAlso Equals(_t2, obj._t1)) _
             '    )
-            Dim v1 As Object = _e1
-            Dim ve1 As Object = obj._e1
-            If _e1 Is Nothing Then
-                If _t1 Is Nothing Then
-                    'v1 = _d1
-                    've1 = obj._d1
-                Else
-                    v1 = _t1
-                    ve1 = obj._t1
-                End If
-            End If
+            'Dim v1 As Object = _e1
+            'Dim ve1 As Object = obj._e1
+            'If _e1 Is Nothing Then
+            '    If _t1 Is Nothing Then
+            '        'v1 = _d1
+            '        've1 = obj._d1
+            '    Else
+            '        v1 = _t1
+            '        ve1 = obj._t1
+            '    End If
+            'End If
 
-            Dim v2 As Object = _e2
-            Dim ve2 As Object = obj._e2
-            If v2 Is Nothing Then
-                If _t2 Is Nothing Then
-                    'v2 = _d2
-                    've2 = obj._d2
-                Else
-                    v2 = _t2
-                    ve2 = obj._e2
-                End If
-            End If
+            'Dim v2 As Object = _e2
+            'Dim ve2 As Object = obj._e2
+            'If v2 Is Nothing Then
+            '    If _t2 Is Nothing Then
+            '        'v2 = _d2
+            '        've2 = obj._d2
+            '    Else
+            '        v2 = _t2
+            '        ve2 = obj._e2
+            '    End If
+            'End If
 
-            Dim b As Boolean = (Equals(v1, ve1) AndAlso Equals(v2, ve2)) _
-                OrElse (Equals(v1, ve2) AndAlso Equals(v2, ve1))
+            'Dim b As Boolean = (Equals(v1, ve1) AndAlso Equals(v2, ve2)) _
+            '    OrElse (Equals(v1, ve2) AndAlso Equals(v2, ve1))
 
-            Return b
+            'Return b
+
+            Return (_l.Equals(obj._l) AndAlso _r.Equals(obj._r)) OrElse _
+                (_l.Equals(obj._r) AndAlso _r.Equals(obj._l))
         End Function
 
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of Core.IFilter) Implements Core.IFilter.GetAllFilters
@@ -207,26 +333,27 @@ Namespace Criteria.Joins
         Private Function _ToString() As String Implements Core.IFilter._ToString
             Dim sb As New StringBuilder
 
-            If _e1 IsNot Nothing Then
-                sb.Append(_e1.First.ToStaticString).Append(_e1.Second).Append(" - ")
-            ElseIf _t1 IsNot Nothing Then
-                sb.Append(_t1.First.RawName).Append(_t1.Second).Append(" - ")
-                'ElseIf _d1 IsNot Nothing Then
-                '    sb.Append(_d1.First).Append(_d1.Second).Append(" - ")
-                'Else
-                '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
-            End If
+            'If _e1 IsNot Nothing Then
+            '    sb.Append(_e1.First.ToStaticString).Append(_e1.Second).Append(" - ")
+            'ElseIf _t1 IsNot Nothing Then
+            '    sb.Append(_t1.First.RawName).Append(_t1.Second).Append(" - ")
+            '    'ElseIf _d1 IsNot Nothing Then
+            '    '    sb.Append(_d1.First).Append(_d1.Second).Append(" - ")
+            '    'Else
+            '    '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
+            'End If
 
-            If _e2 IsNot Nothing Then
-                sb.Append(_e2.First.ToStaticString).Append(_e2.Second).Append(" - ")
-            ElseIf _t2 IsNot Nothing Then
-                sb.Append(_t2.First.RawName).Append(_t2.Second).Append(" - ")
-                'ElseIf _d2 IsNot Nothing Then
-                '    sb.Append(_d2.First).Append(_d2.Second).Append(" - ")
-                'Else
-                '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
-            End If
+            'If _e2 IsNot Nothing Then
+            '    sb.Append(_e2.First.ToStaticString).Append(_e2.Second).Append(" - ")
+            'ElseIf _t2 IsNot Nothing Then
+            '    sb.Append(_t2.First.RawName).Append(_t2.Second).Append(" - ")
+            '    'ElseIf _d2 IsNot Nothing Then
+            '    '    sb.Append(_d2.First).Append(_d2.Second).Append(" - ")
+            '    'Else
+            '    '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
+            'End If
 
+            sb.Append(_l.ToString).Append(" - ").Append(_r.ToString).Append(" - ")
             Return sb.ToString
         End Function
 
@@ -246,26 +373,26 @@ Namespace Criteria.Joins
         Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
             Dim map As MapField2Column = Nothing
             Dim os As ObjectSource = Nothing
-            If _e1 IsNot Nothing Then
-                map = schema.GetObjectSchema(_e1.First.GetRealType(schema)).GetFieldColumnMap(_e1.Second)
-                os = _e1.First
+            If _l.Property.ObjectSource IsNot Nothing Then
+                map = schema.GetObjectSchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
+                os = _l.Property.ObjectSource
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
-            ElseIf _t1 IsNot Nothing Then
-                map = New MapField2Column(Nothing, _t1.Second, _t1.First)
+            ElseIf _l.Column IsNot Nothing Then
+                map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
             Else
                 Throw New InvalidOperationException
             End If
 
             Dim map2 As MapField2Column = Nothing
             Dim os2 As ObjectSource = Nothing
-            If _e2 IsNot Nothing Then
-                map2 = schema.GetObjectSchema(_e2.First.GetRealType(schema)).GetFieldColumnMap(_e2.Second)
-                os2 = _e2.First
+            If _r.Property.ObjectSource IsNot Nothing Then
+                map2 = schema.GetObjectSchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
+                os2 = _r.Property.ObjectSource
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
-            ElseIf _t2 IsNot Nothing Then
-                map2 = New MapField2Column(Nothing, _t2.Second, _t2.First)
+            ElseIf _r.Column IsNot Nothing Then
+                map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
             Else
                 Throw New InvalidOperationException
             End If
@@ -319,13 +446,15 @@ Namespace Criteria.Joins
 
         Protected Sub CopyTo(ByVal obj As JoinFilter)
             With obj
-                ._e1 = _e1
-                ._e2 = _e2
-                ._oper = _oper
-                ._t1 = _t1
-                ._t2 = _t2
+                '._e1 = _e1
+                '._e2 = _e2
+                '._oper = _oper
+                '._t1 = _t1
+                '._t2 = _t2
                 '._d1 = _d1
                 '._d2 = _d2
+                ._l = _l
+                ._r = _r
             End With
         End Sub
 
@@ -338,10 +467,10 @@ Namespace Criteria.Joins
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
-                    If fl._e1 IsNot Nothing AndAlso fl._e1.First.GetRealType(schema) Is t AndAlso fl._e1.Second = propertyAlias Then
-                        f = SetJF(fl._e2, fl._t2, Nothing, value, fl._oper)
-                    ElseIf fl._e2 IsNot Nothing AndAlso fl._e2.First.GetRealType(schema) Is t AndAlso fl._e2.Second = propertyAlias Then
-                        f = SetJF(fl._e1, fl._t1, Nothing, value, fl._oper)
+                    If fl._l.Property.ObjectSource IsNot Nothing AndAlso fl._l.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._l.Property.Field = propertyAlias Then
+                        f = SetJF(fl._l.Property, value, fl._oper)
+                    ElseIf fl._r.Property.ObjectSource IsNot Nothing AndAlso fl._r.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._r.Property.Field = propertyAlias Then
+                        f = SetJF(fl._r.Property, value, fl._oper)
                         'ElseIf fl._d1 IsNot Nothing Then
                         '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
                         '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then
@@ -362,18 +491,23 @@ Namespace Criteria.Joins
             Return Nothing
         End Function
 
-        Private Shared Function SetJF(ByVal e As Pair(Of ObjectSource, String), ByVal t As Pair(Of SourceFragment, String), _
-                               ByVal d As Pair(Of String), ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
-            If e IsNot Nothing Then
-                Return New EntityFilter(e.First, e.Second, value, oper)
-            ElseIf t IsNot Nothing Then
-                Return New TableFilter(t.First, t.Second, value, oper)
-                'ElseIf d IsNot Nothing Then
-                '    Return New Criteria.Core.EntityFilter(d.First, d.Second, value, oper)
-            Else
-                Throw New InvalidOperationException
-            End If
+        Private Shared Function SetJF(ByVal op As ObjectProperty, _
+                               ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
+            Return New EntityFilter(op, value, oper)
         End Function
+
+        'Private Shared Function SetJF(ByVal e As Pair(Of ObjectSource, String), ByVal t As Pair(Of SourceFragment, String), _
+        '                       ByVal d As Pair(Of String), ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
+        '    If e IsNot Nothing Then
+        '        Return New EntityFilter(e.First, e.Second, value, oper)
+        '    ElseIf t IsNot Nothing Then
+        '        Return New TableFilter(t.First, t.Second, value, oper)
+        '        'ElseIf d IsNot Nothing Then
+        '        '    Return New Criteria.Core.EntityFilter(d.First, d.Second, value, oper)
+        '    Else
+        '        Throw New InvalidOperationException
+        '    End If
+        'End Function
 
         Public Shared Function ChangeEntityJoinToLiteral(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal literal As String) As IFilter
             Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New LiteralValue(literal))

@@ -361,26 +361,26 @@ Namespace Entities
         '    End Function
         'End Class
 
-        Private Class ChangedEventHelper
-            Implements IDisposable
+        'Private Class ChangedEventHelper
+        '    Implements IDisposable
 
-            Private _value As Object
-            Private _fieldName As String
-            Private _obj As KeyEntity
-            Private _d As IDisposable
+        '    Private _value As Object
+        '    Private _fieldName As String
+        '    Private _obj As KeyEntity
+        '    Private _d As IDisposable
 
-            Public Sub New(ByVal obj As KeyEntity, ByVal propertyAlias As String, ByVal d As IDisposable)
-                _fieldName = propertyAlias
-                _obj = obj
-                _value = obj.GetValue(propertyAlias)
-                _d = d
-            End Sub
+        '    Public Sub New(ByVal obj As KeyEntity, ByVal propertyAlias As String, ByVal d As IDisposable)
+        '        _fieldName = propertyAlias
+        '        _obj = obj
+        '        _value = obj.GetValue(propertyAlias)
+        '        _d = d
+        '    End Sub
 
-            Public Sub Dispose() Implements IDisposable.Dispose
-                _d.Dispose()
-                _obj.RaisePropertyChanged(_fieldName, _value)
-            End Sub
-        End Class
+        '    Public Sub Dispose() Implements IDisposable.Dispose
+        '        _d.Dispose()
+        '        _obj.RaisePropertyChanged(_fieldName, _value)
+        '    End Sub
+        'End Class
 
         'Public Class ManagerRequiredArgs
         '    Inherits EventArgs
@@ -1213,7 +1213,7 @@ Namespace Entities
             Return True
         End Function
 
-        Private Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2 Implements _IKeyEntity.GetAccept
+        Private Function GetAccept(ByVal m As M2MCache) As AcceptState2 Implements _IKeyEntity.GetAccept
             Using SyncHelper(False)
                 For Each a As AcceptState2 In _needAccept
                     If a.CacheItem Is m Then
@@ -2459,9 +2459,9 @@ Namespace Entities
         '    MyBase.SetValue(pi, c, Nothing, value)
         'End Sub
 
-        Public Overridable Overloads Sub CreateObject(ByVal propertyAlias As String, ByVal value As Object) Implements IFactory.CreateObject
-
-        End Sub
+        Public Overridable Overloads Function CreateObject(ByVal propertyAlias As String, ByVal value As Object) As _IEntity Implements IFactory.CreateObject
+            Return Nothing
+        End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
             If propertyAlias = OrmBaseT.PKName Then

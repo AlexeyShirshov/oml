@@ -323,12 +323,12 @@ Namespace Criteria.Conditions
             '    Return e
             'End Function
 
-            Public Sub SetType(ByVal [alias] As ObjectAlias) Implements IOrmFilterTemplate.SetType
-                Con.Left.GetFilterTemplate.SetType([alias])
-                If Con._right IsNot Nothing Then
-                    Con.Right.GetFilterTemplate.SetType([alias])
-                End If
-            End Sub
+            'Public Sub SetType(ByVal [alias] As ObjectAlias) Implements IOrmFilterTemplate.SetType
+            '    Con.Left.GetFilterTemplate.SetType([alias])
+            '    If Con._right IsNot Nothing Then
+            '        Con.Right.GetFilterTemplate.SetType([alias])
+            '    End If
+            'End Sub
 
             Protected ReadOnly Property Con() As EntityCondition
                 Get

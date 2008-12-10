@@ -12,15 +12,77 @@ Namespace Entities
         [Aggregate]
     End Enum
 
+    Public Class FieldReference
+        Private _op As ObjectProperty
+        Private _tf As Pair(Of SourceFragment, String)
+
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+            _op = New ObjectProperty(t, propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+            _op = New ObjectProperty(entityName, propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+            _op = New ObjectProperty([alias], propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal prop As ObjectProperty)
+            _op = prop
+        End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            _op = New ObjectProperty(os, propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String)
+            _tf = New Pair(Of SourceFragment, String)(table, column)
+        End Sub
+
+        Public ReadOnly Property [Property]() As ObjectProperty
+            Get
+                Return _op
+            End Get
+        End Property
+
+        Public ReadOnly Property Column() As Pair(Of SourceFragment, String)
+            Get
+                Return _tf
+            End Get
+        End Property
+
+        Public Overrides Function ToString() As String
+            If _tf IsNot Nothing Then
+                Return _tf.First.RawName & "$" & _tf.Second
+            Else
+                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
+            End If
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, FieldReference))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As FieldReference) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+
+            Return Object.Equals(_tf, obj._tf) OrElse Object.Equals(_op, obj._op)
+        End Function
+    End Class
+
     Public Class SelectExpression
         Implements Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
-        Private _field As String
-        Private _osrc As ObjectSource
+        'Private _field As String
+        'Private _osrc As ObjectSource
+        Private _op As ObjectProperty
         Private _table As SourceFragment
         Private _column As String
         'Private _custom As String
-        Private _values() As Pair(Of Object, String)
+        Private _values() As FieldReference
         Private _attr As Field2DbRelations
         Private _q As Worm.Query.QueryCmd
         Private _agr As AggregateBase
@@ -37,96 +99,107 @@ Namespace Entities
         'End Sub
 
         Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
-            _field = propertyAlias
-            _osrc = os
+            _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
 #Region " Public ctors "
 
 #Region " Type ctors "
-        Public Sub New(ByVal t As Type)
-            _osrc = New ObjectSource(t)
-        End Sub
+        'Public Sub New(ByVal t As Type)
+        '    _osrc = New ObjectSource(t)
+        'End Sub
 
-        Public Sub New(ByVal entityName As String)
-            _osrc = New ObjectSource(entityName)
-        End Sub
+        'Public Sub New(ByVal entityName As String)
+        '    _osrc = New ObjectSource(entityName)
+        'End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias)
-            _osrc = New ObjectSource([alias])
-        End Sub
+        'Public Sub New(ByVal [alias] As ObjectAlias)
+        '    _osrc = New ObjectSource([alias])
+        'End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(t)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(t)
+            _op = New ObjectProperty(t, propertyAlias)
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(entityName)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(entityName)
+            _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
         Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource([alias])
+            '_field = propertyAlias
+            '_osrc = New ObjectSource([alias])
+            _op = New ObjectProperty([alias], propertyAlias)
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal fieldAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(t)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(t)
+            _op = New ObjectProperty(t, propertyAlias)
             _falias = fieldAlias
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal fieldAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(entityName)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(entityName)
+            _op = New ObjectProperty(entityName, propertyAlias)
             _falias = fieldAlias
         End Sub
 
         Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource([alias])
+            '_field = propertyAlias
+            '_osrc = New ObjectSource([alias])
+            _op = New ObjectProperty([alias], propertyAlias)
             _falias = fieldAlias
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
-            _field = propertyAlias
-            _osrc = New ObjectSource(t)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(t)
+            _op = New ObjectProperty(t, propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(into)
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(t)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(t)
+            _op = New ObjectProperty(t, propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(intoEntityName)
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
-            _field = propertyAlias
-            _osrc = New ObjectSource(entityName)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(entityName)
+            _op = New ObjectProperty(entityName, propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(into)
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource(entityName)
+            '_field = propertyAlias
+            '_osrc = New ObjectSource(entityName)
+            _op = New ObjectProperty(entityName, propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(intoEntityName)
         End Sub
 
         Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
-            _field = propertyAlias
-            _osrc = New ObjectSource([alias])
+            '_field = propertyAlias
+            '_osrc = New ObjectSource([alias])
+            _op = New ObjectProperty([alias], propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(into)
         End Sub
 
         Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
-            _field = propertyAlias
-            _osrc = New ObjectSource([alias])
+            '_field = propertyAlias
+            '_osrc = New ObjectSource([alias])
+            _op = New ObjectProperty([alias], propertyAlias)
             _falias = intoPropertyAlias
             _dst = New ObjectSource(intoEntityName)
         End Sub
@@ -143,13 +216,13 @@ Namespace Entities
             _falias = fieldAlias
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String), ByVal fieldAlias As String)
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal fieldAlias As String)
             _column = computed
             _values = values
             _falias = fieldAlias
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String))
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference)
             MyClass.New(computed, values, Nothing)
         End Sub
 
@@ -193,7 +266,7 @@ Namespace Entities
 
         Public ReadOnly Property PropType() As PropType
             Get
-                If _osrc IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then
+                If _op.ObjectSource IsNot Nothing Then
                     Return Entities.PropType.ObjectProperty
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
                     Return Entities.PropType.TableColumn
@@ -238,10 +311,10 @@ Namespace Entities
 
         Public Property PropertyAlias() As String
             Get
-                Return _field
+                Return _op.Field
             End Get
             Protected Friend Set(ByVal value As String)
-                _field = value
+                _op = New ObjectProperty(_op.ObjectSource, value)
                 RaiseOnChange()
             End Set
         End Property
@@ -256,21 +329,18 @@ Namespace Entities
             End Set
         End Property
 
-        'Public ReadOnly Property ObjectAlias() As ObjectAlias
-        '    Get
-        '        If _osrc Is Nothing Then
-        '            Return Nothing
-        '        End If
-        '        Return _osrc.ObjectAlias
-        '    End Get
-        'End Property
-
-        Public Property ObjectSource() As ObjectSource
+        Public ReadOnly Property ObjectSource() As ObjectSource
             Get
-                Return _osrc
+                Return _op.ObjectSource
             End Get
-            Friend Set(ByVal value As ObjectSource)
-                _osrc = value
+        End Property
+
+        Public Property ObjectProperty() As ObjectProperty
+            Get
+                Return _op
+            End Get
+            Friend Set(ByVal value As ObjectProperty)
+                _op = value
             End Set
         End Property
 
@@ -308,18 +378,18 @@ Namespace Entities
             End Get
         End Property
 
-        Public Property Values() As Pair(Of Object, String)()
+        Public Property Values() As FieldReference()
             Get
                 Return _values
             End Get
-            Protected Set(ByVal value As Pair(Of Object, String)())
+            Protected Set(ByVal value As FieldReference())
                 _values = value
             End Set
         End Property
 
         Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-            If _osrc IsNot Nothing Then
-                Return _osrc.ToStaticString & "$" & _field
+            If _op.ObjectSource IsNot Nothing Then
+                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -333,7 +403,8 @@ Namespace Entities
                     ElseIf _agr IsNot Nothing Then
                         Return _agr.ToString
                     Else
-                        Return _field
+                        Throw New NotSupportedException
+                        'Return _field
                     End If
                 End If
             End If
@@ -354,8 +425,8 @@ Namespace Entities
                 Dim b As Boolean
                 If _values IsNot Nothing Then
                     b = _column = s._column
-                ElseIf Not String.IsNullOrEmpty(_field) Then
-                    b = _field = s._field AndAlso _osrc.Equals(s._osrc)
+                ElseIf _op.ObjectSource IsNot Nothing Then
+                    b = _op.Field = s._op.Field AndAlso _op.ObjectSource.Equals(_op.ObjectSource)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
                     b = _column = s._column AndAlso _table Is s._table
                 ElseIf _q IsNot Nothing Then
@@ -379,8 +450,8 @@ Namespace Entities
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            If _osrc IsNot Nothing Then
-                Return _osrc.ToStaticString & "$" & _field
+            If _op.ObjectSource IsNot Nothing Then
+                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -394,7 +465,8 @@ Namespace Entities
                     ElseIf _agr IsNot Nothing Then
                         Return _agr.ToString
                     Else
-                        Return _field
+                        Throw New NotSupportedException
+                        'Return _field
                     End If
                 End If
             End If
