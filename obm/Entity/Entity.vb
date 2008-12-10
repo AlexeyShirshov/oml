@@ -29,37 +29,6 @@ Namespace Entities
             End Sub
         End Class
 
-        Public Class PropertyChangedEventArgs
-            Inherits EventArgs
-
-            Private _prev As Object
-            Public ReadOnly Property PreviousValue() As Object
-                Get
-                    Return _prev
-                End Get
-            End Property
-
-            Private _current As Object
-            Public ReadOnly Property CurrentValue() As Object
-                Get
-                    Return _current
-                End Get
-            End Property
-
-            Private _fieldName As String
-            Public ReadOnly Property PropertyAlias() As String
-                Get
-                    Return _fieldName
-                End Get
-            End Property
-
-            Public Sub New(ByVal fieldName As String, ByVal prevValue As Object, ByVal currentValue As Object)
-                _fieldName = fieldName
-                _prev = prevValue
-                _current = currentValue
-            End Sub
-        End Class
-
         Private _state As ObjectState = ObjectState.Created
 
         <NonSerialized()> _
@@ -78,7 +47,7 @@ Namespace Entities
         Private _schema As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
-        Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
+        Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChanged
 
 #If DEBUG Then
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)

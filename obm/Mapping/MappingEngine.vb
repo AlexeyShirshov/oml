@@ -131,7 +131,8 @@ Public Class ObjectMappingEngine
 
         Dim sup() As String = Nothing
         If schema IsNot Nothing Then
-            sup = schema.GetSuppressedFields()
+            Dim s As IObjectSchemaBase = TryCast(schema, IObjectSchemaBase)
+            If s IsNot Nothing Then sup = s.GetSuppressedFields()
         End If
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
@@ -239,7 +240,9 @@ Public Class ObjectMappingEngine
     'End Function
 
     Public Function GetMappedFields(ByVal schema As IEntitySchema) As ICollection(Of MapField2Column)
-        Dim sup() As String = schema.GetSuppressedFields()
+        Dim sup() As String = Nothing
+        Dim s As IObjectSchemaBase = TryCast(schema, IObjectSchemaBase)
+        If s IsNot Nothing Then sup = s.GetSuppressedFields()
         If sup Is Nothing OrElse sup.Length = 0 Then
             Return schema.GetFieldColumnMap.Values
         End If
@@ -319,7 +322,7 @@ Public Class ObjectMappingEngine
     'End Function
 
     Public Function GetM2MRelations(ByVal s As IEntitySchema) As M2MRelation()
-        Dim schema As IMultiTableWithM2MSchema = TryCast(s, IMultiTableWithM2MSchema)
+        Dim schema As ISchemaWithM2M = TryCast(s, ISchemaWithM2M)
         If schema IsNot Nothing Then
             Return schema.GetM2MRelations
         Else
@@ -342,16 +345,16 @@ Public Class ObjectMappingEngine
 
         Dim sch As IEntitySchema = GetObjectSchema(maintype)
         Dim editable As IReadonlyObjectSchema = TryCast(sch, IReadonlyObjectSchema)
-        Dim schema As IMultiTableWithM2MSchema = Nothing
+        Dim schema As ISchemaWithM2M = Nothing
         If editable IsNot Nothing Then
-            schema = editable.GetEditableSchema
+            schema = TryCast(editable.GetEditableSchema, ISchemaWithM2M)
         Else
-            schema = TryCast(sch, IMultiTableWithM2MSchema)
+            schema = TryCast(sch, ISchemaWithM2M)
         End If
         If schema IsNot Nothing Then
             Dim m As M2MRelation() = schema.GetM2MRelations
             If m Is Nothing AndAlso editable IsNot Nothing Then
-                schema = TryCast(sch, IMultiTableWithM2MSchema)
+                schema = TryCast(sch, ISchemaWithM2M)
                 If schema IsNot Nothing Then
                     m = schema.GetM2MRelations
                 End If
@@ -581,10 +584,12 @@ Public Class ObjectMappingEngine
         Return ChangeValueType(GetObjectSchema(type), c, o)
     End Function
 
-    Public Function ChangeValueType(ByVal schema As IEntitySchema, ByVal c As ColumnAttribute, ByVal o As Object) As Object
-        If schema Is Nothing Then
-            Throw New ArgumentNullException("schema")
+    Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal c As ColumnAttribute, ByVal o As Object) As Object
+        If s Is Nothing Then
+            Throw New ArgumentNullException("s")
         End If
+
+        Dim schema As IObjectSchemaBase = TryCast(s, IObjectSchemaBase)
 
         If o Is Nothing Then Return DBNull.Value
 
@@ -602,7 +607,7 @@ Public Class ObjectMappingEngine
 
         Dim v As Object = o
 
-        If schema.ChangeValueType(c, o, v) Then
+        If schema IsNot Nothing AndAlso schema.ChangeValueType(c, o, v) Then
             Return v
         End If
 
@@ -1650,29 +1655,25 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Shared Function ExtractValues(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal aliases As IPrepareTable, _
-        ByVal _values() As Pair(Of Object, String)) As List(Of String)
+        ByVal _values() As FieldReference) As List(Of String)
         Dim values As New List(Of String)
         'Dim lastt As Type = Nothing
         Dim d As String = schema.Delimiter
         If stmt IsNot Nothing Then
             d = stmt.Selector
         End If
-        For Each p As Pair(Of Object, String) In _values
-            Dim o As Object = p.First
-            If o Is Nothing Then
-                Throw New NullReferenceException
-            End If
-
-            If TypeOf o Is Type Then
-                Dim t As Type = CType(o, Type)
+        For Each p As FieldReference In _values
+            If p.Property.ObjectSource IsNot Nothing Then
+                Dim t As Type = p.Property.ObjectSource.GetRealType(schema) 'CType(o, Type)
                 'If Not GetType(IEntity).IsAssignableFrom(t) Then
                 '    Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
                 'End If
                 'lastt = t
 
-                FormatType(t, stmt, p, schema, aliases, values, Nothing)
-            ElseIf TypeOf o Is SourceFragment Then
-                Dim tbl As SourceFragment = CType(o, SourceFragment)
+                FormatType(t, stmt, p.Property.Field, schema, aliases, values, Nothing)
+            ElseIf p.Column IsNot Nothing Then
+                Dim tbl As SourceFragment = p.Column.First 'CType(o, SourceFragment)
+                Dim clm As String = p.Column.Second
                 Dim [alias] As String = Nothing
                 If aliases IsNot Nothing Then
                     Debug.Assert(aliases.ContainsKey(tbl, Nothing), "There is not alias for table " & tbl.RawName)
@@ -1683,25 +1684,25 @@ Public Class ObjectMappingEngine
                     End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & d & p.Second)
+                    values.Add([alias] & d & clm)
                 Else
-                    values.Add(p.Second)
+                    values.Add(clm)
                 End If
-            ElseIf TypeOf o Is ObjectSource Then
-                Dim src As ObjectSource = CType(o, ObjectSource)
-                Dim t As Type = src.GetRealType(schema)
+                'ElseIf TypeOf o Is ObjectSource Then
+                '    Dim src As ObjectSource = CType(o, ObjectSource)
+                '    Dim t As Type = src.GetRealType(schema)
 
-                FormatType(t, stmt, p, schema, aliases, values, src)
-            ElseIf o Is Nothing Then
-                values.Add(p.Second)
+                '    FormatType(t, stmt, p, schema, aliases, values, src)
+                'ElseIf o Is Nothing Then
+                '    values.Add(p.Second)
             Else
-                Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
+                Throw New NotSupportedException '(String.Format("Type {0} is not supported", o.GetType))
             End If
         Next
         Return values
     End Function
 
-    Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal p As Pair(Of Object, String), _
+    Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal fld As String, _
                                   ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
                                   ByVal values As List(Of String), ByVal os As ObjectSource)
         If Not GetType(IEntity).IsAssignableFrom(t) Then
@@ -1716,7 +1717,7 @@ Public Class ObjectMappingEngine
         Dim oschema As IEntitySchema = schema.GetObjectSchema(t)
         Dim tbl As SourceFragment = Nothing
         Dim map As MapField2Column = Nothing
-        Dim fld As String = p.Second
+        'Dim fld As String = p.Second
         If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
             fld = map._columnName
             tbl = map._tableName

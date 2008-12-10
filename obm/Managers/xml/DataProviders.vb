@@ -62,7 +62,7 @@ Namespace Xml
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
                 Return True
             End Function
 
@@ -118,7 +118,7 @@ Namespace Xml
             '    End Get
             'End Property
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -130,7 +130,7 @@ Namespace Xml
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then

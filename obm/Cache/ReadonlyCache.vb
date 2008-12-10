@@ -28,11 +28,11 @@ Namespace Cache
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
 
         Public Event RegisterEntityCreation(ByVal sender As CacheBase, ByVal e As IEntity)
-        Public Event RegisterObjectCreation(ByVal sender As CacheBase, ByVal t As Type, ByVal id As Integer)
+        'Public Event RegisterObjectCreation(ByVal sender As CacheBase, ByVal t As Type, ByVal id As Integer)
         Public Event RegisterObjectRemoval(ByVal sender As CacheBase, ByVal obj As ICachedEntity)
 
         Public Event RegisterCollectionCreation(ByVal sender As CacheBase, ByVal t As Type)
-        Public Event RegisterCollectionRemoval(ByVal sender As CacheBase, ByVal ce As OrmManager.CachedItem)
+        Public Event RegisterCollectionRemoval(ByVal sender As CacheBase, ByVal ce As CachedItem)
         Public Event CacheHasModification(ByVal sender As CacheBase)
         Public Event CacheHasnotModification(ByVal sender As CacheBase)
 
@@ -81,12 +81,12 @@ Namespace Cache
             RaiseEvent RegisterEntityCreation(Me, obj)
         End Sub
 
-        Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
-            RaiseEvent RegisterObjectCreation(Me, t, id)
-#If TraceCreation Then
-            _added.add(new Pair(Of date,Pair(Of type,Integer))(Now,New Pair(Of type,Integer)(t,id)))
-#End If
-        End Sub
+        '        Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
+        '            RaiseEvent RegisterObjectCreation(Me, t, id)
+        '#If TraceCreation Then
+        '            _added.add(new Pair(Of date,Pair(Of type,Integer))(Now,New Pair(Of type,Integer)(t,id)))
+        '#End If
+        '        End Sub
 
 #If TraceCreation Then
         Private _added As ArrayList = ArrayList.Synchronized(New ArrayList)
@@ -149,14 +149,14 @@ Namespace Cache
             RaiseEvent RegisterCollectionCreation(Me, t)
         End Sub
 
-        Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As OrmManager.CachedItem)
+        Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As CachedItem)
             RaiseEvent RegisterCollectionRemoval(Me, ce)
         End Sub
 
         Public Overridable Sub RemoveEntry(ByVal key As String, ByVal id As String)
             Dim dic As IDictionary = CType(_filters(key), System.Collections.IDictionary)
             If dic IsNot Nothing Then
-                Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
+                Dim ce As CachedItem = TryCast(dic(id), CachedItem)
                 dic.Remove(id)
                 If ce IsNot Nothing Then
                     RegisterRemovalCacheItem(ce)
@@ -450,7 +450,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEntries(ByVal obj As _IKeyEntity, ByVal name As String) As ICollection(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As _IKeyEntity, ByVal name As String) As ICollection(Of Pair(Of M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -464,7 +464,7 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
 #End If
-                Dim etrs As New List(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
+                Dim etrs As New List(Of Pair(Of M2MCache, Pair(Of String, String)))
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
                 If _m2m_dep.TryGetValue(name, l) Then
@@ -472,12 +472,12 @@ Namespace Cache
                         Dim dic As IDictionary = _GetDictionary(p.Key)
                         If dic IsNot Nothing Then
                             For Each id As String In p.Value.Keys
-                                Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
+                                Dim ce As M2MCache = TryCast(dic(id), M2MCache)
                                 If ce Is Nothing Then
                                     'dic.Remove(id)
                                     RemoveEntry(p.Key, id)
                                 Else
-                                    etrs.Add(New Pair(Of OrmManager.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
+                                    etrs.Add(New Pair(Of M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
                                 End If
                             Next
                         End If

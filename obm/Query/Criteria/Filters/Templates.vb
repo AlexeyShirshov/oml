@@ -76,34 +76,46 @@ Namespace Criteria.Core
         Inherits TemplateBase
         Implements IOrmFilterTemplate
 
-        Private _os As ObjectSource
-        Private _fieldname As String
-
+        'Private _os As ObjectSource
+        'Private _fieldname As String
+        Private _op As ObjectProperty
         'Private _appl As Boolean
+
+        Public Sub New(ByVal op As ObjectProperty, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+            MyBase.New(oper)
+            '_os = New ObjectSource(t)
+            '_fieldname = propertyAlias
+            _op = op
+            '_appl = appl
+        End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _os = New ObjectSource(t)
-            _fieldname = propertyAlias
+            '_os = New ObjectSource(t)
+            '_fieldname = propertyAlias
+            _op = New ObjectProperty(t, propertyAlias)
             '_appl = appl
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _os = New ObjectSource(entityName)
-            _fieldname = propertyAlias
+            '_os = New ObjectSource(entityName)
+            '_fieldname = propertyAlias
+            _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
         Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _os = New ObjectSource([alias])
-            _fieldname = propertyAlias
+            '_os = New ObjectSource([alias])
+            '_fieldname = propertyAlias
+            _op = New ObjectProperty([alias], propertyAlias)
         End Sub
 
         Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _os = os
-            _fieldname = propertyAlias
+            '_os = os
+            '_fieldname = propertyAlias
+            _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
         Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
@@ -111,12 +123,13 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim lt As Type = _os.AnyType
+            Dim os As ObjectSource = _op.ObjectSource
+            Dim lt As Type = os.AnyType
             If lt Is Nothing Then
-                If Not String.IsNullOrEmpty(_os.AnyEntityName) Then
-                    lt = schema.GetTypeByEntityName(_os.AnyEntityName)
+                If Not String.IsNullOrEmpty(os.AnyEntityName) Then
+                    lt = schema.GetTypeByEntityName(os.AnyEntityName)
                 Else
-                    Throw New InvalidOperationException(String.Format("Type is not specified in filter: {0} {1}", _fieldname, OperToString))
+                    Throw New InvalidOperationException(String.Format("Type is not specified in filter: {0} {1}", PropertyAlias, OperToString))
                 End If
             End If
 
@@ -127,20 +140,21 @@ Namespace Criteria.Core
                 End If
                 Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
             Else
-                Dim v As Object = obj.GetValueOptimized(Nothing, _fieldname, oschema)
-                If _os.Type IsNot Nothing Then
-                    Return CreateEntityFilter(_os.Type, _fieldname, New ScalarValue(v), Operation)
-                ElseIf Not String.IsNullOrEmpty(_os.EntityName) Then
-                    Return CreateEntityFilter(_os.EntityName, _fieldname, New ScalarValue(v), Operation)
-                Else
-                    Return CreateEntityFilter(_os.ObjectAlias, _fieldname, New ScalarValue(v), Operation)
-                End If
+                Dim v As Object = obj.GetValueOptimized(Nothing, PropertyAlias, oschema)
+                'If _os.Type IsNot Nothing Then
+                '    Return CreateEntityFilter(_os.Type, _fieldname, New ScalarValue(v), Operation)
+                'ElseIf Not String.IsNullOrEmpty(_os.EntityName) Then
+                '    Return CreateEntityFilter(_os.EntityName, _fieldname, New ScalarValue(v), Operation)
+                'Else
+                '    Return CreateEntityFilter(_os.ObjectAlias, _fieldname, New ScalarValue(v), Operation)
+                'End If
+                Return New EntityFilter(_op, New ScalarValue(v), Operation)
             End If
         End Function
 
         Public ReadOnly Property ObjectSource() As ObjectSource
             Get
-                Return _os
+                Return _op.ObjectSource
             End Get
         End Property
 
@@ -158,19 +172,19 @@ Namespace Criteria.Core
 
         Public ReadOnly Property PropertyAlias() As String
             Get
-                Return _fieldname
+                Return _op.Field
             End Get
         End Property
 
-        Public Sub SetType(ByVal oa As ObjectAlias) Implements IOrmFilterTemplate.SetType
-            If _os Is Nothing Then
-                If oa.Type IsNot Nothing Then
-                    _os = New ObjectSource(oa.Type)
-                Else
-                    _os = New ObjectSource(oa.EntityName)
-                End If
-            End If
-        End Sub
+        'Public Sub SetType(ByVal oa As ObjectAlias) Implements IOrmFilterTemplate.SetType
+        '    If _os Is Nothing Then
+        '        If oa.Type IsNot Nothing Then
+        '            _os = New ObjectSource(oa.Type)
+        '        Else
+        '            _os = New ObjectSource(oa.EntityName)
+        '        End If
+        '    End If
+        'End Sub
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, OrmFilterTemplate))
@@ -180,7 +194,7 @@ Namespace Criteria.Core
             If obj Is Nothing Then
                 Return False
             End If
-            Return _os.Equals(obj._os) AndAlso _fieldname Is obj._fieldname AndAlso Operation = obj.Operation
+            Return ObjectSource.Equals(obj.ObjectSource) AndAlso PropertyAlias = PropertyAlias AndAlso Operation = obj.Operation
         End Function
 
         Public Overrides Function GetHashCode() As Integer
@@ -188,7 +202,7 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function GetStaticString() As String
-            Return _os.ToStaticString & _fieldname & OperToString()
+            Return ObjectSource.ToStaticString & PropertyAlias & OperToString()
         End Function
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash

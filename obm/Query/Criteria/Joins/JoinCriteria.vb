@@ -194,25 +194,25 @@ Namespace Criteria.Joins
         End Sub
 
         Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As JoinLink
-            _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource(t), propertyAlias)
+            _jf.Right = New FieldReference(New ObjectSource(t), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
         Public Function eq(ByVal entityName As String, ByVal propertyAlias As String) As JoinLink
-            _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource(entityName), propertyAlias)
+            _jf.Right = New FieldReference(New ObjectSource(entityName), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
         Public Function eq(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As JoinLink
-            _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource([alias]), propertyAlias)
+            _jf.Right = New FieldReference(New ObjectSource([alias]), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
         Public Function eq(ByVal table As SourceFragment, ByVal column As String) As JoinLink
-            _jf._t2 = New Pair(Of SourceFragment, String)(table, column)
+            _jf.Right = New FieldReference(table, column)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function

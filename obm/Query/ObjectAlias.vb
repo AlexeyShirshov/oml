@@ -217,6 +217,22 @@
             Me.ObjectSource = New ObjectSource([alias])
             Me.Field = propertyAlias
         End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            Me.ObjectSource = os
+            Me.Field = propertyAlias
+        End Sub
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            If obj Is Nothing OrElse Not TypeOf obj Is ObjectProperty Then
+                Return False
+            End If
+            Return Equals(CType(obj, ObjectProperty))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As ObjectProperty) As Boolean
+            Return ObjectSource.Equals(obj.ObjectSource) AndAlso Field = obj.Field
+        End Function
     End Structure
 
 End Namespace

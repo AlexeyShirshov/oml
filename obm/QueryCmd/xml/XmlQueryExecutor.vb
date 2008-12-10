@@ -41,5 +41,9 @@
         Public Sub ResetEntity1(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
             Throw New NotImplementedException
         End Sub
+
+        Public Function Exec1(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace

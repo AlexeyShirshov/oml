@@ -133,6 +133,7 @@
   <ItemGroup>
     <Compile Include="Cache\Abstract.vb" />
     <Compile Include="Cache\advcache.vb" />
+    <Compile Include="Cache\CacheItem.vb" />
     <Compile Include="Cache\classes.vb" />
     <Compile Include="Cache\NewObjectsStore.vb" />
     <Compile Include="Cache\ReadonlyCache.vb" />
@@ -163,6 +164,7 @@
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\ObjectAlias.vb" />
+    <Compile Include="Query\ReadonlyMatrix.vb" />
     <Compile Include="Query\Sorting.vb" />
     <Compile Include="Entity\Abstract.vb" />
     <Compile Include="Entity\Anonym.vb" />
@@ -172,7 +174,7 @@
     <Compile Include="Managers\Classes.vb" />
     <Compile Include="Managers\db\CacheItemProviders.vb" />
     <Compile Include="Managers\InnerMgrClasses.vb" />
-    <Compile Include="Managers\ReadonlyList.vb" />
+    <Compile Include="Query\ReadonlyList.vb" />
     <Compile Include="Managers\xml\DataProviders.vb" />
     <Compile Include="Managers\xml\XmlManager.vb" />
     <Compile Include="Mapping\Classes.vb" />

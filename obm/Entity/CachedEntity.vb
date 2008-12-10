@@ -997,7 +997,7 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(c, Me, value))
+                            value = CStr(fv.CreateValue(.Name, Me, value))
                         End If
 
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
@@ -1049,7 +1049,7 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(c, obj, value))
+                            value = CStr(fv.CreateValue(.Name, obj, value))
                         End If
 
                         If GetType(IKeyEntity).IsAssignableFrom(pi.PropertyType) Then
@@ -1694,7 +1694,7 @@ l1:
         Protected Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
             Dim l As New List(Of CachedEntity)
             'Using mc As IGetManager = GetMgr()
-            '    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
+            '    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
             '        Dim s As IListObjectConverter.ExtractListResult
             '        For Each obj As CachedEntity In o.First.GetObjectListNonGeneric(mc.Manager, False, False, s)
             '            If obj.HasChanges Then

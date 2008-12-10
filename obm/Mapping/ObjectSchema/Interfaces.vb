@@ -70,8 +70,8 @@ Namespace Entities.Meta
         Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As QueryJoin
     End Interface
 
-    Public Interface IMultiTableWithM2MSchema
-        Inherits IMultiTableObjectSchema
+    Public Interface ISchemaWithM2M
+        Inherits IEntitySchema
         Function GetM2MRelations() As M2MRelation()
     End Interface
 
@@ -80,15 +80,17 @@ Namespace Entities.Meta
     'End Interface
 
     Public Interface IOrmObjectSchema
-        Inherits IContextObjectSchema, IMultiTableWithM2MSchema
+        Inherits IObjectSchemaBase
+        Inherits IMultiTableObjectSchema
+        Inherits IContextObjectSchema, ISchemaWithM2M
     End Interface
 
     Public Interface IReadonlyObjectSchema
-        Function GetEditableSchema() As IMultiTableWithM2MSchema
+        Function GetEditableSchema() As IEntitySchema
     End Interface
 
     Public Interface IDBValueFilter
-        Function CreateValue(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
+        Function CreateValue(ByVal propertyAlias As String, ByVal obj As IEntity, ByVal value As Object) As Object
     End Interface
 
     Public Interface IPKInsertValues
@@ -164,7 +166,7 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IObjectSchemaBase
-        Inherits Worm.Entities.Meta.IEntitySchema
+        Inherits IEntitySchema
         Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         Function GetSuppressedFields() As String()
     End Interface

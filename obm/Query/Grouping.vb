@@ -15,9 +15,8 @@ Namespace Entities
 
         Public Sub New(ByVal p As SelectExpression)
             MyBase.New(p.Computed, p.Values, p.Column)
-            ObjectSource = p.ObjectSource
             Table = p.Table
-            PropertyAlias = p.PropertyAlias
+            ObjectProperty = p.ObjectProperty
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal field As String)
@@ -28,11 +27,11 @@ Namespace Entities
             MyBase.New(t, column)
         End Sub
 
-        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal field As String)
-            MyBase.new(t, column, field)
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal fieldAlias As String)
+            MyBase.new(t, column, fieldAlias)
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String), ByVal [alias] As String)
+        Public Sub New(ByVal computed As String, ByVal [alias] As String, ByVal ParamArray values() As FieldReference)
             MyBase.New(computed, values, [alias])
         End Sub
 

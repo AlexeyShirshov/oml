@@ -37,6 +37,10 @@ Namespace Criteria.Core
             MyBase.New(value, New OrmFilterTemplate(os, propertyAlias, operation))
         End Sub
 
+        Public Sub New(ByVal op As ObjectProperty, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+            MyBase.New(value, New OrmFilterTemplate(op, operation))
+        End Sub
+
         'Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
         '    MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
         '    _dbFilter = True
@@ -406,9 +410,10 @@ Namespace Criteria.Core
 
         Private _str As String
         Private _sstr As String
-        Private _values() As Pair(Of Object, String)
+        Private _values() As FieldReference
 
-        Public Sub New(ByVal format As String, ByVal value As IFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
+        Public Sub New(ByVal format As String, ByVal value As IFilterValue, _
+                       ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As FieldReference)
             MyBase.New(value)
             '_t = table
             '_field = field
@@ -474,12 +479,13 @@ Namespace Criteria.Core
             'Return String.Format(_format, o.ToString, _field) & TemplateBase.Oper2String(_oper)
             If String.IsNullOrEmpty(_sstr) Then
                 Dim values As New List(Of String)
-                For Each p As Pair(Of Object, String) In _values
-                    If p.First Is Nothing Then
-                        values.Add(p.Second)
-                    Else
-                        values.Add(p.First.ToString & "^" & p.Second)
-                    End If
+                For Each p As FieldReference In _values
+                    'If p.First Is Nothing Then
+                    '    values.Add(p.Second)
+                    'Else
+                    '    values.Add(p.First.ToString & "^" & p.Second)
+                    'End If
+                    values.Add(p.ToString)
                 Next
                 _sstr = String.Format(_format, values.ToArray) & OperationString
             End If

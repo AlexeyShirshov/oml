@@ -54,7 +54,7 @@
           <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
         </TypeIdentifier>
       </Delegate>
-      <Class Name="Worm.OrmManager.CachedItem" Collapsed="true">
+      <Class Name="Worm.Cache.CachedItem" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
         </TypeIdentifier>
@@ -103,7 +103,7 @@
         </TypeIdentifier>
         <Lollipop Position="0.2" />
       </Class>
-      <Class Name="Worm.OrmManager.M2MCache" Collapsed="true">
+      <Class Name="Worm.Cache.M2MCache" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
         </TypeIdentifier>

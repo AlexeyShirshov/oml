@@ -109,7 +109,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
                 PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
-            q.SetJoins(JCtor.join(tbl).[on](tbl, "ref_id").eq(GetType(Table1), "ID"))
+            q.Join(JCtor.join(tbl).[on](tbl, "ref_id").eq(GetType(Table1), "ID"))
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 

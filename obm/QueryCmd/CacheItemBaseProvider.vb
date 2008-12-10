@@ -4,6 +4,7 @@ Imports Worm.Entities
 Imports Worm.OrmManager
 Imports Worm.Criteria.Joins
 Imports Worm.Sorting
+Imports Worm.Cache
 
 Namespace Query
     Public MustInherit Class CacheItemBaseProvider
@@ -98,7 +99,7 @@ Namespace Query
 
                     Worm.Cache.Add2Cache(cache, dp, _key, _id)
 
-                    Dim types As IEnumerable(Of Type)
+                    Dim types As ICollection(Of Type) = Nothing
                     Dim rightType As Boolean = q.GetSelectedTypes(MappingEngine, types)
 
                     If _f IsNot Nothing AndAlso _f.Length > i Then
@@ -238,7 +239,11 @@ Namespace Query
             End Get
         End Property
 
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
+        Public Overridable Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
+            Return GetCacheItem(withLoad(0))
+        End Function
+
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
         Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
                                       ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 
@@ -344,7 +349,7 @@ Namespace Query
                 'If SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType) Then
                 '    l.Add(SelectedType)
                 'End If
-                Dim el As IEnumerable(Of Type) = Nothing
+                Dim el As ICollection(Of Type) = Nothing
                 If _q.GetSelectedTypes(Mgr.MappingEngine, el) Then
                     l.AddRange(el)
                 End If

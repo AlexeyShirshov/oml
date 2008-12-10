@@ -182,14 +182,14 @@ Namespace Sorting
 
 #Region " Typeless ctors "
 
-        Public Sub New(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
+        Public Sub New(ByVal sortExpression As String, ByVal values() As FieldReference)
             '    '_t = t
             MyBase.New(sortExpression, values)
             '    _custom = sortExpression
             '    _values = values
         End Sub
 
-        Public Sub New(ByVal prev As Sort, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
+        Public Sub New(ByVal prev As Sort, ByVal sortExpression As String, ByVal values() As FieldReference)
             MyBase.New(sortExpression, values)
             _prev = prev
             '_t = t
@@ -270,17 +270,17 @@ Namespace Sorting
         '    End Set
         'End Property
 
-        Public Property SortBy() As String
+        Public ReadOnly Property SortBy() As String
             Get
-                If Not String.IsNullOrEmpty(PropertyAlias) Then
-                    Return PropertyAlias
+                If ObjectProperty.ObjectSource IsNot Nothing Then
+                    Return ObjectProperty.Field
                 Else
                     Return Column
                 End If
             End Get
-            Set(ByVal value As String)
-                PropertyAlias = value
-            End Set
+            'Set(ByVal value As String)
+            '    PropertyAlias = value
+            'End Set
         End Property
 
         Public Property Order() As SortType

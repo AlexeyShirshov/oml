@@ -218,7 +218,7 @@ Namespace Cache
         Private _deletedTypes As New Dictionary(Of Type, Type)
         Private _m2mQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
 
-        Public Delegate Function EnumM2MCache(ByVal mgr As OrmManager, ByVal entity As OrmManager.M2MCache) As Boolean
+        Public Delegate Function EnumM2MCache(ByVal mgr As OrmManager, ByVal entity As M2MCache) As Boolean
 
         Public Event OnObjectUpdated(ByVal cache As OrmCache, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
         Public Event OnObjectAdded(ByVal cache As OrmCache, ByVal obj As _ICachedEntity)
@@ -451,10 +451,12 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub validate_AddCalculatedType(ByVal ts As IEnumerable(Of Type), _
+        Protected Friend Function validate_AddCalculatedType(ByVal ts As IEnumerable(Of Type), _
             ByVal key As String, ByVal id As String, ByVal f As IFilter, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object)
-            'Debug.WriteLine(t.Name & ": add dependent " & id)
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object) As Boolean
+
+            Dim r As Boolean
+
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
 #Else
@@ -467,14 +469,16 @@ Namespace Cache
                         tkey = c.GetEntityKey(filterInfo)
                     End If
                     Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
-                    l.Add(f, key, id)
+                    r = l.Add(f, key, id)
                 Next
                 'Dim h As List(Of String) = l.GetIds(key, f)
                 'If Not h.Contains(id) Then
                 '    h.Add(id)
                 'End If
             End Using
-        End Sub
+
+            Return r
+        End Function
 
         Protected Friend Sub validate_AddDependentObject(ByVal o As ICachedEntity, ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
@@ -731,7 +735,7 @@ Namespace Cache
                             'Dim b As Boolean = False
                             Dim remove As New List(Of String)
                             For Each id As String In p.Value.Keys
-                                Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
+                                Dim ce As M2MCache = TryCast(dic(id), M2MCache)
                                 If ce IsNot Nothing Then
                                     If Not f(mgr, ce) Then
                                         remove.Add(id)
@@ -1112,7 +1116,7 @@ l1:
             Dim ids As IEnumerable(Of String) = hid.GetIds(h)
             Dim rm As New List(Of String)
             For Each id As String In ids
-                Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
+                Dim ce As CachedItem = TryCast(dic(id), CachedItem)
                 Dim f As IEntityFilter = Nothing
                 If ce IsNot Nothing Then
                     f = TryCast(ce.Filter, IEntityFilter)
@@ -1193,7 +1197,7 @@ l1:
                 ids = hid.GetIds(h)
 
                 For Each id As String In ids
-                    Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
+                    Dim ce As CachedItem = TryCast(dic(id), CachedItem)
                     Dim f As IEntityFilter = Nothing
                     If ce IsNot Nothing Then
                         f = TryCast(ce.Filter, IEntityFilter)

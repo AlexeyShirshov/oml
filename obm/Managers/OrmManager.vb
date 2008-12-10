@@ -77,14 +77,14 @@ Partial Public MustInherit Class OrmManager
 #If TraceManagerCreation Then
     Private _callstack As String
 #End If
-    Private Function GetStart() As Integer
+    Protected Friend Function GetStart() As Integer
         If _externalFilter IsNot Nothing Then
             Return 0
         End If
         Return _start
     End Function
 
-    Private Function GetLength() As Integer
+    Protected Friend Function GetLength() As Integer
         If _externalFilter IsNot Nothing Then
             Return Integer.MaxValue
         End If
@@ -927,7 +927,7 @@ Partial Public MustInherit Class OrmManager
         Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
         RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
-        Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
+        Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
         succeeded = True
 
         If s = IListObjectConverter.ExtractListResult.NeedLoad Then
@@ -935,7 +935,7 @@ Partial Public MustInherit Class OrmManager
 l1:
             del.Renew = True
             ce = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-            r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
+            r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
             Assert(s = IListObjectConverter.ExtractListResult.Successed, "Withload should always successed")
         End If
 
@@ -1312,20 +1312,20 @@ l1:
         ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
-    Protected Friend Function GetFromCache2(Of T As {_IEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
 
-        Return GetFromCacheBase(Of T)(dic, sync, id, withLoad, del, Nothing)
+        Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
 
-        Return GetFromCacheBase(Of T)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
+        Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, AddressOf _ValCE(Of T))
     End Function
 
-    Protected Friend Function GetFromCacheBase(Of T As _IEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItem
+    Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        ByVal withLoad() As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItem
 
         Invariant()
 
@@ -1831,7 +1831,7 @@ l1:
 
                 Dim orm As _IKeyEntity = TryCast(obj, _IKeyEntity)
                 If orm IsNot Nothing Then
-                    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
+                    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
                         If Not o.First.Entry.HasChanges Then
                             Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
                             mdic.Remove(o.Second.Second)
@@ -1865,6 +1865,10 @@ l1:
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
         Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
+    End Function
+
+    Public Function GetDictionary(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
+        Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema, schema)
     End Function
 
     Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
@@ -2195,7 +2199,7 @@ l1:
     End Function
 
     Protected Friend Sub M2MCancel(ByVal mainobj As _IKeyEntity, ByVal t As Type)
-        For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
+        For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             If o.First.Entry.SubType Is t Then
                 o.First.Entry.Reject(Me, True)
             End If
@@ -2242,7 +2246,7 @@ l1:
         'Dim tt1 As Type = mainobj.GetType
         'Dim tt2 As Type = t
 
-        For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
+        For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             Dim m2me As M2MCache = o.First
             If m2me Is Nothing Then
                 Throw New OrmManagerException(String.Format("M2MCache entry is nothing for key:[{0}] and id:[{1}]. Quering type {2} for {3}; direct={4}", o.Second.First, o.Second.Second, t, mainobj.ObjName, direct))
@@ -3268,7 +3272,7 @@ l1:
                                     processedType.Add(acp.el.SubType)
                                 Next
                             End If
-                            For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
+                            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
                                 Dim m2me As M2MCache = o.First
                                 If m2me.Filter IsNot Nothing Then
                                     Dim dic As IDictionary = GetDic(_cache, o.Second.First)
