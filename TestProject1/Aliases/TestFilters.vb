@@ -59,8 +59,8 @@ Imports Worm.Criteria.Joins
         Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q2.Select(t1).SelectAgg(AggCtor.Count)
 
-        Assert.AreEqual(2, q.SingleSimpleDyn(Of Integer))
-        Assert.AreEqual(3, q2.SingleSimpleDyn(Of Integer))
+        Assert.AreEqual(2, q.SingleSimple(Of Integer))
+        Assert.AreEqual(3, q2.SingleSimple(Of Integer))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
@@ -71,7 +71,7 @@ Imports Worm.Criteria.Joins
 
         q.Select(t1.Type).Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
-        Assert.AreEqual(2, q.SingleSimpleDyn(Of Integer))
+        Assert.AreEqual(2, q.SingleSimple(Of Integer))
     End Sub
 
     <TestMethod()> _
@@ -82,7 +82,7 @@ Imports Worm.Criteria.Joins
 
         q.Select(t1).Where(PCtor.prop(t1, "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
-        Assert.AreEqual(1, q.SingleSimpleDyn(Of Integer))
+        Assert.AreEqual(1, q.SingleSimple(Of Integer))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
@@ -93,7 +93,7 @@ Imports Worm.Criteria.Joins
 
         q.Select(t1).Where(PCtor.prop(GetType(Table1), "Enum").eq(2)).SelectAgg(AggCtor.Count)
 
-        Assert.AreEqual(1, q.SingleSimpleDyn(Of Integer))
+        Assert.AreEqual(1, q.SingleSimple(Of Integer))
     End Sub
 
     <TestMethod()> _

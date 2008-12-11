@@ -1633,11 +1633,14 @@ l1:
                     c = CType(de.Key, ColumnAttribute)
                     If c.PropertyAlias = se.PropertyAlias Then
                         pi = CType(de.Value, Reflection.PropertyInfo)
+                        se._c = c
+                        se._pi = pi
                         Exit For
                     End If
                 Next
 
                 Dim att As Field2DbRelations = MappingEngine.GetAttributes(oschema, c)
+                se._realAtt = att
 
                 If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
@@ -1732,17 +1735,17 @@ l1:
                 Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
                 Dim oschema As IEntitySchema = types(se.ObjectSource)
 
-                Dim pi As Reflection.PropertyInfo = Nothing
-                Dim c As ColumnAttribute = Nothing
-                For Each de As DictionaryEntry In pdic(t)
-                    c = CType(de.Key, ColumnAttribute)
-                    If c.PropertyAlias = se.PropertyAlias Then
-                        pi = CType(de.Value, Reflection.PropertyInfo)
-                        Exit For
-                    End If
-                Next
+                Dim pi As Reflection.PropertyInfo = se._pi
+                Dim c As ColumnAttribute = se._c
+                'For Each de As DictionaryEntry In pdic(t)
+                '    c = CType(de.Key, ColumnAttribute)
+                '    If c.PropertyAlias = se.PropertyAlias Then
+                '        pi = CType(de.Value, Reflection.PropertyInfo)
+                '        Exit For
+                '    End If
+                'Next
 
-                Dim att As Field2DbRelations = MappingEngine.GetAttributes(oschema, c)
+                Dim att As Field2DbRelations = se._realAtt 'MappingEngine.GetAttributes(oschema, c)
                 If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                     Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
                     Dim fac As List(Of Pair(Of String, Object)) = Nothing

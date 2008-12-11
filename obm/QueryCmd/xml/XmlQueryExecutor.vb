@@ -22,9 +22,9 @@
             Throw New NotImplementedException
         End Function
 
-        Public Function ExecSimple1(Of CreateType As {New, Entities._ICachedEntity}, ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
-            Throw New NotImplementedException
-        End Function
+        'Public Function ExecSimple1(Of CreateType As {New, Entities._ICachedEntity}, ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
+        '    Throw New NotImplementedException
+        'End Function
 
         Public Sub Reset(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
             Throw New NotImplementedException

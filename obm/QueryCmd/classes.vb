@@ -19,8 +19,8 @@ Namespace Query
 
         Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix
 
-        Function ExecSimple(Of CreateType As {_ICachedEntity, New}, ReturnType)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
+        'Function ExecSimple(Of CreateType As {_ICachedEntity, New}, ReturnType)( _
+        '    ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
         Function ExecSimple(Of ReturnType)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
