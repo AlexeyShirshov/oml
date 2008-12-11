@@ -60,7 +60,7 @@ Imports Worm.Sorting
                 New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
             })
 
-            Dim i As Integer = q.ToSimpleList(Of Entity4, Integer)(mgr)(0)
+            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -75,7 +75,7 @@ Imports Worm.Sorting
             })
             q.Select(GetType(Entity4))
 
-            Dim i As Integer = q.SingleSimpleDyn(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.SingleSimple(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -134,25 +134,25 @@ Imports Worm.Sorting
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.propJoins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
-            Assert.AreEqual(39, q.ToSimpleListDyn(Of Integer)(mgr)(0))
+            Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
 
             q.Group = New ObjectModel.ReadOnlyCollection(Of Grouping)( _
                 New Grouping() {New Grouping(table, r.Column)} _
             )
 
-            Dim l As IList(Of Integer) = q.ToSimpleList(Of Entity4, Integer)(mgr)
+            Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
 
             q.propSort = SCtor.Custom("cnt desc")
-            l = q.ToSimpleList(Of Entity4, Integer)(mgr)
+            l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
             q.propSort = New Worm.Sorting.Sort(q.Aggregates(0), SortType.Desc)
-            l = q.ToSimpleList(Of Entity4, Integer)(mgr)
+            l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))

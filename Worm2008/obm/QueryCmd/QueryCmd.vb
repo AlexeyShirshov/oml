@@ -1617,7 +1617,7 @@ Namespace Query
 
 #Region " ToSimpleList "
 
-        Public Function ToSimpleListDyn(Of T)(ByVal mgr As OrmManager) As IList(Of T)
+        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManager) As IList(Of T)
             Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
             'Dim qt As Type = q.GetType
@@ -1629,7 +1629,7 @@ Namespace Query
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
 
-        Public Function ToSimpleListDyn(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
+        Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
                 'mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
@@ -1637,41 +1637,41 @@ Namespace Query
             End Using
         End Function
 
-        Public Function ToSimpleListDyn(Of T)() As IList(Of T)
+        Public Function ToSimpleList(Of T)() As IList(Of T)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Return ToSimpleListDyn(Of T)(_getMgr)
+            Return ToSimpleList(Of T)(_getMgr)
         End Function
 
-        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As IList(Of T)
-            Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
-            'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
-            'Dim qt As Type = q.GetType
-            'Dim mi As MethodInfo = qt.GetMethod("ToSimpleList")
-            'If mi Is Nothing Then
-            '    Throw New InvalidOperationException
-            'End If
-            'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
-            'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
-        End Function
+        'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As IList(Of T)
+        '    Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
+        '    'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
+        '    'Dim qt As Type = q.GetType
+        '    'Dim mi As MethodInfo = qt.GetMethod("ToSimpleList")
+        '    'If mi Is Nothing Then
+        '    '    Throw New InvalidOperationException
+        '    'End If
+        '    'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
+        '    'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
+        'End Function
 
-        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
-            End Using
-        End Function
+        'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
+        '    Using mgr As OrmManager = getMgr.CreateManager
+        '        'mgr.RaiseObjectCreation = True
+        '        AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
+        '        Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
+        '    End Using
+        'End Function
 
-        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)() As IList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
-            End If
+        'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)() As IList(Of T)
+        '    If _getMgr Is Nothing Then
+        '        Throw New InvalidOperationException("OrmManager required")
+        '    End If
 
-            Return ToSimpleList(Of CreateType, T)(_getMgr)
-        End Function
+        '    Return ToSimpleList(Of CreateType, T)(_getMgr)
+        'End Function
 #End Region
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
@@ -1961,32 +1961,86 @@ Namespace Query
 
 #Region " SingleSimple "
 
-        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+        'Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    End If
+        '    Return l(0)
+        'End Function
+
+        'Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    End If
+        '    Return l(0)
+        'End Function
+
+        'Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)() As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    End If
+        '    Return l(0)
+        'End Function
+
+        'Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    ElseIf l.Count = 1 Then
+        '        Return l(0)
+        '    End If
+        '    Return Nothing
+        'End Function
+
+        'Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    ElseIf l.Count = 1 Then
+        '        Return l(0)
+        '    End If
+        '    Return Nothing
+        'End Function
+
+        'Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)() As T
+        '    Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
+        '    If l.Count <> 1 Then
+        '        Throw New InvalidOperationException("Number of items is " & l.Count)
+        '    ElseIf l.Count = 1 Then
+        '        Return l(0)
+        '    End If
+        '    Return Nothing
+        'End Function
+
+        Public Function SingleSimple(Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             End If
             Return l(0)
         End Function
 
-        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+        Public Function SingleSimple(Of T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(getMgr)
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             End If
             Return l(0)
         End Function
 
-        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)() As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
+        Public Function SingleSimple(Of T)() As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)()
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             End If
             Return l(0)
         End Function
 
-        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+        Public Function [SingleOrDefaultSimple](Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then
@@ -1995,8 +2049,8 @@ Namespace Query
             Return Nothing
         End Function
 
-        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+        Public Function [SingleOrDefaultSimple](Of T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(getMgr)
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then
@@ -2005,62 +2059,8 @@ Namespace Query
             Return Nothing
         End Function
 
-        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)() As T
-            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            ElseIf l.Count = 1 Then
-                Return l(0)
-            End If
-            Return Nothing
-        End Function
-
-        Public Function SingleSimpleDyn(Of T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
-        End Function
-
-        Public Function SingleSimpleDyn(Of T)(ByVal getMgr As ICreateManager) As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(getMgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
-        End Function
-
-        Public Function SingleSimpleDyn(Of T)() As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)()
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
-        End Function
-
-        Public Function [SingleOrDefaultSimpleDyn](Of T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            ElseIf l.Count = 1 Then
-                Return l(0)
-            End If
-            Return Nothing
-        End Function
-
-        Public Function [SingleOrDefaultSimpleDyn](Of T)(ByVal getMgr As ICreateManager) As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(getMgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            ElseIf l.Count = 1 Then
-                Return l(0)
-            End If
-            Return Nothing
-        End Function
-
-        Public Function [SingleOrDefaultSimpleDyn](Of T)() As T
-            Dim l As IList(Of T) = ToSimpleListDyn(Of T)()
+        Public Function [SingleOrDefaultSimple](Of T)() As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)()
             If l.Count <> 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then

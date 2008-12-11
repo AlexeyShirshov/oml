@@ -110,7 +110,7 @@ Namespace Linq
 
                     'Else
                     If rt.IsValueType OrElse rt Is GetType(String) Then
-                        l = q.ToSimpleListDyn(Of TResult)(mgr)
+                        l = q.ToSimpleList(Of TResult)(mgr)
                     Else
                         If GetType(KeyEntity).IsAssignableFrom(rt) Then
                             l = CType(q.ToList(mgr), IList(Of TResult))
