@@ -409,7 +409,7 @@ Namespace Query.Database
             'Throw New InvalidOperationException
             Dim p As Provider(Of CreatedType) = GetProcessor(Of CreatedType)(mgr, query)
 
-            Return p.GetSimpleValues()
+            Return p.GetSimpleValues(GetType(ReturnType))
         End Function
 
         'Private Shared Function _GetCe(Of ReturnType As _ICachedEntity)( _
