@@ -885,44 +885,50 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("obj")
         End If
 
+        If obj.IsPropertyLoaded(propertyAlias) Then
+
+        End If
+
         Dim schema As IEntitySchema = GetObjectSchema(obj.GetType)
 
-        Dim pi As Reflection.PropertyInfo = Nothing
+        Return GetFieldValue(obj, propertyAlias, schema)
+        'Dim pi As Reflection.PropertyInfo = Nothing
 
-        If schema IsNot Nothing Then
-            pi = GetProperty(obj.GetType, schema, propertyAlias)
-        Else
-            pi = GetProperty(obj.GetType, propertyAlias)
-        End If
+        'If schema IsNot Nothing Then
+        '    pi = GetProperty(obj.GetType, schema, propertyAlias)
+        'Else
+        '    pi = GetProperty(obj.GetType, propertyAlias)
+        'End If
 
-        If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
-        End If
+        'If pi Is Nothing Then
+        '    Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
+        'End If
 
-        Return GetFieldValue(obj, propertyAlias, pi, schema)
+        'Return GetFieldValue(obj, propertyAlias, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
+    'Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
+    '    If obj Is Nothing Then
+    '        Throw New ArgumentNullException("obj")
+    '    End If
 
-        Dim pi As Reflection.PropertyInfo = Nothing
+    '    Dim pi As Reflection.PropertyInfo = Nothing
 
-        If schema IsNot Nothing Then
-            pi = GetProperty(obj.GetType, schema, propertyAlias)
-        Else
-            pi = GetProperty(obj.GetType, propertyAlias)
-        End If
+    '    If schema IsNot Nothing Then
+    '        pi = GetProperty(obj.GetType, schema, propertyAlias)
+    '    Else
+    '        pi = GetProperty(obj.GetType, propertyAlias)
+    '    End If
 
-        If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
-        End If
+    '    If pi Is Nothing Then
+    '        Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
+    '    End If
 
-        Return GetFieldValue(obj, propertyAlias, pi, schema)
-    End Function
+    '    Return GetFieldValue(obj, propertyAlias, pi, schema)
+    'End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, _
+        ByVal schema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -1019,6 +1025,13 @@ Public Class ObjectMappingEngine
 
     '    Return sb.ToString
     'End Function
+
+    Public Shared Function ConvertColumn2SelExp(ByVal c As ColumnAttribute, ByVal t As Type) As SelectExpression
+        Dim se As New SelectExpression(t, c.PropertyAlias)
+        se.Column = c.Column
+        se.Attributes = c._behavior
+        Return se
+    End Function
 
     Protected Friend Function GetJoinFieldNameByType(ByVal mainType As Type, ByVal subType As Type, ByVal oschema As IEntitySchema) As String
         Dim j As IJoinBehavior = TryCast(oschema, IJoinBehavior)

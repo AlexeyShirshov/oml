@@ -299,7 +299,7 @@ Namespace Database
 
         Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, _
             ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
-            ByRef select_columns As Generic.IList(Of ColumnAttribute)) As String
+            ByRef select_columns As Generic.List(Of ColumnAttribute)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -826,7 +826,7 @@ l1:
         End Sub
 
         Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
-            ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilter)) As String
+            ByRef select_columns As Generic.List(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")

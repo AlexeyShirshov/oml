@@ -1003,7 +1003,7 @@ Namespace Database.Storedprocs
             Private _count As Integer
             Private _loaded As Integer
             Private _oschema As IEntitySchema
-            Private _props As IDictionary
+            'Private _props As IDictionary
             Private _cm As Collections.IndexedCollection(Of String, MapField2Column)
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
@@ -1011,15 +1011,18 @@ Namespace Database.Storedprocs
                 If mgr._externalFilter IsNot Nothing Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
                 End If
+                Dim original_type As Type = GetType(T)
                 If _l Is Nothing Then
                     _l = New List(Of T)
-                    _oschema = mgr.MappingEngine.GetObjectSchema(GetType(T))
-                    _props = mgr.MappingEngine.GetProperties(GetType(T), _oschema)
+                    _oschema = mgr.MappingEngine.GetObjectSchema(original_type)
+                    '_props = mgr.MappingEngine.GetProperties(original_type, _oschema)
                     _cm = _oschema.GetFieldColumnMap
                 End If
                 Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, dic, loaded, _oschema, _cm, _props)
+                Dim cols As IList(Of SelectExpression) = GetColumns.ConvertAll(Of SelectExpression)(Function(col As ColumnAttribute) _
+                     New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, cols, dr, dic, loaded, _oschema, _cm)
                 _loaded += loaded
             End Sub
 
