@@ -2086,13 +2086,13 @@ Namespace Query
             End If
         End Function
 
-        Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
-            If SelectedType IsNot Nothing Then
-                Return mpe.GetObjectSchema(SelectedType, False)
-            Else
-                Return _oschema
-            End If
-        End Function
+        'Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
+        '    If SelectedType IsNot Nothing Then
+        '        Return mpe.GetObjectSchema(SelectedType, False)
+        '    Else
+        '        Return _oschema
+        '    End If
+        'End Function
 
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)

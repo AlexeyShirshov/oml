@@ -548,10 +548,10 @@ Namespace Sorting
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
                 Else
-                    Return xo.GetValueOptimized(Nothing, s.SortBy, Nothing)
+                    Return schema.GetFieldValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, Nothing)
                 End If
             End If
-            Return xo.GetValueOptimized(Nothing, s.SortBy, oschema)
+            Return schema.GetFieldValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, oschema)
         End Function
 
         Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare
