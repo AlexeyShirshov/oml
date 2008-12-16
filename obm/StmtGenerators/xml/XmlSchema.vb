@@ -178,5 +178,11 @@ Namespace Xml
                 Return False
             End Get
         End Property
+
+        Public Overrides ReadOnly Property FTSKey() As String
+            Get
+                Throw New NotSupportedException
+            End Get
+        End Property
     End Class
 End Namespace

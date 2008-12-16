@@ -6,7 +6,7 @@ Imports Worm.Entities
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
     Inherits OrmBaseT(Of Table3)
-    Implements IOrmEditable(Of Table3)
+    Implements IOrmEditable(Of Table3), IOptimizedValues
 
     Private _obj As IKeyEntity
     Private _code As Byte
@@ -75,8 +75,8 @@ Public Class Table3
         End If
     End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Ref"
                 RefObject = CType(value, KeyEntity)
@@ -87,9 +87,26 @@ Public Class Table3
             Case "XML"
                 Xml = CType(value, System.Xml.XmlDocument)
             Case Else
-                MyBase.SetValue(pi, fieldName, oschema, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Ref"
+                Return _obj
+            Case "Code"
+                Return _code
+            Case "Version"
+                Return _v
+            Case "XML"
+                Return _x
+            Case Else
+                Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
 
     <Column("Ref", Field2DbRelations.Factory)> _
     Public Property RefObject() As IKeyEntity

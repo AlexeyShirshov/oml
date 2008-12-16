@@ -90,7 +90,9 @@ Namespace Query
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
-                _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean))(cmd._types)
+                If cmd._types IsNot Nothing Then
+                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean))(cmd._types)
+                End If
                 _cmd = cmd
             End Sub
 
@@ -143,7 +145,7 @@ Namespace Query
         Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
         Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
-        Protected Friend _load As Boolean
+        'Protected Friend _load As Boolean
         Protected _top As Top
         Protected _page As Nullable(Of Integer)
         Protected _distinct As Boolean
@@ -183,7 +185,7 @@ Namespace Query
 
         Public ReadOnly Property CreateType() As ObjectSource
             Get
-                Return Nothing
+                Return _createType
             End Get
             'Set(ByVal value As Type)
             '    If _createType IsNot Nothing AndAlso _execCnt > 0 Then
@@ -408,13 +410,13 @@ Namespace Query
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal cs As List(Of List(Of SelectExpression))) As IFilter()
+            ByVal cs As List(Of List(Of SelectExpression)), ByVal stmt As StmtGenerator) As IFilter()
 
             Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 Dim c As List(Of SelectExpression) = Nothing
-                Dim f As IFilter = q.Prepare(j, schema, filterInfo, c)
+                Dim f As IFilter = q.Prepare(j, schema, filterInfo, c, stmt)
                 If f IsNot Nothing Then
                     fs.Add(f)
                 End If
@@ -428,7 +430,7 @@ Namespace Query
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByRef cl As List(Of SelectExpression)) As IFilter
+            ByRef cl As List(Of SelectExpression), ByVal stmt As StmtGenerator) As IFilter
 
             If propJoins IsNot Nothing Then
                 j.AddRange(propJoins)
@@ -456,9 +458,11 @@ Namespace Query
             '    End If
             'Next
 
-            Dim selectType As Type = GetSelectedType(schema)
+            Dim selectOS As ObjectSource = GetRealSelectedOS()
 
-            If selectType IsNot Nothing Then
+            If selectOS IsNot Nothing Then
+                Dim selectType As Type = selectOS.GetRealType(schema)
+
                 If AutoJoins OrElse _m2mObject IsNot Nothing Then
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
@@ -508,7 +512,7 @@ Namespace Query
 
                     'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
 
-                    If _appendMain OrElse propWithLoad OrElse IsFTS Then
+                    If _appendMain OrElse WithLoad(selectOS) OrElse IsFTS Then
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
@@ -516,8 +520,8 @@ Namespace Query
                         If _from IsNot Nothing AndAlso table.Equals(_from.Table) Then
                             _from = Nothing
                         End If
-                        If propWithLoad AndAlso _fields IsNot Nothing AndAlso _fields.Count = 1 Then
-                            _fields = Nothing
+                        If WithLoad(selectOS) Then
+
                         End If
                     Else
                         _from = New FromClause(table)
@@ -541,48 +545,91 @@ Namespace Query
 
             End If
 
-            If _fields IsNot Nothing Then
-                If selectType IsNot Nothing Then
-                    If _autoFields Then
-                        For Each pk As ColumnAttribute In schema.GetPrimaryKeys(selectType)
-                            Dim find As Boolean
-                            For Each fld As SelectExpression In _fields
-                                If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
-                                    AndAlso fld.PropertyAlias = pk.PropertyAlias Then
-                                    find = True
-                                    Exit For
+            If _m2mObject Is Nothing Then
+                If _fields IsNot Nothing Then
+                    If selectOS IsNot Nothing Then
+                        Dim selectType As Type = selectOS.GetRealType(schema)
+                        If _autoFields Then
+                            For Each pk As ColumnAttribute In schema.GetPrimaryKeys(selectType)
+                                Dim find As Boolean
+                                For Each fld As SelectExpression In _fields
+                                    If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
+                                        AndAlso fld.PropertyAlias = pk.PropertyAlias Then
+                                        find = True
+                                        Exit For
+                                    End If
+                                Next
+                                If Not find Then
+                                    If cl Is Nothing Then
+                                        cl = New List(Of SelectExpression)
+                                    End If
+                                    Dim se As New SelectExpression(selectType, pk.PropertyAlias)
+                                    se.Attributes = pk._behavior
+                                    cl.Add(se)
                                 End If
                             Next
-                            If Not find Then
-                                If cl Is Nothing Then
-                                    cl = New List(Of SelectExpression)
+                        ElseIf cl Is Nothing Then
+                            cl = New List(Of SelectExpression)
+                        End If
+
+                        If cl IsNot Nothing Then
+                            For Each fld As SelectExpression In _fields
+                                If Not cl.Contains(fld) Then
+                                    cl.Add(fld)
                                 End If
-                                cl.Add(New SelectExpression(selectType, pk.PropertyAlias))
-                                cl(0).Attributes = pk._behavior
-                            End If
-                        Next
-                    ElseIf cl Is Nothing Then
+                            Next
+                        End If
+                    Else
                         cl = New List(Of SelectExpression)
+                        For Each fld As SelectExpression In _fields
+                            cl.Add(fld)
+                        Next
                     End If
 
                     If cl IsNot Nothing Then
-                        For Each fld As SelectExpression In _fields
-                            If Not cl.Contains(fld) Then
-                                cl.Add(fld)
-                            End If
-                        Next
+                        cl.Sort(Function(fst As SelectExpression, sec As SelectExpression) _
+                            fst.ToString.CompareTo(sec.ToString))
                     End If
                 Else
-                    cl = New List(Of SelectExpression)
-                    For Each fld As SelectExpression In _fields
-                        cl.Add(fld)
-                    Next
+                    If _types IsNot Nothing Then
+                        If IsFTS Then
+                            cl = New List(Of SelectExpression)
+                            For Each tp As Pair(Of ObjectSource, Boolean) In _types
+                                If tp.Second Then
+                                    Throw New NotImplementedException
+                                Else
+                                    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
+                                    Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
+                                    se.Into = tp.First
+                                    se.Attributes = Field2DbRelations.PK
+                                    cl.Add(se)
+                                End If
+                            Next
+                        ElseIf _from IsNot Nothing AndAlso _from.ObjectSource Is Nothing Then
+                            Throw New NotSupportedException
+                        Else
+                            cl = New List(Of SelectExpression)
+                            For Each tp As Pair(Of ObjectSource, Boolean) In _types
+                                If tp.Second Then
+                                    Throw New NotImplementedException
+                                Else
+                                    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
+                                    Dim se As New SelectExpression(tp.First, pk)
+                                    se.Attributes = Field2DbRelations.PK
+                                    cl.Add(se)
+                                End If
+                            Next
+                        End If
+                    Else
+                        Throw New NotImplementedException
+                    End If
                 End If
+            End If
 
-                If cl IsNot Nothing Then
-                    cl.Sort(Function(fst As SelectExpression, sec As SelectExpression) _
-                        fst.ToString.CompareTo(sec.ToString))
-                End If
+            If _aggregates IsNot Nothing Then
+                For Each a As AggregateBase In _aggregates
+                    cl.Add(New SelectExpression(a))
+                Next
             End If
             Return f
         End Function
@@ -862,7 +909,7 @@ Namespace Query
             End If
         End Function
 
-        Protected Function GetSelectedOS() As ObjectSource
+        Protected Function GetRealSelectedOS() As ObjectSource
             If _from IsNot Nothing Then
                 If _from.ObjectSource IsNot Nothing Then
                     Return _from.ObjectSource
@@ -870,15 +917,22 @@ Namespace Query
             Else
                 If _types IsNot Nothing AndAlso _types.Count > 0 Then
                     Return _types(0).First
-                Else
-                    For Each s As SelectExpression In SelectList
-                        If s.ObjectSource IsNot Nothing Then
-                            Return s.ObjectSource
-                        End If
-                    Next
                 End If
             End If
             Return Nothing
+        End Function
+
+        Public Function GetSelectedOS() As ObjectSource
+            Dim os As ObjectSource = GetRealSelectedOS()
+            If os Is Nothing AndAlso SelectList IsNot Nothing Then
+                For Each s As SelectExpression In SelectList
+                    If s.ObjectSource IsNot Nothing Then
+                        os = s.ObjectSource
+                        Exit For
+                    End If
+                Next
+            End If
+            Return os
         End Function
 
         Public Function GetSelectedTypes(ByVal mpe As ObjectMappingEngine, ByRef ts As ICollection(Of Type)) As Boolean
@@ -921,6 +975,19 @@ Namespace Query
             'ts = Array.ConvertAll(Array.a _dic
             Return l.Count > 0
 
+        End Function
+
+        Protected Function WithLoad(ByVal os As ObjectSource) As Boolean
+            If _from IsNot Nothing Then
+                Return _from.ObjectSource.Equals(os)
+            Else
+                For Each tp As Pair(Of ObjectSource, Boolean) In _types
+                    If tp.First.Equals(os) Then
+                        Return tp.Second
+                    End If
+                Next
+            End If
+            Throw New InvalidOperationException
         End Function
 
 #Region " Properties "
@@ -1208,19 +1275,25 @@ Namespace Query
             End Set
         End Property
 
-        Public Property propWithLoad() As Boolean
+        Public ReadOnly Property propWithLoad() As Boolean
             Get
-                Return _load
+
             End Get
-            Set(ByVal value As Boolean)
-                _load = value
-                If _m2mObject Is Nothing Then
-                    RenewStatementMark()
-                Else
-                    RenewMark()
-                End If
-            End Set
         End Property
+
+        'Public Property propWithLoad() As Boolean
+        '    Get
+        '        Return _load
+        '    End Get
+        '    Set(ByVal value As Boolean)
+        '        _load = value
+        '        If _m2mObject Is Nothing Then
+        '            RenewStatementMark()
+        '        Else
+        '            RenewMark()
+        '        End If
+        '    End Set
+        'End Property
 #End Region
 
         Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
@@ -1255,10 +1328,10 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function WithLoad(ByVal value As Boolean) As QueryCmd
-            propWithLoad = value
-            Return Me
-        End Function
+        'Public Function WithLoad(ByVal value As Boolean) As QueryCmd
+        '    propWithLoad = value
+        '    Return Me
+        'End Function
 
         Public Function Where(ByVal filter As IGetFilter) As QueryCmd
             Me.Filter = filter
@@ -1716,12 +1789,12 @@ Namespace Query
             End If
 
             Dim props As IDictionary = mpe.GetProperties(rt, _oschema)
-            For Each e As IEntity In l
+            For Each e As _IEntity In l
                 Dim ro As New T
                 For Each kv As DictionaryEntry In props
                     Dim col As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
-                    Dim v As Object = e.GetValueOptimized(Nothing, col.PropertyAlias, Nothing)
+                    Dim v As Object = mpe.GetPropertyValue(e, col.PropertyAlias, Nothing)
                     If v Is DBNull.Value Then
                         v = Nothing
                     End If
@@ -2086,13 +2159,13 @@ Namespace Query
             End If
         End Function
 
-        'Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
-        '    If SelectedType IsNot Nothing Then
-        '        Return mpe.GetObjectSchema(SelectedType, False)
-        '    Else
-        '        Return _oschema
-        '    End If
-        'End Function
+        Protected Friend Function GetSchemaForCreateType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
+            If CreateType IsNot Nothing Then
+                Return mpe.GetObjectSchema(CreateType.GetRealType(mpe), False)
+            Else
+                Return _oschema
+            End If
+        End Function
 
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
@@ -2125,7 +2198,7 @@ Namespace Query
                 ._hint = _hint
                 ._joins = _joins
                 ._m2mKey = _m2mKey
-                ._load = _load
+                '._load = _load
                 ._mark = ._mark
                 ._m2mObject = _m2mObject
                 ._order = _order

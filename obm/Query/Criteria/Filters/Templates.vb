@@ -140,7 +140,7 @@ Namespace Criteria.Core
                 End If
                 Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
             Else
-                Dim v As Object = obj.GetValueOptimized(Nothing, PropertyAlias, oschema)
+                Dim v As Object = schema.GetPropertyValue(obj, PropertyAlias, oschema)
                 'If _os.Type IsNot Nothing Then
                 '    Return CreateEntityFilter(_os.Type, _fieldname, New ScalarValue(v), Operation)
                 'ElseIf Not String.IsNullOrEmpty(_os.EntityName) Then

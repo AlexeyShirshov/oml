@@ -496,8 +496,8 @@ Namespace Sorting
                         End If
                     Else
                         Dim pr As Pair(Of _IEntity, IOrmSorting) = TryCast(xo, Pair(Of _IEntity, IOrmSorting))
-                        xo = pr.First.GetValueOptimized(Nothing, s.SortBy, ss)
-                        yo = pr2.First.GetValueOptimized(Nothing, s.SortBy, ss)
+                        xo = _mgr.MappingEngine.GetPropertyValue(pr.First, s.SortBy, ss)
+                        yo = _mgr.MappingEngine.GetPropertyValue(pr2.First, s.SortBy, ss)
                     End If
                 End If
                 Dim k As Integer = 1
@@ -548,10 +548,10 @@ Namespace Sorting
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
                 Else
-                    Return schema.GetFieldValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, Nothing)
+                    Return schema.GetPropertyValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, Nothing)
                 End If
             End If
-            Return schema.GetFieldValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, oschema)
+            Return schema.GetPropertyValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, oschema)
         End Function
 
         Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare

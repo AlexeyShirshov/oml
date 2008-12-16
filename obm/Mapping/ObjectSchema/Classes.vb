@@ -115,14 +115,13 @@
             Me.Key = key
         End Sub
 
-        <Obsolete("Connected type is obsolete")> _
         Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
             Me.ConnectedType = connectedType
         End Sub
 
-        <Obsolete("Connected type is obsolete")> _
+        <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type, ByVal direct As Boolean)
             MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
@@ -134,7 +133,7 @@
             MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
         End Sub
 
-        <Obsolete("Connected type is obsolete")> _
+        <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
             MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
@@ -156,20 +155,20 @@
             MyClass.New(type, table, column, delete, mapping, DirKey)
         End Sub
 
+        <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping)
             Key = GetKey(direct)
         End Sub
 
-        <Obsolete("Connected type is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
             Me.ConnectedType = connectedType
         End Sub
 
-        <Obsolete("Connected type is obsolete")> _
+        <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
             ByVal connectedType As Type, ByVal direct As Boolean)

@@ -432,9 +432,9 @@ Public Class MultiR
             Return l
         End Function
 
-        Protected Overrides Function GetWithLoad() As Boolean
-            Return True
-        End Function
+        'Protected Overrides Function GetWithLoad() As Boolean
+        '    Return True
+        'End Function
     End Class
 
     Public Class r2

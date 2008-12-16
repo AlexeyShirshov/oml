@@ -23,8 +23,8 @@ Partial Public Class OrmManager
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
             Dim oschema As IEntitySchema = schema.GetObjectSchema(obj.GetType)
-            o1 = CType(obj.GetValueOptimized(Nothing, p1.PropertyName, oschema), IKeyEntity)
-            o2 = CType(obj.GetValueOptimized(Nothing, p2.PropertyName, oschema), IKeyEntity)
+            o1 = CType(schema.GetPropertyValue(obj, p1.PropertyName, oschema), IKeyEntity)
+            o2 = CType(schema.GetPropertyValue(obj, p2.PropertyName, oschema), IKeyEntity)
         End Sub
 
         Public Function Add(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
@@ -274,7 +274,7 @@ Partial Public Class OrmManager
         'ReadOnly Property SortType() As SortType
         ReadOnly Property Filter() As IFilter
         Sub CreateDepends()
-        Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItem
+        Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
     End Interface
 
     Public Interface ICacheItemProvoder(Of T As {ICachedEntity})
@@ -431,7 +431,7 @@ Partial Public Class OrmManager
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase.Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
-        Private Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItem Implements ICacheItemProvoderBase.GetCacheItem
+        Private Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements ICacheItemProvoderBase.GetCacheItem
             Return GetCacheItem(withLoad(0))
         End Function
 

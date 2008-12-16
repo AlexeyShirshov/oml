@@ -748,7 +748,7 @@ Namespace Database.Storedprocs
             _donthit = True
             'Dim ce As New CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
-            mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, rr, GetColumns)
+            mgr.LoadMultipleObjectsClm(Of T)(cmd, GetWithLoad, rr, GetColumns)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
@@ -1022,12 +1022,12 @@ Namespace Database.Storedprocs
                 Dim loaded As Integer
                 Dim cols As IList(Of SelectExpression) = GetColumns.ConvertAll(Of SelectExpression)(Function(col As ColumnAttribute) _
                      New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, cols, dr, dic, loaded, _oschema, _cm)
+                mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _oschema, _cm)
                 _loaded += loaded
             End Sub
 
             Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
-            Protected MustOverride Function GetWithLoad() As Boolean
+            'Protected MustOverride Function GetWithLoad() As Boolean
 
             Public Function GetObjects(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
                 If _o Is Nothing Then

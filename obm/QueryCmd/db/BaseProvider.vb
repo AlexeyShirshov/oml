@@ -14,7 +14,7 @@ Namespace Query.Database
             Protected _params As ParamMgr
             Private _cmdType As System.Data.CommandType
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As Cache.CachedItem
+            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As Cache.CachedItemBase
                 Throw New NotImplementedException
             End Function
 

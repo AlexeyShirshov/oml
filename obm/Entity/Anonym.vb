@@ -7,22 +7,23 @@ Namespace Entities
     <DefaultProperty("Item")> _
     Public Class AnonymousEntity
         Inherits Entity
+        Implements IOptimizedValues
 
         Private _props As New Dictionary(Of String, Object)
 
-        Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
+        Public Overridable Function GetValue( _
+            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
             Return _props(propertyAlias)
         End Function
 
-        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
+        Public Overridable Sub SetValue( _
+            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
             _props(propertyAlias) = value
         End Sub
 
         Default Public ReadOnly Property Item(ByVal field As String) As Object
             Get
-                Return GetValue(field)
+                Return GetValue(field, Nothing)
             End Get
         End Property
     End Class

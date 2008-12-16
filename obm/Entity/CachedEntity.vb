@@ -115,10 +115,10 @@ Namespace Entities
                         'Else
                         Dim dc As ColumnAttribute = schema.GetColumnByPropertyAlias(dt, p.Second, oschema)
                         'Dim sc As New ColumnAttribute(p.First)
-                        Dim o As Object = source.GetValueOptimized(Nothing, p.First, oschema)
+                        Dim o As Object = schema.GetPropertyValue(source, p.First, oschema)
                         'Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(dt, oschema, c)
                         '_dst.SetValue(pi, c, oschema, o)
-                        schema.SetFieldValue(_dst, p.Second, o, oschema)
+                        schema.SetPropertyValue(_dst, p.Second, o, oschema)
                         If (schema.GetAttributes(oschema, dc) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             pk = True
                         End If
@@ -773,7 +773,7 @@ Namespace Entities
             BeginLoading()
             For Each p As PKDesc In pk
                 'Dim c As New ColumnAttribute(p.PropertyAlias)
-                SetValue(Nothing, p.PropertyAlias, oschema, p.Value)
+                schema.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
                 SetLoaded(p.PropertyAlias, True, True, schema)
             Next
             EndLoading()
@@ -1127,7 +1127,7 @@ l1:
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                 If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    l.Add(New PKDesc(c.PropertyAlias, GetValue(pi, c.PropertyAlias, oschema)))
+                    l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)))
                 End If
             Next
             'End Using
@@ -1197,9 +1197,9 @@ l1:
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                    Dim original As Object = obj.GetValueOptimized(pi, c.PropertyAlias, oschema)
+                    Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, c.PropertyAlias, pi, oschema)
                     If (schema.GetAttributes(oschema, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
-                        Dim current As Object = GetValue(pi, c.PropertyAlias, oschema)
+                        Dim current As Object = ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)
                         If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                             (current IsNot Nothing AndAlso Not current.Equals(original)) Then
                             columns.Add(c)
@@ -1711,7 +1711,7 @@ l1:
             For Each kv As DictionaryEntry In MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-                    Dim o As CachedEntity = CType(GetValue(CType(kv.Key, ColumnAttribute).PropertyAlias), CachedEntity)
+                    Dim o As CachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, ColumnAttribute).PropertyAlias, pi, Nothing), CachedEntity)
                     If o IsNot Nothing AndAlso o.HasChanges Then
                         l.Add(o)
                     End If

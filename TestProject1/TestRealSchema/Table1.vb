@@ -24,7 +24,7 @@ End Class
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
     Inherits OrmBaseT(Of Table1)
-    Implements IOrmEditable(Of Table1)
+    Implements IOrmEditable(Of Table1), IOptimizedValues
 
     Private _name As String
     Private _code As Nullable(Of Integer)
@@ -73,8 +73,8 @@ Public Class Table1
     '    Return New Table1(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Title"
                 Name = CStr(value)
@@ -91,16 +91,18 @@ Public Class Table1
             Case "ddd"
                 Name = CStr(value)
             Case Else
-                MyBase.SetValue(pi, fieldName, oschema, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object
+    Public Overridable Function GetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
         If fieldName = "ddd" Then
             Return Name
         Else
-            Return MyBase.GetValue(pi, fieldName, oschema)
+            Throw New NotSupportedException(fieldName)
+            'Return MyBase.GetValue(pi, fieldName, oschema)
         End If
     End Function
 

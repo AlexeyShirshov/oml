@@ -298,7 +298,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValueOptimized(Nothing, c.PropertyAlias, oschema, nodes.Current.Value)
+                        MappingEngine.SetPropertyValue(obj, c.PropertyAlias, nodes.Current.Value, oschema)
                         sn = True
                         cnt += 1
                     Loop
@@ -324,7 +324,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValueOptimized(pi, c.PropertyAlias, oschema, nodes.Current.Value)
+                        ObjectMappingEngine.SetPropertyValue(obj, c.PropertyAlias, pi, nodes.Current.Value, oschema)
                         If orm IsNot Nothing Then orm.SetLoaded(c, True, True, MappingEngine)
                         sn = True
                     Loop

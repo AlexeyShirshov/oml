@@ -334,7 +334,7 @@ Namespace Entities
                         Dim add As New Hashtable
                         For Each ar As T In col2
                             If col.Contains(ar) Then Continue For
-                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, sname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, sname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -354,7 +354,7 @@ Namespace Entities
                         Next
                         For Each ar As T In col
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -376,7 +376,7 @@ Namespace Entities
                         For Each ar As T In c.Values
                             CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
                             Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                             If addt IsNot Nothing Then
                                 For Each kl As T In addt

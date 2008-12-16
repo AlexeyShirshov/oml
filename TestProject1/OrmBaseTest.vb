@@ -442,7 +442,7 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetColumnValue()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        schema.GetFieldValue(Nothing, "ID")
+        schema.GetPropertyValue(Nothing, "ID")
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -451,7 +451,7 @@ End Class
 
         Dim o As New Entity(10, Nothing, schema)
 
-        schema.GetFieldValue(o, Nothing)
+        schema.GetPropertyValue(o, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -460,7 +460,7 @@ End Class
 
         Dim o As New Entity(10, Nothing, schema)
 
-        Assert.AreEqual(10, schema.GetFieldValue(o, "ID"))
+        Assert.AreEqual(10, schema.GetPropertyValue(o, "ID"))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentException))> _
@@ -469,7 +469,7 @@ End Class
 
         Dim o As New Entity(10, Nothing, schema)
 
-        Assert.AreEqual(10, schema.GetFieldValue(o, "FASDCSDC"))
+        Assert.AreEqual(10, schema.GetPropertyValue(o, "FASDCSDC"))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _

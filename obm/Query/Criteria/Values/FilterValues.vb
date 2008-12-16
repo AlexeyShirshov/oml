@@ -944,7 +944,7 @@ Namespace Criteria.Values
 
                 Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 Dim sl As List(Of Entities.SelectExpression) = Nothing
-                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, sl)
+                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, sl, stmt)
 
                 sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, _
                      j, f, almgr, sl))

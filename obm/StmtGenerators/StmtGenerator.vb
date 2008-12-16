@@ -15,6 +15,7 @@ Public MustInherit Class StmtGenerator
     Public MustOverride ReadOnly Property GetYear() As String
     Public MustOverride ReadOnly Property GetDate() As String
     Public MustOverride ReadOnly Property Selector() As String
+    Public MustOverride ReadOnly Property FTSKey() As String
 
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource) As Criteria.ICtor
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource, ByVal propertyAlias As String) As Criteria.CriteriaField

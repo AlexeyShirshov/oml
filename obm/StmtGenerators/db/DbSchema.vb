@@ -2044,7 +2044,7 @@ l1:
             If Not appendMain AndAlso cs IsNot Nothing Then
                 appendMain = cs.GetContextFilter(filter_info) IsNot Nothing
             End If
-            AppendNativeTypeJoins(mpe, searchType, almgr, mpe.GetTables(searchType), sb, params, ct, "[key]", appendMain, filter_info, searchSchema)
+            AppendNativeTypeJoins(mpe, searchType, almgr, mpe.GetTables(searchType), sb, params, ct, FTSKey, appendMain, filter_info, searchSchema)
             'If fields.Count > 0 Then
             If appendMain Then
                 'Dim mainAlias As String = almgr.Aliases(searchTable)
@@ -2064,7 +2064,7 @@ l1:
                     'If tm Is Nothing Then
                     '    Throw New DBSchemaException("Invalid join")
                     'End If
-                    join.InjectJoinFilter(mpe, searchType, mpe.GetPrimaryKeys(searchType, searchSchema)(0).PropertyAlias, ct, "[key]")
+                    join.InjectJoinFilter(mpe, searchType, mpe.GetPrimaryKeys(searchType, searchSchema)(0).PropertyAlias, ct, FTSKey)
                     'Dim al As String = almgr.AddTable(join.Table)
                     'columns = columns.Replace(join.Table.TableName & ".", al & ".")
                     Dim tbl As SourceFragment = join.Table
@@ -2514,6 +2514,12 @@ l1:
         Public Overrides ReadOnly Property SupportParams() As Boolean
             Get
                 Return True
+            End Get
+        End Property
+
+        Public Overrides ReadOnly Property FTSKey() As String
+            Get
+                Return "[key]"
             End Get
         End Property
     End Class

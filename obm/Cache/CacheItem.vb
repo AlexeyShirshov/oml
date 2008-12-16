@@ -53,6 +53,18 @@ Namespace Cache
                 Return CType(_col, ReadOnlyObjectList(Of T))
             End If
         End Function
+
+        Public ReadOnly Property ExecutionTime() As TimeSpan
+            Get
+                Return _execTime
+            End Get
+        End Property
+
+        Public ReadOnly Property FetchTime() As TimeSpan
+            Get
+                Return _fetchTime
+            End Get
+        End Property
     End Class
 
     Public Class CachedItem
@@ -129,18 +141,6 @@ Namespace Cache
         Public Overridable ReadOnly Property CanRenewAfterSort() As Boolean
             Get
                 Return True
-            End Get
-        End Property
-
-        Public ReadOnly Property ExecutionTime() As TimeSpan
-            Get
-                Return _execTime
-            End Get
-        End Property
-
-        Public ReadOnly Property FetchTime() As TimeSpan
-            Get
-                Return _fetchTime
             End Get
         End Property
 

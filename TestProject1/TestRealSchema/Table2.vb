@@ -5,7 +5,7 @@ Imports Worm.Cache
 <Entity(GetType(Table2Implementation), "1")> _
 Public Class Table2
     Inherits OrmBaseT(Of Table2)
-    Implements IOrmEditable(Of Table2)
+    Implements IOrmEditable(Of Table2), IOptimizedValues
 
     Private _tbl1 As Table1
     Private _blob As Byte()
@@ -51,8 +51,8 @@ Public Class Table2
         End With
     End Sub
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Table1"
                 Tbl = CType(value, Table1)
@@ -61,9 +61,24 @@ Public Class Table2
             Case "Money"
                 Money = CDec(value)
             Case Else
-                MyBase.SetValue(pi, fieldName, oschema, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Table1"
+                Return _tbl1
+            Case "Blob"
+                Return _blob
+            Case "Money"
+                Return _m
+            Case Else
+                Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
 
     <Column("Table1")> _
     Public Property Tbl() As Table1
@@ -120,6 +135,7 @@ Public Class Table2
             End Using
         End Set
     End Property
+
 End Class
 
 Public Class Table2Implementation
