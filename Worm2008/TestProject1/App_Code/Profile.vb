@@ -345,7 +345,7 @@ Public Class MyUserDef
 
     Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
-                New M2MRelation(GetType(MyRole), _schema.GetSharedTable("dbo.UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping) _
+                New M2MRelation(GetType(MyRole), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 
@@ -426,7 +426,7 @@ Public Class MyRoleDef
 
     Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
-                New M2MRelation(GetType(MyUser), _schema.GetSharedTable("dbo.UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping) _
+                New M2MRelation(GetType(MyUser), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 

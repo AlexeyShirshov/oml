@@ -110,7 +110,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -124,7 +124,8 @@ Namespace Query.Database
                 'End If
                 oschema = dbm.MappingEngine.GetObjectSchema(t, False)
 
-                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, True, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -211,8 +212,8 @@ Namespace Query.Database
             '    End If
             'End Sub
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
-                Return New CachedItem(GetEntities(), _mgr.Cache)
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
+                Return New CachedItemBase(GetEntities(), _mgr.Cache)
             End Function
         End Class
 
@@ -228,7 +229,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -236,15 +237,16 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
-                'If t Is Nothing Then
-                '    t = SelectedType
+                'Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                ''If t Is Nothing Then
+                ''    t = SelectedType
+                ''End If
+                'If t IsNot SelectedType AndAlso t IsNot Nothing Then
+                '    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 'End If
-                If t IsNot SelectedType AndAlso t IsNot Nothing Then
-                    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
-                End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -325,7 +327,7 @@ Namespace Query.Database
             '    End Get
             'End Property
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
+            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
                 Dim r As ReadOnlyEntityList(Of ReturnType) = CType(GetEntities(), ReadOnlyEntityList(Of ReturnType))
                 Return GetCacheItem(r)
             End Function
@@ -335,8 +337,12 @@ Namespace Query.Database
             End Function
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As CachedItem
+                Dim t As Type = _q.GetSelectedType(MappingEngine)
+                Dim sortex As IOrmSorting2 = Nothing
+                If t IsNot Nothing Then
+                    sortex = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
+                End If
 
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(Sort)
@@ -439,7 +445,8 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
+                'dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
+                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, _sl(0))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -549,7 +556,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -557,15 +564,16 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
-                'If t Is Nothing Then
-                '    t = SelectedType
+                'Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                ''If t Is Nothing Then
+                ''    t = SelectedType
+                ''End If
+                'If t IsNot SelectedType AndAlso t IsNot Nothing Then
+                '    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
                 'End If
-                If t IsNot SelectedType AndAlso t IsNot Nothing Then
-                    oschema = dbm.MappingEngine.GetObjectSchema(t, False)
-                End If
 
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

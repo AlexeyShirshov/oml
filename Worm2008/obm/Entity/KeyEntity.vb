@@ -2471,23 +2471,23 @@ Namespace Entities
             End If
         End Function
 
-        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
-            If propertyAlias = OrmBaseT.PKName Then
-                _id = value
-            Else
-                MyBase.SetValue(pi, propertyAlias, schema, value)
-            End If
-        End Sub
+        'Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+        '    ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
+        '    If propertyAlias = OrmBaseT.PKName Then
+        '        _id = value
+        '    Else
+        '        MyBase.SetValue(pi, propertyAlias, schema, value)
+        '    End If
+        'End Sub
 
-        Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
-            If propertyAlias = OrmBaseT.PKName Then
-                Return _id
-            Else
-                Return MyBase.GetValue(pi, propertyAlias, oschema)
-            End If
-        End Function
+        'Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
+        '    ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
+        '    If propertyAlias = OrmBaseT.PKName Then
+        '        Return _id
+        '    Else
+        '        Return MyBase.GetValue(pi, propertyAlias, oschema)
+        '    End If
+        'End Function
     End Class
 
 End Namespace

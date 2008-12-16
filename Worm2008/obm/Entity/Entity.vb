@@ -179,13 +179,22 @@ Namespace Entities
 
         Protected ReadOnly Property MappingEngine() As ObjectMappingEngine
             Get
-                Using mc As IGetManager = GetMgr()
-                    If mc Is Nothing Then
-                        Return Nothing
+                If _schema IsNot Nothing Then
+                    Return _schema
+                Else
+                    Dim mgr As OrmManager = OrmManager.CurrentManager
+                    If mgr IsNot Nothing Then
+                        Return mgr.MappingEngine
                     Else
-                        Return mc.Manager.MappingEngine
+                        Using mc As IGetManager = GetMgr()
+                            If mc IsNot Nothing Then
+                                Return mc.Manager.MappingEngine
+                            Else
+                                Return Nothing
+                            End If
+                        End Using
                     End If
-                End Using
+                End If
             End Get
         End Property
 
@@ -224,7 +233,7 @@ Namespace Entities
                     For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                         Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                         Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                        sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetFieldValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
+                        sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
                     Next
                 Finally
                     _readRaw = olr
@@ -237,22 +246,22 @@ Namespace Entities
             Return SyncHelper(False)
         End Function
 
-        Public Function GetValue(ByVal propertyAlias As String) As Object
-            Return GetValue(Nothing, propertyAlias, Nothing)
-        End Function
+        'Public Function GetValue(ByVal propertyAlias As String) As Object
+        '    Return GetValue(Nothing, propertyAlias, Nothing)
+        'End Function
 
-        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized
-            If pi Is Nothing Then
-                Dim s As ObjectMappingEngine = MappingEngine
-                If s Is Nothing Then
-                    Return ObjectMappingEngine.GetFieldValueSchemaless(Me, propertyAlias, oschema, pi)
-                Else
-                    Return s.GetFieldValue(Me, propertyAlias, oschema, pi)
-                End If
-            End If
-            Return pi.GetValue(Me, Nothing)
-        End Function
+        'Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
+        '    ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized
+        '    If pi Is Nothing Then
+        '        Dim s As ObjectMappingEngine = MappingEngine
+        '        If s Is Nothing Then
+        '            Return ObjectMappingEngine.GetFieldValueSchemaless(Me, propertyAlias, oschema, pi)
+        '        Else
+        '            Return s.GetFieldValue(Me, propertyAlias, oschema, pi)
+        '        End If
+        '    End If
+        '    Return pi.GetValue(Me, Nothing)
+        'End Function
 
         Protected ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
             Get
@@ -281,15 +290,15 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-            ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object) Implements IEntity.SetValueOptimized
+        'Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+        '    ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object) Implements IEntity.SetValueOptimized
 
-            If pi Is Nothing Then
-                pi = MappingEngine.GetProperty(Me.GetType, schema, propertyAlias)
-            End If
+        '    If pi Is Nothing Then
+        '        pi = MappingEngine.GetProperty(Me.GetType, schema, propertyAlias)
+        '    End If
 
-            pi.SetValue(Me, value, Nothing)
-        End Sub
+        '    pi.SetValue(Me, value, Nothing)
+        'End Sub
 
         Protected Overridable Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
@@ -317,10 +326,11 @@ Namespace Entities
         End Function
 
         Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
-            For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
+            Dim schema As ObjectMappingEngine = mgr.MappingEngine
+            For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                [to].SetValueOptimized(pi, c.PropertyAlias, oschema, [from].GetValueOptimized(pi, c.PropertyAlias, oschema))
+                ObjectMappingEngine.SetPropertyValue([to], c.PropertyAlias, pi, ObjectMappingEngine.GetPropertyValue(from, c.PropertyAlias, pi, oschema), oschema)
             Next
         End Sub
 

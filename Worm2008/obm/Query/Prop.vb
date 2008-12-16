@@ -263,7 +263,7 @@ Namespace Entities
 
         Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
             For Each s As T In selectList
-                c.Add(New MapField2Column(s.PropertyAlias, s.Column, s.Table, s.Attributes))
+                c.Add(New MapField2Column(If(String.IsNullOrEmpty(s.PropertyAlias), s.FieldAlias, s.PropertyAlias), s.Column, s.Table, s.Attributes))
             Next
             Return c
         End Function
@@ -348,9 +348,22 @@ Namespace Entities
             End Set
         End Property
 
+        Public Property Into() As ObjectSource
+            Get
+                Return _dst
+            End Get
+            Set(ByVal value As ObjectSource)
+                _dst = value
+            End Set
+        End Property
+
         Public Property FieldAlias() As String
             Get
-                Return _falias
+                If _agr IsNot Nothing Then
+                    Return _agr.Alias
+                Else
+                    Return _falias
+                End If
             End Get
             Protected Friend Set(ByVal value As String)
                 _falias = value

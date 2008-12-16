@@ -159,10 +159,10 @@ Namespace Web
                     Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
                     Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                         Using u.BeginEdit()
-                            schema.SetFieldValue(u, GetField("Password"), HashPassword(newPassword), oschema)
+                            schema.SetPropertyValue(u, GetField("Password"), HashPassword(newPassword), oschema)
                             Dim lpcf As String = GetField("LastPasswordChangeDate")
                             If schema.HasField(u.GetType, lpcf) Then
-                                schema.SetFieldValue(u, lpcf, UserMapper.GetNow, oschema)
+                                schema.SetPropertyValue(u, lpcf, UserMapper.GetNow, oschema)
                             End If
                         End Using
                         st.AcceptModifications()
@@ -221,12 +221,12 @@ Namespace Web
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
 
-                schema.SetFieldValue(u, GetField("Email"), email, oschema)
+                schema.SetPropertyValue(u, GetField("Email"), email, oschema)
 
                 If PasswordFormat = MembershipPasswordFormat.Hashed Then
-                    schema.SetFieldValue(u, GetField("Password"), HashPassword(password), oschema)
+                    schema.SetPropertyValue(u, GetField("Password"), HashPassword(password), oschema)
                 ElseIf PasswordFormat = MembershipPasswordFormat.Clear Then
-                    schema.SetFieldValue(u, GetField("Password"), password, oschema)
+                    schema.SetPropertyValue(u, GetField("Password"), password, oschema)
                 Else
                     Throw New NotImplementedException(PasswordFormat.ToString)
                 End If
@@ -234,21 +234,21 @@ Namespace Web
                 Dim d As Date = UserMapper.GetNow()
 
                 If Not String.IsNullOrEmpty(UserMapper.LastActivityField) Then
-                    schema.SetFieldValue(u, UserMapper.LastActivityField, d, oschema)
+                    schema.SetPropertyValue(u, UserMapper.LastActivityField, d, oschema)
                 End If
 
                 If Not String.IsNullOrEmpty(UserMapper.IsAnonymousField) Then
-                    schema.SetFieldValue(u, UserMapper.IsAnonymousField, False, oschema)
+                    schema.SetPropertyValue(u, UserMapper.IsAnonymousField, False, oschema)
                 End If
 
                 Dim llf As String = GetField("LastLoginDate")
                 If schema.HasField(u.GetType, llf) Then
-                    schema.SetFieldValue(u, llf, d, oschema)
+                    schema.SetPropertyValue(u, llf, d, oschema)
                 End If
 
                 Dim crf As String = GetField("CreationDate")
                 If schema.HasField(u.GetType, crf) Then
-                    schema.SetFieldValue(u, crf, d, oschema)
+                    schema.SetPropertyValue(u, crf, d, oschema)
                 End If
 
                 mgr.SaveChanges(u, True)
@@ -301,10 +301,10 @@ Namespace Web
                     Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
                     Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                         Using u.BeginEdit()
-                            schema.SetFieldValue(u, GetField("Password"), HashPassword(psw), oschema)
+                            schema.SetPropertyValue(u, GetField("Password"), HashPassword(psw), oschema)
                             Dim lpcf As String = GetField("LastPasswordChangeDate")
                             If schema.HasField(u.GetType, lpcf) Then
-                                schema.SetFieldValue(u, lpcf, UserMapper.GetNow, oschema)
+                                schema.SetPropertyValue(u, lpcf, UserMapper.GetNow, oschema)
                             End If
                         End Using
                         st.AcceptModifications()
@@ -331,7 +331,7 @@ Namespace Web
                         Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using u.BeginEdit()
-                                schema.SetFieldValue(u, lf, False, oschema)
+                                schema.SetPropertyValue(u, lf, False, oschema)
                                 'Dim llf As String = GetField("LastLockoutDate")
                                 'If schema.HasField(u.GetType, llf) Then
                                 '    schema.SetFieldValue(u, llf, ProfileProvider.GetNow)
@@ -355,7 +355,7 @@ Namespace Web
                         Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using u.BeginEdit()
-                                schema.SetFieldValue(u, UserMapper.UserNameField, user.Comment, oschema)
+                                schema.SetPropertyValue(u, UserMapper.UserNameField, user.Comment, oschema)
                             End Using
                             st.AcceptModifications()
                         End Using
@@ -380,15 +380,15 @@ Namespace Web
                 Dim lf As String = GetField("IsLockedOut")
                 Dim tt As System.Type = u.GetType
                 Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
-                If schema.HasField(tt, lf) AndAlso CBool(u.GetValueOptimized(Nothing, lf, oschema)) Then
+                If schema.HasField(tt, lf) AndAlso CBool(schema.GetPropertyValue(u, lf, oschema)) Then
                     Return False
                 End If
 
                 Dim c As Boolean
                 If PasswordFormat = MembershipPasswordFormat.Clear Then
-                    c = String.Equals(CStr(u.GetValueOptimized(Nothing, GetField("Password"), oschema)), password)
+                    c = String.Equals(CStr(schema.GetPropertyValue(u, GetField("Password"), oschema)), password)
                 ElseIf PasswordFormat = MembershipPasswordFormat.Hashed Then
-                    c = ComparePasswords(CType(u.GetValueOptimized(Nothing, GetField("Password"), oschema), Byte()), HashPassword(password))
+                    c = ComparePasswords(CType(schema.GetPropertyValue(u, GetField("Password"), oschema), Byte()), HashPassword(password))
                 End If
 
                 If Not c Then
@@ -412,10 +412,10 @@ Namespace Web
                         Using u.BeginEdit()
                             Dim llf As String = GetField("LastLoginDate")
                             If schema.HasField(tt, llf) Then
-                                schema.SetFieldValue(u, llf, UserMapper.GetNow, oschema)
+                                schema.SetPropertyValue(u, llf, UserMapper.GetNow, oschema)
                             End If
                             If schema.HasField(tt, GetField("FailedPasswordAttemtCount")) Then
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
+                                schema.SetPropertyValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
                             End If
                         End Using
                         st.AcceptModifications()
@@ -534,7 +534,7 @@ Namespace Web
                 If u Is Nothing Then
                     Return Nothing
                 End If
-                Return CStr(u.GetValueOptimized(Nothing, GetField("Email"), Nothing))
+                Return CStr(schema.GetPropertyValue(u, GetField("Email"), Nothing))
             End Using
         End Function
 #End Region
@@ -564,46 +564,46 @@ Namespace Web
             Dim ut As System.Type = u.GetType
             Dim oschema As IEntitySchema = schema.GetObjectSchema(ut)
             If schema.HasField(ut, lf) Then
-                islockedout = CBool(u.GetValueOptimized(Nothing, lf, oschema))
+                islockedout = CBool(schema.GetPropertyValue(u, lf, oschema))
             End If
 
             Dim crf As String = GetField("CreationDate")
             Dim created As Date = Date.MinValue
             If schema.HasField(ut, crf) Then
-                created = CDate(u.GetValueOptimized(Nothing, crf, oschema))
+                created = CDate(schema.GetPropertyValue(u, crf, oschema))
             End If
 
             Dim llf As String = GetField("LastLoginDate")
             Dim lastlogin As Date = Date.MinValue
             If schema.HasField(ut, llf) Then
-                lastlogin = CDate(u.GetValueOptimized(Nothing, llf, oschema))
+                lastlogin = CDate(schema.GetPropertyValue(u, llf, oschema))
             End If
 
             Dim lpcf As String = GetField("LastPasswordChangedDate")
             Dim lastpsw As Date = Date.MinValue
             If schema.HasField(ut, lpcf) Then
-                lastpsw = CDate(u.GetValueOptimized(Nothing, lpcf, oschema))
+                lastpsw = CDate(schema.GetPropertyValue(u, lpcf, oschema))
             End If
 
             Dim lld As String = GetField("LastLockoutDate")
             Dim lastlockout As Date = Date.MinValue
             If schema.HasField(ut, lld) Then
-                lastlockout = CDate(u.GetValueOptimized(Nothing, lld, oschema))
+                lastlockout = CDate(schema.GetPropertyValue(u, lld, oschema))
             End If
 
             Dim lastact As Date = Date.MinValue
             If Not String.IsNullOrEmpty(UserMapper.LastActivityField) Then
-                lastact = CDate(u.GetValueOptimized(Nothing, UserMapper.LastActivityField, oschema))
+                lastact = CDate(schema.GetPropertyValue(u, UserMapper.LastActivityField, oschema))
             End If
 
             Dim uname As String = Nothing
             If Not String.IsNullOrEmpty(UserMapper.UserNameField) Then
-                uname = CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema))
+                uname = CStr(schema.GetPropertyValue(u, UserMapper.UserNameField, oschema))
             End If
 
             Dim username As String = Nothing
             If _treatUsernameAsEmail Then
-                username = CStr(u.GetValueOptimized(Nothing, GetField("Email"), oschema))
+                username = CStr(schema.GetPropertyValue(u, GetField("Email"), oschema))
             Else
                 username = uname
                 uname = Nothing
@@ -612,7 +612,7 @@ Namespace Web
             Dim mu As New MembershipUser(Me.Name, _
                 username, _
                 u.Identifier, _
-                CStr(u.GetValueOptimized(Nothing, GetField("Email"), oschema)), _
+                CStr(schema.GetPropertyValue(u, GetField("Email"), oschema)), _
                 Nothing, uname, _
                 True, islockedout, created, lastlogin, _
                 lastact, _
@@ -715,13 +715,13 @@ Namespace Web
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim laf As String = UserMapper.LastActivityField
                     If Not String.IsNullOrEmpty(laf) Then
-                        Dim dt As Date = CDate(u.GetValueOptimized(Nothing, laf, Nothing))
+                        Dim dt As Date = CDate(schema.GetPropertyValue(u, laf, Nothing))
                         Dim n As Date = UserMapper.GetNow
                         If n.Subtract(dt).TotalSeconds > 1 Then
                             Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
                             Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                                 Using u.BeginEdit
-                                    schema.SetFieldValue(u, laf, n, oschema)
+                                    schema.SetPropertyValue(u, laf, n, oschema)
                                 End Using
                                 st.AcceptModifications()
                             End Using
@@ -738,7 +738,7 @@ Namespace Web
 
             Dim onlineSpan As TimeSpan = New TimeSpan(0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0)
             Dim compareTime As DateTime = UserMapper.GetNow.Subtract(onlineSpan)
-            Dim last As Date = CDate(u.GetValueOptimized(Nothing, UserMapper.LastActivityField, Nothing))
+            Dim last As Date = CDate(schema.GetPropertyValue(u, UserMapper.LastActivityField, Nothing))
             Return last > compareTime
         End Function
 
@@ -748,8 +748,8 @@ Namespace Web
 
             If schema.HasField(ut, GetField("IsLockedOut")) Then
                 Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
-                Dim failCnt As Integer = CInt(u.GetValueOptimized(Nothing, GetField("FailedPasswordAttemtCount"), oschema))
-                Dim startFail As Date = CDate(u.GetValueOptimized(Nothing, GetField("FailedPasswordAttemtStart"), oschema))
+                Dim failCnt As Integer = CInt(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtCount"), oschema))
+                Dim startFail As Date = CDate(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtStart"), oschema))
                 Dim endFail As Date = startFail.AddMinutes(PasswordAttemptWindow)
                 Dim nowd As Date = UserMapper.GetNow
                 failCnt += 1
@@ -757,9 +757,9 @@ Namespace Web
                     Using u.BeginEdit
                         If failCnt < MaxInvalidPasswordAttempts Then
 l1:
-                            schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), failCnt, oschema)
+                            schema.SetPropertyValue(u, GetField("FailedPasswordAttemtCount"), failCnt, oschema)
                             If failCnt = 1 Then
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), nowd, oschema)
+                                schema.SetPropertyValue(u, GetField("FailedPasswordAttemtStart"), nowd, oschema)
                             End If
                         Else
                             If nowd > endFail Then
@@ -767,12 +767,12 @@ l1:
                                 GoTo l1
                             Else
                                 Dim ldf As String = GetField("LastLockoutDate")
-                                schema.SetFieldValue(u, GetField("IsLockedOut"), True, oschema)
+                                schema.SetPropertyValue(u, GetField("IsLockedOut"), True, oschema)
                                 If schema.HasField(ut, ldf) Then
-                                    schema.SetFieldValue(u, ldf, nowd, oschema)
+                                    schema.SetPropertyValue(u, ldf, nowd, oschema)
                                 End If
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), Nothing, oschema)
+                                schema.SetPropertyValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
+                                schema.SetPropertyValue(u, GetField("FailedPasswordAttemtStart"), Nothing, oschema)
 
                                 UserBlocked(u)
                             End If

@@ -82,7 +82,7 @@ Namespace Web
                 Dim users As New Generic.List(Of String)
                 Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
-                    users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
+                    users.Add(CStr(mgr.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
                 Next
                 Return users.ToArray
             End Using
@@ -95,7 +95,7 @@ Namespace Web
                 'Dim col As IEnumerable = FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
                 Dim col As IEnumerable = New Query.QueryCmd().Select(GetRoleType).ToList(mgr)
                 For Each r As IKeyEntity In col
-                    roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
+                    roles.Add(CStr(mgr.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
                 Next
                 Return roles.ToArray
             End Using
@@ -110,7 +110,7 @@ Namespace Web
                 Dim roles As New Generic.List(Of String)
                 Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
-                    roles.Add(CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)))
+                    roles.Add(CStr(mgr.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
                 Next
                 Return roles.ToArray
             End Using
@@ -125,7 +125,7 @@ Namespace Web
                 Dim users As New Generic.List(Of String)
                 Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, Nothing)
-                    users.Add(CStr(u.GetValueOptimized(Nothing, UserMapper.UserNameField, oschema)))
+                    users.Add(CStr(mgr.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
                 Next
                 Return users.ToArray
             End Using
@@ -135,7 +135,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
-                    If CStr(r.GetValueOptimized(Nothing, _rolenameField, oschema)) = roleName Then
+                    If CStr(mgr.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
                         Return True
                     End If
                 Next
@@ -211,7 +211,7 @@ Namespace Web
                     f = CType(New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
                 Dim cmd As New Query.QueryCmd(r)
-                cmd.Where(f).WithLoad(WithLoad).Select(UserMapper.GetUserType)
+                cmd.Where(f).Select(UserMapper.GetUserType, WithLoad)
                 Return cmd.ToList(mgr)
                 'Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If

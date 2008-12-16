@@ -465,7 +465,7 @@ Partial Public MustInherit Class OrmManager
 
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
-                Dim v As IKeyEntity = CType(o.GetValueOptimized(Nothing, propertyAlias, oschema), IKeyEntity)
+                Dim v As IKeyEntity = CType(MappingEngine.GetPropertyValue(o, propertyAlias, oschema), IKeyEntity)
                 Dim ll As ReadOnlyList(Of T) = Nothing
                 If Not lookups.TryGetValue(v, ll) Then
                     ll = New ReadOnlyList(Of T)
@@ -924,7 +924,7 @@ Partial Public MustInherit Class OrmManager
     Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
         ByVal id As String, ByVal sync As String, ByVal del As ICacheItemProvoder(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-        Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+        Dim ce As CachedItem = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), CachedItem)
         RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
         Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
@@ -934,7 +934,7 @@ Partial Public MustInherit Class OrmManager
             withLoad = True
 l1:
             del.Renew = True
-            ce = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+            ce = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), CachedItem)
             r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
             Assert(s = IListObjectConverter.ExtractListResult.Successed, "Withload should always successed")
         End If
@@ -1313,19 +1313,19 @@ l1:
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
     Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
 
         Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
 
         Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, AddressOf _ValCE(Of T))
     End Function
 
     Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad() As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItem
+        ByVal withLoad() As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItemBase
 
         Invariant()
 
@@ -1341,7 +1341,7 @@ l1:
         'Dim sort_type As SortType = del.SortType
         'Dim f As IOrmFilter = del.Filter
 
-        Dim ce As CachedItem = Nothing
+        Dim ce As CachedItemBase = Nothing
         del.Created = False
 
         If renew OrElse del.Renew OrElse _dont_cache_lists Then
@@ -1376,7 +1376,7 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         ElseIf vdel IsNot Nothing Then
-            If Not vdel(ce, del, dic, id, sync, v) Then
+            If Not vdel(CType(ce, CachedItem), del, dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
@@ -2921,7 +2921,7 @@ l1:
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
                 'Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
-                Dim obj As IEntity = CType(o.GetValueOptimized(Nothing, fields(i), oschema), IEntity)
+                Dim obj As IEntity = CType(MappingEngine.GetPropertyValue(o, fields(i), oschema), IEntity)
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
                         'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)

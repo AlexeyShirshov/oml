@@ -49,6 +49,11 @@ Namespace Entities
         End Sub
     End Class
 
+    Public Interface IOptimizedValues
+        Sub SetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object)
+        Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
+    End Interface
+
     Public Interface _IEntity
         Inherits IEntity
         Sub BeginLoading()
@@ -68,8 +73,6 @@ Namespace Entities
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object)
-        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity

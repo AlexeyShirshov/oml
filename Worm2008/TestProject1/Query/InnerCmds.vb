@@ -53,7 +53,7 @@ Imports Worm
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q.Select(GetType(Table1))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).WithLoad(True).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).Select(GetType(Table1), True).ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 
@@ -71,7 +71,7 @@ Imports Worm
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).WithLoad(True).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).Select(GetType(Table1), True).ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 
@@ -84,12 +84,12 @@ Imports Worm
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1))
+        inner.Select(GetType(Table1), True)
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.WithLoad(True)).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 
@@ -108,7 +108,7 @@ Imports Worm
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.Select(FCtor.prop(GetType(Table1), "Code"))). _
-            WithLoad(True).ToList(Of Table1)()
+            ToList(Of Table1)()
 
         Assert.AreEqual(0, r.Count)
 
@@ -127,7 +127,7 @@ Imports Worm
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.Select(FCtor.prop(GetType(Table1), "ID"))). _
-            WithLoad(True).ToList(Of Table1)()
+            ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 

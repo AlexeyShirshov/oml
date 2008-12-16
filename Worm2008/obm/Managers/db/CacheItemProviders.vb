@@ -199,7 +199,7 @@ Namespace Database
                     End With
 
                     Dim r As New ReadOnlyList(Of T)
-                    _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, r, arr)
+                    _mgr.LoadMultipleObjectsClm(Of T)(cmd, withLoad, r, arr)
 
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                         r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), ReadOnlyList(Of T))
@@ -390,7 +390,7 @@ Namespace Database
                 Throw New NotSupportedException
             End Function
 
-            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Object)
+            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As IList(Of Object)
                 Dim t As Type = GetType(T)
 
                 Using cmd As System.Data.Common.DbCommand = _mgr.CreateDBCommand
@@ -410,11 +410,11 @@ Namespace Database
                             .Parameters.Add(p)
                         Next
                     End With
-                    Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
-                    If withLoad Then
-                        arr = _mgr.MappingEngine.GetSortedFieldList(t)
-                    End If
-                    Return _mgr.LoadM2M(Of T)(cmd, withLoad, _obj, _sort, arr)
+                    'Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
+                    'If withLoad Then
+                    '    arr = _mgr.MappingEngine.GetSortedFieldList(t)
+                    'End If
+                    Return _mgr.LoadM2M(Of T)(_obj.GetType, cmd, withLoad, _sort)
                     '              Dim b As ConnAction = _mgr.TestConn(cmd)
                     '              Try
                     '                  If withLoad Then
@@ -486,8 +486,8 @@ Namespace Database
                     For Each o As IKeyEntity In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
-                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, f1, oschema), IKeyEntity).Identifier
-                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, f2, oschema), IKeyEntity).Identifier
+                        Dim id1 As Object = CType(_mgr.MappingEngine.GetPropertyValue(o, f1, oschema), IKeyEntity).Identifier
+                        Dim id2 As Object = CType(_mgr.MappingEngine.GetPropertyValue(o, f2, oschema), IKeyEntity).Identifier
 
                         If Not id1.Equals(_obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")

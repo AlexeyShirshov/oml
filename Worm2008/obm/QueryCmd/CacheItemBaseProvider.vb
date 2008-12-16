@@ -239,11 +239,11 @@ Namespace Query
             End Get
         End Property
 
-        Public Overridable Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
+        Public Overridable Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
             Return GetCacheItem(withLoad(0))
         End Function
 
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
         Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
                                       ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 

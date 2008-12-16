@@ -5,7 +5,7 @@ Imports Worm.Entities.Meta
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3
     Inherits OrmBaseT(Of Tables1to3)
-    Implements IOrmEditable(Of Tables1to3)
+    Implements IOrmEditable(Of Tables1to3), IOptimizedValues
 
     Private _name As String
     Private _table1 As Table1
@@ -43,8 +43,8 @@ Public Class Tables1to3
     '    Return New Tables1to3(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Title"
                 Title = CStr(value)
@@ -53,9 +53,24 @@ Public Class Tables1to3
             Case "Table3"
                 Table3 = CType(value, TestProject1.Table33)
             Case Else
-                MyBase.SetValue(pi, fieldName, oschema, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Title"
+                Return _name
+            Case "Table1"
+                Return _table1
+            Case "Table3"
+                Return _table3
+            Case Else
+                Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
 
     <Column("Title")> _
     Public Property Title() As String

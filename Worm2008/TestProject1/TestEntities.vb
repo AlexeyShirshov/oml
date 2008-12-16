@@ -136,7 +136,7 @@ Public Class EntitySchema1v1Implementation
     Public Overrides Function GetM2MRelations() As M2MRelation()
         If _rels Is Nothing Then
             _rels = New M2MRelation() { _
-                New M2MRelation(GetType(Entity4), _schema.GetSharedTable("dbo.[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
+                New M2MRelation(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
                 }
         End If
         Return _rels
@@ -392,7 +392,7 @@ Public Class EntitySchema4v1Implementation
 
     Public Overrides Function GetM2MRelations() As M2MRelation()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() {New M2MRelation(GetType(Entity), _schema.GetSharedTable("dbo.[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
+            _rels = New M2MRelation() {New M2MRelation(GetType(Entity), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
         End If
         Return _rels
     End Function

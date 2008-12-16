@@ -5,7 +5,7 @@ Imports Worm.Entities.Meta
 <Entity(GetType(Table4Implementation), "1"), Entity(GetType(Table4Implementation2), "2")> _
 Public Class Table4
     Inherits OrmBaseT(Of Table4)
-    Implements IOrmEditable(Of Table4)
+    Implements IOrmEditable(Of Table4), IOptimizedValues
 
     Private _col As Nullable(Of Boolean)
     Private _g As Guid
@@ -41,17 +41,30 @@ Public Class Table4
     '    Return New Table4(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object)
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Col"
                 Col = CType(value, Global.System.Nullable(Of Boolean))
             Case "GUID"
                 GUID = CType(value, System.Guid)
             Case Else
-                MyBase.SetValue(pi, fieldName, oschema, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Col"
+                Return _col
+            Case "GUID"
+                Return _g
+            Case Else
+                Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
 
     <Column("Col")> _
     Public Property Col() As Nullable(Of Boolean)
@@ -80,6 +93,7 @@ Public Class Table4
             End Using
         End Set
     End Property
+
 End Class
 
 Public Class Table4Implementation

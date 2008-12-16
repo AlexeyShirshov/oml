@@ -957,7 +957,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.WithLoad(True)
+        q.Select(GetType(Table1), True)
         q.ClientPaging = New Worm.Query.Paging(0, 1)
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()

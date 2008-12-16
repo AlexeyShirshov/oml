@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Core
 Imports Worm.Sorting
+Imports System.Collections.ObjectModel
 
 Namespace Entities
 
@@ -10,7 +11,7 @@ Namespace Entities
         Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal schema As ObjectMappingEngine, _
                    ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, ByVal columnAliases As List(Of String), _
                    ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-                   ByVal defaultTable As SourceFragment)
+                   ByVal defaultTable As SourceFragment, ByVal inSelect As Boolean)
 
     End Interface
 
@@ -29,7 +30,8 @@ Namespace Database
         Public Sub Format(ByVal se As Entities.SelectExpression, ByVal sb As System.Text.StringBuilder, _
                           ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                           ByVal columnAliases As System.Collections.Generic.List(Of String), _
-                          ByVal context As Object, ByVal selList As System.Collections.ObjectModel.ReadOnlyCollection(Of Entities.SelectExpression), ByVal defaultTable As Entities.Meta.SourceFragment) Implements Entities.ISelectExpressionFormater.Format
+                          ByVal context As Object, ByVal selList As ReadOnlyCollection(Of Entities.SelectExpression), _
+                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
                 Select Case se.PropType
@@ -66,7 +68,7 @@ Namespace Database
                             '    _q.Into(_q.SelectedType)
                             'End If
 
-                            Dim f As IFilter = se.Query.Prepare(j, schema, context, sl)
+                            Dim f As IFilter = se.Query.Prepare(j, schema, context, sl, _s)
                             sb.Append(" order by (")
                             sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, j, f, almgr, sl))
                         End Using
@@ -79,7 +81,17 @@ Namespace Database
                         'Throw New NotSupportedException(se.PropType.ToString)
                 End Select
             Else
-
+                Select Case se.PropType
+                    Case Entities.PropType.Aggregate
+                        se.Aggregate.MakeStmt(schema, _s, columnAliases, pmgr, almgr, context, inSelect)
+                    Case Entities.PropType.TableColumn
+                        If Not String.IsNullOrEmpty(se.Table.Name) Then
+                            sb.Append(se.Table.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                        End If
+                        sb.Append(se.Column).Append(", ")
+                    Case Else
+                        Throw New NotImplementedException
+                End Select
             End If
 
         End Sub
