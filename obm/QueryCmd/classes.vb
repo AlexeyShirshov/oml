@@ -4,6 +4,21 @@ Imports System.Collections.Generic
 
 Namespace Query
     Public Interface IExecutor
+        Class GetCacheItemEventArgs
+            Inherits EventArgs
+
+            Private _created As Boolean
+            Public Property Created() As Boolean
+                Get
+                    Return _created
+                End Get
+                Set(ByVal value As Boolean)
+                    _created = value
+                End Set
+            End Property
+        End Class
+
+        Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As GetCacheItemEventArgs)
 
         Function ExecEntity(Of ReturnType As {_IEntity})( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
@@ -105,18 +120,42 @@ Namespace Query
         End Function
     End Class
 
-    Public Class Paging
-        Public Start As Integer
-        Public Length As Integer
+    Public Structure Paging
+        Private _start As Integer
+        Public Property Start() As Integer
+            Get
+                Return _start
+            End Get
+            Set(ByVal value As Integer)
+                _start = value
+                _ne = True
+            End Set
+        End Property
 
-        Public Sub New()
-        End Sub
+        Private _len As Integer
+        Public Property Length() As Integer
+            Get
+                Return _len
+            End Get
+            Set(ByVal value As Integer)
+                _len = value
+                _ne = True
+            End Set
+        End Property
+
+        Private _ne As Boolean
 
         Public Sub New(ByVal start As Integer, ByVal length As Integer)
             Me.Start = start
             Me.Length = length
         End Sub
-    End Class
+
+        Public ReadOnly Property IsEmpty() As Boolean
+            Get
+                Return Not _ne
+            End Get
+        End Property
+    End Structure
 
     Public Class RevQueryIterator
         Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)

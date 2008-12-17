@@ -1980,7 +1980,7 @@ Namespace Entities
 
         Protected Overrides Sub PKLoaded(ByVal pkCount As Integer)
             If pkCount <> 1 Then
-                Throw New OrmObjectException(String.Format("OrmBase derived class must have only one PK. The values is {0}", pkCount))
+                Throw New OrmObjectException(String.Format("KeyEntity derived class must have only one PK. The value is {0}", pkCount))
             End If
             MyBase.PKLoaded(pkCount)
         End Sub

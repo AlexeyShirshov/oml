@@ -1260,9 +1260,9 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim l As New List(Of Table1)
             Using cmd As New System.Data.SqlClient.SqlCommand("select id,code from table1 where id = 1")
-                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).Add(Nothing, "code", "Code").GetAllProperties
+                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).Add_custom("Code", "code").GetAllProperties
 
-                mgr.QueryObjects(Of Table1)(cmd, True, l, s, _
+                mgr.QueryObjects(Of Table1)(cmd, l, s, _
                     Nothing, SelectExpression.GetMapping(s))
 
                 Assert.AreEqual(1, l.Count)

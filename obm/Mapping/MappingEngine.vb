@@ -754,7 +754,7 @@ Public Class ObjectMappingEngine
         Return GetProperty(original_type, New ColumnAttribute(propertyAlias))
     End Function
 
-    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
+    Public Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
         If String.IsNullOrEmpty(propertyAlias) Then
             Throw New ArgumentNullException("propertyAlias")
         End If
@@ -1101,6 +1101,13 @@ Public Class ObjectMappingEngine
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As ColumnAttribute, ByVal t As Type) As SelectExpression
         Dim se As New SelectExpression(t, c.PropertyAlias)
+        se.Column = c.Column
+        se.Attributes = c._behavior
+        Return se
+    End Function
+
+    Public Shared Function ConvertColumn2SelExp(ByVal c As ColumnAttribute, ByVal os As ObjectSource) As SelectExpression
+        Dim se As New SelectExpression(os, c.PropertyAlias)
         se.Column = c.Column
         se.Attributes = c._behavior
         Return se
@@ -1952,6 +1959,32 @@ Public Class ObjectMappingEngine
 
         sb.Length -= 2
 
+        'If add_c Then
+        '    sel(original_type) = sb.ToString
+        'End If
+        Return sb.ToString
+    End Function
+
+    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
+        'Dim add_c As Boolean = False
+        'If arr Is Nothing Then
+        '    Dim s As String = CStr(sel(original_type))
+        '    If Not String.IsNullOrEmpty(s) Then
+        '        Return s
+        '    End If
+        '    add_c = True
+        'End If
+        Dim sb As New StringBuilder
+        If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
+        For Each c As ColumnAttribute In arr
+            If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
+            End If
+        Next
+
+        If sb.Length > 0 Then
+            sb.Length -= 2
+        End If
         'If add_c Then
         '    sel(original_type) = sb.ToString
         'End If

@@ -86,6 +86,8 @@ Public Class Table3
                 Version = CType(value, Byte())
             Case "XML"
                 Xml = CType(value, System.Xml.XmlDocument)
+            Case "ID"
+                Identifier = value
             Case Else
                 Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)

@@ -52,6 +52,8 @@ Public Class Tables1to3
                 Table1 = CType(value, TestProject1.Table1)
             Case "Table3"
                 Table3 = CType(value, TestProject1.Table33)
+            Case "ID"
+                Identifier = value
             Case Else
                 Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
@@ -67,7 +69,8 @@ Public Class Tables1to3
             Case "Table3"
                 Return _table3
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Function

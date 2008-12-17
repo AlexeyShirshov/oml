@@ -68,7 +68,7 @@ Namespace Database
                             '    _q.Into(_q.SelectedType)
                             'End If
 
-                            Dim f As IFilter = se.Query.Prepare(j, schema, context, sl, _s)
+                            Dim f As IFilter = se.Query.Prepare(Nothing, j, schema, context, sl, _s)
                             sb.Append(" order by (")
                             sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, j, f, almgr, sl))
                         End Using
@@ -88,9 +88,15 @@ Namespace Database
                         If Not String.IsNullOrEmpty(se.Table.Name) Then
                             sb.Append(se.Table.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
                         End If
-                        sb.Append(se.Column).Append(", ")
+                        sb.Append(se.Column)
+                    Case Entities.PropType.ObjectProperty
+                        Dim oschema As IEntitySchema = schema.GetObjectSchema(se.ObjectSource.GetRealType(schema))
+                        Dim map As MapField2Column = oschema.GetFieldColumnMap()(se.PropertyAlias)
+                        sb.Append(map._tableName.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                        Dim col As String = schema.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, columnAliases, se.ObjectSource)
+                        sb.Append(col)
                     Case Else
-                        Throw New NotImplementedException
+                        Throw New NotImplementedException(se.PropType.ToString)
                 End Select
             End If
 

@@ -214,7 +214,7 @@ Namespace Xml
 #End Region
 
         Protected Friend Sub LoadMultipleObjects(Of T As {New, _IEntity})( _
-            ByVal xpath As String, ByVal withLoad As Boolean, _
+            ByVal xpath As String, _
             ByVal values As IList)
 
             Dim original_type As Type = GetType(T)
@@ -231,7 +231,7 @@ Namespace Xml
             Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(original_type)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
-                LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema, withLoad)
+                LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema)
             Loop
             _fetch = ft.GetTime
             'Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
@@ -249,7 +249,7 @@ Namespace Xml
         End Function
 
         Protected Sub LoadFromNodeIterator(Of T As {New, _IEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
-            ByVal values As IList, ByRef loaded As Integer, ByVal oschema As IEntitySchema, ByVal withLoad As Boolean)
+            ByVal values As IList, ByRef loaded As Integer, ByVal oschema As IEntitySchema)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Dim oo As T = obj
@@ -264,14 +264,14 @@ Namespace Xml
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 
-                    If withLoad Then
-                        Using obj.GetSyncRoot()
-                            'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
-                            'If obj.IsLoaded Then obj.IsLoaded = False
-                            LoadData(oschema, node, obj)
-                            obj.CorrectStateAfterLoading(Object.ReferenceEquals(oo, obj))
-                        End Using
-                    End If
+                    'If withLoad Then
+                    Using obj.GetSyncRoot()
+                        'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
+                        'If obj.IsLoaded Then obj.IsLoaded = False
+                        LoadData(oschema, node, obj)
+                        obj.CorrectStateAfterLoading(Object.ReferenceEquals(oo, obj))
+                    End Using
+                    'End If
                     values.Add(obj)
                     If obj.IsLoaded Then
                         loaded += 1

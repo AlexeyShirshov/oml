@@ -468,9 +468,9 @@ Namespace Criteria.Joins
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
                     If fl._l.Property.ObjectSource IsNot Nothing AndAlso fl._l.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._l.Property.Field = propertyAlias Then
-                        f = SetJF(fl._l.Property, value, fl._oper)
-                    ElseIf fl._r.Property.ObjectSource IsNot Nothing AndAlso fl._r.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._r.Property.Field = propertyAlias Then
                         f = SetJF(fl._r.Property, value, fl._oper)
+                    ElseIf fl._r.Property.ObjectSource IsNot Nothing AndAlso fl._r.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._r.Property.Field = propertyAlias Then
+                        f = SetJF(fl._l.Property, value, fl._oper)
                         'ElseIf fl._d1 IsNot Nothing Then
                         '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
                         '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then

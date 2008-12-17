@@ -748,7 +748,7 @@ Namespace Database.Storedprocs
             _donthit = True
             'Dim ce As New CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
-            mgr.LoadMultipleObjectsClm(Of T)(cmd, GetWithLoad, rr, GetColumns)
+            mgr.LoadMultipleObjectsClm(Of T)(cmd, rr, GetColumns)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime

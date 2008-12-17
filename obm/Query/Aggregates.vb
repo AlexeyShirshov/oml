@@ -277,30 +277,30 @@ Namespace Query
         End Function
     End Class
 
-    Public Class AggCtor
-        Private _l As List(Of AggregateBase)
+    'Public Class AggCtor
+    '    Private _l As List(Of AggregateBase)
 
-        Public Shared Function Count() As AggCtor
-            Dim a As New AggCtor
-            a.GetAllAggregates.Add(New Aggregate(AggregateFunction.Count))
-            Return a
-        End Function
+    '    Public Shared Function Count() As AggCtor
+    '        Dim a As New AggCtor
+    '        a.GetAllAggregates.Add(New Aggregate(AggregateFunction.Count))
+    '        Return a
+    '    End Function
 
-        Public Shared Function Count(ByVal [alias] As String) As AggCtor
-            Dim a As New AggCtor
-            a.GetAllAggregates.Add(New Aggregate(AggregateFunction.Count, [alias]))
-            Return a
-        End Function
+    '    Public Shared Function Count(ByVal [alias] As String) As AggCtor
+    '        Dim a As New AggCtor
+    '        a.GetAllAggregates.Add(New Aggregate(AggregateFunction.Count, [alias]))
+    '        Return a
+    '    End Function
 
-        Public Function GetAllAggregates() As List(Of AggregateBase)
-            If _l Is Nothing Then
-                _l = New List(Of AggregateBase)
-            End If
-            Return _l
-        End Function
+    '    Public Function GetAllAggregates() As List(Of AggregateBase)
+    '        If _l Is Nothing Then
+    '            _l = New List(Of AggregateBase)
+    '        End If
+    '        Return _l
+    '    End Function
 
-        Public Shared Widening Operator CType(ByVal a As AggCtor) As AggregateBase()
-            Return a.GetAllAggregates.ToArray
-        End Operator
-    End Class
+    '    Public Shared Widening Operator CType(ByVal a As AggCtor) As AggregateBase()
+    '        Return a.GetAllAggregates.ToArray
+    '    End Operator
+    'End Class
 End Namespace

@@ -246,9 +246,10 @@ Namespace Entities
             Return SyncHelper(False)
         End Function
 
-        'Public Function GetValue(ByVal propertyAlias As String) As Object
-        '    Return GetValue(Nothing, propertyAlias, Nothing)
-        'End Function
+        Public Function GetValue(ByVal propertyAlias As String) As Object
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Return schema.GetPropertyValue(Me, propertyAlias)
+        End Function
 
         'Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
         '    ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized

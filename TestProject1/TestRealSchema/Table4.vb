@@ -48,6 +48,8 @@ Public Class Table4
                 Col = CType(value, Global.System.Nullable(Of Boolean))
             Case "GUID"
                 GUID = CType(value, System.Guid)
+            Case "ID"
+                Identifier = value
             Case Else
                 Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)

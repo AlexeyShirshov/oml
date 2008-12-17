@@ -830,10 +830,10 @@ Namespace Linq
             End Get
         End Property
 
-        Protected Overrides Function VisitWithLoad(ByVal w As WithLoadExpression) As System.Linq.Expressions.Expression
-            _q.propWithLoad = True
-            Return MyBase.VisitWithLoad(w)
-        End Function
+        'Protected Overrides Function VisitWithLoad(ByVal w As WithLoadExpression) As System.Linq.Expressions.Expression
+        '    _q.propWithLoad = True
+        '    Return MyBase.VisitWithLoad(w)
+        'End Function
 
         'Protected Friend Function _GetProperties() As Orm.OrmProperty()
         '    'If _new Is Nothing Then
@@ -1073,17 +1073,17 @@ Namespace Linq
                 Case "Select"
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
-                    _q.propWithLoad = IsLoadRequired()
+                    '_q.propWithLoad = IsLoadRequired()
                     _q.SelectList = GetSelectList()
                 Case "Distinct"
                     Me.Visit(m.Arguments(0))
                     _q.propDistinct = True
                 Case "Count"
                     Visit2ParamOverride(m)
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(AggregateFunction.Count)})
+                    _q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(AggregateFunction.Count))})
                 Case "LongCount"
                     Visit2ParamOverride(m)
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(AggregateFunction.BigCount)})
+                    _q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(AggregateFunction.BigCount))})
                 Case "First"
                     Visit2ParamOverride(m)
                     _ct = Linq.Constr.First
@@ -1130,7 +1130,7 @@ Namespace Linq
 
         Protected Sub VisitAgg(ByVal m As MethodCallExpression, ByVal af As AggregateFunction)
             Me.Visit(m.Arguments(0))
-            _q.propWithLoad = False
+            '_q.propWithLoad = False
             If m.Arguments.Count > 1 Then
                 Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
@@ -1139,7 +1139,7 @@ Namespace Linq
                     'Dim al As String = Nothing
                     'Dim num As Integer
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
-                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
+                    aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(a)})
                     aq.From(_q)
                     '_q.OuterQuery = aq
                     Dim ev As EntityPropValue = TryCast(ag.Exp.Value, EntityPropValue)
@@ -1173,8 +1173,8 @@ Namespace Linq
                     'aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
                     '_q.OuterQuery = aq
                 Else
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, Translate(ag.Exp))})
-                    _q.SelectList = Nothing
+                    _q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, Translate(ag.Exp)))})
+                    '_q.SelectList = Nothing
                     '_q.WithLoad = False
                     'If _mem IsNot Nothing Then
                     '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
@@ -1192,7 +1192,7 @@ Namespace Linq
                     'End If
 
                     Dim aq As New Query.QueryCmd()
-                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
+                    aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, 0))})
                     aq.From(_q)
                     '_q.OuterQuery = aq
                     _q.Select(New SelectExpression() {CType(_sel(0).Value, EntityPropValue).OrmProp})
@@ -1201,8 +1201,8 @@ Namespace Linq
                     'If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
                     '    tt = tt.GetGenericArguments(0)
                     'End If
-                    _q.SelectList = Nothing
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, Translate(_sel(0)))})
+                    '_q.SelectList = Nothing
+                    _q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, Translate(_sel(0))))})
                     '_q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
                     '_q.WithLoad = False
                 End If

@@ -11,7 +11,7 @@ Namespace Entities
 
         Private _props As New Dictionary(Of String, Object)
 
-        Public Overridable Function GetValue( _
+        Public Overridable Overloads Function GetValue( _
             ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
             Return _props(propertyAlias)
         End Function
@@ -107,9 +107,11 @@ Namespace Entities
         End Sub
 
         Public Function GetPKValues() As Meta.PKDesc() Implements ICachedEntity.GetPKValues
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
             Dim l As New List(Of PKDesc)
             For Each pk As String In _pk
-                l.Add(New PKDesc(pk, GetValue(pk)))
+                l.Add(New PKDesc(pk, schema.GetPropertyValue(Me, pk, oschema)))
             Next
             Return l.ToArray
         End Function
@@ -122,9 +124,11 @@ Namespace Entities
 
         Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
             Get
+                Dim schema As Worm.ObjectMappingEngine = MappingEngine
+                Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
                 Dim k As Integer
                 For Each pk As String In _pk
-                    k = k Xor GetValue(pk).GetHashCode
+                    k = k Xor schema.GetPropertyValue(Me, pk, oschema).GetHashCode
                 Next
                 Return k
             End Get
