@@ -60,6 +60,10 @@ Public Class Table2
                 Blob = CType(value, Byte())
             Case "Money"
                 Money = CDec(value)
+            Case "ID"
+                Identifier = value
+            Case "DT"
+                DT = CType(value, Date?)
             Case Else
                 Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
@@ -74,8 +78,11 @@ Public Class Table2
                 Return _blob
             Case "Money"
                 Return _m
+            Case "DT"
+                Return _dt
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                Return MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Function

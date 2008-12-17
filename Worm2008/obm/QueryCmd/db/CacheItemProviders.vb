@@ -125,7 +125,7 @@ Namespace Query.Database
                 oschema = dbm.MappingEngine.GetObjectSchema(t, False)
 
                 'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.LoadMultipleObjects(t, cmd, True, rr, _sl(0), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -139,11 +139,11 @@ Namespace Query.Database
 
                 SelectExpression.GetMapping(c, q.SelectList)
 
-                If q.Aggregates IsNot Nothing Then
-                    For Each p As AggregateBase In q.Aggregates
-                        c.Add(New MapField2Column(p.Alias, p.Alias, Nothing))
-                    Next
-                End If
+                'If q.Aggregates IsNot Nothing Then
+                '    For Each p As AggregateBase In q.Aggregates
+                '        c.Add(New MapField2Column(p.Alias, p.Alias, Nothing))
+                '    Next
+                'End If
 
                 Return c
             End Function
@@ -246,7 +246,7 @@ Namespace Query.Database
                 'End If
 
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, _sl(0), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -446,7 +446,7 @@ Namespace Query.Database
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
                 'dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
-                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, _sl(0))
+                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, rr, _sl(0))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -573,7 +573,7 @@ Namespace Query.Database
                 'End If
 
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, _sl(0), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(0), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

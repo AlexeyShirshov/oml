@@ -176,12 +176,15 @@
             End Get
         End Property
 
+        Private _calc As Type
         Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-            Dim rt As Type = AnyType
-            If rt Is Nothing Then
-                rt = schema.GetTypeByEntityName(AnyEntityName)
+            If _calc Is Nothing Then
+                _calc = AnyType
+                If _calc Is Nothing Then
+                    _calc = schema.GetTypeByEntityName(AnyEntityName)
+                End If
             End If
-            Return rt
+            Return _calc
         End Function
 
         'Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type

@@ -1824,8 +1824,11 @@ l1:
             sb.Append(",").Append([alias]).Append(Selector).Append(id_clm)
             sb.Append(" ").Append(selectedType.Name).Append(mpe.GetPrimaryKeys(selectedType, schema)(0).PropertyAlias)
             If withLoad Then
-                sb.Append(",").Append(mpe.GetSelectColumnList(selectedType, mpe, Nothing, Nothing, schema, Nothing))
-                appendMainTable = True
+                Dim s As String = mpe.GetSelectColumnListWithoutPK(selectedType, mpe, Nothing, Nothing, schema, Nothing)
+                If Not String.IsNullOrEmpty(s) Then
+                    sb.Append(",").Append(s)
+                    appendMainTable = True
+                End If
             End If
             sb.Append(" from ")
 

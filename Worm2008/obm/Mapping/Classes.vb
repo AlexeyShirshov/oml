@@ -28,9 +28,9 @@
             _table = tableName
         End Sub
 
-        Public Sub New(ByVal schema As String, ByVal tableName As String)
+        Public Sub New(ByVal prefix As String, ByVal tableName As String)
             _table = tableName
-            _schema = schema
+            _schema = prefix
         End Sub
 
         'Public Property TableName() As String

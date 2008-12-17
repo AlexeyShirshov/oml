@@ -56,8 +56,8 @@ Imports Worm.Sorting
     <TestMethod()> Public Sub TestMax()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
+            q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                New SelectExpression(New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID")) _
             })
 
             Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
@@ -70,8 +70,8 @@ Imports Worm.Sorting
     <TestMethod()> Public Sub TestCount()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count) _
+            q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                New SelectExpression(New Aggregate(AggregateFunction.Count)) _
             })
             q.Select(GetType(Entity4))
 
@@ -94,8 +94,8 @@ Imports Worm.Sorting
             Dim inner As QueryCmd = New QueryCmd()
             inner.From(table)
             inner.Filter = New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
-            inner.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count) _
+            inner.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                New SelectExpression(New Aggregate(AggregateFunction.Count)) _
             })
 
             Dim q As New QueryCmd()
@@ -121,11 +121,11 @@ Imports Worm.Sorting
     <TestMethod()> Public Sub TestGroup()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count) _
+            q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                New SelectExpression(New Aggregate(AggregateFunction.Count, "cnt")) _
             })
             q.Select(GetType(Entity4))
-            q.Aggregates(0).Alias = "cnt"
+            'q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
             Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
@@ -151,7 +151,7 @@ Imports Worm.Sorting
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.propSort = New Worm.Sorting.Sort(q.Aggregates(0), SortType.Desc)
+            q.propSort = New Worm.Sorting.Sort(q.SelectList(0).Aggregate, SortType.Desc)
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -165,8 +165,8 @@ Imports Worm.Sorting
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count, "Count") _
+            q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
             })
             q.Select(t)
 
@@ -201,7 +201,7 @@ Imports Worm.Sorting
             q.Select(typeE4)
             q.propSort = New Worm.Sorting.Sort( _
                 New QueryCmd().From(table). _
-                    SelectAgg(AggCtor.Count). _
+                    Select(FCtor.count). _
                     Where(JoinCondition.Create(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
 
             Assert.AreEqual(12, q.ToList(Of Entity4)(mgr).Count)

@@ -199,7 +199,7 @@ Namespace Database
                     End With
 
                     Dim r As New ReadOnlyList(Of T)
-                    _mgr.LoadMultipleObjectsClm(Of T)(cmd, withLoad, r, arr)
+                    _mgr.LoadMultipleObjectsClm(Of T)(cmd, r, arr)
 
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                         r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), ReadOnlyList(Of T))

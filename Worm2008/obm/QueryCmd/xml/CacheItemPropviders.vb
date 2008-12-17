@@ -23,7 +23,7 @@ Namespace Query.Xml
 
                 Dim values As New List(Of ReturnType)
                 Dim xpath As String = Nothing
-                dbm.LoadMultipleObjects(Of CreateType)(xpath, _q.propWithLoad, values)
+                dbm.LoadMultipleObjects(Of CreateType)(xpath, values)
 
                 If Sort IsNot Nothing AndAlso Sort.IsExternal Then
                     r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, values), ReadOnlyObjectList(Of ReturnType))

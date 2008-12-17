@@ -41,6 +41,8 @@ Namespace Query.Database
         Private _m As Guid
         Private _sm As Guid
 
+        Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
+
         Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
             If _procA Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -70,7 +72,7 @@ Namespace Query.Database
                 End If
 
                 Dim sl As New List(Of List(Of SelectExpression))
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -114,7 +116,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
@@ -159,7 +161,7 @@ Namespace Query.Database
                 End If
 
                 Dim sl As New List(Of List(Of SelectExpression))
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -200,7 +202,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
@@ -211,12 +213,12 @@ Namespace Query.Database
                         p.ResetDic()
                     End If
                 End If
-                End If
+            End If
 
-                _m = query.Mark
-                _sm = query.SMark
+            _m = query.Mark
+            _sm = query.SMark
 
-                Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
+            Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
         End Function
 
         Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
@@ -243,7 +245,7 @@ Namespace Query.Database
                 End If
 
                 Dim sl As New List(Of List(Of SelectExpression))
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -282,7 +284,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
@@ -334,7 +336,7 @@ Namespace Query.Database
                 End If
 
                 Dim sl As New List(Of List(Of SelectExpression))
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -377,7 +379,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
@@ -421,7 +423,7 @@ Namespace Query.Database
                 'End If
 
                 Dim sl As New List(Of List(Of SelectExpression))
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -460,7 +462,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
@@ -539,7 +541,7 @@ Namespace Query.Database
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
             'Dim oldC As Boolean = mgr.RaiseObjectCreation
 
-            If query.ClientPaging IsNot Nothing Then
+            If Not query.ClientPaging.IsEmpty Then
                 mgr._start = query.ClientPaging.Start
                 mgr._length = query.ClientPaging.Length
             End If
@@ -578,17 +580,19 @@ Namespace Query.Database
                 'Debug.WriteLine(query.Mark)
                 'Debug.WriteLine(query.SMark)
 
-                Dim oldLoad As Boolean = query._load
-                Dim created As Boolean = True
-                If query.ClientPaging IsNot Nothing Then
-                    query._load = False
-                    created = False
-                End If
+                'Dim oldLoad As Boolean = query._load
+                'Dim created As Boolean = True
+                'If query.ClientPaging IsNot Nothing Then
+                '    query._load = False
+                '    created = False
+                'End If
 
                 Dim ce As Cache.CachedItemBase = d(mgr, query, dic, id, sync, p)
                 p.Clear()
-
-                query._load = oldLoad
+                Dim args As New IExecutor.GetCacheItemEventArgs
+                RaiseEvent OnGetCacheItem(Me, args)
+                Dim created As Boolean = args.Created
+                'query._load = oldLoad
 
                 query.LastExecitionResult = mgr.GetLastExecitionResult
 
@@ -661,9 +665,9 @@ Namespace Query.Database
 
             Return _Exec(Of ReturnType)(mgr, query, d, _
                 Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                    m.GetFromCache2(dic, sync, id, q.propWithLoad, p2), _
+                    m.GetFromCache2(dic, sync, id, True, p2), _
                 Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-                   CType(ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
+                   CType(ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
         End Function
 
         Public Function ExecEntity(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
@@ -764,6 +768,115 @@ Namespace Query.Database
         '    Return l
         'End Function
 
+        'Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
+        '    ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal selectedType As Type, _
+        '    ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
+        '    ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
+        '    ByVal selList As IEnumerable(Of SelectExpression), ByVal i As Integer)
+
+        '    Dim b As Boolean
+        '    Dim cols As New StringBuilder
+        '    If innerColumns IsNot Nothing Then
+        '        If query.propWithLoad Then
+        '            For Each c As String In innerColumns
+        '                cols.Append("src_t").Append(i).Append(s.Selector).Append(c).Append(",")
+        '                columnAliases.Add(c)
+        '            Next
+        '        ElseIf selectedType IsNot Nothing Then
+        '            Dim c As String = mpe.GetPrimaryKeysName(selectedType, mpe, False, columnAliases, os, Nothing)(0)
+        '            c = c.Replace(mpe.Delimiter, s.Selector)
+        '            cols.Append("src_t").Append(i).Append(s.Selector).Append(c).Append(",")
+        '        Else
+        '        End If
+        '        cols.Length -= 1
+        '        sb.Append(cols.ToString)
+        '        b = True
+        '    ElseIf os Is Nothing Then
+        '        If selList IsNot Nothing Then
+        '            For Each p As SelectExpression In selList
+        '                'If Not String.IsNullOrEmpty(p.Table.Name) Then
+        '                '    cols.Append(p.Table.UniqueName(p.ObjectSource)).Append(mpe.Delimiter)
+        '                'End If
+        '                'cols.Append(p.Column).Append(", ")
+        '                'columnAliases.Add(p.Column)
+        '                s.CreateSelectExpressionFormater().Format(p, cols, mpe, almgr, params, columnAliases, filterInfo, Nothing, Nothing, True)
+        '            Next
+        '            cols.Length -= 2
+        '            sb.Append(cols.ToString)
+        '            b = True
+        '        End If
+        '    Else
+        '        Dim queryType As Type = selectedType
+        '        Dim withLoad As Boolean = query.propWithLoad OrElse Not GetType(ICachedEntity).IsAssignableFrom(queryType)
+        '        If withLoad Then
+        '            If selList Is Nothing AndAlso query.Aggregates Is Nothing Then
+        '                cols.Append(mpe.GetSelectColumnList(queryType, mpe, Nothing, columnAliases, os, query.GetSelectedOS))
+        '                sb.Append(cols.ToString)
+        '                b = True
+        '            ElseIf selList IsNot Nothing Then
+        '                'cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases, os))
+        '                cols.Append(mpe.GetSelectColumns(mpe, selList, columnAliases))
+        '                sb.Append(cols.ToString)
+        '                b = True
+        '            End If
+        '        ElseIf selList IsNot Nothing Then
+        '            For Each p As SelectExpression In selList
+        '                Dim oschema As IEntitySchema = os
+        '                If p.ObjectSource IsNot Nothing AndAlso p.ObjectSource.GetRealType(mpe) IsNot selectedType Then
+        '                    oschema = mpe.GetObjectSchema(p.ObjectSource.GetRealType(mpe))
+        '                End If
+        '                Dim map As MapField2Column = oschema.GetFieldColumnMap()(p.PropertyAlias)
+        '                cols.Append(map._tableName.UniqueName(p.ObjectSource)).Append(mpe.Delimiter)
+        '                Dim col As String = mpe.GetColumnNameByPropertyAlias(oschema, p.PropertyAlias, False, columnAliases, p.ObjectSource)
+        '                cols.Append(col).Append(", ")
+        '                'columnAliases.Add(map._columnName)
+        '            Next
+        '            cols.Length -= 2
+        '            sb.Append(cols.ToString)
+        '            b = True
+        '        ElseIf query.Aggregates Is Nothing Then
+        '            mpe.GetPKList(queryType, mpe, os, cols, columnAliases, query.GetSelectedOS)
+        '            sb.Append(cols.ToString)
+        '            b = True
+        '        End If
+        '    End If
+
+        '    If query.Aggregates IsNot Nothing Then
+        '        For Each a As AggregateBase In query.Aggregates
+        '            If b Then
+        '                sb.Append(",")
+        '            Else
+        '                b = True
+        '            End If
+        '            sb.Append(a.MakeStmt(mpe, s, innerColumns, params, almgr, filterInfo, True))
+        '            If columnAliases IsNot Nothing Then
+        '                columnAliases.Add(a.GetAlias)
+        '            End If
+        '        Next
+        '    End If
+
+        '    If Not b Then
+        '        If os IsNot Nothing Then
+        '            Throw New NotSupportedException("Select columns must be specified")
+        '        End If
+        '        sb.Append("*")
+        '    End If
+
+        '    If query.RowNumberFilter IsNot Nothing Then
+        '        If Not s.SupportRowNumber Then
+        '            Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
+        '        End If
+        '        sb.Append(",row_number() over (")
+        '        If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
+        '            sb.Append(RowNumberOrder)
+        '            'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+        '        Else
+        '            sb.Append("order by ").Append(cols.ToString)
+        '        End If
+        '        sb.Append(") as ").Append(QueryCmd.RowNumerColumn)
+        '    End If
+        'End Sub
+
         Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal selectedType As Type, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
@@ -772,83 +885,18 @@ Namespace Query.Database
 
             Dim b As Boolean
             Dim cols As New StringBuilder
+
             If innerColumns IsNot Nothing Then
-                If query.propWithLoad Then
-                    For Each c As String In innerColumns
-                        cols.Append("src_t").Append(i).Append(s.Selector).Append(c).Append(",")
-                        columnAliases.Add(c)
-                    Next
-                ElseIf selectedType IsNot Nothing Then
-                    Dim c As String = mpe.GetPrimaryKeysName(selectedType, mpe, False, columnAliases, os, Nothing)(0)
-                    c = c.Replace(mpe.Delimiter, s.Selector)
-                    cols.Append("src_t").Append(i).Append(s.Selector).Append(c).Append(",")
-                Else
-                End If
-                cols.Length -= 1
+                Throw New NotImplementedException
+            Else
+                For Each p As SelectExpression In selList
+                    s.CreateSelectExpressionFormater().Format(p, cols, mpe, almgr, params, columnAliases, _
+                        filterInfo, Nothing, Nothing, True)
+                    cols.Append(", ")
+                Next
+                cols.Length -= 2
                 sb.Append(cols.ToString)
                 b = True
-            ElseIf os Is Nothing Then
-                If selList IsNot Nothing Then
-                    For Each p As SelectExpression In selList
-                        'If Not String.IsNullOrEmpty(p.Table.Name) Then
-                        '    cols.Append(p.Table.UniqueName(p.ObjectSource)).Append(mpe.Delimiter)
-                        'End If
-                        'cols.Append(p.Column).Append(", ")
-                        'columnAliases.Add(p.Column)
-                        s.CreateSelectExpressionFormater().Format(p, cols, mpe, almgr, params, columnAliases, filterInfo, Nothing, Nothing, True)
-                    Next
-                    cols.Length -= 2
-                    sb.Append(cols.ToString)
-                    b = True
-                End If
-            Else
-                Dim queryType As Type = selectedType
-                Dim withLoad As Boolean = query.propWithLoad OrElse Not GetType(ICachedEntity).IsAssignableFrom(queryType)
-                If withLoad Then
-                    If selList Is Nothing AndAlso query.Aggregates Is Nothing Then
-                        cols.Append(mpe.GetSelectColumnList(queryType, mpe, Nothing, columnAliases, os, query.GetSelectedOS))
-                        sb.Append(cols.ToString)
-                        b = True
-                    ElseIf selList IsNot Nothing Then
-                        'cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases, os))
-                        cols.Append(mpe.GetSelectColumns(mpe, selList, columnAliases))
-                        sb.Append(cols.ToString)
-                        b = True
-                    End If
-                ElseIf selList IsNot Nothing Then
-                    For Each p As SelectExpression In selList
-                        Dim oschema As IEntitySchema = os
-                        If p.ObjectSource IsNot Nothing AndAlso p.ObjectSource.GetRealType(mpe) IsNot selectedType Then
-                            oschema = mpe.GetObjectSchema(p.ObjectSource.GetRealType(mpe))
-                        End If
-                        Dim map As MapField2Column = oschema.GetFieldColumnMap()(p.PropertyAlias)
-                        cols.Append(map._tableName.UniqueName(p.ObjectSource)).Append(mpe.Delimiter)
-                        Dim col As String = mpe.GetColumnNameByPropertyAlias(oschema, p.PropertyAlias, False, columnAliases, p.ObjectSource)
-                        cols.Append(col).Append(", ")
-                        'columnAliases.Add(map._columnName)
-                    Next
-                    cols.Length -= 2
-                    sb.Append(cols.ToString)
-                    b = True
-                ElseIf query.Aggregates Is Nothing Then
-                    mpe.GetPKList(queryType, mpe, os, cols, columnAliases, query.GetSelectedOS)
-                    sb.Append(cols.ToString)
-                    b = True
-                End If
-            End If
-
-            If query.Aggregates IsNot Nothing Then
-                For Each a As AggregateBase In query.Aggregates
-                    If b Then
-                        sb.Append(",")
-                    Else
-                        b = True
-                    End If
-                    sb.Append(a.MakeStmt(mpe, s, innerColumns, params, almgr, filterInfo, True))
-                    If columnAliases IsNot Nothing Then
-                        columnAliases.Add(a.GetAlias)
-                    End If
-                Next
             End If
 
             If Not b Then
@@ -930,7 +978,7 @@ Namespace Query.Database
             Dim tables() As SourceFragment = Nothing
             'Dim osrc As ObjectSource = Nothing
             Dim selectType As Type = Nothing
-            If os IsNot Nothing Then
+            If from Is Nothing OrElse from.Table Is Nothing Then
                 'osrc = from.ObjectSource
                 selectType = osrc.GetRealType(mpe)
                 Dim mts As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
@@ -965,7 +1013,7 @@ Namespace Query.Database
 
             Dim st As SearchFragment = TryCast(tbl_real, SearchFragment)
             If st IsNot Nothing Then
-                appendMain = appendMain OrElse FormatSearchTable(mpe, sb, st, s, os, params, selectType)
+                appendMain = FormatSearchTable(mpe, sb, st, s, os, params, selectType) OrElse appendMain
             Else
                 sb.Append(s.GetTableName(tbl_real))
             End If

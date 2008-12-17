@@ -306,9 +306,8 @@ Imports Worm.Criteria
     <TestMethod()> Public Sub TestGroupInsert()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr")). _
-                SelectAgg(AggCtor.Count("cnt")). _
+            Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
+                Select(FCtor.prop(GetType(Table1), "EnumStr").Add_count("cnt")). _
                 GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
@@ -336,9 +335,8 @@ Imports Worm.Criteria
     <TestMethod()> Public Sub TestGroupUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr")). _
-                SelectAgg(AggCtor.Count("cnt")). _
+            Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
+                Select(FCtor.prop(GetType(Table1), "EnumStr").Add_count("cnt")). _
                 GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)

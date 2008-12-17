@@ -220,10 +220,38 @@ Namespace Entities
             _falias = fieldAlias
         End Sub
 
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal propertyAlias As String, ByVal intoType As Type)
+            _column = column
+            _table = t
+            _falias = propertyAlias
+            _dst = New ObjectSource(intoType)
+        End Sub
+
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal propertyAlias As String, ByVal intoEntityName As String)
+            _column = column
+            _table = t
+            _falias = propertyAlias
+            _dst = New ObjectSource(intoEntityName)
+        End Sub
+
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal fieldAlias As String)
             _column = computed
             _values = values
             _falias = fieldAlias
+        End Sub
+
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal propertyAlias As String, ByVal intoType As Type)
+            _column = computed
+            _values = values
+            _falias = propertyAlias
+            _dst = New ObjectSource(intoType)
+        End Sub
+
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal propertyAlias As String, ByVal intoEntityName As String)
+            _column = computed
+            _values = values
+            _falias = propertyAlias
+            _dst = New ObjectSource(intoEntityName)
         End Sub
 
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference)

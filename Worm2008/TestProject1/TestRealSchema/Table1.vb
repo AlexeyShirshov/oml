@@ -90,18 +90,21 @@ Public Class Table1
                 _cust = CInt(value)
             Case "ddd"
                 Name = CStr(value)
+            Case "ID"
+                Identifier = value
             Case Else
                 Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    Public Overridable Function GetValue( _
+    Public Overridable Overloads Function GetValue( _
         ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
         If fieldName = "ddd" Then
             Return Name
         Else
-            Throw New NotSupportedException(fieldName)
+            Return MappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
+            'Throw New NotSupportedException(fieldName)
             'Return MyBase.GetValue(pi, fieldName, oschema)
         End If
     End Function

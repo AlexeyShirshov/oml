@@ -709,7 +709,7 @@ l1:
                 If withLoad Then
                     LoadMultipleObjects(ct, selectedType, cmd, values, Nothing, Nothing)
                 Else
-                    LoadMultipleObjects(ct, cmd, True, values, arr)
+                    LoadMultipleObjects(ct, cmd, values, arr)
                 End If
                 Return values
             End Using
@@ -960,7 +960,7 @@ l1:
                         params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                         nidx = cmd_str.Second
                     End With
-                    LoadMultipleObjects(original_type, cmd, withLoad, values, arr)
+                    LoadMultipleObjects(original_type, cmd, values, arr)
                     'If msort Then
                     '    objs = Schema.GetObjectSchema(original_type).ExternalSort(sort, sortType, objs)
                     'End If
@@ -1022,7 +1022,7 @@ l1:
                         params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                         nidx = cmd_str.Second
                     End With
-                    LoadMultipleObjectsClm(Of T)(cmd, withLoad, objs, arr)
+                    LoadMultipleObjectsClm(Of T)(cmd, objs, arr)
                     'If msort Then
                     '    objs = Schema.GetObjectSchema(original_type).ExternalSort(sort, sortType, objs)
                     'End If
@@ -1313,14 +1313,13 @@ l1:
 
         Protected Friend Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As List(Of ColumnAttribute))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
             If _LoadMultipleObjectsMI4clm Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjectsClm" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 4 Then
+                    If mi2.Name = "LoadMultipleObjectsClm" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 3 Then
                         _LoadMultipleObjectsMI4clm = mi2
                         Exit For
                     End If
@@ -1334,20 +1333,19 @@ l1:
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4clm.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, selectList}, Nothing)
+                New Object() {cmd, values, selectList}, Nothing)
 
         End Sub
 
         Protected Friend Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As List(Of SelectExpression))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
             If _LoadMultipleObjectsMI4 Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 4 Then
+                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 3 Then
                         _LoadMultipleObjectsMI4 = mi2
                         Exit For
                     End If
@@ -1361,13 +1359,12 @@ l1:
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, selectList}, Nothing)
+                New Object() {cmd, values, selectList}, Nothing)
 
         End Sub
 
         Public Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression), _
             ByVal oschema As IEntitySchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
@@ -1377,7 +1374,7 @@ l1:
 
             If _LoadMultipleObjectsMI Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "QueryObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 6 Then
+                    If mi2.Name = "QueryObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 5 Then
                         _LoadMultipleObjectsMI = mi2
                         Exit For
                     End If
@@ -1391,37 +1388,38 @@ l1:
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, selectList, oschema, fields_idx}, Nothing)
+                New Object() {cmd, values, selectList, oschema, fields_idx}, Nothing)
 
         End Sub
 
         Protected Friend Sub LoadMultipleObjectsClm(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, ByVal values As IList, _
+            ByVal values As IList, _
             ByVal selectList As List(Of ColumnAttribute))
 
             Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            QueryObjects(Of T)(cmd, withLoad, values, _
+            QueryObjects(Of T)(cmd, values, _
                                selectList.ConvertAll(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, GetType(T))), _
                                oschema, fields_idx)
         End Sub
 
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, ByVal values As IList, _
+            ByVal values As IList, _
             ByVal selectList As List(Of SelectExpression))
 
             Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            QueryObjects(Of T)(cmd, withLoad, values, _
+            QueryObjects(Of T)(cmd, values, _
                                selectList, _
                                oschema, fields_idx)
         End Sub
 
         Public Sub QueryMultiTypeObjects( _
+            ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
             ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
@@ -1450,7 +1448,7 @@ l1:
 
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadMultiFromResultSet(values, selectList, dr, types, pdic, objDic, _loadedInLastFetch)
+                        LoadMultiFromResultSet(createType, values, selectList, dr, types, pdic, objDic, _loadedInLastFetch)
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1465,7 +1463,9 @@ l1:
             End Try
         End Sub
 
-        Protected Sub LoadMultiFromResultSet(ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
+        Protected Sub LoadMultiFromResultSet( _
+            ByVal createType As Type, _
+            ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
             ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
             ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
@@ -1476,12 +1476,16 @@ l1:
             Dim odic As New Specialized.OrderedDictionary '(Of ObjectSource, _IEntity)
             Dim dfac As New Dictionary(Of ObjectSource, List(Of Pair(Of String, Object)))
             Dim pkdic As New Dictionary(Of ObjectSource, Integer)
-            Dim l As New List(Of _IEntity)
 
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
-                Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
-                Dim oschema As IEntitySchema = types(se.ObjectSource)
+                Dim t As Type = createType
+                Dim os As ObjectSource = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                If os IsNot Nothing Then
+                    t = os.GetRealType(MappingEngine)
+                End If
+
+                Dim oschema As IEntitySchema = types(os)
                 Dim att As Field2DbRelations = se._realAtt
                 Dim pi As Reflection.PropertyInfo = se._pi
                 Dim c As ColumnAttribute = se._c
@@ -1502,36 +1506,45 @@ l1:
                 End If
 
                 If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
+                    Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
+                    Dim obj As _IEntity = Nothing
+                    If p IsNot Nothing Then obj = p.First
                     If obj Is Nothing Then
                         obj = CType(Activator.CreateInstance(t), _IEntity)
                         obj.SetMgrString(IdentityString)
-                        odic.Add(se.ObjectSource, obj)
+                        p = New Pair(Of _IEntity)(obj, Nothing)
+                        odic.Add(os, p)
                     End If
 
                     Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                    Dim propertyAlias As String = se.FieldAlias
+                    If String.IsNullOrEmpty(propertyAlias) Then
+                        propertyAlias = se.PropertyAlias
+                    End If
 
                     Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
                     Dim value As Object = dr.GetValue(i)
                     If fv IsNot Nothing Then
-                        value = fv.CreateValue(se.PropertyAlias, obj, value)
+                        value = fv.CreateValue(propertyAlias, obj, value)
                     End If
 
                     obj.BeginLoading()
-                    ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
-                                     False, Nothing, c)
+                    'ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
+                    '                 False, Nothing, c)
+                    ParsePKFromDb(obj, dr, oschema, ce, i, propertyAlias, c, pi, value)
 
                     obj.EndLoading()
 
                     Dim cnt As Integer
-                    pkdic.TryGetValue(se.ObjectSource, cnt)
-                    pkdic(se.ObjectSource) = cnt + 1
+                    pkdic.TryGetValue(os, cnt)
+                    pkdic(os) = cnt + 1
                 End If
             Next
 
-            For Each de As DictionaryEntry In odic
-                Dim obj As _IEntity = CType(de.Value, _IEntity)
-                Dim os As ObjectSource = CType(de.Key, ObjectSource)
+            Dim ex As New List(Of _IEntity)
+            For Each os As ObjectSource In odic.Keys
+                Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
+                Dim obj As _IEntity = p.First
                 Dim pk_count As Integer
                 pkdic.TryGetValue(os, pk_count)
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
@@ -1542,7 +1555,7 @@ l1:
 
                         Dim c As OrmCache = TryCast(_cache, OrmCache)
                         If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
-                            l.Add(obj)
+                            ex.Add(obj)
                         End If
 
                         'Threading.Monitor.Enter(dic)
@@ -1554,18 +1567,18 @@ l1:
                             Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
+                            odic(os) = New Pair(Of _IEntity)(obj, robj)
+
                             obj = robj
                             ce = CType(obj, _ICachedEntity)
                             'SyncLock dic
                             If fromCache Then
                                 If obj.ObjectState = ObjectState.Created Then
                                     'Using obj.GetSyncRoot
-                                    l.Add(obj)
+                                    ex.Add(obj)
                                     'End Using
                                 ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                                    l.Add(obj)
-                                    'Else
-                                    '    obj.BeginLoading()
+                                    ex.Add(obj)
                                 End If
                                 'Else
                                 '    If fromRS Then
@@ -1584,15 +1597,24 @@ l1:
                 End If
             Next
 
-            If l.Count = odic.Count Then
-                values.Add(New ReadOnlyObjectList(Of _IEntity)(l))
+            If ex.Count = odic.Count Then
+                values.Add(New ReadOnlyObjectList(Of _IEntity)(ex))
                 Return
+                'ElseIf l.Count > 0 Then
+                '    For Each os As ObjectSource In odic.Keys
+                '        Dim idx As Integer = l.IndexOf(CType(odic(os), _IEntity))
+                '        If idx >= 0 Then
+                '            odic(os) = l(idx)
+                '        End If
+                '    Next
+                '    l.Clear()
             End If
 
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
-                Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
-                Dim oschema As IEntitySchema = types(se.ObjectSource)
+                'Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
+                Dim os As ObjectSource = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                Dim oschema As IEntitySchema = types(os)
 
                 Dim pi As Reflection.PropertyInfo = se._pi
                 Dim c As ColumnAttribute = se._c
@@ -1606,49 +1628,59 @@ l1:
 
                 Dim att As Field2DbRelations = se._realAtt 'MappingEngine.GetAttributes(oschema, c)
                 If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim obj As _IEntity = CType(odic(se.ObjectSource), _IEntity)
-                    Dim fac As List(Of Pair(Of String, Object)) = Nothing
-                    If Not dfac.TryGetValue(se.ObjectSource, fac) Then
-                        fac = New List(Of Pair(Of String, Object))
-                        dfac.Add(se.ObjectSource, fac)
-                    End If
+                    Dim obj As _IEntity = CType(odic(os), Pair(Of _IEntity)).Second
+                    If Not ex.Contains(obj) Then
+                        Dim fac As List(Of Pair(Of String, Object)) = Nothing
+                        If Not dfac.TryGetValue(os, fac) Then
+                            fac = New List(Of Pair(Of String, Object))
+                            dfac.Add(os, fac)
+                        End If
 
-                    Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                        Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                        Dim propertyAlias As String = se.FieldAlias
+                        If String.IsNullOrEmpty(propertyAlias) Then
+                            propertyAlias = se.PropertyAlias
+                        End If
 
-                    Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
-                    Dim value As Object = dr.GetValue(i)
-                    If fv IsNot Nothing Then
-                        value = fv.CreateValue(se.PropertyAlias, obj, value)
-                    End If
+                        Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                        Dim value As Object = dr.GetValue(i)
+                        If fv IsNot Nothing Then
+                            value = fv.CreateValue(propertyAlias, obj, value)
+                        End If
 
-                    obj.BeginLoading()
-                    ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
-                                     False, fac, c)
+                        obj.BeginLoading()
+                        ParseValueFromDb(dr, att, i, obj, pi, propertyAlias, oschema, value, ce, _
+                                         False, fac, c)
 
-                    obj.EndLoading()
+                        obj.EndLoading()
 
-                    Dim cnt As Integer
-                    pkdic.TryGetValue(se.ObjectSource, cnt)
-                    pkdic(se.ObjectSource) = cnt + 1
+                        Dim cnt As Integer
+                        pkdic.TryGetValue(os, cnt)
+                        pkdic(os) = cnt + 1
 
-                    Dim f As IFactory = TryCast(obj, IFactory)
-                    If f IsNot Nothing Then
-                        For Each p As Pair(Of String, Object) In fac
-                            Dim e As _IEntity = f.CreateObject(p.First, p.Second)
-                            If e IsNot Nothing Then
-                                e.SetMgrString(IdentityString)
-                                If obj.CreateManager IsNot Nothing Then
-                                    e.SetCreateManager(obj.CreateManager)
+                        Dim f As IFactory = TryCast(obj, IFactory)
+                        If f IsNot Nothing Then
+                            For Each p As Pair(Of String, Object) In fac
+                                Dim e As _IEntity = f.CreateObject(p.First, p.Second)
+                                If e IsNot Nothing Then
+                                    e.SetMgrString(IdentityString)
+                                    If obj.CreateManager IsNot Nothing Then
+                                        e.SetCreateManager(obj.CreateManager)
+                                    End If
                                 End If
-                            End If
-                        Next
+                            Next
+                        End If
                     End If
-
                 End If
             Next
 
+            Dim l As New List(Of _IEntity)
             For Each de As DictionaryEntry In odic
-                Dim obj As _IEntity = CType(de.Value, _IEntity)
+                Dim p As Pair(Of _IEntity) = CType(de.Value, Pair(Of _IEntity))
+                Dim obj As _IEntity = p.Second
+
+                'Assert(obj.ObjectState <> ObjectState.Created, "Object cannot be created")
+
                 Dim os As ObjectSource = CType(de.Key, ObjectSource)
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
@@ -1658,6 +1690,11 @@ l1:
 
                 RaiseObjectLoaded(obj)
 
+                Dim dic As IDictionary = Nothing
+                objDic.TryGetValue(os, dic)
+
+                AfterLoadingProcess(dic, p.First, Nothing, obj)
+
                 l.Add(obj)
             Next
 
@@ -1666,7 +1703,7 @@ l1:
 
         Public Sub QueryObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, ByVal values As IList, _
+            ByVal values As IList, _
             ByVal selectList As IList(Of SelectExpression), ByVal oschema As IEntitySchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
@@ -1687,7 +1724,7 @@ l1:
             Dim b As ConnAction = TestConn(cmd)
             Try
                 _loadedInLastFetch = 0
-                If withLoad AndAlso c IsNot Nothing Then
+                If c IsNot Nothing Then
                     c.BeginTrackDelete(original_type)
                 End If
 
@@ -1752,7 +1789,7 @@ l1:
                     _fetch = ft.GetTime
                 End Using
             Finally
-                If withLoad AndAlso c IsNot Nothing Then
+                If c IsNot Nothing Then
                     c.EndTrackDelete(original_type)
                 End If
                 CloseConn(b)
@@ -1880,7 +1917,7 @@ l1:
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To selectList.Count - 1
                     Dim se As SelectExpression = selectList(idx)
-                    Dim propertyAlias As String = If(String.IsNullOrEmpty(se.PropertyAlias), se.FieldAlias, se.PropertyAlias)
+                    Dim propertyAlias As String = If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias)
                     Dim c As ColumnAttribute = se._c
                     Dim pi As Reflection.PropertyInfo = se._pi
                     Dim attr As Field2DbRelations = se._realAtt
@@ -1927,57 +1964,7 @@ l1:
                                 value = fv.CreateValue(propertyAlias, obj, value)
                             End If
 
-                            If Not dr.IsDBNull(idx) Then
-                                'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
-                                '    ce.CreateCopyForSaveNewEntry()
-                                '    'bl = True
-                                'End If
-
-                                Try
-                                    If pi Is Nothing Then
-                                        MappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    Else
-                                        Dim propType As Type = pi.PropertyType
-                                        If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                            Dim v As Object = Convert.ChangeType(value, propType)
-                                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                            Dim dt As DateTime = CDate(value)
-                                            Dim l As Long = dt.ToBinary
-                                            Using ms As New IO.MemoryStream
-                                                Dim sw As New IO.StreamWriter(ms)
-                                                sw.Write(l)
-                                                sw.Flush()
-                                                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                            End Using
-                                        Else
-                                            'If c.FieldName = "ID" Then
-                                            '    obj.Identifier = CInt(value)
-                                            'Else
-                                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
-                                            'End If
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        End If
-                                    End If
-                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                    Dim dt As DateTime = CDate(value)
-                                    Dim l As Long = dt.ToBinary
-                                    Using ms As New IO.MemoryStream
-                                        Dim sw As New IO.StreamWriter(ms)
-                                        sw.Write(l)
-                                        sw.Flush()
-                                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                    End Using
-                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
-                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                End Try
-                            End If
+                            ParsePKFromDb(obj, dr, oschema, ce, idx, propertyAlias, c, pi, value)
                         End If
                     End If
                 Next
@@ -2230,6 +2217,63 @@ l1:
             RaiseObjectLoaded(obj)
             Return obj
         End Function
+
+        Private Sub ParsePKFromDb(ByVal obj As _IEntity, ByVal dr As System.Data.Common.DbDataReader, _
+            ByVal oschema As IEntitySchema, ByVal ce As _ICachedEntity, ByVal idx As Integer, _
+            ByVal propertyAlias As String, ByVal c As ColumnAttribute, _
+            ByVal pi As Reflection.PropertyInfo, ByVal value As Object)
+            If Not dr.IsDBNull(idx) Then
+                'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
+                '    ce.CreateCopyForSaveNewEntry()
+                '    'bl = True
+                'End If
+
+                Try
+                    If pi Is Nothing Then
+                        MappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    Else
+                        Dim propType As Type = pi.PropertyType
+                        If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                            Dim v As Object = Convert.ChangeType(value, propType)
+                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                            Dim dt As DateTime = CDate(value)
+                            Dim l As Long = dt.ToBinary
+                            Using ms As New IO.MemoryStream
+                                Dim sw As New IO.StreamWriter(ms)
+                                sw.Write(l)
+                                sw.Flush()
+                                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                            End Using
+                        Else
+                            'If c.FieldName = "ID" Then
+                            '    obj.Identifier = CInt(value)
+                            'Else
+                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+                            'End If
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        End If
+                    End If
+                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                    Dim dt As DateTime = CDate(value)
+                    Dim l As Long = dt.ToBinary
+                    Using ms As New IO.MemoryStream
+                        Dim sw As New IO.StreamWriter(ms)
+                        sw.Write(l)
+                        sw.Flush()
+                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
+                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    End Using
+                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
+                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
+                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                End Try
+            End If
+        End Sub
 
         Public Sub ParseValueFromDb(ByVal dr As System.Data.Common.DbDataReader, _
             ByVal att As Field2DbRelations, ByVal i As Integer, ByVal obj As _IEntity, _
@@ -2571,7 +2615,7 @@ l1:
                         params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
                         nextp = cmd_str.Second
                     End With
-                    LoadMultipleObjectsClm(Of T)(cmd, True, values, columns)
+                    LoadMultipleObjectsClm(Of T)(cmd, values, columns)
                 End Using
             Next
 
@@ -2721,7 +2765,7 @@ l1:
                         params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
                         nextp = cmd_str.Second
                     End With
-                    LoadMultipleObjects(realType, cmd, True, values, columns)
+                    LoadMultipleObjects(realType, cmd, values, columns)
                 End Using
             Next
 
@@ -3000,7 +3044,7 @@ l1:
 
                 If Not String.IsNullOrEmpty(cmd.CommandText) Then
                     If type2search Is selectType OrElse searchCols.Count = 0 Then
-                        LoadMultipleObjectsClm(Of T)(cmd, fields IsNot Nothing, col, selCols)
+                        LoadMultipleObjectsClm(Of T)(cmd, col, selCols)
                     Else
                         LoadMultipleObjects(selectType, type2search, cmd, col, selCols, searchCols)
                     End If
@@ -3025,7 +3069,7 @@ l1:
 
                     If Not String.IsNullOrEmpty(cmd.CommandText) Then
                         If type2search Is selectType OrElse searchCols.Count = 0 Then
-                            LoadMultipleObjectsClm(Of T)(cmd, fields IsNot Nothing, col2, selCols)
+                            LoadMultipleObjectsClm(Of T)(cmd, col2, selCols)
                         Else
                             LoadMultipleObjects(selectType, type2search, cmd, col2, selCols, searchCols)
                         End If
@@ -3378,7 +3422,7 @@ l2:
 
                 Dim r As New List(Of T)
                 If type2search Is selectType OrElse searchCols.Count = 0 Then
-                    LoadMultipleObjectsClm(Of T)(cmd, fields IsNot Nothing, r, selCols)
+                    LoadMultipleObjectsClm(Of T)(cmd, r, selCols)
                 Else
                     LoadMultipleObjects(selectType, type2search, cmd, r, selCols, searchCols)
                 End If
@@ -3523,29 +3567,37 @@ l2:
             Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
 
             Dim tt As Type = GetType(ReturnType)
+            Dim ost As ObjectSource = New ObjectSource(t)
+            Dim ostt As ObjectSource = Nothing
+            If t IsNot tt Then
+                ostt = New ObjectSource(tt)
+            Else
+                ostt = New ObjectSource(New ObjectAlias(tt))
+            End If
 
             Dim types As New Dictionary(Of ObjectSource, IEntitySchema)
-            types.Add(New ObjectSource(t), MappingEngine.GetObjectSchema(t))
-            types.Add(New ObjectSource(tt), MappingEngine.GetObjectSchema(tt))
+            types.Add(ost, MappingEngine.GetObjectSchema(t))
+            types.Add(ostt, MappingEngine.GetObjectSchema(tt))
 
             Dim pdic As New Dictionary(Of Type, IDictionary)
-            pdic.Add(t, MappingEngine.GetProperties(t, types(New ObjectSource(t))))
-            pdic.Add(tt, MappingEngine.GetProperties(tt, types(New ObjectSource(tt))))
+            pdic.Add(t, MappingEngine.GetProperties(t, types(ost)))
+            If t IsNot tt Then
+                pdic.Add(tt, MappingEngine.GetProperties(tt, types(ostt)))
+            End If
 
             Dim sel As New List(Of SelectExpression)
-            sel.Add(New SelectExpression(t, MappingEngine.GetPrimaryKeys(t, types(New ObjectSource(t)))(0).PropertyAlias))
-
-            sel.Add(New SelectExpression(tt, MappingEngine.GetPrimaryKeys(tt, types(New ObjectSource(tt)))(0).PropertyAlias))
+            sel.Add(New SelectExpression(t, MappingEngine.GetPrimaryKeys(t, types(ost))(0).PropertyAlias))
+            sel.Add(New SelectExpression(ostt, MappingEngine.GetPrimaryKeys(tt, types(ostt))(0).PropertyAlias))
 
             If withLoad Then
-                For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(tt, types(New ObjectSource(tt)))
+                For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(tt, types(ostt))
                     If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                         sel.Add(ObjectMappingEngine.ConvertColumn2SelExp(c, tt))
                     End If
                 Next
             End If
 
-            QueryMultiTypeObjects(cmd, v, types, pdic, sel)
+            QueryMultiTypeObjects(tt, cmd, v, types, pdic, sel)
 
             Return New ReadonlyMatrix(v)
         End Function

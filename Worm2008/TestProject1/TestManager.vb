@@ -183,7 +183,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity) = e.M2M.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity In c
-                Assert.IsFalse(e4.InternalProperties.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
             c = e.M2M.Find(Of Entity)(Nothing, Nothing, False)

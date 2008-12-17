@@ -2,6 +2,8 @@
     Partial Public Class XmlQueryExecutor
         Implements IExecutor
 
+        Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
+
         Public Function Exec(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
             Throw New NotImplementedException
         End Function

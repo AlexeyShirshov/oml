@@ -191,7 +191,7 @@ Namespace Xml
                 End If
 
                 Dim r As New ReadOnlyList(Of T)
-                _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, CType(r.List, System.Collections.IList))
+                _mgr.LoadMultipleObjects(Of T)(sb.ToString, CType(r.List, System.Collections.IList))
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                     r = CType(_mgr.MappingEngine.ExternalSort(Of T)(_mgr, _sort, r.List), Global.Worm.ReadOnlyList(Of T))
