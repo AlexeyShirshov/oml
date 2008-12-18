@@ -5,7 +5,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Criteria
 
 Namespace Query
-    Public Class PCtor
+    Public Class Ctor
         'Implements ICtor
 
         Private _os As ObjectSource

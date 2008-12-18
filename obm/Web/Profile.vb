@@ -193,13 +193,13 @@ Namespace Web
             Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
-                Dim cl As Worm.Criteria.PredicateLink = New PCtor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
+                Dim cl As Worm.Criteria.PredicateLink = New Ctor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(True))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(False))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(False))
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
                 End Select
                 Dim col As ICollection = FindUsers(mgr, cl)
@@ -278,17 +278,17 @@ Namespace Web
             Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
-                Dim cl As Worm.Criteria.PredicateLink = New PCtor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
+                Dim cl As Worm.Criteria.PredicateLink = New Ctor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(True))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(True))
                     Case ProfileAuthenticationOption.Authenticated
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(False))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(False))
                 End Select
                 'c.AddFilter(New OrmFilter(GetUserType, _userNameField, usernameToMatch & "%", FilterOperation.Like))
-                cl.[and](New PCtor(GetUserType).prop(_userNameField).[like](usernameToMatch & "%"))
+                cl.[and](New Ctor(GetUserType).prop(_userNameField).[like](usernameToMatch & "%"))
                 Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
                 Return CreateProfileCollection(pageIndex, pageSize, mgr, col)
@@ -302,14 +302,14 @@ Namespace Web
 
             Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
-                Dim cl As Worm.Criteria.PredicateLink = New PCtor(GetUserType).prop(_userNameField).[like](usernameToMatch & "%")
+                Dim cl As Worm.Criteria.PredicateLink = New Ctor(GetUserType).prop(_userNameField).[like](usernameToMatch & "%")
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(True))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(True))
                     Case ProfileAuthenticationOption.Authenticated
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(False))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(False))
                 End Select
                 Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
@@ -325,14 +325,14 @@ Namespace Web
             Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
-                Dim cl As Worm.Criteria.PredicateLink = New PCtor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
+                Dim cl As Worm.Criteria.PredicateLink = New Ctor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(True))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(True))
                     Case ProfileAuthenticationOption.Authenticated
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(False))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(False))
                 End Select
                 Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
@@ -350,10 +350,10 @@ Namespace Web
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl = New PCtor(GetUserType).prop(_isAnonymousField).eq(True)
+                        cl = New Ctor(GetUserType).prop(_isAnonymousField).eq(True)
                     Case ProfileAuthenticationOption.Authenticated
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
-                        cl = New PCtor(GetUserType).prop(_isAnonymousField).eq(False)
+                        cl = New Ctor(GetUserType).prop(_isAnonymousField).eq(False)
                 End Select
                 Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
@@ -369,14 +369,14 @@ Namespace Web
             Using mgr As OrmManager = _getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
-                Dim cl As Worm.Criteria.PredicateLink = New PCtor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
+                Dim cl As Worm.Criteria.PredicateLink = New Ctor(GetUserType).prop(_lastActivityField).less_than_eq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(True))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(True))
                     Case ProfileAuthenticationOption.Authenticated
                         'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
-                        cl.[and](New PCtor(GetUserType).prop(_isAnonymousField).eq(False))
+                        cl.[and](New Ctor(GetUserType).prop(_isAnonymousField).eq(False))
                 End Select
                 Dim col As IList = FindUsers(mgr, cl)
                 Return col.Count

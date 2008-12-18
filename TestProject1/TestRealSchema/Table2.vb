@@ -87,7 +87,7 @@ Public Class Table2
         End Select
     End Function
 
-    <EntityPropertyAttribute("Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Tbl() As Table1
         Get
             Using SyncHelper(True, "Table1")
@@ -101,7 +101,7 @@ Public Class Table2
         End Set
     End Property
 
-    <EntityPropertyAttribute("Blob")> _
+    <EntityPropertyAttribute(PropertyAlias:="Blob")> _
     Public Property Blob() As Byte()
         Get
             Using SyncHelper(True, "Blob")
@@ -115,7 +115,7 @@ Public Class Table2
         End Set
     End Property
 
-    <EntityPropertyAttribute("Money")> _
+    <EntityPropertyAttribute(PropertyAlias:="Money")> _
     Public Property Money() As Decimal
         Get
             Using SyncHelper(True, "Money")
@@ -129,7 +129,7 @@ Public Class Table2
         End Set
     End Property
 
-    <EntityPropertyAttribute("DT")> _
+    <EntityPropertyAttribute(PropertyAlias:="DT")> _
     Public Property DT() As Nullable(Of Date)
         Get
             Using SyncHelper(True, "DT")

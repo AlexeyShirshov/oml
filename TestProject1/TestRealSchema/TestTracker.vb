@@ -174,8 +174,8 @@ Public Class TestTracker
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
             mgr.Find(Of Table1)(10)
-            mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("Code").eq(100), Nothing, True)
-            mgr.Find(Of Table1)(New PCtor(GetType(Table1)).prop("DT").eq(Now), Nothing, True)
+            mgr.Find(Of Table1)(New Ctor(GetType(Table1)).prop("Code").eq(100), Nothing, True)
+            mgr.Find(Of Table1)(New Ctor(GetType(Table1)).prop("DT").eq(Now), Nothing, True)
 
             mgr.BeginTransaction()
             Try

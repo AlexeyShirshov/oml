@@ -13,6 +13,9 @@ Namespace Query
         Private _created As Boolean
         Private _renew As Boolean
 
+        Private _m As Guid
+        Private _sm As Guid
+
         Protected Sub New()
 
         End Sub
@@ -27,6 +30,23 @@ Namespace Query
         Protected _sync As String
         Protected _dic As IDictionary
         Private _dp() As Cache.IDependentTypes
+
+        Public Sub SetMark(ByVal q As QueryCmd)
+            _m = q.Mark
+            _sm = q.SMark
+        End Sub
+
+        Public ReadOnly Property QMark() As Guid
+            Get
+                Return _m
+            End Get
+        End Property
+
+        Public ReadOnly Property QSMark() As Guid
+            Get
+                Return _sm
+            End Get
+        End Property
 
         Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
@@ -189,7 +209,11 @@ Namespace Query
 
                     For Each s As Sort In New Sort.Iterator(q.propSort)
                         If Not String.IsNullOrEmpty(s.SortBy) Then
-                            Dim t As Type = s.ObjectSource.GetRealType(MappingEngine)
+                            Dim t As Type = Nothing
+                            If s.ObjectSource IsNot Nothing Then
+                                t = s.ObjectSource.GetRealType(MappingEngine)
+                            End If
+
                             If t Is Nothing Then
                                 If rightType Then
                                     cache.validate_UpdateType(types, _key, _id)

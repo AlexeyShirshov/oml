@@ -59,7 +59,7 @@ Imports Worm.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
-            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
@@ -85,7 +85,7 @@ Imports Worm.Criteria.Joins
             q.From(t)
             Assert.IsNotNull(q)
 
-            q.Filter = PCtor.prop(GetType(Entity4), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity4), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
@@ -125,7 +125,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)). _
-                Where(PCtor.prop(GetType(Entity4), "Title").[like]("b%")). _
+                Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")). _
                 Sort(SCtor.prop(GetType(Entity4), "ID"))
 
             Assert.IsNotNull(q)
@@ -143,7 +143,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestSort2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Filter = PCtor.prop(GetType(Entity4), "Title").like("b%")
+            q.Filter = Ctor.prop(GetType(Entity4), "Title").like("b%")
             q.propSort = SCtor.prop(GetType(Entity4), "ID")
             q.Select(GetType(Entity4))
             Assert.IsNotNull(q)
@@ -211,7 +211,7 @@ Imports Worm.Criteria.Joins
             Dim t_entity5 As Type = GetType(Entity5)
 
             Dim q As New QueryCmd()
-            q = q.Where(PCtor.prop(t_entity4, "Title").[like]("%b")). _
+            q = q.Where(Ctor.prop(t_entity4, "Title").[like]("%b")). _
                 Select(FCtor.prop(t_entity, "ID").Add_prop(t_entity4, "Title"))
             q.AutoJoins = True
 
@@ -229,7 +229,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.propJoins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
-            q = q.Where(PCtor.prop(t_entity4, "Title").[like]("%b")). _
+            q = q.Where(Ctor.prop(t_entity4, "Title").[like]("%b")). _
                 Select(FCtor.prop(t_entity, "ID").Add_prop(t_entity4, "Title"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
@@ -244,10 +244,10 @@ Imports Worm.Criteria.Joins
             'Dim t3 As Type = GetType(Table3)
 
             Dim q As New QueryCmd()
-            q = q.Where(PCtor.exists( _
+            q = q.Where(Ctor.exists( _
                         New QueryCmd().Select("Table3"). _
                             Join(JCtor.join(t1).onM2M("Table3")). _
-                            Where(PCtor.prop("Table3", "Code").eq(2)))).Select(t1)
+                            Where(Ctor.prop("Table3", "Code").eq(2)))).Select(t1)
 
             Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
 
@@ -278,7 +278,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.Select(GetType(Entity4))
-            q.Filter = PCtor.prop(GetType(Entity4), "Title").[like]("b%")
+            q.Filter = Ctor.prop(GetType(Entity4), "Title").[like]("b%")
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -300,7 +300,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
-            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
             Dim s As String = "<ShowPlanXML xmlns='http://schemas.microsoft.com/sqlserver/2004/07/showplan' Version='1.0' Build='9.00.3042.00'><BatchSequence><Batch><Statements><StmtSimple StatementText='declare @p1 Int;set @p1 = 1&#xd;' StatementId='1' StatementCompId='1' StatementType='ASSIGN'/><StmtSimple StatementText='&#xa;select t1.id from dbo.ent1 t1 where t1.id = @p1&#xd;&#xa;' StatementId='2' StatementCompId='2' StatementType='SELECT' StatementSubTreeCost='0.0032831' StatementEstRows='1' StatementOptmLevel='TRIVIAL'><StatementSetOptions QUOTED_IDENTIFIER='false' ARITHABORT='true' CONCAT_NULL_YIELDS_NULL='false' ANSI_NULLS='false' ANSI_PADDING='false' ANSI_WARNINGS='false' NUMERIC_ROUNDABORT='false'/><QueryPlan CachedPlanSize='8' CompileTime='0' CompileCPU='0' CompileMemory='72'><RelOp NodeId='0' PhysicalOp='Clustered Index Seek' LogicalOp='Clustered Index Seek' EstimateRows='1' EstimateIO='0.003125' EstimateCPU='0.0001581' AvgRowSize='11' EstimatedTotalSubtreeCost='0.0032831' Parallel='0' EstimateRebinds='0' EstimateRewinds='0'><OutputList><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></OutputList><IndexScan Ordered='1' ScanDirection='FORWARD' ForcedIndex='0' NoExpandHint='0'><DefinedValues><DefinedValue><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></DefinedValue></DefinedValues><Object Schema='[dbo]' Table='[ent1]' Index='[PK_ent1]' Alias='[t1]'/><SeekPredicates><SeekPredicate><Prefix ScanType='EQ'><RangeColumns><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></RangeColumns><RangeExpressions><ScalarOperator ScalarString='[@p1]'><Identifier><ColumnReference Column='@p1'/></Identifier></ScalarOperator></RangeExpressions></Prefix></SeekPredicate></SeekPredicates></IndexScan></RelOp></QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>"
@@ -317,7 +317,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
-            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
@@ -352,7 +352,7 @@ Imports Worm.Criteria.Joins
             Dim q As New QueryCmd(e)
 
             Dim q2 As QueryCmd = New QueryCmd(e). _
-                Where(PCtor.prop(GetType(Entity4), "Title").eq("first"))
+                Where(Ctor.prop(GetType(Entity4), "Title").eq("first"))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
@@ -372,7 +372,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
-            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
@@ -380,7 +380,7 @@ Imports Worm.Criteria.Joins
             Assert.IsNotNull(e)
 
             Dim q2 As New QueryCmd(e)
-            q2.Filter = PCtor.prop(GetType(Entity4), "Title").[like]("b%")
+            q2.Filter = Ctor.prop(GetType(Entity4), "Title").[like]("b%")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
@@ -393,7 +393,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
-            q.Filter = PCtor.prop(GetType(Entity), "ID").eq(1)
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
@@ -521,7 +521,7 @@ Imports Worm.Criteria.Joins
 
             'q.From(t). _
             q.Select(New SelectExpression() {New SelectExpression(t, "id", "pk"), New SelectExpression(t, "name", "Title")}). _
-            Where(PCtor.column(t, "id").greater_than(5)). _
+            Where(Ctor.column(t, "id").greater_than(5)). _
             Sort(SCtor.column(t, "name"))
 
             Dim l As IList(Of Worm.Entities.AnonymousEntity) = q.ToObjectList(Of Worm.Entities.AnonymousEntity)(mgr)
@@ -541,7 +541,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestEntity()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().Select(GetType(NonCache)). _
-            Where(PCtor.prop(GetType(NonCache), "Code").eq(5))
+            Where(Ctor.prop(GetType(NonCache), "Code").eq(5))
 
             Dim l As ReadOnlyObjectList(Of NonCache) = q.ToObjectList(Of NonCache)(mgr)
 
@@ -651,16 +651,16 @@ Imports Worm.Criteria.Joins
             Dim tt2 As Type = GetType(Table2)
 
             Dim q As QueryCmd = New QueryCmd(). _
-                Where(New PCtor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
+                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
 
             Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
 
-            q.Where(New PCtor(tt2).prop("Table1").not_exists(GetType(Table1)))
+            q.Where(New Ctor(tt2).prop("Table1").not_exists(GetType(Table1)))
 
             Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
 
-            q.Where(PCtor.prop(tt2, "Table1").not_exists(GetType(Table1), _
-                PCtor.prop(GetType(Table1), "Code").eq(45). _
+            q.Where(Ctor.prop(tt2, "Table1").not_exists(GetType(Table1), _
+                Ctor.prop(GetType(Table1), "Code").eq(45). _
                 [and]( _
                     JoinCondition.Create(tt2, "Table1").eq(GetType(Table1), "Enum") _
                 )))
@@ -675,11 +675,11 @@ Imports Worm.Criteria.Joins
             Dim tt2 As Type = GetType(Table2)
 
             Dim q As QueryCmd = New QueryCmd(). _
-                Where(New PCtor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
+                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
 
             Dim cq As QueryCmd = New QueryCmd(). _
                 Where(JoinCondition.Create(tt2, "Table1").eq(tt1, "Enum").[and]( _
-                      PCtor.prop(tt1, "Code").eq(45))).Select(tt1)
+                      Ctor.prop(tt1, "Code").eq(45))).Select(tt1)
 
             q.Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
 
@@ -832,7 +832,7 @@ Imports Worm.Criteria.Joins
         End Property
 
         Private _title As String
-        <EntityPropertyAttribute("name")> Public Property Title() As String
+        <EntityPropertyAttribute(PropertyAlias:="name")> Public Property Title() As String
             Get
                 Return _title
             End Get
@@ -1012,7 +1012,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim t As Table10 = q.Where(PCtor.prop(GetType(Table10), "ID").eq(3)).Single(Of Table10)()
+        Dim t As Table10 = q.Where(Ctor.prop(GetType(Table10), "ID").eq(3)).Single(Of Table10)()
 
         Assert.AreEqual(2, t.Tbl.ID)
         Assert.AreEqual("second", t.Tbl.Name)

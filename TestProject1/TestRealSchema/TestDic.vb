@@ -31,7 +31,7 @@ Public Class TestDic
 
         Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As Worm.OrmManager = TestManagerRS.CreateManagerShared(s)
-            Dim f As Worm.Criteria.PredicateLink = New PCtor(GetType(Table1)).prop("Title").[like]("f%")
+            Dim f As Worm.Criteria.PredicateLink = New Ctor(GetType(Table1)).prop("Title").[like]("f%")
             Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, False)
 
             Assert.AreEqual(2, col.Count)

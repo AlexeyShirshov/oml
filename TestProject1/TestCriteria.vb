@@ -13,7 +13,7 @@ Imports Worm.Query
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim cr As Worm.Criteria.PredicateLink = PCtor.prop(GetType(Entity4), "ID").eq(56). _
+        Dim cr As Worm.Criteria.PredicateLink = Ctor.prop(GetType(Entity4), "ID").eq(56). _
             [and](GetType(Entity4), "Title").eq("lsd")
 
         Dim cr2 As PredicateLink = CType(cr.Clone, PredicateLink)
@@ -42,7 +42,7 @@ Imports Worm.Query
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = CType(PCtor.prop(GetType(Entity4), "ID").eq(56). _
+        Dim f As IEntityFilter = CType(Ctor.prop(GetType(Entity4), "ID").eq(56). _
             [and]("Title").eq("lsd").Filter(), IEntityFilter)
 
         Dim schema As New ObjectMappingEngine("1")
@@ -64,8 +64,8 @@ Imports Worm.Query
 
     <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IEntityFilter = CType(PCtor.prop(GetType(Entity4), "ID").eq(56). _
-            [and](PCtor.prop(GetType(Entity4), "Title").eq(56).[or](GetType(Entity), "ID").eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(Ctor.prop(GetType(Entity4), "ID").eq(56). _
+            [and](Ctor.prop(GetType(Entity4), "Title").eq(56).[or](GetType(Entity), "ID").eq(483)).Filter, IEntityFilter)
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
@@ -85,7 +85,7 @@ Imports Worm.Query
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = CType(New PCtor(GetType(Entity4)).prop("ID").eq(56). _
+        Dim f As IEntityFilter = CType(New Ctor(GetType(Entity4)).prop("ID").eq(56). _
             [and]("Title").eq("lsd").Filter, IEntityFilter)
 
         Dim schema As New ObjectMappingEngine("1")
@@ -106,8 +106,8 @@ Imports Worm.Query
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = CType(New PCtor(GetType(Entity4)).prop("ID").eq(56). _
-            [and](New PCtor(GetType(Entity4)).prop("Title").eq(56).[or]("ID").eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(New Ctor(GetType(Entity4)).prop("ID").eq(56). _
+            [and](New Ctor(GetType(Entity4)).prop("Title").eq(56).[or]("ID").eq(483)).Filter, IEntityFilter)
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create

@@ -477,11 +477,12 @@ Namespace Sorting
 
         Public Overridable Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
+            Dim tos As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(_t)
             For Each s As Sort In _s
                 'If s.IsAny Then
                 '    Throw New NotSupportedException("Any sorting is not supported")
                 'End If
-                Dim ss As IEntitySchema = Nothing
+                Dim ss As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(s.ObjectSource.GetRealType(_mgr.MappingEngine))
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
                 Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
@@ -531,7 +532,7 @@ Namespace Sorting
             Return p
         End Function
 
-        Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IEntitySchema) As Object
+        Private Function GetValue(ByVal x As T, ByVal s As Sort, ByVal oschema As IEntitySchema) As Object
             Dim xo As _IEntity = x
             Dim schema As ObjectMappingEngine = _mgr.MappingEngine
             Dim st As Type = s.ObjectSource.GetRealType(schema)
@@ -541,10 +542,8 @@ Namespace Sorting
                 Else
                     xo = schema.GetJoinObj(oschema, xo, st)
                 End If
-                If oschema Is Nothing Then
-                    oschema = schema.GetObjectSchema(_t)
-                End If
-                Dim ss As IOrmSorting = TryCast(oschema, IOrmSorting)
+                Dim os As IEntitySchema = schema.GetObjectSchema(_t)
+                Dim ss As IOrmSorting = TryCast(os, IOrmSorting)
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
                 Else

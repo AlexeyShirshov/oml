@@ -79,7 +79,7 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(PCtor.prop(tt, "Code").not_eq(2), Nothing, True)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Ctor.prop(tt, "Code").not_eq(2), Nothing, True)
 
             Assert.AreEqual(0, c.Count)
         End Using
@@ -103,7 +103,7 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             'Dim tbl As String = "dbo.tables1to3relation"
             Dim t As Type = s.GetTypeByEntityName("Table3")
-            Dim f As Worm.Criteria.PredicateLink = New PCtor(t).prop("Code").less_than_eq(10)
+            Dim f As Worm.Criteria.PredicateLink = New Ctor(t).prop("Code").less_than_eq(10)
             'Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
             'Dim f2 As New OrmFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)

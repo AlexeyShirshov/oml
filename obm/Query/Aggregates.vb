@@ -217,6 +217,12 @@ Namespace Query
             Return s
         End Function
 
+        Public ReadOnly Property Expression() As UnaryExp
+            Get
+                Return _oper
+            End Get
+        End Property
+
         Public Shared Function FormatFunc(ByVal AggFunc As AggregateFunction, ByVal d As String) As String
             Dim s As String = Nothing
             Select Case AggFunc

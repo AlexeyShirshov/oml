@@ -76,7 +76,7 @@ Public Class MyProfile
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New PCtor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(mgr, New Ctor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -173,7 +173,7 @@ Public Class MyUser
     '    Return New MyUser(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    <EntityPropertyAttribute("LastActivity")> _
+    <EntityPropertyAttribute(PropertyAlias:="LastActivity")> _
     Public Property LastActivity() As Date
         Get
             Using SyncHelper(True, "LastActivity")
@@ -187,7 +187,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("IsAnonymous")> _
+    <EntityPropertyAttribute(PropertyAlias:="IsAnonymous")> _
     Public Property IsAnonymous() As Boolean
         Get
             Using SyncHelper(True, "IsAnonymous")
@@ -201,7 +201,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("UserName")> _
+    <EntityPropertyAttribute(PropertyAlias:="UserName")> _
     Public Property UserName() As String
         Get
             Using SyncHelper(True, "UserName")
@@ -215,7 +215,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("Field")> _
+    <EntityPropertyAttribute(PropertyAlias:="Field")> _
     Public Property Field() As String
         Get
             Using SyncHelper(True, "Field")
@@ -229,7 +229,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("Password")> _
+    <EntityPropertyAttribute(PropertyAlias:="Password")> _
     Public Property Password() As Byte()
         Get
             Using SyncHelper(True, "Password")
@@ -243,7 +243,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("Email")> _
+    <EntityPropertyAttribute(PropertyAlias:="Email")> _
     Public Property Email() As String
         Get
             Using SyncHelper(True, "Email")
@@ -257,7 +257,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("FailedPasswordAttemtCount")> _
+    <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtCount")> _
     Public Property FailedPswAttemtCount() As Integer
         Get
             Using SyncHelper(True, "FailedPasswordAttemtCount")
@@ -271,7 +271,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("FailedPasswordAttemtStart")> _
+    <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtStart")> _
     Public Property FailedPswAttemtDate() As Nullable(Of Date)
         Get
             Using SyncHelper(True, "FailedPasswordAttemtStart")
@@ -285,7 +285,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("IsLocked")> _
+    <EntityPropertyAttribute(PropertyAlias:="IsLocked")> _
     Public Property IsLocked() As Boolean
         Get
             Using SyncHelper(True, "IsLocked")
@@ -299,7 +299,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <EntityPropertyAttribute("LastLockedAt")> _
+    <EntityPropertyAttribute(PropertyAlias:="LastLockedAt")> _
     Public Property LastLockedAt() As Nullable(Of Date)
         Get
             Using SyncHelper(True, "LastLockedAt")
@@ -388,7 +388,7 @@ Public Class MyRole
     '    Return New MyRole(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    <EntityPropertyAttribute("Name")> _
+    <EntityPropertyAttribute(PropertyAlias:="Name")> _
     Public Property RoleName() As String
         Get
             Using SyncHelper(True, "Name")

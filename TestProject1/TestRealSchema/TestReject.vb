@@ -264,7 +264,7 @@ Public Class TestReject
                     t3.Delete()
 
                     For Each tt As Tables1to3 In New Worm.Query.QueryCmd(). _
-                        Where(PCtor.prop(GetType(Tables1to3), "Table3").eq(t3)).ToList(Of Tables1to3)(mgr)
+                        Where(Ctor.prop(GetType(Tables1to3), "Table3").eq(t3)).ToList(Of Tables1to3)(mgr)
                         tt.Delete()
                     Next
 

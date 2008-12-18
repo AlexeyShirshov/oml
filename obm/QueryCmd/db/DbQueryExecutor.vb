@@ -38,8 +38,6 @@ Namespace Query.Database
         Private _procA As BaseProvider
         Private _procAT As BaseProvider
         Private _procS As BaseProvider
-        Private _m As Guid
-        Private _sm As Guid
 
         Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
 
@@ -101,14 +99,14 @@ Namespace Query.Database
 
                 InitTypes(mgr, query, GetType(ReturnType))
 
-                If _m <> query.Mark Then
+                If _procA.QMark <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
-                    If _sm <> query.SMark Then
+                    If _procA.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
@@ -117,8 +115,7 @@ Namespace Query.Database
                 End If
             End If
 
-            _m = query.Mark
-            _sm = query.SMark
+            _procA.SetMark(query)
 
             Return CType(_procA, ProviderAnonym(Of ReturnType))
         End Function
@@ -171,14 +168,14 @@ Namespace Query.Database
 
                 InitTypes(mgr,query,GetType(CreateType))
 
-                If _m <> query.Mark Then
+                If _procAT.QMark <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
-                    If _sm <> query.SMark Then
+                    If _procAT.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
@@ -187,8 +184,7 @@ Namespace Query.Database
                 End If
             End If
 
-            _m = query.Mark
-            _sm = query.SMark
+            _procAT.SetMark(query)
 
             Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
         End Function
@@ -202,7 +198,7 @@ Namespace Query.Database
 
             If Not GetType(AnonymousEntity).IsAssignableFrom(type) Then
                 If query.NeedSelectType(mgr.MappingEngine) Then
-                    query.Select(query.CreateType.AnyType)
+                    query.SelectInt(query.CreateType.AnyType)
                 End If
             End If
 
@@ -259,14 +255,14 @@ Namespace Query.Database
 
                 InitTypes(mgr, query, GetType(ReturnType))
 
-                If _m <> query.Mark Then
+                If _proc.QMark <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
-                    If _sm <> query.SMark Then
+                    If _proc.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
@@ -276,8 +272,7 @@ Namespace Query.Database
                 p.Created = False
             End If
 
-            _m = query.Mark
-            _sm = query.SMark
+            _proc.SetMark(query)
 
             Return CType(_proc, Provider(Of ReturnType))
         End Function
@@ -342,14 +337,14 @@ Namespace Query.Database
 
                 InitTypes(mgr,query,GetType(CreateType))
 
-                If _m <> query.Mark Then
+                If _procT.QMark <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
-                    If _sm <> query.SMark Then
+                    If _procT.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
@@ -359,8 +354,7 @@ Namespace Query.Database
                 p.Created = False
             End If
 
-            _m = query.Mark
-            _sm = query.SMark
+            _procT.SetMark(query)
 
             Return CType(_procT, ProviderT(Of CreateType, ReturnType))
         End Function
@@ -413,14 +407,14 @@ Namespace Query.Database
 
                 'InitTypes(mgr,query,GetType(CreateType))
 
-                If _m <> query.Mark Then
+                If _procS.QMark <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                     Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
                     p.Reset(mgr, j, f, sl, query)
                 Else
                     p.Init(mgr, query)
-                    If _sm <> query.SMark Then
+                    If _procS.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
                     'If query._resDic Then
@@ -430,8 +424,7 @@ Namespace Query.Database
                 p.Created = False
             End If
 
-            _m = query.Mark
-            _sm = query.SMark
+            _procS.SetMark(query)
 
             Return CType(_procS, BaseProvider)
         End Function
@@ -938,7 +931,7 @@ Namespace Query.Database
             Dim osrc_ As ObjectSource = Nothing
             If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
                 osrc_ = from.ObjectSource
-            Else
+            ElseIf from Is Nothing Then
                 osrc_ = osrc
             End If
 

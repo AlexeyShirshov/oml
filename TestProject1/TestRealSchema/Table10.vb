@@ -62,11 +62,12 @@ Public Class Table10
             Case "Table1"
                 Return _tbl1
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                Return GetValueReflection(propertyAlias, schema)
+                'Throw New NotSupportedException(propertyAlias)
         End Select
     End Function
 
-    <EntityPropertyAttribute("Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Tbl() As Table1
         Get
             Using SyncHelper(True, "Table1")

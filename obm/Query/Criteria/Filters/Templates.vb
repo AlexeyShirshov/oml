@@ -134,11 +134,11 @@ Namespace Criteria.Core
             End If
 
             If obj.GetType IsNot lt Then
-                Dim o As IKeyEntity = schema.GetJoinObj(oschema, obj, lt)
+                Dim o As _IEntity = schema.GetJoinObj(oschema, obj, lt)
                 If o Is Nothing Then
                     Throw New ArgumentException(String.Format("Template type {0} is not match {1}", lt.ToString, obj.GetType))
                 End If
-                Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
+                Return MakeFilter(schema, schema.GetObjectSchema(lt), CType(o, ICachedEntity))
             Else
                 Dim v As Object = schema.GetPropertyValue(obj, PropertyAlias, oschema)
                 'If _os.Type IsNot Nothing Then

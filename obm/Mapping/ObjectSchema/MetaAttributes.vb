@@ -21,15 +21,15 @@ Namespace Entities.Meta
             Me._behavior = behavior
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String)
-            _fieldName = propertyAlias
-            Me._behavior = Field2DbRelations.None
-        End Sub
+        'Public Sub New(ByVal column As String)
+        '    _column = column
+        '    Me._behavior = Field2DbRelations.None
+        'End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal behavior As Field2DbRelations)
-            _fieldName = propertyAlias
-            Me._behavior = behavior
-        End Sub
+        'Public Sub New(ByVal column As String, ByVal behavior As Field2DbRelations)
+        '    _column = column
+        '    Me._behavior = behavior
+        'End Sub
 
         ''' <summary>
         ''' Имя поля класса, которое мапится на колонку в БД
@@ -43,14 +43,14 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        'Public ReadOnly Property SyncBehavior() As Field2DbRelations
-        '    Get
-        '        Return _behavior
-        '    End Get
-        '    'Set(ByVal value As Field2DbRelations)
-        '    '    behavior = value
-        '    'End Set
-        'End Property
+        Public Property Behavior() As Field2DbRelations
+            Get
+                Return _behavior
+            End Get
+            Set(ByVal value As Field2DbRelations)
+                behavior = value
+            End Set
+        End Property
 
         Public Property Column() As String
             Get

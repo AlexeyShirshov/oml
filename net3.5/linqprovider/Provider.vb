@@ -1212,7 +1212,8 @@ Namespace Linq
         Public Function GetNew(ByVal o As KeyEntity) As Object
             If _new Is Nothing Then
                 If _sel IsNot Nothing Then
-                    Return o.GetValue(CType(_sel(0).Value, EntityPropValue).OrmProp.PropertyAlias)
+                    Throw New InvalidOperationException
+                    'Return o.GetValueReflection(CType(_sel(0).Value, EntityPropValue).OrmProp.PropertyAlias, Nothing)
                     'Return Eval(Expression.MakeMemberAccess(Expression.Constant(o), ))
                 Else
                     Throw New InvalidOperationException

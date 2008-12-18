@@ -26,7 +26,7 @@ Public Class MyRoles
         Dim t As Type = GetRoleType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _rolenameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
-        Dim col As IList = FindRoles(mgr, CType(New PCtor(t).prop(_rolenameField).eq(name), PredicateLink))
+        Dim col As IList = FindRoles(mgr, CType(New Ctor(t).prop(_rolenameField).eq(name), PredicateLink))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate role name " & name)
         ElseIf col.Count = 0 Then

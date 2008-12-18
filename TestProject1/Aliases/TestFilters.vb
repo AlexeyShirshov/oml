@@ -63,13 +63,13 @@ Imports Worm.Criteria.Joins
         Assert.AreEqual(3, q2.SingleSimple(Of Integer))
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1.Type).Where(PCtor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
+        q.From(t1.Type).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
 
         Assert.AreEqual(2, q.SingleSimple(Of Integer))
     End Sub
@@ -80,18 +80,18 @@ Imports Worm.Criteria.Joins
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1).Where(PCtor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
+        q.From(t1).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
 
         Assert.AreEqual(1, q.SingleSimple(Of Integer))
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong2()
         Dim t1 As New ObjectAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1).Where(PCtor.prop(GetType(Table1), "Enum").eq(2)).Select(FCtor.count)
+        q.From(t1).Where(Ctor.prop(GetType(Table1), "Enum").eq(2)).Select(FCtor.count)
 
         Assert.AreEqual(1, q.SingleSimple(Of Integer))
     End Sub
@@ -102,7 +102,7 @@ Imports Worm.Criteria.Joins
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(t1).Where(PCtor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).Sort(SCtor.prop(t1, "DT"))
+        q.Select(t1).Where(Ctor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).Sort(SCtor.prop(t1, "DT"))
 
         Assert.AreEqual(2, q.Single(Of Table1).ID)
     End Sub

@@ -105,12 +105,12 @@ Public Class TestSearch
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("1"))
 
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
-                SCtor.prop(GetType(Table1), "DT"), Nothing, PCtor.prop(GetType(Table1), "Code").eq(45).Filter)
+                SCtor.prop(GetType(Table1), "DT"), Nothing, Ctor.prop(GetType(Table1), "Code").eq(45).Filter)
 
             Assert.AreEqual(1, c.Count)
 
             c = mgr.Search(Of Table1)("sec", _
-                Nothing, Nothing, PCtor.prop(GetType(Table1), "Code").eq(45).Filter)
+                Nothing, Nothing, Ctor.prop(GetType(Table1), "Code").eq(45).Filter)
 
             Assert.AreEqual(1, c.Count)
 

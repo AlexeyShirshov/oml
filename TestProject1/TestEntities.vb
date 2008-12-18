@@ -212,7 +212,7 @@ Public Class Entity2
     '    Return e
     'End Function
 
-    <EntityPropertyAttribute("Str")> _
+    <EntityPropertyAttribute(PropertyAlias:="Str")> _
     Public Property Str() As String
         Get
             Using SyncHelper(True, "Str")
@@ -339,7 +339,7 @@ Public Class Entity4
     '    End Get
     'End Property
 
-    <EntityPropertyAttribute("Title")> _
+    <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -553,7 +553,7 @@ Public Class Entity5
         End With
     End Sub
 
-    <EntityPropertyAttribute("Title")> _
+    <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -567,7 +567,7 @@ Public Class Entity5
         End Set
     End Property
 
-    <EntityPropertyAttribute("Version", Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Protected Property Version() As Byte()
         Get
             Using SyncHelper(True, "Title")

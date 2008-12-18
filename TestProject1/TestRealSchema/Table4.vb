@@ -63,12 +63,13 @@ Public Class Table4
             Case "GUID"
                 Return _g
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                Return GetValueReflection(propertyAlias, schema)
+                'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Function
 
-    <EntityPropertyAttribute("Col")> _
+    <EntityPropertyAttribute(PropertyAlias:="Col")> _
     Public Property Col() As Nullable(Of Boolean)
         Get
             Using SyncHelper(True, "Col")
@@ -82,7 +83,7 @@ Public Class Table4
         End Set
     End Property
 
-    <EntityPropertyAttribute("GUID", Field2DbRelations.InsertDefault Or Field2DbRelations.SyncInsert)> _
+    <EntityPropertyAttribute(PropertyAlias:="GUID", behavior:=Field2DbRelations.InsertDefault Or Field2DbRelations.SyncInsert)> _
     Public Property GUID() As Guid
         Get
             Using SyncHelper(True, "GUID")

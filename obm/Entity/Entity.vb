@@ -246,9 +246,13 @@ Namespace Entities
             Return SyncHelper(False)
         End Function
 
-        Public Function GetValue(ByVal propertyAlias As String) As Object
+        Protected Function GetValue(ByVal propertyAlias As String) As Object
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Return schema.GetPropertyValue(Me, propertyAlias)
+            If schema Is Nothing Then
+                Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
+            Else
+                Return schema.GetPropertyValue(Me, propertyAlias)
+            End If
         End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object

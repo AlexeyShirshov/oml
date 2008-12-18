@@ -105,12 +105,13 @@ Public Class Table3
             Case "XML"
                 Return _x
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                Return GetValueReflection(propertyAlias, schema)
+                'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Function
 
-    <EntityPropertyAttribute("Ref", Field2DbRelations.Factory)> _
+    <EntityPropertyAttribute(PropertyAlias:="Ref", behavior:=Field2DbRelations.Factory)> _
     Public Property RefObject() As IKeyEntity
         Get
             Using SyncHelper(True, "Ref")
@@ -124,7 +125,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute("Code")> _
+    <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Byte
         Get
             Using SyncHelper(True, "Code")
@@ -142,7 +143,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute("Version", Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Public Property Version() As Byte()
         Get
             Using SyncHelper(True, "Version")
@@ -156,7 +157,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute("XML")> _
+    <EntityPropertyAttribute(PropertyAlias:="XML")> _
     Public Property Xml() As System.Xml.XmlDocument
         Get
             Using SyncHelper(True, "XML")

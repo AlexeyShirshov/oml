@@ -90,7 +90,7 @@ Namespace Criteria.Core
 
                     Return r
                 Else
-                    Dim o As IKeyEntity = schema.GetJoinObj(oschema, obj, rt)
+                    Dim o As _IEntity = schema.GetJoinObj(oschema, obj, rt)
                     If o IsNot Nothing Then
                         Return Eval(schema, o, schema.GetObjectSchema(rt))
                     End If
