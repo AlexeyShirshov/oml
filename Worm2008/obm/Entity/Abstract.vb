@@ -90,11 +90,11 @@ Namespace Entities
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function SetLoaded(ByVal propertyMap As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
+        Function SetLoaded(ByVal propertyMap As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
         Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
-        Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
+        Function ForseUpdate(ByVal c As EntityPropertyAttribute) As Boolean
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)

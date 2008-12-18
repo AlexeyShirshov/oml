@@ -91,7 +91,7 @@ Imports Worm.Entities
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
-        Dim sel As List(Of ColumnAttribute) = Nothing
+        Dim sel As List(Of EntityPropertyAttribute) = Nothing
 
         Dim expected As String = "declare @pk_id int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
@@ -116,7 +116,7 @@ Imports Worm.Entities
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
-        Dim sel As List(Of ColumnAttribute) = Nothing
+        Dim sel As List(Of EntityPropertyAttribute) = Nothing
 
         Dim expected As String = "declare @pk_id int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
@@ -323,7 +323,7 @@ Imports Worm.Entities
             o.Load()
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
-            Dim sel As List(Of ColumnAttribute) = Nothing
+            Dim sel As List(Of EntityPropertyAttribute) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, params, sel, upd))
 
@@ -378,7 +378,7 @@ Imports Worm.Entities
                 "if @@rowcount > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
-            Dim sel As List(Of ColumnAttribute) = Nothing
+            Dim sel As List(Of EntityPropertyAttribute) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             Assert.AreEqual(expected, gen.Update(schemaV1, o, Nothing, params, sel, upd))
 

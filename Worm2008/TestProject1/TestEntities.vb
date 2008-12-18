@@ -58,7 +58,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     Protected _schema As Worm.ObjectMappingEngine
     Protected _objectType As Type
 
-    Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
         newvalue = value
         Return False
     End Function
@@ -212,7 +212,7 @@ Public Class Entity2
     '    Return e
     'End Function
 
-    <Column("Str")> _
+    <EntityPropertyAttribute("Str")> _
     Public Property Str() As String
         Get
             Using SyncHelper(True, "Str")
@@ -339,7 +339,7 @@ Public Class Entity4
     '    End Get
     'End Property
 
-    <Column("Title")> _
+    <EntityPropertyAttribute("Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -553,7 +553,7 @@ Public Class Entity5
         End With
     End Sub
 
-    <Column("Title")> _
+    <EntityPropertyAttribute("Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -567,7 +567,7 @@ Public Class Entity5
         End Set
     End Property
 
-    <Column("Version", Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute("Version", Field2DbRelations.RowVersion)> _
     Protected Property Version() As Byte()
         Get
             Using SyncHelper(True, "Title")

@@ -232,7 +232,7 @@ Namespace Entities
                 Try
                     For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                         Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                        Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                        Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                         sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
                     Next
                 Finally
@@ -250,6 +250,14 @@ Namespace Entities
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
             Return schema.GetPropertyValue(Me, propertyAlias)
         End Function
+
+        Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
+            Return MappingEngine.GetProperty(Me.GetType, oschema, propertyAlias).GetValue(Me, Nothing)
+        End Function
+
+        Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
+            MappingEngine.GetProperty(Me.GetType, oschema, propertyAlias).SetValue(Me, value, Nothing)
+        End Sub
 
         'Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
         '    ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized
@@ -300,8 +308,20 @@ Namespace Entities
 
         '    pi.SetValue(Me, value, Nothing)
         'End Sub
+        Protected Overridable Overloads Sub Init()
+            'If OrmManager.CurrentManager IsNot Nothing Then
+            '    _mgrStr = OrmManager.CurrentManager.IdentityString
+            'End If
+        End Sub
 
-        Protected Overridable Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
+        Public Sub New()
+            'Dim arr As Generic.List(Of ColumnAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
+            'members_load_state = New BitArray(arr.Count)
+
+            Init()
+        End Sub
+
+        Protected Overridable Overloads Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
 
             _state = Entities.ObjectState.Created
@@ -330,7 +350,7 @@ Namespace Entities
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
             For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                 ObjectMappingEngine.SetPropertyValue([to], c.PropertyAlias, pi, ObjectMappingEngine.GetPropertyValue(from, c.PropertyAlias, pi, oschema), oschema)
             Next
         End Sub
@@ -520,7 +540,6 @@ Namespace Entities
             Return o
         End Function
 #End Region
-
     End Class
 
 End Namespace

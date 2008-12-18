@@ -136,20 +136,20 @@ Public Class ObjectMappingEngine
         End If
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-            Dim column As ColumnAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
-            If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+            Dim column As EntityPropertyAttribute = Nothing
+            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
             If column Is Nothing Then
                 Dim propertyAlias As String = pi.Name
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New ColumnAttribute(mc._newattributes)
+                        column = New EntityPropertyAttribute(mc._newattributes)
                         column.Column = mc._columnName
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    column = New ColumnAttribute(propertyAlias)
+                    column = New EntityPropertyAttribute(propertyAlias)
                     column.Column = propertyAlias
                 End If
             End If
@@ -166,21 +166,21 @@ Public Class ObjectMappingEngine
         Next
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-            Dim column As ColumnAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
-            If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+            Dim column As EntityPropertyAttribute = Nothing
+            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
 
             If column Is Nothing Then
                 Dim propertyAlias As String = pi.Name
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New ColumnAttribute(mc._newattributes)
+                        column = New EntityPropertyAttribute(mc._newattributes)
                         column.Column = mc._columnName
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    column = New ColumnAttribute(propertyAlias)
+                    column = New EntityPropertyAttribute(propertyAlias)
                     column.Column = propertyAlias
                 End If
             End If
@@ -576,7 +576,7 @@ Public Class ObjectMappingEngine
     'End Function
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822")> _
-    Public Function ChangeValueType(ByVal type As Type, ByVal c As ColumnAttribute, ByVal o As Object) As Object
+    Public Function ChangeValueType(ByVal type As Type, ByVal c As EntityPropertyAttribute, ByVal o As Object) As Object
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -584,7 +584,7 @@ Public Class ObjectMappingEngine
         Return ChangeValueType(GetObjectSchema(type), c, o)
     End Function
 
-    Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal c As ColumnAttribute, ByVal o As Object) As Object
+    Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal c As EntityPropertyAttribute, ByVal o As Object) As Object
         If s Is Nothing Then
             Throw New ArgumentNullException("s")
         End If
@@ -686,7 +686,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetDBType(ByVal type As Type, ByVal os As IEntitySchema, _
-                                         ByVal c As ColumnAttribute) As DBType
+                                         ByVal c As EntityPropertyAttribute) As DBType
         Dim db As DBType = os.GetFieldColumnMap()(c.PropertyAlias).DBType
         If db.IsEmpty Then
             db = c.SourceType
@@ -694,7 +694,7 @@ Public Class ObjectMappingEngine
         Return db
     End Function
 
-    Public Function GetAttributes(ByVal type As Type, ByVal c As ColumnAttribute) As Field2DbRelations
+    Public Function GetAttributes(ByVal type As Type, ByVal c As EntityPropertyAttribute) As Field2DbRelations
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -704,7 +704,7 @@ Public Class ObjectMappingEngine
         Return GetAttributes(schema, c)
     End Function
 
-    Public Function GetAttributes(ByVal schema As IEntitySchema, ByVal c As ColumnAttribute) As Field2DbRelations
+    Public Function GetAttributes(ByVal schema As IEntitySchema, ByVal c As EntityPropertyAttribute) As Field2DbRelations
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
         End If
@@ -738,11 +738,11 @@ Public Class ObjectMappingEngine
     '    Next
     'End Sub
 
-    Protected Friend Function GetProperty(ByVal original_type As Type, ByVal c As ColumnAttribute) As Reflection.PropertyInfo
+    Protected Friend Function GetProperty(ByVal original_type As Type, ByVal c As EntityPropertyAttribute) As Reflection.PropertyInfo
         Return CType(GetProperties(original_type)(c), Reflection.PropertyInfo)
     End Function
 
-    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal c As ColumnAttribute) As Reflection.PropertyInfo
+    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal c As EntityPropertyAttribute) As Reflection.PropertyInfo
         Return CType(GetProperties(t, schema)(c), Reflection.PropertyInfo)
     End Function
 
@@ -751,7 +751,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(original_type, New ColumnAttribute(propertyAlias))
+        Return GetProperty(original_type, New EntityPropertyAttribute(propertyAlias))
     End Function
 
     Public Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -759,7 +759,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(t, schema, New ColumnAttribute(propertyAlias))
+        Return GetProperty(t, schema, New EntityPropertyAttribute(propertyAlias))
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -767,7 +767,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(original_type, Nothing)(New ColumnAttribute(propertyAlias)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(original_type, Nothing)(New EntityPropertyAttribute(propertyAlias)), Reflection.PropertyInfo)
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -775,24 +775,24 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(t, oschema)(New ColumnAttribute(propertyAlias)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(t, oschema)(New EntityPropertyAttribute(propertyAlias)), Reflection.PropertyInfo)
     End Function
 
-    Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of ColumnAttribute)
+    Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of EntityPropertyAttribute)
         'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
         If schema Is Nothing Then
             schema = GetObjectSchema(original_type)
         End If
         Dim cl_type As String = "columnlist" & original_type.ToString & schema.GetType.ToString
 
-        Dim arr As Generic.List(Of ColumnAttribute) = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+        Dim arr As Generic.List(Of EntityPropertyAttribute) = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
         If arr Is Nothing Then
             SyncLock String.Intern(cl_type)
-                arr = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+                arr = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
                 If arr Is Nothing Then
-                    arr = New Generic.List(Of ColumnAttribute)
+                    arr = New Generic.List(Of EntityPropertyAttribute)
 
-                    For Each c As ColumnAttribute In GetProperties(original_type, schema).Keys
+                    For Each c As EntityPropertyAttribute In GetProperties(original_type, schema).Keys
                         arr.Add(c)
                     Next
 
@@ -807,18 +807,18 @@ Public Class ObjectMappingEngine
 
     '<MethodImpl(MethodImplOptions.Synchronized)> _
 
-    Public Function GetPrimaryKeys(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As List(Of ColumnAttribute)
+    Public Function GetPrimaryKeys(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As List(Of EntityPropertyAttribute)
         Dim cl_type As String = "clm_pklist" & original_type.ToString
 
-        Dim arr As Generic.List(Of ColumnAttribute) = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+        Dim arr As Generic.List(Of EntityPropertyAttribute) = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
 
         If arr Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(cl_type)
-                arr = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+                arr = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
                 If arr Is Nothing Then
-                    arr = New Generic.List(Of ColumnAttribute)
+                    arr = New Generic.List(Of EntityPropertyAttribute)
 
-                    For Each c As ColumnAttribute In GetSortedFieldList(original_type, schema)
+                    For Each c As EntityPropertyAttribute In GetSortedFieldList(original_type, schema)
                         Dim att As Field2DbRelations
                         If schema IsNot Nothing Then
                             att = GetAttributes(schema, c)
@@ -1099,14 +1099,14 @@ Public Class ObjectMappingEngine
     '    Return sb.ToString
     'End Function
 
-    Public Shared Function ConvertColumn2SelExp(ByVal c As ColumnAttribute, ByVal t As Type) As SelectExpression
+    Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal t As Type) As SelectExpression
         Dim se As New SelectExpression(t, c.PropertyAlias)
         se.Column = c.Column
         se.Attributes = c._behavior
         Return se
     End Function
 
-    Public Shared Function ConvertColumn2SelExp(ByVal c As ColumnAttribute, ByVal os As ObjectSource) As SelectExpression
+    Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As ObjectSource) As SelectExpression
         Dim se As New SelectExpression(os, c.PropertyAlias)
         se.Column = c.Column
         se.Attributes = c._behavior
@@ -1160,7 +1160,7 @@ Public Class ObjectMappingEngine
     Public Function GetPropertyTypeByName(ByVal type As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Type
         'Dim t As Type = map(
         For Each de As DictionaryEntry In GetProperties(type, oschema)
-            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
             If propertyAlias = c.PropertyAlias Then
                 Return CType(de.Value, Reflection.PropertyInfo).PropertyType
             End If
@@ -1187,7 +1187,7 @@ Public Class ObjectMappingEngine
                     For Each de As DictionaryEntry In GetProperties(type)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If pi.PropertyType Is propertyType Then
-                            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                             l.Add(c.PropertyAlias)
                         End If
                     Next
@@ -1222,13 +1222,13 @@ Public Class ObjectMappingEngine
         Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
     End Function
 
-    Protected Function GetColumnsFromPropertyAlias(ByVal main As Type, ByVal propertyType As Type) As ColumnAttribute()
+    Protected Function GetColumnsFromPropertyAlias(ByVal main As Type, ByVal propertyType As Type) As EntityPropertyAttribute()
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
-        Dim l As New List(Of ColumnAttribute)
+        Dim l As New List(Of EntityPropertyAttribute)
 
         For Each de As DictionaryEntry In GetProperties(main)
-            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
             Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
             If pi.PropertyType Is propertyType Then
                 l.Add(c)
@@ -1237,18 +1237,18 @@ Public Class ObjectMappingEngine
         Return l.ToArray
     End Function
 
-    Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String) As ColumnAttribute
+    Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String) As EntityPropertyAttribute
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
         'Dim l As New List(Of ColumnAttribute)
         Return GetColumnByPropertyAlias(main, propertyAlias, GetObjectSchema(main))
     End Function
 
-    Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As ColumnAttribute
+    Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As EntityPropertyAttribute
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
         For Each de As DictionaryEntry In GetProperties(main, oschema)
-            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
             If c.PropertyAlias = propertyAlias Then
                 Return c
             End If
@@ -1342,9 +1342,20 @@ Public Class ObjectMappingEngine
                 OrElse assembly.ManifestModule.Name = "System.Xml.dll" OrElse assembly.ManifestModule.Name = "System.dll" _
                 OrElse assembly.ManifestModule.Name = "System.Configuration.dll" OrElse assembly.ManifestModule.Name = "System.Web.dll" _
                 OrElse assembly.ManifestModule.Name = "System.Drawing.dll" OrElse assembly.ManifestModule.Name = "System.Web.Services.dll" _
-                OrElse assembly.FullName.Contains("Microsoft") Then
+                OrElse assembly.FullName.Contains("Microsoft") OrElse assembly.ManifestModule.Name = "Worm.Orm.dll" _
+                OrElse assembly.ManifestModule.Name = "CoreFramework.dll" OrElse assembly.ManifestModule.Name = "ASPNETHosting.dll" _
+                OrElse assembly.ManifestModule.Name = "System.Transactions.dll" OrElse assembly.ManifestModule.Name = "System.EnterpriseServices.dll" Then
             Else
-                For Each tp As Type In assembly.GetTypes
+                Dim types() As Type = Nothing
+                Try
+                    types = assembly.GetTypes
+                Catch ex As Reflection.ReflectionTypeLoadException
+                    Debug.Print("Worm error during loading types: " & ex.ToString)
+                End Try
+
+                If types Is Nothing Then Continue For
+
+                For Each tp As Type In types
                     If tp.IsClass AndAlso t.IsAssignableFrom(tp) Then
                         Dim entities() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
 
@@ -1353,8 +1364,8 @@ Public Class ObjectMappingEngine
                                 Dim schema As IEntitySchema = Nothing
 
                                 If ea.Type Is Nothing Then
-                                    Dim l As New List(Of ColumnAttribute)
-                                    For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                    Dim l As New List(Of EntityPropertyAttribute)
+                                    For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
                                         l.Add(c)
                                     Next
 
@@ -1402,8 +1413,8 @@ Public Class ObjectMappingEngine
                                 If ea.Version = _version Then
                                     Dim schema As IEntitySchema = Nothing
                                     If ea.Type Is Nothing Then
-                                        Dim l As New List(Of ColumnAttribute)
-                                        For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                        Dim l As New List(Of EntityPropertyAttribute)
+                                        For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
                                             l.Add(c)
                                         Next
 
@@ -1458,8 +1469,8 @@ Public Class ObjectMappingEngine
                                 If ea1 IsNot Nothing Then
                                     Dim schema As IEntitySchema = Nothing
                                     If ea1.Type Is Nothing Then
-                                        Dim l As New List(Of ColumnAttribute)
-                                        For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                        Dim l As New List(Of EntityPropertyAttribute)
+                                        For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
                                             l.Add(c)
                                         Next
 
@@ -1519,8 +1530,8 @@ Public Class ObjectMappingEngine
                                         Dim schema As IEntitySchema = Nothing
 
                                         If ea2.Type Is Nothing Then
-                                            Dim l As New List(Of ColumnAttribute)
-                                            For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                            Dim l As New List(Of EntityPropertyAttribute)
+                                            For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
                                                 l.Add(c)
                                             Next
 
@@ -1890,7 +1901,7 @@ Public Class ObjectMappingEngine
                         schema = mpe.GetObjectSchema(original_type)
                     End If
 
-                    For Each c As ColumnAttribute In mpe.GetSortedFieldList(original_type, schema)
+                    For Each c As EntityPropertyAttribute In mpe.GetSortedFieldList(original_type, schema)
                         If (mpe.GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             arr.Add(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, add_alias, columnAliases, os))
                         End If
@@ -1942,7 +1953,7 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -1953,7 +1964,7 @@ Public Class ObjectMappingEngine
         'End If
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
-        For Each c As ColumnAttribute In arr
+        For Each c As EntityPropertyAttribute In arr
             sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
         Next
 
@@ -1965,7 +1976,7 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
+    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -1976,7 +1987,7 @@ Public Class ObjectMappingEngine
         'End If
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
-        For Each c As ColumnAttribute In arr
+        For Each c As EntityPropertyAttribute In arr
             If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                 sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
             End If

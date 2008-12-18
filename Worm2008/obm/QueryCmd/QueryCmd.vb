@@ -211,7 +211,7 @@ Namespace Query
         Private _cacheSort As Boolean
         'Private _autoFields As Boolean
         Private _timeout As Nullable(Of Integer)
-        Private _oschema As IEntitySchema
+        Private _pod As Pair(Of Type, IEntitySchema)
         Private _createType As ObjectSource
 
         '#Region " Cache "
@@ -459,7 +459,7 @@ Namespace Query
             End Sub
 
             Public Sub cl_paging(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs)
-                args.Created = True
+                args.Created = False
                 SetCT2Nothing()
                 RemoveHandler sender.OnGetCacheItem, AddressOf Me.cl_paging
             End Sub
@@ -535,7 +535,7 @@ Namespace Query
                     If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
                         j.AddRange(joins)
                     End If
-                    _appendMain = appendMain
+                    '_appendMain = appendMain
                 End If
 
                 If _m2mObject IsNot Nothing Then
@@ -592,7 +592,7 @@ Namespace Query
                             _from = New FromClause(selectOS)
                         End If
                         If WithLoad(selectOS, schema) Then
-                            cl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                            cl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
                         Else
                             GoTo l1
                         End If
@@ -601,7 +601,7 @@ Namespace Query
                         'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                         'os.GetFieldColumnMap()("ID")._columnName
 l1:
-                        Dim pk As ColumnAttribute = schema.GetPrimaryKeys(selectType)(0)
+                        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                         Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                         se.Attributes = Field2DbRelations.PK
                         cl.Add(se)
@@ -631,7 +631,7 @@ l1:
             End If
 
             If SelectList IsNot Nothing Then
-                If GetType(AnonymousEntity).IsAssignableFrom(_createType.GetRealType(schema)) Then
+                If _createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(_createType.GetRealType(schema)) Then
                     cl.AddRange(SelectList)
                 Else
                     If IsFTS AndAlso GetSelectedTypes(schema).Count > 1 Then
@@ -658,24 +658,45 @@ l1:
 
                                 Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
                                 If col.Count > 0 Then
-                                    For Each pk As ColumnAttribute In dic
-                                        Dim find As Boolean
-                                        For Each fld As SelectExpression In col
-                                            If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
-                                                AndAlso fld.PropertyAlias = pk.PropertyAlias Then
-                                                find = True
-                                                Exit For
+                                    For Each dice As DictionaryEntry In dic
+                                        Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
+                                        If (pk._behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                            Dim find As Boolean
+                                            For Each fld As SelectExpression In col
+                                                If fld.PropertyAlias = pk.PropertyAlias Then
+                                                    find = True
+                                                    Exit For
+                                                End If
+                                            Next
+                                            If Not find Then
+                                                Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
+                                                se.Attributes = pk._behavior
+                                                If Not cl.Contains(se) Then
+                                                    cl.Add(se)
+                                                End If
                                             End If
-                                        Next
-                                        If Not find Then
-                                            Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
-                                            se.Attributes = pk._behavior
-                                            cl.Add(se)
                                         End If
                                     Next
+                                    cl.AddRange(col)
                                 End If
                             End If
                         Next
+
+                        If AutoJoins Then
+                            Dim t As Type = GetSelectedOS.GetRealType(schema)
+                            Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
+                            For Each se As SelectExpression In SelectList
+                                If se.ObjectSource IsNot Nothing Then
+                                    If Not HasInQuery(se.ObjectSource, j) Then
+                                        OrmManager.AppendJoin(schema, t, f, filterInfo, _
+                                            j, selSchema, Nothing, se.ObjectSource.GetRealType(schema))
+                                    End If
+                                ElseIf se.Table IsNot Nothing Then
+                                Else
+                                    Throw New NotImplementedException
+                                End If
+                            Next
+                        End If
                     Else
                         cl.AddRange(SelectList)
                     End If
@@ -730,7 +751,7 @@ l1:
                         If WithLoad(tp, schema) Then
                             _appendMain = True
                             Dim os As ObjectSource = tp.First
-                            cl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                            cl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                         Else
                             Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
                             Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
@@ -743,9 +764,9 @@ l1:
                     Dim s As IEntitySchema = GetSchemaForCreateType(schema)
                     If s IsNot Nothing Then
                         For Each m As MapField2Column In s.GetFieldColumnMap
-                            Dim se As New SelectExpression(m._tableName, m._propertyAlias)
+                            Dim se As New SelectExpression(m._tableName, m._columnName)
                             se.Attributes = m._newattributes
-                            se.Column = m._columnName
+                            se.PropertyAlias = m._propertyAlias
                             cl.Add(se)
                         Next
                     Else
@@ -776,8 +797,8 @@ l1:
 
         Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), ByVal tp As Pair(Of ObjectSource, Boolean?))
             Dim t As Type = tp.First.GetRealType(schema)
-            If WithLoad(tp, schema) Then
-                cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
+            If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse WithLoad(tp, schema) Then
+                cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
             Else
                 Dim pk As String = schema.GetPrimaryKeys(t)(0).PropertyAlias
                 Dim se As New SelectExpression(tp.First, pk)
@@ -902,6 +923,8 @@ l1:
                     For Each t As Type In rt
                         sb2.Append(t.ToString)
                     Next
+                ElseIf _pod IsNot Nothing Then
+                    sb2.Append(_pod.First.ToString)
                 ElseIf _from IsNot Nothing Then
                     If _from.Table IsNot Nothing Then
                         Select Case cb
@@ -913,7 +936,10 @@ l1:
                             Case Else
                                 Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
                         End Select
+                    ElseIf _from.ObjectSource IsNot Nothing Then
+                        sb2.Append(_from.ObjectSource.ToStaticString)
                     Else
+                        Throw New NotSupportedException
                     End If
                 Else
                     Throw New NotSupportedException
@@ -1046,13 +1072,13 @@ l1:
             Dim sb As New StringBuilder
             Dim l As List(Of SelectExpression) = Nothing
             GetStaticKey(sb, _joins, _filter.Filter, Cache.CacheListBehavior.CacheAll, SelectList, mpe)
-            If SelectTypes IsNot Nothing Then
-                For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
-                    sb.Append(tp.First.ToStaticString)
-                Next
-                sb.Append("$")
+            'If SelectTypes IsNot Nothing Then
+            '    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+            '        sb.Append(tp.First.ToStaticString)
+            '    Next
+            '    sb.Append("$")
 
-            End If
+            'End If
             Return sb.ToString
         End Function
 
@@ -1071,6 +1097,14 @@ l1:
             Else
                 If SelectTypes IsNot Nothing AndAlso SelectTypes.Count > 0 Then
                     Return SelectTypes(0).First
+                    'ElseIf SelectList IsNot Nothing Then
+                    '    Dim os As ObjectSource = SelectList(0).ObjectSource
+                    '    For i As Integer = 1 To SelectList.Count - 1
+                    '        If Not SelectList(i).ObjectSource.Equals(os) Then
+                    '            Return Nothing
+                    '        End If
+                    '    Next
+                    '    Return os
                 End If
             End If
             Return Nothing
@@ -1089,6 +1123,27 @@ l1:
             Return os
         End Function
 
+        Friend Function NeedSelectType(ByVal mpe As ObjectMappingEngine) As Boolean
+            If SelectTypes IsNot Nothing Then
+                Return False
+            End If
+
+            'If SelectList IsNot Nothing Then
+            '    For Each s As SelectExpression In SelectList
+            '        If s.ObjectProperty.ObjectSource Is Nothing Then
+            '            Return False
+            '        Else
+            '            Dim t As Type = s.ObjectSource.GetRealType(mpe)
+            '            If t Is Nothing OrElse GetType(AnonymousEntity).IsAssignableFrom(t) Then
+            '                Return False
+            '            End If
+            '        End If
+            '    Next
+            'End If
+
+            Return SelectList Is Nothing
+        End Function
+
         Public Function GetSelectedTypes(ByVal mpe As ObjectMappingEngine, ByRef ts As ICollection(Of Type)) As Boolean
             'If _dic Is Nothing Then
             '    _dic = New Dictionary(Of ObjectSource, IEntitySchema)
@@ -1102,7 +1157,7 @@ l1:
                     'End If
                     ts.Add(os.GetRealType(mpe))
                 Next
-            Else
+            ElseIf SelectList IsNot Nothing Then
                 For Each s As SelectExpression In SelectList
                     If s.ObjectProperty.ObjectSource Is Nothing Then
                         '_dic.Clear()
@@ -1481,7 +1536,7 @@ l1:
 
         Protected Friend ReadOnly Property propWithLoad() As Boolean
             Get
-                Return SelectTypes(0).Second.HasValue AndAlso SelectTypes(0).Second.Value
+                Return SelectTypes IsNot Nothing AndAlso SelectTypes(0).Second IsNot Nothing AndAlso SelectTypes(0).Second.Value
             End Get
         End Property
 
@@ -1981,7 +2036,7 @@ l1:
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
-            _oschema = GetSchema(mpe, rt, hasPK)
+            _pod = New Pair(Of Type, IEntitySchema)(rt, GetSchema(mpe, rt, hasPK))
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
@@ -1996,11 +2051,11 @@ l1:
             End If
             'End Using
 
-            Dim props As IDictionary = mpe.GetProperties(rt, _oschema)
+            Dim props As IDictionary = mpe.GetProperties(rt, _pod.Second)
             For Each e As _IEntity In l
                 Dim ro As New T
                 For Each kv As DictionaryEntry In props
-                    Dim col As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                    Dim col As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
                     Dim v As Object = mpe.GetPropertyValue(e, col.PropertyAlias, Nothing)
                     If v Is DBNull.Value Then
@@ -2358,7 +2413,7 @@ l1:
             If SelectList Is Nothing Then
                 Dim selList As New OrmObjectIndex
                 For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
-                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                    Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                     selList.Add(New MapField2Column(c.PropertyAlias, c.Column, Nothing))
                 Next
                 Return New SimpleObjectSchema(selList)
@@ -2368,10 +2423,10 @@ l1:
         End Function
 
         Protected Friend Function GetSchemaForCreateType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
-            If _oschema Is Nothing Then
-                Return mpe.GetObjectSchema(CreateType.GetRealType(mpe), False)
+            If _pod Is Nothing Then
+                Return mpe.GetObjectSchema(GetSelectedType(mpe), False)
             Else
-                Return _oschema
+                Return _pod.Second
             End If
         End Function
 
@@ -2430,7 +2485,7 @@ l1:
                 ._schema = _schema
                 ._cacheSort = _cacheSort
                 ._timeout = _timeout
-                ._oschema = _oschema
+                ._pod = _pod
                 '._autoFields = _autoFields
             End With
         End Sub

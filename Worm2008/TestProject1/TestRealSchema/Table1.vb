@@ -109,7 +109,7 @@ Public Class Table1
         End If
     End Function
 
-    <Column("Title")> _
+    <EntityProperty("Title")> _
     Public Overridable Property Name() As String
         Get
             Using SyncHelper(True, "Title")
@@ -123,7 +123,7 @@ Public Class Table1
         End Set
     End Property
 
-    <Column("Enum")> _
+    <EntityPropertyAttribute("Enum")> _
     Public Property [Enum]() As Nullable(Of Enum1)
         Get
             Using SyncHelper(True, "Enum")
@@ -137,7 +137,7 @@ Public Class Table1
         End Set
     End Property
 
-    <Column("EnumStr")> _
+    <EntityPropertyAttribute("EnumStr")> _
     Public Property EnumStr() As Nullable(Of Enum1)
         Get
             Using SyncHelper(True, "EnumStr")
@@ -151,7 +151,7 @@ Public Class Table1
         End Set
     End Property
 
-    <Column("Code")> _
+    <EntityPropertyAttribute("Code")> _
     Public Property Code() As Nullable(Of Integer)
         Get
             Using SyncHelper(True, "Code")
@@ -165,7 +165,7 @@ Public Class Table1
         End Set
     End Property
 
-    <Column("DT")> _
+    <EntityPropertyAttribute("DT")> _
     Public Property CreatedAt() As Date
         Get
             Using SyncHelper(True, "DT")
@@ -199,7 +199,7 @@ Public Class Table1Implementation
         Main
     End Enum
 
-    Public Overrides Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
+    Public Overrides Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         If c.PropertyAlias = "EnumStr" Then
             If TypeOf value Is Enum1 Then
                 newvalue = value.ToString

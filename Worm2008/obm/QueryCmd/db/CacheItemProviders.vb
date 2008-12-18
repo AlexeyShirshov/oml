@@ -16,10 +16,6 @@ Namespace Query.Database
             'Private _created As Boolean
             'Private _renew As Boolean
 
-            Protected Sub New()
-
-            End Sub
-
             'Protected _mgr As OrmReadOnlyDBManager
             'Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             'Protected _f() As IFilter

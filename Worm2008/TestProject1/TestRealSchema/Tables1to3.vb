@@ -69,13 +69,13 @@ Public Class Tables1to3
             Case "Table3"
                 Return _table3
             Case Else
-                MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                Return MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Function
 
-    <Column("Title")> _
+    <EntityPropertyAttribute("Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -89,7 +89,7 @@ Public Class Tables1to3
         End Set
     End Property
 
-    <Column("Table1")> _
+    <EntityPropertyAttribute("Table1")> _
     Public Property Table1() As Table1
         Get
             Using SyncHelper(True, "Table1")
@@ -103,7 +103,7 @@ Public Class Tables1to3
         End Set
     End Property
 
-    <Column("Table3")> _
+    <EntityPropertyAttribute("Table3")> _
     Public Property Table3() As Table33
         Get
             Using SyncHelper(True, "Table3")

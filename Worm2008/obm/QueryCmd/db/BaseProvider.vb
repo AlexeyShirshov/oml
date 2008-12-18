@@ -2,6 +2,7 @@
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
+Imports Worm.Entities
 
 Namespace Query.Database
 
@@ -13,6 +14,18 @@ Namespace Query.Database
             Private _stmt As String
             Protected _params As ParamMgr
             Private _cmdType As System.Data.CommandType
+
+            Protected Sub New()
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)), _
+                           ByVal f() As IFilter, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)))
+                _mgr = mgr
+                _q = q
+                _sl = sl
+                _f = f
+                _j = j
+            End Sub
 
             Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As Cache.CachedItemBase
                 Throw New NotImplementedException

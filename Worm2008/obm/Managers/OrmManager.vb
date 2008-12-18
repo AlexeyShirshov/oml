@@ -1022,12 +1022,12 @@ l1:
 
         Dim sync As String = id & GetStaticKey()
 
-        Dim l As List(Of ColumnAttribute) = Nothing
+        Dim l As List(Of EntityPropertyAttribute) = Nothing
         If cols IsNot Nothing Then
             Dim has_id As Boolean = False
-            l = New List(Of ColumnAttribute)
+            l = New List(Of EntityPropertyAttribute)
             For Each c As String In cols
-                Dim col As ColumnAttribute = _schema.GetColumnByPropertyAlias(GetType(T), c)
+                Dim col As EntityPropertyAttribute = _schema.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
@@ -1308,7 +1308,7 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Delegate Function ValDelegate(ByRef ce As CachedItem, _
+    Protected Friend Delegate Function ValDelegate(ByRef ce As CachedItemBase, _
         ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
@@ -1351,11 +1351,11 @@ l1:
             End If
             del.Created = True
         Else
-            ce = CType(dic(id), CachedItem)
+            ce = CType(dic(id), CachedItemBase)
             If ce Is Nothing Then
 l1:
                 Using SyncHelper.AcquireDynamicLock(sync)
-                    ce = CType(dic(id), CachedItem)
+                    ce = CType(dic(id), CachedItemBase)
                     Dim emp As Boolean = ce Is Nothing
                     If emp OrElse del.Renew OrElse _dont_cache_lists Then
                         ce = del.GetCacheItem(withLoad)
@@ -1376,7 +1376,7 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         ElseIf vdel IsNot Nothing Then
-            If Not vdel(CType(ce, CachedItem), del, dic, id, sync, v) Then
+            If Not vdel(ce, del, dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
@@ -1389,7 +1389,7 @@ l1:
         Return ce
     End Function
 
-    Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
+    Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItemBase, _
         ByVal del_ As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
@@ -1399,13 +1399,15 @@ l1:
             ce._expires = _expiresPattern
         End If
 
-        If ce.Expires Then
-            ce.Expire()
+        Dim ce_ As CachedItem = CType(ce, CachedItem)
+
+        If ce_.Expires Then
+            ce_.Expire()
             del.Renew = True
             Return False
         End If
 
-        If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce) Then
+        If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce_) Then
             del.Renew = True
             Return False
         End If
@@ -1413,22 +1415,22 @@ l1:
         If _externalFilter Is Nothing Then
             Dim psort As Sort = del.Sort
 
-            If ce.SortEquals(psort) OrElse psort Is Nothing Then
-                If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
-                    Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
-                    ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
-                    If ce.CanRenewAfterSort Then
-                        dic(id) = ce
+            If ce_.SortEquals(psort) OrElse psort Is Nothing Then
+                If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce_.SortExpires Then
+                    Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
+                    Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
+                    If ce_.CanRenewAfterSort Then
+                        dic(id) = ce2
                     End If
                 End If
             Else
                 'Dim loaded As Integer = 0
-                Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
+                Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
                 If objs IsNot Nothing AndAlso objs.Count > 0 Then
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
                         Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
-                        If ce.CanRenewAfterSort Then
+                        If ce_.CanRenewAfterSort Then
                             dic(id) = ce2
                         End If
                         ce = ce2
@@ -1444,7 +1446,7 @@ l1:
                                 Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
                                 Dim ce2 As CachedItem = del.GetCacheItem(os)
-                                If ce.CanRenewAfterSort Then
+                                If ce_.CanRenewAfterSort Then
                                     dic(id) = ce2
                                 End If
                                 ce = ce2
@@ -1928,7 +1930,7 @@ l1:
 
     Private Shared Sub InsertObject(Of T As {IKeyEntity})(ByVal mgr As OrmManager, _
         ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IKeyEntity, _
-        ByVal columns As List(Of ColumnAttribute))
+        ByVal columns As List(Of EntityPropertyAttribute))
 
         Throw New NotImplementedException
     End Sub
@@ -1970,7 +1972,7 @@ l1:
 
     Protected Shared Function FormPKValues(Of T As {IKeyEntity, New})(ByVal mgr As OrmManager, _
         ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-        ByVal check_loaded As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As List(Of Object)
+        ByVal check_loaded As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute)) As List(Of Object)
 
         Dim l As New Generic.List(Of Object)
         Dim col As IList(Of T) = TryCast(objs, IList(Of T))
@@ -2960,11 +2962,11 @@ l1:
         Return col
     End Function
 
-    Protected Function LoadObjectsInternal(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+    Protected Function LoadObjectsInternal(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Return LoadObjectsInternal(Of T, T)(objs, start, length, remove_not_found, columns, withLoad)
     End Function
 
-    Public Function LoadObjects(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of ColumnAttribute)) As ReadOnlyList(Of T)
+    Public Function LoadObjects(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of EntityPropertyAttribute)) As ReadOnlyList(Of T)
         Return LoadObjectsInternal(objs, start, length, True, columns, _schema.GetSortedFieldList(GetType(T)).Count = columns.Count)
     End Function
 
@@ -3042,7 +3044,7 @@ l1:
             Next
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() { _
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of EntityPropertyAttribute)(New EntityPropertyAttribute() { _
                 _schema.GetPrimaryKeys(GetType(T))(0) _
                 }))
         End If
@@ -3072,7 +3074,7 @@ l1:
             End If
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, start, length, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() { _
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of EntityPropertyAttribute)(New EntityPropertyAttribute() { _
                 _schema.GetPrimaryKeys(GetType(T))(0) _
                 }))
         End If
@@ -3376,7 +3378,7 @@ l1:
         ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICacheItemProvoder(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {IKeyEntity, New})(ByVal aspect As QueryAspect, ByVal join() As QueryJoin, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As ICacheItemProvoder(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As ICacheItemProvoder(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {IKeyEntity, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICacheItemProvoder(Of T)
@@ -3405,8 +3407,8 @@ l1:
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
     Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
-    Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
-    Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
@@ -3443,7 +3445,7 @@ l1:
             ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
         Dim original_type As Type = GetType(T)
-        Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+        Dim columns As Generic.List(Of EntityPropertyAttribute) = _schema.GetSortedFieldList(original_type)
 
         Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
     End Function
@@ -3679,54 +3681,7 @@ l1:
                     End If
 
                     If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
-                        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, oschema)
-
-                        If String.IsNullOrEmpty(field) Then
-
-                            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetObjectSchema(type2join))
-
-                            If String.IsNullOrEmpty(field) Then
-                                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
-                                If m2m IsNot Nothing Then
-                                    l.AddRange(MakeM2MJoin(schema, m2m, type2join))
-                                Else
-                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
-                                End If
-                            Else
-                                l.Add(MakeJoin(schema, selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
-                            End If
-                        Else
-                            l.Add(MakeJoin(schema, type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
-                        End If
-
-                        types.Add(type2join)
-
-                        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
-                        Dim ts As IOrmObjectSchema = TryCast(sh, IOrmObjectSchema)
-                        If ts IsNot Nothing Then
-                            Dim pk_table As SourceFragment = sh.Table
-                            For i As Integer = 1 To ts.GetTables.Length - 1
-                                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
-                                Dim join As QueryJoin = Nothing
-                                If joinableTs IsNot Nothing Then
-                                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
-                                Else
-                                    join = ts.GetJoins(pk_table, ts.GetTables(i))
-                                End If
-
-                                If Not QueryJoin.IsEmpty(join) Then
-                                    l.Add(join)
-                                End If
-                            Next
-
-                            Dim newfl As IFilter = ts.GetContextFilter(filterInfo)
-                            If newfl IsNot Nothing Then
-                                Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
-                                con.AddFilter(filter)
-                                con.AddFilter(newfl)
-                                filter = con.Condition
-                            End If
-                        End If
+                        AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join)
                     ElseIf type2join Is selectType Then
                         appendMain = True
                     End If
@@ -3769,6 +3724,63 @@ l1:
         joins = l.ToArray
         Return joins.Length > 0
     End Function
+
+    Public Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
+        ByRef filter As IFilter, ByVal filterInfo As Object, ByVal l As List(Of QueryJoin), _
+        ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type)
+        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+
+        If String.IsNullOrEmpty(field) Then
+
+            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetObjectSchema(type2join))
+
+            If String.IsNullOrEmpty(field) Then
+                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
+                If m2m IsNot Nothing Then
+                    l.AddRange(MakeM2MJoin(schema, m2m, type2join))
+                Else
+                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                End If
+            Else
+                l.Add(MakeJoin(schema, selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+            End If
+        Else
+            l.Add(MakeJoin(schema, type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+        End If
+
+If types isnot Nothing then
+        types.Add(type2join)
+        end if
+        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
+        Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
+        If ts IsNot Nothing Then
+            Dim pk_table As SourceFragment = sh.Table
+            For i As Integer = 1 To ts.GetTables.Length - 1
+                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+                Dim join As QueryJoin = Nothing
+                If joinableTs IsNot Nothing Then
+                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
+                Else
+                    join = ts.GetJoins(pk_table, ts.GetTables(i))
+                End If
+
+                If Not QueryJoin.IsEmpty(join) Then
+                    l.Add(join)
+                End If
+            Next
+
+            Dim cfs As IContextObjectSchema = TryCast(sh, IContextObjectSchema)
+            If cfs IsNot Nothing Then
+                Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
+                If newfl IsNot Nothing Then
+                    Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                    con.AddFilter(filter)
+                    con.AddFilter(newfl)
+                    filter = con.Condition
+                End If
+            End If
+        End If
+    End Sub
 
     Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
         Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Type, schema.GetPrimaryKeys(m2m.Type)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)

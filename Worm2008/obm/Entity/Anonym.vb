@@ -44,7 +44,7 @@ Namespace Entities
 
         End Function
 
-        Public Function ForseUpdate(ByVal c As Meta.ColumnAttribute) As Boolean Implements _ICachedEntity.ForseUpdate
+        Public Function ForseUpdate(ByVal c As Meta.EntityPropertyAttribute) As Boolean Implements _ICachedEntity.ForseUpdate
 
         End Function
 
@@ -82,7 +82,7 @@ Namespace Entities
 
         End Function
 
-        Public Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
         End Function
 

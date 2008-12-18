@@ -737,7 +737,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
+        Protected MustOverride Function GetColumns() As List(Of EntityPropertyAttribute)
         Protected MustOverride Function GetWithLoad() As Boolean
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -887,14 +887,14 @@ Namespace Database.Storedprocs
                 Return _name
             End Function
 
-            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute)
-                Dim l As New List(Of ColumnAttribute)
+            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute)
+                Dim l As New List(Of EntityPropertyAttribute)
                 For i As Integer = 0 To _cols.Length - 1
                     Dim c As String = _cols(i)
                     If Array.IndexOf(_pk, i) >= 0 Then
-                        l.Add(New ColumnAttribute(c, Field2DbRelations.PK))
+                        l.Add(New EntityPropertyAttribute(c, Field2DbRelations.PK))
                     Else
-                        l.Add(New ColumnAttribute(c))
+                        l.Add(New EntityPropertyAttribute(c))
                     End If
                 Next
                 Return l
@@ -1020,13 +1020,13 @@ Namespace Database.Storedprocs
                 End If
                 Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
-                Dim cols As IList(Of SelectExpression) = GetColumns.ConvertAll(Of SelectExpression)(Function(col As ColumnAttribute) _
+                Dim cols As IList(Of SelectExpression) = GetColumns.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
                      New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
                 mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _oschema, _cm)
                 _loaded += loaded
             End Sub
 
-            Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
+            Protected MustOverride Function GetColumns() As List(Of EntityPropertyAttribute)
             'Protected MustOverride Function GetWithLoad() As Boolean
 
             Public Function GetObjects(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)

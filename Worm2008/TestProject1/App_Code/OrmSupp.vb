@@ -5,7 +5,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
 
     Protected _schema As Worm.ObjectMappingEngine
 
-    Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
         newvalue = value
         Return False
     End Function

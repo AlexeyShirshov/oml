@@ -89,7 +89,7 @@ Namespace Entities
         Private _falias As String
         Private _dst As ObjectSource
 
-        Friend _c As ColumnAttribute
+        Friend _c As EntityPropertyAttribute
         Friend _pi As Reflection.PropertyInfo
         Friend _realAtt As Field2DbRelations
 

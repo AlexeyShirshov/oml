@@ -51,7 +51,8 @@ Public Class Table10
             Case "Table1"
                 Tbl = CType(value, Table1)
             Case Else
-                Throw New NotSupportedException(fieldName)
+                SetValueReflection(fieldName, value, oschema)
+                'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
@@ -65,7 +66,7 @@ Public Class Table10
         End Select
     End Function
 
-    <Column("Table1")> _
+    <EntityPropertyAttribute("Table1")> _
     Public Property Tbl() As Table1
         Get
             Using SyncHelper(True, "Table1")

@@ -88,7 +88,7 @@ Imports Worm.Criteria
 
         Private _id As Guid
 
-        <Column(Field2DbRelations.PrimaryKey, Column:="pk", DBType:="uniqueidentifier")> _
+        <EntityPropertyAttribute(Field2DbRelations.PrimaryKey, Column:="pk", DBType:="uniqueidentifier")> _
         Public Overrides Property Identifier() As Object
             Get
                 Return _id
@@ -100,7 +100,7 @@ Imports Worm.Criteria
 
         Private _code As Integer
 
-        <Column(Column:="code")> _
+        <EntityPropertyAttribute(Column:="code")> _
         Public Property Code() As Integer
             Get
                 Return _code

@@ -35,7 +35,7 @@ Namespace Database
                 'Dim t As Type = obj.GetType
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-                Dim cols As Generic.List(Of ColumnAttribute) = Nothing
+                Dim cols As Generic.List(Of EntityPropertyAttribute) = Nothing
                 Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
                 Dim inv As Boolean
                 Using obj.GetSyncRoot()
@@ -58,7 +58,7 @@ Namespace Database
 
                                 Dim b As ConnAction = mgr.TestConn(cmd)
                                 Try
-                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
+                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
 
                                     inv = True
                                 Finally
@@ -99,7 +99,7 @@ Namespace Database
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
                                             If sel Then
-                                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
+                                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
                                             Else
                                                 Dim r As Integer = cmd.ExecuteNonQuery()
                                                 If r = 0 Then
@@ -151,7 +151,7 @@ Namespace Database
                     'Dim t As Type = obj.GetType
 
                     Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
-                    Dim cols As Generic.List(Of ColumnAttribute) = Nothing
+                    Dim cols As Generic.List(Of EntityPropertyAttribute) = Nothing
                     Using obj.GetSyncRoot()
                         Dim cmdtext As String = Nothing
                         Try
@@ -175,7 +175,7 @@ Namespace Database
 
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
-                                            mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
+                                            mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
                                         Finally
                                             mgr.CloseConn(b)
                                         End Try
@@ -199,7 +199,7 @@ Namespace Database
                                             Dim b As ConnAction = mgr.TestConn(cmd)
                                             Try
                                                 If sel Then
-                                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
+                                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
                                                 Else
                                                     cmd.ExecuteNonQuery()
                                                 End If
@@ -564,7 +564,7 @@ l1:
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect, cols)
         End Function
 
@@ -578,10 +578,10 @@ l1:
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
-            Dim l As New List(Of ColumnAttribute)
+            Dim l As New List(Of EntityPropertyAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
+                Dim col As EntityPropertyAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
@@ -634,7 +634,7 @@ l1:
             ByVal filter As IFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort, ByVal q() As QueryAspect) As IList
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim arr As Generic.List(Of ColumnAttribute) = Nothing
+                Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -698,7 +698,7 @@ l1:
                     SQLGenerator.AppendWhere(MappingEngine, ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                        SQLGenerator.AppendOrder(MappingEngine, sort, almgr, sb, True, Nothing, Nothing)
+                        SQLGenerator.AppendOrder(MappingEngine, sort, almgr, sb, True, Nothing, Nothing, Nothing)
                     End If
 
                     params.AppendParams(.Parameters)
@@ -924,13 +924,13 @@ l1:
             Dim original_type As Type = ct
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(SQLGenerator, "p")
-            Dim arr As Generic.List(Of ColumnAttribute) = Nothing
+            Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = MappingEngine.GetSortedFieldList(original_type)
                 sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
-                arr = New Generic.List(Of ColumnAttribute)
+                arr = New Generic.List(Of EntityPropertyAttribute)
                 'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
@@ -986,13 +986,13 @@ l1:
             Dim original_type As Type = GetType(T)
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(SQLGenerator, "p")
-            Dim arr As Generic.List(Of ColumnAttribute) = Nothing
+            Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = MappingEngine.GetSortedFieldList(original_type)
                 sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
-                arr = New Generic.List(Of ColumnAttribute)
+                arr = New Generic.List(Of EntityPropertyAttribute)
                 'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
@@ -1090,8 +1090,8 @@ l1:
             Dim filter As IFilter = c.Condition
 
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim arr As List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
-                Dim cols As IList(Of SelectExpression) = arr.ConvertAll(Of SelectExpression)(Function(col As ColumnAttribute) _
+                Dim arr As List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(original_type)
+                Dim cols As IList(Of SelectExpression) = arr.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
                      New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -1305,15 +1305,15 @@ l1:
 
         Protected Sub LoadMultipleObjects(ByVal firstType As Type, _
             ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal values As IList, _
-            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute))
+            ByVal first_cols As List(Of EntityPropertyAttribute), ByVal sec_cols As List(Of EntityPropertyAttribute))
 
             Throw New NotImplementedException
             'QueryMultiTypeObjects(cmd,
         End Sub
 
-        Protected Friend Sub LoadMultipleObjects(ByVal t As Type, _
+        Protected Friend Sub LoadMultipleObjects(ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal values As IList, ByVal selectList As List(Of ColumnAttribute))
+            ByVal values As IList, ByVal selectList As List(Of EntityPropertyAttribute))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
@@ -1330,14 +1330,14 @@ l1:
                 End If
             End If
 
-            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4clm.MakeGenericMethod(New Type() {t})
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4clm.MakeGenericMethod(New Type() {createType})
 
             mi_real.Invoke(Me, flags, Nothing, _
                 New Object() {cmd, values, selectList}, Nothing)
 
         End Sub
 
-        Protected Friend Sub LoadMultipleObjects(ByVal t As Type, _
+        Protected Friend Sub LoadMultipleObjects(ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, ByVal selectList As List(Of SelectExpression))
 
@@ -1356,14 +1356,14 @@ l1:
                 End If
             End If
 
-            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {t})
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {createType})
 
             mi_real.Invoke(Me, flags, Nothing, _
                 New Object() {cmd, values, selectList}, Nothing)
 
         End Sub
 
-        Public Sub LoadMultipleObjects(ByVal t As Type, _
+        Public Sub LoadMultipleObjects(ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression), _
             ByVal oschema As IEntitySchema, _
@@ -1385,7 +1385,7 @@ l1:
                 End If
             End If
 
-            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {createType})
 
             mi_real.Invoke(Me, flags, Nothing, _
                 New Object() {cmd, values, selectList, oschema, fields_idx}, Nothing)
@@ -1395,13 +1395,13 @@ l1:
         Protected Friend Sub LoadMultipleObjectsClm(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, _
-            ByVal selectList As List(Of ColumnAttribute))
+            ByVal selectList As List(Of EntityPropertyAttribute))
 
             Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
             QueryObjects(Of T)(cmd, values, _
-                               selectList.ConvertAll(Function(c As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, GetType(T))), _
+                               selectList.ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, GetType(T))), _
                                oschema, fields_idx)
         End Sub
 
@@ -1488,11 +1488,11 @@ l1:
                 Dim oschema As IEntitySchema = types(os)
                 Dim att As Field2DbRelations = se._realAtt
                 Dim pi As Reflection.PropertyInfo = se._pi
-                Dim c As ColumnAttribute = se._c
+                Dim c As EntityPropertyAttribute = se._c
 
                 If c Is Nothing Then
                     For Each de As DictionaryEntry In pdic(t)
-                        c = CType(de.Key, ColumnAttribute)
+                        c = CType(de.Key, EntityPropertyAttribute)
                         If c.PropertyAlias = se.PropertyAlias Then
                             pi = CType(de.Value, Reflection.PropertyInfo)
                             se._c = c
@@ -1617,7 +1617,7 @@ l1:
                 Dim oschema As IEntitySchema = types(os)
 
                 Dim pi As Reflection.PropertyInfo = se._pi
-                Dim c As ColumnAttribute = se._c
+                Dim c As EntityPropertyAttribute = se._c
                 'For Each de As DictionaryEntry In pdic(t)
                 '    c = CType(de.Key, ColumnAttribute)
                 '    If c.PropertyAlias = se.PropertyAlias Then
@@ -1918,15 +1918,15 @@ l1:
                 For idx As Integer = 0 To selectList.Count - 1
                     Dim se As SelectExpression = selectList(idx)
                     Dim propertyAlias As String = If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias)
-                    Dim c As ColumnAttribute = se._c
+                    Dim c As EntityPropertyAttribute = se._c
                     Dim pi As Reflection.PropertyInfo = se._pi
                     Dim attr As Field2DbRelations = se._realAtt
                     If c Is Nothing Then
                         Dim d As IDictionary = MappingEngine.GetProperties(original_type, oschema)
                         If d IsNot Nothing AndAlso d.Count > 0 Then
                             For Each de As DictionaryEntry In d
-                                c = CType(de.Key, ColumnAttribute)
-                                If c.PropertyAlias = se.PropertyAlias Then
+                                c = CType(de.Key, EntityPropertyAttribute)
+                                If c.PropertyAlias = propertyAlias Then
                                     pi = CType(de.Value, Reflection.PropertyInfo)
                                     se._c = c
                                     se._pi = pi
@@ -1935,7 +1935,7 @@ l1:
                             Next
                             attr = propertyMap(propertyAlias).GetAttributes(c)
                         Else
-                            c = New ColumnAttribute(propertyAlias, se.Attributes)
+                            c = New EntityPropertyAttribute(propertyAlias, se.Attributes)
                             c.Column = se.Column
                             se._c = c
                         End If
@@ -2023,7 +2023,7 @@ l1:
                     For idx As Integer = 0 To selectList.Count - 1
                         Dim se As SelectExpression = selectList(idx)
                         Dim propertyAlias As String = If(String.IsNullOrEmpty(se.PropertyAlias), se.FieldAlias, se.PropertyAlias)
-                        Dim c As ColumnAttribute = se._c
+                        Dim c As EntityPropertyAttribute = se._c
                         Dim pi As Reflection.PropertyInfo = se._pi
                         Dim att As Field2DbRelations = se._realAtt
 
@@ -2220,7 +2220,7 @@ l1:
 
         Private Sub ParsePKFromDb(ByVal obj As _IEntity, ByVal dr As System.Data.Common.DbDataReader, _
             ByVal oschema As IEntitySchema, ByVal ce As _ICachedEntity, ByVal idx As Integer, _
-            ByVal propertyAlias As String, ByVal c As ColumnAttribute, _
+            ByVal propertyAlias As String, ByVal c As EntityPropertyAttribute, _
             ByVal pi As Reflection.PropertyInfo, ByVal value As Object)
             If Not dr.IsDBNull(idx) Then
                 'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
@@ -2280,7 +2280,7 @@ l1:
             ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, _
             ByVal oschema As IEntitySchema, ByVal value As Object, ByVal ce As _ICachedEntity, _
             ByVal check_pk As Boolean, ByVal fac As List(Of Pair(Of String, Object)), _
-            ByVal c As ColumnAttribute)
+            ByVal c As EntityPropertyAttribute)
             If pi Is Nothing Then
                 If dr.IsDBNull(i) Then
                     MappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema)
@@ -2567,7 +2567,7 @@ l1:
 
         Public Overrides Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Invariant()
 
@@ -2717,7 +2717,7 @@ l1:
 
         Public Overrides Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Invariant()
 
@@ -3020,7 +3020,7 @@ l1:
             Dim selSchema As IEntitySchema = MappingEngine.GetObjectSchema(selectType)
             Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
             Dim queryFields As String() = Nothing
-            Dim selCols, searchCols As New List(Of ColumnAttribute)
+            Dim selCols, searchCols As New List(Of EntityPropertyAttribute)
             Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
 
             Dim joins As New List(Of QueryJoin)
@@ -3214,7 +3214,7 @@ l2:
             Dim selectType As System.Type = GetType(T)
             Dim fields As New List(Of Pair(Of String, Type))
             Dim joins As New List(Of QueryJoin)
-            Dim selCols, searchCols As New List(Of ColumnAttribute)
+            Dim selCols, searchCols As New List(Of EntityPropertyAttribute)
             Dim queryFields As String() = Nothing
 
             Dim searchSchema As IEntitySchema = MappingEngine.GetObjectSchema(type2search)
@@ -3229,8 +3229,8 @@ l2:
 
         Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
-            ByVal joins As IList(Of QueryJoin), ByVal selCols As IList(Of ColumnAttribute), _
-            ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
+            ByVal joins As IList(Of QueryJoin), ByVal selCols As IList(Of EntityPropertyAttribute), _
+            ByVal searchCols As IList(Of EntityPropertyAttribute), ByRef queryFields As String(), _
             ByVal searchSchema As IEntitySchema, ByVal selSchema As IEntitySchema) As Boolean
 
             'Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -3253,7 +3253,7 @@ l2:
             'End If
             'If selectType IsNot type2search Then
             Dim pkname As String = MappingEngine.GetPrimaryKeys(selectType)(0).PropertyAlias
-            selCols.Insert(0, New ColumnAttribute(pkname, Field2DbRelations.PK))
+            selCols.Insert(0, New EntityPropertyAttribute(pkname, Field2DbRelations.PK))
             fields.Insert(0, New Pair(Of String, Type)(pkname, selectType))
             'End If
 
@@ -3379,12 +3379,12 @@ l2:
                 If ss IsNot Nothing Then
                     For Each s As String In ss
                         fields.Add(New Pair(Of String, Type)(s, type2search))
-                        searchCols.Add(New ColumnAttribute(s))
+                        searchCols.Add(New EntityPropertyAttribute(s))
                     Next
                 End If
 
                 If searchCols.Count > 0 Then
-                    For Each c As ColumnAttribute In searchCols
+                    For Each c As EntityPropertyAttribute In searchCols
                         selCols.Add(c)
                     Next
                     'searchCols.Insert(0, New ColumnAttribute("ID", Field2DbRelations.PK))
@@ -3402,7 +3402,7 @@ l2:
         Public Function MakeSqlStmtSearch(Of T As {IKeyEntity, New})(ByVal type2search As Type, _
             ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
             ByVal joins() As QueryJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
-            ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
+            ByVal selCols As List(Of EntityPropertyAttribute), ByVal searchCols As List(Of EntityPropertyAttribute), _
             ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
             Dim selSchema As IEntitySchema = MappingEngine.GetObjectSchema(selectType)
@@ -3590,7 +3590,7 @@ l2:
             sel.Add(New SelectExpression(ostt, MappingEngine.GetPrimaryKeys(tt, types(ostt))(0).PropertyAlias))
 
             If withLoad Then
-                For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(tt, types(ostt))
+                For Each c As EntityPropertyAttribute In MappingEngine.GetSortedFieldList(tt, types(ostt))
                     If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                         sel.Add(ObjectMappingEngine.ConvertColumn2SelExp(c, tt))
                     End If
@@ -3718,7 +3718,7 @@ l2:
             Dim filter As IFilter = c.Condition
 
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim arr As Generic.List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
+                Dim arr As Generic.List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(original_type)
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -3737,7 +3737,7 @@ l2:
                 newObj.SetObjectState(ObjectState.NotLoaded)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
-                    LoadSingleObject(cmd, arr.ConvertAll(Function(clm As ColumnAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, original_type)), _
+                    LoadSingleObject(cmd, arr.ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, original_type)), _
                                      newObj, False, True, False, Nothing)
                     newObj.SetObjectState(ObjectState.Clone)
                     Return newObj

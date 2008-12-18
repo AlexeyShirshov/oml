@@ -82,7 +82,7 @@
             Me.DBType = New DBType(dbType, nullable)
         End Sub
 
-        Public Function GetAttributes(ByVal c As ColumnAttribute) As Field2DbRelations
+        Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
             If _newattributes = Field2DbRelations.None Then
                 Return c._behavior
             Else

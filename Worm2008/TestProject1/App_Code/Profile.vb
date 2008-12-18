@@ -173,7 +173,7 @@ Public Class MyUser
     '    Return New MyUser(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    <Column("LastActivity")> _
+    <EntityPropertyAttribute("LastActivity")> _
     Public Property LastActivity() As Date
         Get
             Using SyncHelper(True, "LastActivity")
@@ -187,7 +187,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("IsAnonymous")> _
+    <EntityPropertyAttribute("IsAnonymous")> _
     Public Property IsAnonymous() As Boolean
         Get
             Using SyncHelper(True, "IsAnonymous")
@@ -201,7 +201,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("UserName")> _
+    <EntityPropertyAttribute("UserName")> _
     Public Property UserName() As String
         Get
             Using SyncHelper(True, "UserName")
@@ -215,7 +215,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("Field")> _
+    <EntityPropertyAttribute("Field")> _
     Public Property Field() As String
         Get
             Using SyncHelper(True, "Field")
@@ -229,7 +229,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("Password")> _
+    <EntityPropertyAttribute("Password")> _
     Public Property Password() As Byte()
         Get
             Using SyncHelper(True, "Password")
@@ -243,7 +243,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("Email")> _
+    <EntityPropertyAttribute("Email")> _
     Public Property Email() As String
         Get
             Using SyncHelper(True, "Email")
@@ -257,7 +257,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("FailedPasswordAttemtCount")> _
+    <EntityPropertyAttribute("FailedPasswordAttemtCount")> _
     Public Property FailedPswAttemtCount() As Integer
         Get
             Using SyncHelper(True, "FailedPasswordAttemtCount")
@@ -271,7 +271,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("FailedPasswordAttemtStart")> _
+    <EntityPropertyAttribute("FailedPasswordAttemtStart")> _
     Public Property FailedPswAttemtDate() As Nullable(Of Date)
         Get
             Using SyncHelper(True, "FailedPasswordAttemtStart")
@@ -285,7 +285,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("IsLocked")> _
+    <EntityPropertyAttribute("IsLocked")> _
     Public Property IsLocked() As Boolean
         Get
             Using SyncHelper(True, "IsLocked")
@@ -299,7 +299,7 @@ Public Class MyUser
         End Set
     End Property
 
-    <Column("LastLockedAt")> _
+    <EntityPropertyAttribute("LastLockedAt")> _
     Public Property LastLockedAt() As Nullable(Of Date)
         Get
             Using SyncHelper(True, "LastLockedAt")
@@ -388,7 +388,7 @@ Public Class MyRole
     '    Return New MyRole(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    <Column("Name")> _
+    <EntityPropertyAttribute("Name")> _
     Public Property RoleName() As String
         Get
             Using SyncHelper(True, "Name")

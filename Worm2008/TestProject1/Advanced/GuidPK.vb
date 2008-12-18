@@ -8,7 +8,7 @@ Public Class GuidPK
     Private _code As Integer
     Private _id As Guid
 
-    <Column(column:="code")> _
+    <EntityPropertyAttribute(column:="code")> _
     Public Property Code() As Integer
         Get
             Using Read("Code")
@@ -22,7 +22,7 @@ Public Class GuidPK
         End Set
     End Property
 
-    <Column("ID", Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
+    <EntityPropertyAttribute("ID", Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -52,7 +52,7 @@ Public Class ComplexPK
     Inherits CachedEntity
 
     Private _code As String
-    <Column(Field2DbRelations.PK, column:="code")> Public Property Code() As String
+    <EntityPropertyAttribute(Field2DbRelations.PK, column:="code")> Public Property Code() As String
         Get
             Using Read("Code")
                 Return _code
@@ -66,7 +66,7 @@ Public Class ComplexPK
     End Property
 
     Private _i As Integer
-    <Column(Field2DbRelations.PK, column:="i")> Public Property Int() As Integer
+    <EntityPropertyAttribute(Field2DbRelations.PK, column:="i")> Public Property Int() As Integer
         Get
             Using Read("Int")
                 Return _i
@@ -80,7 +80,7 @@ Public Class ComplexPK
     End Property
 
     Private _name As String
-    <Column(column:="name")> Public Property Name() As String
+    <EntityPropertyAttribute(column:="name")> Public Property Name() As String
         Get
             Using Read("Name")
                 Return _name
@@ -105,7 +105,7 @@ Public Class NonCache
     Private _code As Integer
     Private _id As Guid
 
-    <Column(column:="code")> _
+    <EntityPropertyAttribute(column:="code")> _
     Public Property Code() As Integer
         Get
             Using Read("Code")
@@ -119,7 +119,7 @@ Public Class NonCache
         End Set
     End Property
 
-    <Column("ID", Field2DbRelations.PrimaryKey, column:="pk")> _
+    <EntityPropertyAttribute("ID", Field2DbRelations.PrimaryKey, column:="pk")> _
     Public Property Identifier() As Object
         Get
             Using Read("ID")

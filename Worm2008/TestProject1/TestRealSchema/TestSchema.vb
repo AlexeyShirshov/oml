@@ -155,7 +155,7 @@ Public Class TestSchema
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
-            col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.ColumnAttribute)(New Meta.ColumnAttribute() {New Meta.ColumnAttribute("ID")}))
+            col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.EntityPropertyAttribute)(New Meta.EntityPropertyAttribute() {New Meta.EntityPropertyAttribute("ID")}))
             Assert.AreEqual(0, col.Count)
 
             col = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True)

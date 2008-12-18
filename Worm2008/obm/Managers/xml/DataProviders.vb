@@ -147,14 +147,14 @@ Namespace Xml
         Protected Class FilterCustDelegate(Of T As {New, IKeyEntity})
             Inherits BaseDataProvider(Of T)
 
-            Private _cols As List(Of ColumnAttribute)
+            Private _cols As List(Of EntityPropertyAttribute)
 
             Public Sub New(ByVal mgr As QueryManager, ByVal f As Worm.Criteria.Core.IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
             End Sub
 
-            Public Sub New(ByVal mgr As QueryManager, ByVal f As IFilter, ByVal cols As List(Of ColumnAttribute), _
+            Public Sub New(ByVal mgr As QueryManager, ByVal f As IFilter, ByVal cols As List(Of EntityPropertyAttribute), _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
                 _cols = cols
@@ -215,7 +215,7 @@ Namespace Xml
                 Return Nothing
             End Function
 
-            Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal arr As IList(Of ColumnAttribute))
+            Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal arr As IList(Of EntityPropertyAttribute))
                 Throw New NotImplementedException
             End Sub
 

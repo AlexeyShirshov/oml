@@ -167,7 +167,7 @@ Namespace Entities.Meta
 
     Public Interface IObjectSchemaBase
         Inherits IEntitySchema
-        Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        Function ChangeValueType(ByVal c As Worm.Entities.Meta.EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         Function GetSuppressedFields() As String()
     End Interface
 
