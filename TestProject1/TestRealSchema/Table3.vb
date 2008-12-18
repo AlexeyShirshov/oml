@@ -110,7 +110,7 @@ Public Class Table3
         End Select
     End Function
 
-    <Column("Ref", Field2DbRelations.Factory)> _
+    <EntityPropertyAttribute("Ref", Field2DbRelations.Factory)> _
     Public Property RefObject() As IKeyEntity
         Get
             Using SyncHelper(True, "Ref")
@@ -124,7 +124,7 @@ Public Class Table3
         End Set
     End Property
 
-    <Column("Code")> _
+    <EntityPropertyAttribute("Code")> _
     Public Property Code() As Byte
         Get
             Using SyncHelper(True, "Code")
@@ -142,7 +142,7 @@ Public Class Table3
         End Set
     End Property
 
-    <Column("Version", Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute("Version", Field2DbRelations.RowVersion)> _
     Public Property Version() As Byte()
         Get
             Using SyncHelper(True, "Version")
@@ -156,7 +156,7 @@ Public Class Table3
         End Set
     End Property
 
-    <Column("XML")> _
+    <EntityPropertyAttribute("XML")> _
     Public Property Xml() As System.Xml.XmlDocument
         Get
             Using SyncHelper(True, "XML")

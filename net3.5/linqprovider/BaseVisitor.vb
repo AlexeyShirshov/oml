@@ -396,7 +396,7 @@ Namespace Linq
                 Dim pi As PropertyInfo = CType(de.Value, PropertyInfo)
                 If pi.Name = prop Then
                     'Return _schema.GetColumnNameByFieldNameInternal(t, CType(de.Key, ColumnAttribute).FieldName, False)
-                    Return CType(de.Key, ColumnAttribute).PropertyAlias
+                    Return CType(de.Key, EntityPropertyAttribute).PropertyAlias
                 End If
             Next
             If prop.Equals("ID", StringComparison.InvariantCultureIgnoreCase) Then Return "ID"

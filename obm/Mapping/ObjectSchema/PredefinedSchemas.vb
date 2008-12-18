@@ -15,7 +15,7 @@ Namespace Entities.Meta
             _cols = cols
         End Sub
 
-        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
+        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of EntityPropertyAttribute), ByVal pk As String)
             'If String.IsNullOrEmpty(pk) Then
             '    Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
             'End If
@@ -33,7 +33,7 @@ Namespace Entities.Meta
                 _table = New SourceFragment(table)
             End If
 
-            For Each c As ColumnAttribute In cols
+            For Each c As EntityPropertyAttribute In cols
                 If String.IsNullOrEmpty(c.PropertyAlias) Then
                     Throw New ObjectMappingException(String.Format("Cann't create schema for entity {0}", t))
                 End If

@@ -63,13 +63,7 @@ Namespace Query.Database
                 '    query.SelectedType = Nothing
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(ReturnType)) 'query.SelectedType
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(query.CreateType.AnyType)
-                End If
+                InitTypes(mgr, query, GetType(ReturnType))
 
                 Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
@@ -105,13 +99,7 @@ Namespace Query.Database
                 '    query.SelectedType = Nothing
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(ReturnType))
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(query.CreateType.AnyType)
-                End If
+                InitTypes(mgr, query, GetType(ReturnType))
 
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -150,15 +138,7 @@ Namespace Query.Database
                 '    query.SelectedType = Nothing
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(CreateType))
-                End If
-
-                If Not GetType(AnonymousEntity).IsAssignableFrom(GetType(CreateType)) Then
-                    If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                        query.Select(GetType(CreateType))
-                    End If
-                End If
+               InitTypes(mgr,query,GetType(CreateType))
 
                 Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
@@ -189,15 +169,7 @@ Namespace Query.Database
                 '    query.SelectedType = Nothing
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(CreateType))
-                End If
-
-                If Not GetType(AnonymousEntity).IsAssignableFrom(GetType(CreateType)) Then
-                    If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                        query.Select(GetType(CreateType))
-                    End If
-                End If
+                InitTypes(mgr,query,GetType(CreateType))
 
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -221,6 +193,24 @@ Namespace Query.Database
             Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
         End Function
 
+        Protected Shared Sub InitTypes(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal type As Type)
+            If Not type.IsInterface Then
+                If query.CreateType Is Nothing Then
+                    query.Into(type)
+                End If
+            End If
+
+            If Not GetType(AnonymousEntity).IsAssignableFrom(type) Then
+                If query.NeedSelectType(mgr.MappingEngine) Then
+                    query.Select(query.CreateType.AnyType)
+                End If
+            End If
+
+            If query.CreateType Is Nothing Then
+                query.Into(query.GetSelectedType(mgr.MappingEngine))
+            End If
+        End Sub
+
         Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -236,13 +226,7 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(ReturnType))
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(query.CreateType.AnyType)
-                End If
+                InitTypes(mgr, query, GetType(ReturnType))
 
                 Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
@@ -273,13 +257,7 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(ReturnType))
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(query.CreateType.AnyType)
-                End If
+                InitTypes(mgr, query, GetType(ReturnType))
 
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -327,13 +305,7 @@ Namespace Query.Database
                 '    query.SelectedType = Nothing
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(CreateType))
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(GetType(CreateType))
-                End If
+                InitTypes(mgr, query, GetType(CreateType))
 
                 Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
@@ -368,13 +340,7 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                If query.CreateType Is Nothing Then
-                    query.Into(GetType(CreateType))
-                End If
-
-                If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                    query.Select(GetType(CreateType))
-                End If
+                InitTypes(mgr,query,GetType(CreateType))
 
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -414,13 +380,7 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                'If query.CreateType Is Nothing Then
-                '    query.Into(GetType(ReturnType))
-                'End If
-
-                'If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                '    query.Select(query.CreateType.AnyType)
-                'End If
+                'InitTypes(mgr,query,GetType(CreateType))
 
                 Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
@@ -438,7 +398,7 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _procS = New BaseProvider
+                _procS = New BaseProvider(mgr, query, sl, f, j)
                 'End If
             Else
                 Dim p As BaseProvider = CType(_procS, BaseProvider)
@@ -451,13 +411,7 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                'If query.CreateType Is Nothing Then
-                '    query.Into(GetType(ReturnType))
-                'End If
-
-                'If query.GetSelectedType(mgr.MappingEngine) Is Nothing Then
-                '    query.Select(query.CreateType.AnyType)
-                'End If
+                'InitTypes(mgr,query,GetType(CreateType))
 
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
@@ -889,9 +843,14 @@ Namespace Query.Database
             If innerColumns IsNot Nothing Then
                 Throw New NotImplementedException
             Else
+                Dim tbl As SourceFragment = Nothing
+                If query.FromClaus IsNot Nothing Then
+                    tbl = query.FromClaus.Table
+                End If
+
                 For Each p As SelectExpression In selList
                     s.CreateSelectExpressionFormater().Format(p, cols, mpe, almgr, params, columnAliases, _
-                        filterInfo, Nothing, Nothing, True)
+                        filterInfo, Nothing, tbl, os, True)
                     cols.Append(", ")
                 Next
                 cols.Length -= 2
@@ -976,11 +935,14 @@ Namespace Query.Database
             ByVal apd As Func(Of String)) As Pair(Of SourceFragment, String)
 
             Dim tables() As SourceFragment = Nothing
-            'Dim osrc As ObjectSource = Nothing
-            Dim selectType As Type = Nothing
+            Dim osrc_ As ObjectSource = Nothing
+            If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
+                osrc_ = from.ObjectSource
+            Else
+                osrc_ = osrc
+            End If
+
             If from Is Nothing OrElse from.Table Is Nothing Then
-                'osrc = from.ObjectSource
-                selectType = osrc.GetRealType(mpe)
                 Dim mts As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
                 If mts Is Nothing Then
                     tables = New SourceFragment() {os.Table}
@@ -1006,10 +968,15 @@ Namespace Query.Database
             '        tbl_real = tbl
             '    End If
             'End If
-            [alias] = almgr.AddTable(tbl_real, osrc, params)
+            [alias] = almgr.AddTable(tbl_real, osrc_, params)
             'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
-            almgr.Replace(mpe, s, tbl, osrc, sb)
+            almgr.Replace(mpe, s, tbl, osrc_, sb)
             'Dim appendMain As Boolean
+
+            Dim selectType As Type = Nothing
+            If osrc IsNot Nothing Then
+                selectType = osrc.GetRealType(mpe)
+            End If
 
             Dim st As SearchFragment = TryCast(tbl_real, SearchFragment)
             If st IsNot Nothing Then
@@ -1215,7 +1182,7 @@ Namespace Query.Database
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
             If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.propSort, sb, mpe, almgr, params, columnAliases, filterInfo, query.SelectList, query.Table, False)
+                s.CreateSelectExpressionFormater().Format(query.propSort, sb, mpe, almgr, params, columnAliases, filterInfo, query.SelectList, query.Table, query.GetSchemaForCreateType(mpe), False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)

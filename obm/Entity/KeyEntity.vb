@@ -453,12 +453,6 @@ Namespace Entities
         '        Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
         '#End If
         'for xml serialization
-        Public Sub New()
-            'Dim arr As Generic.List(Of ColumnAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
-            'members_load_state = New BitArray(arr.Count)
-
-            Init()
-        End Sub
 
 #Region " Protected functions "
         'Protected Friend ReadOnly Property HasBodyChanges() As Boolean
@@ -655,12 +649,6 @@ Namespace Entities
             Identifier = id
             PKLoaded(1)
             CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, schema)
-        End Sub
-
-        Protected Overridable Overloads Sub Init()
-            'If OrmManager.CurrentManager IsNot Nothing Then
-            '    _mgrStr = OrmManager.CurrentManager.IdentityString
-            'End If
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -2411,7 +2399,7 @@ Namespace Entities
         ''' Идентификатор объекта
         ''' </summary>
         ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
-        <ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PrimaryKey)> _
+        <EntityPropertyAttribute(OrmBaseT.PKName, Field2DbRelations.PrimaryKey)> _
         Public Overrides Property Identifier() As Object
             Get
                 'Using SyncHelper(True)

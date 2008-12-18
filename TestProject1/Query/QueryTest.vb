@@ -832,7 +832,7 @@ Imports Worm.Criteria.Joins
         End Property
 
         Private _title As String
-        <Column("name")> Public Property Title() As String
+        <EntityPropertyAttribute("name")> Public Property Title() As String
             Get
                 Return _title
             End Get
@@ -923,6 +923,27 @@ Imports Worm.Criteria.Joins
 
         q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title").Add_column(t, "id", "ID", Field2DbRelations.PK)). _
             Sort(SCtor.prop(GetType(cls), "Code")).From(t)
+
+        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
+
+        Assert.AreEqual(3, l.Count)
+
+        Assert.AreEqual(2, l(0).Code)
+
+        'Using mgr As OrmManager = q.GetMgr.CreateManager
+        '    Assert.IsTrue(mgr.CustomObject(l(0)).IsLoaded)
+        'End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestCachedCustomObject2()
+
+        Dim t As New SourceFragment("dbo", "table1")
+
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
+
+        q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title").Add_column(t, "id", "ID", Field2DbRelations.PK)). _
+            Sort(SCtor.prop(GetType(cls), "Code"))
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 

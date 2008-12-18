@@ -110,7 +110,7 @@ Module Module2
         End Sub
 
         Private _name As String
-        <Entities.Meta.Column(column:="name")> Public Property Name() As String
+        <Entities.Meta.EntityPropertyAttribute(column:="name")> Public Property Name() As String
             Get
                 Using Read("Name")
                     Return _name
@@ -124,7 +124,7 @@ Module Module2
         End Property
 
         Private _code As Nullable(Of Integer)
-        <Entities.Meta.Column(column:="code")> Public Property Code() As Nullable(Of Integer)
+        <Entities.Meta.EntityPropertyAttribute(column:="code")> Public Property Code() As Nullable(Of Integer)
             Get
                 Using Read("Code")
                     Return _code

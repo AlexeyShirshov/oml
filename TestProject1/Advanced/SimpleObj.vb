@@ -8,7 +8,7 @@ Public Class SimpleObj
 
     Private _title As String
 
-    <Column(column:="name")> _
+    <EntityPropertyAttribute(column:="name")> _
     Public Property Title() As String
         Get
             Using Read("Title")
@@ -29,7 +29,7 @@ Public Class SimpleObj2
 
     Private _title As String
 
-    <Column(column:="name")> _
+    <EntityPropertyAttribute(column:="name")> _
     Public Property Title() As String
         Get
             Using Read("Title")

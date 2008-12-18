@@ -101,10 +101,10 @@ Namespace Xml
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
-            Dim l As New List(Of ColumnAttribute)
+            Dim l As New List(Of EntityPropertyAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
+                Dim col As EntityPropertyAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
@@ -144,7 +144,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal aspect As Entities.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
@@ -185,13 +185,13 @@ Namespace Xml
 
         Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IKeyEntity}, T2 As IKeyEntity)( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 
         Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IKeyEntity)(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 
@@ -288,7 +288,7 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(original_type)
+            For Each c As EntityPropertyAttribute In MappingEngine.GetSortedFieldList(original_type)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)
                     Dim n As XPathNavigator = node.Clone
@@ -310,10 +310,10 @@ Namespace Xml
 
         Protected Function LoadData(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _IEntity) As Boolean
             Dim original_type As Type = obj.GetType
-            Dim columns As List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
+            Dim columns As List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(original_type)
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
-                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                     Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)

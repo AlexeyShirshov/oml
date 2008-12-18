@@ -3,9 +3,9 @@ Imports System
 Namespace Entities.Meta
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
-    Public NotInheritable Class ColumnAttribute
+    Public NotInheritable Class EntityPropertyAttribute
         Inherits Attribute
-        Implements IComparable(Of ColumnAttribute), ICloneable
+        Implements IComparable(Of EntityPropertyAttribute), ICloneable
 
         Private _fieldName As String
         Public ReadOnly _behavior As Field2DbRelations
@@ -79,15 +79,15 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Function CompareTo(ByVal other As ColumnAttribute) As Integer Implements System.IComparable(Of ColumnAttribute).CompareTo
+        Public Function CompareTo(ByVal other As EntityPropertyAttribute) As Integer Implements System.IComparable(Of EntityPropertyAttribute).CompareTo
             Return _fieldName.CompareTo(other._fieldName)
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, ColumnAttribute))
+            Return Equals(TryCast(obj, EntityPropertyAttribute))
         End Function
 
-        Public Overloads Function Equals(ByVal obj As ColumnAttribute) As Boolean
+        Public Overloads Function Equals(ByVal obj As EntityPropertyAttribute) As Boolean
             If obj Is Nothing Then
                 Return False
             End If
@@ -134,12 +134,12 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Function Clone() As ColumnAttribute
-            Return CType(_Clone(), ColumnAttribute)
+        Public Function Clone() As EntityPropertyAttribute
+            Return CType(_Clone(), EntityPropertyAttribute)
         End Function
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
-            Dim c As New ColumnAttribute(_fieldName, _behavior)
+            Dim c As New EntityPropertyAttribute(_fieldName, _behavior)
             c._column = _column
             c._db = _db
             c._idx = _idx

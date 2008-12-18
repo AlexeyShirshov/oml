@@ -11,9 +11,28 @@ Namespace Entities
         Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal schema As ObjectMappingEngine, _
                    ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, ByVal columnAliases As List(Of String), _
                    ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-                   ByVal defaultTable As SourceFragment, ByVal inSelect As Boolean)
+                   ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema, ByVal inSelect As Boolean)
 
     End Interface
+
+    <Serializable()> _
+    Public Class SelectFormaterException
+        Inherits System.Exception
+
+        Public Sub New(ByVal message As String)
+            MyBase.New(message)
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal inner As Exception)
+            MyBase.New(message, inner)
+        End Sub
+
+        Protected Sub New( _
+            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+            ByVal context As System.Runtime.Serialization.StreamingContext)
+            MyBase.New(info, context)
+        End Sub
+    End Class
 
 End Namespace
 
@@ -31,7 +50,7 @@ Namespace Database
                           ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                           ByVal columnAliases As System.Collections.Generic.List(Of String), _
                           ByVal context As Object, ByVal selList As ReadOnlyCollection(Of Entities.SelectExpression), _
-                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
+                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal defaultObjectSchema As IEntitySchema, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
                 Select Case se.PropType
@@ -77,16 +96,23 @@ Namespace Database
                             sb.Append(" desc")
                         End If
                     Case Else
-                        _s.AppendOrder(schema, s, almgr, sb, True, selList, defaultTable)
+                        _s.AppendOrder(schema, s, almgr, sb, True, selList, defaultTable, defaultObjectSchema)
                         'Throw New NotSupportedException(se.PropType.ToString)
                 End Select
             Else
                 Select Case se.PropType
                     Case Entities.PropType.Aggregate
-                        se.Aggregate.MakeStmt(schema, _s, columnAliases, pmgr, almgr, context, inSelect)
+                        sb.Append(se.Aggregate.MakeStmt(schema, _s, columnAliases, pmgr, almgr, context, inSelect))
                     Case Entities.PropType.TableColumn
-                        If Not String.IsNullOrEmpty(se.Table.Name) Then
-                            sb.Append(se.Table.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                        Dim t As SourceFragment = se.Table
+                        If t Is Nothing Then
+                            t = defaultTable
+                        End If
+                        If t Is Nothing Then
+                            Throw New Entities.SelectFormaterException("Table is not specified for column " & se.Column)
+                        End If
+                        If Not String.IsNullOrEmpty(t.Name) Then
+                            sb.Append(t.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
                         End If
                         sb.Append(se.Column)
                     Case Entities.PropType.ObjectProperty

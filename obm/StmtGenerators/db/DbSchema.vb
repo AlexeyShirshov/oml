@@ -299,7 +299,7 @@ Namespace Database
 
         Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, _
             ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
-            ByRef select_columns As Generic.List(Of ColumnAttribute)) As String
+            ByRef select_columns As Generic.List(Of EntityPropertyAttribute)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -315,8 +315,8 @@ Namespace Database
                     'Dim tables_val As New System.Collections.Specialized.ListDictionary
                     'Dim params_val As New System.Collections.Specialized.ListDictionary
                     'Dim _params As New ArrayList
-                    Dim sel_columns As New Generic.List(Of ColumnAttribute)
-                    Dim prim_key As ColumnAttribute = Nothing
+                    Dim sel_columns As New Generic.List(Of EntityPropertyAttribute)
+                    Dim prim_key As EntityPropertyAttribute = Nothing
                     'Dim prim_key_value As Object = Nothing
                     Dim real_t As Type = obj.GetType
                     Dim oschema As IEntitySchema = mpe.GetObjectSchema(real_t)
@@ -338,7 +338,7 @@ Namespace Database
                     Dim pkt As SourceFragment = tbls(0)
 
                     For Each de As DictionaryEntry In mpe.GetProperties(real_t, es)
-                        Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
                             Dim current As Object = pi.GetValue(obj, Nothing)
@@ -436,7 +436,7 @@ l1:
         End Function
 
         Protected Overridable Overloads Function GetDBType(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal os As IEntitySchema, _
-                                                 ByVal c As ColumnAttribute, ByVal propType As Type) As String
+                                                 ByVal c As EntityPropertyAttribute, ByVal propType As Type) As String
             Dim db As DBType = mpe.GetDBType(type, os, c)
             If db.IsEmpty Then
                 Return DbTypeConvertor.ToSqlDbType(propType).ToString
@@ -455,7 +455,7 @@ l1:
 
         Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of Pair(Of SourceFragment, List(Of ITemplateFilter))), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema, _
-            ByVal sel_columns As Generic.List(Of ColumnAttribute), _
+            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
 
             If params Is Nothing Then
@@ -469,7 +469,7 @@ l1:
                 Dim syncInsertPK As New List(Of Pair(Of String, Pair(Of String)))
                 If sel_columns IsNot Nothing Then
                     For Each de As DictionaryEntry In mpe.GetProperties(type, os)
-                        Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                         'If sel_columns.Contains(c) Then
                         Dim att As Field2DbRelations = mpe.GetAttributes(os, c)
                         If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -609,7 +609,7 @@ l1:
                         Dim selSb As New StringBuilder
                         selSb.Append("select ")
                         Dim com As Boolean = False
-                        For Each c As ColumnAttribute In sel_columns
+                        For Each c As EntityPropertyAttribute In sel_columns
                             If com Then
                                 selSb.Append(", ")
                             Else
@@ -664,14 +664,14 @@ l1:
         End Structure
 
         Protected Sub GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
-            ByVal sel_columns As Generic.List(Of ColumnAttribute), ByVal unions As String())
+            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), ByVal unions As String())
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
             For Each de As DictionaryEntry In mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
                     Dim original As Object = pi.GetValue(originalCopy, Nothing)
@@ -768,7 +768,7 @@ l1:
 
             For Each de As DictionaryEntry In mpe.GetProperties(rt, oschema)
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
                     Dim att As Field2DbRelations = mpe.GetAttributes(oschema, c)
@@ -826,7 +826,7 @@ l1:
         End Sub
 
         Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
-            ByRef select_columns As Generic.List(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilter)) As String
+            ByRef select_columns As Generic.List(Of EntityPropertyAttribute), ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -844,7 +844,7 @@ l1:
                     '    Throw New ObjectStateException(obj.ObjName & "Object in state modified have to has an original copy")
                     'End If
 
-                    Dim sel_columns As New Generic.List(Of ColumnAttribute)
+                    Dim sel_columns As New Generic.List(Of EntityPropertyAttribute)
                     Dim updated_tables As New Dictionary(Of SourceFragment, TableUpdate)
                     Dim rt As Type = obj.GetType
 
@@ -922,7 +922,7 @@ l1:
                             Dim sel_sb As New StringBuilder
                             sel_sb.Append("select ")
                             Dim com As Boolean = False
-                            For Each c As ColumnAttribute In sel_columns
+                            For Each c As EntityPropertyAttribute In sel_columns
                                 If com Then
                                     sel_sb.Append(", ")
                                 Else
@@ -964,11 +964,11 @@ l1:
             End Using
         End Function
 
-        Protected Function CheckColumns(ByVal sel_columns As Generic.IList(Of ColumnAttribute), _
+        Protected Function CheckColumns(ByVal sel_columns As Generic.IList(Of EntityPropertyAttribute), _
             ByVal tables As IDictionary(Of SourceFragment, TableUpdate), ByVal esch As IEntitySchema) As Boolean
 
             If sel_columns.Count > 0 Then
-                For Each c As ColumnAttribute In sel_columns
+                For Each c As EntityPropertyAttribute In sel_columns
                     If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.PropertyAlias)._tableName) Then
                         Return False
                     End If
@@ -1008,7 +1008,7 @@ l1:
                 Dim o As New Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
                     For Each de As DictionaryEntry In mpe.GetProperties(type, oschema)
-                        Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
                             Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
@@ -1027,7 +1027,7 @@ l1:
                         Dim f As IFilter = join.Condition
 
                         For Each de As DictionaryEntry In mpe.GetProperties(type, oschema)
-                            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                             Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                             If c IsNot Nothing Then
                                 Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
@@ -1116,7 +1116,7 @@ l1:
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal tables() As SourceFragment, _
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
 
             Dim selectcmd As New StringBuilder
             'Dim maintable As String = tables(0)
@@ -1172,7 +1172,7 @@ l1:
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
-            ByVal filterInfo As Object, ByVal arr As Generic.IList(Of ColumnAttribute)) As String
+            ByVal filterInfo As Object, ByVal arr As Generic.IList(Of EntityPropertyAttribute)) As String
 
             If original_type Is Nothing Then
                 Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
@@ -1191,7 +1191,7 @@ l1:
         Public Overridable Function SelectDistinct(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal relation As M2MRelation, _
             ByVal wideLoad As Boolean, ByVal appendSecondTable As Boolean, ByVal filterInfo As Object, _
-            ByVal arr As Generic.IList(Of ColumnAttribute)) As String
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute)) As String
 
             If original_type Is Nothing Then
                 Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
@@ -1248,14 +1248,14 @@ l1:
 
         Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), _
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute), _
              ByVal additionalColumns As String, ByVal filterInfo As Object) As String
             Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
         End Function
 
         Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal queryAspect() As QueryAspect, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), _
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute), _
              ByVal additionalColumns As String, ByVal filterInfo As Object) As String
             Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, queryAspect, additionalColumns, filterInfo, arr)
         End Function
@@ -1651,7 +1651,9 @@ l1:
         End Function
 
         Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), ByVal defaultTable As SourceFragment)
+            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, _
+            ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
+            ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
                 If appendOrder Then
                     sb.Append(" order by ")
@@ -1701,18 +1703,32 @@ l1:
                         If st IsNot Nothing Then
                             Dim schema As IEntitySchema = CType(mpe.GetObjectSchema(st, False), IEntitySchema)
 
-                            If schema Is Nothing Then GoTo l1
+                            If schema Is Nothing Then
+                                schema = defaultObjectSchema
+                            End If
+
+                            If schema Is Nothing Then
+                                Throw New SQLGeneratorException(String.Format("Object schema for field {0} of type {1} is not defined", ns.SortBy, st))
+                            End If
 
                             Dim map As MapField2Column = Nothing
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
                             If cm.TryGetValue(ns.SortBy, map) Then
-                                sb2.Append(almgr.GetAlias(map._tableName, ns.ObjectSource)).Append(Selector).Append(map._columnName)
+                                Dim t As SourceFragment = map._tableName
+                                If t Is Nothing Then
+                                    t = defaultTable
+                                End If
+                                If t Is Nothing Then
+                                    Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
+                                End If
+
+                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map._columnName)
                                 If ns.Order = SortType.Desc Then
                                     sb2.Append(" desc")
                                 End If
                             Else
-                                Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.SortBy, st))
+                                Throw New SQLGeneratorException(String.Format("Field {0} of type {1} is not defined", ns.SortBy, st))
                             End If
                         Else
 l1:
@@ -2094,7 +2110,7 @@ l1:
             'sb.Append(" order by rank ").Append(sort_type.ToString)
             If sort IsNot Nothing Then
                 'sb.Append(",")
-                AppendOrder(mpe, sort, almgr, sb, True, Nothing, Nothing)
+                AppendOrder(mpe, sort, almgr, sb, True, Nothing, Nothing, Nothing)
             Else
                 sb.Append(" order by rank ").Append(sort_type.ToString)
             End If
@@ -2358,7 +2374,7 @@ l1:
             Dim cm As Boolean = False
             For Each de As DictionaryEntry In mpe.GetProperties(t)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 If c IsNot Nothing AndAlso _
                     ((mpe.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
                     (mpe.GetAttributes(t, c) And Field2DbRelations.RV) = Field2DbRelations.RV) Then
@@ -2495,10 +2511,10 @@ l1:
                     almgr, paramMgr, _joins, _
                     False, Nothing, Nothing, Nothing, Nothing, filterInfo))
             Else
-                Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
+                Dim arr As Generic.IList(Of EntityPropertyAttribute) = Nothing
                 If Not String.IsNullOrEmpty(_field) Then
-                    arr = New Generic.List(Of ColumnAttribute)
-                    arr.Add(New ColumnAttribute(_field))
+                    arr = New Generic.List(Of EntityPropertyAttribute)
+                    arr.Add(New EntityPropertyAttribute(_field))
                 End If
                 sb.Append(SelectWithJoin(dbschema, _t, almgr, paramMgr, _joins, _
                     arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))

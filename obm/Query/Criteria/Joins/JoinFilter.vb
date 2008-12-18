@@ -468,9 +468,9 @@ Namespace Criteria.Joins
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
                     If fl._l.Property.ObjectSource IsNot Nothing AndAlso fl._l.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._l.Property.Field = propertyAlias Then
-                        f = SetJF(fl._r.Property, value, fl._oper)
+                        f = SetJF(fl._r, value, fl._oper)
                     ElseIf fl._r.Property.ObjectSource IsNot Nothing AndAlso fl._r.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl._r.Property.Field = propertyAlias Then
-                        f = SetJF(fl._l.Property, value, fl._oper)
+                        f = SetJF(fl._l, value, fl._oper)
                         'ElseIf fl._d1 IsNot Nothing Then
                         '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
                         '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then
@@ -491,9 +491,13 @@ Namespace Criteria.Joins
             Return Nothing
         End Function
 
-        Private Shared Function SetJF(ByVal op As ObjectProperty, _
+        Private Shared Function SetJF(ByVal fr As FieldReference, _
                                ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
-            Return New EntityFilter(op, value, oper)
+            If fr.Property.ObjectSource IsNot Nothing Then
+                Return New EntityFilter(fr.Property, value, oper)
+            Else
+                Return New TableFilter(fr.Column.First, fr.Column.Second, value, oper)
+            End If
         End Function
 
         'Private Shared Function SetJF(ByVal e As Pair(Of ObjectSource, String), ByVal t As Pair(Of SourceFragment, String), _

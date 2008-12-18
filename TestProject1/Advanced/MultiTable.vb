@@ -17,7 +17,7 @@ Public Class MultiTable
 
     Private _title As String
 
-    <Column(column:="msg")> _
+    <EntityPropertyAttribute(column:="msg")> _
     Public Property Msg() As String
         Get
             Using Read("Msg")

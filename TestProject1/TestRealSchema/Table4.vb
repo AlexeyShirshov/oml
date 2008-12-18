@@ -68,7 +68,7 @@ Public Class Table4
         End Select
     End Function
 
-    <Column("Col")> _
+    <EntityPropertyAttribute("Col")> _
     Public Property Col() As Nullable(Of Boolean)
         Get
             Using SyncHelper(True, "Col")
@@ -82,7 +82,7 @@ Public Class Table4
         End Set
     End Property
 
-    <Column("GUID", Field2DbRelations.InsertDefault Or Field2DbRelations.SyncInsert)> _
+    <EntityPropertyAttribute("GUID", Field2DbRelations.InsertDefault Or Field2DbRelations.SyncInsert)> _
     Public Property GUID() As Guid
         Get
             Using SyncHelper(True, "GUID")

@@ -12,7 +12,7 @@ Namespace Criteria.Core
 
         'Private _templ As OrmFilterTemplate
         Private _str As String
-        Protected _oschema As IEntitySchema
+        'Protected _oschema As IEntitySchema
         Private _prep As Boolean = True
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
@@ -120,7 +120,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-            Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.PropertyAlias), v)
+            Return schema.ChangeValueType(schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema)), New EntityPropertyAttribute(Template.PropertyAlias), v)
         End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -141,9 +141,9 @@ Namespace Criteria.Core
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
         Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As List(Of String)) As String
-            If _oschema Is Nothing Then
-                _oschema = oschema
-            End If
+            'If _oschema Is Nothing Then
+            '    _oschema = oschema
+            'End If
 
             Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
@@ -193,9 +193,9 @@ Namespace Criteria.Core
 
         Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IEntitySchema, _
             ByVal stmt As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
-            If _oschema Is Nothing Then
-                _oschema = oschema
-            End If
+            'If _oschema Is Nothing Then
+            '    _oschema = oschema
+            'End If
 
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
@@ -217,9 +217,9 @@ Namespace Criteria.Core
 
             Dim v As IEvaluableValue = TryCast(Val(), IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
-                If schema.GetPropertyTypeByName(rt, _oschema, Template.PropertyAlias) Is GetType(Byte()) Then
+                If schema.GetPropertyTypeByName(rt, oschema, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
-                ElseIf schema.GetPropertyTypeByName(rt, _oschema, Template.PropertyAlias) Is GetType(Decimal) Then
+                ElseIf schema.GetPropertyTypeByName(rt, oschema, Template.PropertyAlias) Is GetType(Decimal) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Decimal
                 End If
             End If
@@ -232,15 +232,17 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("schema")
             End If
 
-            If _oschema Is Nothing Then
+            Dim oschema As IEntitySchema = Nothing
+
+            If oschema Is Nothing Then
                 If Template.ObjectSource.AnyType IsNot Nothing Then
-                    _oschema = schema.GetObjectSchema(Template.ObjectSource.AnyType)
+                    oschema = schema.GetObjectSchema(Template.ObjectSource.AnyType)
                 Else
-                    _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.ObjectSource.AnyEntityName))
+                    oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.ObjectSource.AnyEntityName))
                 End If
             End If
 
-            Return MakeSingleQueryStmt(_oschema, stmt, schema, almgr, pname)
+            Return MakeSingleQueryStmt(oschema, stmt, schema, almgr, pname)
         End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
@@ -273,16 +275,17 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("stmt")
             End If
 
-            If _oschema Is Nothing Then
+            Dim oschema As IEntitySchema = Nothing
+            If oschema Is Nothing Then
                 'If Template.Type Is Nothing AndAlso Not String.IsNullOrEmpty(Template.EntityName) Then
                 '    _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.EntityName))
                 'Else
                 '    _oschema = schema.GetObjectSchema(Template.Type)
                 'End If
-                _oschema = schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema))
+                oschema = schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema))
             End If
 
-            Return MakeQueryStmt(_oschema, stmt, filterInfo, schema, almgr, pname, columns)
+            Return MakeQueryStmt(oschema, stmt, filterInfo, schema, almgr, pname, columns)
         End Function
     End Class
 

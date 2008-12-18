@@ -19,7 +19,7 @@ Public Class Composite
         MyBase.New(id, cache, schema)
     End Sub
 
-    <Column("Title")> _
+    <EntityPropertyAttribute("Title")> _
     Public Property Message() As String
         Get
             Using SyncHelper(True, "Title")
@@ -33,7 +33,7 @@ Public Class Composite
         End Set
     End Property
 
-    <Column("Title2", Field2DbRelations.ReadOnly)> _
+    <EntityPropertyAttribute("Title2", Field2DbRelations.ReadOnly)> _
     Public Property Message2() As String
         Get
             Using SyncHelper(True, "Title2")

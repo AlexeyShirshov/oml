@@ -271,8 +271,8 @@ Namespace Criteria.Joins
                             f = CreateJoin(table, column, fl.Left.Property, fl._oper)
                             tm = CreateOrmFilter(fl.Left.Property, fl._oper)
                         Else
-                            f = CreateJoin(table, column, fl.Right.Column, fl._oper)
-                            tm = CreateTableFilter(fl.Right.Column, fl._oper)
+                            f = CreateJoin(table, column, fl.Left.Column, fl._oper)
+                            tm = CreateTableFilter(fl.Left.Column, fl._oper)
                         End If
                     End If
                 End If

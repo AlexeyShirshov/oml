@@ -150,14 +150,14 @@ Namespace Database
         Protected Class FilterCustDelegate(Of T As {New, IKeyEntity})
             Inherits BaseDataProvider(Of T)
 
-            Private _cols As List(Of ColumnAttribute)
+            Private _cols As List(Of EntityPropertyAttribute)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As Worm.Criteria.Core.IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, ByVal cols As List(Of ColumnAttribute), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, ByVal cols As List(Of EntityPropertyAttribute), _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
                 _cols = cols
@@ -167,7 +167,7 @@ Namespace Database
                 Dim original_type As Type = GetType(T)
 
                 Using cmd As System.Data.Common.DbCommand = _mgr.CreateDBCommand
-                    Dim arr As Generic.List(Of ColumnAttribute) = _cols
+                    Dim arr As Generic.List(Of EntityPropertyAttribute) = _cols
 
                     With cmd
                         .CommandType = System.Data.CommandType.Text
@@ -181,7 +181,7 @@ Namespace Database
                             End If
                             AppendSelect(sb, original_type, almgr, params, arr)
                         Else
-                            arr = New Generic.List(Of ColumnAttribute)
+                            arr = New Generic.List(Of EntityPropertyAttribute)
                             arr.Add(Schema.GetPrimaryKeys(original_type)(0))
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
@@ -191,7 +191,7 @@ Namespace Database
                         c.AddFilter(AppendWhere)
                         _mgr.SQLGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing, Nothing)
                         End If
 
                         params.AppendParams(.Parameters)
@@ -224,11 +224,11 @@ Namespace Database
                 Return Nothing
             End Function
 
-            Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
+            Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of EntityPropertyAttribute))
                 sb.Append(_mgr.SQLGenerator.Select(_mgr.MappingEngine, t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
             End Sub
 
-            Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
+            Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of EntityPropertyAttribute))
                 sb.Append(_mgr.SQLGenerator.SelectID(_mgr.MappingEngine, t, almgr, pmgr, _mgr.GetFilterInfo))
             End Sub
         End Class
@@ -265,7 +265,7 @@ Namespace Database
             End Sub
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
-                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean, ByVal cols As List(Of ColumnAttribute))
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean, ByVal cols As List(Of EntityPropertyAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
                 If distinct Then
@@ -274,14 +274,14 @@ Namespace Database
             End Sub
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
-                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer, ByVal cols As List(Of ColumnAttribute))
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer, ByVal cols As List(Of EntityPropertyAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal f As IFilter, _
-               ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect, ByVal cols As List(Of ColumnAttribute))
+               ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect, ByVal cols As List(Of EntityPropertyAttribute))
                 MyBase.New(mgr, f, cols, sort, key, id)
                 _join = join
                 If aspect IsNot Nothing Then
@@ -289,11 +289,11 @@ Namespace Database
                 End If
             End Sub
 
-            Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+            Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
                 sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetFilterInfo, arr))
             End Sub
 
-            Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+            Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
                 sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, False, _asc, Nothing, _mgr.GetFilterInfo, Nothing))
             End Sub
 
@@ -345,11 +345,11 @@ Namespace Database
                 End If
             End Sub
 
-            Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+            Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
                 sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetFilterInfo, arr))
             End Sub
 
-            Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+            Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
                 sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetFilterInfo, Nothing))
             End Sub
 
@@ -402,7 +402,7 @@ Namespace Database
                         sb.Append(_mgr.SQLGenerator.SelectM2M(_mgr.MappingEngine, almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing, Nothing)
                         End If
 
                         .CommandText = sb.ToString

@@ -72,7 +72,7 @@ Public Class Tables1to1
         End Select
     End Function
 
-    <Column("K")> _
+    <EntityPropertyAttribute("K")> _
     Public Property K() As String
         Get
             Using SyncHelper(True, "K")
@@ -86,7 +86,7 @@ Public Class Tables1to1
         End Set
     End Property
 
-    <Column("Table1")> _
+    <EntityPropertyAttribute("Table1")> _
     Public Property Table1() As Table1
         Get
             Using SyncHelper(True, "Table1")
@@ -100,7 +100,7 @@ Public Class Tables1to1
         End Set
     End Property
 
-    <Column("Table1Back")> _
+    <EntityPropertyAttribute("Table1Back")> _
     Public Property Table1Back() As Table1
         Get
             Using SyncHelper(True, "Table1")

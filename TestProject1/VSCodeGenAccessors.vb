@@ -138,9 +138,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
 
-    Friend Overloads Function LoadMultipleObjects(ByVal t As Global.System.Type, ByVal cmd As Global.System.Data.Common.DbCommand, ByVal withLoad As Boolean, ByVal arr As System.Collections.Generic.List(Of Worm.Entities.Meta.ColumnAttribute)) As Global.System.Collections.IList
+    Friend Overloads Function LoadMultipleObjects(ByVal t As Global.System.Type, ByVal cmd As Global.System.Data.Common.DbCommand, ByVal withLoad As Boolean, ByVal arr As System.Collections.Generic.List(Of Worm.Entities.Meta.EntityPropertyAttribute)) As Global.System.Collections.IList
         Dim args() As Object = New Object() {t, cmd, withLoad, arr}
-        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("LoadMultipleObjects", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Data.Common.DbCommand), GetType(Boolean), GetType(System.Collections.Generic.List(Of Worm.Entities.Meta.ColumnAttribute))}, args), Global.System.Collections.IList)
+        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("LoadMultipleObjects", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Data.Common.DbCommand), GetType(Boolean), GetType(System.Collections.Generic.List(Of Worm.Entities.Meta.EntityPropertyAttribute))}, args), Global.System.Collections.IList)
         Return ret
     End Function
 
@@ -167,9 +167,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("LoadObject", New System.Type() {GetType(Global.Worm.Entities.KeyEntity)}, args)
     End Sub
 
-    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.ColumnAttribute), ByVal obj As Global.Worm.Entities.KeyEntity, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal obj As Global.Worm.Entities.KeyEntity, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
         Dim args() As Object = New Object() {cmd, arr, obj, check_pk, load, modifiedloaded}
-        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.ColumnAttribute)), GetType(Global.Worm.Entities.KeyEntity), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
+        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Global.Worm.Entities.KeyEntity), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
     End Sub
 
     Friend Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Global.System.Type, ByVal dr As Global.System.Data.IDataReader) As Integer
@@ -178,9 +178,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
 
-    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
+    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
         Dim args() As Object = New Object() {obj, dr, arr, check_pk, displacement}
-        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.ColumnAttribute)), GetType(Boolean), GetType(Integer)}, args)
+        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Boolean), GetType(Integer)}, args)
     End Sub
 
     Friend Function TestConn(ByVal cmd As Global.System.Data.Common.DbCommand) As Global.TestProject1.Worm_Orm_OrmReadOnlyDBManager_ConnActionAccessor
