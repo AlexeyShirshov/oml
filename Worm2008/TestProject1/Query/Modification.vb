@@ -53,7 +53,7 @@ Imports Worm.Criteria
         Dim q As New QueryCmd(Function() _
            TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1")))
 
-        Dim t As Table1 = q.Where(PCtor.prop(GetType(Table1), "ID").eq(1)).Single(Of Table1)()
+        Dim t As Table1 = q.Where(Ctor.prop(GetType(Table1), "ID").eq(1)).Single(Of Table1)()
 
         Assert.IsNull(t.InternalProperties.OriginalCopy)
         Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)

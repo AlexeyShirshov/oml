@@ -55,7 +55,7 @@ Imports Worm.Criteria
             mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
-                PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
@@ -85,7 +85,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table1), "ID").greater_than(2)
+            q.Filter = Ctor.prop(GetType(Table1), "ID").greater_than(2)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
@@ -113,7 +113,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
+            q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -141,7 +141,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
+            q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -169,7 +169,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
+            q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             q.Sort(SCtor.Custom("id"))
             Assert.IsNotNull(q)
 
@@ -199,7 +199,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
+            q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -228,7 +228,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").eq(Enum1.sec.ToString)
+            q.Filter = Ctor.column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -256,7 +256,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
-            q.Filter = PCtor.prop(GetType(Table2), "Money").eq(1)
+            q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
 
@@ -284,7 +284,7 @@ Imports Worm.Criteria
 
             Dim q As New QueryCmd()
             q.Select(GetType(Table2))
-            q.Filter = PCtor.prop(GetType(Table2), "Money").greater_than(1)
+            q.Filter = Ctor.prop(GetType(Table2), "Money").greater_than(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
 
@@ -366,10 +366,10 @@ Imports Worm.Criteria
             mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
-                PCtor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(SCtor.prop(GetType(Entity4), "Title"))
+                Ctor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(SCtor.prop(GetType(Entity4), "Title"))
 
             Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
-                PCtor.prop(GetType(Entity4), "Title").eq("djkg"))
+                Ctor.prop(GetType(Entity4), "Title").eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(7, l.Count)

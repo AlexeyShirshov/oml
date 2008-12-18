@@ -491,9 +491,9 @@ Module Module2
                     Do
                         Try
                             If r.NextDouble > 0.5 Then
-                                mgr.Find(Of TestEditTable)(PCtor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, False)
+                                mgr.Find(Of TestEditTable)(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, False)
                             Else
-                                mgr.Find(Of TestEditTable)(PCtor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, True)
+                                mgr.Find(Of TestEditTable)(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, True)
                             End If
                             done = True
                             Threading.Thread.Sleep(0)

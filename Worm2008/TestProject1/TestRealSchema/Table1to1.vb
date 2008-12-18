@@ -53,7 +53,8 @@ Public Class Tables1to1
             Case "Table1Back"
                 Table1Back = CType(value, TestProject1.Table1)
             Case Else
-                Throw New NotSupportedException(fieldName)
+                SetValueReflection(fieldName, value, oschema)
+                'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
@@ -72,7 +73,7 @@ Public Class Tables1to1
         End Select
     End Function
 
-    <EntityPropertyAttribute("K")> _
+    <EntityPropertyAttribute(PropertyAlias:="K")> _
     Public Property K() As String
         Get
             Using SyncHelper(True, "K")
@@ -86,7 +87,7 @@ Public Class Tables1to1
         End Set
     End Property
 
-    <EntityPropertyAttribute("Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Table1() As Table1
         Get
             Using SyncHelper(True, "Table1")
@@ -100,7 +101,7 @@ Public Class Tables1to1
         End Set
     End Property
 
-    <EntityPropertyAttribute("Table1Back")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1Back")> _
     Public Property Table1Back() As Table1
         Get
             Using SyncHelper(True, "Table1")

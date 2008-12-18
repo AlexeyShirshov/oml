@@ -208,7 +208,7 @@ Namespace Web
             If r IsNot Nothing Then
                 Dim f As PredicateLink = Nothing
                 If usernameToMatch IsNot Nothing Then
-                    f = CType(New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
+                    f = CType(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
                 Dim cmd As New Query.QueryCmd(r)
                 cmd.Where(f).Select(UserMapper.GetUserType, WithLoad)

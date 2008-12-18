@@ -73,7 +73,7 @@ Imports Worm.Sorting
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 New SelectExpression(New Aggregate(AggregateFunction.Count)) _
             })
-            q.Select(GetType(Entity4))
+            q.From(GetType(Entity4))
 
             Dim i As Integer = q.SingleSimple(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
 
@@ -124,7 +124,7 @@ Imports Worm.Sorting
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "cnt")) _
             })
-            q.Select(GetType(Entity4))
+            q.From(GetType(Entity4))
             'q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
@@ -168,7 +168,7 @@ Imports Worm.Sorting
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
             })
-            q.Select(t)
+            q.From(t)
 
             Dim o As New Grouping("left({0},1)", "Pref", New FieldReference(t, "Title"))
             q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(SCtor.Custom("Count desc"))

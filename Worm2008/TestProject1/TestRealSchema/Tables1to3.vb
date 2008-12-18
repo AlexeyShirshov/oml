@@ -75,7 +75,7 @@ Public Class Tables1to3
         End Select
     End Function
 
-    <EntityPropertyAttribute("Title")> _
+    <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
             Using SyncHelper(True, "Title")
@@ -89,7 +89,7 @@ Public Class Tables1to3
         End Set
     End Property
 
-    <EntityPropertyAttribute("Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Table1() As Table1
         Get
             Using SyncHelper(True, "Table1")
@@ -103,7 +103,7 @@ Public Class Tables1to3
         End Set
     End Property
 
-    <EntityPropertyAttribute("Table3")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table3")> _
     Public Property Table3() As Table33
         Get
             Using SyncHelper(True, "Table3")

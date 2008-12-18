@@ -96,7 +96,7 @@ Imports Worm.Criteria.Joins
         Assert.AreEqual(2, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.Where(PCtor.prop(GetType(Table3), "Code").eq(2))
+        q.Where(Ctor.prop(GetType(Table3), "Code").eq(2))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -112,7 +112,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
         q.Join(JCtor.join("Table3").onM2M(GetType(Table1)))
-        q.Where(PCtor.prop("Table3", "Code").eq(2)).From(tbl)
+        q.Where(Ctor.prop("Table3", "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -125,7 +125,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
 
-        q.Where(PCtor.prop(GetType(Table1), "Code").eq(2)).From(tbl)
+        q.Where(Ctor.prop(GetType(Table1), "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -136,7 +136,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
 
-        q.Where(PCtor.prop(GetType(Table3), "ID").eq(1))
+        q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
         Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("second", GetType(Table1)).ToList(Of Table1)()
@@ -152,7 +152,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
 
-        q.Where(PCtor.prop(GetType(Table3), "ID").eq(1))
+        q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
         Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("first").ToEntityList(Of Table1)()

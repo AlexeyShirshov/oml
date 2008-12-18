@@ -196,13 +196,13 @@ Imports Worm.Query
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(1, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
-            c = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, False)
+            c = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)
@@ -218,7 +218,7 @@ Imports Worm.Query
 
             mgr.Find(Of Entity4)(12).EnsureLoaded()
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, False)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 If e4.ID = 12 Then
@@ -239,7 +239,7 @@ Imports Worm.Query
 
             mgr.Find(Of Entity4)(12).EnsureLoaded()
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), Nothing, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), Nothing, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
@@ -257,7 +257,7 @@ Imports Worm.Query
 
             mgr.ConvertIds2Objects(Of Entity4)(New Object() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False)
 
-            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
@@ -275,7 +275,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
             Dim c3 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -286,7 +286,7 @@ Imports Worm.Query
             c = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
             c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -308,7 +308,7 @@ Imports Worm.Query
                 c = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
                 Assert.AreEqual(10, c.Count)
 
-                c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+                c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
                 Assert.AreEqual(9, c2.Count)
 
                 c3 = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -328,7 +328,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
             'mgr.Obj2ObjRelationDelete(e, GetType(Entity4))
@@ -381,7 +381,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                 SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
@@ -394,7 +394,7 @@ Imports Worm.Query
 
     Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").eq("245g0nj"), Nothing, False)
+            Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").eq("245g0nj"), Nothing, False)
             Assert.AreEqual(1, c.Count)
         End Using
     End Sub
@@ -408,7 +408,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                 SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
@@ -420,7 +420,7 @@ Imports Worm.Query
             c = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(12, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+            c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                 SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
@@ -429,7 +429,7 @@ Imports Worm.Query
                 'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
                 e.SaveChanges(True)
 
-                c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+                c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                     SCtor.prop(GetType(Entity4), "Title").asc, True)
                 Assert.AreEqual(11, c2.Count)
 
@@ -450,7 +450,7 @@ Imports Worm.Query
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.M2M.Add(mgr.Find(Of Entity4)(5))
@@ -458,7 +458,7 @@ Imports Worm.Query
             c = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(12, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.M2M.Cancel(GetType(Entity4))
@@ -466,7 +466,7 @@ Imports Worm.Query
             c = e.M2M.Find(Of Entity4)(Nothing, SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(11, c.Count)
 
-            c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
+            c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
         End Using
     End Sub
@@ -477,7 +477,7 @@ Imports Worm.Query
             Dim e As Entity = mgr.Find(Of Entity)(2)
             Dim e2 As Entity4 = mgr.Find(Of Entity4)(5)
 
-            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+            Dim c2 As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                 SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
@@ -486,7 +486,7 @@ Imports Worm.Query
 
             e.M2M.Add(e2)
 
-            c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+            c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                 SCtor.prop(GetType(Entity4), "Title").asc, True)
             Assert.AreEqual(10, c2.Count)
 
@@ -495,7 +495,7 @@ Imports Worm.Query
                 'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
                 e.SaveChanges(True)
 
-                c2 = e.M2M.Find(Of Entity4)(New PCtor(GetType(Entity4)).prop("Title").not_eq("bt"), _
+                c2 = e.M2M.Find(Of Entity4)(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt"), _
                     SCtor.prop(GetType(Entity4), "Title").asc, True)
                 Assert.AreEqual(11, c2.Count)
 
@@ -763,7 +763,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestDeletaCacheVal()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As Worm.ReadOnlyList(Of Entity4) = mgr.Find(Of Entity4)(PCtor.prop(GetType(Entity4), "Title").[like]("2%"), Nothing, False)
+            Dim c As Worm.ReadOnlyList(Of Entity4) = mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "Title").[like]("2%"), Nothing, False)
 
             Assert.AreEqual(3, c.Count)
 
@@ -776,7 +776,7 @@ Imports Worm.Query
             mgr.BeginTransaction()
             Try
                 e2.SaveChanges(True)
-                c = mgr.Find(Of Entity4)(PCtor.prop(GetType(Entity4), "Title").[like]("2%"), Nothing, False)
+                c = mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "Title").[like]("2%"), Nothing, False)
 
                 Assert.AreEqual(2, c.Count)
             Finally
@@ -1188,11 +1188,11 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestDistinct()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(PCtor.prop(GetType(Entity4), "Title").[like]("b%"), Nothing, False)
+            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(Ctor.prop(GetType(Entity4), "Title").[like]("b%"), Nothing, False)
 
             Assert.AreEqual(8, r.Count)
 
-            r = mgr.FindDistinct(Of Entity)(PCtor.prop(GetType(Entity4), "Title").[like]("b%"), Nothing, False)
+            r = mgr.FindDistinct(Of Entity)(Ctor.prop(GetType(Entity4), "Title").[like]("b%"), Nothing, False)
 
             Assert.AreEqual(5, r.Count)
         End Using
@@ -1200,7 +1200,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestM2MSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(PCtor.prop(GetType(Entity), "ID").less_than(3), SCtor.prop(GetType(Entity4), "Title"), False)
+            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(Ctor.prop(GetType(Entity), "ID").less_than(3), SCtor.prop(GetType(Entity4), "Title"), False)
 
             Assert.AreEqual(15, r.Count)
 

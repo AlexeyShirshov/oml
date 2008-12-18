@@ -109,7 +109,7 @@ Public Class Table1
         End If
     End Function
 
-    <EntityProperty("Title")> _
+    <EntityProperty(PropertyAlias:="Title")> _
     Public Overridable Property Name() As String
         Get
             Using SyncHelper(True, "Title")
@@ -123,7 +123,7 @@ Public Class Table1
         End Set
     End Property
 
-    <EntityPropertyAttribute("Enum")> _
+    <EntityPropertyAttribute(PropertyAlias:="Enum")> _
     Public Property [Enum]() As Nullable(Of Enum1)
         Get
             Using SyncHelper(True, "Enum")
@@ -137,7 +137,7 @@ Public Class Table1
         End Set
     End Property
 
-    <EntityPropertyAttribute("EnumStr")> _
+    <EntityPropertyAttribute(PropertyAlias:="EnumStr")> _
     Public Property EnumStr() As Nullable(Of Enum1)
         Get
             Using SyncHelper(True, "EnumStr")
@@ -151,7 +151,7 @@ Public Class Table1
         End Set
     End Property
 
-    <EntityPropertyAttribute("Code")> _
+    <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Nullable(Of Integer)
         Get
             Using SyncHelper(True, "Code")
@@ -165,7 +165,7 @@ Public Class Table1
         End Set
     End Property
 
-    <EntityPropertyAttribute("DT")> _
+    <EntityPropertyAttribute(PropertyAlias:="DT")> _
     Public Property CreatedAt() As Date
         Get
             Using SyncHelper(True, "DT")

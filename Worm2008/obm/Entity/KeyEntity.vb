@@ -2399,7 +2399,7 @@ Namespace Entities
         ''' Идентификатор объекта
         ''' </summary>
         ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
-        <EntityPropertyAttribute(OrmBaseT.PKName, Field2DbRelations.PrimaryKey)> _
+        <EntityPropertyAttribute(Propertyalias:=OrmBaseT.PKName, Behavior:=Field2DbRelations.PrimaryKey)> _
         Public Overrides Property Identifier() As Object
             Get
                 'Using SyncHelper(True)

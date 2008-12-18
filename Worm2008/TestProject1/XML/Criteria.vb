@@ -52,7 +52,7 @@ Imports Worm.Query
     <TestMethod()> Public Sub TestQuery()
         Using mgr As OrmManager = CreateManager()
             Dim col As ICollection(Of Entity4) = mgr.Find(Of Entity4)( _
-                PCtor.prop(New ObjectSource(GetType(Entity4)), "Title").eq("first"))
+                Ctor.prop(New ObjectSource(GetType(Entity4)), "Title").eq("first"))
 
             Assert.AreEqual(1, col.Count)
 

@@ -441,7 +441,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim c As PredicateLink = CType(New PCtor(UserMapper.GetUserType).prop(MapField("Email")).[like](emailToMatch), PredicateLink)
+                Dim c As PredicateLink = CType(New Ctor(UserMapper.GetUserType).prop(MapField("Email")).[like](emailToMatch), PredicateLink)
                 Dim users As IList = UserMapper.FindUsers(mgr, c)
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
@@ -454,7 +454,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch))
+                Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -481,7 +481,7 @@ Namespace Web
             Using mgr As OrmManager = UserMapper.CreateManager
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._lastActivityField, New TypeWrap(Of Object)(compareTime), FilterOperation.GreaterThan))
-                Return UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.LastActivityField).greater_than(compareTime)).Count
+                Return UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).prop(UserMapper.LastActivityField).greater_than(compareTime)).Count
             End Using
         End Function
 
@@ -494,7 +494,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(schema.GetPrimaryKeys(UserMapper.GetUserType)(0).PropertyAlias).eq(providerUserKey))
+                Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).prop(schema.GetPrimaryKeys(UserMapper.GetUserType)(0).PropertyAlias).eq(providerUserKey))
                 If users.Count <> 1 Then
                     Return Nothing
                 End If
@@ -670,7 +670,7 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(GetField("Email")).eq(email))
+            Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).prop(GetField("Email")).eq(email))
             If users.Count <> 1 Then
                 Return Nothing
             End If
@@ -686,7 +686,7 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
             Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            Dim users As IList = UserMapper.FindUsers(mgr, New PCtor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
+            Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
             If users.Count <> 1 Then
                 Return Nothing
             End If

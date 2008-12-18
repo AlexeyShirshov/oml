@@ -1267,10 +1267,10 @@ l1:
                                 Throw New ArgumentException("Collection contains different types")
                             End If
 
-                            Dim o As IKeyEntity = schema.GetJoinObj(oschema, obj, t)
+                            Dim o As _IEntity = schema.GetJoinObj(oschema, obj, t)
 
                             If o IsNot Nothing Then
-                                UpdateCache(schema, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(o, Nothing)}, mgr, afterDelegate, contextKey, callbacks, True, False)
+                                UpdateCache(schema, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(CType(o, _ICachedEntity), Nothing)}, mgr, afterDelegate, contextKey, callbacks, True, False)
                             End If
                         Next
                     Next

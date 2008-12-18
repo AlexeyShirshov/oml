@@ -6,6 +6,7 @@ Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports System.Reflection
 Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Values
 
 Namespace Query
 
@@ -524,7 +525,7 @@ Namespace Query
                 AddHandler executor.OnGetCacheItem, AddressOf New cls2(Me).cl_paging
             End If
 
-            Dim selectOS As ObjectSource = GetRealSelectedOS()
+            Dim selectOS As ObjectSource = GetSelectedOS()
 
             If selectOS IsNot Nothing Then
                 Dim selectType As Type = selectOS.GetRealType(schema)
@@ -535,7 +536,7 @@ Namespace Query
                     If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
                         j.AddRange(joins)
                     End If
-                    '_appendMain = appendMain
+                    _appendMain = _appendMain OrElse appendMain
                 End If
 
                 If _m2mObject IsNot Nothing Then
@@ -645,6 +646,15 @@ l1:
                             If Not types.ContainsKey(os) Then
                                 Dim t As Type = os.GetRealType(schema)
                                 types.Add(os, schema.GetObjectSchema(t))
+                            End If
+                        End If
+                        If _from Is Nothing AndAlso se.Aggregate IsNot Nothing Then
+                            Dim a As Aggregate = TryCast(se.Aggregate, [Aggregate])
+                            If a IsNot Nothing Then
+                                Dim ep As EntityPropValue = TryCast(a.Expression.Value, EntityPropValue)
+                                If ep IsNot Nothing AndAlso ep.OrmProp.ObjectSource IsNot Nothing Then
+                                    _from = New FromClause(ep.OrmProp.ObjectSource)
+                                End If
                             End If
                         End If
                     Next
@@ -773,6 +783,13 @@ l1:
                         Return True
                     End If
                 Next
+                If SelectTypes IsNot Nothing Then
+                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+                        If os.Equals(tp.First) Then
+                            Return True
+                        End If
+                    Next
+                End If
             End If
             Return False
         End Function
@@ -1644,6 +1661,10 @@ l1:
             SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(fields)
             Return Me
         End Function
+
+        Friend Sub SelectInt(ByVal t As Type)
+            _sel = New SelectClause(New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(t), Nothing)}))
+        End Sub
 
         Public Function [Select](ByVal t As Type, ByVal withLoad As Boolean) As QueryCmd
             Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(t), withLoad)})

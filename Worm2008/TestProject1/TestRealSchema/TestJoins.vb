@@ -123,7 +123,7 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As IEntityFilter = CType(New PCtor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
+            Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetObjectSchema(t)))
 
@@ -137,10 +137,10 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
-            c = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"). _
+            c = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"). _
                 [and]("Code").eq(2), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
@@ -150,7 +150,7 @@ Public Class TestJoinsRS
             mgr.BeginTransaction()
             Try
                 t2.SaveChanges(True)
-                c = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+                c = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
                 Assert.AreEqual(3, c.Count)
             Finally
                 mgr.Rollback()
@@ -163,7 +163,7 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
@@ -178,7 +178,7 @@ Public Class TestJoinsRS
             Try
                 t1.SaveChanges(True)
                 t2.SaveChanges(True)
-                c = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+                c = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
                 Assert.AreEqual(2, c.Count)
             Finally
                 mgr.Rollback()
@@ -191,7 +191,7 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -201,7 +201,7 @@ Public Class TestJoinsRS
             mgr.BeginTransaction()
             Try
                 t1.SaveChanges(True)
-                c = mgr.Find(Of Table2)(New PCtor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
+                c = mgr.Find(Of Table2)(New Ctor(GetType(Table1)).prop("Title").eq("first"), Nothing, False)
                 Assert.AreEqual(0, c.Count)
             Finally
                 mgr.Rollback()

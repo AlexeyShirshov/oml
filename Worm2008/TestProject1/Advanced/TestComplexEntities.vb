@@ -82,7 +82,7 @@ Imports Worm.Criteria
         Dim gen As New ObjectMappingEngine("1")
 
         Dim q As QueryCmd = New QueryCmd().Select(GetType(ComplexPK)).Where _
-            (PCtor.prop(GetType(ComplexPK), "Int").eq(345))
+            (Ctor.prop(GetType(ComplexPK), "Int").eq(345))
 
         Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)( _
             Function() TestManager.CreateManager(cache, gen))
@@ -102,7 +102,7 @@ Imports Worm.Criteria
         Assert.IsTrue(f.InternalProperties.IsLoaded)
 
         l = New QueryCmd().Select(GetType(ComplexPK)).Where _
-            (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+            (Ctor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
         Assert.IsTrue(l(0).InternalProperties.IsLoaded)
@@ -112,8 +112,9 @@ Imports Worm.Criteria
     <TestMethod()> _
     Public Sub TestCPKUpdate()
         Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim l As ReadOnlyEntityList(Of ComplexPK) = New QueryCmd().Select(GetType(ComplexPK)).Where _
-                            (PCtor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
+            Dim l As ReadOnlyEntityList(Of ComplexPK) = _
+                New QueryCmd().Select(GetType(ComplexPK)). _
+                    Where(Ctor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
 
             Dim f As ComplexPK = l(0)
 
@@ -126,7 +127,7 @@ Imports Worm.Criteria
                 End Using
 
                 Dim f2 As ComplexPK = New QueryCmd().Select(GetType(ComplexPK)).Where _
-                             (PCtor.prop(GetType(ComplexPK), "Name").eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
+                             (Ctor.prop(GetType(ComplexPK), "Name").eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
 
                 Assert.AreSame(f, f2)
             Finally

@@ -260,12 +260,12 @@ Namespace Entities
             Dim s As ObjectMappingEngine = mgr.MappingEngine
             Dim cr As Criteria.PredicateLink = Nothing
             If strong Then
-                cr = New PCtor(New ObjectSource(tt)).prop(field).eq(Name)
+                cr = New Ctor(New ObjectSource(tt)).prop(field).eq(Name)
                 If Not String.IsNullOrEmpty(sec) Then
                     cr.[or](tt, sec).eq(Name)
                 End If
             Else
-                cr = New PCtor(New ObjectSource(tt)).prop(field).[like](Name & "%")
+                cr = New Ctor(New ObjectSource(tt)).prop(field).[like](Name & "%")
                 If Not String.IsNullOrEmpty(sec) Then
                     cr.[or](tt, sec).[like](Name & "%")
                 End If
@@ -288,9 +288,9 @@ Namespace Entities
             con.AddFilter(Root.Filter)
 
             If strong Then
-                con.AddFilter(New PCtor(New ObjectSource(tt)).prop(field).eq(Name).Filter())
+                con.AddFilter(New Ctor(New ObjectSource(tt)).prop(field).eq(Name).Filter())
             Else
-                con.AddFilter(New PCtor(New ObjectSource(tt)).prop(field).[like](Name & "%").Filter())
+                con.AddFilter(New Ctor(New ObjectSource(tt)).prop(field).[like](Name & "%").Filter())
             End If
 
             If loadName Then

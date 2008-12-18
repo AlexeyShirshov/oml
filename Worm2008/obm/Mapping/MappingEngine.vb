@@ -1136,9 +1136,9 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetJoinObj(ByVal oschema As IEntitySchema, _
-        ByVal obj As _IEntity, ByVal subType As Type) As IKeyEntity
+        ByVal obj As _IEntity, ByVal subType As Type) As _IEntity
         Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
-        Dim r As IKeyEntity = Nothing
+        Dim r As _IEntity = Nothing
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = GetPropertyValue(obj, c, oschema)
             'If obj.IsPropertyLoaded(c) Then
@@ -1146,7 +1146,7 @@ Public Class ObjectMappingEngine
             'Else
             '    id = GetPropertyValue(obj, c, oschema)
             'End If
-            r = TryCast(id, KeyEntity)
+            r = TryCast(id, _IEntity)
             If r Is Nothing AndAlso id IsNot Nothing Then
                 Try
                     'Dim id As Integer = Convert.ToInt32(o)

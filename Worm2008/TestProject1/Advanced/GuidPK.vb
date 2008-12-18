@@ -22,7 +22,7 @@ Public Class GuidPK
         End Set
     End Property
 
-    <EntityPropertyAttribute("ID", Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
+    <EntityPropertyAttribute(PropertyAlias:="ID", Behavior:=Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -119,7 +119,7 @@ Public Class NonCache
         End Set
     End Property
 
-    <EntityPropertyAttribute("ID", Field2DbRelations.PrimaryKey, column:="pk")> _
+    <EntityPropertyAttribute(PropertyAlias:="ID", Behavior:=Field2DbRelations.PrimaryKey, column:="pk")> _
     Public Property Identifier() As Object
         Get
             Using Read("ID")
