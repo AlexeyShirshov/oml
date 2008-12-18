@@ -18,6 +18,11 @@ Namespace Criteria.Joins
             _jc = jc
         End Sub
 
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal jc As List(Of QueryJoin))
+            _jc = jc
+            AddType(os)
+        End Sub
+
         Protected Friend Sub New(ByVal t As Type, ByVal jc As List(Of QueryJoin))
             _jc = jc
             AddType(t)
@@ -74,6 +79,10 @@ Namespace Criteria.Joins
 
         Protected Friend Sub AddFilter(ByVal jf As IFilter)
             _jc(_jc.Count - 1).Condition = jf
+        End Sub
+
+        Protected Friend Sub AddType(ByVal os As ObjectSource)
+            _jc(_jc.Count - 1).M2MObjectSource = os
         End Sub
 
         Protected Friend Sub AddType(ByVal t As Type)
@@ -163,6 +172,13 @@ Namespace Criteria.Joins
             End If
             Return jl._jc.ToArray
         End Operator
+
+        Public Function ToList() As IList(Of QueryJoin)
+            If _c IsNot Nothing Then
+                AddFilter(_c.Condition)
+            End If
+            Return _jc
+        End Function
 
         Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
             Get

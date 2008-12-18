@@ -21,8 +21,7 @@ Namespace Criteria.Joins
         'Protected _type As Type
         'Protected _en As String
         Protected _src As ObjectSource
-        Private _jt As Type
-        Private _jen As String
+        Private _jos As ObjectSource
         Private _key As String
 
         Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
@@ -33,6 +32,12 @@ Namespace Criteria.Joins
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _src = New ObjectSource(type)
+            _joinType = joinType
+            _condition = condition
+        End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _src = os
             _joinType = joinType
             _condition = condition
         End Sub
@@ -53,14 +58,14 @@ Namespace Criteria.Joins
             _src = New ObjectSource(type)
             _joinType = joinType
             _condition = Condition
-            _jt = joinEntityType
+            _jos = New ObjectSource(joinEntityType)
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityName As String)
             _src = New ObjectSource(type)
             _joinType = joinType
             _condition = Condition
-            _jen = joinEntityName
+            _jos = New ObjectSource(joinEntityName)
         End Sub
 
         Public Shared Function IsEmpty(ByVal j As QueryJoin) As Boolean
@@ -146,11 +151,12 @@ Namespace Criteria.Joins
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition.GetStaticString(mpe)
             Else
-                If _jt IsNot Nothing Then
-                    Return s & JoinTypeString() & _jt.ToString & _key
-                Else
-                    Return s & JoinTypeString() & _jen & _key
-                End If
+                Return s & JoinTypeString() & _jos.ToStaticString & _key
+                'If _jt IsNot Nothing Then
+                '    Return s & JoinTypeString() & _jos.ToStaticString & _key
+                'Else
+                '    Return s & JoinTypeString() & _jen & _key
+                'End If
             End If
         End Function
 
@@ -174,11 +180,12 @@ Namespace Criteria.Joins
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition._ToString
             Else
-                If _jt IsNot Nothing Then
-                    Return s & JoinTypeString() & _jt.ToString & _key
-                Else
-                    Return s & JoinTypeString() & _jen & _key
-                End If
+                Return s & JoinTypeString() & _jos.ToStaticString & _key
+                'If _jt IsNot Nothing Then
+                '    Return s & JoinTypeString() & _jt.ToString & _key
+                'Else
+                '    Return s & JoinTypeString() & _jen & _key
+                'End If
             End If
         End Function
 
@@ -191,21 +198,30 @@ Namespace Criteria.Joins
             End Set
         End Property
 
+        Public Property M2MObjectSource() As ObjectSource
+            Get
+                Return _jos
+            End Get
+            Set(ByVal value As ObjectSource)
+                _jos = value
+            End Set
+        End Property
+
         Public Property M2MJoinType() As Type
             Get
-                Return _jt
+                Return _jos.Type
             End Get
             Set(ByVal value As Type)
-                _jt = value
+                _jos = New ObjectSource(value)
             End Set
         End Property
 
         Public Property M2MJoinEntityName() As String
             Get
-                Return _jen
+                Return _jos.EntityName
             End Get
             Set(ByVal value As String)
-                _jen = value
+                _jos = New ObjectSource(value)
             End Set
         End Property
 

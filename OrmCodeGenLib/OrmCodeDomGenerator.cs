@@ -2396,7 +2396,7 @@ namespace Worm.CodeGen.Core
                 // параметры
                 method.Parameters.Add(
                     new CodeParameterDeclarationExpression(
-                        new CodeTypeReference(typeof(ColumnAttribute)),
+                        new CodeTypeReference(typeof(EntityPropertyAttribute)),
                         "c"
                         )
                     );
@@ -2723,7 +2723,7 @@ namespace Worm.CodeGen.Core
         }
         private void CreatePropertyColumnAttribute(CodeMemberProperty property, PropertyDescription propertyDesc)
         {
-            CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(ColumnAttribute)));
+            CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(EntityPropertyAttribute)));
 
             if (!string.IsNullOrEmpty(propertyDesc.PropertyAlias))
             {

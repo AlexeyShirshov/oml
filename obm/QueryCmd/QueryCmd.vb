@@ -683,15 +683,17 @@ l1:
                         Next
 
                         If AutoJoins Then
-                            Dim t As Type = GetSelectedOS.GetRealType(schema)
+                            Dim selOS As ObjectSource = GetSelectedOS()
+                            Dim t As Type = selOS.GetRealType(schema)
                             Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
                             For Each se As SelectExpression In SelectList
                                 If se.ObjectSource IsNot Nothing Then
                                     If Not HasInQuery(se.ObjectSource, j) Then
-                                        OrmManager.AppendJoin(schema, t, f, filterInfo, _
-                                            j, selSchema, Nothing, se.ObjectSource.GetRealType(schema))
+                                        schema.AppendJoin(selOS, se.ObjectSource, _
+                                            f, j, filterInfo, selSchema)
                                     End If
                                 ElseIf se.Table IsNot Nothing Then
+                                    Throw New NotImplementedException
                                 Else
                                     Throw New NotImplementedException
                                 End If
@@ -701,50 +703,6 @@ l1:
                         cl.AddRange(SelectList)
                     End If
                 End If
-
-                'If selectOS IsNot Nothing Then
-                '    Dim selectType As Type = selectOS.GetRealType(schema)
-                '    If _autoFields Then
-                '        For Each pk As ColumnAttribute In schema.GetPrimaryKeys(selectType)
-                '            Dim find As Boolean
-                '            For Each fld As SelectExpression In _fields
-                '                If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
-                '                    AndAlso fld.PropertyAlias = pk.PropertyAlias Then
-                '                    find = True
-                '                    Exit For
-                '                End If
-                '            Next
-                '            If Not find Then
-                '                If cl Is Nothing Then
-                '                    cl = New List(Of SelectExpression)
-                '                End If
-                '                Dim se As New SelectExpression(selectType, pk.PropertyAlias)
-                '                se.Attributes = pk._behavior
-                '                cl.Add(se)
-                '            End If
-                '        Next
-                '    ElseIf cl Is Nothing Then
-                '        cl = New List(Of SelectExpression)
-                '    End If
-
-                '    If cl IsNot Nothing Then
-                '        For Each fld As SelectExpression In _fields
-                '            If Not cl.Contains(fld) Then
-                '                cl.Add(fld)
-                '            End If
-                '        Next
-                '    End If
-                'Else
-                '    cl = New List(Of SelectExpression)
-                '    For Each fld As SelectExpression In _fields
-                '        cl.Add(fld)
-                '    Next
-                'End If
-
-                'If cl IsNot Nothing Then
-                '    cl.Sort(Function(fst As SelectExpression, sec As SelectExpression) _
-                '        fst.ToString.CompareTo(sec.ToString))
-                'End If
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
@@ -785,6 +743,17 @@ l1:
                         'End If
                     Next
                 End If
+
+                If AutoJoins Then
+                    Dim selOS As ObjectSource = GetSelectedOS()
+                    Dim t As Type = selOS.GetRealType(schema)
+                    Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
+                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+                        If Not HasInQuery(tp.First, j) Then
+                            schema.AppendJoin(selOS, tp.First, f, j, filterInfo, selSchema)
+                        End If
+                    Next
+                End If
             End If
 
             'If _aggregates IsNot Nothing Then
@@ -793,6 +762,19 @@ l1:
             '    Next
             'End If
             Return f
+        End Function
+
+        Private Function HasInQuery(ByVal os As ObjectSource, ByVal js As List(Of QueryJoin)) As Boolean
+            If FromClaus IsNot Nothing AndAlso FromClaus.ObjectSource.Equals(os) Then
+                Return True
+            Else
+                For Each j As QueryJoin In js
+                    If os.Equals(j.ObjectSource) OrElse os.Equals(j.M2MObjectSource) Then
+                        Return True
+                    End If
+                Next
+            End If
+            Return False
         End Function
 
         Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), ByVal tp As Pair(Of ObjectSource, Boolean?))

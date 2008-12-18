@@ -36,6 +36,13 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
+        Public Shared Function join(ByVal os As ObjectSource) As JoinCondition
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.Join, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
+
         Public Shared Function left_join(ByVal t As Type) As JoinCondition
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
             Dim jc As New JCtor
@@ -180,6 +187,10 @@ Namespace Query
 
         Public Function onM2M(ByVal m2mType As Type) As JoinLink
             Return New JoinLink(m2mType, _j)
+        End Function
+
+        Public Function onM2M(ByVal m2mOS As ObjectSource) As JoinLink
+            Return New JoinLink(m2mOS, _j)
         End Function
 
         Public Function onM2M(ByVal m2mEntityName As String) As JoinLink

@@ -76,6 +76,22 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, _
+                       ByVal os2 As ObjectSource, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If os IsNot Nothing Then
+                f = New FieldReference(os, propertyAlias)
+            End If
+            _l = f
+
+            If os2 IsNot Nothing Then
+                f = New FieldReference(os2, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
+
         Public Sub New(ByVal op As ObjectProperty, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             Dim f As FieldReference = Nothing
             If op.ObjectSource IsNot Nothing Then
