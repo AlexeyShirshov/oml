@@ -5,6 +5,11 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
 Imports Worm.Entities
 Imports Worm.Sorting
+Imports Worm.Criteria.Core
+Imports Worm.Criteria
+Imports Worm.Criteria.Conditions
+Imports Worm.Query
+
 'Namespace Schema
 
 ''' <summary>
@@ -2014,6 +2019,91 @@ Public Class ObjectMappingEngine
         Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, os, columnAliases)
     End Function
 #End Region
+
+    Public Sub AppendJoin(ByVal selectOS As ObjectSource, _
+        ByVal joinOS As ObjectSource, ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
+        ByVal filterInfo As Object, ByVal selSchema As IEntitySchema)
+
+        Dim schema As ObjectMappingEngine = Me
+        Dim selectType As Type = selectOS.GetRealType(Me)
+        Dim type2join As Type = joinOS.GetRealType(Me)
+        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
+
+        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+
+        If String.IsNullOrEmpty(field) Then
+
+            field = schema.GetJoinFieldNameByType(type2join, selectType, sh)
+
+            If String.IsNullOrEmpty(field) Then
+                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
+                If m2m IsNot Nothing Then
+                    'l.AddRange(MakeM2MJoin(m2m, joinOS))
+                    l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
+                Else
+                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                End If
+            Else
+                l.Add(MakeJoin(selectOS, schema.GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, field, FilterOperation.Equal, JoinType.Join, True))
+            End If
+        Else
+            l.Add(MakeJoin(joinOS, schema.GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, field, FilterOperation.Equal, JoinType.Join, False))
+        End If
+
+        Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
+        If ts IsNot Nothing Then
+            Dim pk_table As SourceFragment = sh.Table
+            For i As Integer = 1 To ts.GetTables.Length - 1
+                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+                Dim join As QueryJoin = Nothing
+                If joinableTs IsNot Nothing Then
+                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
+                Else
+                    join = ts.GetJoins(pk_table, ts.GetTables(i))
+                End If
+
+                If Not QueryJoin.IsEmpty(join) Then
+                    l.Add(join)
+                End If
+            Next
+
+            Dim cfs As IContextObjectSchema = TryCast(sh, IContextObjectSchema)
+            If cfs IsNot Nothing Then
+                Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
+                If newfl IsNot Nothing Then
+                    Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                    con.AddFilter(filter)
+                    con.AddFilter(newfl)
+                    filter = con.Condition
+                End If
+            End If
+        End If
+    End Sub
+
+    'Public Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal joinOS As ObjectSource) As Worm.Criteria.Joins.QueryJoin()
+    '    Dim schema As ObjectMappingEngine = Me
+    '    Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Type, schema.GetPrimaryKeys(m2m.Type)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+    '    Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
+    '    m2m = schema.GetM2MRelation(m2m.Type, type2join, True)
+    '    Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+    '    Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
+    '    Return New QueryJoin() {mj, tj}
+    'End Function
+
+    Public Function MakeJoin(ByVal joinOS As ObjectSource, ByVal pk As String, ByVal selectOS As ObjectSource, ByVal field As String, _
+           ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, ByVal switchTable As Boolean) As Worm.Criteria.Joins.QueryJoin
+
+        Dim schema As ObjectMappingEngine = Me
+
+        Dim jf As New JoinFilter(joinOS, pk, selectOS, field, oper)
+
+        Dim t As ObjectSource = joinOS
+        If switchTable Then
+            t = selectOS
+        End If
+
+        Return New QueryJoin(t, joinType, jf)
+    End Function
 End Class
 
 'End Namespace

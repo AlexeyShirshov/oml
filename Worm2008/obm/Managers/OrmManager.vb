@@ -3748,9 +3748,10 @@ l1:
             l.Add(MakeJoin(schema, type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
         End If
 
-If types isnot Nothing then
-        types.Add(type2join)
-        end if
+        If types IsNot Nothing Then
+            types.Add(type2join)
+        End If
+
         Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
         Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
         If ts IsNot Nothing Then
