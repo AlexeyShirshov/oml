@@ -191,7 +191,7 @@ namespace Worm.CodeGen.Core
         {
             return
                 IsCodeMethod(match) &&
-                ((match as CodeMemberMethod).Attributes & MemberAttributes.Override) == MemberAttributes.Static
+                ((match as CodeMemberMethod).Attributes & MemberAttributes.Override) == MemberAttributes.Override
                 && !IsInterfaceImplementedMethod(match);
         }
 

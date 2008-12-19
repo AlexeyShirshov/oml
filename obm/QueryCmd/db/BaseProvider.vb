@@ -31,8 +31,38 @@ Namespace Query.Database
                 Throw New NotImplementedException
             End Function
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As System.Collections.Generic.List(Of System.Collections.Generic.List(Of Criteria.Joins.QueryJoin)), ByVal f() As Criteria.Core.IFilter, ByVal sl As System.Collections.Generic.List(Of System.Collections.Generic.List(Of Entities.SelectExpression)), ByVal q As QueryCmd)
-                Throw New NotImplementedException
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Criteria.Joins.QueryJoin)), _
+                ByVal f() As Criteria.Core.IFilter, ByVal sl As List(Of List(Of Entities.SelectExpression)), _
+                ByVal q As QueryCmd)
+                _j = j
+                _f = f
+                _sl = sl
+                _mgr = mgr
+                _q = q
+                _dic = Nothing
+
+                Dim str As String
+                If _q.Table IsNot Nothing Then
+                    str = _q.Table.RawName
+                Else
+                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
+                End If
+
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
+
+                If _dic Is Nothing Then
+                    _dic = GetExternalDic(_key)
+                    If _dic IsNot Nothing Then
+                        _key = Nothing
+                    End If
+                End If
+
+                If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
+                    _id = _q.GetDynamicKey(_j, _f)
+                    _sync = _id & _mgr.GetStaticKey()
+                End If
+
+                ResetStmt()
             End Sub
 
             Public Sub ResetStmt()

@@ -6,7 +6,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Conditions
 Imports Worm.Query
 
-Namespace Entities
+Namespace Misc
 
     Class myCultureComparer
         Implements IEqualityComparer
@@ -33,7 +33,6 @@ Namespace Entities
             Return obj.ToString().ToLower().GetHashCode()
         End Function
     End Class
-
 
     Public Class DicIndexBase
 
@@ -407,7 +406,7 @@ Namespace Entities
         End Property
 
         Public Shadows Function FindById(ByVal id As Integer) As DicIndex(Of T)
-            Return CType(MyBase.FindById(id), Global.Worm.Entities.DicIndex(Of T))
+            Return CType(MyBase.FindById(id), DicIndex(Of T))
         End Function
     End Class
 

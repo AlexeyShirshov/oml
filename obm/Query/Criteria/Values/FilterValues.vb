@@ -106,7 +106,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
-    Public Class EntityPropValue
+    Public Class FieldValue
         Implements IFilterValue
 
         Private _p As SelectExpression
@@ -115,15 +115,19 @@ Namespace Criteria.Values
             _p = p
         End Sub
 
-        Public Sub New(ByVal t As Type, ByVal field As String)
-            _p = New SelectExpression(t, field)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+            _p = New SelectExpression(t, propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            _p = New SelectExpression(os, propertyAlias)
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String)
             _p = New SelectExpression(table, column)
         End Sub
 
-        Public ReadOnly Property OrmProp() As SelectExpression
+        Public ReadOnly Property Expression() As SelectExpression
             Get
                 Return _p
             End Get

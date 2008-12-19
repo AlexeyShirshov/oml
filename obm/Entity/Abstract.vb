@@ -315,9 +315,29 @@ Namespace Entities
                 Dim find As Boolean
                 For j As Integer = 0 To ids.Length - 1
                     Dim p2 As PKDesc = ids(j)
-                    If p.PropertyAlias = p2.PropertyAlias AndAlso p.Value.Equals(p2.Value) Then
-                        find = True
-                        Exit For
+                    If p.PropertyAlias = p2.PropertyAlias Then
+                        If p.Value.GetType IsNot p2.Value.GetType Then
+                            Dim o As Object = Nothing, o2 As Object = p.Value
+                            Try
+                                o = Convert.ChangeType(p2.Value, p.Value.GetType)
+                            Catch ex As InvalidCastException
+                                Try
+                                    o = Convert.ChangeType(p.Value, p2.Value.GetType)
+                                    o2 = p2.Value
+                                Catch
+                                    Exit For
+                                End Try
+                            End Try
+                            If o2.Equals(o) Then
+                                find = True
+                                Exit For
+                            End If
+                        Else
+                            If p.Value.Equals(p2.Value) Then
+                                find = True
+                                Exit For
+                            End If
+                        End If
                     End If
                 Next
                 If Not find Then

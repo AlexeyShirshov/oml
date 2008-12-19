@@ -121,6 +121,17 @@ Namespace Database
                         sb.Append(map._tableName.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
                         Dim col As String = schema.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, columnAliases, se.ObjectSource)
                         sb.Append(col)
+                        If Not String.IsNullOrEmpty(se.FieldAlias) Then
+                            sb.Append(" ").Append(se.FieldAlias)
+                            columnAliases.RemoveAt(columnAliases.Count - 1)
+                            columnAliases.Add(se.FieldAlias)
+                        End If
+                    Case Entities.PropType.CustomValue
+                        If inSelect Then
+                            sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing)))
+                        Else
+                            sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
+                        End If
                     Case Else
                         Throw New NotImplementedException(se.PropType.ToString)
                 End Select

@@ -164,7 +164,30 @@ namespace Worm.CodeGen.Core.Descriptors
     		set { _enablePropertyChanged = value; }
     	}
 
-    	#region ICloneable Members
+        public string DbTypeName
+        {
+            get;
+            set;
+        }
+
+        public int? DbTypeSize
+        {
+            get;
+            set;
+        }
+
+        public bool? DbTypeNullable
+        {
+            get;
+            set;
+        }
+
+        public string PropertyName
+        {
+            get { return Name; }
+        }
+
+        #region ICloneable Members
 
         public object Clone()
         {

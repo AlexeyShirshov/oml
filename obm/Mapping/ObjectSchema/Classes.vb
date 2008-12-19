@@ -84,7 +84,7 @@
 
         Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
             If _newattributes = Field2DbRelations.None Then
-                Return c._behavior
+                Return c.Behavior()
             Else
                 Return _newattributes
             End If

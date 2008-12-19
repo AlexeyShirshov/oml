@@ -190,8 +190,16 @@ Namespace Query
             MyClass.New(agFunc, New UnaryExp(New RefValue(num)))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal field As String)
-            MyClass.New(agFunc, New UnaryExp(New EntityPropValue(t, field)))
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal propertyAlias As String)
+            MyClass.New(agFunc, New UnaryExp(New FieldValue(t, propertyAlias)))
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As ObjectSource, ByVal propertyAlias As String)
+            MyClass.New(agFunc, New UnaryExp(New FieldValue(os, propertyAlias)))
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String)
+            MyClass.New(agFunc, New UnaryExp(New FieldValue(t, column)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)

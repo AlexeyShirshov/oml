@@ -51,6 +51,7 @@ namespace Worm.CodeGen.Core
             _appName = ass.GetName().Name;
             _appVersion = ass.GetName().Version.ToString(4);
         	EnableReadOnlyPropertiesSetter = false;
+            GenerateEntityName = true;
         }
 
         #region Properties
@@ -169,6 +170,12 @@ namespace Worm.CodeGen.Core
 	    public bool EnableReadOnlyPropertiesSetter { get; set; }
 
 	    public LinqSettingsDescriptor LinqSettings { get; set; }
+
+        public bool GenerateEntityName
+        {
+            get;
+            set;
+        }
 
 	    //[XmlIgnore]
         //public List<SelfRelationDescription> SelfRelations

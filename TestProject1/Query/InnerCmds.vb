@@ -48,10 +48,10 @@ Imports Worm
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        inner.Select(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.Select(GetType(Table1))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).Select(GetType(Table1), True).ToList(Of Table1)()
 
@@ -62,7 +62,7 @@ Imports Worm
         Next
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(OrmManagerException))> Public Sub TestInnerWrongLoad()
+    <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestInnerWrongLoad()
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -102,19 +102,22 @@ Imports Worm
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1))
+        inner.Where(Ctor.prop(GetType(Table1), "Code").not_eq(2))
+        inner.AutoFields = False
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.Select(FCtor.prop(GetType(Table1), "Code"))). _
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.Select(FCtor.prop(GetType(Table1), "Code", "id"))). _
             ToList(Of Table1)()
 
-        Assert.AreEqual(0, r.Count)
+        Assert.AreEqual(2, r.Count)
 
-        'For Each t As Table1 In r
-        '    Assert.IsTrue(t.InternalProperties.IsLoaded)
-        'Next
+        For Each t As Table1 In r
+            Assert.AreEqual(Entities.ObjectState.NotLoaded, t.InternalProperties.ObjectState)
+            t.Load()
+            Assert.AreEqual(Entities.ObjectState.NotFoundInSource, t.InternalProperties.ObjectState)
+        Next
     End Sub
 
     <TestMethod()> Public Sub TestInnerWithoutLoadID()

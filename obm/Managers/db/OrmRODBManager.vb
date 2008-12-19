@@ -11,6 +11,7 @@ Imports Worm.Criteria.Values
 Imports cc = Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports System.Collections.ObjectModel
+Imports Worm.Misc
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -1307,8 +1308,45 @@ l1:
             ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal values As IList, _
             ByVal first_cols As List(Of EntityPropertyAttribute), ByVal sec_cols As List(Of EntityPropertyAttribute))
 
-            Throw New NotImplementedException
-            'QueryMultiTypeObjects(cmd,
+            Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
+
+            Dim ost As ObjectSource = New ObjectSource(firstType)
+            Dim ostt As ObjectSource = Nothing
+            If firstType IsNot secondType Then
+                ostt = New ObjectSource(secondType)
+            Else
+                ostt = New ObjectSource(New ObjectAlias(secondType))
+            End If
+
+            Dim types As New Dictionary(Of ObjectSource, IEntitySchema)
+            types.Add(ost, MappingEngine.GetObjectSchema(firstType))
+            types.Add(ostt, MappingEngine.GetObjectSchema(secondType))
+
+            Dim pdic As New Dictionary(Of Type, IDictionary)
+            pdic.Add(firstType, MappingEngine.GetProperties(firstType, types(ost)))
+            If firstType IsNot secondType Then
+                pdic.Add(secondType, MappingEngine.GetProperties(secondType, types(ostt)))
+            End If
+
+            Dim sel As New List(Of SelectExpression)
+
+            If first_cols Is Nothing Then
+                sel.Add(New SelectExpression(ost, MappingEngine.GetPrimaryKeys(firstType, types(ost))(0).PropertyAlias))
+            Else
+                sel.AddRange(MappingEngine.GetSortedFieldList(firstType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, firstType)))
+            End If
+
+            If sec_cols Is Nothing Then
+                sel.Add(New SelectExpression(ostt, MappingEngine.GetPrimaryKeys(secondType, types(ostt))(0).PropertyAlias))
+            Else
+                sel.AddRange(MappingEngine.GetSortedFieldList(secondType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, secondType)))
+            End If
+
+            QueryMultiTypeObjects(firstType, cmd, v, types, pdic, sel)
+
+            For Each r As ReadOnlyCollection(Of _IEntity) In v
+                values.Add(r(0))
+            Next
         End Sub
 
         Protected Friend Sub LoadMultipleObjects(ByVal createType As Type, _
@@ -1933,11 +1971,17 @@ l1:
                                     Exit For
                                 End If
                             Next
-                            attr = propertyMap(propertyAlias).GetAttributes(c)
+                            If propertyMap.ContainsKey(propertyAlias) Then
+                                attr = propertyMap(propertyAlias).GetAttributes(c)
+                            End If
+                            If attr = Field2DbRelations.None Then
+                                attr = se.Attributes
+                            End If
                         Else
-                            c = New EntityPropertyAttribute(propertyAlias, se.Attributes)
+                            c = New EntityPropertyAttribute(propertyAlias, se.Attributes, Nothing)
                             c.Column = se.Column
                             se._c = c
+                            attr = se.Attributes
                         End If
                         se._realAtt = attr
                     End If
@@ -2287,7 +2331,7 @@ l1:
                 Else
                     MappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
                 End If
-                If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
+                If ce IsNot Nothing AndAlso c IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
             Else
                 Dim propType As Type = pi.PropertyType
                 If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -3253,7 +3297,7 @@ l2:
             'End If
             'If selectType IsNot type2search Then
             Dim pkname As String = MappingEngine.GetPrimaryKeys(selectType)(0).PropertyAlias
-            selCols.Insert(0, New EntityPropertyAttribute(pkname, Field2DbRelations.PK))
+            selCols.Insert(0, New EntityPropertyAttribute(pkname, Field2DbRelations.PK, Nothing))
             fields.Insert(0, New Pair(Of String, Type)(pkname, selectType))
             'End If
 
@@ -3379,7 +3423,7 @@ l2:
                 If ss IsNot Nothing Then
                     For Each s As String In ss
                         fields.Add(New Pair(Of String, Type)(s, type2search))
-                        searchCols.Add(New EntityPropertyAttribute(s))
+                        searchCols.Add(New EntityPropertyAttribute(s, String.Empty))
                     Next
                 End If
 
@@ -3591,7 +3635,7 @@ l2:
 
             If withLoad Then
                 For Each c As EntityPropertyAttribute In MappingEngine.GetSortedFieldList(tt, types(ostt))
-                    If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    If (c.Behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                         sel.Add(ObjectMappingEngine.ConvertColumn2SelExp(c, tt))
                     End If
                 Next

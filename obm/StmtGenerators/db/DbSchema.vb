@@ -2514,7 +2514,7 @@ l1:
                 Dim arr As Generic.IList(Of EntityPropertyAttribute) = Nothing
                 If Not String.IsNullOrEmpty(_field) Then
                     arr = New Generic.List(Of EntityPropertyAttribute)
-                    arr.Add(New EntityPropertyAttribute(_field))
+                    arr.Add(New EntityPropertyAttribute(_field, String.Empty))
                 End If
                 sb.Append(SelectWithJoin(dbschema, _t, almgr, paramMgr, _joins, _
                     arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))

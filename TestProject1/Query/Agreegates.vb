@@ -165,13 +165,35 @@ Imports Worm.Sorting
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
+            Dim o As New Grouping("left({0},1)", "Pref", New FieldReference(t, "Title"))
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
+                o, _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
             })
-            q.From(t)
+            q.From(t).GroupBy(New Grouping() {o}).Sort(SCtor.Custom("Count").desc)
 
-            Dim o As New Grouping("left({0},1)", "Pref", New FieldReference(t, "Title"))
-            q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(SCtor.Custom("Count desc"))
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
+
+            Assert.AreEqual(5, l.Count)
+
+            Assert.AreEqual("2", l(0)("Pref"))
+            Assert.AreEqual(3, l(0)("Count"))
+
+            Assert.AreEqual("b", l(1)("Pref"))
+            Assert.AreEqual(3, l(1)("Count"))
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestDic2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim t As Type = GetType(Entity4)
+            'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            Dim q As New QueryCmd()
+            q.Select(FCtor.custom("left({0},1)", "Pref", New FieldReference(t, "Title")).Add_count("Count")) _
+                .From(t) _
+                .GroupBy(FCtor.custom("left({0},1)", "Pref", New FieldReference(t, "Title"))) _
+                .Sort(SCtor.Custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 

@@ -150,13 +150,13 @@ Public Class Expressions
             Dim rightValue As IFilterValue = rf._v
             If lf.GetType Is GetType(UnaryExp) AndAlso leftValue.GetType IsNot GetType(RefValue) Then
                 If rf.GetType Is GetType(UnaryExp) AndAlso rightValue.GetType IsNot GetType(RefValue) Then
-                    If leftValue.GetType Is GetType(EntityPropValue) Then
+                    If leftValue.GetType Is GetType(FieldValue) Then
                         If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
-                            Dim lv As EntityPropValue = CType(leftValue, EntityPropValue)
-                            If lv.OrmProp.Table IsNot Nothing Then
-                                Return New ColumnPredicate(lv.OrmProp.Table, lv.OrmProp.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                            Dim lv As FieldValue = CType(leftValue, FieldValue)
+                            If lv.Expression.Table IsNot Nothing Then
+                                Return New ColumnPredicate(lv.Expression.Table, lv.Expression.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             Else
-                                Return New PropertyPredicate(lv.OrmProp.ObjectProperty).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(lv.Expression.ObjectProperty).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             End If
                         Else
                             GoTo l1
@@ -169,12 +169,12 @@ Public Class Expressions
                             GoTo l1
                         End If
                     ElseIf GetType(IParamFilterValue).IsAssignableFrom(leftValue.GetType) Then
-                        If rightValue.GetType Is GetType(EntityPropValue) Then
-                            Dim rv As EntityPropValue = CType(rightValue, EntityPropValue)
-                            If rv.OrmProp.Table IsNot Nothing Then
-                                Return New ColumnPredicate(rv.OrmProp.Table, rv.OrmProp.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                        If rightValue.GetType Is GetType(FieldValue) Then
+                            Dim rv As FieldValue = CType(rightValue, FieldValue)
+                            If rv.Expression.Table IsNot Nothing Then
+                                Return New ColumnPredicate(rv.Expression.Table, rv.Expression.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             Else
-                                Return New PropertyPredicate(rv.OrmProp.ObjectProperty).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(rv.Expression.ObjectProperty).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             End If
                         ElseIf rightValue.GetType Is GetType(CustomValue) Then
                             Dim rv As CustomValue = CType(rightValue, CustomValue)

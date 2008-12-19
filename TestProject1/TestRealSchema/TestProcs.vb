@@ -307,14 +307,15 @@ Public Class P2OrmProc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of EntityPropertyAttribute)
-        Dim l As New List(Of EntityPropertyAttribute)
-        l.Add(New EntityPropertyAttribute("ID", Field2DbRelations.PK))
-        l.Add(New EntityPropertyAttribute("Title"))
-        l.Add(New EntityPropertyAttribute("Code"))
-        l.Add(New EntityPropertyAttribute("Enum"))
-        l.Add(New EntityPropertyAttribute("EnumStr"))
-        l.Add(New EntityPropertyAttribute("DT"))
+    Protected Overrides Function GetColumns() As List(Of SelectExpression)
+        Dim l As New List(Of SelectExpression)
+        l.Add(New SelectExpression(GetType(Table1), "ID"))
+        l(0).Attributes = Field2DbRelations.PK
+        l.Add(New SelectExpression(GetType(Table1), "Title"))
+        l.Add(New SelectExpression(GetType(Table1), "Code"))
+        l.Add(New SelectExpression(GetType(Table1), "Enum"))
+        l.Add(New SelectExpression(GetType(Table1), "EnumStr"))
+        l.Add(New SelectExpression(GetType(Table1), "DT"))
         Return l
     End Function
 
@@ -424,11 +425,12 @@ Public Class MultiR
     Class r
         Inherits MultiResultsetQueryOrmStoredProcBase.OrmDescriptor(Of Table1)
 
-        Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of EntityPropertyAttribute)
-            Dim l As New List(Of EntityPropertyAttribute)
+        Protected Overrides Function GetColumns() As List(Of SelectExpression)
+            Dim l As New List(Of SelectExpression)
             Dim mgr As Worm.OrmManager = Worm.OrmManager.CurrentManager
-            l.Add(New EntityPropertyAttribute("ID", Field2DbRelations.PK))
-            l.Add(New EntityPropertyAttribute("Custom"))
+            l.Add(New SelectExpression(GetType(Table1), "ID"))
+            l(0).Attributes = Field2DbRelations.PK
+            l.Add(New SelectExpression(GetType(Table1), "Custom"))
             Return l
         End Function
 
@@ -520,10 +522,11 @@ Public Class PartialLoadProc
         _params.Add(New Pair(Of String, Object)("id", i))
     End Sub
 
-    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of EntityPropertyAttribute)
-        Dim l As New List(Of EntityPropertyAttribute)
-        l.Add(New EntityPropertyAttribute("ID", Field2DbRelations.PK))
-        l.Add(New EntityPropertyAttribute("ddd"))
+    Protected Overrides Function GetColumns() As List(Of SelectExpression)
+        Dim l As New List(Of SelectExpression)
+        l.Add(New SelectExpression(GetType(Table1), "ID"))
+        l(0).Attributes = Field2DbRelations.PK
+        l.Add(New SelectExpression(GetType(Table1), "ddd"))
         Return l
     End Function
 

@@ -106,6 +106,11 @@ Namespace Entities
             _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal fieldAlias As String)
+            _op = New ObjectProperty(os, propertyAlias)
+            _falias = fieldAlias
+        End Sub
+
 #Region " Public ctors "
 
 #Region " Type ctors "
@@ -279,6 +284,9 @@ Namespace Entities
         End Sub
 #End Region
 
+        'Public Sub New(ByVal propertyAlias As String)
+        '    _op = New ObjectProperty(CStr(Nothing), propertyAlias)
+        'End Sub
 
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
@@ -309,8 +317,12 @@ Namespace Entities
                         Return Entities.PropType.TableColumn
                     ElseIf _q IsNot Nothing Then
                         Return Entities.PropType.Subquery
-                    Else
+                    ElseIf _agr IsNot Nothing Then
                         Return Entities.PropType.Aggregate
+                    ElseIf Not String.IsNullOrEmpty(_op.Field) Then
+                        Return Entities.PropType.ObjectProperty
+                    Else
+                        Throw New NotSupportedException
                     End If
                 End If
             End Get
@@ -448,7 +460,8 @@ Namespace Entities
                     ElseIf _agr IsNot Nothing Then
                         Return _agr.ToString
                     Else
-                        Throw New NotSupportedException
+                        Return _op.Field
+                        'Throw New NotSupportedException
                         'Return _field
                     End If
                 End If

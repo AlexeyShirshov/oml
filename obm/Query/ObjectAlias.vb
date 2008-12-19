@@ -48,7 +48,8 @@
             ElseIf Not String.IsNullOrEmpty(_en) Then
                 Return _en
             Else
-                Throw New NotImplementedException
+                Return String.Empty
+                'Throw New NotImplementedException
             End If
         End Function
 

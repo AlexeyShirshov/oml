@@ -200,6 +200,21 @@
         <xs:documentation>Тип свойства (возможна ссылка на сущность)</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="dbTypeName" type="xs:Name" use="optional">
+      <xs:annotation>
+        <xs:documentation>Имя типа поля БД</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="dbTypeSize" type="xs:integer" use="optional">
+      <xs:annotation>
+        <xs:documentation>Размер типа поля БД</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="dbTypeNullable" type="xs:boolean" use="optional">
+      <xs:annotation>
+        <xs:documentation>Тип поля БД является nullable</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="fieldName" type="xs:string" use="required">
       <xs:annotation>
         <xs:documentation>Наименование колонки из БД</xs:documentation>
@@ -678,5 +693,10 @@
 			  <xs:documentation>Enables generation of setters for properties marked readonly.</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+      <xs:attribute name="generateEntityName" default="true" use="optional" type="xs:boolean">
+        <xs:annotation>
+          <xs:documentation>Indicates whether generates EntityName or not</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
   </xs:complexType>
 </xs:schema>

@@ -10,17 +10,13 @@ namespace Worm.CodeGen.Core.Descriptors
 		private readonly string _id;
 		private readonly string _name;
 		private readonly string _description;
-		private string _namespace;
-		private readonly List<TableDescription> _tables;
+	    private readonly List<TableDescription> _tables;
 		private readonly List<PropertyDescription> _properties;
 		private readonly List<PropertyDescription> _suppressedProperties;
 		private readonly OrmObjectsDef _ormObjectsDef;
 		private EntityDescription _baseEntity;
-		private EntityBehaviuor _behaviour;
-		private bool _inheritsTables;
-		private bool _useGenerics;
-		private bool _makeInterface;
-		#endregion Private Fields
+
+	    #endregion Private Fields
 
 		public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef)
 			: this(id, name, nameSpace, description, ormObjectsDef, null)
@@ -42,9 +38,9 @@ namespace Worm.CodeGen.Core.Descriptors
 			_properties = new List<PropertyDescription>();
 			_suppressedProperties = new List<PropertyDescription>();
 			_ormObjectsDef = ormObjectsDef;
-			_namespace = nameSpace;
+			RawNamespace = nameSpace;
 			_baseEntity = baseEntity;
-			_behaviour = behaviour;
+			Behaviour = behaviour;
 		}
 
 		public string Identifier
@@ -77,17 +73,17 @@ namespace Worm.CodeGen.Core.Descriptors
 			get { return _ormObjectsDef; }
 		}
 
-        public bool HasCompositePK
+        public bool HasSinglePK
         {
             get
             {
                 int s = 0;
-                foreach (PropertyDescription pd in _properties)
+                foreach (var propertyDescription in this.CompleteEntity.Properties)
                 {
-                    if (pd.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK))
+                    if (propertyDescription.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
                         s++;
                 }
-                return s > 1 || (BaseEntity == null?false:BaseEntity.HasCompositePK);
+                return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
             }
         }
 
@@ -179,16 +175,13 @@ namespace Worm.CodeGen.Core.Descriptors
 
 		public string Namespace
 		{
-			get { return string.IsNullOrEmpty(_namespace) ? _ormObjectsDef.Namespace : _namespace; }
-			set { _namespace = value; }
+			get { return string.IsNullOrEmpty(RawNamespace) ? _ormObjectsDef.Namespace : RawNamespace; }
+			set { RawNamespace = value; }
 		}
 
-	    public string RawNamespace
-	    {
-            get { return _namespace; }
-	    }
+	    public string RawNamespace { get; private set; }
 
-		public EntityDescription BaseEntity
+	    public EntityDescription BaseEntity
 		{
 			get { return _baseEntity; }
 			set { _baseEntity = value; }
@@ -300,45 +293,47 @@ namespace Worm.CodeGen.Core.Descriptors
 			}
 		}
 
-		public EntityBehaviuor Behaviour
-		{
-			get { return _behaviour; }
-			set { _behaviour = value; }
-		}
+	    public EntityBehaviuor Behaviour { get; set; }
 
-		public List<PropertyDescription> SuppressedProperties
+	    public List<PropertyDescription> SuppressedProperties
 		{
 			get { return _suppressedProperties; }
 		}
 
-		public bool InheritsBaseTables
-		{
-			get { return _inheritsTables; }
-			set { _inheritsTables = value; }
-		}
+	    public bool InheritsBaseTables { get; set; }
 
-		public bool UseGenerics
-		{
-			get { return _useGenerics; }
-			set { _useGenerics = value; }
-		}
+	    public bool UseGenerics { get; set; }
 
-		public bool MakeInterface
-		{
-			get { return _makeInterface; }
-			set { _makeInterface = value; }
-		}
+	    public bool MakeInterface { get; set; }
 
-		public bool EnableCommonEventRaise
+	    public bool EnableCommonEventRaise
 		{
 			get
 			{
-				return _ormObjectsDef.EnableCommonPropertyChangedFire &&
-					   !_properties.Exists(delegate(PropertyDescription prop)
-											{
-												return prop.EnablePropertyChanged;
-											});
+				return _ormObjectsDef.EnableCommonPropertyChangedFire && !_properties.Exists(prop => prop.EnablePropertyChanged);
 			}
 		}
+
+	    public PropertyDescription PkProperty
+	    {
+            get
+            {
+                if (HasSinglePK) 
+                    foreach (var propertyDescription in CompleteEntity.Properties)
+                    {
+                        if (propertyDescription.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                            return propertyDescription;
+                    }
+                throw new InvalidOperationException("Only usable with single PK");
+            }
+	    }
+
+	    public List<PropertyDescription> PkProperties
+	    {
+	        get
+	        {
+	            return Properties.FindAll(p => p.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK));
+	        }
+	    }
 	}
 }

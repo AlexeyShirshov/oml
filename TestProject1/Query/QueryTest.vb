@@ -741,7 +741,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
         q.From(t)
-        q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title"))
+        q.Select(FCtor.column(t, "code", "Code", Field2DbRelations.PK).Add_column(t, "name", "Title"))
 
         Dim r As ReadOnlyEntityList(Of AnonymousCachedEntity) = q.ToEntityList(Of AnonymousCachedEntity)()
 
@@ -832,7 +832,7 @@ Imports Worm.Criteria.Joins
         End Property
 
         Private _title As String
-        <EntityPropertyAttribute(PropertyAlias:="name")> Public Property Title() As String
+        <EntityProperty("name")> Public Property Title() As String
             Get
                 Return _title
             End Get
