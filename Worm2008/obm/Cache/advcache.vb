@@ -380,8 +380,13 @@ Namespace Cache
         End Sub
 
         Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
-            Dim lo As ListObject = CType(weak_list, ListObject)
-            Return lo.l.Count
+            Dim lo As ListObject = TryCast(weak_list, ListObject)
+            If lo IsNot Nothing Then
+                Return lo.l.Count
+            Else
+                Dim l As ICollection = CType(weak_list, ICollection)
+                Return l.Count
+            End If
         End Function
 
         Public ReadOnly Property IsWeak() As Boolean Implements IListObjectConverter.IsWeak

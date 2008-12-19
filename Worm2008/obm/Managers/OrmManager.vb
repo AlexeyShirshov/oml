@@ -9,6 +9,7 @@ Imports Worm.Sorting
 Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Criteria.Conditions
+Imports Worm.Misc
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False

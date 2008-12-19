@@ -40,35 +40,36 @@ Namespace Query.Database
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
                              ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
-                _j = j
-                _f = f
-                _sl = sl
-                _mgr = mgr
-                _q = q
-                _dic = Nothing
+                '_j = j
+                '_f = f
+                '_sl = sl
+                '_mgr = mgr
+                '_q = q
+                '_dic = Nothing
 
-                Dim str As String
-                If _q.Table IsNot Nothing Then
-                    str = _q.Table.RawName
-                Else
-                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
-                End If
+                'Dim str As String
+                'If _q.Table IsNot Nothing Then
+                '    str = _q.Table.RawName
+                'Else
+                '    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
+                'End If
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
+                '_key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
 
-                If _dic Is Nothing Then
-                    _dic = GetExternalDic(_key)
-                    If _dic IsNot Nothing Then
-                        _key = Nothing
-                    End If
-                End If
+                'If _dic Is Nothing Then
+                '    _dic = GetExternalDic(_key)
+                '    If _dic IsNot Nothing Then
+                '        _key = Nothing
+                '    End If
+                'End If
 
-                If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
-                    _id = _q.GetDynamicKey(_j, _f)
-                    _sync = _id & _mgr.GetStaticKey()
-                End If
+                'If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
+                '    _id = _q.GetDynamicKey(_j, _f)
+                '    _sync = _id & _mgr.GetStaticKey()
+                'End If
 
-                ResetStmt()
+                'ResetStmt()
+                MyBase.Reset(mgr, j, f, sl, q)
                 ResetDic()
             End Sub
 
@@ -121,7 +122,7 @@ Namespace Query.Database
                 oschema = dbm.MappingEngine.GetObjectSchema(t, False)
 
                 'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.LoadMultipleObjects(t, cmd, rr, _sl(0), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, rr, _sl(_sl.Count - 1), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -242,7 +243,7 @@ Namespace Query.Database
                 'End If
 
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(0), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(_sl.Count - 1), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -442,7 +443,7 @@ Namespace Query.Database
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
                 'dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
-                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, rr, _sl(0))
+                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, rr, _sl(_sl.Count - 1))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -569,7 +570,7 @@ Namespace Query.Database
                 'End If
 
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
-                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(0), oschema, fields)
+                dbm.QueryObjects(Of CreateType)(cmd, rr, _sl(_sl.Count - 1), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

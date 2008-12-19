@@ -246,6 +246,10 @@ namespace Worm.CodeGen.Core
             _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("defaultNamespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
         	_ormObjectsDef.EntityBaseTypeName = _ormXmlDocument.DocumentElement.GetAttribute("entityBaseType");
+
+            string generateEntityName = _ormXmlDocument.DocumentElement.GetAttribute("generateEntityName");            
+            _ormObjectsDef.GenerateEntityName = string.IsNullOrEmpty(generateEntityName) ? true : XmlConvert.ToBoolean(generateEntityName);
+
             string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
             if (!string.IsNullOrEmpty(baseUriString))
             {
@@ -314,7 +318,7 @@ namespace Worm.CodeGen.Core
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-				string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute;
+				string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
@@ -335,6 +339,10 @@ namespace Worm.CodeGen.Core
             	propertyObsolete = propertyElement.GetAttribute("obsolete");
 				propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
             	enablePropertyChangedAttribute = propertyElement.GetAttribute("enablePropertyChanged");
+
+                dbTypeNameAttribute = propertyElement.GetAttribute("dbTypeName");
+                dbTypeSizeAttribute = propertyElement.GetAttribute("dbTypeSize");
+                dbTypeNullableAttribute = propertyElement.GetAttribute("dbTypeNullable");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -376,6 +384,12 @@ namespace Worm.CodeGen.Core
             	property.Obsolete = obsolete;
             	property.ObsoleteDescripton = propertyObsoleteDescription;
             	property.EnablePropertyChanged = enablePropertyChanged;
+
+                property.DbTypeName = dbTypeNameAttribute;
+                if (!string.IsNullOrEmpty(dbTypeSizeAttribute))
+                    property.DbTypeSize = XmlConvert.ToInt32(dbTypeSizeAttribute);
+                if (!string.IsNullOrEmpty(dbTypeNullableAttribute))
+                    property.DbTypeNullable = XmlConvert.ToBoolean(dbTypeNullableAttribute);
 
                 entity.Properties.Add(property);
             }

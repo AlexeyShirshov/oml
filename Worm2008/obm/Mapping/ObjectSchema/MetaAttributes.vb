@@ -8,7 +8,7 @@ Namespace Entities.Meta
         Implements IComparable(Of EntityPropertyAttribute), ICloneable
 
         Private _fieldName As String
-        Public ReadOnly _behavior As Field2DbRelations
+        Private _behavior As Field2DbRelations
         'Private _table As String
         Private _column As String
         Private _idx As Integer = -1
@@ -21,15 +21,24 @@ Namespace Entities.Meta
             Me._behavior = behavior
         End Sub
 
-        'Public Sub New(ByVal column As String)
-        '    _column = column
-        '    Me._behavior = Field2DbRelations.None
-        'End Sub
+        Public Sub New(ByVal column As String)
+            _column = column
+            Me._behavior = Field2DbRelations.None
+        End Sub
 
-        'Public Sub New(ByVal column As String, ByVal behavior As Field2DbRelations)
-        '    _column = column
-        '    Me._behavior = behavior
-        'End Sub
+        Public Sub New(ByVal column As String, ByVal behavior As Field2DbRelations)
+            _column = column
+            Me._behavior = behavior
+        End Sub
+
+        Friend Sub New(ByVal propertAlias As String, ByVal column As String)
+            _fieldName = propertAlias
+        End Sub
+
+        Friend Sub New(ByVal propertAlias As String, ByVal behavior As Field2DbRelations, ByVal column As String)
+            _fieldName = propertAlias
+            _behavior = behavior
+        End Sub
 
         ''' <summary>
         ''' Имя поля класса, которое мапится на колонку в БД
@@ -48,7 +57,7 @@ Namespace Entities.Meta
                 Return _behavior
             End Get
             Set(ByVal value As Field2DbRelations)
-                behavior = value
+                _behavior = value
             End Set
         End Property
 
@@ -139,7 +148,7 @@ Namespace Entities.Meta
         End Function
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
-            Dim c As New EntityPropertyAttribute(_fieldName, _behavior)
+            Dim c As New EntityPropertyAttribute(_fieldName, Behavior, Nothing)
             c._column = _column
             c._db = _db
             c._idx = _idx

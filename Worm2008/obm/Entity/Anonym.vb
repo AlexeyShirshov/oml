@@ -33,6 +33,7 @@ Namespace Entities
         Implements _ICachedEntity
 
         Private _pk() As String
+        Private _hasPK As Boolean
 
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Added
         Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Deleted
@@ -54,12 +55,15 @@ Namespace Entities
 
         Public ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
             Get
-
+                Return _hasPK
             End Get
         End Property
 
         Public Sub PKLoaded(ByVal pkCount As Integer) Implements _ICachedEntity.PKLoaded
-
+            If _pk Is Nothing Then
+                Throw New OrmObjectException("PK is not loaded")
+            End If
+            _hasPK = True
         End Sub
 
         Public Sub RaiseCopyRemoved() Implements _ICachedEntity.RaiseCopyRemoved

@@ -456,12 +456,12 @@ Namespace Linq
                             Select Case m.Member.Name
                                 Case "Year"
                                     Dim p As FieldReference = Nothing
-                                    Dim ev As EntityPropValue = TryCast(b._exp.Value, EntityPropValue)
+                                    Dim ev As FieldValue = TryCast(b._exp.Value, FieldValue)
                                     Dim pr As SelectExpression = Nothing
                                     If ev Is Nothing Then
                                         pr = _q.GetProperty(CType(b._exp.Value, ComputedValue).Alias)
                                     Else
-                                        pr = ev.OrmProp
+                                        pr = ev.Expression
                                     End If
                                     If pr.Table Is Nothing Then
                                         p = New FieldReference(pr.ObjectProperty)
@@ -515,14 +515,14 @@ Namespace Linq
         Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
             _cannotEval = True
             If GetType(KeyEntity).IsAssignableFrom(p.Type) Then
-                _exp = New UnaryExp(_mem, New EntityPropValue(p.Type, GetField(p.Type, _mem)))
+                _exp = New UnaryExp(_mem, New FieldValue(p.Type, GetField(p.Type, _mem)))
                 _mem = Nothing
                 '_t = p.Type
                 '_prop = m.Member.Name
             Else
                 Dim pr As SelectExpression = _q.GetProperty(p.Name)
                 If pr IsNot Nothing Then
-                    _exp = New UnaryExp(New EntityPropValue(pr))
+                    _exp = New UnaryExp(New FieldValue(pr))
                     _mem = Nothing
                 ElseIf p.Type.Name.Contains("$") Then
                     _exp = New UnaryExp(New ComputedValue(_mem))
@@ -572,9 +572,9 @@ Namespace Linq
         End Property
 
         Protected Function GetSO(ByVal exp As UnaryExp) As SortLink
-            Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
+            Dim e As FieldValue = TryCast(exp.Value, FieldValue)
             If e IsNot Nothing Then
-                Return Worm.Query.SCtor.prop(e.OrmProp.ObjectProperty)
+                Return Worm.Query.SCtor.prop(e.Expression.ObjectProperty)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
@@ -602,7 +602,7 @@ Namespace Linq
             If GetType(KeyEntity).IsAssignableFrom(m.Expression.Type) Then
                 Dim p As ParameterExpression = CType(m.Expression, ParameterExpression)
                 Dim field As String = GetField(p.Type, m.Member.Name)
-                _sort.Add(New UnaryExp(m.Member.Name, New EntityPropValue(p.Type, field)))
+                _sort.Add(New UnaryExp(m.Member.Name, New FieldValue(p.Type, field)))
                 'If _sort Is Nothing Then
                 '    _sort = Worm.Orm.Sorting.Field(field)
                 'Else
@@ -789,7 +789,7 @@ Namespace Linq
         Public Function IsOrmExp(ByVal e As UnaryExp) As Boolean
             Dim b As BinaryExp = TryCast(e, BinaryExp)
             If b Is Nothing Then
-                Return TryCast(e.Value, EntityPropValue) IsNot Nothing
+                Return TryCast(e.Value, FieldValue) IsNot Nothing
             Else
                 If IsOrmExp(b.Left) Then
                     Return True
@@ -865,7 +865,7 @@ Namespace Linq
                 If c IsNot Nothing Then
                     For Each e As UnaryExp In _sel
                         If e.Alias = c.Alias Then
-                            Dim ev As EntityPropValue = TryCast(e.Value, EntityPropValue)
+                            Dim ev As FieldValue = TryCast(e.Value, FieldValue)
                             If ev IsNot Nothing Then
                                 Return e
                             End If
@@ -899,9 +899,9 @@ Namespace Linq
             End If
 
             For Each e As UnaryExp In _sel
-                Dim ev As EntityPropValue = CType(e.Value, EntityPropValue)
+                Dim ev As FieldValue = CType(e.Value, FieldValue)
                 If ev IsNot Nothing AndAlso e.Alias = name Then
-                    Return ev.OrmProp
+                    Return ev.Expression
                 End If
             Next
 
@@ -963,7 +963,7 @@ Namespace Linq
             Dim l As New List(Of SelectExpression)
             If _sel IsNot Nothing Then
                 For Each e As UnaryExp In _sel
-                    l.Add(CType(e.Value, EntityPropValue).OrmProp)
+                    l.Add(CType(e.Value, FieldValue).Expression)
                 Next
                 Return New ReadOnlyCollection(Of SelectExpression)(l)
             Else
@@ -1003,7 +1003,7 @@ Namespace Linq
             If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
                 tt = tt.GetGenericArguments(0)
             End If
-            _sel.Add(New UnaryExp(m.Member.Name, New EntityPropValue(tt, GetField(tt, m.Member.Name))))
+            _sel.Add(New UnaryExp(m.Member.Name, New FieldValue(tt, GetField(tt, m.Member.Name))))
             Return Nothing
         End Function
 
@@ -1142,10 +1142,10 @@ Namespace Linq
                     aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(a)})
                     aq.From(_q)
                     '_q.OuterQuery = aq
-                    Dim ev As EntityPropValue = TryCast(ag.Exp.Value, EntityPropValue)
+                    Dim ev As FieldValue = TryCast(ag.Exp.Value, FieldValue)
                     Dim pr As SelectExpression = Nothing
                     If ev IsNot Nothing Then
-                        pr = ev.OrmProp
+                        pr = ev.Expression
                     Else
                         Dim cv As ComputedValue = TryCast(ag.Exp.Value, ComputedValue)
                         If cv IsNot Nothing Then
@@ -1195,7 +1195,7 @@ Namespace Linq
                     aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, 0))})
                     aq.From(_q)
                     '_q.OuterQuery = aq
-                    _q.Select(New SelectExpression() {CType(_sel(0).Value, EntityPropValue).OrmProp})
+                    _q.Select(New SelectExpression() {CType(_sel(0).Value, FieldValue).Expression})
                 Else
                     'Dim tt As Type = _mem.Member.DeclaringType
                     'If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then

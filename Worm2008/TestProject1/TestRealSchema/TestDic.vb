@@ -7,6 +7,7 @@ Imports Worm.Database
 Imports Worm.Entities
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm.Misc
 
 <TestClass()> _
 Public Class TestDic

@@ -834,7 +834,26 @@ Namespace Query.Database
             Dim cols As New StringBuilder
 
             If innerColumns IsNot Nothing Then
-                Throw New NotImplementedException
+                For Each p As SelectExpression In selList
+                    Dim f As String = If(String.IsNullOrEmpty(p.FieldAlias), p.PropertyAlias, p.FieldAlias)
+                    Dim idx As Integer = innerColumns.IndexOf(f)
+                    If idx < 0 Then
+                        Dim m As MapField2Column = os.GetFieldColumnMap(f)
+                        f = If(String.IsNullOrEmpty(p.Column), m._columnName, p.Column)
+
+                        idx = innerColumns.IndexOf(f)
+
+                        If idx < 0 Then
+                            Throw New QueryCmdException(String.Format("Cannot find column {0} in inner query", f), query)
+                        End If
+                    End If
+                    cols.Append("src_t").Append(i).Append(s.Selector).Append(f)
+                    cols.Append(", ")
+                    columnAliases.Add(f)
+                Next
+                cols.Length -= 2
+                sb.Append(cols.ToString)
+                b = True
             Else
                 Dim tbl As SourceFragment = Nothing
                 If query.FromClaus IsNot Nothing Then

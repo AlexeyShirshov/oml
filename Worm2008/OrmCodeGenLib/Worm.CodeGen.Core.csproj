@@ -88,6 +88,7 @@
     <Compile Include="Descriptors\SelfRelationDescription.cs" />
     <Compile Include="Descriptors\SelfRelationTarget.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="OrmCodeDomGenerator.Delegates.cs" />
     <Compile Include="OrmCodeGenHelper.cs" />
     <Compile Include="OrmCodeGenNameHelper.cs" />
     <Compile Include="CodeDomPatterns.cs" />

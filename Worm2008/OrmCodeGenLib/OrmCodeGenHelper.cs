@@ -12,7 +12,7 @@ namespace Worm.CodeGen.Core
         {
             string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity, true) + ".Properties";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className),
-                                             propertyDesc.Name);
+                                             propertyDesc.PropertyName);
         }
 
         public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription)
@@ -29,7 +29,7 @@ namespace Worm.CodeGen.Core
 
         public static CodeExpression GetPropertyReferenceExpression(PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
-            return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity), propertyDesc.Name);
+            return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity), propertyDesc.PropertyName);
         }
     }
 }

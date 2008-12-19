@@ -210,7 +210,7 @@ Namespace Query
         Private _execCnt As Integer
         Private _schema As ObjectMappingEngine
         Private _cacheSort As Boolean
-        'Private _autoFields As Boolean
+        Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _pod As Pair(Of Type, IEntitySchema)
         Private _createType As ObjectSource
@@ -231,14 +231,14 @@ Namespace Query
             'End Set
         End Property
 
-        'Public Property AutoFields() As Boolean
-        '    Get
-        '        Return _autoFields
-        '    End Get
-        '    Set(ByVal value As Boolean)
-        '        _autoFields = value
-        '    End Set
-        'End Property
+        Public Property AutoFields() As Boolean
+            Get
+                Return _autoFields
+            End Get
+            Set(ByVal value As Boolean)
+                _autoFields = value
+            End Set
+        End Property
 
         Public Property CommandTimed() As Nullable(Of Integer)
             Get
@@ -634,6 +634,10 @@ l1:
             If SelectList IsNot Nothing Then
                 If _createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(_createType.GetRealType(schema)) Then
                     cl.AddRange(SelectList)
+                    For Each se As SelectExpression In SelectList
+                        If _from IsNot Nothing Then Exit For
+                        CheckFrom(se)
+                    Next
                 Else
                     If IsFTS AndAlso GetSelectedTypes(schema).Count > 1 Then
                         _appendMain = True
@@ -648,15 +652,7 @@ l1:
                                 types.Add(os, schema.GetObjectSchema(t))
                             End If
                         End If
-                        If _from Is Nothing AndAlso se.Aggregate IsNot Nothing Then
-                            Dim a As Aggregate = TryCast(se.Aggregate, [Aggregate])
-                            If a IsNot Nothing Then
-                                Dim ep As EntityPropValue = TryCast(a.Expression.Value, EntityPropValue)
-                                If ep IsNot Nothing AndAlso ep.OrmProp.ObjectSource IsNot Nothing Then
-                                    _from = New FromClause(ep.OrmProp.ObjectSource)
-                                End If
-                            End If
-                        End If
+                        CheckFrom(se)
                     Next
                     If types.Count > 0 Then
                         Dim pdic As New Dictionary(Of Type, IDictionary)
@@ -668,25 +664,27 @@ l1:
 
                                 Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
                                 If col.Count > 0 Then
-                                    For Each dice As DictionaryEntry In dic
-                                        Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
-                                        If (pk._behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                            Dim find As Boolean
-                                            For Each fld As SelectExpression In col
-                                                If fld.PropertyAlias = pk.PropertyAlias Then
-                                                    find = True
-                                                    Exit For
-                                                End If
-                                            Next
-                                            If Not find Then
-                                                Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
-                                                se.Attributes = pk._behavior
-                                                If Not cl.Contains(se) Then
-                                                    cl.Add(se)
+                                    If _autoFields Then
+                                        For Each dice As DictionaryEntry In dic
+                                            Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
+                                            If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                                Dim find As Boolean
+                                                For Each fld As SelectExpression In col
+                                                    If fld.PropertyAlias = pk.PropertyAlias Then
+                                                        find = True
+                                                        Exit For
+                                                    End If
+                                                Next
+                                                If Not find Then
+                                                    Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
+                                                    se.Attributes = pk.Behavior
+                                                    If Not cl.Contains(se) Then
+                                                        cl.Add(se)
+                                                    End If
                                                 End If
                                             End If
-                                        End If
-                                    Next
+                                        Next
+                                    End If
                                     cl.AddRange(col)
                                 End If
                             End If
@@ -728,17 +726,25 @@ l1:
                             cl.Add(se)
                         End If
                     Next
-                ElseIf _from IsNot Nothing AndAlso _from.ObjectSource Is Nothing Then
-                    Dim s As IEntitySchema = GetSchemaForCreateType(schema)
-                    If s IsNot Nothing Then
-                        For Each m As MapField2Column In s.GetFieldColumnMap
-                            Dim se As New SelectExpression(m._tableName, m._columnName)
-                            se.Attributes = m._newattributes
-                            se.PropertyAlias = m._propertyAlias
-                            cl.Add(se)
-                        Next
-                    Else
-                        Throw New NotSupportedException
+                ElseIf _from IsNot Nothing Then
+                    If _from.Table IsNot Nothing Then
+                        Dim s As IEntitySchema = GetSchemaForCreateType(schema)
+                        If s IsNot Nothing Then
+                            For Each m As MapField2Column In s.GetFieldColumnMap
+                                Dim se As New SelectExpression(m._tableName, m._columnName)
+                                se.Attributes = m._newattributes
+                                se.PropertyAlias = m._propertyAlias
+                                cl.Add(se)
+                            Next
+                        Else
+                            Throw New NotSupportedException
+                        End If
+                    ElseIf _from.Query IsNot Nothing Then
+                        If SelectTypes.Count > 1 Then
+                            Throw New NotSupportedException
+                        Else
+                            AddTypeFields(schema, cl, SelectTypes(0), New ObjectSource(New ObjectAlias(_from.Query)))
+                        End If
                     End If
                 Else
                     For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
@@ -774,6 +780,28 @@ l1:
             Return f
         End Function
 
+        Private Sub CheckFrom(ByVal se As SelectExpression)
+            If _from Is Nothing Then
+                If se.Aggregate IsNot Nothing Then
+                    Dim a As Aggregate = TryCast(se.Aggregate, [Aggregate])
+                    If a IsNot Nothing Then
+                        Dim ep As FieldValue = TryCast(a.Expression.Value, FieldValue)
+                        If ep IsNot Nothing Then
+                            If ep.Expression.ObjectSource IsNot Nothing Then
+                                _from = New FromClause(ep.Expression.ObjectSource)
+                            ElseIf ep.Expression.Table IsNot Nothing Then
+                                _from = New FromClause(ep.Expression.Table)
+                            Else
+                                Throw New NotSupportedException
+                            End If
+                        End If
+                    End If
+                ElseIf se.Table IsNot Nothing Then
+                    _from = New FromClause(se.Table)
+                End If
+            End If
+        End Sub
+
         Private Function HasInQuery(ByVal os As ObjectSource, ByVal js As List(Of QueryJoin)) As Boolean
             If FromClaus IsNot Nothing AndAlso FromClaus.ObjectSource.Equals(os) Then
                 Return True
@@ -794,15 +822,21 @@ l1:
             Return False
         End Function
 
-        Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), ByVal tp As Pair(Of ObjectSource, Boolean?))
+        Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
+                                  ByVal tp As Pair(Of ObjectSource, Boolean?), Optional ByVal os As ObjectSource = Nothing)
             Dim t As Type = tp.First.GetRealType(schema)
+            If os Is Nothing Then
+                os = tp.First
+            End If
             If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse WithLoad(tp, schema) Then
-                cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
+                cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
             Else
-                Dim pk As String = schema.GetPrimaryKeys(t)(0).PropertyAlias
-                Dim se As New SelectExpression(tp.First, pk)
-                se.Attributes = Field2DbRelations.PK
-                cl.Add(se)
+                For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t)
+                    Dim se As New SelectExpression(os, c.PropertyAlias)
+                    se.Attributes = c.Behavior
+                    se.Column = c.Column
+                    cl.Add(se)
+                Next
             End If
         End Sub
 

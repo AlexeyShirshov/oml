@@ -154,7 +154,7 @@ Public Class ObjectMappingEngine
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    column = New EntityPropertyAttribute(propertyAlias)
+                    column = New EntityPropertyAttribute(propertyAlias, String.Empty)
                     column.Column = propertyAlias
                 End If
             End If
@@ -185,7 +185,7 @@ Public Class ObjectMappingEngine
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    column = New EntityPropertyAttribute(propertyAlias)
+                    column = New EntityPropertyAttribute(propertyAlias, String.Empty)
                     column.Column = propertyAlias
                 End If
             End If
@@ -756,7 +756,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(original_type, New EntityPropertyAttribute(propertyAlias))
+        Return GetProperty(original_type, New EntityPropertyAttribute(propertyAlias, String.Empty))
     End Function
 
     Public Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -764,7 +764,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(t, schema, New EntityPropertyAttribute(propertyAlias))
+        Return GetProperty(t, schema, New EntityPropertyAttribute(propertyAlias, String.Empty))
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -772,7 +772,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(original_type, Nothing)(New EntityPropertyAttribute(propertyAlias)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(original_type, Nothing)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -780,7 +780,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(t, oschema)(New EntityPropertyAttribute(propertyAlias)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(t, oschema)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
     End Function
 
     Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of EntityPropertyAttribute)
@@ -1107,14 +1107,14 @@ Public Class ObjectMappingEngine
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal t As Type) As SelectExpression
         Dim se As New SelectExpression(t, c.PropertyAlias)
         se.Column = c.Column
-        se.Attributes = c._behavior
+        se.Attributes = c.Behavior
         Return se
     End Function
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As ObjectSource) As SelectExpression
         Dim se As New SelectExpression(os, c.PropertyAlias)
         se.Column = c.Column
-        se.Attributes = c._behavior
+        se.Attributes = c.Behavior
         Return se
     End Function
 
@@ -1993,7 +1993,7 @@ Public Class ObjectMappingEngine
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
         For Each c As EntityPropertyAttribute In arr
-            If (c._behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+            If (c.Behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                 sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
             End If
         Next

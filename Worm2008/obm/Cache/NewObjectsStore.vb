@@ -68,7 +68,7 @@ Namespace Cache
             Dim l As New List(Of PKDesc)
             For Each de As DictionaryEntry In dic
                 Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                If (c._behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim id As Object = GetPKValue(t, c.PropertyAlias, pi.PropertyType, pi.DeclaringType)
                     l.Add(New PKDesc(c.PropertyAlias, id))

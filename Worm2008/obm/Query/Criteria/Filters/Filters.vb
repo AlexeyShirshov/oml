@@ -120,7 +120,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-            Return schema.ChangeValueType(schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema)), New EntityPropertyAttribute(Template.PropertyAlias), v)
+            Return schema.ChangeValueType(schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema)), New EntityPropertyAttribute(Template.PropertyAlias, String.Empty), v)
         End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean

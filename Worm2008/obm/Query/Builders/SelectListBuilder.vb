@@ -10,6 +10,10 @@ Namespace Query
             Return prop(New ObjectSource(t), propertyAlias)
         End Function
 
+        Public Shared Function prop(ByVal t As Type, ByVal propertyAlias As String, ByVal fieldAlias As String) As FCtor
+            Return prop(New ObjectSource(t), propertyAlias, fieldAlias)
+        End Function
+
         Public Shared Function prop(ByVal entityName As String, ByVal propertyAlias As String) As FCtor
             Return prop(New ObjectSource(entityName), propertyAlias)
         End Function
@@ -21,6 +25,12 @@ Namespace Query
         Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String) As FCtor
             Dim f As New FCtor
             f.GetAllProperties.Add(New SelectExpression(os, propertyAlias))
+            Return f
+        End Function
+
+        Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal fieldAlias As String) As FCtor
+            Dim f As New FCtor
+            f.GetAllProperties.Add(New SelectExpression(os, propertyAlias, fieldAlias))
             Return f
         End Function
 
@@ -101,6 +111,12 @@ Namespace Query
         Public Shared Function count(ByVal [alias] As String) As FCtor
             Dim f As New FCtor
             f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Count, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function Exp(ByVal expression As SelectExpression) As FCtor
+            Dim f As New FCtor
+            f.GetAllProperties.Add(expression)
             Return f
         End Function
 #End Region
@@ -192,6 +208,11 @@ Namespace Query
 
         Public Function Add_count(ByVal [alias] As String) As FCtor
             GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Count, [alias])))
+            Return Me
+        End Function
+
+        Public Function AddExp(ByVal expression As SelectExpression) As FCtor
+            GetAllProperties.Add(expression)
             Return Me
         End Function
 #End Region

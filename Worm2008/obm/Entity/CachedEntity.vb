@@ -861,7 +861,12 @@ l1:
                             ElseIf tt.IsArray Then
                                 elems.Add(New Pair(Of String, Object)(c.PropertyAlias, pi.GetValue(Me, Nothing)))
                             ElseIf tt Is GetType(XmlDocument) Then
-                                xmls.Add(New Pair(Of String, String)(c.PropertyAlias, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
+                                Dim xdoc As XmlDocument = CType(pi.GetValue(Me, Nothing), XmlDocument)
+                                If xdoc Is Nothing Then
+                                    xmls.Add(New Pair(Of String, String)(c.PropertyAlias, Nothing))
+                                Else
+                                    xmls.Add(New Pair(Of String, String)(c.PropertyAlias, xdoc.OuterXml))
+                                End If
                             Else
                                 If v IsNot Nothing Then
                                     .WriteAttributeString(c.PropertyAlias, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
@@ -1652,7 +1657,7 @@ l1:
         End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-            Dim c As New EntityPropertyAttribute(propertyAlias)
+            Dim c As New EntityPropertyAttribute(propertyAlias, String.Empty)
             Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList()
             Dim idx As Integer = arr.BinarySearch(c)
             If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias)

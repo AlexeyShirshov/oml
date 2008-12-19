@@ -304,6 +304,12 @@ namespace Worm.CodeGen.Core
 						propertyElement.SetAttribute("obsoleteDescription", property.ObsoleteDescripton);
 					if (property.EnablePropertyChanged)
 						propertyElement.SetAttribute("enablePropertyChanged", XmlConvert.ToString(property.EnablePropertyChanged));
+                    if (!string.IsNullOrEmpty(property.DbTypeName))
+                        propertyElement.SetAttribute("dbTypeName", property.DbTypeName);
+                    if (property.DbTypeSize.HasValue)
+                        propertyElement.SetAttribute("dbTypeSize", XmlConvert.ToString(property.DbTypeSize.Value));
+                    if (property.DbTypeNullable.HasValue)
+                        propertyElement.SetAttribute("dbTypeNullable", XmlConvert.ToString(property.DbTypeNullable.Value));
                     propertiesNode.AppendChild(propertyElement);
                 }
                 entityElement.AppendChild(propertiesNode);
@@ -374,6 +380,9 @@ namespace Worm.CodeGen.Core
 			if (_ormObjectsDef.EnableCommonPropertyChangedFire)
 				_ormXmlDocumentMain.DocumentElement.SetAttribute("enableCommonPropertyChangedFire",
 				                                                 XmlConvert.ToString(_ormObjectsDef.EnableCommonPropertyChangedFire));
+            if (!_ormObjectsDef.GenerateEntityName)
+                _ormXmlDocumentMain.DocumentElement.SetAttribute("generateEntityName",
+                                                                 XmlConvert.ToString(_ormObjectsDef.GenerateEntityName));
 
             StringBuilder commentBuilder = new StringBuilder();
             foreach (string comment in _ormObjectsDef.SystemComments)

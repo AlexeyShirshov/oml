@@ -737,7 +737,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Protected MustOverride Function GetColumns() As List(Of EntityPropertyAttribute)
+        Protected MustOverride Function GetColumns() As List(Of SelectExpression)
         Protected MustOverride Function GetWithLoad() As Boolean
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -748,7 +748,7 @@ Namespace Database.Storedprocs
             _donthit = True
             'Dim ce As New CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
-            mgr.LoadMultipleObjectsClm(Of T)(cmd, rr, GetColumns)
+            mgr.LoadMultipleObjects(Of T)(cmd, rr, GetColumns)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
@@ -887,15 +887,15 @@ Namespace Database.Storedprocs
                 Return _name
             End Function
 
-            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute)
-                Dim l As New List(Of EntityPropertyAttribute)
+            Protected Overrides Function GetColumns() As List(Of SelectExpression)
+                Dim l As New List(Of SelectExpression)
                 For i As Integer = 0 To _cols.Length - 1
                     Dim c As String = _cols(i)
+                    Dim se As New SelectExpression(GetType(T2), c)
                     If Array.IndexOf(_pk, i) >= 0 Then
-                        l.Add(New EntityPropertyAttribute(c, Field2DbRelations.PK))
-                    Else
-                        l.Add(New EntityPropertyAttribute(c))
+                        se.Attributes = Field2DbRelations.PK
                     End If
+                    l.Add(se)
                 Next
                 Return l
             End Function
@@ -1020,13 +1020,13 @@ Namespace Database.Storedprocs
                 End If
                 Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
-                Dim cols As IList(Of SelectExpression) = GetColumns.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
-                     New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
+                Dim cols As IList(Of SelectExpression) = GetColumns() '.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
+                'New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
                 mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _oschema, _cm)
                 _loaded += loaded
             End Sub
 
-            Protected MustOverride Function GetColumns() As List(Of EntityPropertyAttribute)
+            Protected MustOverride Function GetColumns() As List(Of SelectExpression)
             'Protected MustOverride Function GetWithLoad() As Boolean
 
             Public Function GetObjects(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
