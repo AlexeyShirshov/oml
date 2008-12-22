@@ -3,7 +3,6 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
-Imports Worm.Database.Criteria
 Imports Worm.Database
 Imports Worm.Entities
 Imports Worm.Entities.Meta

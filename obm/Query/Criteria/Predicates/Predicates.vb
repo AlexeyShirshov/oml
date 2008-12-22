@@ -5,6 +5,8 @@ Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria
 Imports System.Collections.Generic
+Imports Worm.Query
+Imports Worm.Entities.Meta
 
 Namespace Criteria
 
@@ -74,7 +76,13 @@ Namespace Criteria
 
         Protected MustOverride Function GetLink(ByVal fl As IFilter) As PredicateLink
         Protected MustOverride Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
-        Protected MustOverride Function CreateJoinFilter(ByVal t As Type, ByVal joinField As String, ByVal fo As FilterOperation) As IFilter
+        Protected MustOverride Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As IFilter
+        Protected MustOverride Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As IFilter
+
+        Protected Function cjf(ByVal t As Type, ByVal joinPropertyAlias As String, ByVal fo As FilterOperation) As IFilter
+            Dim j As IFilter = CreateJoinFilter(New ObjectProperty(t, joinPropertyAlias), fo)
+            Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
+        End Function
 
         Public Function eq(ByVal value As IParamFilterValue) As PredicateLink
             If value Is Nothing OrElse value Is DBNull.Value Then
@@ -107,6 +115,18 @@ Namespace Criteria
                 Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.Equal))
             End If
         End Function
+
+        Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
+            Return GetLink(CreateJoinFilter(New ObjectProperty(t, propertyAlias), FilterOperation.Equal))
+        End Function
+
+        Public Function eq(ByVal op As ObjectProperty) As PredicateLink
+            Return GetLink(CreateJoinFilter(op, FilterOperation.Equal))
+        End Function
+
+        'Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
+        '    Return GetLink(CreateJoinFilter(New ObjectProperty(t, propertyAlias), FilterOperation.Equal))
+        'End Function
 
         Public Function not_eq(ByVal value As IKeyEntity) As PredicateLink
             If value Is Nothing Then
@@ -182,13 +202,13 @@ Namespace Criteria
         Public Function exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
             'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
             'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.Exists))
-            Return GetLink(CreateJoinFilter(t, joinField, FilterOperation.Exists))
+            Return GetLink(cjf(t, joinField, FilterOperation.Exists))
         End Function
 
         Public Function not_exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
             'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
             'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.NotExists))
-            Return GetLink(CreateJoinFilter(t, joinField, FilterOperation.NotExists))
+            Return GetLink(cjf(t, joinField, FilterOperation.NotExists))
         End Function
 
         Public Function exists(ByVal t As Type) As PredicateLink
@@ -259,13 +279,13 @@ Namespace Criteria
             _op = New ObjectProperty(t, propertyAlias)
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             '_os = os
             '_f = propertyAlias
             _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, _
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
             '_os = os
@@ -317,9 +337,14 @@ Namespace Criteria
             Return New PredicateLink(_op.ObjectSource, CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
-        Protected Overrides Function CreateJoinFilter(ByVal t As System.Type, ByVal joinField As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(ObjectProp, t, joinField, FilterOperation.Equal)
-            Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
+        Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Dim j As New JoinFilter(ObjectProp, op, FilterOperation.Equal)
+            Return j
+        End Function
+
+        Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
+            Dim j As New JoinFilter(t, column, ObjectProp, FilterOperation.Equal)
+            Return j
         End Function
     End Class
 
@@ -377,9 +402,14 @@ Namespace Criteria
             Return New PredicateLink(Table, CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
-        Protected Overrides Function CreateJoinFilter(ByVal t As System.Type, ByVal joinField As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(Table, Column, t, joinField, FilterOperation.Equal)
-            Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
+        Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Dim j As New JoinFilter(Table, Column, op, FilterOperation.Equal)
+            Return j
+        End Function
+
+        Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
+            Dim j As New JoinFilter(Table, column, t, column, FilterOperation.Equal)
+            Return j
         End Function
     End Class
 
@@ -438,7 +468,11 @@ Namespace Criteria
             Return New PredicateLink(CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
-        Protected Overrides Function CreateJoinFilter(ByVal t As System.Type, ByVal joinField As String, ByVal fo As FilterOperation) As Core.IFilter
+        Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
             Throw New NotImplementedException
         End Function
     End Class
@@ -506,7 +540,11 @@ Namespace Criteria
             Return New PredicateLink(CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
-        Protected Overrides Function CreateJoinFilter(ByVal t As System.Type, ByVal joinField As String, ByVal fo As FilterOperation) As Core.IFilter
+        Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
             Throw New NotImplementedException
         End Function
     End Class

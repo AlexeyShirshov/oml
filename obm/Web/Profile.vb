@@ -3,7 +3,6 @@ Imports System.Web.Profile
 Imports Worm.Entities
 Imports System.Configuration
 Imports Worm.Database
-Imports Worm.Database.Criteria
 Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Query

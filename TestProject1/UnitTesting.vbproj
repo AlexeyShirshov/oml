@@ -91,6 +91,7 @@
     <Compile Include="Advanced\SimpleModel.vb" />
     <Compile Include="Advanced\SimpleObj.vb" />
     <Compile Include="Advanced\TestComplexEntities.vb" />
+    <Compile Include="Aliases\JoinAliases.vb" />
     <Compile Include="Aliases\TestFilters.vb" />
     <Compile Include="App_Code\MyMembership.vb" />
     <Compile Include="App_Code\MyRoles.vb" />

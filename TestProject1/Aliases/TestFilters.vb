@@ -5,7 +5,6 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Entities
 Imports Worm.Query
 Imports Worm.Database
-Imports Worm.Database.Criteria
 Imports Worm
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
@@ -49,23 +48,9 @@ Imports Worm.Criteria.Joins
     '
 #End Region
 
-    <TestMethod()> Public Sub TestJoin()
-        Dim t1 As New ObjectAlias(GetType(Table1))
-        Dim t2 As New ObjectAlias(GetType(Table1))
-
-        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.From(t1).Join(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).Select(FCtor.count)
-
-        Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q2.From(t1).Select(FCtor.count)
-
-        Assert.AreEqual(2, q.SingleSimple(Of Integer))
-        Assert.AreEqual(3, q2.SingleSimple(Of Integer))
-    End Sub
-
     <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong()
-        Dim t1 As New ObjectAlias(GetType(Table1))
+        Dim t1 As New EntityAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -76,7 +61,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> _
     Public Sub TestFilter()
-        Dim t1 As New ObjectAlias(GetType(Table1))
+        Dim t1 As New EntityAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -87,7 +72,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong2()
-        Dim t1 As New ObjectAlias(GetType(Table1))
+        Dim t1 As New EntityAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -98,7 +83,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> _
     Public Sub TestSort()
-        Dim t1 As New ObjectAlias(GetType(Table1))
+        Dim t1 As New EntityAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -106,4 +91,6 @@ Imports Worm.Criteria.Joins
 
         Assert.AreEqual(2, q.Single(Of Table1).ID)
     End Sub
+
+
 End Class

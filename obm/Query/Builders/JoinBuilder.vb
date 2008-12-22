@@ -29,14 +29,14 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal [alias] As ObjectAlias) As JoinCondition
+        Public Shared Function join(ByVal [alias] As EntityAlias) As JoinCondition
             Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.Join, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal os As ObjectSource) As JoinCondition
+        Public Shared Function join(ByVal os As EntityUnion) As JoinCondition
             Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.Join, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
@@ -52,6 +52,13 @@ Namespace Query
 
         Public Shared Function left_join(ByVal entityName As String) As JoinCondition
             Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
+
+        Public Shared Function left_join(ByVal [alias] As EntityAlias) As JoinCondition
+            Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -189,7 +196,7 @@ Namespace Query
             Return New JoinLink(m2mType, _j)
         End Function
 
-        Public Function onM2M(ByVal m2mOS As ObjectSource) As JoinLink
+        Public Function onM2M(ByVal m2mOS As EntityUnion) As JoinLink
             Return New JoinLink(m2mOS, _j)
         End Function
 
@@ -211,8 +218,8 @@ Namespace Query
             Return c
         End Function
 
-        Public Function [on](ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As CriteriaJoin
-            Dim jf As New JoinFilter(New ObjectSource([alias]), propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+        Public Function [on](ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(New EntityUnion([alias]), propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
             Dim c As New CriteriaJoin(jf, _j)
             Return c
         End Function
@@ -229,22 +236,22 @@ Namespace Query
             Return c
         End Function
 
-        Public Shared Function Create(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaJoin
-            Dim jf As New JoinFilter(entityName, propertyAlias, CType(Nothing, String), Nothing, FilterOperation.Equal)
-            Dim c As New CriteriaJoin(jf, Nothing)
-            Return c
-        End Function
+        'Public Shared Function Create(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaJoin
+        '    Dim jf As New JoinFilter(entityName, propertyAlias, CType(Nothing, String), Nothing, FilterOperation.Equal)
+        '    Dim c As New CriteriaJoin(jf, Nothing)
+        '    Return c
+        'End Function
 
-        Public Shared Function Create(ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
-            Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
-            Dim c As New CriteriaJoin(jf, Nothing)
-            Return c
-        End Function
+        'Public Shared Function Create(ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
+        '    Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+        '    Dim c As New CriteriaJoin(jf, Nothing)
+        '    Return c
+        'End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
-            Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
-            Dim c As New CriteriaJoin(jf, Nothing)
-            Return c
-        End Function
+        'Public Shared Function Create(ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
+        '    Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+        '    Dim c As New CriteriaJoin(jf, Nothing)
+        '    Return c
+        'End Function
     End Class
 End Namespace

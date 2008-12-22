@@ -6,7 +6,6 @@ Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities
-Imports Worm.Database.Criteria
 Imports Worm.Sorting
 Imports Worm.Criteria.Values
 Imports Worm.Entities.Meta
@@ -818,7 +817,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim cc As ICollection(Of Table1) = mgr.FindTop(Of Table1)(10, Nothing, Nothing, True)
 
-            Assert.AreEqual(3, mgr.GetLastExecitionResult.Count)
+            Assert.AreEqual(3, mgr.GetLastExecitionResult.RowCount)
             Assert.IsFalse(mgr.GetLastExecitionResult.CacheHit)
 
             System.Diagnostics.Trace.WriteLine(mgr.GetLastExecitionResult.ExecutionTime.ToString)

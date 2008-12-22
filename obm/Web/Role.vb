@@ -3,7 +3,6 @@ Imports System.Web.Security
 Imports Worm
 Imports Worm.Entities
 Imports Worm.Database
-Imports Worm.Database.Criteria
 Imports Worm.Criteria
 Imports Worm.Query
 

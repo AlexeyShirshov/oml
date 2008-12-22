@@ -2,6 +2,7 @@
 Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports Worm.Criteria.Core
+Imports Worm.Query
 
 Namespace Criteria.Joins
     Public Enum JoinType
@@ -20,8 +21,8 @@ Namespace Criteria.Joins
         Protected _condition As Core.IFilter
         'Protected _type As Type
         'Protected _en As String
-        Protected _src As ObjectSource
-        Private _jos As ObjectSource
+        Protected _src As EntityUnion
+        Private _jos As EntityUnion
         Private _key As String
 
         Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
@@ -31,48 +32,50 @@ Namespace Criteria.Joins
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _src = New ObjectSource(type)
+            _src = New EntityUnion(type)
             _joinType = joinType
             _condition = condition
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+        Public Sub New(ByVal os As EntityUnion, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _src = os
             _joinType = joinType
             _condition = condition
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _src = New ObjectSource([alias])
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _src = New EntityUnion([alias])
             _joinType = joinType
             _condition = condition
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _src = New ObjectSource(entityName)
+            _src = New EntityUnion(entityName)
             _joinType = joinType
             _condition = condition
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityType As Type)
-            _src = New ObjectSource(type)
+            _src = New EntityUnion(type)
             _joinType = joinType
             _condition = Condition
-            _jos = New ObjectSource(joinEntityType)
+            _jos = New EntityUnion(joinEntityType)
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityName As String)
-            _src = New ObjectSource(type)
+            _src = New EntityUnion(type)
             _joinType = joinType
             _condition = Condition
-            _jos = New ObjectSource(joinEntityName)
+            _jos = New EntityUnion(joinEntityName)
         End Sub
 
         Public Shared Function IsEmpty(ByVal j As QueryJoin) As Boolean
             Return j Is Nothing
         End Function
 
-        Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal schema As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal schema As StmtGenerator, _
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, _
+            ByVal os As EntityUnion) As String
             'If IsEmpty Then
             '    Throw New InvalidOperationException("Object must be created")
             'End If
@@ -95,14 +98,25 @@ Namespace Criteria.Joins
                 tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
             End If
 
+            Dim os_ As EntityUnion = ObjectSource
+            If os_ Is Nothing Then
+                os_ = os
+            End If
+
             Dim alTable As SourceFragment = tbl
             'Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
-            If Not almgr.ContainsKey(tbl, ObjectSource) Then
-                almgr.AddTable(tbl, ObjectSource, pname)
+            If Not almgr.ContainsKey(tbl, os_) Then
+                almgr.AddTable(tbl, os_, pname)
             End If
-            'Dim table As String = _table
-            'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, ObjectSource) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname, Nothing)
+
+            For Each f As IFilter In Condition.GetAllFilters
+                Dim jf As JoinFilter = TryCast(f, JoinFilter)
+                If jf IsNot Nothing Then
+                    jf.SetUnion(os_)
+                End If
+            Next
+
+            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname, Nothing)
         End Function
 
         Public Function JoinTypeString() As String
@@ -198,11 +212,11 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        Public Property M2MObjectSource() As ObjectSource
+        Public Property M2MObjectSource() As EntityUnion
             Get
                 Return _jos
             End Get
-            Set(ByVal value As ObjectSource)
+            Set(ByVal value As EntityUnion)
                 _jos = value
             End Set
         End Property
@@ -212,7 +226,7 @@ Namespace Criteria.Joins
                 Return _jos.Type
             End Get
             Set(ByVal value As Type)
-                _jos = New ObjectSource(value)
+                _jos = New EntityUnion(value)
             End Set
         End Property
 
@@ -221,15 +235,15 @@ Namespace Criteria.Joins
                 Return _jos.EntityName
             End Get
             Set(ByVal value As String)
-                _jos = New ObjectSource(value)
+                _jos = New EntityUnion(value)
             End Set
         End Property
 
-        Public Property ObjectSource() As ObjectSource
+        Public Property ObjectSource() As EntityUnion
             Get
                 Return _src
             End Get
-            Friend Set(ByVal value As ObjectSource)
+            Friend Set(ByVal value As EntityUnion)
                 _src = value
             End Set
         End Property
@@ -313,11 +327,11 @@ Namespace Criteria.Joins
             Return New OrmFilterTemplate(op, oper)
         End Function
 
-        Protected Function CreateOrmFilter(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As Core.TemplateBase
+        Protected Function CreateOrmFilter(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal oper As FilterOperation) As Core.TemplateBase
             Return New OrmFilterTemplate(os, propertyAlias, oper)
         End Function
 
-        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As JoinFilter
+        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal oper As FilterOperation) As JoinFilter
             Return New JoinFilter(table, column, os, propertyAlias, oper)
         End Function
 

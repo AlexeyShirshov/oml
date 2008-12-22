@@ -1,6 +1,6 @@
-﻿Namespace Entities
+﻿Namespace Query
 
-    Public Class ObjectAlias
+    Public Class EntityAlias
         Private _t As Type
         Private _en As String
         Private _q As Worm.Query.QueryCmd
@@ -76,10 +76,10 @@
         'End Function
     End Class
 
-    Public Class ObjectSource
+    Public Class EntityUnion
         Private _t As Type
         Private _en As String
-        Private _a As ObjectAlias
+        Private _a As EntityAlias
 
         Public Sub New(ByVal t As Type)
             If t Is Nothing Then
@@ -95,7 +95,7 @@
             _en = entityName
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias)
+        Public Sub New(ByVal [alias] As EntityAlias)
             If [alias] Is Nothing Then
                 Throw New ArgumentNullException("alias")
             End If
@@ -103,10 +103,10 @@
         End Sub
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, ObjectSource))
+            Return Equals(TryCast(obj, EntityUnion))
         End Function
 
-        Public Overloads Function Equals(ByVal obj As ObjectSource) As Boolean
+        Public Overloads Function Equals(ByVal obj As EntityUnion) As Boolean
             If obj Is Nothing Then
                 Return False
             End If
@@ -171,7 +171,7 @@
             End Get
         End Property
 
-        Public ReadOnly Property ObjectAlias() As ObjectAlias
+        Public ReadOnly Property ObjectAlias() As EntityAlias
             Get
                 Return _a
             End Get
@@ -204,25 +204,25 @@
     End Class
 
     Public Structure ObjectProperty
-        Public ReadOnly ObjectSource As ObjectSource
+        Public ReadOnly ObjectSource As EntityUnion
         Public ReadOnly Field As String
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
-            Me.ObjectSource = New ObjectSource(entityName)
+            Me.ObjectSource = New EntityUnion(entityName)
             Me.Field = propertyAlias
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
-            Me.ObjectSource = New ObjectSource(t)
+            Me.ObjectSource = New EntityUnion(t)
             Me.Field = propertyAlias
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
-            Me.ObjectSource = New ObjectSource([alias])
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
+            Me.ObjectSource = New EntityUnion([alias])
             Me.Field = propertyAlias
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             Me.ObjectSource = os
             Me.Field = propertyAlias
         End Sub

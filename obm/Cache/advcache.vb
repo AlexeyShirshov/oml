@@ -63,12 +63,12 @@ Namespace Cache
                 Else
                     l = mc.GetLoadedCount(Of T)(c)
                 End If
-                If l < er.Count Then
+                If l < er.RowCount Then
                     'Dim tt As TimeSpan = er.FetchTime + er.ExecutionTime
                     ''Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
                     'Dim slt As Double = (er.FetchTime.TotalMilliseconds / er.Count)
                     'Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (er.Count - l) * 1.1)
-                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, l) Then
+                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, l) Then
                         c.LoadObjects()
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
@@ -311,7 +311,7 @@ Namespace Cache
                 Next
                 If loaded < l.Count Then
                     Dim er As OrmManager.ExecutionResult = mc.GetLastExecitionResult
-                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
+                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, loaded) Then
                         'c = FromWeakList(Of T)(weak_list, mc)
                         c.LoadObjects()
                     Else

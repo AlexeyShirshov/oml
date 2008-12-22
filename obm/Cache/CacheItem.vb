@@ -21,6 +21,11 @@ Namespace Cache
             If col IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
+        Friend Sub New(ByVal r As ReadonlyMatrix, ByVal cache As CacheBase)
+            _col = CType(cache.ListConverter.ToWeakList(r), System.Collections.ICollection)
+            If r IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
+        End Sub
+
         Public Overridable Function GetCount(ByVal mgr As OrmManager) As Integer
             Return _col.Count
         End Function
@@ -52,6 +57,37 @@ Namespace Cache
             Else
                 Return CType(_col, ReadOnlyObjectList(Of T))
             End If
+        End Function
+
+        Public Overridable Function GetMatrix(ByVal mgr As OrmManager, _
+            ByVal withLoad() As Boolean, ByVal created As Boolean, _
+            ByVal start As Integer, ByVal length As Integer, _
+            ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix
+
+            Return mgr.ListConverter.FromWeakList(_col, mgr, start, length, withLoad, created, successed)
+            'If Not (start = 0 AndAlso (_col.Count = length OrElse length = Integer.MaxValue)) Then
+            '    Dim list As IList = TryCast(_col, IList)
+            '    Dim r As New List(Of T)
+            '    If list IsNot Nothing Then
+            '        For i As Integer = start To Math.Min(start + length, _col.Count) - 1
+            '            r.Add(CType(list(i), T))
+            '        Next
+            '    Else
+            '        Dim i As Integer = 0
+            '        For Each o As T In _col
+            '            If i >= start Then
+            '                r.Add(o)
+            '            End If
+            '            If i >= length + start Then
+            '                Exit For
+            '            End If
+            '            i += 1
+            '        Next
+            '    End If
+            '    Return New ReadOnlyObjectList(Of T)(r)
+            'Else
+            '    Return CType(_col, ReadOnlyObjectList(Of T))
+            'End If
         End Function
 
         Public ReadOnly Property ExecutionTime() As TimeSpan

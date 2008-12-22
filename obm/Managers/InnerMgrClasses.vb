@@ -236,7 +236,7 @@ Partial Public Class OrmManager
     End Class
 
     Public Structure ExecutionResult
-        Public ReadOnly Count As Integer
+        Public ReadOnly RowCount As Integer
         Public ReadOnly ExecutionTime As TimeSpan
         Public ReadOnly FetchTime As TimeSpan
         Public ReadOnly CacheHit As Boolean
@@ -244,7 +244,7 @@ Partial Public Class OrmManager
 
         Public Sub New(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan, _
             ByVal hit As Boolean, ByVal loaded As Nullable(Of Integer))
-            Me.Count = count
+            Me.RowCount = count
             Me.ExecutionTime = execTime
             Me.FetchTime = fetchTime
             Me.CacheHit = hit
@@ -256,7 +256,7 @@ Partial Public Class OrmManager
 
         Private Function GetTraceStr() As String
             Dim sb As New StringBuilder
-            sb.AppendLine("Resultset count: " & Me.Count)
+            sb.AppendLine("Resultset count: " & Me.RowCount)
             sb.AppendLine("Execution time: " & Me.ExecutionTime.ToString)
             sb.AppendLine("Fetch time: " & Me.FetchTime.ToString)
             sb.AppendLine("Cache hit: " & Me.CacheHit)
@@ -310,7 +310,7 @@ Partial Public Class OrmManager
         End Sub
 
         Protected Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As ExecutionResult)
-            _p.SetTotalCount(er.Count)
+            _p.SetTotalCount(er.RowCount)
             _oldStart = mgr._start
             mgr._start = _p.GetCurrentPageOffset
             _oldLength = mgr._length

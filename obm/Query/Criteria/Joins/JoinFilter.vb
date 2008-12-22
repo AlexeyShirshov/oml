@@ -3,6 +3,7 @@ Imports Worm.Entities
 Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Namespace Criteria.Joins
     Public Class JoinFilter
@@ -21,6 +22,7 @@ Namespace Criteria.Joins
 
         Friend _oper As FilterOperation
 
+        Private _eu As EntityUnion
 #Region " Ctors "
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
@@ -50,7 +52,7 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             'Dim p As Pair(Of ObjectSource, String) = Nothing
             'If os IsNot Nothing Then
             '    p = New Pair(Of ObjectSource, String)(os, propertyAlias)
@@ -76,8 +78,8 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, _
-                       ByVal os2 As ObjectSource, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, _
+                       ByVal os2 As EntityUnion, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             Dim f As FieldReference = Nothing
             If os IsNot Nothing Then
                 f = New FieldReference(os, propertyAlias)
@@ -101,6 +103,21 @@ Namespace Criteria.Joins
 
             If t2 IsNot Nothing Then
                 f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal op As ObjectProperty, ByVal op2 As ObjectProperty, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If op.ObjectSource IsNot Nothing Then
+                f = New FieldReference(op)
+            End If
+            _l = f
+
+            If op2.ObjectSource IsNot Nothing Then
+                f = New FieldReference(op2)
             End If
             _r = f
 
@@ -159,7 +176,7 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As EntityUnion, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             'Dim t As Pair(Of SourceFragment, String) = Nothing
             'If table IsNot Nothing Then
             '    t = New Pair(Of SourceFragment, String)(table, column)
@@ -266,9 +283,9 @@ Namespace Criteria.Joins
 
 #End Region
 
-        'Public Function GetStaticString() As String Implements IFilter.GetStaticString
-        '    Throw New NotSupportedException
-        'End Function
+        Public Sub SetUnion(ByVal eu As EntityUnion)
+            _eu = eu
+        End Sub
 
         Public ReadOnly Property Left() As FieldReference
             Get
@@ -385,30 +402,37 @@ Namespace Criteria.Joins
             Return _ToString()
         End Function
 
-        'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
+            Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
+        End Function
+
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+
             Dim map As MapField2Column = Nothing
-            Dim os As ObjectSource = Nothing
+            Dim os As EntityUnion = Nothing
             If _l.Property.ObjectSource IsNot Nothing Then
                 map = schema.GetObjectSchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
-                os = _l.Property.ObjectSource
+                os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
+                os = _eu
             Else
                 Throw New InvalidOperationException
             End If
 
             Dim map2 As MapField2Column = Nothing
-            Dim os2 As ObjectSource = Nothing
+            Dim os2 As EntityUnion = Nothing
             If _r.Property.ObjectSource IsNot Nothing Then
                 map2 = schema.GetObjectSchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
-                os2 = _r.Property.ObjectSource
+                os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
+                os2 = _eu
             Else
                 Throw New InvalidOperationException
             End If
@@ -473,10 +497,6 @@ Namespace Criteria.Joins
                 ._r = _r
             End With
         End Sub
-
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
-            Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
-        End Function
 
         Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IParamFilterValue) As IFilter
             For Each _fl As IFilter In source.GetAllFilters()

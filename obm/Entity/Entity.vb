@@ -256,11 +256,25 @@ Namespace Entities
         End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
-            Return MappingEngine.GetProperty(Me.GetType, oschema, propertyAlias).GetValue(Me, Nothing)
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim pi As Reflection.PropertyInfo
+            If schema Is Nothing Then
+                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            Else
+                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            End If
+            Return pi.GetValue(Me, Nothing)
         End Function
 
         Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
-            MappingEngine.GetProperty(Me.GetType, oschema, propertyAlias).SetValue(Me, value, Nothing)
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim pi As Reflection.PropertyInfo
+            If schema Is Nothing Then
+                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            Else
+                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            End If
+            pi.SetValue(Me, value, Nothing)
         End Sub
 
         'Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _

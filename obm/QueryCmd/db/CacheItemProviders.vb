@@ -145,47 +145,6 @@ Namespace Query.Database
                 Return c
             End Function
 
-            Public Sub ResetCache()
-                _dic.Remove(Id)
-            End Sub
-
-            Public ReadOnly Property Key() As String
-                Get
-                    Return _key
-                End Get
-            End Property
-
-            Public ReadOnly Property Id() As String
-                Get
-                    Return _id
-                End Get
-            End Property
-
-            Public ReadOnly Property Sync() As String
-                Get
-                    Return _sync
-                End Get
-            End Property
-
-            Public ReadOnly Property Dic() As IDictionary
-                Get
-                    Return _dic
-                End Get
-            End Property
-
-            Public ReadOnly Property Fetch() As TimeSpan
-                Get
-                    Return _mgr.Fecth
-                End Get
-            End Property
-
-            Public ReadOnly Property Exec() As TimeSpan
-                Get
-                    Return _mgr.Exec
-                End Get
-            End Property
-
-
             'Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
             '    If q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType) Then
 
@@ -209,7 +168,7 @@ Namespace Query.Database
             '    End If
             'End Sub
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
+            Public Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
                 Return New CachedItemBase(GetEntities(), _mgr.Cache)
             End Function
         End Class
@@ -324,7 +283,7 @@ Namespace Query.Database
             '    End Get
             'End Property
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
+            Public Overloads Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
                 Dim r As ReadOnlyEntityList(Of ReturnType) = CType(GetEntities(), ReadOnlyEntityList(Of ReturnType))
                 Return GetCacheItem(r)
             End Function

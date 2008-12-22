@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
 Imports Worm.Entities
 Imports Worm.Expressions
+Imports Worm.Query
 
 Namespace Criteria.Core
 
@@ -29,11 +30,11 @@ Namespace Criteria.Core
             MyBase.New(value, New OrmFilterTemplate(entityName, propertyAlias, operation))
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
             MyBase.New(value, New OrmFilterTemplate([alias], propertyAlias, operation))
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
             MyBase.New(value, New OrmFilterTemplate(os, propertyAlias, operation))
         End Sub
 
@@ -48,7 +49,7 @@ Namespace Criteria.Core
 
         Protected Overrides Function _ToString() As String
             If _str Is Nothing Then
-                _str = Val._ToString & Template.GetStaticString
+                _str = val._ToString & Template.GetStaticString
             End If
             Return _str
         End Function
@@ -64,7 +65,7 @@ Namespace Criteria.Core
         End Property
 
         Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
-            Dim evval As IEvaluableValue = TryCast(Val(), IEvaluableValue)
+            Dim evval As IEvaluableValue = TryCast(val(), IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
@@ -215,7 +216,7 @@ Namespace Criteria.Core
             Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
             Dim rt As Type = Template.ObjectSource.GetRealType(schema)
 
-            Dim v As IEvaluableValue = TryCast(Val(), IEvaluableValue)
+            Dim v As IEvaluableValue = TryCast(val(), IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
                 If schema.GetPropertyTypeByName(rt, oschema, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
@@ -263,7 +264,7 @@ Namespace Criteria.Core
         End Property
 
         Protected Overrides Function _Clone() As Object
-            Return New EntityFilter(Val, CType(Template, OrmFilterTemplate))
+            Return New EntityFilter(val, CType(Template, OrmFilterTemplate))
         End Function
 
         Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String

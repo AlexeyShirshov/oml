@@ -3,7 +3,6 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
-Imports Worm.Database.Criteria
 Imports Worm.Database
 Imports Worm
 Imports Worm.Entities.Meta
@@ -662,7 +661,7 @@ Imports Worm.Criteria.Joins
             q.Where(Ctor.prop(tt2, "Table1").not_exists(GetType(Table1), _
                 Ctor.prop(GetType(Table1), "Code").eq(45). _
                 [and]( _
-                    JoinCondition.Create(tt2, "Table1").eq(GetType(Table1), "Enum") _
+                    Ctor.prop(tt2, "Table1").eq(GetType(Table1), "Enum") _
                 )))
 
             Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
@@ -678,7 +677,7 @@ Imports Worm.Criteria.Joins
                 Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
 
             Dim cq As QueryCmd = New QueryCmd(). _
-                Where(JoinCondition.Create(tt2, "Table1").eq(tt1, "Enum").[and]( _
+                Where(Ctor.prop(tt2, "Table1").eq(tt1, "Enum").[and]( _
                       Ctor.prop(tt1, "Code").eq(45))).Select(tt1)
 
             q.Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))

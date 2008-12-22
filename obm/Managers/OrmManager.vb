@@ -10,6 +10,7 @@ Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Criteria.Conditions
 Imports Worm.Misc
+Imports Worm.Query
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
@@ -429,7 +430,7 @@ Partial Public MustInherit Class OrmManager
                     'Dim con As New OrmCondition.OrmConditionConstructor
                     'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                     'con.AddFilter(criteria.Filter)
-                    Dim cl As PredicateLink = New PropertyPredicate(New ObjectSource(tt), propertyAlias).eq(o).[and](criteria)
+                    Dim cl As PredicateLink = New PropertyPredicate(New EntityUnion(tt), propertyAlias).eq(o).[and](criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -497,7 +498,7 @@ Partial Public MustInherit Class OrmManager
                     'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                     'con.AddFilter(filter)
                     'Dim f As IOrmFilter = con.Condition
-                    Dim cl As PredicateLink = New PropertyPredicate(New ObjectSource(tt), propertyAlias).eq(obj).[and](criteria)
+                    Dim cl As PredicateLink = New PropertyPredicate(New EntityUnion(tt), propertyAlias).eq(obj).[and](criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)

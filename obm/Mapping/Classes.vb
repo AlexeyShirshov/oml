@@ -1,4 +1,6 @@
-﻿Namespace Entities.Meta
+﻿Imports Worm.Query
+
+Namespace Entities.Meta
 
     Public Class PKDesc
         Public ReadOnly PropertyAlias As String
@@ -50,7 +52,7 @@
             Return Nothing
         End Function
 
-        Public ReadOnly Property UniqueName(ByVal os As ObjectSource) As String
+        Public ReadOnly Property UniqueName(ByVal os As EntityUnion) As String
             Get
                 If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                     Return RawName & "^" & _uqName
@@ -241,23 +243,23 @@
         Implements IPrepareTable
 
         Private _defaultAliases As Generic.IDictionary(Of SourceFragment, String)
-        Private _objectAlises As Generic.IDictionary(Of ObjectAlias, Generic.IDictionary(Of SourceFragment, String))
+        Private _objectAlises As Generic.IDictionary(Of EntityAlias, Generic.IDictionary(Of SourceFragment, String))
         Private _cnt As Integer
 
         Private Sub New(ByVal aliases As Generic.IDictionary(Of SourceFragment, String))
             _defaultAliases = aliases
-            _objectAlises = New Generic.Dictionary(Of ObjectAlias, Generic.IDictionary(Of SourceFragment, String))
+            _objectAlises = New Generic.Dictionary(Of EntityAlias, Generic.IDictionary(Of SourceFragment, String))
         End Sub
 
         Public Shared Function Create() As AliasMgr
             Return New AliasMgr(New Generic.Dictionary(Of SourceFragment, String))
         End Function
 
-        Public Function AddTable(ByRef table As SourceFragment, ByVal os As Entities.ObjectSource) As String Implements IPrepareTable.AddTable
+        Public Function AddTable(ByRef table As SourceFragment, ByVal os As EntityUnion) As String Implements IPrepareTable.AddTable
             Return AddTable(table, os, CType(Nothing, ICreateParam))
         End Function
 
-        Public Function AddTable(ByRef table As SourceFragment, ByVal os As Entities.ObjectSource, ByVal pmgr As ICreateParam) As String Implements IPrepareTable.AddTable
+        Public Function AddTable(ByRef table As SourceFragment, ByVal os As EntityUnion, ByVal pmgr As ICreateParam) As String Implements IPrepareTable.AddTable
             'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
             Dim t As SourceFragment = table
             Dim tt As SourceFragment = table.OnTableAdd(pmgr)
@@ -303,7 +305,7 @@
         '    End Get
         'End Property
 
-        Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As ObjectSource, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+        Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
             If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 sb.Replace(table.UniqueName(Nothing) & schema.Delimiter, _defaultAliases(table) & gen.Selector)
             Else
@@ -311,7 +313,7 @@
             End If
         End Sub
 
-        Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As Entities.ObjectSource) As String Implements IPrepareTable.GetAlias
+        Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As String Implements IPrepareTable.GetAlias
             If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 Return _defaultAliases(table)
             Else
@@ -319,7 +321,7 @@
             End If
         End Function
 
-        Public Function ContainsKey(ByVal table As Entities.Meta.SourceFragment, ByVal os As Entities.ObjectSource) As Boolean Implements IPrepareTable.ContainsKey
+        Public Function ContainsKey(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As Boolean Implements IPrepareTable.ContainsKey
             If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 Return _defaultAliases.ContainsKey(table)
             Else

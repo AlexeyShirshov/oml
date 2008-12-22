@@ -6,7 +6,6 @@ Imports Worm.Database
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Query
-Imports Worm.Database.Criteria
 Imports Worm.Criteria
 
 <TestClass()> Public Class TestComplexEntities

@@ -16,14 +16,14 @@ Namespace Query
 #Region " Classes "
         Class SelectClause
             Private _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
-            Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))
+            Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
 
-            Public Sub New(ByVal types As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?)))
+            Public Sub New(ByVal types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
                 _types = types
             End Sub
 
-            Public Sub New(ByVal types As List(Of Pair(Of ObjectSource, Boolean?)))
-                _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(types)
+            Public Sub New(ByVal types As List(Of Pair(Of EntityUnion, Boolean?)))
+                _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(types)
             End Sub
 
             Public Sub New(ByVal fields As ObjectModel.ReadOnlyCollection(Of SelectExpression))
@@ -34,7 +34,7 @@ Namespace Query
                 _fields = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(fields)
             End Sub
 
-            Public ReadOnly Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))
+            Public ReadOnly Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
                 Get
                     Return _types
                 End Get
@@ -48,7 +48,7 @@ Namespace Query
         End Class
 
         Class FromClause
-            Public ObjectSource As ObjectSource
+            Public ObjectSource As EntityUnion
             Public Table As SourceFragment
             Public Query As QueryCmd
 
@@ -60,19 +60,19 @@ Namespace Query
                 Me.Query = query
             End Sub
 
-            Public Sub New(ByVal [alias] As ObjectAlias)
-                Me.ObjectSource = New ObjectSource([alias])
+            Public Sub New(ByVal [alias] As EntityAlias)
+                Me.ObjectSource = New EntityUnion([alias])
             End Sub
 
             Public Sub New(ByVal t As Type)
-                Me.ObjectSource = New ObjectSource(t)
+                Me.ObjectSource = New EntityUnion(t)
             End Sub
 
             Public Sub New(ByVal entityName As String)
-                Me.ObjectSource = New ObjectSource(entityName)
+                Me.ObjectSource = New EntityUnion(entityName)
             End Sub
 
-            Public Sub New(ByVal os As ObjectSource)
+            Public Sub New(ByVal os As EntityUnion)
                 Me.ObjectSource = os
             End Sub
         End Class
@@ -118,15 +118,15 @@ Namespace Query
         End Class
 
         Class svct
-            Private _oldct As ObjectSource
-            Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))
+            Private _oldct As EntityUnion
+            Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Private _cmd As QueryCmd
             Private _f As FromClause
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
                 If cmd.SelectClaus IsNot Nothing AndAlso cmd.SelectClaus.SelectTypes IsNot Nothing Then
-                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(cmd.SelectClaus.SelectTypes)
+                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(cmd.SelectClaus.SelectTypes)
                 End If
                 _cmd = cmd
                 _f = cmd._from
@@ -213,13 +213,13 @@ Namespace Query
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _pod As Pair(Of Type, IEntitySchema)
-        Private _createType As ObjectSource
+        Private _createType As EntityUnion
 
         '#Region " Cache "
         '        Private _dic As IDictionary(Of ObjectSource, IEntitySchema)
         '#End Region
 
-        Public ReadOnly Property CreateType() As ObjectSource
+        Public ReadOnly Property CreateType() As EntityUnion
             Get
                 Return _createType
             End Get
@@ -451,9 +451,9 @@ Namespace Query
                 MyBase.New(cmd)
 
                 If cmd.SelectTypes IsNot Nothing Then
-                    Dim t As New List(Of Pair(Of ObjectSource, Boolean?))
-                    For Each tp As Pair(Of ObjectSource, Boolean?) In _types
-                        t.Add(New Pair(Of ObjectSource, Boolean?)(tp.First, False))
+                    Dim t As New List(Of Pair(Of EntityUnion, Boolean?))
+                    For Each tp As Pair(Of EntityUnion, Boolean?) In _types
+                        t.Add(New Pair(Of EntityUnion, Boolean?)(tp.First, False))
                     Next
                     cmd._sel = New SelectClause(t)
                 End If
@@ -486,11 +486,16 @@ Namespace Query
             Return fs.ToArray
         End Function
 
+        Friend _types As Dictionary(Of EntityUnion, IEntitySchema)
+        Friend _pdic As Dictionary(Of Type, IDictionary)
+
         Public Function Prepare(ByVal executor As IExecutor, ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByRef cl As List(Of SelectExpression), ByVal stmt As StmtGenerator) As IFilter
 
             cl = New List(Of SelectExpression)
+            _types = New Dictionary(Of EntityUnion, IEntitySchema)
+            _pdic = New Dictionary(Of Type, IDictionary)
 
             If propJoins IsNot Nothing Then
                 j.AddRange(propJoins)
@@ -525,7 +530,7 @@ Namespace Query
                 AddHandler executor.OnGetCacheItem, AddressOf New cls2(Me).cl_paging
             End If
 
-            Dim selectOS As ObjectSource = GetSelectedOS()
+            Dim selectOS As EntityUnion = GetSelectedOS()
 
             If selectOS IsNot Nothing Then
                 Dim selectType As Type = selectOS.GetRealType(schema)
@@ -643,24 +648,23 @@ l1:
                         _appendMain = True
                     End If
 
-                    Dim types As New Dictionary(Of ObjectSource, IEntitySchema)
                     For Each se As SelectExpression In SelectList
-                        Dim os As ObjectSource = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                        Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
                         If os IsNot Nothing Then
-                            If Not types.ContainsKey(os) Then
+                            If Not _types.ContainsKey(os) Then
                                 Dim t As Type = os.GetRealType(schema)
-                                types.Add(os, schema.GetObjectSchema(t))
+                                _types.Add(os, schema.GetObjectSchema(t))
                             End If
                         End If
                         CheckFrom(se)
                     Next
-                    If types.Count > 0 Then
-                        Dim pdic As New Dictionary(Of Type, IDictionary)
-                        For Each de As KeyValuePair(Of ObjectSource, IEntitySchema) In types
+                    If _types.Count > 0 Then
+
+                        For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
                             Dim t As Type = de.Key.GetRealType(schema)
-                            If Not pdic.ContainsKey(t) Then
+                            If Not _pdic.ContainsKey(t) Then
                                 Dim dic As IDictionary = schema.GetProperties(t, de.Value)
-                                pdic.Add(t, dic)
+                                _pdic.Add(t, dic)
 
                                 Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
                                 If col.Count > 0 Then
@@ -690,8 +694,12 @@ l1:
                             End If
                         Next
 
+                        If cl.Count = 0 Then
+                            cl.AddRange(SelectList)
+                        End If
+
                         If AutoJoins Then
-                            Dim selOS As ObjectSource = GetSelectedOS()
+                            Dim selOS As EntityUnion = GetSelectedOS()
                             Dim t As Type = selOS.GetRealType(schema)
                             Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
                             For Each se As SelectExpression In SelectList
@@ -713,10 +721,10 @@ l1:
                 End If
             Else
                 If IsFTS Then
-                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+                    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                         If WithLoad(tp, schema) Then
                             _appendMain = True
-                            Dim os As ObjectSource = tp.First
+                            Dim os As EntityUnion = tp.First
                             cl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                         Else
                             Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
@@ -726,8 +734,8 @@ l1:
                             cl.Add(se)
                         End If
                     Next
-                ElseIf _from IsNot Nothing Then
-                    If _from.Table IsNot Nothing Then
+                Else
+                    If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
                         Dim s As IEntitySchema = GetSchemaForCreateType(schema)
                         If s IsNot Nothing Then
                             For Each m As MapField2Column In s.GetFieldColumnMap
@@ -739,32 +747,44 @@ l1:
                         Else
                             Throw New NotSupportedException
                         End If
-                    ElseIf _from.Query IsNot Nothing Then
+                    ElseIf _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
                         If SelectTypes.Count > 1 Then
                             Throw New NotSupportedException
                         Else
-                            AddTypeFields(schema, cl, SelectTypes(0), New ObjectSource(New ObjectAlias(_from.Query)))
+                            AddTypeFields(schema, cl, SelectTypes(0), New EntityUnion(New EntityAlias(_from.Query)))
                         End If
+                    Else
+                        For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                            AddTypeFields(schema, cl, tp)
+                            'If tp.Second Then
+                            '    Throw New NotImplementedException
+                            'Else
+                            '    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
+                            '    Dim se As New SelectExpression(tp.First, pk)
+                            '    se.Attributes = Field2DbRelations.PK
+                            '    cl.Add(se)
+                            'End If
+                            If Not _types.ContainsKey(tp.First) Then
+                                Dim t As Type = tp.First.GetRealType(schema)
+                                _types.Add(tp.First, schema.GetObjectSchema(t))
+                            End If
+                        Next
+
+                        For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
+                            Dim t As Type = de.Key.GetRealType(schema)
+                            If Not _pdic.ContainsKey(t) Then
+                                Dim dic As IDictionary = schema.GetProperties(t, de.Value)
+                                _pdic.Add(t, dic)
+                            End If
+                        Next
                     End If
-                Else
-                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
-                        AddTypeFields(schema, cl, tp)
-                        'If tp.Second Then
-                        '    Throw New NotImplementedException
-                        'Else
-                        '    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
-                        '    Dim se As New SelectExpression(tp.First, pk)
-                        '    se.Attributes = Field2DbRelations.PK
-                        '    cl.Add(se)
-                        'End If
-                    Next
                 End If
 
                 If AutoJoins Then
-                    Dim selOS As ObjectSource = GetSelectedOS()
+                    Dim selOS As EntityUnion = GetSelectedOS()
                     Dim t As Type = selOS.GetRealType(schema)
                     Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
-                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+                    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                         If Not HasInQuery(tp.First, j) Then
                             schema.AppendJoin(selOS, tp.First, f, j, filterInfo, selSchema)
                         End If
@@ -802,7 +822,7 @@ l1:
             End If
         End Sub
 
-        Private Function HasInQuery(ByVal os As ObjectSource, ByVal js As List(Of QueryJoin)) As Boolean
+        Private Function HasInQuery(ByVal os As EntityUnion, ByVal js As List(Of QueryJoin)) As Boolean
             If FromClaus IsNot Nothing AndAlso FromClaus.ObjectSource.Equals(os) Then
                 Return True
             Else
@@ -812,7 +832,7 @@ l1:
                     End If
                 Next
                 If SelectTypes IsNot Nothing Then
-                    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+                    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                         If os.Equals(tp.First) Then
                             Return True
                         End If
@@ -823,7 +843,7 @@ l1:
         End Function
 
         Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
-                                  ByVal tp As Pair(Of ObjectSource, Boolean?), Optional ByVal os As ObjectSource = Nothing)
+                                  ByVal tp As Pair(Of EntityUnion, Boolean?), Optional ByVal os As EntityUnion = Nothing)
             Dim t As Type = tp.First.GetRealType(schema)
             If os Is Nothing Then
                 os = tp.First
@@ -1116,7 +1136,7 @@ l1:
         End Function
 
         Public Function GetSelectedType(ByVal mpe As ObjectMappingEngine) As Type
-            Dim os As ObjectSource = GetSelectedOS()
+            Dim os As EntityUnion = GetSelectedOS()
             If os IsNot Nothing Then
                 Return os.GetRealType(mpe)
             Else
@@ -1124,7 +1144,7 @@ l1:
             End If
         End Function
 
-        Protected Function GetRealSelectedOS() As ObjectSource
+        Protected Function GetRealSelectedOS() As EntityUnion
             If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                 Return _from.ObjectSource
             Else
@@ -1143,8 +1163,8 @@ l1:
             Return Nothing
         End Function
 
-        Public Function GetSelectedOS() As ObjectSource
-            Dim os As ObjectSource = GetRealSelectedOS()
+        Public Function GetSelectedOS() As EntityUnion
+            Dim os As EntityUnion = GetRealSelectedOS()
             If os Is Nothing AndAlso SelectList IsNot Nothing Then
                 For Each s As SelectExpression In SelectList
                     If s.ObjectSource IsNot Nothing Then
@@ -1183,8 +1203,8 @@ l1:
             ts = New List(Of Type)
 
             If SelectTypes IsNot Nothing Then
-                For Each p As Pair(Of ObjectSource, Boolean?) In SelectTypes
-                    Dim os As ObjectSource = p.First
+                For Each p As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                    Dim os As EntityUnion = p.First
                     'If Not _dic.ContainsKey(os) Then
                     '    _dic.Add(os, Nothing)
                     'End If
@@ -1226,11 +1246,11 @@ l1:
 
         End Function
 
-        Protected Function WithLoad(ByVal os As ObjectSource, ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Function WithLoad(ByVal os As EntityUnion, ByVal mpe As ObjectMappingEngine) As Boolean
             'If _from IsNot Nothing Then
             '    Return _from.ObjectSource.Equals(os)
             'Else
-            For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
+            For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                 If tp.First.Equals(os) Then
                     Return WithLoad(tp, mpe)
                 End If
@@ -1240,7 +1260,7 @@ l1:
             Return False
         End Function
 
-        Protected Function WithLoad(ByVal tp As Pair(Of ObjectSource, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Function WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
             Return tp.Second.HasValue AndAlso tp.Second.Value
         End Function
 
@@ -1476,22 +1496,22 @@ l1:
         '    End Set
         'End Property
 
-        Public Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))
+        Public Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Get
                 If _sel IsNot Nothing Then
                     Return _sel.SelectTypes
                 End If
                 Return Nothing
             End Get
-            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?)))
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
                 SelectClaus = New SelectClause(value)
             End Set
         End Property
 
-        Protected Function GetSelectList(ByVal os As ObjectSource) As ICollection(Of SelectExpression)
+        Protected Function GetSelectList(ByVal os As EntityUnion) As ICollection(Of SelectExpression)
             Dim l As New List(Of SelectExpression)
             For Each se As SelectExpression In SelectList
-                Dim os_ As ObjectSource = se.ObjectSource 'If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                Dim os_ As EntityUnion = se.ObjectSource 'If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
                 If se.Into Is Nothing AndAlso os.Equals(os_) Then
                     l.Add(se)
                 End If
@@ -1573,6 +1593,22 @@ l1:
             End Get
         End Property
 
+        Protected Friend ReadOnly Property propWithLoads() As Boolean()
+            Get
+                If SelectTypes Is Nothing Then
+                    Dim r(_types.Count - 1) As Boolean
+                    Return r
+                Else
+                    Dim r(SelectTypes.Count - 1) As Boolean
+                    For i As Integer = 0 To SelectTypes.Count - 1
+                        Dim t As Pair(Of EntityUnion, Boolean?) = SelectTypes(i)
+                        r(i) = t.Second.HasValue AndAlso t.Second.Value
+                    Next
+                    Return r
+                End If
+            End Get
+        End Property
+
         'Public Property propWithLoad() As Boolean
         '    Get
         '        Return _load
@@ -1620,10 +1656,14 @@ l1:
             Return Me
         End Function
 
-        'Public Function WithLoad(ByVal value As Boolean) As QueryCmd
-        '    propWithLoad = value
-        '    Return Me
-        'End Function
+        Public Function WhereAdd(ByVal filter As IGetFilter) As QueryCmd
+            If Me.Filter Is Nothing Then
+                Me.Filter = filter
+            Else
+                Me.Filter = Ctor.Filter(filter).and(Me.Filter)
+            End If
+            Return Me
+        End Function
 
         Public Function Where(ByVal filter As IGetFilter) As QueryCmd
             Me.Filter = filter
@@ -1631,12 +1671,12 @@ l1:
         End Function
 
         Public Function Into(ByVal t As Type) As QueryCmd
-            _createType = New ObjectSource(t)
+            _createType = New EntityUnion(t)
             Return Me
         End Function
 
         Public Function Into(ByVal entityName As String) As QueryCmd
-            _createType = New ObjectSource(entityName)
+            _createType = New EntityUnion(entityName)
             Return Me
         End Function
 
@@ -1646,7 +1686,7 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal [alias] As ObjectAlias) As QueryCmd
+        Public Function From(ByVal [alias] As EntityAlias) As QueryCmd
             _from = New FromClause([alias])
             RenewMark()
             Return Me
@@ -1671,23 +1711,23 @@ l1:
         End Function
 
         Public Function [Select](ByVal ParamArray t() As Type) As QueryCmd
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))( _
-                Array.ConvertAll(Of Type, Pair(Of ObjectSource, Boolean?))(t, _
-                    Function(item As Type) New Pair(Of ObjectSource, Boolean?)(New ObjectSource(item), Nothing)))
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))( _
+                Array.ConvertAll(Of Type, Pair(Of EntityUnion, Boolean?))(t, _
+                    Function(item As Type) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
             Return Me
         End Function
 
         Public Function [Select](ByVal ParamArray entityNames() As String) As QueryCmd
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))( _
-                Array.ConvertAll(Of String, Pair(Of ObjectSource, Boolean?))(entityNames, _
-                    Function(item As String) New Pair(Of ObjectSource, Boolean?)(New ObjectSource(item), Nothing)))
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))( _
+                Array.ConvertAll(Of String, Pair(Of EntityUnion, Boolean?))(entityNames, _
+                    Function(item As String) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
             Return Me
         End Function
 
-        Public Function [Select](ByVal ParamArray aliases() As ObjectAlias) As QueryCmd
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))( _
-                Array.ConvertAll(Of ObjectAlias, Pair(Of ObjectSource, Boolean?))(aliases, _
-                    Function(item As ObjectAlias) New Pair(Of ObjectSource, Boolean?)(New ObjectSource(item), Nothing)))
+        Public Function [Select](ByVal ParamArray aliases() As EntityAlias) As QueryCmd
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))( _
+                Array.ConvertAll(Of EntityAlias, Pair(Of EntityUnion, Boolean?))(aliases, _
+                    Function(item As EntityAlias) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
             Return Me
         End Function
 
@@ -1697,45 +1737,64 @@ l1:
         End Function
 
         Friend Sub SelectInt(ByVal t As Type)
-            _sel = New SelectClause(New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(t), Nothing)}))
+            _sel = New SelectClause(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), Nothing)}))
         End Sub
 
         Public Function [Select](ByVal t As Type, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(t), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
         End Function
 
         Public Function [Select](ByVal entityName As String, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(entityName), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(entityName), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
         End Function
 
-        Public Function [Select](ByVal [alias] As ObjectAlias, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource([alias]), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+        Public Function [Select](ByVal [alias] As EntityAlias, ByVal withLoad As Boolean) As QueryCmd
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion([alias]), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
         End Function
 
         Public Function [SelectAdd](ByVal t As Type, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(SelectTypes)
-            l.AddRange(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(t), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
+            If SelectTypes IsNot Nothing Then
+                l.AddRange(SelectTypes)
+            End If
+            l.AddRange(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
         End Function
 
         Public Function [SelectAdd](ByVal entityName As String, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(SelectTypes)
-            l.AddRange(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource(entityName), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
+            If SelectTypes IsNot Nothing Then
+                l.AddRange(SelectTypes)
+            End If
+            l.AddRange(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(entityName), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
         End Function
 
-        Public Function [SelectAdd](ByVal [alias] As ObjectAlias, ByVal withLoad As Boolean) As QueryCmd
-            Dim l As New List(Of Pair(Of ObjectSource, Boolean?))(SelectTypes)
-            l.AddRange(New Pair(Of ObjectSource, Boolean?)() {New Pair(Of ObjectSource, Boolean?)(New ObjectSource([alias]), withLoad)})
-            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of ObjectSource, Boolean?))(l)
+        Public Function [SelectAdd](ByVal [alias] As EntityAlias, ByVal withLoad As Boolean) As QueryCmd
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
+            If SelectTypes IsNot Nothing Then
+                l.AddRange(SelectTypes)
+            End If
+            l.AddRange(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion([alias]), withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
+            Return Me
+        End Function
+
+        Public Function [SelectAdd](ByVal fields() As SelectExpression) As QueryCmd
+            Dim l As New List(Of SelectExpression)()
+            If SelectList IsNot Nothing Then
+                l.AddRange(SelectList)
+            End If
+            l.AddRange(fields)
+            SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(l)
             Return Me
         End Function
 
@@ -1776,7 +1835,21 @@ l1:
 #Region " ToLists "
 
         Public Function ToMatrix() As ReadonlyMatrix
-            Throw New NotImplementedException
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+            Return ToMatrix(_getMgr)
+        End Function
+
+        Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
+            Using mgr As OrmManager = getMgr.CreateManager
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
+                Return ToMatrix(mgr)
+            End Using
+        End Function
+
+        Public Function ToMatrix(ByVal mgr As OrmManager) As ReadonlyMatrix
+            Return GetExecutor(mgr).Exec(mgr, Me)
         End Function
 
 #Region " ToList "

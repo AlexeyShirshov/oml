@@ -6,10 +6,12 @@ using System.Reflection;
 using System.Text;
 using Worm.CodeGen.Core.CodeDomExtensions;
 using Worm.CodeGen.Core.Descriptors;
-using Worm.Orm;
+using Worm.Entities;
 using Worm.Collections;
-using Worm.Orm.Meta;
+using Worm.Entities.Meta;
 using Worm.Cache;
+using Worm.Query;
+using Worm.Criteria.Joins;
 
 namespace Worm.CodeGen.Core
 {
@@ -345,9 +347,9 @@ namespace Worm.CodeGen.Core
 			            if (_ormObjectsDefinition.EntityBaseType == null)
 			            {
                             if(entity.HasSinglePK)
-                                entityType = new CodeTypeReference(typeof(Worm.Orm.OrmBase));
+                                entityType = new CodeTypeReference(typeof(KeyEntity));
 			                else
-			                    entityType = new CodeTypeReference(typeof (Worm.Orm.CachedEntity));
+			                    entityType = new CodeTypeReference(typeof (CachedEntity));
                             //else if(entity.HasIntPK)
                                 
                             //else
@@ -501,7 +503,7 @@ namespace Worm.CodeGen.Core
 
 			            propertyAliasClassCotr.BaseConstructorArgs.Add(OrmCodeGenHelper.GetEntityNameReferenceExpression(entity));
 			            propertyAliasClass.Members.Add(propertyAliasClassCotr);
-			            propertyAliasClass.BaseTypes.Add(new CodeTypeReference(typeof (ObjectAlias)));
+			            propertyAliasClass.BaseTypes.Add(new CodeTypeReference(typeof (EntityAlias)));
                                                          
 
 			            instancedPropertyAliasClass = new CodeTypeDeclaration
@@ -513,7 +515,7 @@ namespace Worm.CodeGen.Core
 			            var instancedPropertyAliasClassCotr = new CodeConstructor{Attributes= MemberAttributes.Public};
 
                         instancedPropertyAliasClassCotr.Parameters.Add(
-			                new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (ObjectAlias)), "objectAlias"));
+			                new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (EntityAlias)), "objectAlias"));
 
 			            instancedPropertyAliasClassCotr.Statements.Add(
 			                new CodeAssignStatement(
@@ -523,7 +525,7 @@ namespace Worm.CodeGen.Core
 
 			            instancedPropertyAliasClass.Members.Add(instancedPropertyAliasClassCotr);
 
-			            instancedPropertyAliasClass.Members.Add(new CodeMemberField(new CodeTypeReference(typeof (ObjectAlias)),
+			            instancedPropertyAliasClass.Members.Add(new CodeMemberField(new CodeTypeReference(typeof (EntityAlias)),
 			                                                       OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias")));
 
                         if (entity.BaseEntity != null)
@@ -603,7 +605,7 @@ namespace Worm.CodeGen.Core
                         if (entity.BaseEntity != null)
                             getMethod.Attributes |= MemberAttributes.New;
 			            getMethod.Parameters.Add(new CodeParameterDeclarationExpression
-			                                         {Name = "objectAlias", Type = new CodeTypeReference(typeof (ObjectAlias))});
+			                                         {Name = "objectAlias", Type = new CodeTypeReference(typeof (EntityAlias))});
 
                         getMethod.Statements.Add(
                             new CodeMethodReturnStatement(
@@ -1059,7 +1061,7 @@ namespace Worm.CodeGen.Core
 			            entitySchemaDefClass.Members.Add(method);
 			            method.Name = "GetJoins";
 			            // тип возвращаемого значения
-			            method.ReturnType = new CodeTypeReference(typeof (Worm.Criteria.Joins.OrmJoin));
+			            method.ReturnType = new CodeTypeReference(typeof (QueryJoin));
 			            // модификаторы доступа
 			            method.Attributes = MemberAttributes.Public;
 			            // реализует метод базового класса
@@ -1097,7 +1099,7 @@ namespace Worm.CodeGen.Core
 			                method.Statements.Add(
 			                    new CodeMethodReturnStatement(
 			                        new CodeDefaultValueExpression(
-			                            new CodeTypeReference(typeof (Worm.Database.Criteria.Joins.OrmJoin)))
+			                            new CodeTypeReference(typeof (QueryJoin)))
 			                        )
 			                    );
 			            }
@@ -1389,7 +1391,7 @@ namespace Worm.CodeGen.Core
 			                (entity.BaseEntity == null)
 			                    ?
 			                        (CodeExpression) new CodeObjectCreateExpression(
-			                                             new CodeTypeReference(typeof (Worm.Orm.Meta.OrmObjectIndex))
+			                                             new CodeTypeReference(typeof (Worm.Entities.Meta.OrmObjectIndex))
 			                                             )
 			                    :
 			                        new CodeMethodInvokeExpression(
@@ -2136,7 +2138,7 @@ namespace Worm.CodeGen.Core
     		
             entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
             if(entityClass.Entity.HasSinglePK)
-                entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IOrmBase)));
+                entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IKeyEntity)));
             else
                 entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_ICachedEntity)));
                 
@@ -2760,7 +2762,7 @@ namespace Worm.CodeGen.Core
                 // параметры
                 method.Parameters.Add(
                     new CodeParameterDeclarationExpression(
-                        new CodeTypeReference(typeof(ColumnAttribute)),
+                        new CodeTypeReference(typeof(EntityPropertyAttribute)),
                         "c"
                         )
                     );
@@ -2889,7 +2891,7 @@ namespace Worm.CodeGen.Core
                                                     {
                                                         Name = propertyDesc.PropertyName,
                                                         Type =
-                                                            new CodeTypeReference(typeof (Worm.Criteria.ObjectProperty)),
+                                                            new CodeTypeReference(typeof (ObjectProperty)),
                                                         HasGet = true,
                                                         HasSet = false,
                                                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
@@ -2901,7 +2903,7 @@ namespace Worm.CodeGen.Core
                     {
                         Name = propertyDesc.PropertyName,
                         Type =
-                            new CodeTypeReference(typeof(Worm.Criteria.ObjectProperty)),
+                            new CodeTypeReference(typeof(ObjectProperty)),
                         HasGet = true,
                         HasSet = false,
                         Attributes = MemberAttributes.Public | MemberAttributes.Final,
@@ -2911,7 +2913,7 @@ namespace Worm.CodeGen.Core
                 }
                 if(fieldsClass != null)
                 {
-                    Type type = typeof(Worm.Criteria.ObjectProperty);
+                    Type type = typeof(ObjectProperty);
                     var propConst = new CodeMemberField(type, OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyName))
                                         {
                                             InitExpression = new CodeObjectCreateExpression(type, OrmCodeGenHelper.GetEntityNameReferenceExpression(entity), OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc)),
@@ -3157,7 +3159,7 @@ namespace Worm.CodeGen.Core
         }
         private void CreatePropertyColumnAttribute(CodeMemberProperty property, PropertyDescription propertyDesc)
         {
-            CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(ColumnAttribute)));
+            CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(EntityPropertyAttribute)));
 
             if (!string.IsNullOrEmpty(propertyDesc.PropertyAlias))
             {
