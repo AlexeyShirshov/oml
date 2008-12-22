@@ -132,6 +132,24 @@ Namespace Database
                         Else
                             sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
                         End If
+                    Case Entities.PropType.Subquery
+                        If Not String.IsNullOrEmpty(se._tempMark) Then
+                            Dim j As New List(Of QueryJoin)
+                            Dim sl As List(Of Entities.SelectExpression) = Nothing
+
+                            Dim _q As Query.QueryCmd = se.Query
+                            Dim c As New Query.QueryCmd.svct(_q)
+                            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                                Dim f As IFilter = se.Query.Prepare(Nothing, j, schema, context, sl, _s)
+                                sb.Replace(se._tempMark, Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, j, f, almgr, sl))
+                            End Using
+                        Else
+                            se._tempMark = Guid.NewGuid.ToString
+                            sb.Append("(").Append(se._tempMark).Append(")")
+                            If Not String.IsNullOrEmpty(se.FieldAlias) Then
+                                sb.Append(" ").Append(se.FieldAlias)
+                            End If
+                        End If
                     Case Else
                         Throw New NotImplementedException(se.PropType.ToString)
                 End Select

@@ -2,6 +2,7 @@ Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Namespace Sorting
     Public Enum SortType
@@ -132,7 +133,7 @@ Namespace Sorting
 
 #Region " Type ctors "
 
-        Protected Friend Sub New(ByVal prev As Sort, ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+        Protected Friend Sub New(ByVal prev As Sort, ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             MyBase.New(os, propertyAlias)
             '_f = fieldName
             _order = order
@@ -160,7 +161,7 @@ Namespace Sorting
         '    '_t = t
         'End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             MyBase.New(os, propertyAlias)
             '_f = fieldName
             _order = order

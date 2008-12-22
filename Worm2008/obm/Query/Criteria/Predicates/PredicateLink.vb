@@ -2,6 +2,7 @@
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
+Imports Worm.Query
 
 Namespace Criteria
 
@@ -10,7 +11,7 @@ Namespace Criteria
 
         Private _con As Condition.ConditionConstructor
         Private _tbl As Meta.SourceFragment
-        Private _os As ObjectSource
+        Private _os As EntityUnion
 
 #Region " Ctors "
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructor)
@@ -22,24 +23,24 @@ Namespace Criteria
         End Sub
 
         Public Sub New(ByVal t As Type)
-            _os = New ObjectSource(t)
+            _os = New EntityUnion(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal con As Condition.ConditionConstructor)
             _con = con
-            _os = New ObjectSource(t)
+            _os = New EntityUnion(t)
         End Sub
 
         Public Sub New(ByVal table As Meta.SourceFragment)
             _tbl = table
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource)
+        Public Sub New(ByVal os As EntityUnion)
             _os = os
         End Sub
 
-        Public Sub New(ByVal oa As ObjectAlias)
-            _os = New ObjectSource(oa)
+        Public Sub New(ByVal oa As EntityAlias)
+            _os = New EntityUnion(oa)
         End Sub
 
         Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal con As Condition.ConditionConstructor)
@@ -48,15 +49,15 @@ Namespace Criteria
         End Sub
 
         Public Sub New(ByVal entityName As String)
-            _os = New ObjectSource(entityName)
+            _os = New EntityUnion(entityName)
         End Sub
 
         Protected Friend Sub New(ByVal entityName As String, ByVal con As Condition.ConditionConstructor)
             _con = con
-            _os = New ObjectSource(entityName)
+            _os = New EntityUnion(entityName)
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal con As Condition.ConditionConstructor)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal con As Condition.ConditionConstructor)
             _con = con
             _os = os
         End Sub
@@ -64,11 +65,11 @@ Namespace Criteria
 #End Region
 
         Protected Function CreateField(ByVal entityName As String, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
-            Return CreateField(New ObjectSource(entityName), propertyAlias, con, oper)
+            Return CreateField(New EntityUnion(entityName), propertyAlias, con, oper)
         End Function
 
         Protected Function CreateField(ByVal t As Type, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
-            Return CreateField(New ObjectSource(t), propertyAlias, con, oper)
+            Return CreateField(New EntityUnion(t), propertyAlias, con, oper)
         End Function
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone
@@ -80,7 +81,7 @@ Namespace Criteria
         End Function
 
         'Protected MustOverride Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
-        Protected Function CreateField(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
+        Protected Function CreateField(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
             Return New PropertyPredicate(os, propertyAlias, con, oper)
         End Function
 
@@ -104,7 +105,7 @@ Namespace Criteria
             Return CreateField(t, propertyAlias, _con, ConditionOperator.And)
         End Function
 
-        Public Function [and](ByVal oa As ObjectAlias, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [and](ByVal oa As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If
@@ -113,10 +114,10 @@ Namespace Criteria
                 Throw New ArgumentNullException("oa")
             End If
 
-            Return CreateField(New ObjectSource(oa), propertyAlias, _con, ConditionOperator.And)
+            Return CreateField(New EntityUnion(oa), propertyAlias, _con, ConditionOperator.And)
         End Function
 
-        Public Function [and](ByVal os As ObjectSource, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [and](ByVal os As EntityUnion, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
@@ -156,7 +157,7 @@ Namespace Criteria
             Return CreateField(t, propertyAlias, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [or](ByVal oa As ObjectAlias, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [or](ByVal oa As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If
@@ -165,10 +166,10 @@ Namespace Criteria
                 Throw New ArgumentNullException("oa")
             End If
 
-            Return CreateField(New ObjectSource(oa), propertyAlias, _con, ConditionOperator.Or)
+            Return CreateField(New EntityUnion(oa), propertyAlias, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [or](ByVal os As ObjectSource, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [or](ByVal os As EntityUnion, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If
@@ -377,7 +378,7 @@ Namespace Criteria
             End Get
         End Property
 
-        Protected ReadOnly Property ObjectSource() As ObjectSource
+        Protected ReadOnly Property ObjectSource() As EntityUnion
             Get
                 Return _os
             End Get

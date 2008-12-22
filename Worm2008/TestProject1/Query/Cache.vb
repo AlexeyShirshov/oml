@@ -3,7 +3,6 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
-Imports Worm.Database.Criteria
 Imports Worm.Database
 Imports Worm
 Imports Worm.Entities.Meta
@@ -251,7 +250,7 @@ Imports Worm.Criteria.Joins
             Dim tt2 As Type = GetType(Table2)
 
             Dim cq As QueryCmd = New QueryCmd(). _
-                Where(JoinCondition.Create(tt2, "Table1").eq(tt1, "Enum").[and]( _
+                Where(Ctor.prop(tt2, "Table1").eq(tt1, "Enum").[and]( _
                       Ctor.prop(tt1, "Code").eq(45)))
             cq.Select(tt1)
 

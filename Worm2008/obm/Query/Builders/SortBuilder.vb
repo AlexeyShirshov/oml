@@ -4,10 +4,10 @@ Imports Worm.Entities.Meta
 
 Namespace Query
     Public Class SCtor
-        Private _os As ObjectSource
+        Private _os As EntityUnion
         Private _prev As SortLink
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal prev As SortLink)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal prev As SortLink)
             _os = os
             _prev = prev
         End Sub
@@ -21,11 +21,11 @@ Namespace Query
         End Function
 
         Public Shared Function prop(ByVal en As String, ByVal propertyAlias As String) As SortLink
-            Return New SortLink(New ObjectSource(en), propertyAlias)
+            Return New SortLink(New EntityUnion(en), propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As SortLink
-            Return New SortLink(New ObjectSource([alias]), propertyAlias)
+        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As SortLink
+            Return New SortLink(New EntityUnion([alias]), propertyAlias)
         End Function
 
         Public Shared Function column(ByVal t As SourceFragment, ByVal clm As String) As SortLink
@@ -52,7 +52,7 @@ Namespace Query
             Return New SortLink(t, propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String) As SortLink
+        Public Shared Function prop(ByVal os As EntityUnion, ByVal propertyAlias As String) As SortLink
             Return New SortLink(os, propertyAlias)
         End Function
 
@@ -79,7 +79,7 @@ Namespace Query
         Private _ext As Boolean
         Private _prev As SortLink
         Private _order As SortType
-        Private _os As ObjectSource
+        Private _os As EntityUnion
         Private _custom As String
         Private _values() As FieldReference
         Private _del As ExternalSortDelegate
@@ -101,13 +101,13 @@ Namespace Query
 
         Protected Friend Sub New(ByVal t As Type, ByVal prev As SortLink)
             _prev = prev
-            _os = New ObjectSource(t)
+            _os = New EntityUnion(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, Optional ByVal prev As SortLink = Nothing)
             _f = propertyAlias
             _prev = prev
-            _os = New ObjectSource(t)
+            _os = New EntityUnion(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal ext As Boolean, Optional ByVal prev As SortLink = Nothing)
@@ -115,7 +115,7 @@ Namespace Query
             _ext = ext
             _prev = prev
             If t IsNot Nothing Then
-                _os = New ObjectSource(t)
+                _os = New EntityUnion(t)
             End If
         End Sub
 
@@ -123,23 +123,23 @@ Namespace Query
             _f = propertyAlias
             _ext = ext
             If t IsNot Nothing Then
-                _os = New ObjectSource(t)
+                _os = New EntityUnion(t)
             End If
             _del = del
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             _os = os
             _f = propertyAlias
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal prev As SortLink)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal prev As SortLink)
             _prev = prev
             _os = os
             _f = propertyAlias
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal ext As Boolean, Optional ByVal prev As SortLink = Nothing)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal ext As Boolean, Optional ByVal prev As SortLink = Nothing)
             _f = propertyAlias
             _ext = ext
             _prev = prev
@@ -194,7 +194,7 @@ Namespace Query
         End Function
 
         Public Function next_prop(ByVal entityName As String, ByVal propertyAlias As String) As SortLink
-            Return New SortLink(New ObjectSource(entityName), propertyAlias, Me)
+            Return New SortLink(New EntityUnion(entityName), propertyAlias, Me)
         End Function
 
         Public Function next_prop(ByVal t As Type, ByVal propertyAlias As String) As SortLink

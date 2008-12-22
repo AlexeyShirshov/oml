@@ -1111,7 +1111,7 @@ Public Class ObjectMappingEngine
         Return se
     End Function
 
-    Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As ObjectSource) As SelectExpression
+    Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As EntityUnion) As SelectExpression
         Dim se As New SelectExpression(os, c.PropertyAlias)
         se.Column = c.Column
         se.Attributes = c.Behavior
@@ -1813,7 +1813,7 @@ Public Class ObjectMappingEngine
 
     Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal fld As String, _
                                   ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
-                                  ByVal values As List(Of String), ByVal os As ObjectSource)
+                                  ByVal values As List(Of String), ByVal os As EntityUnion)
         If Not GetType(IEntity).IsAssignableFrom(t) Then
             Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
         End If
@@ -1854,7 +1854,7 @@ Public Class ObjectMappingEngine
 
 #Region " Gen "
     Public Function GetColumnNameByPropertyAlias(ByVal schema As IEntitySchema, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
+        ByVal add_alias As Boolean, ByVal columnAliases As List(Of String), ByVal os As EntityUnion) As String
 
         If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
@@ -1878,7 +1878,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        ByVal add_alias As Boolean, ByVal os As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
 
         If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
@@ -1888,7 +1888,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetPrimaryKeysName(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal add_alias As Boolean, _
-        ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String()
+        ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String()
         If original_type Is Nothing Then
             Throw New ArgumentNullException("original_type")
         End If
@@ -1920,7 +1920,7 @@ Public Class ObjectMappingEngine
         Return arr.ToArray
     End Function
 
-    Protected Friend Sub GetPKList(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal schema As IEntitySchema, ByVal ids As StringBuilder, ByVal columnAliases As List(Of String), ByVal os As ObjectSource)
+    Protected Friend Sub GetPKList(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal schema As IEntitySchema, ByVal ids As StringBuilder, ByVal columnAliases As List(Of String), ByVal os As EntityUnion)
         If ids Is Nothing Then
             Throw New ArgumentNullException("ids")
         End If
@@ -1958,7 +1958,7 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -1981,7 +1981,7 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As ObjectSource) As String
+    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -2007,21 +2007,21 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
         Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, True, os, columnAliases)
     End Function
 
-    Public Function GetColumnNameByPropertyAlias(ByVal os As IEntitySchema, ByVal propertyAlias As String, ByVal osrc As ObjectSource, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+    Public Function GetColumnNameByPropertyAlias(ByVal os As IEntitySchema, ByVal propertyAlias As String, ByVal osrc As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
         Return GetColumnNameByPropertyAlias(os, propertyAlias, True, columnAliases, osrc)
     End Function
 
-    Protected Function GetColumns4Select(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal columnAliases As List(Of String), ByVal os As ObjectSource) As String
+    Protected Function GetColumns4Select(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal columnAliases As List(Of String), ByVal os As EntityUnion) As String
         Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, os, columnAliases)
     End Function
 #End Region
 
-    Public Sub AppendJoin(ByVal selectOS As ObjectSource, _
-        ByVal joinOS As ObjectSource, ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
+    Public Sub AppendJoin(ByVal selectOS As EntityUnion, _
+        ByVal joinOS As EntityUnion, ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
         ByVal filterInfo As Object, ByVal selSchema As IEntitySchema)
 
         Dim schema As ObjectMappingEngine = Me
@@ -2090,14 +2090,14 @@ Public Class ObjectMappingEngine
     '    Return New QueryJoin() {mj, tj}
     'End Function
 
-    Public Function MakeJoin(ByVal joinOS As ObjectSource, ByVal pk As String, ByVal selectOS As ObjectSource, ByVal field As String, _
+    Public Function MakeJoin(ByVal joinOS As EntityUnion, ByVal pk As String, ByVal selectOS As EntityUnion, ByVal field As String, _
            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, ByVal switchTable As Boolean) As Worm.Criteria.Joins.QueryJoin
 
         Dim schema As ObjectMappingEngine = Me
 
         Dim jf As New JoinFilter(joinOS, pk, selectOS, field, oper)
 
-        Dim t As ObjectSource = joinOS
+        Dim t As EntityUnion = joinOS
         If switchTable Then
             t = selectOS
         End If

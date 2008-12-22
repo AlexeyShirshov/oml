@@ -2,6 +2,7 @@ Imports System.Collections.Generic
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Entities
+Imports Worm.Query
 
 Namespace Criteria.Values
 
@@ -119,7 +120,7 @@ Namespace Criteria.Values
             _p = New SelectExpression(t, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             _p = New SelectExpression(os, propertyAlias)
         End Sub
 

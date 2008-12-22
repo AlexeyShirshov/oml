@@ -3,6 +3,7 @@ Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports System.Collections.ObjectModel
 
 Namespace Query.Database
 
@@ -27,8 +28,19 @@ Namespace Query.Database
                 _j = j
             End Sub
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As Cache.CachedItemBase
-                Throw New NotImplementedException
+            Public Overloads Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As Cache.CachedItemBase
+                Return New Cache.CachedItemBase(GetMatrix(), _mgr.Cache)
+            End Function
+
+            Protected Function GetMatrix() As ReadonlyMatrix
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+
+                Using cmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                    ', dbm, Query, GetType(ReturnType), _j, _f
+                    MakeStatement(cmd)
+
+                    Return ExecMatrix(cmd)
+                End Using
             End Function
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Criteria.Joins.QueryJoin)), _
@@ -144,6 +156,13 @@ Namespace Query.Database
                 Dim l As IList = CType(_mgr, OrmReadOnlyDBManager).GetSimpleValues(cmd, t)
                 _q.ExecCount += 1
                 Return l
+            End Function
+
+            Protected Overridable Function ExecMatrix(ByVal cmd As System.Data.Common.DbCommand) As ReadonlyMatrix
+                Dim l As New List(Of ReadOnlyCollection(Of _IEntity))
+                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(Nothing, cmd, l, _q._types, _q._pdic, _sl(_sl.Count - 1))
+                _q.ExecCount += 1
+                Return New ReadonlyMatrix(l)
             End Function
         End Class
     End Class

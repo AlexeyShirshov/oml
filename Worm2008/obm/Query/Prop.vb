@@ -24,7 +24,7 @@ Namespace Entities
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
             _op = New ObjectProperty([alias], propertyAlias)
         End Sub
 
@@ -32,7 +32,7 @@ Namespace Entities
             _op = prop
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
@@ -87,11 +87,12 @@ Namespace Entities
         Private _q As Worm.Query.QueryCmd
         Private _agr As AggregateBase
         Private _falias As String
-        Private _dst As ObjectSource
+        Private _dst As EntityUnion
 
         Friend _c As EntityPropertyAttribute
         Friend _pi As Reflection.PropertyInfo
         Friend _realAtt As Field2DbRelations
+        Friend _tempMark As String
 
         Public Event OnChange()
 
@@ -102,11 +103,11 @@ Namespace Entities
         '    _field = propertyAlias
         'End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
             _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal fieldAlias As String)
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal fieldAlias As String)
             _op = New ObjectProperty(os, propertyAlias)
             _falias = fieldAlias
         End Sub
@@ -138,7 +139,7 @@ Namespace Entities
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
@@ -158,7 +159,7 @@ Namespace Entities
             _falias = fieldAlias
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
@@ -170,7 +171,7 @@ Namespace Entities
             '_osrc = New ObjectSource(t)
             _op = New ObjectProperty(t, propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(into)
+            _dst = New EntityUnion(into)
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
@@ -178,7 +179,7 @@ Namespace Entities
             '_osrc = New ObjectSource(t)
             _op = New ObjectProperty(t, propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(intoEntityName)
+            _dst = New EntityUnion(intoEntityName)
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
@@ -186,7 +187,7 @@ Namespace Entities
             '_osrc = New ObjectSource(entityName)
             _op = New ObjectProperty(entityName, propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(into)
+            _dst = New EntityUnion(into)
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
@@ -194,23 +195,23 @@ Namespace Entities
             '_osrc = New ObjectSource(entityName)
             _op = New ObjectProperty(entityName, propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(intoEntityName)
+            _dst = New EntityUnion(intoEntityName)
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(into)
+            _dst = New EntityUnion(into)
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
             _falias = intoPropertyAlias
-            _dst = New ObjectSource(intoEntityName)
+            _dst = New EntityUnion(intoEntityName)
         End Sub
 #End Region
 
@@ -229,14 +230,14 @@ Namespace Entities
             _column = column
             _table = t
             _falias = propertyAlias
-            _dst = New ObjectSource(intoType)
+            _dst = New EntityUnion(intoType)
         End Sub
 
         Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal propertyAlias As String, ByVal intoEntityName As String)
             _column = column
             _table = t
             _falias = propertyAlias
-            _dst = New ObjectSource(intoEntityName)
+            _dst = New EntityUnion(intoEntityName)
         End Sub
 
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal fieldAlias As String)
@@ -249,14 +250,14 @@ Namespace Entities
             _column = computed
             _values = values
             _falias = propertyAlias
-            _dst = New ObjectSource(intoType)
+            _dst = New EntityUnion(intoType)
         End Sub
 
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal propertyAlias As String, ByVal intoEntityName As String)
             _column = computed
             _values = values
             _falias = propertyAlias
-            _dst = New ObjectSource(intoEntityName)
+            _dst = New EntityUnion(intoEntityName)
         End Sub
 
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference)
@@ -373,7 +374,7 @@ Namespace Entities
             End Set
         End Property
 
-        Public ReadOnly Property ObjectSource() As ObjectSource
+        Public ReadOnly Property ObjectSource() As EntityUnion
             Get
                 Return _op.ObjectSource
             End Get
@@ -388,11 +389,11 @@ Namespace Entities
             End Set
         End Property
 
-        Public Property Into() As ObjectSource
+        Public Property Into() As EntityUnion
             Get
                 Return _dst
             End Get
-            Set(ByVal value As ObjectSource)
+            Set(ByVal value As EntityUnion)
                 _dst = value
             End Set
         End Property

@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities
 Imports Worm.Criteria.Values
 Imports Worm.Entities.Meta
+Imports Worm.Query
 
 Namespace Criteria.Core
     Public MustInherit Class TemplateBase
@@ -104,14 +105,14 @@ Namespace Criteria.Core
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
             '_os = New ObjectSource([alias])
             '_fieldname = propertyAlias
             _op = New ObjectProperty([alias], propertyAlias)
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
             '_os = os
             '_fieldname = propertyAlias
@@ -123,7 +124,7 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim os As ObjectSource = _op.ObjectSource
+            Dim os As EntityUnion = _op.ObjectSource
             Dim lt As Type = os.AnyType
             If lt Is Nothing Then
                 If Not String.IsNullOrEmpty(os.AnyEntityName) Then
@@ -152,7 +153,7 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public ReadOnly Property ObjectSource() As ObjectSource
+        Public ReadOnly Property ObjectSource() As EntityUnion
             Get
                 Return _op.ObjectSource
             End Get
@@ -221,7 +222,7 @@ Namespace Criteria.Core
             Return New EntityFilter(entityName, propertyAlias, value, operation)
         End Function
 
-        Protected Function CreateEntityFilter(ByVal oa As ObjectAlias, ByVal propertyAlias As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
+        Protected Function CreateEntityFilter(ByVal oa As EntityAlias, ByVal propertyAlias As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
             Return New EntityFilter(oa, propertyAlias, value, operation)
         End Function
 

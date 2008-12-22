@@ -12,6 +12,7 @@ Imports cc = Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports System.Collections.ObjectModel
 Imports Worm.Misc
+Imports Worm.Query
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -1093,7 +1094,7 @@ l1:
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 Dim arr As List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(original_type)
                 Dim cols As IList(Of SelectExpression) = arr.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
-                     New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
+                     New SelectExpression(New EntityUnion(original_type), col.PropertyAlias))
                 With cmd
                     .CommandType = System.Data.CommandType.Text
 
@@ -1310,15 +1311,15 @@ l1:
 
             Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
 
-            Dim ost As ObjectSource = New ObjectSource(firstType)
-            Dim ostt As ObjectSource = Nothing
+            Dim ost As EntityUnion = New EntityUnion(firstType)
+            Dim ostt As EntityUnion = Nothing
             If firstType IsNot secondType Then
-                ostt = New ObjectSource(secondType)
+                ostt = New EntityUnion(secondType)
             Else
-                ostt = New ObjectSource(New ObjectAlias(secondType))
+                ostt = New EntityUnion(New EntityAlias(secondType))
             End If
 
-            Dim types As New Dictionary(Of ObjectSource, IEntitySchema)
+            Dim types As New Dictionary(Of EntityUnion, IEntitySchema)
             types.Add(ost, MappingEngine.GetObjectSchema(firstType))
             types.Add(ostt, MappingEngine.GetObjectSchema(secondType))
 
@@ -1460,7 +1461,7 @@ l1:
             ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
-            ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
+            ByVal types As IDictionary(Of EntityUnion, IEntitySchema), _
             ByVal pdic As Dictionary(Of Type, IDictionary), _
             ByVal selectList As IList(Of SelectExpression))
 
@@ -1469,14 +1470,14 @@ l1:
             Try
                 _loadedInLastFetch = 0
                 If c IsNot Nothing Then
-                    For Each os As ObjectSource In types.Keys
+                    For Each os As EntityUnion In types.Keys
                         Dim original_type As Type = os.GetRealType(MappingEngine)
                         c.BeginTrackDelete(original_type)
                     Next
                 End If
 
-                Dim objDic As New Dictionary(Of ObjectSource, IDictionary)
-                For Each k As KeyValuePair(Of ObjectSource, IEntitySchema) In types
+                Dim objDic As New Dictionary(Of EntityUnion, IDictionary)
+                For Each k As KeyValuePair(Of EntityUnion, IEntitySchema) In types
                     objDic.Add(k.Key, GetDictionary(k.Key.GetRealType(MappingEngine), k.Value))
                 Next
 
@@ -1492,7 +1493,7 @@ l1:
                 End Using
             Finally
                 If c IsNot Nothing Then
-                    For Each os As ObjectSource In types.Keys
+                    For Each os As EntityUnion In types.Keys
                         Dim original_type As Type = os.GetRealType(MappingEngine)
                         c.EndTrackDelete(original_type)
                     Next
@@ -1506,21 +1507,25 @@ l1:
             ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
             ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
-            ByVal types As IDictionary(Of ObjectSource, IEntitySchema), _
+            ByVal types As IDictionary(Of EntityUnion, IEntitySchema), _
             ByVal pdic As Dictionary(Of Type, IDictionary), _
-            ByVal objDic As Dictionary(Of ObjectSource, IDictionary), _
+            ByVal objDic As Dictionary(Of EntityUnion, IDictionary), _
             ByRef loaded As Integer)
 
             Dim odic As New Specialized.OrderedDictionary '(Of ObjectSource, _IEntity)
-            Dim dfac As New Dictionary(Of ObjectSource, List(Of Pair(Of String, Object)))
-            Dim pkdic As New Dictionary(Of ObjectSource, Integer)
+            Dim dfac As New Dictionary(Of EntityUnion, List(Of Pair(Of String, Object)))
+            Dim pkdic As New Dictionary(Of EntityUnion, Integer)
 
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
                 Dim t As Type = createType
-                Dim os As ObjectSource = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
                 If os IsNot Nothing Then
                     t = os.GetRealType(MappingEngine)
+                End If
+                Dim propertyAlias As String = se.FieldAlias
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    propertyAlias = se.PropertyAlias
                 End If
 
                 Dim oschema As IEntitySchema = types(os)
@@ -1531,7 +1536,7 @@ l1:
                 If c Is Nothing Then
                     For Each de As DictionaryEntry In pdic(t)
                         c = CType(de.Key, EntityPropertyAttribute)
-                        If c.PropertyAlias = se.PropertyAlias Then
+                        If c.PropertyAlias = propertyAlias Then
                             pi = CType(de.Value, Reflection.PropertyInfo)
                             se._c = c
                             se._pi = pi
@@ -1555,10 +1560,6 @@ l1:
                     End If
 
                     Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-                    Dim propertyAlias As String = se.FieldAlias
-                    If String.IsNullOrEmpty(propertyAlias) Then
-                        propertyAlias = se.PropertyAlias
-                    End If
 
                     Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
                     Dim value As Object = dr.GetValue(i)
@@ -1580,7 +1581,7 @@ l1:
             Next
 
             Dim ex As New List(Of _IEntity)
-            For Each os As ObjectSource In odic.Keys
+            For Each os As EntityUnion In odic.Keys
                 Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
                 Dim obj As _IEntity = p.First
                 Dim pk_count As Integer
@@ -1651,7 +1652,7 @@ l1:
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
                 'Dim t As Type = se.ObjectSource.GetRealType(MappingEngine)
-                Dim os As ObjectSource = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
                 Dim oschema As IEntitySchema = types(os)
 
                 Dim pi As Reflection.PropertyInfo = se._pi
@@ -1719,7 +1720,7 @@ l1:
 
                 'Assert(obj.ObjectState <> ObjectState.Created, "Object cannot be created")
 
-                Dim os As ObjectSource = CType(de.Key, ObjectSource)
+                Dim os As EntityUnion = CType(de.Key, EntityUnion)
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
                 If ce IsNot Nothing Then
@@ -3245,7 +3246,7 @@ l2:
                         End If
                     End If
                 Next
-                _er = New ExecutionResult(_er.Count + col2.Count, Nothing, Nothing, False, 0)
+                _er = New ExecutionResult(_er.RowCount + col2.Count, Nothing, Nothing, False, 0)
             End If
 
             Return New ReadOnlyList(Of T)(res)
@@ -3611,15 +3612,15 @@ l2:
             Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
 
             Dim tt As Type = GetType(ReturnType)
-            Dim ost As ObjectSource = New ObjectSource(t)
-            Dim ostt As ObjectSource = Nothing
+            Dim ost As EntityUnion = New EntityUnion(t)
+            Dim ostt As EntityUnion = Nothing
             If t IsNot tt Then
-                ostt = New ObjectSource(tt)
+                ostt = New EntityUnion(tt)
             Else
-                ostt = New ObjectSource(New ObjectAlias(tt))
+                ostt = New EntityUnion(New EntityAlias(tt))
             End If
 
-            Dim types As New Dictionary(Of ObjectSource, IEntitySchema)
+            Dim types As New Dictionary(Of EntityUnion, IEntitySchema)
             types.Add(ost, MappingEngine.GetObjectSchema(t))
             types.Add(ostt, MappingEngine.GetObjectSchema(tt))
 

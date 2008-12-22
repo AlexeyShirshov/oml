@@ -194,7 +194,7 @@ Namespace Query
             MyClass.New(agFunc, New UnaryExp(New FieldValue(t, propertyAlias)))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As ObjectSource, ByVal propertyAlias As String)
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As EntityUnion, ByVal propertyAlias As String)
             MyClass.New(agFunc, New UnaryExp(New FieldValue(os, propertyAlias)))
         End Sub
 

@@ -158,4 +158,29 @@ Imports Worm
         Next
     End Sub
 
+    <TestMethod()> Public Sub TestSelectInner()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+        inner.From(GetType(Entity4)).Select(FCtor.prop(GetType(Entity4), "Title")). _
+            Where(Ctor.prop(GetType(Entity), "ID").eq(GetType(Entity4), "ID"))
+
+        inner.AutoFields = False
+
+        Dim q As New QueryCmd(Function() _
+                    TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(FCtor.prop(GetType(Entity), "ID").Add_column(inner, "Title"))
+
+        Dim l As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
+
+        Assert.AreEqual(13, l.Count)
+
+        For Each e As Entities.AnonymousEntity In l
+            If CInt(e("ID")) = 13 Then
+                Assert.IsNull(e("Title"))
+            Else
+                Assert.IsNotNull(e("Title"))
+            End If
+        Next
+    End Sub
 End Class

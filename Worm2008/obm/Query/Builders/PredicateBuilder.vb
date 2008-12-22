@@ -8,7 +8,7 @@ Namespace Query
     Public Class Ctor
         'Implements ICtor
 
-        Private _os As ObjectSource
+        Private _os As EntityUnion
         Private _tbl As Worm.Entities.Meta.SourceFragment
 
         'Public Sub New(ByVal t As Type)
@@ -28,7 +28,7 @@ Namespace Query
                 Throw New ArgumentNullException("t")
             End If
 
-            _os = New ObjectSource(t)
+            _os = New EntityUnion(t)
         End Sub
 
         Public Sub New(ByVal tbl As Entities.Meta.SourceFragment)
@@ -40,10 +40,10 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal entityName As String)
-            _os = New ObjectSource(entityName)
+            _os = New EntityUnion(entityName)
         End Sub
 
-        Public Sub New(ByVal os As ObjectSource)
+        Public Sub New(ByVal os As EntityUnion)
             _os = os
         End Sub
 
@@ -68,8 +68,8 @@ Namespace Query
         '    Return Field(t, propertyAlias)
         'End Function
 
-        Public Shared Function prop(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As PropertyPredicate
-            Return prop(New ObjectSource([alias]), propertyAlias)
+        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
+            Return prop(New EntityUnion([alias]), propertyAlias)
         End Function
 
         'Public Shared Function Field(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
@@ -92,7 +92,7 @@ Namespace Query
             Return New PropertyPredicate(t, propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String) As PropertyPredicate
+        Public Shared Function prop(ByVal os As EntityUnion, ByVal propertyAlias As String) As PropertyPredicate
             If os Is Nothing Then
                 Throw New ArgumentNullException("os")
             End If
@@ -118,6 +118,12 @@ Namespace Query
             End If
 
             Return New PropertyPredicate(entityName, propertyAlias)
+        End Function
+
+        Public Shared Function Filter(ByVal f As IGetFilter) As PredicateLink
+            Dim con As New Condition.ConditionConstructor
+            con.AddFilter(f.Filter)
+            Return New PredicateLink(con)
         End Function
 
         Public Shared Function ColumnOnInlineTable(ByVal columnName As String) As ColumnPredicate

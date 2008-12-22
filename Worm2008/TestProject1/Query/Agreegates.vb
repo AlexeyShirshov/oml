@@ -8,7 +8,6 @@ Imports Worm.Entities.Meta
 Imports System.Collections
 Imports Worm.Entities
 Imports Worm
-Imports Worm.Database.Criteria
 Imports Worm.Criteria.Joins
 Imports Worm.Sorting
 
@@ -190,9 +189,9 @@ Imports Worm.Sorting
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("left({0},1)", "Pref", New FieldReference(t, "Title")).Add_count("Count")) _
+            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).Add_count("Count")) _
                 .From(t) _
-                .GroupBy(FCtor.custom("left({0},1)", "Pref", New FieldReference(t, "Title"))) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
                 .Sort(SCtor.Custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
@@ -224,7 +223,7 @@ Imports Worm.Sorting
             q.propSort = New Worm.Sorting.Sort( _
                 New QueryCmd().From(table). _
                     Select(FCtor.count). _
-                    Where(JoinCondition.Create(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
+                    Where(Ctor.column(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
 
             Assert.AreEqual(12, q.ToList(Of Entity4)(mgr).Count)
         End Using

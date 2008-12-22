@@ -1,7 +1,6 @@
 ﻿Imports Worm.Database
 Imports Worm.Cache
 Imports Worm
-Imports Worm.Database.Criteria
 Imports Worm.Database.OrmReadOnlyDBManager
 Imports Worm.Criteria
 Imports Worm.Query

@@ -16,7 +16,8 @@ End Interface
 
 <Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
-Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3")> _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "joins")> _
 Public Class Entity
     Inherits OrmBaseT(Of Entity)
     Implements IEnt
@@ -296,7 +297,9 @@ Public Class Entity3
     'End Sub
 End Class
 
-<Entity(GetType(EntitySchema4v1Implementation), "1"), Entity(GetType(EntitySchema4v2Implementation), "2")> _
+<Entity(GetType(EntitySchema4v1Implementation), "1"), _
+Entity(GetType(EntitySchema4v1Implementation), "joins"), _
+Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
     Inherits OrmBaseT(Of Entity4)
     Implements IOrmEditable(Of Entity4)

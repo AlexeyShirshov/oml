@@ -5,7 +5,6 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Query
-Imports Worm.Database.Criteria
 Imports Worm.Entities
 Imports Worm
 Imports Worm.Criteria

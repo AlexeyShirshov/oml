@@ -80,7 +80,7 @@ namespace Worm.CodeGen.Core.Descriptors
                 int s = 0;
                 foreach (var propertyDescription in this.CompleteEntity.Properties)
                 {
-                    if (propertyDescription.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                    if (propertyDescription.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
                         s++;
                 }
                 return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
@@ -321,7 +321,7 @@ namespace Worm.CodeGen.Core.Descriptors
                 if (HasSinglePK) 
                     foreach (var propertyDescription in CompleteEntity.Properties)
                     {
-                        if (propertyDescription.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                        if (propertyDescription.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
                             return propertyDescription;
                     }
                 throw new InvalidOperationException("Only usable with single PK");
@@ -332,7 +332,7 @@ namespace Worm.CodeGen.Core.Descriptors
 	    {
 	        get
 	        {
-	            return Properties.FindAll(p => p.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK));
+                return Properties.FindAll(p => p.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK));
 	        }
 	    }
 	}

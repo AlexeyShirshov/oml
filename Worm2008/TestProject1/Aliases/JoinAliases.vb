@@ -4,9 +4,9 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm
-Imports Worm.Entities
+Imports Worm.Criteria.Joins
 
-<TestClass()> Public Class Matrix
+<TestClass()> Public Class JoinAliases
 
     Private testContextInstance As TestContext
 
@@ -45,38 +45,32 @@ Imports Worm.Entities
     '
 #End Region
 
-    <TestMethod()> Public Sub TestSelect()
+    <TestMethod()> Public Sub TestJoin()
         Dim t1 As New EntityAlias(GetType(Table1))
         Dim t2 As New EntityAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q.From(t1).Join(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).Select(FCtor.count)
 
-        q.From(t1). _
-            Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, t2)
+        Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q2.From(t1).Select(FCtor.count)
 
-        Dim m As ReadonlyMatrix = q.ToMatrix
+        Assert.AreEqual(2, q.SingleSimple(Of Integer))
+        Assert.AreEqual(3, q2.SingleSimple(Of Integer))
     End Sub
 
-    <TestMethod()> Public Sub TestSelect2()
-        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    <TestMethod()> Public Sub TestOuterJoin()
+        Dim t1 As New EntityAlias(GetType(Entity))
+        Dim t2 As New EntityAlias(GetType(Entity4))
 
-        q.From(GetType(Table1)).Select(GetType(Table1), GetType(Table2)). _
-            Join(JCtor.join(GetType(Table2)).on(GetType(Table2), "Table1").eq(GetType(Table1), "ID"))
+        Dim q As New QueryCmd(Function() TestManager.CreateManager(New ObjectMappingEngine("joins")))
+        q.From(t2).Join(JCtor.join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)
 
-        Dim m As ReadonlyMatrix = q.ToMatrix
+        Assert.AreEqual(3, q.SingleSimple(Of Integer))
+
+        q.Join(JCtor.left_join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)
+
+        Assert.AreEqual(12, q.SingleSimple(Of Integer))
     End Sub
 
-    <TestMethod()> Public Sub TestSelectWithload()
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
-
-        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-
-        q.From(t1). _
-            Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, True).SelectAdd(t2, True)
-
-        Dim m As ReadonlyMatrix = q.ToMatrix
-    End Sub
 End Class

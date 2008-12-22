@@ -7,28 +7,28 @@ Namespace Query
 
 #Region " Shared "
         Public Shared Function prop(ByVal t As Type, ByVal propertyAlias As String) As FCtor
-            Return prop(New ObjectSource(t), propertyAlias)
+            Return prop(New EntityUnion(t), propertyAlias)
         End Function
 
         Public Shared Function prop(ByVal t As Type, ByVal propertyAlias As String, ByVal fieldAlias As String) As FCtor
-            Return prop(New ObjectSource(t), propertyAlias, fieldAlias)
+            Return prop(New EntityUnion(t), propertyAlias, fieldAlias)
         End Function
 
         Public Shared Function prop(ByVal entityName As String, ByVal propertyAlias As String) As FCtor
-            Return prop(New ObjectSource(entityName), propertyAlias)
+            Return prop(New EntityUnion(entityName), propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As FCtor
-            Return prop(New ObjectSource([alias]), propertyAlias)
+        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As FCtor
+            Return prop(New EntityUnion([alias]), propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String) As FCtor
+        Public Shared Function prop(ByVal os As EntityUnion, ByVal propertyAlias As String) As FCtor
             Dim f As New FCtor
             f.GetAllProperties.Add(New SelectExpression(os, propertyAlias))
             Return f
         End Function
 
-        Public Shared Function prop(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal fieldAlias As String) As FCtor
+        Public Shared Function prop(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal fieldAlias As String) As FCtor
             Dim f As New FCtor
             f.GetAllProperties.Add(New SelectExpression(os, propertyAlias, fieldAlias))
             Return f
@@ -69,6 +69,18 @@ Namespace Query
         Public Shared Function column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal propertyAlias As String, ByVal intoEntityName As String) As FCtor
             Dim f As New FCtor
             f.GetAllProperties.Add(New SelectExpression(table, tableColumn, propertyAlias, intoEntityName))
+            Return f
+        End Function
+
+        Public Shared Function column(ByVal inner As QueryCmd) As FCtor
+            Dim f As New FCtor
+            f.GetAllProperties.Add(New SelectExpression(inner))
+            Return f
+        End Function
+
+        Public Shared Function column(ByVal inner As QueryCmd, ByVal fieldAlias As String) As FCtor
+            Dim f As New FCtor
+            f.GetAllProperties.Add(New SelectExpression(inner, fieldAlias))
             Return f
         End Function
 
@@ -134,12 +146,12 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function Add_prop(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As FCtor
+        Public Function Add_prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As FCtor
             GetAllProperties.Add(New SelectExpression([alias], propertyAlias))
             Return Me
         End Function
 
-        Public Function Add_prop(ByVal os As ObjectSource, ByVal propertyAlias As String) As FCtor
+        Public Function Add_prop(ByVal os As EntityUnion, ByVal propertyAlias As String) As FCtor
             GetAllProperties.Add(New SelectExpression(os, propertyAlias))
             Return Me
         End Function
@@ -173,6 +185,16 @@ Namespace Query
 
         Public Function Add_column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal propertyAlias As String, ByVal intoEntityName As String) As FCtor
             GetAllProperties.Add(New SelectExpression(table, tableColumn, propertyAlias, intoEntityName))
+            Return Me
+        End Function
+
+        Public Function Add_column(ByVal query As QueryCmd) As FCtor
+            GetAllProperties.Add(New SelectExpression(query))
+            Return Me
+        End Function
+
+        Public Function Add_column(ByVal query As QueryCmd, ByVal fieldAlias As String) As FCtor
+            GetAllProperties.Add(New SelectExpression(query, fieldAlias))
             Return Me
         End Function
 

@@ -3,7 +3,6 @@ Imports Worm.Entities
 Imports System.Collections.Generic
 Imports System.Collections
 Imports Worm.Database
-Imports Worm.Database.Criteria
 Imports Worm.Criteria
 Imports Worm.Query
 

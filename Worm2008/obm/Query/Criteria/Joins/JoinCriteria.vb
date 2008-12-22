@@ -18,7 +18,7 @@ Namespace Criteria.Joins
             _jc = jc
         End Sub
 
-        Protected Friend Sub New(ByVal os As ObjectSource, ByVal jc As List(Of QueryJoin))
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal jc As List(Of QueryJoin))
             _jc = jc
             AddType(os)
         End Sub
@@ -81,7 +81,7 @@ Namespace Criteria.Joins
             _jc(_jc.Count - 1).Condition = jf
         End Sub
 
-        Protected Friend Sub AddType(ByVal os As ObjectSource)
+        Protected Friend Sub AddType(ByVal os As EntityUnion)
             _jc(_jc.Count - 1).M2MObjectSource = os
         End Sub
 
@@ -210,19 +210,19 @@ Namespace Criteria.Joins
         End Sub
 
         Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As JoinLink
-            _jf.Right = New FieldReference(New ObjectSource(t), propertyAlias)
+            _jf.Right = New FieldReference(New EntityUnion(t), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
         Public Function eq(ByVal entityName As String, ByVal propertyAlias As String) As JoinLink
-            _jf.Right = New FieldReference(New ObjectSource(entityName), propertyAlias)
+            _jf.Right = New FieldReference(New EntityUnion(entityName), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
-        Public Function eq(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As JoinLink
-            _jf.Right = New FieldReference(New ObjectSource([alias]), propertyAlias)
+        Public Function eq(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(New EntityUnion([alias]), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function

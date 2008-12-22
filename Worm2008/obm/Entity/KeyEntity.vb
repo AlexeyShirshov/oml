@@ -6,6 +6,7 @@ Imports Worm.Criteria
 Imports System.Collections.Generic
 Imports System.ComponentModel
 Imports Worm.Criteria.Core
+Imports Worm.Query
 
 #Const TraceSetState = False
 
@@ -191,7 +192,7 @@ Namespace Entities
             Public Function FindDistinct(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Dim rel As M2MRelation = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
-                    Dim crit As PredicateLink = New PropertyPredicate(New ObjectSource(_o.GetType), OrmBaseT.PKName).eq(_o).[and](CType(criteria, PredicateLink))
+                    Dim crit As PredicateLink = New PropertyPredicate(New EntityUnion(_o.GetType), OrmBaseT.PKName).eq(_o).[and](CType(criteria, PredicateLink))
                     Return mc.Manager.FindDistinct(Of T)(rel, crit, sort, withLoad)
                 End Using
             End Function

@@ -263,11 +263,7 @@ Namespace Query
             End Get
         End Property
 
-        Public Overridable Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-            Return GetCacheItem(withLoad(0))
-        End Function
-
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItemBase
+        Public MustOverride Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
         Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
                                       ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 
@@ -297,6 +293,45 @@ Namespace Query
             'End Set
         End Property
 
+        Public Sub ResetCache()
+            _dic.Remove(Id)
+        End Sub
+
+        Public ReadOnly Property Key() As String
+            Get
+                Return _key
+            End Get
+        End Property
+
+        Public ReadOnly Property Id() As String
+            Get
+                Return _id
+            End Get
+        End Property
+
+        Public ReadOnly Property Sync() As String
+            Get
+                Return _sync
+            End Get
+        End Property
+
+        Public ReadOnly Property Dic() As IDictionary
+            Get
+                Return _dic
+            End Get
+        End Property
+
+        Public ReadOnly Property Fetch() As TimeSpan
+            Get
+                Return _mgr.Fecth
+            End Get
+        End Property
+
+        Public ReadOnly Property Exec() As TimeSpan
+            Get
+                Return _mgr.Exec
+            End Get
+        End Property
 
         Protected ReadOnly Property Cache() As Cache.CacheBase
             Get
