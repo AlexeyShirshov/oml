@@ -1,5 +1,8 @@
 using System;
-using Worm.Orm;
+using Worm.Entities.Meta;
+using Worm.Entities;
+using Worm.Cache;
+using Worm;
 
 namespace test
 {
@@ -11,19 +14,19 @@ namespace test
 
 		public Album() {}
 
-		public Album(int id, Worm.Orm.OrmCacheBase cache, Worm.Orm.OrmSchemaBase schema)
+		public Album(int id, CacheBase cache, ObjectMappingEngine schema)
 			: base(id, cache, schema)
 		{
 		}
 
-		[Worm.Orm.ColumnAttribute()]
+        [EntityProperty]
 		public virtual string Name
 		{
 			get { using (Read("Name")) { return _name; } }
 			set { using (Write("Name")) { _name = value; } }
 		}
 
-		[Worm.Orm.ColumnAttribute()]
+        [EntityProperty]
 		public virtual DateTime? Release
 		{
 			get { using (Read("Release")) { return _release; } }

@@ -1,4 +1,7 @@
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Entities.Meta
+Imports Worm
+Imports Worm.Cache
 
 Namespace test
     <Entity("dbo.Albums", "id", "1")> _
@@ -12,11 +15,11 @@ Namespace test
 
         End Sub
 
-        Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+        Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
             MyBase.New(id, cache, schema)
         End Sub
 
-        <ColumnAttribute()> _
+        <EntityProperty()> _
         Public Overridable Property Name() As String
             Get
                 Using Read("Name")
@@ -30,7 +33,7 @@ Namespace test
             End Set
         End Property
 
-        <ColumnAttribute()> _
+        <EntityProperty()> _
         Public Overridable Property Release() As Nullable(Of Date)
             Get
                 Using Read("Release")
