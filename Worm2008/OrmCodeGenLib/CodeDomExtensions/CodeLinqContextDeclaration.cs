@@ -50,9 +50,11 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 ctor.Attributes = MemberAttributes.Public;
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cache.OrmCache)),"cache"));
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(ObjectMappingEngine)), "schema"));
+                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (StmtGenerator)), "gen"));
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(string)), "conn"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("cache"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("schema"));
+                ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("gen"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("conn"));
                 Members.Add(ctor);
                 ctor = new CodeConstructor();
