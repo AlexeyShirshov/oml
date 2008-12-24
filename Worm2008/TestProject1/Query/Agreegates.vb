@@ -62,6 +62,12 @@ Imports Worm.Sorting
             Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            i = q.ToSimpleList(Of Integer)(mgr)(0)
+
+            Assert.AreEqual(12, i)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
         End Using
     End Sub
@@ -98,7 +104,7 @@ Imports Worm.Sorting
             })
 
             Dim q As New QueryCmd()
-            q.propSort = New Worm.Sorting.Sort(inner, SortType.Desc)
+            q.propSort = SCtor.query(inner).desc
             q.Select(GetType(Entity4))
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -133,17 +139,20 @@ Imports Worm.Sorting
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.propJoins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
+            Assert.IsNotNull(q.SelectList)
             Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
+            Assert.IsNotNull(q.SelectList)
 
             q.Group = New ObjectModel.ReadOnlyCollection(Of Grouping)( _
                 New Grouping() {New Grouping(table, r.Column)} _
             )
 
+            Assert.IsNotNull(q.SelectList)
             Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
 
-            q.propSort = SCtor.Custom("cnt desc")
+            q.propSort = SCtor.Custom("cnt").desc
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -151,6 +160,7 @@ Imports Worm.Sorting
             Assert.AreEqual(4, l(1))
 
             q.propSort = New Worm.Sorting.Sort(q.SelectList(0).Aggregate, SortType.Desc)
+            'q.propSort = sCTOR.
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)

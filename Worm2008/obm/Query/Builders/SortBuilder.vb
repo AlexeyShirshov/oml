@@ -32,6 +32,10 @@ Namespace Query
             Return New SortLink(t, clm)
         End Function
 
+        Public Shared Function query(ByVal queryCmd As QueryCmd) As SortLink
+            Return New SortLink(queryCmd)
+        End Function
+
         'Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
         '    Return SortOrder.CreateCustom(sortExpression, Nothing, values)
         'End Function
@@ -84,6 +88,7 @@ Namespace Query
         Private _values() As FieldReference
         Private _del As ExternalSortDelegate
         Private _table As SourceFragment
+        Private _cmd As QueryCmd
 
         Protected Sub New()
 
@@ -183,6 +188,15 @@ Namespace Query
             _values = values
         End Sub
 
+        Protected Friend Sub New(ByVal cmd As QueryCmd)
+            _cmd = cmd
+        End Sub
+
+        Protected Friend Sub New(ByVal cmd As QueryCmd, ByVal prev As SortLink)
+            _cmd = cmd
+            _prev = prev
+        End Sub
+
         'Public Function NextSort(ByVal field As String) As SortOrder
         '    _f = field
         '    Return Me
@@ -191,6 +205,10 @@ Namespace Query
         Public Function NextSort(ByVal so As SortLink) As SortLink
             _prev = so
             Return Me
+        End Function
+
+        Public Function next_query(ByVal queryCmd As QueryCmd) As SortLink
+            Return New SortLink(queryCmd, Me)
         End Function
 
         Public Function next_prop(ByVal entityName As String, ByVal propertyAlias As String) As SortLink
@@ -289,7 +307,7 @@ Namespace Query
         End Operator
 
         Private Shared Function xxx(ByVal so As SortLink) As Sort
-            If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) Then
+            If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) OrElse so._cmd IsNot Nothing Then
                 If so._prev Is Nothing Then
                     If so.IsCustom Then
                         Dim s As New Sort(so._custom, so._values)
@@ -298,6 +316,8 @@ Namespace Query
                     Else
                         If so._os IsNot Nothing Then
                             Return New Sort(so._os, so._f, so._order, so._ext, so._del)
+                        ElseIf so._cmd IsNot Nothing Then
+                            Return New Sort(so._cmd, so._order)
                         Else
                             Return New Sort(so._table, so._f, so._order, so._ext, so._del)
                         End If
@@ -310,6 +330,8 @@ Namespace Query
                     Else
                         If so._os IsNot Nothing Then
                             Return New Sort(so._prev, so._os, so._f, so._order, so._ext, so._del)
+                        ElseIf so._cmd IsNot Nothing Then
+                            Return New Sort(so._prev, so._cmd, so._order)
                         Else
                             Return New Sort(so._prev, so._table, so._f, so._order, so._ext, so._del)
                         End If

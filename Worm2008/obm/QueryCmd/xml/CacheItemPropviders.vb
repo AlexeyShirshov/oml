@@ -34,7 +34,7 @@ Namespace Query.Xml
                 Return r
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
+            Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
                 Return New CachedItem(GetEntities(), _mgr.Cache)
             End Function
 

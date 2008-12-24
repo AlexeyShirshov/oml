@@ -38,6 +38,7 @@ Namespace Query.Database
         Private _procA As BaseProvider
         Private _procAT As BaseProvider
         Private _procS As BaseProvider
+        Private _procSM As BaseProvider
 
         Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
 
@@ -429,34 +430,75 @@ Namespace Query.Database
             Return CType(_procS, BaseProvider)
         End Function
 
-        'Public Function ExecSimple(Of CreatedType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
-        '    Dim p As ProviderT(Of CreatedType, CreatedType) = GetProcessorT(Of CreatedType, CreatedType)(mgr, query)
+        Protected Function GetProcessorS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As BaseProvider
+            If _procSM Is Nothing Then
+                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+                'If query.Joins IsNot Nothing Then
+                '    j.AddRange(query.Joins)
+                'End If
 
-        '    Return p.GetSimpleValues(Of ReturnType)()
-        'End Function
+                'If query.SelectedType Is Nothing Then
+                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+                '    Else
+                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+                '    End If
+                'End If
 
-        Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
-            'Dim ts() As Reflection.MemberInfo = Me.GetType.GetMember("ExecSimple")
-            'For Each t As Reflection.MethodInfo In ts
-            '    If t.IsGenericMethod AndAlso t.GetGenericArguments.Length = 2 Then
-            '        t = t.MakeGenericMethod(New Type() {query.SelectedType, GetType(ReturnType)})
-            '        Return CType(t.Invoke(Me, New Object() {mgr, query}), System.Collections.Generic.IList(Of ReturnType))
-            '    End If
-            'Next
-            'Throw New InvalidOperationException
-            Dim p As BaseProvider = GetProcessor(mgr, query)
+                'InitTypes(mgr,query,GetType(CreateType))
 
-            Return p.GetSimpleValues(Of ReturnType)()
+                Dim sl As New List(Of List(Of SelectExpression))
+                Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                'If query.Filter IsNot Nothing Then
+                '    f = query.Filter.Filter(GetType(ReturnType))
+                'End If
+
+                'If query.AutoJoins Then
+                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+                '        j.AddRange(joins)
+                '    End If
+                'End If
+
+                'If query.Obj IsNot Nothing Then
+                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'Else
+                _procSM = New SimpleProvider(Of T)(mgr, j, f, query, sl)
+                'End If
+            Else
+                Dim p As BaseProvider = CType(_procSM, BaseProvider)
+
+                'If query.SelectedType Is Nothing Then
+                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+                '    Else
+                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+                '    End If
+                'End If
+
+                'InitTypes(mgr,query,GetType(CreateType))
+
+                If _procSM.QMark <> query.Mark Then
+                    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+                    Dim sl As New List(Of List(Of SelectExpression))
+                    Dim f() As IFilter = query.Prepare(Me, j, mgr.MappingEngine, mgr.GetFilterInfo, sl, mgr.StmtGenerator)
+                    p.Reset(mgr, j, f, sl, query)
+                Else
+                    p.Init(mgr, query)
+                    If _procSM.QSMark <> query.SMark Then
+                        p.ResetStmt()
+                    End If
+                    'If query._resDic Then
+                    '    p.ResetDic()
+                    'End If
+                End If
+                p.Created = False
+            End If
+
+            _procSM.SetMark(query)
+
+            Return CType(_procSM, BaseProvider)
         End Function
-
-        'Private Shared Function _GetCe(Of ReturnType As _ICachedEntity)( _
-        '    ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.CachedItem
-        '    Return mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
-        'End Function
-
-        'Private Shared Function d2(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal ce As CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
-        '    Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
-        'End Function
 
         Protected Delegate Function GetCeDelegate( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManager.ICacheItemProvoderBase) As Worm.Cache.CachedItemBase
@@ -579,6 +621,41 @@ Namespace Query.Database
             dbm.CommandTimeout = timeout
 
             Return res
+        End Function
+
+        Public Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
+            Return _Exec(Of ReadonlyMatrix)(mgr, query, _
+                Function() GetProcessor(mgr, query), _
+                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+                    m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
+                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+                    ce.GetMatrix(m, q.propWithLoads, created, m.GetStart, m.GetLength, s) _
+                )
+        End Function
+
+        Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType) Implements IExecutor.ExecSimple
+            'Dim ts() As Reflection.MemberInfo = Me.GetType.GetMember("ExecSimple")
+            'For Each t As Reflection.MethodInfo In ts
+            '    If t.IsGenericMethod AndAlso t.GetGenericArguments.Length = 2 Then
+            '        t = t.MakeGenericMethod(New Type() {query.SelectedType, GetType(ReturnType)})
+            '        Return CType(t.Invoke(Me, New Object() {mgr, query}), System.Collections.Generic.IList(Of ReturnType))
+            '    End If
+            'Next
+            'Throw New InvalidOperationException
+            'Dim p As BaseProvider = GetProcessor(mgr, query)
+
+            'Return p.GetSimpleValues(Of ReturnType)()
+            Dim olds As Boolean = query.CacheSort
+            query.CacheSort = True
+            Try
+                Return _Exec(mgr, query, Function() GetProcessorS(Of ReturnType)(mgr, query), _
+                                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+                                    m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
+                                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+                                    ce.GetObjectList(Of ReturnType)(mgr, m.GetStart, m.GetLength))
+            Finally
+                query._cacheSort = olds
+            End Try
         End Function
 
         Public Function Exec(Of ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager, _
@@ -1322,16 +1399,6 @@ Namespace Query.Database
         Public Sub ResetEntity(Of CreateType As {New, _IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
             GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query).ResetCache()
         End Sub
-
-        Public Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
-            Return _Exec(Of ReadonlyMatrix)(mgr, query, _
-                Function() GetProcessor(mgr, query), _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                    m.GetFromCacheBase(dic, sync, id, q.propWithLoads, p2, Nothing), _
-                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-                    ce.GetMatrix(m, q.propWithLoads, created, m.GetStart, m.GetLength, s) _
-                )
-        End Function
     End Class
 
 End Namespace

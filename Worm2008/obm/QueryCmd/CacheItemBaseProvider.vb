@@ -263,7 +263,7 @@ Namespace Query
             End Get
         End Property
 
-        Public MustOverride Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
         Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
                                       ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 

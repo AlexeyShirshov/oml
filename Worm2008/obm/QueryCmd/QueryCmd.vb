@@ -134,7 +134,9 @@ Namespace Query
 
             Public Sub SetCT2Nothing()
                 _cmd._createType = _oldct
-                _cmd._sel = New SelectClause(_types)
+                If _types IsNot Nothing Then
+                    _cmd._sel = New SelectClause(_types)
+                End If
                 _cmd._from = _f
             End Sub
         End Class
@@ -209,7 +211,7 @@ Namespace Query
         Private _name As String
         Private _execCnt As Integer
         Private _schema As ObjectMappingEngine
-        Private _cacheSort As Boolean
+        Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _pod As Pair(Of Type, IEntitySchema)
@@ -1030,6 +1032,15 @@ l1:
                     End If
                 Next
                 sb.Append("$")
+            End If
+
+            If _group IsNot Nothing Then
+                For Each g As Grouping In _group
+                    If Not GetStaticKeyFromProp(sb, cb, g, mpe) Then
+                        Return False
+                    End If
+                    sb.Append("$")
+                Next
             End If
 
             If _order IsNot Nothing Then
@@ -3036,6 +3047,36 @@ l1:
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
             Return ToStaticString(mpe)
+        End Function
+
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object) As T
+            If _getMgr IsNot Nothing Then
+                Using mgr As OrmManager = _getMgr.CreateManager
+                    Return GetByID(Of T)(id, mgr)
+                End Using
+            Else
+                Throw New QueryCmdException("Manager is required", Me)
+            End If
+        End Function
+
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
+            If mgr Is Nothing Then
+                Throw New QueryCmdException("Manager is required", Me)
+            End If
+
+            Dim f As IGetFilter = Nothing
+            Dim pk As String = Nothing
+
+            Dim selou As EntityUnion = GetSelectedOS()
+
+            If selou IsNot Nothing Then
+                Dim tp As Type = selou.GetRealType(mgr.MappingEngine)
+                f = Ctor.prop(selou, mgr.MappingEngine.GetPrimaryKeys(tp)(0).PropertyAlias).eq(id)
+            Else
+                f = Ctor.prop(GetType(T), mgr.MappingEngine.GetPrimaryKeys(GetType(T))(0).PropertyAlias).eq(id)
+            End If
+
+            Return Where(f).Single(Of T)()
         End Function
     End Class
 

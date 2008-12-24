@@ -168,7 +168,7 @@ Namespace Query.Database
             '    End If
             'End Sub
 
-            Public Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
+            Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
                 Return New CachedItemBase(GetEntities(), _mgr.Cache)
             End Function
         End Class
@@ -283,7 +283,7 @@ Namespace Query.Database
             '    End Get
             'End Property
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
+            Public Overloads Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
                 Dim r As ReadOnlyEntityList(Of ReturnType) = CType(GetEntities(), ReadOnlyEntityList(Of ReturnType))
                 Return GetCacheItem(r)
             End Function

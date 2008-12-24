@@ -445,6 +445,10 @@ Namespace Entities
             End Set
         End Property
 
+        Public Overrides Function ToString() As String
+            Throw New NotSupportedException
+        End Function
+
         Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
             If _op.ObjectSource IsNot Nothing Then
                 Return _op.ObjectSource.ToStaticString & "$" & _op.Field
@@ -459,7 +463,7 @@ Namespace Entities
                     ElseIf _q IsNot Nothing Then
                         Return _q._ToString
                     ElseIf _agr IsNot Nothing Then
-                        Return _agr.ToString
+                        Return _agr._ToString
                     Else
                         Return _op.Field
                         'Throw New NotSupportedException
@@ -508,7 +512,7 @@ Namespace Entities
             Return New Cache.EmptyDependentTypes
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
             If _op.ObjectSource IsNot Nothing Then
                 Return _op.ObjectSource.ToStaticString & "$" & _op.Field
             Else
@@ -522,7 +526,7 @@ Namespace Entities
                     ElseIf _q IsNot Nothing Then
                         Return _q.ToStaticString(mpe)
                     ElseIf _agr IsNot Nothing Then
-                        Return _agr.ToString
+                        Return _agr.GetStaticString(mpe)
                     Else
                         Throw New NotSupportedException
                         'Return _field
