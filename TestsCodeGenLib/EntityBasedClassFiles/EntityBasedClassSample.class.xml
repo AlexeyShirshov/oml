@@ -17,7 +17,7 @@
 				<oos:Table ref="tblEntity1"/>
 			</oos:Tables>
 			<oos:Properties>
-				<oos:Property attributes="PrimaryKey" fieldName="id" propertyName="Identifier" table="tblEntity1" typeRef="tInt32" />
+				<oos:Property attributes="PrimaryKey" fieldName="id" propertyName="Identifier1" table="tblEntity1" typeRef="tInt32" />
 			</oos:Properties>
 		</oos:Entity>
 	</oos:Entities>

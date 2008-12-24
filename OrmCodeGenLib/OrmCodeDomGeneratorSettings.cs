@@ -120,8 +120,9 @@ namespace Worm.CodeGen.Core
         GenerateVbXorStatement = 0x10000,
         GenerateCsForeachStatement = 0x20000,
         GenerateVbForeachStatement = 0x40000,
+        AllowPartialInterfaces = 0x80000,
 
-        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement | GenerateCsXorStatement | GenerateCsForeachStatement,
+        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement | GenerateCsXorStatement | GenerateCsForeachStatement | AllowPartialInterfaces,
         VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement | GenerateVbSyncLockStatement | GenerateVbXorStatement | GenerateVbForeachStatement,
     }
 

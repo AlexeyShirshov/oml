@@ -7,7 +7,7 @@
 			</Tables>
 			<Properties>
 				<!--<Property propertyName="ID" attributes="PK" table="tblArtists" fieldName="id" typeRef="tInt32" description="Идентификатор"/>-->
-				<Property propertyName="Identifier" attributes="PK" table="tbl1" fieldName="id" typeRef="tInt32" description="prop" propertyAlias="ID" />
+				<Property propertyName="Identifier1" attributes="PK" table="tbl1" fieldName="id" typeRef="tInt32" description="prop" propertyAlias="ID" />
 				<Property propertyName="Prop1" table="tbl1" fieldName="title" typeRef="tString" description="prop"  />
 			</Properties>
 		</Entity>

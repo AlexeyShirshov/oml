@@ -18,7 +18,7 @@ namespace Worm.CodeGen.Core
             return settings.PrivateMembersPrefix + name.Substring(0, 1).ToLower() + name.Substring(1);
         }
 
-        private static OrmCodeDomGeneratorSettings GetSettings()
+        public static OrmCodeDomGeneratorSettings GetSettings()
         {
             OrmCodeDomGeneratorSettings settings = null;
             var h = OrmCodeDomGeneratorSettingsRequied;

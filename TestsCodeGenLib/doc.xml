@@ -14,7 +14,7 @@
 			</Tables>
 			<Properties>
 				<Property fieldName="id" propertyName="Identifier" propertyAlias="ID" description="prop" table="tbl1" typeRef="tInt32"/>
-				<Property fieldName="title" propertyName="Title" description="prop title" table="tbl1" typeRef="tString"/>
+				<Property fieldName="title" propertyName="Title" description="prop title" table="tbl1" typeRef="tString" dbTypeName="nvarchar" dbTypeSize="50" dbTypeNullable="false"/>
 			</Properties>
 		</Entity>
 	</Entities>

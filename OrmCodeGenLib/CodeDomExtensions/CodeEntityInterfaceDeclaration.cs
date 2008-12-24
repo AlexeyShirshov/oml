@@ -40,7 +40,12 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			m_typeReference = new CodeTypeReference();
 
 			IsClass = false;
+            IsPartial = false;
 			IsInterface = true;
+
+            var settings = OrmCodeGenNameHelper.GetSettings();
+            if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.AllowPartialInterfaces) == LanguageSpecificHacks.AllowPartialInterfaces)
+                IsPartial = true;
 		}
 
 		public CodeEntityInterfaceDeclaration(CodeEntityTypeDeclaration entityTypeDeclaration) : this(entityTypeDeclaration, null, null)
@@ -56,7 +61,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			EntityTypeDeclaration = entityTypeDeclaration;
 
 			m_typeReference.BaseType = FullName;
-
+		    
 			
 		}
 

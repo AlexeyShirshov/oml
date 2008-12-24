@@ -332,7 +332,7 @@ namespace Worm.CodeGen.Core.Descriptors
 	    {
 	        get
 	        {
-                return Properties.FindAll(p => p.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK));
+	            return Properties.FindAll(p => p.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK));
 	        }
 	    }
 	}

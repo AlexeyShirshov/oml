@@ -115,10 +115,19 @@ namespace TestsCodeGenLib
             }
 
             CompilerResults result = prov.CompileAssemblyFromDom(prms, units);
-            foreach (CompilerError error in result.Errors)
+            if(result.Errors.HasErrors)
             {
-                Assert.IsTrue(error.IsWarning, error.ToString());
+                StringBuilder sb = new StringBuilder();
+                foreach (CompilerError str in result.Errors)
+                {
+                    sb.AppendLine(str.ToString());
+                }
+                Assert.Fail(sb.ToString());
             }
+            //foreach (CompilerError error in result.Errors)
+            //{
+            //    Assert.IsTrue(error.IsWarning, error.ToString());
+            //}
         }
 
         [TestMethod]
@@ -136,6 +145,24 @@ namespace TestsCodeGenLib
             using (Stream stream = Resources.GetXmlDocumentStream("suppressed"))
             {
                 TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        public void TestVBCodeCopositePK()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("CompositePK"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        public void TestCSCodeCopositePK()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("CompositePK"))
+            {
+                TestCSCodeInternal(stream);
             }
         }
 
