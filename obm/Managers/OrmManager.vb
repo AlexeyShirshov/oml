@@ -1317,17 +1317,17 @@ l1:
     Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
 
-        Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, Nothing)
+        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
 
-        Return GetFromCacheBase(dic, sync, id, New Boolean() {withLoad}, del, AddressOf _ValCE(Of T))
+        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, AddressOf _ValCE(Of T))
     End Function
 
     Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad() As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItemBase
+        ByVal ctx As TypeWrap(Of Object), ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItemBase
 
         Invariant()
 
@@ -1347,7 +1347,7 @@ l1:
         del.Created = False
 
         If renew OrElse del.Renew OrElse _dont_cache_lists Then
-            ce = del.GetCacheItem(withLoad)
+            ce = del.GetCacheItem(ctx)
             If Not _dont_cache_lists Then
                 dic(id) = ce
             End If
@@ -1360,7 +1360,7 @@ l1:
                     ce = CType(dic(id), CachedItemBase)
                     Dim emp As Boolean = ce Is Nothing
                     If emp OrElse del.Renew OrElse _dont_cache_lists Then
-                        ce = del.GetCacheItem(withLoad)
+                        ce = del.GetCacheItem(ctx)
                         If Not _dont_cache_lists OrElse Not emp Then
                             dic(id) = ce
                         End If

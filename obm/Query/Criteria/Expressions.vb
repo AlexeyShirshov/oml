@@ -64,7 +64,11 @@ Public Class Expressions
         End Property
 
         Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
-            Return FormatOper() & "$" & _v.GetType.ToString
+            Return FormatOper() & "$" & _v.GetStaticString(mpe)
+        End Function
+
+        Public Overrides Function ToString() As String
+            Throw New NotSupportedException
         End Function
 
         Public Overridable Function _ToString() As String Implements IQueryElement._ToString

@@ -17,6 +17,8 @@ Namespace Query
     End Enum
 
     Public MustInherit Class AggregateBase
+        Implements IQueryElement
+
         Private _f As AggregateFunction
         Private _alias As String
         Private _distinct As Boolean
@@ -85,6 +87,8 @@ Namespace Query
             Return _alias = obj._alias AndAlso _f = obj._f
         End Function
 
+        Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
     End Class
 
     'Public Class [Aggregate]
@@ -253,9 +257,7 @@ Namespace Query
         End Function
 
         Public Overrides Function ToString() As String
-            Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.ToString)
-            Return s
+            Throw New NotSupportedException
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -272,6 +274,18 @@ Namespace Query
         Public Overrides Function GetHashCode() As Integer
             Return ToString.GetHashCode()
         End Function
+
+        Public Overrides Function _ToString() As String
+            Dim s As String = FormatFunc(AggFunc, String.Empty)
+            s = String.Format(s, _oper._ToString)
+            Return s
+        End Function
+
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Dim s As String = FormatFunc(AggFunc, String.Empty)
+            s = String.Format(s, _oper.ToStaticString(mpe))
+            Return s
+        End Function
     End Class
 
     Public Class CustomFuncAggregate
@@ -287,6 +301,14 @@ Namespace Query
         End Sub
 
         Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+            Throw New NotImplementedException
+        End Function
+
+        Public Overrides Function _ToString() As String
+            Throw New NotImplementedException
+        End Function
+
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             Throw New NotImplementedException
         End Function
     End Class

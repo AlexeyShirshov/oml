@@ -229,6 +229,12 @@ Namespace Sorting
             MyBase.New(q)
         End Sub
 
+        Protected Friend Sub New(ByVal prev As Sort, ByVal q As QueryCmd, ByVal order As SortType)
+            MyBase.New(q)
+            _order = order
+            _prev = prev
+        End Sub
+
         Protected Sub New()
         End Sub
 

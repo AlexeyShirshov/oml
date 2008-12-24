@@ -274,7 +274,7 @@ Partial Public Class OrmManager
         'ReadOnly Property SortType() As SortType
         ReadOnly Property Filter() As IFilter
         Sub CreateDepends()
-        Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase
+        Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
     End Interface
 
     Public Interface ICacheItemProvoder(Of T As {ICachedEntity})
@@ -431,8 +431,8 @@ Partial Public Class OrmManager
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase.Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
-        Private Function GetCacheItem(ByVal withLoad() As Boolean) As CachedItemBase Implements ICacheItemProvoderBase.GetCacheItem
-            Return GetCacheItem(withLoad(0))
+        Private Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase Implements ICacheItemProvoderBase.GetCacheItem
+            Return GetCacheItem(CType(ctx.Value, Boolean())(0))
         End Function
 
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICacheItemProvoder(Of T).GetCacheItem

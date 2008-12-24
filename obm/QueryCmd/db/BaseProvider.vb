@@ -28,7 +28,7 @@ Namespace Query.Database
                 _j = j
             End Sub
 
-            Public Overloads Overrides Function GetCacheItem(ByVal withLoad() As Boolean) As Cache.CachedItemBase
+            Public Overloads Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As Cache.CachedItemBase
                 Return New Cache.CachedItemBase(GetMatrix(), _mgr.Cache)
             End Function
 
@@ -163,6 +163,32 @@ Namespace Query.Database
                 CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(Nothing, cmd, l, _q._types, _q._pdic, _sl(_sl.Count - 1))
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)
+            End Function
+        End Class
+
+        Public Class SimpleProvider(Of T)
+            Inherits BaseProvider
+
+            Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
+
+                Reset(mgr, j, f, sl, q)
+            End Sub
+
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+                             ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
+                MyBase.Reset(mgr, j, f, sl, q)
+                ResetDic()
+            End Sub
+
+            Public Sub ResetDic()
+                If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
+                    _dic = _mgr.GetDic(_mgr.Cache, _key)
+                End If
+            End Sub
+
+            Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As Cache.CachedItemBase
+                Return New Cache.CachedItemBase(CType(GetSimpleValues(Of T)(), ICollection), _mgr.Cache)
             End Function
         End Class
     End Class

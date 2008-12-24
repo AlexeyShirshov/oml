@@ -30,6 +30,33 @@ Namespace Cache
             Return _col.Count
         End Function
 
+        Public Overridable Function GetObjectList(Of T)(ByVal mgr As OrmManager, _
+            ByVal start As Integer, ByVal length As Integer) As IList(Of T)
+            If Not (start = 0 AndAlso (_col.Count = length OrElse length = Integer.MaxValue)) Then
+                Dim list As IList = TryCast(_col, IList)
+                Dim r As New List(Of T)
+                If list IsNot Nothing Then
+                    For i As Integer = start To Math.Min(start + length, _col.Count) - 1
+                        r.Add(CType(list(i), T))
+                    Next
+                Else
+                    Dim i As Integer = 0
+                    For Each o As T In _col
+                        If i >= start Then
+                            r.Add(o)
+                        End If
+                        If i >= length + start Then
+                            Exit For
+                        End If
+                        i += 1
+                    Next
+                End If
+                Return New List(Of T)(r)
+            Else
+                Return CType(_col, IList(Of T))
+            End If
+        End Function
+
         Public Overridable Function GetObjectList(Of T As {_IEntity})(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _

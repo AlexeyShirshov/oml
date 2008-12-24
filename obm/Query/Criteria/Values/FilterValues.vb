@@ -135,7 +135,7 @@ Namespace Criteria.Values
         End Property
 
         Public Function _ToString() As String Implements IFilterValue._ToString
-            Return _p.ToString
+            Return _p._ToString
         End Function
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _

@@ -67,5 +67,9 @@ Namespace Entities
         Public Overrides Function _ToString() As String
             Return MyBase._ToString() & _cube & _all
         End Function
+
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return MyBase.GetStaticString(mpe) & _cube & _all
+        End Function
     End Class
 End Namespace
