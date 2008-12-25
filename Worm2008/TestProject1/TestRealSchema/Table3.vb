@@ -64,13 +64,13 @@ Public Class Table3
         End If
     End Function
 
-    Public Overrides Function CreateObject(ByVal fieldName As String, ByVal value As Object) As _IEntity
+    Public Overrides Function CreateObject(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
         _id = CInt(value)
         If _code = 0 Then
             _trigger = True
             Return Nothing
         Else
-            _obj = Worm.OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
+            _obj = mgr.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
             Return _obj
         End If
     End Function

@@ -50,10 +50,8 @@ Namespace Misc
 
         Private dic As IDictionary
         Private dic_id As IDictionary
-        Protected childs As ArrayList
-        Protected _filter As IFilter
-        Protected _root As DicIndexBase
-        Protected _joins() As QueryJoin
+        Protected _childs As ArrayList
+        Private _root As DicIndexBase
         'Protected _complex As Boolean
 
         'Protected Friend Property Complex() As Boolean
@@ -64,6 +62,9 @@ Namespace Misc
         '        _complex = value
         '    End Set
         'End Property
+
+        Protected Friend Sub New()
+        End Sub
 
         Public Sub New(ByVal name As String, ByVal parent As DicIndexBase, ByVal count As Integer)
             _name = name
@@ -77,7 +78,7 @@ Namespace Misc
 
         Public ReadOnly Property IsLeaf() As Boolean
             Get
-                Return childs Is Nothing
+                Return _childs Is Nothing
             End Get
         End Property
 
@@ -88,17 +89,17 @@ Namespace Misc
 
         Public ReadOnly Property ChildIndexes() As DicIndexBase()
             Get
-                If childs Is Nothing Then Return Nothing
-                Return CType(childs.ToArray(GetType(DicIndexBase)), DicIndexBase())
+                If _childs Is Nothing Then Return Nothing
+                Return CType(_childs.ToArray(GetType(DicIndexBase)), DicIndexBase())
             End Get
         End Property
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
         Public Sub AddChild(ByVal child As DicIndexBase)
-            If childs Is Nothing Then
-                childs = New ArrayList
+            If _childs Is Nothing Then
+                _childs = New ArrayList
             End If
-            childs.Add(child)
+            _childs.Add(child)
         End Sub
 
         Public ReadOnly Property Name() As String
@@ -128,8 +129,8 @@ Namespace Misc
             Get
                 Dim count As Integer = 0
                 If Not IsLeaf Then
-                    Debug.Assert(childs IsNot Nothing)
-                    For Each mi As DicIndexBase In childs
+                    Debug.Assert(_childs IsNot Nothing)
+                    For Each mi As DicIndexBase In _childs
                         If mi.IsLeaf Then
                             count += mi.Count
                         Else
@@ -192,21 +193,95 @@ Namespace Misc
         '    End If
         'End Function
 
-        Public Property Filter() As IFilter
-            Get
-                Return _filter
-            End Get
-            Protected Friend Set(ByVal value As IFilter)
-                _filter = value
-            End Set
-        End Property
-
         Public Property Root() As DicIndexBase
             Get
                 Return _root
             End Get
             Protected Friend Set(ByVal value As DicIndexBase)
                 _root = value
+            End Set
+        End Property
+
+        Friend Shared Sub Init(ByVal d As DicIndexBase, ByVal name As String, ByVal parent As DicIndexBase, ByVal count As Integer)
+            d._name = name
+            d._parent = parent
+            d._count = count
+        End Sub
+    End Class
+
+    Public Class DicIndexT(Of T As {New, IEntity})
+        Inherits DicIndexBase
+
+        Private _firstField As String
+        Private _secField As String
+        Private _cmd As QueryCmd
+
+        Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal name As String, ByVal parent As DicIndexT(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String)
+            MyBase.new(name, parent, count)
+            _firstField = firstField
+            _secField = secField
+        End Sub
+
+        Friend Shared Shadows Sub Init(ByVal d As DicIndexT(Of T), ByVal name As String, ByVal parent As DicIndexT(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String)
+            DicIndexBase.Init(d, name, parent, count)
+            d._firstField = firstField
+            d._secField = secField
+        End Sub
+
+        Public ReadOnly Property FirstField() As String
+            Get
+                Return _firstField
+            End Get
+        End Property
+
+        Public ReadOnly Property SecondField() As String
+            Get
+                Return _secField
+            End Get
+        End Property
+
+        Public Shared Function CreateRoot(ByVal firstField As String, ByVal secondField As String) As DicIndexT(Of T)
+            Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, secondField)
+        End Function
+
+        Public Shared Function CreateRoot(ByVal firstField As String) As DicIndexT(Of T)
+            Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, Nothing)
+        End Function
+
+        Public Overloads ReadOnly Property Parent() As DicIndexT(Of T)
+            Get
+                Return CType(MyBase.Parent, DicIndexT(Of T))
+            End Get
+        End Property
+
+        Public Overloads ReadOnly Property ChildIndexes() As DicIndexT(Of T)()
+            Get
+                Return CType(_childs.ToArray(GetType(DicIndexT(Of T))), DicIndexT(Of T)())
+            End Get
+        End Property
+
+        Public Shadows Function FindById(ByVal id As Integer) As DicIndexT(Of T)
+            Return CType(MyBase.FindById(id), DicIndexT(Of T))
+        End Function
+    End Class
+
+    Public Class DicIndex(Of T As {New, IKeyEntity})
+        Inherits DicIndexT(Of T)
+
+        Protected _filter As IFilter
+        Protected _joins() As QueryJoin
+
+        Public Property Filter() As IFilter
+            Get
+                Return _filter
+            End Get
+            Protected Friend Set(ByVal value As IFilter)
+                _filter = value
             End Set
         End Property
 
@@ -218,23 +293,25 @@ Namespace Misc
                 _joins = value
             End Set
         End Property
-    End Class
 
-    Public Class DicIndex(Of T As {New, IKeyEntity})
-        Inherits DicIndexBase
+        Protected Overloads ReadOnly Property Root() As DicIndex(Of T)
+            Get
+                Return CType(MyBase.Root, DicIndex(Of T))
+            End Get
+        End Property
 
-        Private _firstField As String
-        Private _secField As String
+        Public Overloads ReadOnly Property ChildIndexes() As DicIndex(Of T)()
+            Get
+                Return CType(_childs.ToArray(GetType(DicIndex(Of T))), DicIndex(Of T)())
+            End Get
+        End Property
 
-        'Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer)
-        '    MyBase.new(name, parent, count)
-        'End Sub
+        Public Sub New()
+        End Sub
 
         Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer, _
             ByVal firstField As String, ByVal secField As String)
-            MyBase.new(name, parent, count)
-            _firstField = firstField
-            _secField = secField
+            MyBase.New(name, parent, count, firstField, secField)
         End Sub
 
         Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
@@ -269,10 +346,8 @@ Namespace Misc
                     cr.[or](tt, sec).[like](Name & "%")
                 End If
             End If
-
-            Dim con As New Condition.ConditionConstructor
-            con.AddFilter(cr.Filter()).AddFilter(Root.Filter)
-            Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
+            cr.and(Root.Filter)
+            Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, cr, sort, False)
         End Function
 
         Private Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
@@ -308,8 +383,8 @@ Namespace Misc
             Dim tt As Type = GetType(T)
             Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(tt)
             Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
-            Dim firstField As String = _firstField
-            Dim secField As String = _secField
+            Dim firstField As String = Me.FirstField
+            Dim secField As String = SecondField
             If odic IsNot Nothing Then
                 If String.IsNullOrEmpty(firstField) Then
                     firstField = odic.GetFirstDicField
@@ -393,20 +468,12 @@ Namespace Misc
             End If
         End Function
 
-        Public Overloads ReadOnly Property Parent() As DicIndex(Of T)
-            Get
-                Return CType(MyBase.Parent, DicIndex(Of T))
-            End Get
-        End Property
+        Public Shared Shadows Function CreateRoot(ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+            Return New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secondField)
+        End Function
 
-        Public Overloads ReadOnly Property ChildIndexes() As DicIndex(Of T)()
-            Get
-                Return CType(childs.ToArray(GetType(DicIndex(Of T))), DicIndex(Of T)())
-            End Get
-        End Property
-
-        Public Shadows Function FindById(ByVal id As Integer) As DicIndex(Of T)
-            Return CType(MyBase.FindById(id), DicIndex(Of T))
+        Public Shared Shadows Function CreateRoot(ByVal firstField As String) As DicIndex(Of T)
+            Return New DicIndex(Of T)("ROOT", Nothing, 0, firstField, Nothing)
         End Function
     End Class
 

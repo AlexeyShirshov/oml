@@ -75,7 +75,7 @@ Namespace Entities.Meta
         '    Return _tables(l)
         'End Function
 
-        'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin Implements IOrmObjectSchema.GetJoins
+        'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As QueryJoin Implements IOrmObjectSchema.GetJoins
         '    Throw New NotSupportedException("Joins is not supported in simple mode")
         'End Function
 
@@ -83,7 +83,7 @@ Namespace Entities.Meta
         '    Return New SourceFragment() {_table}
         'End Function
 
-        'Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
+        'Public Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
         '    newvalue = value
         '    Return False
         'End Function

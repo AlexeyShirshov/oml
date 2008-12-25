@@ -660,8 +660,8 @@ l1:
                     arr = MappingEngine.GetSortedFieldList(ct)
                     If withLoad Then
                         'Dim jc As New OrmFilter(ct, field, selectedType, "ID", FilterOperation.Equal)
-                        'Dim j As New OrmJoin(Schema.GetTables(selectedType)(0), JoinType.Join, jc)
-                        'Dim js As New List(Of OrmJoin)
+                        'Dim j As New QueryJoin(Schema.GetTables(selectedType)(0), JoinType.Join, jc)
+                        'Dim js As New List(Of QueryJoin)
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
                         Dim columns As String = MappingEngine.GetSelectColumnList(selectedType, MappingEngine, Nothing, Nothing, schema2, Nothing)
@@ -673,8 +673,8 @@ l1:
                     '    arr = DatabaseSchema.GetSortedFieldList(ct)
                     '    sb.Append(Schema.Select(ct, almgr, params, arr))
                     'Else
-                    '    arr = New Generic.List(Of ColumnAttribute)
-                    '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
+                    '    arr = New Generic.List(Of EntityPropertyAttribute)
+                    '    arr.Add(New EntityPropertyAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
                     Dim appendMainTable As Boolean = filter IsNot Nothing _
@@ -731,7 +731,7 @@ l1:
 
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(SQLGenerator, "p")
-            'Dim arr As Generic.List(Of ColumnAttribute) = Nothing
+            'Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
             Dim sb As New StringBuilder
             Dim type2load As Type = GetType(T)
             Dim ct As Type = MappingEngine.GetConnectedType(type, type2load)
@@ -852,7 +852,7 @@ l1:
         '    ByVal type2load As Type, ByVal oschema2 As IEntitySchema, ByVal withLoad As Boolean, _
         '    ByVal type As Type, ByVal edic As Dictionary(Of Object, EditableList))
 
-        '    Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
+        '    Dim arr As Generic.IList(Of EntityPropertyAttribute) = Nothing
         '    If withLoad Then
         '        arr = MappingEngine.GetSortedFieldList(type2load)
         '    End If
@@ -933,7 +933,7 @@ l1:
                 sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of EntityPropertyAttribute)
-                'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                'arr.Add(New EntityPropertyAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
             End If
@@ -995,7 +995,7 @@ l1:
                 sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of EntityPropertyAttribute)
-                'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                'arr.Add(New EntityPropertyAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(MappingEngine, original_type, almgr, params, GetFilterInfo))
             End If
@@ -1561,10 +1561,10 @@ l1:
 
                     Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
-                    Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                    Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
                     Dim value As Object = dr.GetValue(i)
                     If fv IsNot Nothing Then
-                        value = fv.CreateValue(propertyAlias, obj, value)
+                        value = fv.CreateValue(propertyAlias, value)
                     End If
 
                     obj.BeginLoading()
@@ -1658,7 +1658,7 @@ l1:
                 Dim pi As Reflection.PropertyInfo = se._pi
                 Dim c As EntityPropertyAttribute = se._c
                 'For Each de As DictionaryEntry In pdic(t)
-                '    c = CType(de.Key, ColumnAttribute)
+                '    c = CType(de.Key, EntityPropertyAttribute)
                 '    If c.PropertyAlias = se.PropertyAlias Then
                 '        pi = CType(de.Value, Reflection.PropertyInfo)
                 '        Exit For
@@ -1681,10 +1681,10 @@ l1:
                             propertyAlias = se.PropertyAlias
                         End If
 
-                        Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                        Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
                         Dim value As Object = dr.GetValue(i)
                         If fv IsNot Nothing Then
-                            value = fv.CreateValue(propertyAlias, obj, value)
+                            value = fv.CreateValue(propertyAlias, value)
                         End If
 
                         obj.BeginLoading()
@@ -1697,10 +1697,10 @@ l1:
                         pkdic.TryGetValue(os, cnt)
                         pkdic(os) = cnt + 1
 
-                        Dim f As IFactory = TryCast(obj, IFactory)
+                        Dim f As IPropertyConverter = TryCast(obj, IPropertyConverter)
                         If f IsNot Nothing Then
                             For Each p As Pair(Of String, Object) In fac
-                                Dim e As _IEntity = f.CreateObject(p.First, p.Second)
+                                Dim e As _IEntity = f.CreateObject(Me, p.First, p.Second)
                                 If e IsNot Nothing Then
                                     e.SetMgrString(IdentityString)
                                     If obj.CreateManager IsNot Nothing Then
@@ -1798,16 +1798,16 @@ l1:
                     'End If
 
                     If selectList Is Nothing Then
-                        'selectList = New List(Of ColumnAttribute)
+                        'selectList = New List(Of EntityPropertyAttribute)
                         'For Each m As MapField2Column In fields_idx
-                        '    Dim clm As New ColumnAttribute(m._propertyAlias, m._newattributes)
+                        '    Dim clm As New EntityPropertyAttribute(m._propertyAlias, m._newattributes)
                         '    clm.Column = If(Not String.IsNullOrEmpty(m._columnName), m._columnName, m._propertyAlias)
                         '    selectList.Add(clm)
                         'Next
-                        'selectList.Sort(Function(c1 As ColumnAttribute, c2 As ColumnAttribute) _
+                        'selectList.Sort(Function(c1 As EntityPropertyAttribute, c2 As EntityPropertyAttribute) _
                         '    dr.GetOrdinal(c1.Column).CompareTo(dr.GetOrdinal(c2.Column)))
                         ''For i As Integer = 0 To dr.FieldCount - 1
-                        ''    Dim clm As New ColumnAttribute(dr.GetName(i))
+                        ''    Dim clm As New EntityPropertyAttribute(dr.GetName(i))
                         ''    selectList.Add(clm)
                         ''Next
                         selectList = New List(Of SelectExpression)
@@ -1939,7 +1939,7 @@ l1:
             obj.SetMgrString(IdentityString)
 
             Dim original_type As Type = obj.GetType
-            Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+            Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
             'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
@@ -2006,7 +2006,7 @@ l1:
                             pk_count += 1
                             Dim value As Object = dr.GetValue(idx)
                             If fv IsNot Nothing Then
-                                value = fv.CreateValue(propertyAlias, obj, value)
+                                value = fv.CreateValue(propertyAlias, value)
                             End If
 
                             ParsePKFromDb(obj, dr, oschema, ce, idx, propertyAlias, c, pi, value)
@@ -2074,7 +2074,7 @@ l1:
 
                         Dim value As Object = dr.GetValue(idx)
                         If fv IsNot Nothing Then
-                            value = fv.CreateValue(propertyAlias, obj, value)
+                            value = fv.CreateValue(propertyAlias, value)
                         End If
 
                         If String.IsNullOrEmpty(propertyAlias) Then
@@ -2232,10 +2232,10 @@ l1:
                         'End If
                     Next
 
-                    Dim f As IFactory = TryCast(obj, IFactory)
+                    Dim f As IPropertyConverter = TryCast(obj, IPropertyConverter)
                     If f IsNot Nothing Then
                         For Each p As Pair(Of String, Object) In fac
-                            Dim e As _IEntity = f.CreateObject(p.First, p.Second)
+                            Dim e As _IEntity = f.CreateObject(Me, p.First, p.Second)
                             If e IsNot Nothing Then
                                 e.SetMgrString(IdentityString)
                                 RaiseObjectLoaded(e)
@@ -2605,7 +2605,7 @@ l1:
         '    'Return New ReadOnlyList(Of T)(values)
 
         '    Dim original_type As Type = GetType(T)
-        '    Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+        '    Dim columns As Generic.List(Of EntityPropertyAttribute) = _schema.GetSortedFieldList(original_type)
 
         '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
         'End Function
@@ -3288,11 +3288,11 @@ l2:
             '    If ss IsNot Nothing Then
             '        For Each s As String In ss
             '            fields.Add(New Pair(Of String, Type)(s, selectType))
-            '            selCols.Add(New ColumnAttribute(s))
+            '            selCols.Add(New EntityPropertyAttribute(s))
             '        Next
             '    End If
             '    If selCols.Count > 0 Then
-            '        selCols.Insert(0, New ColumnAttribute("ID"))
+            '        selCols.Insert(0, New EntityPropertyAttribute("ID"))
             '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
             '    End If
             'End If
@@ -3432,7 +3432,7 @@ l2:
                     For Each c As EntityPropertyAttribute In searchCols
                         selCols.Add(c)
                     Next
-                    'searchCols.Insert(0, New ColumnAttribute("ID", Field2DbRelations.PK))
+                    'searchCols.Insert(0, New EntityPropertyAttribute("ID", Field2DbRelations.PK))
                     'fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
                 End If
 
@@ -3534,8 +3534,8 @@ l2:
 
         Protected Shared Function BuildDictionaryInternal(Of T As {New, IKeyEntity})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
             ByVal firstField As String, ByVal secField As String) As DicIndex(Of T)
-            Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secField)
-            Dim root As DicIndex(Of T) = last
+            Dim last As DicIndex(Of T) = DicIndex(Of T).CreateRoot(firstField, secField)
+            Dim root As DicIndex(Of T) = CType(last, DicIndex(Of T))
             'Dim arr As New Hashtable
             'Dim arr1 As New ArrayList
             Dim first As Boolean = True
@@ -3550,7 +3550,7 @@ l2:
                     Dim name As String = dr.GetString(0)
                     Dim cnt As Integer = dr.GetInt32(1)
 
-                    BuildDic(Of T)(name, cnt, level, root, last, first, firstField, secField)
+                    BuildDic(Of DicIndex(Of T), T)(name, cnt, level, root, last, first, firstField, secField)
                 Loop
                 If mgr IsNot Nothing Then
                     mgr._fetch = ft.GetTime
@@ -3671,7 +3671,7 @@ l2:
 
         'Protected Friend Function LoadM2M(Of T As {IKeyEntity, New})( _
         '    ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
-        '    ByVal obj As IKeyEntity, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
+        '    ByVal obj As IKeyEntity, ByVal sort As Sort, ByVal columns As IList(Of EntityPropertyAttribute)) As List(Of Object)
         '    Dim b As ConnAction = TestConn(cmd)
         '    Dim tt As Type = GetType(T)
         '    Dim c As OrmCache = TryCast(_cache, OrmCache)

@@ -590,11 +590,11 @@ l1:
                 If sel_columns IsNot Nothing AndAlso sel_columns.Count > 0 Then
                     'If unions Is Nothing Then
                     '    Dim rem_list As New ArrayList
-                    '    For Each c As ColumnAttribute In sel_columns
+                    '    For Each c As EntityPropertyAttribute In sel_columns
                     '        If Not tables.Contains(GetFieldTable(type, c.FieldName)) Then rem_list.Add(c)
                     '    Next
 
-                    '    For Each c As ColumnAttribute In rem_list
+                    '    For Each c As EntityPropertyAttribute In rem_list
                     '        sel_columns.Remove(c)
                     '    Next
                     'End If
@@ -671,7 +671,7 @@ l1:
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
             For Each de As DictionaryEntry In mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
-                'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                'Dim c As EntityPropertyAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(EntityPropertyAttribute), True), EntityPropertyAttribute)
                 Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
@@ -768,7 +768,7 @@ l1:
             Dim rt As Type = obj.GetType
 
             For Each de As DictionaryEntry In mpe.GetProperties(rt, oschema)
-                'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                'Dim c As EntityPropertyAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(EntityPropertyAttribute), True), EntityPropertyAttribute)
                 Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
@@ -1267,7 +1267,7 @@ l1:
 
         'Public Overridable Function [Select](ByVal original_type As Type, _
         '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-        '    Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing, _
+        '    Optional ByVal arr As Generic.IList(Of EntityPropertyAttribute) = Nothing, _
         '    Optional ByVal additionalColumns As String = Nothing) As String
 
         '    If original_type Is Nothing Then
@@ -1381,7 +1381,7 @@ l1:
 
         'Public Overridable Function SelectTop(ByVal top As Integer, ByVal original_type As Type, _
         '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-        '    Optional ByVal arr As Generic.ICollection(Of ColumnAttribute) = Nothing) As String
+        '    Optional ByVal arr As Generic.ICollection(Of EntityPropertyAttribute) = Nothing) As String
 
         '    If original_type Is Nothing Then
         '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
@@ -1966,7 +1966,7 @@ l1:
             Dim ct As New SourceFragment(table)
             Dim [alias] As String = almgr.AddTable(ct, CType(Nothing, EntityUnion))
             Dim pname As String = params.CreateParam(value)
-            'cols = New Generic.List(Of ColumnAttribute)
+            'cols = New Generic.List(Of EntityPropertyAttribute)
             Dim sb As New StringBuilder, columns As New StringBuilder
             'Dim tbl As SourceFragment = GetTables(t)(0)
             sb.Append("select ")
@@ -2119,7 +2119,7 @@ l1:
         End Function
 
         'Public Function MakeSearchFreetextStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
-        '    ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
+        '    ByVal sectionName As String, ByVal join As QueryJoin, ByVal sort_type As SortType, _
         '    ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
 
         '    Dim value As String = Configuration.SearchSection.GetValueForFreeText(t, tokens, sectionName)
@@ -2131,7 +2131,7 @@ l1:
         '    Dim ft As New SourceFragment("freetexttable")
         '    Dim [alias] As String = almgr.AddTable(ft)
         '    Dim pname As String = params.CreateParam(value)
-        '    'cols = New Generic.List(Of ColumnAttribute)
+        '    'cols = New Generic.List(Of EntityPropertyAttribute)
         '    Dim sb As New StringBuilder, columns As New StringBuilder
         '    Dim tbl As SourceFragment = GetTables(t)(0)
         '    Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)

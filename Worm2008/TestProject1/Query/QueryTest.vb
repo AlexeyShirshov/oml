@@ -211,7 +211,7 @@ Imports Worm.Criteria.Joins
 
             Dim q As New QueryCmd()
             q = q.Where(Ctor.prop(t_entity4, "Title").[like]("%b")). _
-                Select(FCtor.prop(t_entity, "ID").Add_prop(t_entity4, "Title"))
+                Select(FCtor.prop(t_entity, "ID").prop(t_entity4, "Title"))
             q.AutoJoins = True
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
@@ -229,7 +229,7 @@ Imports Worm.Criteria.Joins
             Dim q As New QueryCmd()
             q.propJoins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
             q = q.Where(Ctor.prop(t_entity4, "Title").[like]("%b")). _
-                Select(FCtor.prop(t_entity, "ID").Add_prop(t_entity4, "Title"))
+                Select(FCtor.prop(t_entity, "ID").prop(t_entity4, "Title"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
 
@@ -420,9 +420,9 @@ Imports Worm.Criteria.Joins
             'q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
             'Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
 
-            q.Select(FCtor.column(t, "code", "Code").Add_count("cnt")). _
+            q.Select(FCtor.column(t, "code", "Code").count("cnt")). _
                 GroupBy(FCtor.column(t, "code")). _
-                Sort(SCtor.Custom("cnt desc"))
+                Sort(SCtor.custom("cnt desc"))
 
             'Assert.IsNull(q.SelectedType)
             Assert.IsNull(q.CreateType)
@@ -722,7 +722,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.prop(t, "Code").Add_prop(t, "Title"))
+        q.Select(FCtor.prop(t, "Code").prop(t, "Title"))
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
@@ -740,7 +740,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
         q.From(t)
-        q.Select(FCtor.column(t, "code", "Code", Field2DbRelations.PK).Add_column(t, "name", "Title"))
+        q.Select(FCtor.column(t, "code", "Code", Field2DbRelations.PK).column(t, "name", "Title"))
 
         Dim r As ReadOnlyEntityList(Of AnonymousCachedEntity) = q.ToEntityList(Of AnonymousCachedEntity)()
 
@@ -859,7 +859,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title").Add_column(t, "id", "ID")). _
+        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID")). _
             Sort(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
@@ -920,7 +920,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title").Add_column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
             Sort(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
@@ -941,7 +941,7 @@ Imports Worm.Criteria.Joins
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").Add_column(t, "name", "Title").Add_column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
             Sort(SCtor.prop(GetType(cls), "Code"))
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
@@ -1067,7 +1067,7 @@ Imports Worm.Criteria.Joins
 
         Dim t As New SourceFragment("dbo", "table1")
 
-        q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)).Add_column(t, "enum", "ID", GetType(Table2)))
+        q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)).column(t, "enum", "ID", GetType(Table2)))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 
@@ -1085,7 +1085,7 @@ Imports Worm.Criteria.Joins
         Dim t As New SourceFragment("dbo", "table1")
 
         q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)). _
-            Add_custom("ID", GetType(Table2), "case when {0} = 2 then 1 else {0} end", New FieldReference(t, "enum")))
+            custom("ID", GetType(Table2), "case when {0} = 2 then 1 else {0} end", New FieldReference(t, "enum")))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 

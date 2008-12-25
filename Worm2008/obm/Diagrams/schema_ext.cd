@@ -1,43 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Interface Name="Worm.Orm.Meta.IJoinBehavior">
+  <Interface Name="Worm.Entities.Meta.IJoinBehavior">
     <Position X="0.5" Y="0.5" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAEAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IConnectedFilter">
+  <Interface Name="Worm.Entities.Meta.IConnectedFilter">
     <Position X="3.25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IGetJoinsWithContext">
+  <Interface Name="Worm.Entities.Meta.IGetJoinsWithContext">
     <Position X="7.5" Y="2" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IReadonlyObjectSchema">
+  <Interface Name="Worm.Entities.Meta.IReadonlyObjectSchema">
     <Position X="7.5" Y="3.75" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IOrmFullTextSupport">
+  <Interface Name="Worm.Entities.Meta.IOrmFullTextSupport">
     <Position X="3.25" Y="4.25" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAAQAAAAAAAAAAAAAkAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IOrmFullTextSupportEx">
+  <Interface Name="Worm.Entities.Meta.IOrmFullTextSupportEx">
     <Position X="3.25" Y="2" Width="2" />
-    <InheritanceLine Type="Worm.Orm.Meta.IOrmFullTextSupport" FixedFromPoint="true">
+    <InheritanceLine Type="Worm.Entities.Meta.IOrmFullTextSupport" FixedFromPoint="true">
       <Path>
         <Point X="4" Y="4.25" />
         <Point X="4" Y="3.858" />
@@ -50,35 +50,35 @@
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IOrmSorting">
+  <Interface Name="Worm.Entities.Meta.IOrmSorting">
     <Position X="0.5" Y="2.5" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IOrmSorting2">
+  <Interface Name="Worm.Entities.Meta.IOrmSorting2">
     <Position X="0.5" Y="4" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.ICacheBehavior">
+  <Interface Name="Worm.Entities.Meta.ICacheBehavior">
     <Position X="5.75" Y="2" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAABAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IFtsStringFormater">
+  <Interface Name="Worm.Entities.Meta.IFtsStringFormater">
     <Position X="7.5" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.Meta.IOrmSchemaInit">
+  <Interface Name="Worm.Entities.Meta.IOrmSchemaInit">
     <Position X="5.75" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>

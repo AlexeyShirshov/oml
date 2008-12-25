@@ -645,6 +645,10 @@ Namespace Entities
             Throw New NotSupportedException
         End Sub
 
+        Protected Overrides Sub Init()
+            MyBase.Init()
+        End Sub
+
         Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IKeyEntity.Init
             MyBase._Init(cache, schema)
             Identifier = id
@@ -2307,7 +2311,7 @@ Namespace Entities
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits KeyEntity
-        Implements IComparable(Of T), IFactory
+        Implements IComparable(Of T), IPropertyConverter
         'Implements IComparable(Of T), IOrmProxy(Of T)
 
         Private _id As Object
@@ -2448,7 +2452,7 @@ Namespace Entities
         '    MyBase.SetValue(pi, c, Nothing, value)
         'End Sub
 
-        Public Overridable Overloads Function CreateObject(ByVal propertyAlias As String, ByVal value As Object) As _IEntity Implements IFactory.CreateObject
+        Public Overridable Overloads Function CreateObject(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity Implements IPropertyConverter.CreateObject
             Return Nothing
         End Function
 

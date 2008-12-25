@@ -12,13 +12,13 @@ Namespace Query
             _prev = prev
         End Sub
 
-        Public Function next_prop(ByVal propertyAlias As String) As SortLink
-            Return New SortLink(_os, propertyAlias, _prev)
-        End Function
+        'Public Function next_prop(ByVal propertyAlias As String) As SortLink
+        '    Return New SortLink(_os, propertyAlias, _prev)
+        'End Function
 
-        Public Function NextExternal(ByVal propertyAlias As String) As SortLink
-            Return New SortLink(_os, propertyAlias, True, _prev)
-        End Function
+        'Public Function NextExternal(ByVal propertyAlias As String) As SortLink
+        '    Return New SortLink(_os, propertyAlias, True, _prev)
+        'End Function
 
         Public Shared Function prop(ByVal en As String, ByVal propertyAlias As String) As SortLink
             Return New SortLink(New EntityUnion(en), propertyAlias)
@@ -44,7 +44,7 @@ Namespace Query
         '    Return SortLink.CreateCustom(sortExpression, Nothing, Nothing)
         'End Function
 
-        Public Shared Function Custom(ByVal sortExpression As String, ByVal ParamArray values() As FieldReference) As SortLink
+        Public Shared Function custom(ByVal sortExpression As String, ByVal ParamArray values() As FieldReference) As SortLink
             Return SortLink.CreateCustom(sortExpression, Nothing, values)
         End Function
 
@@ -207,32 +207,32 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function next_query(ByVal queryCmd As QueryCmd) As SortLink
+        Public Function query(ByVal queryCmd As QueryCmd) As SortLink
             Return New SortLink(queryCmd, Me)
         End Function
 
-        Public Function next_prop(ByVal entityName As String, ByVal propertyAlias As String) As SortLink
+        Public Function prop(ByVal entityName As String, ByVal propertyAlias As String) As SortLink
             Return New SortLink(New EntityUnion(entityName), propertyAlias, Me)
         End Function
 
-        Public Function next_prop(ByVal t As Type, ByVal propertyAlias As String) As SortLink
+        Public Function prop(ByVal t As Type, ByVal propertyAlias As String) As SortLink
             Return New SortLink(t, propertyAlias, Me)
         End Function
 
-        Public Function next_prop(ByVal propertyAlias As String) As SortLink
+        Public Function prop(ByVal propertyAlias As String) As SortLink
             Return New SortLink(_os, propertyAlias, Me)
         End Function
 
-        Public Function next_prop(ByVal prop As ObjectProperty) As SortLink
-            Return New SortLink(prop.ObjectSource, prop.Field, Me)
+        Public Function prop(ByVal oprop As ObjectProperty) As SortLink
+            Return New SortLink(oprop.ObjectSource, oprop.Field, Me)
         End Function
 
-        Public Function next_column(ByVal column As String) As SortLink
-            Return New SortLink(_table, column, Me)
+        Public Function column(ByVal clm As String) As SortLink
+            Return New SortLink(_table, clm, Me)
         End Function
 
-        Public Function next_column(ByVal table As SourceFragment, ByVal column As String) As SortLink
-            Return New SortLink(table, column, Me)
+        Public Function column(ByVal table As SourceFragment, ByVal clm As String) As SortLink
+            Return New SortLink(table, clm, Me)
         End Function
 
         'Public Function NextField(ByVal propertyAlias As String) As SortLink
@@ -251,11 +251,11 @@ Namespace Query
             End If
         End Function
 
-        Public Function next_prop(ByVal t As SourceFragment, ByVal propertyAlias As String) As SortLink
+        Public Function prop(ByVal t As SourceFragment, ByVal propertyAlias As String) As SortLink
             Return New SortLink(t, propertyAlias, Me)
         End Function
 
-        Public Function NextCustom(ByVal sortexpression As String, ByVal ParamArray values() As FieldReference) As SortLink
+        Public Function custom(ByVal sortexpression As String, ByVal ParamArray values() As FieldReference) As SortLink
             Return CreateCustom(sortexpression, Me, values)
         End Function
 
