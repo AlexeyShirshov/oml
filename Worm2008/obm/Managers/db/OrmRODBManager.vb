@@ -638,15 +638,16 @@ l1:
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
 
+                Dim schema2 As IEntitySchema = MappingEngine.GetObjectSchema(selectedType)
+                Dim cs As IEntitySchema = MappingEngine.GetObjectSchema(ct)
+
                 With cmd
                     .CommandType = System.Data.CommandType.Text
 
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    Dim schema2 As IEntitySchema = MappingEngine.GetObjectSchema(selectedType)
                     Dim ctx_schema2 As IContextObjectSchema = TryCast(schema2, IContextObjectSchema)
                     Dim mt_schema2 As IMultiTableObjectSchema = TryCast(schema2, IMultiTableObjectSchema)
-                    Dim cs As IEntitySchema = MappingEngine.GetObjectSchema(ct)
                     Dim mms As IConnectedFilter = TryCast(cs, IConnectedFilter)
                     Dim cfi As Object = GetFilterInfo()
                     If mms IsNot Nothing Then
@@ -709,7 +710,9 @@ l1:
 
                 Dim values As IList = CType(GetType(List(Of )).MakeGenericType(New Type() {ct}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
                 If withLoad Then
-                    LoadMultipleObjects(ct, selectedType, cmd, values, Nothing, Nothing)
+                    LoadMultipleObjects(ct, selectedType, cmd, values, _
+                                        MappingEngine.GetSortedFieldList(ct, cs), _
+                                        MappingEngine.GetSortedFieldList(selectedType, schema2))
                 Else
                     LoadMultipleObjects(ct, cmd, values, arr)
                 End If
@@ -2717,10 +2720,10 @@ l1:
                                 ar.Add(o)
                             End If
                         End If
-                    Else
-                        If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
-                            ar.Add(o)
-                        End If
+                        'Else
+                        '    If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
+                        '        ar.Add(o)
+                        '    End If
                     End If
                     i += 1
                 Next
@@ -2737,8 +2740,8 @@ l1:
                             Else
                                 ar.Add(o)
                             End If
-                        Else
-                            ar.Add(o)
+                            'Else
+                            '    ar.Add(o)
                         End If
                     Next
                 End If

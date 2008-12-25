@@ -384,78 +384,94 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
-        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
-        Dim mr() As M2MRelation = GetM2MRelations(maintype)
-        For Each r As M2MRelation In mr
-            If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
-                Return r
-            End If
-        Next
+        'If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
+        'Dim mr() As M2MRelation = GetM2MRelations(maintype)
+        'For Each r As M2MRelation In mr
+        '    If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
+        '        Return r
+        '    End If
+        'Next
 
-        Dim en As String = GetEntityNameByType(subtype)
-        If Not String.IsNullOrEmpty(en) Then
-            Dim rt As Type = GetTypeByEntityName(en)
-            For Each r As M2MRelation In mr
-                If rt Is r.Type AndAlso String.Equals(r.Key, key) Then
-                    Return r
-                End If
-            Next
-        End If
+        'Dim en As String = GetEntityNameByType(subtype)
+        'If Not String.IsNullOrEmpty(en) Then
+        '    Dim rt As Type = GetTypeByEntityName(en)
+        '    For Each r As M2MRelation In mr
+        '        If rt Is r.Type AndAlso String.Equals(r.Key, key) Then
+        '            Return r
+        '        End If
+        '    Next
+        'End If
 
-        Return Nothing
+        'Return Nothing
+        Return GetM2MRel(GetM2MRelations(maintype), subtype, key)
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal mainSchema As IEntitySchema, ByVal subtype As Type, ByVal key As String) As M2MRelation
         If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
         Dim mr() As M2MRelation = GetM2MRelations(mainSchema)
+        Return GetM2MRel(mr, subtype, key)
+    End Function
+
+    Private Function GetM2MRel(ByVal mr() As M2MRelation, ByVal subtype As Type, ByVal key As String) As M2MRelation
+        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
         For Each r As M2MRelation In mr
             If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
                 Return r
             End If
         Next
 
-        Dim en As String = GetEntityNameByType(maintype)
-        If Not String.IsNullOrEmpty(en) Then
-            For Each r As M2MRelation In mr
-                Dim n As String = GetEntityNameByType(r.Type)
-                If String.Equals(en, n) AndAlso String.Equals(r.Key, key) Then
+        For Each r As M2MRelation In mr
+            Dim n As String = r.EntityName
+            If String.IsNullOrEmpty(n) Then
+                n = GetEntityNameByType(r.Type)
+                If Not String.IsNullOrEmpty(n) Then
+                    Dim n2 As String = GetEntityNameByType(subtype)
+                    If String.Equals(n, n2) AndAlso String.Equals(r.Key, key) Then
+                        Return r
+                    End If
+                End If
+            Else
+                Dim n2 As String = GetEntityNameByType(subtype)
+                If String.Equals(n, n2) AndAlso String.Equals(r.Key, key) Then
                     Return r
                 End If
-            Next
-        End If
+            End If
+        Next
 
         Return Nothing
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
-        Dim mr() As M2MRelation = GetM2MRelations(maintype)
-        For Each r As M2MRelation In mr
-            If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
-                Return r
-            End If
-        Next
+        Return GetM2MRel(GetM2MRelations(maintype), subtype, M2MRelation.GetKey(direct))
+        'Dim mr() As M2MRelation = GetM2MRelations(maintype)
+        'For Each r As M2MRelation In mr
+        '    If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+        '        Return r
+        '    End If
+        'Next
 
-        Dim en As String = GetEntityNameByType(maintype)
-        If Not String.IsNullOrEmpty(en) Then
-            For Each r As M2MRelation In mr
-                Dim n As String = GetEntityNameByType(r.Type)
-                If String.Equals(en, n) AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
-                    Return r
-                End If
-            Next
-        End If
+        'Dim en As String = GetEntityNameByType(maintype)
+        'If Not String.IsNullOrEmpty(en) Then
+        '    For Each r As M2MRelation In mr
+        '        Dim n As String = GetEntityNameByType(r.Type)
+        '        If String.Equals(en, n) AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+        '            Return r
+        '        End If
+        '    Next
+        'End If
 
-        Return Nothing
+        'Return Nothing
     End Function
 
-    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As String) As M2MRelation
-        For Each r As M2MRelation In GetM2MRelationsForEdit(maintype)
-            If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.Key = direct) Then
-                Return r
-            End If
-        Next
+    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
+        'For Each r As M2MRelation In GetM2MRelationsForEdit(maintype)
+        '    If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.Key = direct) Then
+        '        Return r
+        '    End If
+        'Next
 
-        Return Nothing
+        'Return Nothing
+        Return GetM2MRel(GetM2MRelationsForEdit(maintype), subtype, key)
     End Function
 
     Public Function GetRevM2MRelation(ByVal mainType As Type, ByVal subType As Type, ByVal key As String) As M2MRelation
