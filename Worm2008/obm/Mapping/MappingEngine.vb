@@ -164,6 +164,12 @@ Public Class ObjectMappingEngine
                     column.PropertyAlias = pi.Name
                 End If
 
+                If propertyMap IsNot Nothing Then
+                    If (column.Behavior = Field2DbRelations.None) AndAlso propertyMap.ContainsKey(column.PropertyAlias) Then
+                        column.Behavior = propertyMap(column.PropertyAlias)._newattributes
+                    End If
+                End If
+
                 If (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
                     result.Add(column, pi)
                 End If
@@ -196,6 +202,13 @@ Public Class ObjectMappingEngine
                 End If
                 If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) _
                     AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
+
+                    If propertyMap IsNot Nothing Then
+                        If (column.Behavior = Field2DbRelations.None) AndAlso propertyMap.ContainsKey(column.PropertyAlias) Then
+                            column.Behavior = propertyMap(column.PropertyAlias)._newattributes
+                        End If
+                    End If
+
                     result.Add(column, pi)
                 End If
             End If
