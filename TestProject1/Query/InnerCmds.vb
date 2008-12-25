@@ -169,7 +169,7 @@ Imports Worm
         Dim q As New QueryCmd(Function() _
                     TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(FCtor.prop(GetType(Entity), "ID").Add_column(inner, "Title"))
+        q.Select(FCtor.prop(GetType(Entity), "ID").column(inner, "Title"))
 
         Dim l As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
 

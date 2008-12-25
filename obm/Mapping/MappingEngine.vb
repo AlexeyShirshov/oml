@@ -231,14 +231,14 @@ Public Class ObjectMappingEngine
 
 #Region " object functions "
 
-    'Public Function GetAllJoins(ByVal t As Type) As ICollection(Of OrmJoin)
+    'Public Function GetAllJoins(ByVal t As Type) As ICollection(Of QueryJoin)
     '    Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
 
     '    Dim tbls() As SourceFragment = schema.GetTables
     '    Dim tbl As SourceFragment = tbls(0)
-    '    Dim js As New List(Of OrmJoin)
+    '    Dim js As New List(Of QueryJoin)
     '    For i As Integer = 1 To tbls.Length - 1
-    '        Dim j As OrmJoin = schema.GetJoins(tbl, tbls(i))
+    '        Dim j As QueryJoin = schema.GetJoins(tbl, tbls(i))
     '        js.Add(j)
     '    Next
     '    Return js.ToArray
@@ -851,7 +851,7 @@ Public Class ObjectMappingEngine
     '    'If Not map.Contains(cl_type) Then
     '    arr = New Generic.List(Of String)
 
-    '    For Each c As ColumnAttribute In GetSortedFieldList(type)
+    '    For Each c As EntityPropertyAttribute In GetSortedFieldList(type)
     '        If (c.SyncBehavior And Field2DbRelations.PrimaryKey) = Field2DbRelations.PrimaryKey Then
     '            arr.Add(GetColumnNameByFieldName(type, c.FieldName, table))
     '        End If
@@ -993,7 +993,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    'Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal c As ColumnAttribute, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IOrmObjectSchemaBase) As Object
+    'Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal c As EntityPropertyAttribute, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IOrmObjectSchemaBase) As Object
     '    If pi Is Nothing Then
     '        Throw New ArgumentNullException("pi")
     '    End If
@@ -1086,7 +1086,7 @@ Public Class ObjectMappingEngine
 
     'Protected Function GetSelectColumnList(ByVal type As Type, ByVal table As String) As String
     '    Dim sb As New StringBuilder
-    '    For Each c As ColumnAttribute In GetSortedFieldList(type)
+    '    For Each c As EntityPropertyAttribute In GetSortedFieldList(type)
     '        Try
     '            sb.Append(GetColumnNameByFieldName(type, c.FieldName, table))
     '            If c.FieldName = "ID" Then
@@ -1245,7 +1245,7 @@ Public Class ObjectMappingEngine
     Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String) As EntityPropertyAttribute
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
-        'Dim l As New List(Of ColumnAttribute)
+        'Dim l As New List(Of EntityPropertyAttribute)
         Return GetColumnByPropertyAlias(main, propertyAlias, GetObjectSchema(main))
     End Function
 

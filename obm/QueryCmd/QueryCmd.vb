@@ -7,6 +7,7 @@ Imports Worm.Criteria.Joins
 Imports System.Reflection
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Values
+Imports Worm.Misc
 
 Namespace Query
 
@@ -3078,6 +3079,37 @@ l1:
 
             Return Where(f).Single(Of T)()
         End Function
+
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
+            If _group Is Nothing OrElse _group.Count = 0 Then
+                Throw New InvalidOperationException("Group clause not specified")
+            End If
+
+            If _group(0).Values Is Nothing OrElse _group(0).Values.Length = 0 Then
+                Throw New InvalidOperationException("Group is not custom")
+            End If
+
+            If _group(0).Values(0).Property.ObjectSource Is Nothing Then
+                Throw New InvalidOperationException("Group is not object property reference")
+            End If
+
+            Dim n As String = _group(0).Values(0).Property.Field
+
+            Dim last As DicIndexT(Of T) = DicIndexT(Of T).CreateRoot(n)
+            Dim root As DicIndexT(Of T) = last
+            Dim first As Boolean = True
+
+            For Each a As AnonymousEntity In ToAnonymList(mgr)
+                OrmManager.BuildDic(Of DicIndexT(Of T), T)(CStr(a("Pref")), CInt(a("Count")), 1, root, last, first, n, Nothing)
+            Next
+
+            Return root
+        End Function
+
+        'Public Function BuildObjDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, _
+        '    ByVal criteria As IGetFilter, ByVal join() As QueryJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+        '    Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(firstField, secondField)).f)
+        'End Function
     End Class
 
     Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

@@ -233,7 +233,7 @@ Namespace Criteria
             End If
         End Function
 
-        Public Function [Or](ByVal propertyAlias As String) As PredicateBase
+        Public Function [or](ByVal propertyAlias As String) As PredicateBase
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If

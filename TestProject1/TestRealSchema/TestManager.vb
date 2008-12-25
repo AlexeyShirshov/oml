@@ -951,12 +951,12 @@ Public Class TestManagerRS
             'Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             'Assert.AreEqual(1, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").next_prop("ID"))
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop("ID"))
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").next_prop("ID").desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop("ID").desc)
             Assert.AreEqual(2, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(1, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
@@ -1259,7 +1259,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim l As New List(Of Table1)
             Using cmd As New System.Data.SqlClient.SqlCommand("select id,code from table1 where id = 1")
-                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).Add_custom("Code", "code").GetAllProperties
+                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).custom("Code", "code").GetAllProperties
 
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
                     Nothing, SelectExpression.GetMapping(s))

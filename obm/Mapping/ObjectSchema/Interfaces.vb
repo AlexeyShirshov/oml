@@ -89,10 +89,6 @@ Namespace Entities.Meta
         Function GetEditableSchema() As IEntitySchema
     End Interface
 
-    Public Interface IDBValueFilter
-        Function CreateValue(ByVal propertyAlias As String, ByVal obj As IEntity, ByVal value As Object) As Object
-    End Interface
-
     Public Interface IPKInsertValues
         Function GetValue(ByVal propertyAlias As String) As String
     End Interface

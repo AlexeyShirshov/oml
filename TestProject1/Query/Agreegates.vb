@@ -10,6 +10,7 @@ Imports Worm.Entities
 Imports Worm
 Imports Worm.Criteria.Joins
 Imports Worm.Sorting
+Imports Worm.Misc
 
 'Imports Worm.Database.Sorting
 
@@ -152,7 +153,7 @@ Imports Worm.Sorting
 
             Assert.AreEqual(11, l.Count)
 
-            q.propSort = SCtor.Custom("cnt").desc
+            q.propSort = SCtor.custom("cnt").desc
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -179,7 +180,7 @@ Imports Worm.Sorting
                 o, _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
             })
-            q.From(t).GroupBy(New Grouping() {o}).Sort(SCtor.Custom("Count").desc)
+            q.From(t).GroupBy(New Grouping() {o}).Sort(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -199,10 +200,10 @@ Imports Worm.Sorting
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).Add_count("Count")) _
+            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
-                .Sort(SCtor.Custom("Count").desc)
+                .Sort(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -213,6 +214,60 @@ Imports Worm.Sorting
 
             Assert.AreEqual("b", l(1)("Pref"))
             Assert.AreEqual(3, l(1)("Count"))
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestBuildDic()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim t As Type = GetType(Entity4)
+            'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            Dim q As New QueryCmd()
+            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
+                .From(t) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
+                .Sort(SCtor.custom("Count").desc)
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
+
+            Assert.AreEqual(5, l.Count)
+
+            Dim last As DicIndexT(Of Entity4) = DicIndexT(Of Entity4).CreateRoot("Title")
+            Dim root As DicIndexT(Of Entity4) = last
+            Dim first As Boolean = True
+
+            For Each a As AnonymousEntity In l
+                OrmManager.BuildDic(Of DicIndexT(Of Entity4), Entity4)(CStr(a("Pref")), CInt(a("Count")), 1, root, last, first, "Title", Nothing)
+            Next
+
+            Assert.AreEqual(5, root.ChildIndexes.Length)
+
+            Assert.AreEqual("2", root.ChildIndexes(0).Name)
+            Assert.AreEqual(3, root.ChildIndexes(0).Count)
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestBuildDic2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim t As Type = GetType(Entity4)
+            'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            Dim q As New QueryCmd()
+            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
+                .From(t) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
+                .Sort(SCtor.custom("Count").desc)
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
+
+            Assert.AreEqual(5, l.Count)
+
+            Dim root As DicIndexT(Of Entity4) = q.BuildDictionary(Of Entity4)(mgr, 1)
+
+            Assert.AreEqual(5, root.ChildIndexes.Length)
+
+            Assert.AreEqual("2", root.ChildIndexes(0).Name)
+            Assert.AreEqual(3, root.ChildIndexes(0).Count)
 
         End Using
     End Sub

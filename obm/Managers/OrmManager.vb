@@ -1058,7 +1058,7 @@ l1:
         Return CType(r, Global.Worm.ReadOnlyList(Of T))
     End Function
 
-    'Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
+    'Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As QueryJoin, ByVal criteria As CriteriaLink, _
     '    ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
     '    Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
@@ -1068,7 +1068,7 @@ l1:
     '    End If
 
     '    If joins IsNot Nothing Then
-    '        For Each join As OrmJoin In joins
+    '        For Each join As QueryJoin In joins
     '            If Not join.IsEmpty Then
     '                key &= join.GetStaticString
     '            End If
@@ -1085,7 +1085,7 @@ l1:
     '    End If
 
     '    If joins IsNot Nothing Then
-    '        For Each join As OrmJoin In joins
+    '        For Each join As QueryJoin In joins
     '            If Not join.IsEmpty Then
     '                id &= join.ToString
     '            End If
@@ -2649,7 +2649,7 @@ l1:
 
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
             'Dim ss() As String = Split4FullTextSearch()
-            'Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
+            'Dim join As QueryJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
             Return Search(Of T)(type2search, contextKey, sort, Nothing, New FtsDef([string], GetSearchSection))
             'End If
             'Return New ReadOnlyList(Of T)()
@@ -3431,7 +3431,7 @@ l1:
     'Protected MustOverride Function FindObjsDirect(ByVal obj() As OrmBase, ByVal filter_key As String, _
     '    ByVal withLoad As Boolean, ByVal filter As OrmFilter, _
     '    ByVal t As Type, ByVal JoinColumn As String, _
-    '    ByVal columns As Generic.List(Of ColumnAttribute)) As OrmBase()
+    '    ByVal columns As Generic.List(Of EntityPropertyAttribute)) As OrmBase()
 
     'Protected MustOverride Sub Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal dt As System.Data.DataTable, ByVal sync As String, ByVal t As System.Type)
 
@@ -3562,14 +3562,14 @@ l1:
         Return roots
     End Function
 
-    Protected Shared Sub BuildDic(Of T As {New, IKeyEntity})(ByVal name As String, ByVal cnt As Integer, _
-        ByVal level As Integer, ByVal root As DicIndex(Of T), ByRef last As DicIndex(Of T), _
+    Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, IEntity})(ByVal name As String, ByVal cnt As Integer, _
+        ByVal level As Integer, ByVal root As T, ByRef last As T, _
         ByRef first As Boolean, ByVal firstField As String, ByVal secField As String)
         'If name.Length = 0 Then name = "<без имени>"
 
-        Dim current As DicIndex(Of T) = Nothing
+        Dim current As T = Nothing
 
-        Dim p As DicIndex(Of T) = Nothing
+        Dim p As T = Nothing
         If Not first Then
             Dim i As Integer = FirstDiffCharIndex(name, last.Name)
             Debug.Assert(i <= level)
@@ -3577,7 +3577,7 @@ l1:
             If last.Name = "" Then
                 p = root
             Else
-                p = GetParent(last, last.Name.Length - i)
+                p = CType(GetParent(last, last.Name.Length - i), T)
             End If
         Else
             p = last
@@ -3586,18 +3586,20 @@ l1:
 l1:
         If p Is root And name <> "" Then
             If name(0) = "'" Then
-                Dim s As New DicIndex(Of T)("'", Nothing, 0, firstField, secField)
-                p = CType(root.Dictionary(s), DicIndex(Of T))
+                Dim s As New T
+                DicIndexT(Of T2).Init(s, "'", Nothing, 0, firstField, secField)
+                p = CType(root.Dictionary(s), T)
                 If p IsNot Nothing Then GoTo l1
             End If
-            Dim _prev As DicIndex(Of T) = root
+            Dim _prev As T = root
             For k As Integer = 1 To name.Length
                 Dim c As Integer = 0
                 If k = name.Length Then c = cnt
-                Dim s As New DicIndex(Of T)(name.Substring(0, k), _prev, c, firstField, secField)
+                Dim s As New T
+                DicIndexT(Of T2).Init(s, name.Substring(0, k), _prev, c, firstField, secField)
                 If _prev Is root Then
                     If root.Dictionary.Contains(s.Name) Then
-                        s = CType(root.Dictionary(s.Name), DicIndex(Of T))
+                        s = CType(root.Dictionary(s.Name), T)
                     Else
                         'If s.Name = "N" Then
                         '    For Each kd As MediaIndex(Of T) In arr.Keys
@@ -3617,7 +3619,8 @@ l1:
             Next
             current = _prev
         Else
-            current = New DicIndex(Of T)(name, p, cnt, firstField, secField)
+            current = New T
+            DicIndexT(Of T2).Init(current, name, p, cnt, firstField, secField)
             p.AddChild(current)
             root.Add2Dictionary(current)
         End If
@@ -3627,8 +3630,8 @@ l1:
         last = current
     End Sub
 
-    Protected Shared Function GetParent(Of T As {New, IKeyEntity})(ByVal mi As DicIndex(Of T), ByVal level As Integer) As DicIndex(Of T)
-        Dim p As DicIndex(Of T) = mi
+    Protected Shared Function GetParent(Of T As {New, IEntity})(ByVal mi As DicIndexT(Of T), ByVal level As Integer) As DicIndexT(Of T)
+        Dim p As DicIndexT(Of T) = mi
         For i As Integer = 0 To level
             If p Is Nothing Then Return p
             p = p.Parent

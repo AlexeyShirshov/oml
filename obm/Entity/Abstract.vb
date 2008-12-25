@@ -136,8 +136,12 @@ Namespace Entities
         Sub ValidateDelete(ByVal mgr As OrmManager)
     End Interface
 
-    Public Interface IFactory
-        Function CreateObject(ByVal field As String, ByVal value As Object) As _IEntity
+    Public Interface IPropertyConverter
+        Function CreateObject(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
+    End Interface
+
+    Public Interface IDBValueConverter
+        Function CreateValue(ByVal propertyAlias As String, ByVal value As Object) As Object
     End Interface
 
     Public Interface _ICachedEntityEx

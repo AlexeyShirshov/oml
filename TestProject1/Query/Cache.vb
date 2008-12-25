@@ -436,7 +436,7 @@ Imports Worm.Criteria.Joins
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
-                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)

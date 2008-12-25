@@ -54,7 +54,7 @@ Imports Worm.Criteria
             mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
-                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.Custom("name"))
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
@@ -169,7 +169,7 @@ Imports Worm.Criteria
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
-            q.Sort(SCtor.Custom("id"))
+            q.Sort(SCtor.custom("id"))
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -306,7 +306,7 @@ Imports Worm.Criteria
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr").Add_count("cnt")). _
+                Select(FCtor.prop(GetType(Table1), "EnumStr").count("cnt")). _
                 GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
@@ -335,7 +335,7 @@ Imports Worm.Criteria
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr").Add_count("cnt")). _
+                Select(FCtor.prop(GetType(Table1), "EnumStr").count("cnt")). _
                 GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)

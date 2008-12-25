@@ -333,7 +333,7 @@ Namespace Entities
         End Sub
 
         Public Sub New()
-            'Dim arr As Generic.List(Of ColumnAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
+            'Dim arr As Generic.List(Of EntityPropertyAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
             'members_load_state = New BitArray(arr.Count)
 
             Init()
