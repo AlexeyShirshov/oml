@@ -212,6 +212,12 @@ Namespace Query
             Return New JoinLink(m2mEntityName, m2mKey, _j)
         End Function
 
+        Public Function [on](ByVal op As ObjectProperty) As CriteriaJoin
+            Dim jf As New JoinFilter(op, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _j)
+            Return c
+        End Function
+
         Public Function [on](ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
             Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
             Dim c As New CriteriaJoin(jf, _j)

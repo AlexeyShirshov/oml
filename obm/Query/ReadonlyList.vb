@@ -21,6 +21,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
 
     Public Sub New(ByVal realType As Type)
         MyBase.new()
+        _rt = realType
     End Sub
 
     Public Sub New()
@@ -30,6 +31,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
 
     Public Sub New(ByVal realType As Type, ByVal col As IEnumerable(Of T))
         MyBase.New(col)
+        _rt = realType
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
@@ -39,10 +41,12 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
 
     Public Sub New(ByVal realType As Type, ByVal list As List(Of T))
         MyBase.New(list)
+        _rt = realType
     End Sub
 
     Public Sub New(ByVal realType As Type, ByVal list As ReadOnlyList(Of T))
         MyBase.New(list)
+        _rt = realType
     End Sub
 
     Public Overrides Function LoadObjects() As ReadOnlyEntityList(Of T)
@@ -117,7 +121,9 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyList(Of T)
         If _l.Count > 0 Then
             Dim lst As List(Of T) = _l.GetRange(index, count)
-            Return New ReadOnlyList(Of T)(lst)
+            Dim ro As New ReadOnlyList(Of T)(lst)
+            ro._rt = _rt
+            Return ro
         Else
             Return Me
         End If

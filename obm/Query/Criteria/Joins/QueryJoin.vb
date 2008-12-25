@@ -352,8 +352,7 @@ Namespace Criteria.Joins
             Dim j As New QueryJoin(_table, _joinType, _condition)
             j._src = _src
             j.M2MKey = M2MKey
-            j.M2MJoinType = M2MJoinType
-            j.M2MJoinEntityName = M2MJoinEntityName
+            j.M2MObjectSource = M2MObjectSource
             Return j
         End Function
 
