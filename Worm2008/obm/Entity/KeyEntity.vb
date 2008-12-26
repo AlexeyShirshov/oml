@@ -1810,49 +1810,6 @@ Namespace Entities
 
         '#End Region
 
-
-#Region " Operators "
-
-        Public Shared Operator <>(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then Return False
-                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
-                Return Not obj2.Equals(obj1)
-            End If
-            Return Not obj1.Equals(obj2)
-        End Operator
-
-        Public Shared Operator =(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then Return True
-                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
-                Return obj2.Equals(obj1)
-            End If
-            Return obj1.Equals(obj2)
-        End Operator
-
-        Public Shared Operator <(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then
-                    Return False
-                End If
-                Return True
-            End If
-            Return obj1.CompareTo(obj2) < 0
-        End Operator
-
-        Public Shared Operator >(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then
-                    Return False
-                End If
-                Return False
-            End If
-            Return obj1.CompareTo(obj2) > 0
-        End Operator
-
-#End Region
-
         '#Region " Obsolete "
 
         '        <Obsolete("Use M2M.Find")> _
@@ -2338,8 +2295,8 @@ Namespace Entities
         '    Return New T()
         'End Function
 
-        Public Shadows Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
-            Return MyBase.CompareTo(other)
+        Public Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
+            Return Math.Sign(ID - other.ID)
             'If other Is Nothing Then
             '    'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
             '    Return 1
@@ -2464,23 +2421,29 @@ Namespace Entities
             End If
         End Function
 
-        'Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        '    ByVal propertyAlias As String, ByVal schema As Meta.IEntitySchema, ByVal value As Object)
-        '    If propertyAlias = OrmBaseT.PKName Then
-        '        _id = value
-        '    Else
-        '        MyBase.SetValue(pi, propertyAlias, schema, value)
-        '    End If
-        'End Sub
+#Region " Operators "
 
-        'Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        '    ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object
-        '    If propertyAlias = OrmBaseT.PKName Then
-        '        Return _id
-        '    Else
-        '        Return MyBase.GetValue(pi, propertyAlias, oschema)
-        '    End If
-        'End Function
+        Public Shared Operator <(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then
+                    Return False
+                End If
+                Return True
+            End If
+            Return obj1.CompareTo(CType(obj2, T)) < 0
+        End Operator
+
+        Public Shared Operator >(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then
+                    Return False
+                End If
+                Return False
+            End If
+            Return obj1.CompareTo(CType(obj2, T)) > 0
+        End Operator
+
+#End Region
     End Class
 
 End Namespace

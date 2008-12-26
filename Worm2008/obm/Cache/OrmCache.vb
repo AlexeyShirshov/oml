@@ -12,7 +12,6 @@ Namespace Cache
 
     Public Class OrmCache
         Inherits ReadonlyCache
-        Implements IExploreEntityCache
 
         Public Delegate Function CreateCacheListDelegate(ByVal mark As String) As IDictionary
 

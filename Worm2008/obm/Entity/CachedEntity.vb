@@ -1105,21 +1105,21 @@ l1:
 
 #End Region
 
-#Region " IComparable "
+        '#Region " IComparable "
 
-        Public Function CompareTo(ByVal other As CachedEntity) As Integer
-            If other Is Nothing Then
-                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
-                Return 1
-            End If
-            Return Key.CompareTo(other.Key)
-        End Function
+        '        Public Function CompareTo(ByVal other As CachedEntity) As Integer
+        '            If other Is Nothing Then
+        '                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
+        '                Return 1
+        '            End If
+        '            Return Key.CompareTo(other.Key)
+        '        End Function
 
-        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
-            Return CompareTo(TryCast(obj, CachedEntity))
-        End Function
+        '        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
+        '            Return CompareTo(TryCast(obj, CachedEntity))
+        '        End Function
 
-#End Region
+        '#End Region
 
         Private ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
             Get
@@ -1699,6 +1699,28 @@ l1:
         Public Overrides Function GetHashCode() As Integer
             Return GetCacheKey()
         End Function
+
+#Region " Operators "
+
+        Public Shared Operator <>(ByVal obj1 As CachedEntity, ByVal obj2 As CachedEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return False
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return Not obj2.Equals(obj1)
+            End If
+            Return Not obj1.Equals(obj2)
+        End Operator
+
+        Public Shared Operator =(ByVal obj1 As CachedEntity, ByVal obj2 As CachedEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return True
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return obj2.Equals(obj1)
+            End If
+            Return obj1.Equals(obj2)
+        End Operator
+
+#End Region
 
         Protected Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
             Dim l As New List(Of CachedEntity)

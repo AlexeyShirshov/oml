@@ -2279,7 +2279,7 @@ l1:
                     Dim join As QueryJoin = CType(joins(i), QueryJoin)
 
                     If Not QueryJoin.IsEmpty(join) Then
-                        almgr.AddTable(join.Table, Nothing, params)
+                        'almgr.AddTable(join.Table, Nothing, params)
                         sb.Append(join.MakeSQLStmt(mpe, Me, filter_info, almgr, params, Nothing))
                     End If
                 Next

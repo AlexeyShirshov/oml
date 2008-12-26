@@ -101,9 +101,11 @@ Namespace Criteria.Core
             Return IEvaluableValue.EvalResult.Unknown
         End Function
 
-        Protected Overloads Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable, ByVal inSelect As Boolean) As String
+        Protected Overloads Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable, _
+            ByVal inSelect As Boolean, ByVal oschema As IEntitySchema) As String
             'If _dbFilter Then
-            Return Value.GetParam(schema, stmt, pmgr, almgr, AddressOf PrepareValue, Nothing, filterInfo, inSelect)
+            Return Value.GetParam(schema, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue, Nothing, filterInfo, inSelect)
             'Else
             'Throw New InvalidOperationException
             'End If
@@ -120,10 +122,17 @@ Namespace Criteria.Core
             'Return Nothing
         End Function
 
-        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-            Return schema.ChangeValueType(schema.GetObjectSchema(Template.ObjectSource.GetRealType(schema)), New EntityPropertyAttribute(Template.PropertyAlias, String.Empty), v)
-        End Function
-
+        Class cls
+            Private _s As IEntitySchema
+            Private _ep As EntityPropertyAttribute
+            Public Sub New(ByVal s As IEntitySchema, ByVal ep As EntityPropertyAttribute)
+                _s = s
+                _ep = ep
+            End Sub
+            Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
+                Return schema.ChangeValueType(_s, _ep, v)
+            End Function
+        End Class
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
         '    Return Equals(TryCast(obj, EntityFilter))
         'End Function
@@ -182,7 +191,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, filterInfo, pname, almgr, False)
+                Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, filterInfo, pname, almgr, False, oschema)
             Else
                 Return String.Empty
             End If
@@ -208,7 +217,7 @@ Namespace Criteria.Core
 
             Dim pd As Values.PrepareValueDelegate = Nothing
             If _prep Then
-                pd = AddressOf PrepareValue
+                pd = AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue
             End If
 
             Dim prname As String = Value.GetParam(schema, stmt, pname, almgr, pd, Nothing, Nothing, False)
