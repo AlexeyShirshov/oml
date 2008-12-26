@@ -6,6 +6,7 @@ Imports Worm.Query
 
 Namespace Criteria.Values
 
+    <Serializable()> _
     Public Class RefValue
         Implements IFilterValue
 
@@ -30,6 +31,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class CustomValue
         Implements IFilterValue
 
@@ -79,6 +81,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class ComputedValue
         Implements IFilterValue
 
@@ -107,6 +110,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class FieldValue
         Implements IFilterValue
 
@@ -205,6 +209,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class ScalarValue
         Implements IEvaluableValue
 
@@ -437,6 +442,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class LiteralValue
         Implements IParamFilterValue
 
@@ -467,6 +473,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class DBNullValue
         Inherits LiteralValue
         Implements IEvaluableValue
@@ -500,6 +507,7 @@ Namespace Criteria.Values
         End Property
     End Class
 
+    <Serializable()> _
     Public Class EntityValue
         Inherits ScalarValue
 
@@ -559,6 +567,7 @@ Namespace Criteria.Values
         'End Property
     End Class
 
+    <Serializable()> _
     Public Class InValue
         Inherits ScalarValue
 
@@ -671,6 +680,7 @@ Namespace Criteria.Values
         End Property
     End Class
 
+    <Serializable()> _
     Public Class BetweenValue
         Inherits ScalarValue
 
@@ -746,6 +756,7 @@ Namespace Criteria.Values
         End Property
     End Class
 
+    <Serializable()> _
     Public Class SubQuery
         Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
         Cache.IQueryDependentTypes
@@ -904,6 +915,7 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    <Serializable()> _
     Public Class SubQueryCmd
         Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
         Cache.IQueryDependentTypes

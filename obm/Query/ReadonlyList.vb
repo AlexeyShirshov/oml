@@ -14,6 +14,7 @@ Friend Interface ILoadableList
     Sub LoadObjects()
 End Interface
 
+<Serializable()> _
 Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     Inherits ReadOnlyEntityList(Of T)
 
@@ -131,6 +132,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
 
 End Class
 
+<Serializable()> _
 Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     Inherits ReadOnlyObjectList(Of T)
     Implements ILoadableList
@@ -229,6 +231,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     End Function
 End Class
 
+<Serializable()> _
 Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
     Implements IListEdit

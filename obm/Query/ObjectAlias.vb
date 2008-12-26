@@ -1,5 +1,6 @@
 ﻿Namespace Query
 
+    <Serializable()> _
     Public Class EntityAlias
         Private _t As Type
         Private _en As String
@@ -76,6 +77,7 @@
         'End Function
     End Class
 
+    <Serializable()> _
     Public Class EntityUnion
         Private _t As Type
         Private _en As String
@@ -203,6 +205,7 @@
         'End Function
     End Class
 
+    <Serializable()> _
     Public Structure ObjectProperty
         Public ReadOnly ObjectSource As EntityUnion
         Public ReadOnly Field As String

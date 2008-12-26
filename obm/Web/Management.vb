@@ -272,7 +272,7 @@ Namespace Web
 
         Protected Overrides Sub CollectStat()
             _l = New List(Of Pair(Of String, Integer))
-            Dim ce As IExploreCache = TryCast(Cache, IExploreCache)
+            Dim ce As IExploreEntityCache = TryCast(Cache, IExploreEntityCache)
             If ce IsNot Nothing Then
                 For Each key As Object In ce.GetAllKeys
                     _l.Add(New Pair(Of String, Integer)(key.ToString, ce.GetDictionary(key).Count))

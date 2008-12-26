@@ -2,6 +2,7 @@
 
 Namespace Entities.Meta
 
+    <Serializable()> _
     Public Class PKDesc
         Public ReadOnly PropertyAlias As String
         Public ReadOnly Value As Object
@@ -12,6 +13,7 @@ Namespace Entities.Meta
         End Sub
     End Class
 
+    <Serializable()> _
     Public Class SourceFragment
         Implements ICloneable
 

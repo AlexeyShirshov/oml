@@ -14,6 +14,7 @@ Public Interface IEnt
 
 End Interface
 
+<Serializable()> _
 <Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
@@ -297,6 +298,7 @@ Public Class Entity3
     'End Sub
 End Class
 
+<Serializable()> _
 <Entity(GetType(EntitySchema4v1Implementation), "1"), _
 Entity(GetType(EntitySchema4v1Implementation), "joins"), _
 Entity(GetType(EntitySchema4v2Implementation), "2")> _

@@ -6,6 +6,8 @@ Imports System.Collections.Generic
 Imports Worm.Query
 
 Namespace Criteria.Joins
+
+    <Serializable()> _
     Public Class JoinLink
         Implements IGetFilter
 

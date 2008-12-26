@@ -5,7 +5,7 @@ Imports System.Collections.Generic
 Namespace Cache
 
     <Serializable()> _
-        Public Class EntityProxy
+    Public Class EntityProxy
         Private _id() As PKDesc
         Private _t As Type
 

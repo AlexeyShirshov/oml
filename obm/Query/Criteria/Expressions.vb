@@ -17,6 +17,7 @@ Public Class Expressions
         [Mod]
     End Enum
 
+    <Serializable()> _
     Public Class UnaryExp
         Implements IQueryElement
 
@@ -200,6 +201,7 @@ l1:
         End Function
     End Class
 
+    <Serializable()> _
     Public Class BinaryExp
         Inherits UnaryExp
 

@@ -13,6 +13,7 @@ Namespace Criteria.Joins
         CrossJoin
     End Enum
 
+    <Serializable()> _
     Public Class QueryJoin
         Implements IQueryElement, ICloneable
 
