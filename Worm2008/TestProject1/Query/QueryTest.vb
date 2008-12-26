@@ -14,6 +14,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
+Imports System.Runtime.Serialization.Formatters.Binary
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -611,6 +612,18 @@ Imports Worm.Criteria.Joins
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsFalse(q2.LastExecitionResult.CacheHit)
 
+            Dim bf As New BinaryFormatter
+            Using ms As New IO.MemoryStream
+                For Each s As String In mgr.Cache.GetAllKeys
+                    bf.Serialize(ms, mgr.Cache.GetQueryDictionary(s))
+                Next
+                Diagnostics.Debug.WriteLine(ms.ToArray.Length)
+            End Using
+
+            'Dim bf2 As New BinaryFormatter
+            'Using ms2 As New IO.MemoryStream
+            '    bf2.Serialize(ms2, New Entity2())
+            'End Using
         End Using
     End Sub
 

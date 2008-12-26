@@ -5,6 +5,8 @@ Imports System.Collections.Generic
 Imports Worm.Entities.Meta
 
 Namespace Cache
+
+    <Serializable()> _
     Public Class CachedItemBase
         Protected Friend _expires As Date
         Protected _execTime As TimeSpan
@@ -130,6 +132,7 @@ Namespace Cache
         End Property
     End Class
 
+    <Serializable()> _
     Public Class CachedItem
         Inherits CachedItemBase
 
@@ -362,6 +365,7 @@ Namespace Cache
         'End Property
     End Class
 
+    <Serializable()> _
     Public Class M2MCache
         Inherits CachedItem
 

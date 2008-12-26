@@ -15,6 +15,7 @@ Namespace Cache
     End Enum
 
     Public MustInherit Class CacheBase
+        Implements IExploreQueryCache
 
         Public ReadOnly DateTimeCreated As Date
 
@@ -733,11 +734,23 @@ Namespace Cache
                 OrmManager.WriteLine("Attempt to add existing object " & name & " (" & obj.Key & ") to cashe")
             End If
         End Sub
+
+        Public Function GetAllKeys() As List(Of String) Implements IExploreQueryCache.GetAllKeys
+            Dim l As New List(Of String)
+            For Each s As String In _filters.Keys
+                l.Add(s)
+            Next
+            Return l
+        End Function
+
+        Public Function GetQueryDictionary(ByVal key As String) As System.Collections.IDictionary Implements IExploreQueryCache.GetDictionary
+            Return CType(_filters(key), System.Collections.IDictionary)
+        End Function
     End Class
 
     Public Class ReadonlyCache
         Inherits CacheBase
-        Implements IExploreCache
+        Implements IExploreEntityCache
 
         Private _rootObjectsDictionary As IDictionary = Hashtable.Synchronized(New Hashtable)
 
@@ -798,11 +811,11 @@ Namespace Cache
             Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
         End Function
 
-        Public Function GetAllKeys() As System.Collections.ArrayList Implements IExploreCache.GetAllKeys
+        Public Function GetAllEntitiesKeys() As System.Collections.ArrayList Implements IExploreEntityCache.GetAllKeys
             Return New ArrayList(_rootObjectsDictionary.Keys)
         End Function
 
-        Public Function GetDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
+        Public Function GetEntitiesDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreEntityCache.GetDictionary
             Return CType(_rootObjectsDictionary(key), System.Collections.IDictionary)
         End Function
 
@@ -841,6 +854,10 @@ Namespace Cache
 
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter
+        End Function
+
+        Public Overrides Function CreateRootDictionary4Queries() As System.Collections.IDictionary
+            Return New HttpCacheDictionary(Of IDictionary)
         End Function
     End Class
 End Namespace

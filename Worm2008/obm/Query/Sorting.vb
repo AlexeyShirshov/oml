@@ -13,6 +13,7 @@ Namespace Sorting
     Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManager, _
         ByVal generator As ObjectMappingEngine, ByVal sort As Sort, ByVal objs As IList) As IEnumerable
 
+    <Serializable()> _
     Public Class Sort
         Inherits SelectExpression
         Implements ICloneable

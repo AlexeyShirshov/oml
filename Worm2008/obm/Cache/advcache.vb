@@ -181,6 +181,7 @@ Namespace Cache
     Public Class ListConverter
         Implements IListObjectConverter
 
+        <Serializable()> _
         Class ListObjectEntry
             Private _e As EntityProxy
             Private ref As WeakReference
@@ -241,6 +242,7 @@ Namespace Cache
             End Property
         End Class
 
+        <Serializable()> _
         Public Class ListObject
             Public l As Generic.List(Of ListObjectEntry)
             Public t As Type

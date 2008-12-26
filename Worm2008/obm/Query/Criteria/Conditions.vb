@@ -13,9 +13,11 @@ Namespace Criteria.Conditions
         [Or]
     End Enum
 
+    <Serializable()> _
     Public Class Condition
         Implements ITemplateFilter
 
+        <Serializable()> _
         Public Class ConditionConstructor
             Implements ICloneable
 
@@ -98,6 +100,7 @@ Namespace Criteria.Conditions
             End Function
         End Class
 
+        <Serializable()> _
         Protected Class ConditionTemplate
             Inherits TemplateBase
             Protected _con As Condition

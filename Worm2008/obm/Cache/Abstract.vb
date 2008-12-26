@@ -2,9 +2,14 @@
 Imports System.Collections.Generic
 
 Namespace Cache
-    Public Interface IExploreCache
+    Public Interface IExploreEntityCache
         Function GetAllKeys() As ArrayList
         Function GetDictionary(ByVal key As Object) As IDictionary
+    End Interface
+
+    Public Interface IExploreQueryCache
+        Function GetAllKeys() As List(Of String)
+        Function GetDictionary(ByVal key As String) As IDictionary
     End Interface
 
     Public Interface IUpdateCacheCallbacks

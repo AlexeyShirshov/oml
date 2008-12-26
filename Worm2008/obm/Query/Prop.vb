@@ -12,6 +12,7 @@ Namespace Entities
         [Aggregate]
     End Enum
 
+    <Serializable()> _
     Public Class FieldReference
         Private _op As ObjectProperty
         Private _tf As Pair(Of SourceFragment, String)
@@ -73,6 +74,7 @@ Namespace Entities
         End Function
     End Class
 
+    <Serializable()> _
     Public Class SelectExpression
         Implements Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 

@@ -16,6 +16,7 @@ Namespace Query
         Custom
     End Enum
 
+    <Serializable()> _
     Public MustInherit Class AggregateBase
         Implements IQueryElement
 
@@ -181,6 +182,7 @@ Namespace Query
 
     'End Class
 
+    <Serializable()> _
     Public Class [Aggregate]
         Inherits AggregateBase
 
