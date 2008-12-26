@@ -129,7 +129,7 @@ Namespace Entities
     End Interface
 
     Public Interface ICachedEntityEx
-        Inherits ICachedEntity, IComparable, System.Xml.Serialization.IXmlSerializable
+        Inherits ICachedEntity, System.Xml.Serialization.IXmlSerializable
 
         Sub ValidateNewObject(ByVal mgr As OrmManager)
         Sub ValidateUpdate(ByVal mgr As OrmManager)

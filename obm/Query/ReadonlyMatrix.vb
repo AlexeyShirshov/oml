@@ -2,6 +2,7 @@
 Imports Worm.Entities
 Imports System.Collections.Generic
 
+<Serializable()> _
 Public Class ReadonlyMatrix
     Inherits ReadOnlyCollection(Of ReadOnlyCollection(Of _IEntity))
 
