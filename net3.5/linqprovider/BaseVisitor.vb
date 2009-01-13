@@ -395,7 +395,7 @@ Namespace Linq
             For Each de As DictionaryEntry In _schema.GetProperties(t, Nothing)
                 Dim pi As PropertyInfo = CType(de.Value, PropertyInfo)
                 If pi.Name = prop Then
-                    'Return _schema.GetColumnNameByFieldNameInternal(t, CType(de.Key, ColumnAttribute).FieldName, False)
+                    'Return _schema.GetColumnNameByFieldNameInternal(t, CType(de.Key, EntityPropertyAttribute).FieldName, False)
                     Return CType(de.Key, EntityPropertyAttribute).PropertyAlias
                 End If
             Next

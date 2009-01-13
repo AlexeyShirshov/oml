@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using System.Reflection;
 
 namespace Worm.CodeGen.Core.Descriptors
@@ -182,6 +183,14 @@ namespace Worm.CodeGen.Core.Descriptors
                     return type;
             }
             throw new TypeLoadException(String.Format("Cannot find type by given name '{0}'", typeName));
+        }
+
+        public static implicit operator CodeTypeReference(TypeDescription propertyTypeDesc)
+        {
+            return
+                new CodeTypeReference(propertyTypeDesc.IsEntityType
+                                          ? OrmCodeGenNameHelper.GetEntityClassName(propertyTypeDesc.Entity, true)
+                                          : propertyTypeDesc.TypeName);
         }
     }
 

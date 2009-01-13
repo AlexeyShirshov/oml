@@ -6,13 +6,15 @@ Imports Worm.Entities
 
 Namespace Cache
 
-    Public Class HttpCacheDictionary(Of TValue)
+    <Serializable()> _
+    Public Class WebCacheDictionary(Of TValue)
         Implements System.Collections.Generic.IDictionary(Of String, TValue), IDictionary
 
         Private _keys As New Generic.List(Of String)
         Private _abs_expiration As Date
         Private _sld_expiration As TimeSpan
         Private _priority As Caching.CacheItemPriority
+        <NonSerialized()> _
         Private _dep As Caching.CacheDependency
         Private _remove_del As Caching.CacheItemRemovedCallback
         Private _name As String = Guid.NewGuid.ToString
@@ -461,7 +463,7 @@ Namespace Cache
         End Property
     End Class
 
-    Public Class DictionatyCachePolicy
+    Public Class WebCacheDictionaryPolicy
         Public AbsoluteExpiration As Date
         Public SlidingExpiration As TimeSpan
         Public Priority As Caching.CacheItemPriority
@@ -471,8 +473,8 @@ Namespace Cache
 
         End Sub
 
-        Public Shared Function CreateDefault() As DictionatyCachePolicy
-            Dim dp As New DictionatyCachePolicy
+        Public Shared Function CreateDefault() As WebCacheDictionaryPolicy
+            Dim dp As New WebCacheDictionaryPolicy
             With dp
                 .AbsoluteExpiration = Caching.Cache.NoAbsoluteExpiration
                 .SlidingExpiration = Caching.Cache.NoSlidingExpiration
@@ -483,19 +485,22 @@ Namespace Cache
         End Function
     End Class
 
-    Public Class OrmDictionary(Of TValue As ICachedEntity)
+    <Serializable()> _
+    Public Class WebCacheEntityDictionary(Of TValue As ICachedEntity)
         Implements IDictionary(Of Object, TValue), IDictionary
 
         'Private _mask As Integer
         'Private _code As Integer
-        Private _dic As HttpCacheDictionary(Of TValue)
+        Private _dic As WebCacheDictionary(Of TValue)
+
+        <NonSerialized()> _
         Private _mc As CacheBase
         'Private _name As String = Guid.NewGuid.ToString
 
         Public Sub New(ByVal mediaCache As OrmCache)
             '_mask = mask
             '_code = code
-            _dic = New HttpCacheDictionary(Of TValue)
+            _dic = New WebCacheDictionary(Of TValue)
             _mc = mediaCache
 
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
@@ -507,7 +512,7 @@ Namespace Cache
 
             '_mask = mask
             '_code = code
-            _dic = New HttpCacheDictionary(Of TValue)(absolute_expiration, sliding_expiration, priority, dependency)
+            _dic = New WebCacheDictionary(Of TValue)(absolute_expiration, sliding_expiration, priority, dependency)
             _mc = mediaCache
 
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1

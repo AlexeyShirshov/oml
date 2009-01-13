@@ -10,6 +10,9 @@ Imports Worm.Criteria.Values
 Imports Worm.Criteria.Core
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
+Imports Worm.Cache
+Imports Worm.Entities
+Imports System.Collections.ObjectModel
 
 <TestClass()> Public Class DeferredCacheQueryTest
 
@@ -458,4 +461,100 @@ Imports Worm.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestSelectListCache()
+        Dim c As New OrmCache
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        q.Select(FCtor.prop(GetType(Table1), "Title").prop(GetType(Table1), "Code"))
+
+        Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)()
+
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(3, l.Count)
+
+        For Each t As Table1 In l
+            Assert.IsFalse(t.InternalProperties.IsLoaded)
+            Assert.IsTrue(t.InternalProperties.IsPropertyLoaded("Code"))
+        Next
+
+        Dim l2 As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        q.Select(FCtor.prop(GetType(Table1), "Title").prop(GetType(Table1), "Code"))
+        l2 = q.ToList(Of Table1)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        q.Select(FCtor.prop(GetType(Table1), "Code").prop(GetType(Table1), "Title"))
+        l2 = q.ToList(Of Table1)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSelectAnonymListCache()
+        Dim c As New OrmCache
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        q.Select(FCtor.prop(GetType(Table1), "Title").prop(GetType(Table2), "Money"))
+        q.Join(JCtor.join(GetType(Table2)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1"))
+
+        Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList
+
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.AreEqual(2, l.Count)
+
+        l = q.ToAnonymList()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        q.Select(FCtor.prop(GetType(Table2), "Money").prop(GetType(Table1), "Title")).From(GetType(Table1))
+        l = q.ToAnonymList()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSelectMatrixListCache()
+        Dim c As New OrmCache
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        q.Select(FCtor.prop(GetType(Table1), "Title").prop(GetType(Table2), "Money"))
+        q.From(GetType(Table1)).Join(JCtor.join(GetType(Table2)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1"))
+
+        Dim l As ReadonlyMatrix = q.ToMatrix
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.AreEqual(2, l.Count)
+
+        l = q.ToMatrix()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        For Each r As ReadOnlyCollection(Of _IEntity) In l
+            Assert.IsInstanceOfType(r(0), GetType(Table1))
+            Assert.IsFalse(r(0).IsLoaded)
+            Assert.IsTrue(r(0).IsPropertyLoaded("Title"))
+
+            Assert.IsInstanceOfType(r(1), GetType(Table2))
+            Assert.IsFalse(r(1).IsLoaded)
+            Assert.IsTrue(r(1).IsPropertyLoaded("Money"))
+        Next
+
+        q.Select(FCtor.prop(GetType(Table2), "Money").prop(GetType(Table1), "Title"))
+        l = q.ToMatrix()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        For Each r As ReadOnlyCollection(Of _IEntity) In l
+            Assert.IsInstanceOfType(r(1), GetType(Table1))
+            Assert.IsFalse(r(1).IsLoaded)
+            Assert.IsTrue(r(1).IsPropertyLoaded("Title"))
+
+            Assert.IsInstanceOfType(r(0), GetType(Table2))
+            Assert.IsFalse(r(0).IsLoaded)
+            Assert.IsTrue(r(0).IsPropertyLoaded("Money"))
+        Next
+
+    End Sub
 End Class

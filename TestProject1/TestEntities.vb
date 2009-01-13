@@ -55,7 +55,7 @@ Public Class Entity
 End Class
 
 Public MustInherit Class ObjectSchemaBaseImplementation
-    Implements IOrmObjectSchema, IOrmSchemaInit
+    Implements IOrmObjectSchema, ISchemaInit
 
     Protected _schema As Worm.ObjectMappingEngine
     Protected _objectType As Type
@@ -95,11 +95,11 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    End Get
     'End Property
 
-    Public Overridable Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
-        Return New M2MRelation() {}
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements IOrmObjectSchema.GetM2MRelations
+        Return New M2MRelationDesc() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.GetSchema
         _schema = schema
         _objectType = t
     End Sub
@@ -116,7 +116,7 @@ Public Class EntitySchema1v1Implementation
 
     Private _idx As OrmObjectIndex
     Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1")}
-    Protected _rels() As M2MRelation
+    Protected _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
@@ -135,10 +135,10 @@ Public Class EntitySchema1v1Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() { _
-                New M2MRelation(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
                 }
         End If
         Return _rels
@@ -169,10 +169,10 @@ Public Class EntitySchema1v2Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() { _
-                New M2MRelation(GetType(Entity4), New SourceFragment("dbo.[1to2]"), "ent2_id", True, New System.Data.Common.DataTableMapping) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity4), New SourceFragment("dbo.[1to2]"), "ent2_id", True, New System.Data.Common.DataTableMapping) _
                 }
         End If
         Return _rels
@@ -195,7 +195,8 @@ Public Class EntitySchema1v3Implementation
 
 End Class
 
-<Entity(GetType(EntitySchema2v1Implementation), "1"), Entity(GetType(EntitySchema2v2Implementation), "2")> _
+<Entity(GetType(EntitySchema2v1Implementation), "1"), _
+Entity(GetType(EntitySchema2v2Implementation), "2")> _
 Public Class Entity2
     Inherits Entity
 
@@ -366,7 +367,7 @@ Public Class EntitySchema4v1Implementation
 
     Private _idx As OrmObjectIndex
     Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent2")}
-    Protected _rels() As M2MRelation
+    Protected _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
@@ -395,9 +396,9 @@ Public Class EntitySchema4v1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() {New M2MRelation(GetType(Entity), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
+            _rels = New M2MRelationDesc() {New M2MRelationDesc(GetType(Entity), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
         End If
         Return _rels
     End Function
@@ -504,9 +505,9 @@ Public Class EntitySchema4v2Implementation
         Return New TableFilter(GetTables()(Tables2.Main), "s", New ScalarValue(filter_info), Worm.Criteria.FilterOperation.Equal)
     End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() {New M2MRelation(GetType(Entity), New SourceFragment("dbo.[1to2]"), "ent1_id", True, New System.Data.Common.DataTableMapping)}
+            _rels = New M2MRelationDesc() {New M2MRelationDesc(GetType(Entity), New SourceFragment("dbo.[1to2]"), "ent1_id", True, New System.Data.Common.DataTableMapping)}
         End If
         Return _rels
     End Function
@@ -593,7 +594,7 @@ Public Class EntitySchema5v1Implementation
 
     Private _idx As OrmObjectIndex
     Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent3")}
-    Protected _rels() As M2MRelation
+    Protected _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
@@ -614,12 +615,12 @@ Public Class EntitySchema5v1Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
             Dim t As New SourceFragment("dbo.[3to3]")
-            _rels = New M2MRelation() { _
-                New M2MRelation(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, True), _
-                New M2MRelation(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, False) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, True), _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, False) _
             }
         End If
         Return _rels

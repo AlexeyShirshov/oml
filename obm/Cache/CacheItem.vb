@@ -28,8 +28,12 @@ Namespace Cache
             If r IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
-        Public Overridable Function GetCount(ByVal mgr As OrmManager) As Integer
+        Public Overridable Function GetCount(ByVal cache As CacheBase) As Integer
             Return _col.Count
+        End Function
+
+        Public Overridable Function GetAliveCount(ByVal cache As CacheBase) As Integer
+            Return cache.ListConverter.GetAliveCount(_col)
         End Function
 
         Public Overridable Function GetObjectList(Of T)(ByVal mgr As OrmManager, _
@@ -133,7 +137,7 @@ Namespace Cache
     End Class
 
     <Serializable()> _
-    Public Class CachedItem
+    Public Class UpdatableCachedItem
         Inherits CachedItemBase
 
         Protected _obj As Object
@@ -166,18 +170,18 @@ Namespace Cache
         Protected Sub New()
         End Sub
 
-        Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, _
-            ByVal obj As IEnumerable, ByVal mgr As OrmManager)
-            If sort IsNot Nothing Then
-                _sort = CType(sort.Clone, Sorting.Sort)
-            End If
+        'Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+        Public Sub New(ByVal sortExpire As Date, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+            'If sort IsNot Nothing Then
+            '    _sort = CType(sort.Clone, Sorting.Sort)
+            'End If
             '_st = sortType
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
             'End Using
             '_cache = mgr.Cache
             If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
-            _f = filter
+            ' _f = filter
             _expires = mgr._expiresPattern
             _sortExpires = sortExpire
             _execTime = mgr.Exec
@@ -190,15 +194,16 @@ Namespace Cache
             If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
-        Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
-            _sort = Nothing
+        'Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+        Public Sub New(ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+            '_sort = Nothing
             '_st = sortType
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
             'End Using
             '_cache = mgr.Cache
             If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
-            _f = filter
+            '_f = Filter
             _expires = mgr._expiresPattern
             _execTime = mgr.Exec
             _fetchTime = mgr.Fecth
@@ -245,8 +250,12 @@ Namespace Cache
         '    Return False
         'End Function
 
-        Public Overrides Function GetCount(ByVal mgr As OrmManager) As Integer
-            Return mgr.Cache.ListConverter.GetCount(_obj)
+        Public Overrides Function GetCount(ByVal cache As CacheBase) As Integer
+            Return cache.ListConverter.GetCount(_obj)
+        End Function
+
+        Public Overrides Function GetAliveCount(ByVal cache As CacheBase) As Integer
+            Return cache.ListConverter.GetAliveCount(_obj)
         End Function
 
         Public Sub Expire()
@@ -318,7 +327,7 @@ Namespace Cache
         '    End Get
         'End Property
 
-        Shared Operator =(ByVal o1 As CachedItem, ByVal o2 As CachedItem) As Boolean
+        Shared Operator =(ByVal o1 As UpdatableCachedItem, ByVal o2 As UpdatableCachedItem) As Boolean
             If o1 Is Nothing Then
                 If o2 Is Nothing Then
                     Return True
@@ -330,14 +339,21 @@ Namespace Cache
             End If
         End Operator
 
-        Shared Operator <>(ByVal o1 As CachedItem, ByVal o2 As CachedItem) As Boolean
+        Shared Operator <>(ByVal o1 As UpdatableCachedItem, ByVal o2 As UpdatableCachedItem) As Boolean
             Return Not (o1 = o2)
         End Operator
 
-        Public ReadOnly Property Sort() As Sort
+        Public Property Sort() As Sort
             Get
                 Return _sort
             End Get
+            Friend Set(ByVal value As Sort)
+                If value IsNot Nothing Then
+                    _sort = CType(value.Clone, Sorting.Sort)
+                Else
+                    _sort = Nothing
+                End If
+            End Set
         End Property
 
         'Protected Overrides Sub Finalize()
@@ -352,10 +368,13 @@ Namespace Cache
             mgr.ListConverter.Delete(_obj, obj)
         End Sub
 
-        Public ReadOnly Property Filter() As IFilter
+        Public Property Filter() As IFilter
             Get
                 Return _f
             End Get
+            Friend Set(ByVal value As IFilter)
+                _f = value
+            End Set
         End Property
 
         'Friend ReadOnly Property Obj() As Object
@@ -367,35 +386,33 @@ Namespace Cache
 
     <Serializable()> _
     Public Class M2MCache
-        Inherits CachedItem
+        Inherits UpdatableCachedItem
 
-        Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
+        Public Sub New(ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
             ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
-            MyClass.new(sort, filter, mainId, obj, mgr, mainType, subType, M2MRelation.GetKey(direct))
+            MyClass.new(mainId, obj, mgr, mainType, subType, Meta.M2MRelationDesc.GetKey(direct))
         End Sub
 
-        Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
+        Public Sub New(ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
             ByVal mainType As Type, ByVal subType As Type, ByVal key As String)
-            If sort IsNot Nothing Then
-                _sort = CType(sort.Clone, Sorting.Sort)
-            End If
+            'If sort IsNot Nothing Then
+            '    _sort = CType(sort.Clone, Sorting.Sort)
+            'End If
 
             '_st = sortType
             '_cache = mgr.Cache
             If obj IsNot Nothing Then
                 mgr.Cache.RegisterCreationCacheItem(Me.GetType)
-                _obj = New EditableList(mainId, obj, mainType, subType, key, sort)
+                _obj = New CachedM2MRelation(mainId, obj, mainType, subType, key, sort)
             End If
-            _f = filter
+            '_f = filter
             _expires = mgr._expiresPattern
             _execTime = mgr.Exec
             _fetchTime = mgr.Fecth
         End Sub
 
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal el As EditableList, ByVal mgr As OrmManager)
+            ByVal el As CachedM2MRelation, ByVal mgr As OrmManager)
             If sort IsNot Nothing Then
                 _sort = CType(sort.Clone, Sorting.Sort)
             End If
@@ -512,14 +529,18 @@ Namespace Cache
             Throw New NotSupportedException
         End Sub
 
-        Public ReadOnly Property Entry() As EditableList
+        Public ReadOnly Property Entry() As CachedM2MRelation
             Get
-                Return CType(_obj, EditableList)
+                Return CType(_obj, CachedM2MRelation)
             End Get
         End Property
 
-        Public Overrides Function GetCount(ByVal mgr As OrmManager) As Integer
+        Public Overrides Function GetCount(ByVal cache As CacheBase) As Integer
             Return Entry.CurrentCount
+        End Function
+
+        Public Overrides Function GetAliveCount(ByVal cache As CacheBase) As Integer
+            Return 0
         End Function
     End Class
 

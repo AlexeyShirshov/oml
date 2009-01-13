@@ -67,6 +67,126 @@ namespace TestsCodeGenLib
             }
         }
 
+        [TestMethod]
+        public void TestCSCodeGroups()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("groups"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        public void TestVBCodeGroups()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("groups"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestCSCodeGroupsHideParent()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("groups2"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestVBCodeGroupsHideParent()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("groups2"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestCSCodeM2MCheck1()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck1"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestVBCodeM2MCheck1()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck1"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestCSCodeM2MCheck2()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck2"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestVBCodeM2MCheck2()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck2"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestCSCodeM2MCheck3()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck3"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestVBCodeM2MCheck3()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck3"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestCSCodeM2MCheck4()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck4"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OrmCodeGenException))]
+        public void TestVBCodeM2MCheck4()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck4"))
+            {
+                TestVBCodeInternal(stream);
+            }
+        }
+
+        
+
         public void TestCSCodeInternal(Stream stream)
         {
             CodeDomProvider prov = new Microsoft.CSharp.CSharpCodeProvider();

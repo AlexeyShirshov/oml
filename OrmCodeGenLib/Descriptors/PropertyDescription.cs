@@ -5,6 +5,21 @@ using Worm.Entities.Meta;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
+    public class PropertyGroup
+    {
+        public string Name
+        {
+            get;
+            set;
+        }
+
+        public bool Hide
+        {
+            get;
+            set;
+        }
+    }
+
     public class PropertyDescription : ICloneable
     {
         private string _name;
@@ -15,16 +30,9 @@ namespace Worm.CodeGen.Core.Descriptors
         private string _fieldName;
         private TableDescription _table;
         private bool _fromBase;
-        private bool _isRefreshed;
         private AccessLevel _fieldAccessLevel;
         private AccessLevel _propertyAccessLevel;
         private bool _isSuppressed;
-        private EntityDescription _entity;
-        private bool _disabled;
-    	private bool _enablePropertyChanged;
-
-		private ObsoleteType _obsolete;
-    	private string _obsoleteDescripton;
 
         public PropertyDescription(EntityDescription entity, string name)
             : this(entity, name, null, null, null, null, null, null, false, default(AccessLevel), default(AccessLevel), true, false)
@@ -58,8 +66,8 @@ namespace Worm.CodeGen.Core.Descriptors
             _fieldAccessLevel = fieldAccessLevel;
             _propertyAccessLevel = propertyAccessLevel;
             _isSuppressed = isSuppressed;
-            _isRefreshed = isRefreshed;
-            _entity = entity;
+            IsRefreshed = isRefreshed;
+            Entity = entity;
         }
         
         public string Name
@@ -118,7 +126,7 @@ namespace Worm.CodeGen.Core.Descriptors
 
         public AccessLevel PropertyAccessLevel
         {
-            get { return _propertyAccessLevel; }
+            get { return  _propertyAccessLevel; }
             set { _propertyAccessLevel = value; }
         }
 
@@ -128,59 +136,25 @@ namespace Worm.CodeGen.Core.Descriptors
             set { _isSuppressed = value; }
         }
 
-        public bool IsRefreshed
-        {
-            get { return _isRefreshed; }
-            set { _isRefreshed = value; }
-        }
+        public bool IsRefreshed { get; set; }
 
-        public EntityDescription Entity
-        {
-            get { return _entity; }
-            set { _entity = value; }
-        }
+        public EntityDescription Entity { get; set; }
 
-        public bool Disabled
-        {
-            get { return _disabled; }
-            set { _disabled = value; }
-        }
+        public bool Disabled { get; set; }
 
-    	public ObsoleteType Obsolete
-    	{
-    		get { return _obsolete; }
-    		set { _obsolete = value; }
-    	}
+        public ObsoleteType Obsolete { get; set; }
 
-    	public string ObsoleteDescripton
-    	{
-    		get { return _obsoleteDescripton; }
-    		set { _obsoleteDescripton = value; }
-    	}
+        public string ObsoleteDescripton { get; set; }
 
-    	public bool EnablePropertyChanged
-    	{
-    		get { return _enablePropertyChanged; }
-    		set { _enablePropertyChanged = value; }
-    	}
+        public bool EnablePropertyChanged { get; set; }
 
-        public string DbTypeName
-        {
-            get;
-            set;
-        }
+        public string DbTypeName { get; set; }
 
-        public int? DbTypeSize
-        {
-            get;
-            set;
-        }
+        public int? DbTypeSize { get; set; }
 
-        public bool? DbTypeNullable
-        {
-            get;
-            set;
-        }
+        public bool? DbTypeNullable { get; set; }
+
+        public PropertyGroup Group { get; set; }
 
         public string PropertyName
         {

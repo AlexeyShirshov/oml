@@ -53,7 +53,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overloads Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As EditableListBase)
+        Protected Overloads Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As M2MRelation)
             Throw New NotImplementedException
         End Sub
 
@@ -121,7 +121,7 @@ Namespace Xml
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
-            ByVal relation As Entities.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
+            ByVal relation As Entities.Meta.M2MRelationDesc, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
@@ -159,8 +159,8 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
             ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Object), _
-            ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Entities.Meta.M2MRelation, _
-            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Cache.EditableList)
+            ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Entities.Meta.M2MRelationDesc, _
+            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Cache.CachedM2MRelation)
 
             Throw New NotImplementedException
         End Function
@@ -228,7 +228,7 @@ Namespace Xml
             'End If
 
             Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
-            Dim oschema As IEntitySchema = MappingEngine.GetObjectSchema(original_type)
+            Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema)
@@ -290,7 +290,7 @@ Namespace Xml
             Dim cnt As Integer
             For Each c As EntityPropertyAttribute In MappingEngine.GetSortedFieldList(original_type)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)
+                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -316,7 +316,7 @@ Namespace Xml
                 Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)
+                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean

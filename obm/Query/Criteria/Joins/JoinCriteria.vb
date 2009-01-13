@@ -223,6 +223,12 @@ Namespace Criteria.Joins
             Return GetLink()
         End Function
 
+        Public Function eq(ByVal op As ObjectProperty) As JoinLink
+            _jf.Right = New FieldReference(op.ObjectSource, op.Field)
+            _jf._oper = FilterOperation.Equal
+            Return GetLink()
+        End Function
+
         Public Function eq(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As JoinLink
             _jf.Right = New FieldReference(New EntityUnion([alias]), propertyAlias)
             _jf._oper = FilterOperation.Equal

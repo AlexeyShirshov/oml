@@ -13,12 +13,12 @@
       <xs:documentation>Сущность</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="Tables" type="TablesRefCollection_t" minOccurs="1" maxOccurs="1">
+      <xs:element name="Tables" type="TablesRefCollection_t" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>Список используемых таблиц</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="Properties" type="PropertiesCollection_t" minOccurs="1" maxOccurs="1">
+      <xs:element name="Properties" type="PropertiesGroupedCollection_t" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>Свойства сущности</xs:documentation>
         </xs:annotation>
@@ -33,29 +33,29 @@
           <xs:annotation>
             <xs:documentation>Свойства объекта сущности должны быть уникальны</xs:documentation>
           </xs:annotation>
-          <xs:selector xpath="NS:Property" />
+          <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@propertyName" />
         </xs:key>
         <xs:unique name="propName">
           <xs:annotation>
             <xs:documentation>Колонки сущности должны быть уникальны</xs:documentation>
           </xs:annotation>
-          <xs:selector xpath="NS:Property" />
+          <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@fieldName" />
         </xs:unique>
         <xs:keyref name="propTableRef" refer="TableId">
           <xs:annotation>
             <xs:documentation>Ссылка на таблицы</xs:documentation>
           </xs:annotation>
-          <xs:selector xpath="NS:Property" />
+          <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@table" />
         </xs:keyref>
         <xs:keyref name="propType" refer="TypeId">
-          <xs:selector xpath="NS:Property" />
+          <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@typeRef" />
         </xs:keyref>
         <xs:unique name="propertyAlias">
-          <xs:selector xpath="NS:Property" />
+          <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@propertyAlias" />
         </xs:unique>
       </xs:element>
@@ -265,6 +265,29 @@
     <xs:sequence>
       <xs:element name="Property" type="Property_t" minOccurs="0" maxOccurs="unbounded">
       </xs:element>
+    </xs:sequence>  
+  </xs:complexType>
+  <xs:complexType name="PropertiesGroupedCollection_t">
+    <xs:annotation>
+      <xs:documentation>Сгруппированная коллекция свойств сущности</xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="0" maxOccurs="unbounded">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="Property" type="Property_t" />
+        </xs:choice>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="Group">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Property" type="Property_t" minOccurs="0" maxOccurs="unbounded" />
+              </xs:sequence>
+              <xs:attribute name="name" type="Name_t" use="required" />
+              <xs:attribute name="hide" type="xs:boolean" use="optional" default="true" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:choice>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="TableCollection_t">
@@ -385,7 +408,7 @@
 	<xs:annotation>
 	  <xs:documentation>Точка ссылки</xs:documentation>
 	</xs:annotation>
-	<xs:attribute name="fieldName" type="xs:Name" use="required">
+	<xs:attribute name="fieldName" type="xs:string" use="required">
 	  <xs:annotation>
 		<xs:documentation>Имя поля таблицы связи</xs:documentation>
 	  </xs:annotation>
@@ -415,7 +438,7 @@
         <xs:documentation>Сущность</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="fieldName" type="xs:Name" use="required">
+    <xs:attribute name="fieldName" type="xs:string" use="required">
       <xs:annotation>
         <xs:documentation>Имя поля таблицы связи</xs:documentation>
       </xs:annotation>

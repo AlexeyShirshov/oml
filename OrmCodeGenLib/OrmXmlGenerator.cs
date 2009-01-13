@@ -276,45 +276,74 @@ namespace Worm.CodeGen.Core
                 entityElement.AppendChild(tablesNode);
 
                 XmlNode propertiesNode = CreateElement("Properties");
-                foreach (PropertyDescription property in entity.Properties)
-                {
-                    XmlElement propertyElement =
-                        CreateElement("Property");
-                    propertyElement.SetAttribute("propertyName", property.Name);
-                    if(property.Attributes != null && property.Attributes.Length > 0)
-                    {
-                        propertyElement.SetAttribute("attributes", string.Join(" ", property.Attributes));
-                    }
-                    propertyElement.SetAttribute("table", property.Table.Identifier);
-                    propertyElement.SetAttribute("fieldName", property.FieldName);
-                    propertyElement.SetAttribute("typeRef", property.PropertyType.Identifier);
-                    if (!string.IsNullOrEmpty(property.Description))
-                        propertyElement.SetAttribute("description", property.Description);
-                    if (property.FieldAccessLevel != AccessLevel.Private)
-                        propertyElement.SetAttribute("classfieldAccessLevel", property.FieldAccessLevel.ToString());
-                    if (property.PropertyAccessLevel != AccessLevel.Public)
-                        propertyElement.SetAttribute("propertyAccessLevel", property.PropertyAccessLevel.ToString());
-                    if (property.PropertyAlias != property.Name)
-                        propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
-                    if (property.Disabled)
-                        propertyElement.SetAttribute("disabled", XmlConvert.ToString(true));
-					if (property.Obsolete != ObsoleteType.None)
-						propertyElement.SetAttribute("obsolete", property.Obsolete.ToString());
-					if(!string.IsNullOrEmpty(property.ObsoleteDescripton))
-						propertyElement.SetAttribute("obsoleteDescription", property.ObsoleteDescripton);
-					if (property.EnablePropertyChanged)
-						propertyElement.SetAttribute("enablePropertyChanged", XmlConvert.ToString(property.EnablePropertyChanged));
-                    if (!string.IsNullOrEmpty(property.DbTypeName))
-                        propertyElement.SetAttribute("dbTypeName", property.DbTypeName);
-                    if (property.DbTypeSize.HasValue)
-                        propertyElement.SetAttribute("dbTypeSize", XmlConvert.ToString(property.DbTypeSize.Value));
-                    if (property.DbTypeNullable.HasValue)
-                        propertyElement.SetAttribute("dbTypeNullable", XmlConvert.ToString(property.DbTypeNullable.Value));
-                    propertiesNode.AppendChild(propertyElement);
-                }
+                List<PropertyDescription> properties = entity.Properties.FindAll(p => p.Group == null);
+                FillEntityProperties(properties, propertiesNode);
                 entityElement.AppendChild(propertiesNode);
 
+                List<PropertyGroup> groups = new List<PropertyGroup>();
+                properties = entity.Properties.FindAll(p => p.Group != null);
+
+                foreach (var property in properties)
+                {
+                    if (!groups.Contains(property.Group))
+                        groups.Add(property.Group);
+                }
+
+                foreach (var propertyGroup in groups)
+                {
+                    PropertyGroup propertyGroup1 = propertyGroup;
+                    var props = properties.FindAll(p => p.Group == propertyGroup1);
+
+                    XmlElement groupNode = CreateElement("Group");
+                    groupNode.SetAttribute("name", propertyGroup.Name);
+
+                    if (!propertyGroup.Hide)
+                        groupNode.SetAttribute("hide", XmlConvert.ToString(propertyGroup.Hide));
+
+                    FillEntityProperties(props, groupNode);
+                }
+
                 entitiesNode.AppendChild(entityElement);
+            }
+        }
+
+        private void FillEntityProperties(List<PropertyDescription> properties, XmlNode propertiesNode)
+        {
+            foreach (PropertyDescription property in properties)
+            {
+                XmlElement propertyElement =
+                    CreateElement("Property");
+                propertyElement.SetAttribute("propertyName", property.Name);
+                if(property.Attributes != null && property.Attributes.Length > 0)
+                {
+                    propertyElement.SetAttribute("attributes", string.Join(" ", property.Attributes));
+                }
+                propertyElement.SetAttribute("table", property.Table.Identifier);
+                propertyElement.SetAttribute("fieldName", property.FieldName);
+                propertyElement.SetAttribute("typeRef", property.PropertyType.Identifier);
+                if (!string.IsNullOrEmpty(property.Description))
+                    propertyElement.SetAttribute("description", property.Description);
+                if (property.FieldAccessLevel != AccessLevel.Private)
+                    propertyElement.SetAttribute("classfieldAccessLevel", property.FieldAccessLevel.ToString());
+                if (property.PropertyAccessLevel != AccessLevel.Public)
+                    propertyElement.SetAttribute("propertyAccessLevel", property.PropertyAccessLevel.ToString());
+                if (property.PropertyAlias != property.Name)
+                    propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
+                if (property.Disabled)
+                    propertyElement.SetAttribute("disabled", XmlConvert.ToString(true));
+                if (property.Obsolete != ObsoleteType.None)
+                    propertyElement.SetAttribute("obsolete", property.Obsolete.ToString());
+                if(!string.IsNullOrEmpty(property.ObsoleteDescripton))
+                    propertyElement.SetAttribute("obsoleteDescription", property.ObsoleteDescripton);
+                if (property.EnablePropertyChanged)
+                    propertyElement.SetAttribute("enablePropertyChanged", XmlConvert.ToString(property.EnablePropertyChanged));
+                if (!string.IsNullOrEmpty(property.DbTypeName))
+                    propertyElement.SetAttribute("dbTypeName", property.DbTypeName);
+                if (property.DbTypeSize.HasValue)
+                    propertyElement.SetAttribute("dbTypeSize", XmlConvert.ToString(property.DbTypeSize.Value));
+                if (property.DbTypeNullable.HasValue)
+                    propertyElement.SetAttribute("dbTypeNullable", XmlConvert.ToString(property.DbTypeNullable.Value));
+                propertiesNode.AppendChild(propertyElement);
             }
         }
 

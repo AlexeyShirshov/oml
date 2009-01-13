@@ -1,6 +1,5 @@
 <%@ Assembly Name="Worm.Orm" %>
 <%@ Import Namespace="Worm.Cache" %>
-<%@ Import Namespace="Worm.Orm" %>
 <%@ Import Namespace="System.Collections.Generic" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -18,7 +17,7 @@
         Protected Function GetDic() As IDictionary(Of String, Integer)
             Dim dic As IDictionary(Of String, Integer) = Application("dic")
             If dic Is Nothing Then
-                Dim dic2 As New HttpCacheDictionary(Of Integer)(Now.AddMinutes(1), _
+                Dim dic2 As New WebCacheDictionary(Of Integer)(Now.AddMinutes(1), _
                     Caching.Cache.NoSlidingExpiration, CacheItemPriority.Low, Nothing)
                 dic2.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
                 dic = dic2

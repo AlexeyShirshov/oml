@@ -562,7 +562,7 @@ Namespace Linq
             Get
                 Dim so As SortLink = GetSO(_sort(0))
                 For i As Integer = 1 To _sort.Count - 1
-                    so = so.NextSort(GetSO(_sort(i)))
+                    so = so.Sort(GetSO(_sort(i)))
                 Next
                 Return so
             End Get
@@ -1063,12 +1063,12 @@ Namespace Linq
                     Me.Visit(m.Arguments(0))
                     Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
-                    _so = sv.Sort.NextSort(_so)
+                    _so = sv.Sort.Sort(_so)
                 Case "ThenByDescending"
                     Me.Visit(m.Arguments(0))
                     Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
-                    _so = sv.Sort.NextSort(_so)
+                    _so = sv.Sort.Sort(_so)
                     _so.Order(False)
                 Case "Select"
                     Me.Visit(m.Arguments(0))
@@ -1138,7 +1138,7 @@ Namespace Linq
                     Dim aq As New Query.QueryCmd()
                     'Dim al As String = Nothing
                     'Dim num As Integer
-                    Dim a As New Aggregate(af, GetIndex(ag.Exp))
+                    Dim a As New Aggregate(af, ag.Exp)
                     aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(a)})
                     aq.From(_q)
                     '_q.OuterQuery = aq
@@ -1192,7 +1192,8 @@ Namespace Linq
                     'End If
 
                     Dim aq As New Query.QueryCmd()
-                    aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, 0))})
+                    Throw New NotImplementedException
+                    'aq.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {New SelectExpression(New Aggregate(af, 0))})
                     aq.From(_q)
                     '_q.OuterQuery = aq
                     _q.Select(New SelectExpression() {CType(_sel(0).Value, FieldValue).Expression})

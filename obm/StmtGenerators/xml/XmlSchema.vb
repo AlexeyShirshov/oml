@@ -70,7 +70,7 @@ Namespace Xml
             con.AddFilter(filter)
 
             If t IsNot Nothing Then
-                Dim schema As IContextObjectSchema = TryCast(mpe.GetObjectSchema(t), IContextObjectSchema)
+                Dim schema As IContextObjectSchema = TryCast(mpe.GetEntitySchema(t), IContextObjectSchema)
                 If schema IsNot Nothing Then
                     con.AddFilter(schema.GetContextFilter(filter_info))
                 End If
@@ -79,7 +79,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Me, filter_info, Nothing, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Me, filter_info, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False
@@ -87,7 +87,7 @@ Namespace Xml
 
         Public Function SelectID(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type) As String
             Dim selectcmd As New StringBuilder
-            Dim s As IEntitySchema = mpe.GetObjectSchema(original_type)
+            Dim s As IEntitySchema = mpe.GetEntitySchema(original_type)
             selectcmd.Append(GetTableName(s.Table))
             Return selectcmd.ToString
         End Function
@@ -169,7 +169,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal joins As System.Collections.Generic.List(Of QueryJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As System.Collections.Generic.IEnumerable(Of Entities.SelectExpression)) As String
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
             Throw New NotImplementedException
         End Function
 
@@ -184,5 +184,15 @@ Namespace Xml
                 Throw New NotSupportedException
             End Get
         End Property
+
+        Public Overrides ReadOnly Property Left() As String
+            Get
+                Throw New NotImplementedException
+            End Get
+        End Property
+
+        Public Overrides Function Comment(ByVal s As String) As String
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace

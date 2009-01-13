@@ -28,16 +28,16 @@
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Entities.Meta.IOrmFullTextSupport">
+  <Interface Name="Worm.Entities.Meta.IFullTextSupport">
     <Position X="3.25" Y="4.25" Width="1.75" />
     <TypeIdentifier>
       <HashCode>AAAAAQAAAAAAAAAAAAAkAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Entities.Meta.IOrmFullTextSupportEx">
+  <Interface Name="Worm.Entities.Meta.IFullTextSupportEx">
     <Position X="3.25" Y="2" Width="2" />
-    <InheritanceLine Type="Worm.Entities.Meta.IOrmFullTextSupport" FixedFromPoint="true">
+    <InheritanceLine Type="Worm.Entities.Meta.IFullTextSupport" FixedFromPoint="true">
       <Path>
         <Point X="4" Y="4.25" />
         <Point X="4" Y="3.858" />
@@ -78,7 +78,7 @@
       <FileName>Mapping\ObjectSchema\Interfaces.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Entities.Meta.IOrmSchemaInit">
+  <Interface Name="Worm.Entities.Meta.ISchemaInit">
     <Position X="5.75" Y="0.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>

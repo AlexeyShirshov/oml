@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
@@ -78,9 +77,9 @@ namespace Worm.CodeGen.Core.Descriptors
             get
             {
                 int s = 0;
-                foreach (var propertyDescription in this.CompleteEntity.Properties)
+                foreach (var propertyDescription in CompleteEntity.Properties)
                 {
-                    if (propertyDescription.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                    if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
                         s++;
                 }
                 return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
@@ -94,13 +93,10 @@ namespace Worm.CodeGen.Core.Descriptors
 
 		public PropertyDescription GetProperty(string propertyName, bool throwNotFoundException)
 		{
-			PropertyDescription result = this.Properties.Find(delegate(PropertyDescription match)
-			{
-				return match.Name == propertyName;
-			});
+			PropertyDescription result = Properties.Find(match => match.Name == propertyName);
 			if (result == null && throwNotFoundException)
 				throw new KeyNotFoundException(
-					string.Format("Property with name '{0}' in entity '{1}' not found.", propertyName, this.Identifier));
+					string.Format("Property with name '{0}' in entity '{1}' not found.", propertyName, Identifier));
 			return result;
 		}
 
@@ -118,14 +114,11 @@ namespace Worm.CodeGen.Core.Descriptors
 			//{
 			//    localTableId = nameMatch.Groups["name"].Value;
 			//}
-			table = this.Tables.Find(delegate(TableDescription match)
-			{
-				return match.Identifier == tableId;
-			});
+			table = Tables.Find(match => match.Identifier == tableId);
 
 			if (table == null && throwNotFoundException)
 				throw new KeyNotFoundException(
-					string.Format("Table with id '{0}' in entity '{1}' not found.", tableId, this.Identifier));
+					string.Format("Table with id '{0}' in entity '{1}' not found.", tableId, Identifier));
 			return table;
 		}
 
@@ -141,10 +134,47 @@ namespace Worm.CodeGen.Core.Descriptors
 					l.Add(match);
 				}
 			}
+            Dictionary<string, int> relationUniques = new Dictionary<string, int>();
+            FillUniqueRelations(l, relationUniques);
+            if(BaseEntity != null)
+            {
+                var baseEntityRealation = BaseEntity.GetRelations(withDisabled);
+                FillUniqueRelations(baseEntityRealation, relationUniques);
+            }
+            foreach (var relationUnique in relationUniques)
+            {
+                if (relationUnique.Value > 1)
+                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи.");
+            }
 			return l;
 		}
 
-		public List<SelfRelationDescription> GetSelfRelations(bool withDisabled)
+	    private static void FillUniqueRelations<T>(IEnumerable<T> baseEntityRealation, IDictionary<string, int> relationUniques)
+            where T : RelationDescriptionBase
+	    {
+	        foreach (var relationDescription in baseEntityRealation)
+	        {
+	            string key = string.Join("$$$", new[]
+	                                                {
+	                                                    relationDescription.Table.Name,
+	                                                    relationDescription.Left.ToString(),
+	                                                    relationDescription.Right.ToString(),
+	                                                });
+                if (relationDescription.UnderlyingEntity != null)
+                {
+                    EntityDescription superBaseEntity = relationDescription.UnderlyingEntity.SuperBaseEntity;
+                    key += "$" + (superBaseEntity == null ? relationDescription.UnderlyingEntity.Name : superBaseEntity.Name);
+                }
+
+	            int val;
+	            if(!relationUniques.TryGetValue(key, out val))
+	                val = 0;
+	            relationUniques[key] = ++val;
+
+	        }
+	    }
+
+	    public List<SelfRelationDescription> GetSelfRelations(bool withDisabled)
 		{
 			List<SelfRelationDescription> l = new List<SelfRelationDescription>();
 			foreach (RelationDescriptionBase rel in _ormObjectsDef.Relations)
@@ -156,7 +186,19 @@ namespace Worm.CodeGen.Core.Descriptors
 					l.Add(match);
 				}
 			}
-			return l;
+            Dictionary<string, int> relationUniques = new Dictionary<string, int>();
+            FillUniqueRelations(l, relationUniques);
+            if (BaseEntity != null)
+            {
+                var baseEntityRealation = BaseEntity.GetRelations(withDisabled);
+                FillUniqueRelations(baseEntityRealation, relationUniques);
+            }
+            foreach (var relationUnique in relationUniques)
+            {
+                if (relationUnique.Value > 1)
+                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи.");
+            }
+            return l;
 		}
 
 		public List<RelationDescriptionBase> GetAllRelations(bool withDisabled)
@@ -187,6 +229,23 @@ namespace Worm.CodeGen.Core.Descriptors
 			set { _baseEntity = value; }
 		}
 
+	    public EntityDescription SuperBaseEntity
+	    {
+	        get
+	        {
+                EntityDescription superbaseEntity;
+                for (superbaseEntity = this;
+                     superbaseEntity.BaseEntity != null;
+                     superbaseEntity = superbaseEntity.BaseEntity)
+                {
+
+                }
+                if (superbaseEntity == this)
+                    superbaseEntity = null;
+	            return superbaseEntity;
+	        }
+	    }
+
 		//public string QualifiedIdentifier
 		//{
 		//    get
@@ -213,7 +272,8 @@ namespace Worm.CodeGen.Core.Descriptors
 			foreach (PropertyDescription newProperty in newOne.Properties)
 			{
 				PropertyDescription prop = newProperty.CloneSmart();
-				if (newOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == newProperty.Name; }))
+			    PropertyDescription newProperty1 = newProperty;
+			    if (newOne.SuppressedProperties.Exists(match => match.Name == newProperty1.Name))
 					prop.IsSuppressed = true;
 				resultOne.Properties.Add(prop);
 			}
@@ -230,11 +290,12 @@ namespace Worm.CodeGen.Core.Descriptors
 				if (newOne.InheritsBaseTables)
 					foreach (TableDescription oldTable in oldOne.Tables)
 					{
-						if (!resultOne.Tables.Exists(delegate(TableDescription tableMatch) { return oldTable.Name == tableMatch.Name; }))
+					    TableDescription oldTable1 = oldTable;
+					    if (!resultOne.Tables.Exists(tableMatch => oldTable1.Name == tableMatch.Name))
 							resultOne.Tables.Insert(oldOne.Tables.IndexOf(oldTable), oldTable);
 					}
 
-				foreach (PropertyDescription oldProperty in oldOne.SuppressedProperties)
+			    foreach (PropertyDescription oldProperty in oldOne.SuppressedProperties)
 				{
 					PropertyDescription prop = oldProperty.CloneSmart();
 					resultOne.SuppressedProperties.Add(prop);
@@ -250,17 +311,18 @@ namespace Worm.CodeGen.Core.Descriptors
 						if(oldProperty.Table != null)
 							newTable = resultOne.GetTable(oldProperty.Table.Identifier);
 						TypeDescription newType = oldProperty.PropertyType;
-						bool isSuppressed =
-							resultOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == oldProperty.Name; });
+					    PropertyDescription oldProperty1 = oldProperty;
+					    bool isSuppressed =
+							resultOne.SuppressedProperties.Exists(match => match.Name == oldProperty1.Name);
 						bool isRefreshed = false;
-						bool fromBase = true;
+						const bool fromBase = true;
 						if (newType.IsEntityType)
 						{
-							EntityDescription newEntity =
-								resultOne.OrmObjectsDef.Entities.Find(delegate(EntityDescription matchEntity)
-																	  {
-																		  return matchEntity.BaseEntity != null && matchEntity.BaseEntity.Identifier == newType.Entity.Identifier;
-																	  });
+						    TypeDescription newType1 = newType;
+						    EntityDescription newEntity =
+								resultOne.OrmObjectsDef.Entities.Find(
+								    matchEntity =>
+								    matchEntity.BaseEntity != null && matchEntity.BaseEntity.Identifier == newType1.Entity.Identifier);
 							if (newEntity != null)
 							{
 								newType = new TypeDescription(newType.Identifier, newEntity);
@@ -285,10 +347,7 @@ namespace Worm.CodeGen.Core.Descriptors
 			get
 			{
 				EntityDescription baseEntity;
-				if (_baseEntity == null)
-					baseEntity = null;
-				else
-					baseEntity = _baseEntity.CompleteEntity;
+				baseEntity = _baseEntity == null ? null : _baseEntity.CompleteEntity;
 				return MergeEntities(baseEntity, this);
 			}
 		}
@@ -321,7 +380,7 @@ namespace Worm.CodeGen.Core.Descriptors
                 if (HasSinglePK) 
                     foreach (var propertyDescription in CompleteEntity.Properties)
                     {
-                        if (propertyDescription.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                        if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
                             return propertyDescription;
                     }
                 throw new InvalidOperationException("Only usable with single PK");
@@ -332,7 +391,7 @@ namespace Worm.CodeGen.Core.Descriptors
 	    {
 	        get
 	        {
-	            return Properties.FindAll(p => p.HasAttribute(Worm.Entities.Meta.Field2DbRelations.PK));
+	            return Properties.FindAll(p => p.HasAttribute(Entities.Meta.Field2DbRelations.PK));
 	        }
 	    }
 	}

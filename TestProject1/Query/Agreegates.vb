@@ -91,8 +91,8 @@ Imports Worm.Misc
     <TestMethod()> Public Sub TestOrder()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), True)
-            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, True)
+            Dim r As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), True)
+            Dim r2 As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table
@@ -134,8 +134,8 @@ Imports Worm.Misc
             'q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
-            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
+            Dim r As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
+            Dim r2 As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.propJoins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
@@ -168,6 +168,17 @@ Imports Worm.Misc
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
         End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestGroup2()
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        q.Select(FCtor.prop(GetType(Table1), "Title")).From(GetType(Table1))
+
+        Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList
+
+        Assert.AreEqual(3, l.Count)
+
     End Sub
 
     <TestMethod()> Public Sub TestDic()
@@ -272,13 +283,46 @@ Imports Worm.Misc
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestBuildDic3()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim t As Type = GetType(Entity4)
+            'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            Dim q As New QueryCmd()
+
+            Dim root As DicIndexT(Of Entity4) = q.BuildDictionary(Of Entity4)(mgr, "Title", 1)
+
+            Assert.AreEqual(5, root.ChildIndexes.Length)
+
+            Assert.AreEqual("2", root.ChildIndexes(0).Name)
+            Assert.AreEqual(3, root.ChildIndexes(0).Count)
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestBuildDicUnion()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))
+            Dim q As New QueryCmd()
+
+            Dim root As DicIndexT(Of Table1) = q.BuildDictionary(Of Table1)(mgr, "Title", "EnumStr", 1)
+
+            Assert.AreEqual(2, root.ChildIndexes.Length)
+
+            Assert.AreEqual("s", root.ChildIndexes(0).Name)
+            Assert.AreEqual(3, root.ChildIndexes(0).Count)
+
+            Assert.AreEqual("f", root.ChildIndexes(1).Name)
+            Assert.AreEqual(3, root.ChildIndexes(1).Count)
+
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestOrder2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim typeE As Type = GetType(Entity)
             Dim typeE4 As Type = GetType(Entity4)
 
-            Dim r As M2MRelation = mgr.MappingEngine.GetM2MRelation(typeE4, typeE, True)
-            Dim r2 As M2MRelation = mgr.MappingEngine.GetM2MRelation(typeE, typeE4, True)
+            Dim r As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(typeE4, typeE, True)
+            Dim r2 As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(typeE, typeE4, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table

@@ -14,7 +14,7 @@ Imports Worm.Query
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
-#Const TraceManagerCreation = True
+#Const TraceManagerCreation = False
 
 'Namespace Managers
 
@@ -115,7 +115,7 @@ Partial Public MustInherit Class OrmManager
     'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManager, ByVal r As ExecutionResult)
 
-    Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
+    Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IFullTextSupport, ByVal contextKey As Object) As String
 
     Public Shared ReadOnly Property ExecSource() As TraceSource
         Get
@@ -403,7 +403,7 @@ Partial Public MustInherit Class OrmManager
             '    col = New ArrayList(ecol)
         End If
 
-        Dim oschema As IEntitySchema = _schema.GetObjectSchema(tt)
+        Dim oschema As IEntitySchema = _schema.GetEntitySchema(tt)
 #If DEBUG Then
         Dim ft As Type = _schema.GetPropertyTypeByName(tt, oschema, propertyAlias)
         For Each o As IKeyEntity In ecol
@@ -435,7 +435,7 @@ Partial Public MustInherit Class OrmManager
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
                     Dim id As String = f._ToString
-                    Dim ce As CachedItem = CType(dic(id), CachedItem)
+                    Dim ce As UpdatableCachedItem = CType(dic(id), UpdatableCachedItem)
                     If ce IsNot Nothing Then
                         'Dim fs As List(Of String) = Nothing
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
@@ -503,7 +503,9 @@ Partial Public MustInherit Class OrmManager
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
                     Dim id As String = f._ToString
-                    dic(id) = New CachedItem(f, v, Me)
+                    Dim ce As New UpdatableCachedItem(v, Me)
+                    dic(id) = ce
+                    ce.Filter = f
                 End If
                 If j - start = length Then
                     Exit For
@@ -515,12 +517,12 @@ Partial Public MustInherit Class OrmManager
         End Using
     End Function
 
-    Public Sub LoadObjects(Of T As {IKeyEntity, New})(ByVal relation As M2MRelation, ByVal criteria As PredicateLink, _
+    Public Sub LoadObjects(Of T As {IKeyEntity, New})(ByVal relation As M2MRelationDesc, ByVal criteria As PredicateLink, _
         ByVal col As ICollection, ByVal target As ICollection(Of T))
         LoadObjects(Of T)(relation, criteria, col, target, 0, col.Count)
     End Sub
 
-    Public Sub LoadObjects(Of T As {IKeyEntity, New})(ByVal relation As M2MRelation, ByVal criteria As PredicateLink, _
+    Public Sub LoadObjects(Of T As {IKeyEntity, New})(ByVal relation As M2MRelationDesc, ByVal criteria As PredicateLink, _
         ByVal col As ICollection, ByVal target As ICollection(Of T), ByVal start As Integer, ByVal length As Integer)
         Dim type2load As Type = GetType(T)
 
@@ -536,7 +538,7 @@ Partial Public MustInherit Class OrmManager
             Return
         End If
 
-        If type2load IsNot relation.Type Then
+        If type2load IsNot relation.Rel.GetRealType(MappingEngine) Then
             Throw New ArgumentException("Relation is not suit for type " & type2load.Name)
         End If
 
@@ -561,7 +563,7 @@ Partial Public MustInherit Class OrmManager
                     Dim key As String = GetM2MKey(tt1, type2load, direct)
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                         'key &= criteria.Filter(type2load).GetStaticString(_schema)
-                        key &= criteria.Filter().GetStaticString(_schema)
+                        key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
                     End If
 
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -572,7 +574,7 @@ Partial Public MustInherit Class OrmManager
                         id &= criteria.Filter()._ToString
                     End If
 
-                    Dim ce As CachedItem = CType(dic(id), CachedItem)
+                    Dim ce As UpdatableCachedItem = CType(dic(id), UpdatableCachedItem)
                     If ce IsNot Nothing Then
                         'Dim sync As String = GetSync(key, id)
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
@@ -604,12 +606,12 @@ Partial Public MustInherit Class OrmManager
                     type = o.GetType
                 End If
             Next
-            Dim edic As IDictionary(Of Object, EditableList) = GetObjects(Of T)(type, ids, GetFilter(criteria, type2load), relation, False, True)
+            Dim edic As IDictionary(Of Object, CachedM2MRelation) = GetObjects(Of T)(type, ids, GetFilter(criteria, type2load), relation, False, True)
             'l.AddRange(c)
 
             If (target IsNot Nothing OrElse Not _dont_cache_lists) AndAlso edic IsNot Nothing Then
                 For Each o As IKeyEntity In col
-                    Dim el As EditableList = Nothing
+                    Dim el As CachedM2MRelation = Nothing
                     If edic.TryGetValue(o.Identifier, el) Then
                         For Each id As Object In el.Current
                             If target IsNot Nothing Then
@@ -618,7 +620,7 @@ Partial Public MustInherit Class OrmManager
                         Next
                         'Cache.AddRelationValue(o.GetType, type2load)
                     Else
-                        el = New EditableList(o.Identifier, New List(Of Object), type, type2load, Nothing)
+                        el = New CachedM2MRelation(o.Identifier, New List(Of Object), type, type2load, Nothing)
                     End If
 
                     If Not _dont_cache_lists Then
@@ -626,7 +628,7 @@ Partial Public MustInherit Class OrmManager
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                             'key &= criteria.Filter(type2load).GetStaticString(_schema)
-                            key &= criteria.Filter().GetStaticString(_schema)
+                            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
@@ -871,7 +873,7 @@ Partial Public MustInherit Class OrmManager
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
         End If
 
         If joins IsNot Nothing Then
@@ -886,7 +888,7 @@ Partial Public MustInherit Class OrmManager
             key &= aspect.GetStaticKey
         End If
 
-        key &= _schema.GetEntityKey(GetFilterInfo, GetType(T))
+        key &= _schema.GetEntityKey(GetContextFilter, GetType(T))
 
         Return key & GetStaticKey()
     End Function
@@ -926,7 +928,7 @@ Partial Public MustInherit Class OrmManager
     Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
         ByVal id As String, ByVal sync As String, ByVal del As ICacheItemProvoder(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-        Dim ce As CachedItem = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), CachedItem)
+        Dim ce As UpdatableCachedItem = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), UpdatableCachedItem)
         RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
         Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
@@ -936,7 +938,7 @@ Partial Public MustInherit Class OrmManager
             withLoad = True
 l1:
             del.Renew = True
-            ce = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), CachedItem)
+            ce = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), UpdatableCachedItem)
             r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
             Assert(s = IListObjectConverter.ExtractListResult.Successed, "Withload should always successed")
         End If
@@ -1130,7 +1132,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.GetStaticString(_schema) & GetStaticKey() & _schema.GetEntityKey(GetFilterInfo, t)
+        Return filter.GetStaticString(_schema, GetContextFilter) & GetStaticKey() & _schema.GetEntityKey(GetContextFilter, t)
     End Function
 
     Public Function Find(Of T As {IKeyEntity, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
@@ -1146,7 +1148,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain)
         Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
@@ -1162,7 +1164,7 @@ l1:
 
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        If HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain) Then
+        If HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain) Then
             Dim c As Condition.ConditionConstructor = New Condition.ConditionConstructor
             c.AddFilter(filter)
             Return FindWithJoins(Of T)(Nothing, joins, New PredicateLink(c), sort, withLoad)
@@ -1245,7 +1247,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain)
         Return FindWithJoins(Of T)(StmtGenerator.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
@@ -1371,12 +1373,12 @@ l1:
         End If
 
         If del.Renew Then
-            _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created, _loadedInLastFetch)
+            _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not del.Created, _loadedInLastFetch)
             Return ce
         End If
 
         If del.Created Then
-            If Not _dont_cache_lists Then del.CreateDepends()
+            If Not _dont_cache_lists Then del.CreateDepends(ce)
         ElseIf vdel IsNot Nothing Then
             If Not vdel(ce, del, dic, id, sync, v) Then
                 GoTo l1
@@ -1387,7 +1389,7 @@ l1:
         If del.Created Then
             l = _loadedInLastFetch
         End If
-        _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created, l)
+        _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not del.Created, l)
         Return ce
     End Function
 
@@ -1401,7 +1403,7 @@ l1:
             ce._expires = _expiresPattern
         End If
 
-        Dim ce_ As CachedItem = CType(ce, CachedItem)
+        Dim ce_ As UpdatableCachedItem = CType(ce, UpdatableCachedItem)
 
         If ce_.Expires Then
             ce_.Expire()
@@ -1420,7 +1422,7 @@ l1:
             If ce_.SortEquals(psort) OrElse psort Is Nothing Then
                 If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce_.SortExpires Then
                     Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
-                    Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
+                    Dim ce2 As UpdatableCachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
                     If ce_.CanRenewAfterSort Then
                         dic(id) = ce2
                     End If
@@ -1431,7 +1433,7 @@ l1:
                 If objs IsNot Nothing AndAlso objs.Count > 0 Then
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
-                        Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
+                        Dim ce2 As UpdatableCachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
                         If ce_.CanRenewAfterSort Then
                             dic(id) = ce2
                         End If
@@ -1447,7 +1449,7 @@ l1:
                             If sc IsNot Nothing Then
                                 Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
-                                Dim ce2 As CachedItem = del.GetCacheItem(os)
+                                Dim ce2 As UpdatableCachedItem = del.GetCacheItem(os)
                                 If ce_.CanRenewAfterSort Then
                                     dic(id) = ce2
                                 End If
@@ -1859,7 +1861,7 @@ l1:
         Return MakeJoin(_schema, type2join, selectType, field, oper, joinType, switchTable)
     End Function
 
-    Protected Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As QueryJoin()
+    Protected Function MakeM2MJoin(ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As QueryJoin()
         Return MakeM2MJoin(_schema, m2m, type2join)
     End Function
 
@@ -1868,31 +1870,31 @@ l1:
     End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
-        Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
+        Return _cache.GetOrmDictionary(GetContextFilter, t, _schema)
     End Function
 
     Public Function GetDictionary(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema, schema)
+        Return _cache.GetOrmDictionary(GetContextFilter, t, _schema, schema)
     End Function
 
     Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
-        Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
+        Return _cache.GetOrmDictionary(Of T)(GetContextFilter, _schema)
     End Function
 
     Public Function GetDictionary(Of T)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else
-            Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema, oschema)
+            Return _cache.GetOrmDictionary(Of T)(GetContextFilter, _schema, oschema)
         End If
     End Function
 
     Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
-        Return _cache.IsInCachePrecise(obj, GetFilterInfo, _schema)
+        Return _cache.IsInCachePrecise(obj, GetContextFilter, _schema)
     End Function
 
     Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
-        Return _cache.IsInCache(id, t, GetFilterInfo, _schema)
+        Return _cache.IsInCache(id, t, GetContextFilter, _schema)
     End Function
 
     <Conditional("DEBUG")> _
@@ -2034,19 +2036,19 @@ l1:
 #End Region
 
 #Region " Many2Many "
-    Public Function GetM2MList(Of T As {IKeyEntity, New})(ByVal obj As _IKeyEntity, ByVal direct As String) As EditableList
+    Public Function GetM2MList(Of T As {IKeyEntity, New})(ByVal obj As _IKeyEntity, ByVal direct As String) As CachedM2MRelation
         Return FindM2MReturnKeys(Of T)(obj, direct).First.Entry
     End Function
 
-    Public Function FindDistinct(Of T As {IKeyEntity, New})(ByVal relation As M2MRelation, _
+    Public Function FindDistinct(Of T As {IKeyEntity, New})(ByVal relation As M2MRelationDesc, _
         ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
-        Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
+        Dim key As String = "distinct" & _schema.GetEntityKey(GetContextFilter, GetType(T))
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
         End If
 
         If relation IsNot Nothing Then
@@ -2091,7 +2093,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
-        Return _schema.GetEntityKey(GetFilterInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetFilterInfo, tt2) & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(GetContextFilter, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextFilter, tt2) & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {IKeyEntity, New})(ByVal obj As _IKeyEntity, ByVal criteria As IGetFilter, _
@@ -2105,7 +2107,7 @@ l1:
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(tt2).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -2147,7 +2149,7 @@ l1:
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(tt2).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -2222,7 +2224,7 @@ l1:
         M2MDeleteInternal(mainobj, subobj, direct)
 
         If mainobj.GetType Is subobj.GetType Then
-            M2MDeleteInternal(subobj, mainobj, M2MRelation.GetRevKey(direct))
+            M2MDeleteInternal(subobj, mainobj, M2MRelationDesc.GetRevKey(direct))
         Else
             M2MDeleteInternal(subobj, mainobj, direct)
         End If
@@ -2257,7 +2259,7 @@ l1:
             End If
             If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Key = direct Then
                 Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
-                    Dim sv As EditableListBase = m2me.Entry.PrepareSave(Me)
+                    Dim sv As M2MRelation = m2me.Entry.PrepareSave(Me)
                     If sv IsNot Nothing Then
                         M2MSave(mainobj, t, direct, sv)
                         m2me.Entry.Saved = True
@@ -2296,9 +2298,9 @@ l1:
             Cache.UpdateM2MEntries(obj, oldId, obj.GetOldName(oldId))
             Dim tt1 As Type = obj.GetType
 
-            For Each r As M2MRelation In _schema.GetM2MRelations(obj.GetType)
+            For Each r As M2MRelationDesc In _schema.GetM2MRelations(obj.GetType)
 
-                Dim key As String = GetM2MKey(tt1, r.Type, r.Key)
+                Dim key As String = GetM2MKey(tt1, r.Rel.GetRealType(MappingEngine), r.Key)
                 Dim dic As IDictionary = GetDic(_cache, key)
                 Dim id As String = obj.Identifier.ToString
                 'Dim sync As String = GetSync(key, id)
@@ -2307,14 +2309,14 @@ l1:
                     Dim m As M2MCache = CType(dic(id), M2MCache)
 
                     For Each oid As Integer In m.Entry.Current
-                        Dim o As _IKeyEntity = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type, False), _IKeyEntity)
+                        Dim o As _IKeyEntity = CType(GetOrmBaseFromCacheOrCreate(oid, r.Rel.GetRealType(MappingEngine), False), _IKeyEntity)
                         M2MSubUpdate(o, obj, oldId, obj.GetType)
                     Next
                 End If
             Next
 
             Dim c As OrmCache = TryCast(_cache, OrmCache)
-            For Each el As EditableListBase In obj.GetAllRelation
+            For Each el As M2MRelation In obj.GetAllRelation
                 'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
                 If c IsNot Nothing Then c.RemoveM2MQueries(el)
 
@@ -2363,7 +2365,7 @@ l1:
         M2MAddInternal(mainobj, subobj, direct)
 
         If mainobj.GetType Is subobj.GetType Then
-            M2MAddInternal(subobj, mainobj, M2MRelation.GetRevKey(direct))
+            M2MAddInternal(subobj, mainobj, M2MRelationDesc.GetRevKey(direct))
         Else
             M2MAddInternal(subobj, mainobj, direct)
         End If
@@ -2499,7 +2501,7 @@ l1:
             Dim i As Integer = 0
             For Each o As T In col
                 If oschema Is Nothing Then
-                    oschema = _schema.GetObjectSchema(o.GetType)
+                    oschema = _schema.GetEntitySchema(o.GetType)
                 End If
                 Dim er As IEvaluableValue.EvalResult = f.Eval(_schema, o, oschema)
                 Select Case er
@@ -2674,7 +2676,7 @@ l1:
             End Sub
 
             Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
-                ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
+                ByVal f As IFullTextSupport, ByVal contextkey As Object) As String
                 Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
             End Function
         End Class
@@ -2694,7 +2696,7 @@ l1:
         End Sub
 
         Public Function GetFtsString(ByVal section As String, ByVal contextKey As Object, _
-            ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormater.GetFtsString
+            ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormater.GetFtsString
             If _del Is Nothing Then
                 If ftsString = "freetexttable" Then
                     Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
@@ -2920,7 +2922,7 @@ l1:
         Dim prop_objs(fields.Length - 1) As IListEdit
 
         'Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
-        Dim oschema As IEntitySchema = _schema.GetObjectSchema(GetType(T))
+        Dim oschema As IEntitySchema = _schema.GetEntitySchema(GetType(T))
 
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
@@ -3153,7 +3155,7 @@ l1:
         Return Nothing
     End Function
 
-    Protected Friend Overridable Function GetFilterInfo() As Object
+    Protected Friend Overridable Function GetContextFilter() As Object
         Return Nothing
     End Function
 
@@ -3200,19 +3202,19 @@ l1:
 
                     If sa = SaveAction.Delete Then
                         If orm IsNot Nothing Then
-                            For Each r As M2MRelation In MappingEngine.GetM2MRelations(t)
+                            For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
                                 Dim acs As AcceptState2 = Nothing
                                 If r.ConnectedType Is Nothing Then
                                     If r.DeleteCascade Then
-                                        M2MDelete(orm, r.Type, r.Key)
+                                        M2MDelete(orm, r.Rel.GetRealType(MappingEngine), r.Key)
                                     End If
-                                    acs = M2MSave(orm, r.Type, r.Key)
-                                    processedType.Add(r.Type)
+                                    acs = M2MSave(orm, r.Rel.GetRealType(MappingEngine), r.Key)
+                                    processedType.Add(r.Rel.GetRealType(MappingEngine))
                                 End If
                                 If acs IsNot Nothing Then CType(orm, _IKeyEntity).AddAccept(acs)
                             Next
 
-                            Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
+                            Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
                                 CType(_cache, OrmCache).ConnectedEntityEnum(Me, t, AddressOf o.Remove)
@@ -3230,7 +3232,7 @@ l1:
 
                     If sa = SaveAction.Insert Then
                         If orm IsNot Nothing Then
-                            Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
+                            Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
                                 CType(_cache, OrmCache).ConnectedEntityEnum(Me, t, AddressOf o.Add)
@@ -3238,8 +3240,8 @@ l1:
 
                             M2MUpdate(orm, old_id)
 
-                            For Each r As M2MRelation In MappingEngine.GetM2MRelations(t)
-                                Dim tt As Type = r.Type
+                            For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
+                                Dim tt As Type = r.Rel.GetRealType(MappingEngine)
                                 If Not MappingEngine.IsMany2ManyReadonly(t, tt) Then
                                     Dim acs As AcceptState2 = M2MSave(orm, tt, r.Key)
                                     If acs IsNot Nothing Then
@@ -3249,9 +3251,9 @@ l1:
                                 End If
                             Next
 
-                            If orm._m2m.Count > 0 Then
-                                For Each elb As EditableListBase In orm._m2m
-                                    Dim el As EditableListBase = elb.PrepareSave(Me)
+                            If orm._relations.Count > 0 Then
+                                For Each elb As M2MRelation In orm._relations
+                                    Dim el As M2MRelation = elb.PrepareSave(Me)
                                     If el IsNot Nothing Then
                                         M2MSave(orm, el)
                                         'elb.Saved = True
@@ -3266,7 +3268,7 @@ l1:
                             If orm._needAccept IsNot Nothing Then
                                 For Each acp As AcceptState2 In orm._needAccept
                                     'Dim el As EditableList = acp.el.PrepareNewSave(Me)
-                                    Dim el As EditableListBase = acp.el.PrepareSave(Me)
+                                    Dim el As M2MRelation = acp.el.PrepareSave(Me)
                                     If el IsNot Nothing Then
                                         M2MSave(orm, acp.el.SubType, acp.el.Key, el)
                                         acp.CacheItem.Entry.Saved = True
@@ -3288,9 +3290,9 @@ l1:
                                 End If
                             Next
 
-                            If orm._m2m.Count > 0 Then
-                                For Each elb As EditableListBase In orm._m2m
-                                    Dim el As EditableListBase = elb.PrepareSave(Me)
+                            If orm._relations.Count > 0 Then
+                                For Each elb As M2MRelation In orm._relations
+                                    Dim el As M2MRelation = elb.PrepareSave(Me)
                                     If el IsNot Nothing Then
                                         M2MSave(orm, el)
                                         'elb.Saved = True
@@ -3351,8 +3353,8 @@ l1:
         Return obj
     End Function
 
-    Protected Friend Sub M2MSave(ByVal obj As IKeyEntity, ByVal el As EditableListBase)
-        M2MSave(obj, el.SubType, el.Key, el)
+    Protected Friend Sub M2MSave(ByVal obj As IKeyEntity, ByVal el As M2MRelation)
+        M2MSave(obj, el.Relation.Rel.GetRealType(MappingEngine), el.Key, el)
     End Sub
 
 #Region " Abstract members "
@@ -3382,7 +3384,7 @@ l1:
     Protected MustOverride Function GetCustDelegate(Of T As {IKeyEntity, New})(ByVal aspect As QueryAspect, ByVal join() As QueryJoin, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As ICacheItemProvoder(Of T)
 
-    Protected MustOverride Function GetCustDelegate(Of T As {IKeyEntity, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
+    Protected MustOverride Function GetCustDelegate(Of T As {IKeyEntity, New})(ByVal relation As M2MRelationDesc, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICacheItemProvoder(Of T)
 
     'Protected MustOverride Function GetCustDelegate4Top(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
@@ -3405,7 +3407,7 @@ l1:
        ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
 
     Protected MustOverride Function GetObjects(Of T As {IKeyEntity, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
-       ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, EditableList)
+       ByVal relation As M2MRelationDesc, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, CachedM2MRelation)
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
     Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
@@ -3420,7 +3422,7 @@ l1:
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As ICachedEntity)
 
-    Protected MustOverride Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As Type, ByVal key As String, ByVal el As EditableListBase)
+    Protected MustOverride Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As Type, ByVal key As String, ByVal el As M2MRelation)
 
     'Protected MustOverride Function FindObmsByOwnerInternal(ByVal id As Integer, ByVal original_type As Type, ByVal type As Type, ByVal sort As String, ByVal sort_type As SortType) As OrmBase()
 
@@ -3527,9 +3529,9 @@ l1:
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key = criteria.Filter(tt).GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
-            key = criteria.Filter().GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
+            key = criteria.Filter().GetStaticString(_schema, GetContextFilter) & _schema.GetEntityKey(GetContextFilter, tt) & GetStaticKey() & "Dics"
         Else
-            key = _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
+            key = _schema.GetEntityKey(GetContextFilter, tt) & GetStaticKey() & "Dics"
         End If
 
         If joins IsNot Nothing Then
@@ -3668,7 +3670,7 @@ l1:
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As QueryJoin, _
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of QueryJoin)
-        Dim oschema As IEntitySchema = schema.GetObjectSchema(selectType)
+        Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters
@@ -3685,10 +3687,17 @@ l1:
                         Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                     End If
 
-                    If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
-                        AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join)
-                    ElseIf type2join Is selectType Then
+                    If selectType Is type2join Then
                         appendMain = True
+                    Else
+                        Dim s2 As IEntitySchema = schema.GetEntitySchema(type2join)
+                        If oschema.Equals(s2) OrElse oschema.GetType.FullName = s2.GetType.FullName Then
+                            appendMain = True
+                        Else
+                            If Not types.Contains(type2join) Then
+                                AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join)
+                            End If
+                        End If
                     End If
                 End If
             Next
@@ -3710,7 +3719,7 @@ l1:
                         'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
                         'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
                         If String.IsNullOrEmpty(field) Then
-                            Dim m2m As M2MRelation = schema.GetM2MRelation(sortType, selectType, True)
+                            Dim m2m As M2MRelationDesc = schema.GetM2MRelation(sortType, selectType, True)
                             If m2m IsNot Nothing Then
                                 l.AddRange(MakeM2MJoin(schema, m2m, sortType))
                             Else
@@ -3737,10 +3746,10 @@ l1:
 
         If String.IsNullOrEmpty(field) Then
 
-            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetObjectSchema(type2join))
+            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetEntitySchema(type2join))
 
             If String.IsNullOrEmpty(field) Then
-                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
+                Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)
                 If m2m IsNot Nothing Then
                     l.AddRange(MakeM2MJoin(schema, m2m, type2join))
                 Else
@@ -3757,7 +3766,7 @@ l1:
             types.Add(type2join)
         End If
 
-        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
+        Dim sh As IEntitySchema = schema.GetEntitySchema(type2join)
         Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
         If ts IsNot Nothing Then
             Dim pk_table As SourceFragment = sh.Table
@@ -3788,10 +3797,10 @@ l1:
         End If
     End Sub
 
-    Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
-        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Type, schema.GetPrimaryKeys(m2m.Type)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+    Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
+        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Rel.GetRealType(schema), schema.GetPrimaryKeys(m2m.Rel.GetRealType(schema))(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
         Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
-        m2m = schema.GetM2MRelation(m2m.Type, type2join, True)
+        m2m = schema.GetM2MRelation(m2m.Rel.GetRealType(schema), type2join, True)
         Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
         Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
         Return New QueryJoin() {mj, tj}

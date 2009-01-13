@@ -8,6 +8,7 @@ Imports Worm.Query
 
 Namespace Misc
 
+    <Serializable()> _
     Class myCultureComparer
         Implements IEqualityComparer
 
@@ -34,6 +35,7 @@ Namespace Misc
         End Function
     End Class
 
+    <Serializable()> _
     Public Class DicIndexBase
 
         Private _max As Integer = 1
@@ -209,6 +211,7 @@ Namespace Misc
         End Sub
     End Class
 
+    <Serializable()> _
     Public Class DicIndexT(Of T As {New, IEntity})
         Inherits DicIndexBase
 
@@ -270,6 +273,7 @@ Namespace Misc
         End Function
     End Class
 
+    <Serializable()> _
     Public Class DicIndex(Of T As {New, IKeyEntity})
         Inherits DicIndexT(Of T)
 
@@ -381,8 +385,8 @@ Namespace Misc
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
             Dim tt As Type = GetType(T)
-            Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(tt)
-            Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
+            Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
+            Dim odic As ISupportAlphabet = TryCast(oschema, ISupportAlphabet)
             Dim firstField As String = Me.FirstField
             Dim secField As String = SecondField
             If odic IsNot Nothing Then

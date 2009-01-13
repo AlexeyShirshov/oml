@@ -261,7 +261,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
 
-            Dim q As QueryCmd = t1.M2MNew.Find(GetType(Table33))
+            Dim q As QueryCmd = t1.M2MNew.GetCmd(GetType(Table33))
 
             Assert.AreEqual(3, q.ToList(Of Table3)(mgr).Count)
 
@@ -270,7 +270,19 @@ Imports System.Runtime.Serialization.Formatters.Binary
     End Sub
 
     <TestMethod()> Public Sub TestHaving()
-        Assert.Inconclusive()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Type = GetType(Table1)
+
+        q.Select(FCtor.prop(t, "EnumStr")).GroupBy(FCtor.prop(t, "EnumStr")) _
+            .Having(Ctor.count().eq(2))
+
+        Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList
+
+        Assert.AreEqual(1, l.Count)
+
+        Assert.AreEqual(Enum1.sec.ToString, l(0)("EnumStr"))
     End Sub
 
     <TestMethod()> Public Sub TestTop()
@@ -451,6 +463,20 @@ Imports System.Runtime.Serialization.Formatters.Binary
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestRowNumber2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
+            Dim q As New QueryCmd()
+            q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
+            q.Select(GetType(Entity4), True)
+            Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
+            Assert.AreEqual(2, l.Count)
+
+            For Each e As Entity4 In l
+                Assert.IsTrue(e.InternalProperties.IsLoaded)
+            Next
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestInterface()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd()
@@ -617,6 +643,11 @@ Imports System.Runtime.Serialization.Formatters.Binary
                 For Each s As String In mgr.Cache.GetAllKeys
                     bf.Serialize(ms, mgr.Cache.GetQueryDictionary(s))
                 Next
+                Diagnostics.Debug.WriteLine(ms.ToArray.Length)
+            End Using
+
+            Using ms As New IO.MemoryStream
+                bf.Serialize(ms, q)
                 Diagnostics.Debug.WriteLine(ms.ToArray.Length)
             End Using
 
@@ -1103,5 +1134,93 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim r As ReadonlyMatrix = q.ToMatrix
 
         Assert.AreEqual(3, r.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestUnion()
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        q1.Select(FCtor.prop(GetType(Table1), "ID")).UnionAll( _
+            New QueryCmd().Select(FCtor.prop(GetType(Table2), "ID")))
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q1.ToList(Of Table1)()
+
+        Assert.AreEqual(5, l.Count)
+
+        For Each t As Table1 In l
+            t.EnsureLoaded()
+            If t.ID = 4 Then
+                Assert.IsFalse(t.InternalProperties.IsLoaded)
+            Else
+                Assert.IsTrue(t.InternalProperties.IsLoaded)
+            End If
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestHasJoins()
+        Dim q As New QueryCmd(Function() TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        Dim e As Entity = q.Where(Ctor.prop(GetType(Entity2), "ID").eq(2)).Single(Of Entity)()
+
+        Assert.IsNotNull(e)
+
+        Assert.IsInstanceOfType(e, GetType(Entity))
+
+        Assert.AreEqual(2, e.ID)
+    End Sub
+
+    Class myom
+        Inherits SQLGenerator
+
+        Public Overrides ReadOnly Property IncludeCallStack() As Boolean
+            Get
+                Return True
+            End Get
+        End Property
+    End Class
+
+    <TestMethod()> _
+    Public Sub TestStack()
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), New ReadonlyCache, New myom))
+
+        Dim t As Table10 = q.Where(Ctor.prop(GetType(Table10), "ID").eq(3)).Single(Of Table10)()
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGetById()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1)
+
+        Assert.IsNotNull(t)
+        Assert.AreEqual(1, q.ExecCount)
+        Assert.IsFalse(t.InternalProperties.IsLoaded)
+
+        t.Load()
+
+        Assert.IsTrue(t.InternalProperties.IsLoaded)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGetById2()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1, True)
+
+        Assert.IsNotNull(t)
+        Assert.AreEqual(1, q.ExecCount)
+        Assert.IsTrue(t.InternalProperties.IsLoaded)
+
+        t = q.GetByID(Of Table1)(1)
+        Assert.AreEqual(1, q.ExecCount)
     End Sub
 End Class

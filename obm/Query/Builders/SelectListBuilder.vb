@@ -1,6 +1,8 @@
 ﻿Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports Worm.Expressions
+Imports Worm.Criteria.Values
 
 Namespace Query
     Public Class FCtor
@@ -246,6 +248,16 @@ Namespace Query
 
             Public Function count(ByVal [alias] As String) As Int
                 GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Count, [alias])))
+                Return Me
+            End Function
+
+            Public Function sum(ByVal column As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New LiteralValue(column)))))
+                Return Me
+            End Function
+
+            Public Function sum(ByVal column As String, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New LiteralValue(column)))))
                 Return Me
             End Function
 

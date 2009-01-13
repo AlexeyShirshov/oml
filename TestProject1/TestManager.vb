@@ -1135,7 +1135,7 @@ Imports Worm.Query
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Object() {1, 2}, False)
 
-            Dim rel As Meta.M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
+            Dim rel As Meta.M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
             mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
             mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)

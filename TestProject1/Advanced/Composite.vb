@@ -123,7 +123,7 @@ Public Class CompositeEditableSchema
     '    Return _tables
     'End Function
 
-    'Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelation() Implements Worm.Entities.Meta.ISchemaWithM2M.GetM2MRelations
+    'Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelationDesc() Implements Worm.Entities.Meta.ISchemaWithM2M.GetM2MRelations
     '    Return Nothing
     'End Function
 

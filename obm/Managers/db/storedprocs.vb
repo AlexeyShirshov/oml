@@ -1014,7 +1014,7 @@ Namespace Database.Storedprocs
                 Dim original_type As Type = GetType(T)
                 If _l Is Nothing Then
                     _l = New List(Of T)
-                    _oschema = mgr.MappingEngine.GetObjectSchema(original_type)
+                    _oschema = mgr.MappingEngine.GetEntitySchema(original_type)
                     '_props = mgr.MappingEngine.GetProperties(original_type, _oschema)
                     _cm = _oschema.GetFieldColumnMap
                 End If

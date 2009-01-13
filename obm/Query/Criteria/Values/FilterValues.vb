@@ -6,30 +6,30 @@ Imports Worm.Query
 
 Namespace Criteria.Values
 
-    <Serializable()> _
-    Public Class RefValue
-        Implements IFilterValue
+    '<Serializable()> _
+    'Public Class RefValue
+    '    Implements IFilterValue
 
-        Private _num As Integer
+    '    Private _num As Integer
 
-        Public Sub New(ByVal num As Integer)
-            _num = num
-        End Sub
+    '    Public Sub New(ByVal num As Integer)
+    '        _num = num
+    '    End Sub
 
-        Public Function _ToString() As String Implements IFilterValue._ToString
-            Return _num.ToString
-        End Function
+    '    Public Function _ToString() As String Implements IFilterValue._ToString
+    '        Return _num.ToString
+    '    End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
-                          ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
-            Return aliases(_num)
-        End Function
+    '    Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+    '                      ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
+    '                      ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+    '        Return aliases(_num)
+    '    End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
-            Return "refval"
-        End Function
-    End Class
+    '    Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+    '        Return "refval"
+    '    End Function
+    'End Class
 
     <Serializable()> _
     Public Class CustomValue
@@ -70,15 +70,19 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
             Return String.Format(_f, values.ToArray)
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             Return "custval"
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 
     <Serializable()> _
@@ -101,13 +105,17 @@ Namespace Criteria.Values
             Return _alias
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal aliases As System.Collections.Generic.IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             Return [Alias]
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             Return "compval"
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 
     <Serializable()> _
@@ -120,8 +128,16 @@ Namespace Criteria.Values
             _p = p
         End Sub
 
+        Public Sub New(ByVal op As ObjectProperty)
+            _p = New SelectExpression(op)
+        End Sub
+
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             _p = New SelectExpression(t, propertyAlias)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+            _p = New SelectExpression(entityName, propertyAlias)
         End Sub
 
         Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
@@ -144,7 +160,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
             'If almgr IsNot Nothing Then
@@ -162,13 +178,13 @@ Namespace Criteria.Values
 
             If _p.Table Is Nothing Then
 
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(_p.ObjectSource.GetRealType(schema))
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
 
                 Dim map As MapField2Column = Nothing
                 Try
                     map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString & schema.Delimiter & _p.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString(schema, filterInfo) & schema.Delimiter & _p.PropertyAlias, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
@@ -204,9 +220,13 @@ Namespace Criteria.Values
             End If
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
-            Return _p.GetStaticString(mpe)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            Return _p.GetStaticString(mpe, contextFilter)
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            _p.Prepare(executor, schema, filterInfo, stmt)
+        End Sub
     End Class
 
     <Serializable()> _
@@ -236,7 +256,7 @@ Namespace Criteria.Values
 
         Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IEvaluableValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IEvaluableValue.GetParam
 
             Dim v As Object = _v
             If prepare IsNot Nothing Then
@@ -437,9 +457,13 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             Return "scalarval"
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 
     <Serializable()> _
@@ -454,7 +478,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IParamFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IParamFilterValue.GetParam
             Return _pname
         End Function
 
@@ -468,9 +492,13 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             Return "litval"
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 
     <Serializable()> _
@@ -638,7 +666,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
 
             Dim sb As New StringBuilder
             Dim idx As Integer
@@ -727,7 +755,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
 
             If paramMgr Is Nothing Then
                 Throw New ArgumentNullException("paramMgr")
@@ -841,7 +869,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                       ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                      ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+                      ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -857,7 +885,7 @@ Namespace Criteria.Values
             Return sb.ToString
         End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
             Dim r As String = Nothing
             If _t IsNot Nothing Then
                 r = _t.ToString()
@@ -868,12 +896,12 @@ Namespace Criteria.Values
                 r &= "$"
                 For Each join As Worm.Criteria.Joins.QueryJoin In _joins
                     If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
-                        r &= join.GetStaticString(mpe)
+                        r &= join.GetStaticString(mpe, contextFilter)
                     End If
                 Next
             End If
             If _f IsNot Nothing Then
-                r &= "$" & _f.GetStaticString(mpe)
+                r &= "$" & _f.GetStaticString(mpe, contextFilter)
             End If
             If Not String.IsNullOrEmpty(_field) Then
                 r &= "$" & _field
@@ -913,6 +941,10 @@ Namespace Criteria.Values
 
             Return dp.Get
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 
     <Serializable()> _
@@ -936,7 +968,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                          ByVal aliases As IList(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -959,12 +991,9 @@ Namespace Criteria.Values
                 '    _q.Into(_q.SelectedType)
                 'End If
 
-                Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
-                Dim sl As List(Of Entities.SelectExpression) = Nothing
-                Dim f As IFilter = _q.Prepare(Nothing, j, schema, filterInfo, sl, stmt)
+                QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
 
-                sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, _
-                     j, f, almgr, sl))
+                sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, almgr))
             End Using
 
             sb.Append(")")
@@ -972,8 +1001,8 @@ Namespace Criteria.Values
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-            Return _q.ToStaticString(mpe)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString(mpe, contextFilter)
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
@@ -988,6 +1017,10 @@ Namespace Criteria.Values
             End If
             Return qp
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            _q.Prepare(executor, schema, filterInfo, stmt)
+        End Sub
     End Class
 End Namespace
 

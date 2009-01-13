@@ -186,7 +186,7 @@ Public Class Table3Implementation
 
     Private _idx As OrmObjectIndex
     Private _tables() As SourceFragment = {New SourceFragment("dbo.Table3")}
-    Private _rels() As M2MRelation
+    Private _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
@@ -209,10 +209,10 @@ Public Class Table3Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New M2MRelation() { _
-                New M2MRelation(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
             }
         End If
         Return _rels

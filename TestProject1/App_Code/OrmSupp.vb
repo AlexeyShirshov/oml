@@ -1,7 +1,7 @@
 Imports Worm.Entities.Meta
 
 Public MustInherit Class ObjectSchemaBaseImplementationWeb
-    Implements IOrmObjectSchema, IOrmSchemaInit
+    Implements IOrmObjectSchema, ISchemaInit
 
     Protected _schema As Worm.ObjectMappingEngine
 
@@ -40,11 +40,11 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     '    End Get
     'End Property
 
-    Public Overridable Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
-        Return New M2MRelation() {}
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements IOrmObjectSchema.GetM2MRelations
+        Return New M2MRelationDesc() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.GetSchema
         _schema = schema
     End Sub
 

@@ -2,69 +2,79 @@ Imports System.Collections.Generic
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports Worm.Query
 
 Namespace Cache
-    Public Class EditableListBase
-        Private _main As IKeyEntity
-        Protected _addedList As New List(Of IKeyEntity)
-        Protected _deletedList As New List(Of IKeyEntity)
-        Protected _subType As Type
-        Private _new As List(Of IKeyEntity)
-        Private _key As String
-        Protected _cantgetCurrent As Boolean
-        Protected Friend _savedIds As New List(Of IKeyEntity)
+
+    <Serializable()> _
+    Public Class Relation
+        Private _host As IKeyEntity
+        Private _addedList As New List(Of IKeyEntity)
+        Private _deletedList As New List(Of IKeyEntity)
+        'Private _subType As Type
+        'Private _key As String
+        Private _desc As RelationDesc
         Private _syncRoot As New Object
 
         Sub New(ByVal main As IKeyEntity, ByVal subType As Type)
-            '_mainId = mainId
-            '_mainType = mainType
-            _subType = subType
-            _main = main
-        End Sub
-
-        Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal direct As Boolean)
-            MyClass.New(main, subType, M2MRelation.GetKey(direct))
+            MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, Nothing))
         End Sub
 
         Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal key As String)
-            MyClass.New(main, subType)
-            _key = key
+            MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, key))
+        End Sub
+
+        Sub New(ByVal main As IKeyEntity, ByVal desc As RelationDesc)
+            _host = main
+            _desc = desc
         End Sub
 
         Protected Overridable ReadOnly Property _mainId() As Object
             Get
-                Return _main.Identifier
+                Return _host.Identifier
             End Get
         End Property
 
         Protected Overridable ReadOnly Property _mainType() As Type
             Get
-                Return _main.GetType
+                Return _host.GetType
             End Get
         End Property
 
-        Public ReadOnly Property SavedObjsCount() As Integer
+        Protected Overridable ReadOnly Property _main() As IKeyEntity
             Get
-                Return _savedIds.Count
+                Return _host
+            End Get
+        End Property
+
+        Public ReadOnly Property Relation() As RelationDesc
+            Get
+                Return _desc
             End Get
         End Property
 
         Public ReadOnly Property Key() As String
             Get
-                Return _key
+                Return _desc.Key
             End Get
         End Property
 
-        Public ReadOnly Property Deleted() As IList(Of IKeyEntity)
+        Public Property Deleted() As IList(Of IKeyEntity)
             Get
                 Return _deletedList
             End Get
+            Protected Set(ByVal value As IList(Of IKeyEntity))
+                _deletedList = CType(value, List(Of IKeyEntity))
+            End Set
         End Property
 
-        Public ReadOnly Property Added() As IList(Of IKeyEntity)
+        Public Property Added() As IList(Of IKeyEntity)
             Get
                 Return _addedList
             End Get
+            Protected Set(ByVal value As IList(Of IKeyEntity))
+                _addedList = CType(value, List(Of IKeyEntity))
+            End Set
         End Property
 
         Public ReadOnly Property HasDeleted() As Boolean
@@ -88,27 +98,9 @@ Namespace Cache
             End Set
         End Property
 
-        'Public ReadOnly Property Main() As IOrmBase
-        '    Get
-        '        Return OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_mainId, _mainType, False)
-        '    End Get
-        'End Property
-
         Public ReadOnly Property MainType() As Type
             Get
                 Return _mainType
-            End Get
-        End Property
-
-        Public ReadOnly Property SubType() As Type
-            Get
-                Return _subType
-            End Get
-        End Property
-
-        Public ReadOnly Property HasNew() As Boolean
-            Get
-                Return _new IsNot Nothing AndAlso _new.Count > 0
             End Get
         End Property
 
@@ -118,46 +110,15 @@ Namespace Cache
             End Get
         End Property
 
-        Public ReadOnly Property Direct() As Boolean
-            Get
-                Return _key <> M2MRelation.RevKey
-            End Get
-        End Property
-
-        Protected Friend Sub Reject2()
-            Using SyncRoot
-                _savedIds.Clear()
-            End Using
-        End Sub
-
-        Public Sub Reject(ByVal rejectDual As Boolean)
-            Reject(Nothing, rejectDual)
-        End Sub
-
-        Public Sub Reject(ByVal mgr As OrmManager, ByVal rejectDual As Boolean)
-            Using SyncRoot
-                If rejectDual Then
-                    For Each obj As _IKeyEntity In _addedList
-                        RejectRelated(mgr, obj, True)
-                    Next
-                End If
-                _addedList.Clear()
-                If rejectDual Then
-                    For Each obj As _IKeyEntity In _deletedList
-                        RejectRelated(mgr, obj, False)
-                    Next
-                End If
-                _deletedList.Clear()
-                RemoveNew()
-                Reject2()
-            End Using
-        End Sub
-
         Public Sub AddRange(ByVal ids As IEnumerable(Of IKeyEntity))
             For Each obj As IKeyEntity In ids
                 Add(obj)
             Next
         End Sub
+
+        Protected Overridable Function PreAdd(ByVal obj As IKeyEntity) As Boolean
+            Return False
+        End Function
 
         Public Sub Add(ByVal obj As IKeyEntity)
             Using SyncRoot
@@ -191,13 +152,122 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Function GetRealDirect() As String
-            If SubType Is MainType Then
-                Return M2MRelation.GetRevKey(_key)
-            Else
-                Return _key
-            End If
+        Public ReadOnly Property SyncRoot() As IDisposable
+            Get
+#If DebugLocks Then
+                Return New CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
+#Else
+                Return New CSScopeMgr(_syncRoot)
+#End If
+            End Get
+        End Property
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, M2MRelation))
         End Function
+
+        Public Overloads Function Equals(ByVal obj As M2MRelation) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _mainType Is obj._mainType AndAlso _mainId.Equals(obj._mainId) AndAlso _desc.Equals(obj._desc)
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _mainType.GetHashCode Xor _mainId.GetHashCode Xor _desc.GetHashCode
+        End Function
+
+        Protected Overridable Function IsMainObjectNew(ByVal mgr As OrmManager) As Boolean
+            Return _host.ObjectState = ObjectState.Created
+        End Function
+
+        Protected Overridable Function GetCopy() As Relation
+            Return New Relation(_host, _desc)
+        End Function
+    End Class
+
+    <Serializable()> _
+    Public Class M2MRelation
+        Inherits Relation
+        'Private _main As IKeyEntity
+        'Protected _addedList As New List(Of IKeyEntity)
+        'Protected _deletedList As New List(Of IKeyEntity)
+        'Protected _subType As Type
+        Private _new As List(Of IKeyEntity)
+        'Private _key As String
+        Protected Friend _savedIds As New List(Of IKeyEntity)
+        'Private _syncRoot As New Object
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type)
+            MyClass.New(main, New M2MRelationDesc(subType))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal direct As Boolean)
+            'MyClass.New(main, subType, Meta.M2MRelationDesc.GetKey(direct))
+            MyClass.New(main, New M2MRelationDesc(subType, Meta.M2MRelationDesc.GetKey(direct)))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal key As String)
+            'MyBase.New(main, subType, key)
+            MyClass.New(main, New M2MRelationDesc(subType, key))
+        End Sub
+
+        Sub New(ByVal main As IKeyEntity, ByVal desc As M2MRelationDesc)
+            MyBase.New(main, desc)
+        End Sub
+
+        Public ReadOnly Property HasNew() As Boolean
+            Get
+                Return _new IsNot Nothing AndAlso _new.Count > 0
+            End Get
+        End Property
+
+        Public ReadOnly Property SavedObjsCount() As Integer
+            Get
+                Return _savedIds.Count
+            End Get
+        End Property
+
+        Public Shadows ReadOnly Property Relation() As M2MRelationDesc
+            Get
+                Return CType(MyBase.Relation, M2MRelationDesc)
+            End Get
+        End Property
+
+        Public ReadOnly Property Direct() As Boolean
+            Get
+                Return Key <> M2MRelationDesc.RevKey
+            End Get
+        End Property
+
+        Protected Friend Sub Reject2()
+            Using SyncRoot
+                _savedIds.Clear()
+            End Using
+        End Sub
+
+        Public Sub Reject(ByVal rejectDual As Boolean)
+            Reject(Nothing, rejectDual)
+        End Sub
+
+        Public Sub Reject(ByVal mgr As OrmManager, ByVal rejectDual As Boolean)
+            Using SyncRoot
+                If rejectDual Then
+                    For Each obj As _IKeyEntity In Added
+                        RejectRelated(mgr, obj, True)
+                    Next
+                End If
+                Added.Clear()
+                If rejectDual Then
+                    For Each obj As _IKeyEntity In Deleted
+                        RejectRelated(mgr, obj, False)
+                    Next
+                End If
+                Deleted.Clear()
+                RemoveNew()
+                Reject2()
+            End Using
+        End Sub
 
         'Private ReadOnly Property _non_direct() As Boolean
         '    Get
@@ -207,7 +277,7 @@ Namespace Cache
 
         Protected Sub RejectRelated(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity, ByVal add As Boolean)
             'Dim m As M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
-            Dim el As EditableListBase = GetRevert(mgr, obj)
+            Dim el As M2MRelation = GetRevert(mgr, obj)
 
             Dim l As IList(Of IKeyEntity) = el.Added
             If Not add Then
@@ -232,11 +302,11 @@ Namespace Cache
             Return -1
         End Function
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As EditableListBase
-            Return obj.GetRelation(_mainType, _key)
+        Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As M2MRelation
+            Return CType(obj.GetRelation(Relation), M2MRelation)
         End Function
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of EditableListBase)
+        Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of Relation)
             Return _main.GetAllRelation
         End Function
 
@@ -253,7 +323,7 @@ Namespace Cache
         'End Function
 
         Protected Overridable Sub AcceptDual(ByVal mgr As OrmManager)
-            For Each el As EditableListBase In GetRevert(mgr)
+            For Each el As M2MRelation In GetRevert(mgr)
                 If el.Added.Contains(_main) OrElse el.Deleted.Contains(_main) Then
                     el.Accept(mgr, _main)
                 End If
@@ -284,44 +354,15 @@ Namespace Cache
             End If
         End Sub
 
-        Protected Overridable Function PreAdd(ByVal obj As IKeyEntity) As Boolean
-            Return False
-        End Function
-
-        Public ReadOnly Property SyncRoot() As IDisposable
-            Get
-#If DebugLocks Then
-                Return New CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
-#Else
-                Return New CSScopeMgr(_syncRoot)
-#End If
-            End Get
-        End Property
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, EditableListBase))
-        End Function
-
-        Public Overloads Function Equals(ByVal obj As EditableListBase) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return _mainType Is obj._mainType AndAlso _subType Is obj._subType AndAlso _mainId.Equals(obj._mainId) AndAlso String.Equals(_key, obj._key)
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return _mainType.GetHashCode Xor _subType.GetHashCode Xor _mainId.GetHashCode Xor If(String.IsNullOrEmpty(_key), 0, _key.GetHashCode)
-        End Function
-
         Public Overloads Function Accept() As Boolean
             Return Accept(Nothing)
         End Function
 
         Public Overridable Overloads Function Accept(ByVal mgr As OrmManager) As Boolean
             Using SyncRoot
-                Dim needaccept As Boolean = _addedList.Count > 0 OrElse _deletedList.Count > 0
-                _addedList.Clear()
-                _deletedList.Clear()
+                Dim needaccept As Boolean = Added.Count > 0 OrElse Deleted.Count > 0
+                Added.Clear()
+                Deleted.Clear()
                 _savedIds.Clear()
                 RemoveNew()
 
@@ -342,7 +383,7 @@ Namespace Cache
 
         Public Overridable Overloads Function Accept(ByVal mgr As OrmManager, ByVal obj As IKeyEntity) As Boolean
             Using SyncRoot
-                Dim idx As Integer = FindIdIdx(_addedList, obj.Identifier)
+                Dim idx As Integer = FindIdIdx(Added, obj.Identifier)
                 If idx >= 0 Then
                     If Not _AcceptAdd(obj, mgr) Then
                         Return False
@@ -371,16 +412,13 @@ Namespace Cache
                     '        _mainList.Insert(Not pos, id)
                     '    End If
                     'End If
-                    _addedList.RemoveAt(idx)
-                    If _addedList.Count = 0 Then
-                        _cantgetCurrent = False
-                    End If
+                    Added.RemoveAt(idx)
                 Else
-                    idx = FindIdIdx(_deletedList, obj.Identifier)
+                    idx = FindIdIdx(Deleted, obj.Identifier)
                     If idx >= 0 Then
                         'CType(_mainList, List(Of Integer)).Remove(id)
                         _AcceptDelete(obj)
-                        _deletedList.RemoveAt(idx)
+                        Deleted.RemoveAt(idx)
                     End If
                 End If
             End Using
@@ -388,13 +426,13 @@ Namespace Cache
             Return True
         End Function
 
-        Friend Function PrepareSave(ByVal mgr As OrmManager) As EditableListBase
-            Dim newl As EditableListBase = Nothing
+        Friend Function PrepareSave(ByVal mgr As OrmManager) As M2MRelation
+            Dim newl As M2MRelation = Nothing
             'Dim mo As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(_mainId, _mainType, False)
             'If Not mgr.Cache.IsNewObject(_mainType, mo.GetPKValues) Then
             If Not IsMainObjectNew(mgr) Then
                 Dim ad As New List(Of IKeyEntity)
-                For Each ao As _IKeyEntity In _addedList
+                For Each ao As _IKeyEntity In Added
                     'Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
                     'If mgr.Cache.IsNewObject(SubType, ao.GetPKValues) Then
                     If ao.ObjectState = ObjectState.Created Then
@@ -411,31 +449,29 @@ Namespace Cache
                         End If
                     End If
                 Next
-                If ad.Count > 0 OrElse _deletedList.Count > 0 Then
-                    newl = GetCopy()
-                    newl._deletedList = _deletedList
-                    newl._addedList = ad
+                If ad.Count > 0 OrElse Deleted.Count > 0 Then
+                    newl = CType(GetCopy(), M2MRelation)
+                    newl.Deleted = Deleted
+                    newl.Added = ad
                 End If
             End If
             Return newl
         End Function
 
-        Protected Overridable Function IsMainObjectNew(ByVal mgr As OrmManager) As Boolean
-            Return _main.ObjectState = ObjectState.Created
-        End Function
-
         Protected Overridable Function CheckDual(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As Boolean
-            Return FindIdIdx(obj.GetRelation(_mainType, _key)._savedIds, _mainId) < 0
+            Return FindIdIdx(CType(obj.GetRelation(_mainType, Key), M2MRelation)._savedIds, _mainId) < 0
         End Function
 
-        Protected Overridable Function GetCopy() As EditableListBase
-            Return New EditableListBase(_main, _subType, _key)
+        Protected Overrides Function GetCopy() As Relation
+            Return New M2MRelation(_main, Relation)
         End Function
     End Class
 
-    Public Class EditableList
-        Inherits EditableListBase
+    <Serializable()> _
+    Public Class CachedM2MRelation
+        Inherits M2MRelation
 
+        Protected _cantgetCurrent As Boolean
         Private _mainId_ As Object
         Private _mainType_ As Type
         Private _mainList As IList(Of Object)
@@ -469,11 +505,25 @@ Namespace Cache
         End Sub
 
 #Region " Public properties "
+        Protected Function GetRealDirect() As String
+            If SubType Is MainType Then
+                Return Meta.M2MRelationDesc.GetRevKey(Key)
+            Else
+                Return Key
+            End If
+        End Function
+
+        Public ReadOnly Property SubType() As Type
+            Get
+                Dim mpe As ObjectMappingEngine = OrmManager.CurrentManager.MappingEngine
+                Return Relation.Rel.GetRealType(mpe)
+            End Get
+        End Property
 
         Public ReadOnly Property CurrentCount() As Integer
             Get
                 Using SyncRoot
-                    Return _mainList.Count + _addedList.Count - _deletedList.Count
+                    Return _mainList.Count + Added.Count - Deleted.Count
                 End Using
             End Get
         End Property
@@ -486,20 +536,20 @@ Namespace Cache
 
                 Using SyncRoot
                     Dim arr As New List(Of Object)
-                    If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
-                        If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
+                    If _mainList.Count <> 0 OrElse Added.Count <> 0 Then
+                        If Added.Count <> 0 AndAlso _mainList.Count <> 0 Then
                             Dim mgr As OrmManager = OrmManager.CurrentManager
                             Dim col As New ArrayList
                             Dim c As IComparer = Nothing
                             If _sort Is Nothing Then
                                 arr.AddRange(_mainList)
-                                arr.AddRange(_addedList.ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                                arr.AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
                             Else
                                 Dim sr As IOrmSorting = Nothing
-                                col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                                If OrmManager.CanSortOnClient(_subType, col, _sort, sr) Then
+                                col.AddRange(mgr.ConvertIds2Objects(SubType, _mainList, False))
+                                If OrmManager.CanSortOnClient(SubType, col, _sort, sr) Then
                                     If sr Is Nothing Then
-                                        c = New OrmComparer(Of KeyEntity)(_subType, _sort)
+                                        c = New OrmComparer(Of KeyEntity)(SubType, _sort)
                                     Else
                                         c = sr.CreateSortComparer(_sort)
                                     End If
@@ -513,19 +563,19 @@ Namespace Cache
                                 Dim i, j As Integer
                                 Do
                                     If i = _mainList.Count Then
-                                        For k As Integer = j To _addedList.Count - 1
-                                            arr.Add(_addedList(k).Identifier)
+                                        For k As Integer = j To Added.Count - 1
+                                            arr.Add(Added(k).Identifier)
                                         Next
                                         Exit Do
                                     End If
-                                    If j = _addedList.Count Then
+                                    If j = Added.Count Then
                                         For k As Integer = i To _mainList.Count - 1
                                             arr.Add(_mainList(k))
                                         Next
                                         Exit Do
                                     End If
                                     Dim ex As IKeyEntity = CType(col(i), IKeyEntity)
-                                    Dim ad As IKeyEntity = _addedList(j) 'mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType, False)
+                                    Dim ad As IKeyEntity = Added(j) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
                                     If c.Compare(ex, ad) < 0 Then
                                         arr.Add(ex.Identifier)
                                         i += 1
@@ -537,10 +587,10 @@ Namespace Cache
                             End If
                         Else
                             arr.AddRange(_mainList)
-                            arr.AddRange(_addedList.ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                            arr.AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
                         End If
 
-                        For Each obj As IKeyEntity In _deletedList
+                        For Each obj As IKeyEntity In Deleted
                             arr.Remove(obj.Identifier)
                         Next
                     End If
@@ -562,25 +612,25 @@ Namespace Cache
         Public Overrides Function Accept(ByVal mgr As OrmManager) As Boolean
             _cantgetCurrent = False
             Using SyncRoot
-                Dim needaccept As Boolean = _addedList.Count > 0
+                Dim needaccept As Boolean = Added.Count > 0
                 If _sort Is Nothing Then
-                    CType(_mainList, List(Of Object)).AddRange(_addedList.ConvertAll(Function(o As IKeyEntity) o.Identifier))
-                    _addedList.Clear()
+                    CType(_mainList, List(Of Object)).AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                    Added.Clear()
                 Else
-                    If _addedList.Count > 0 Then
+                    If Added.Count > 0 Then
                         needaccept = True
                         Dim sr As IOrmSorting = Nothing
                         Dim c As IComparer = Nothing
                         Dim col As ArrayList = Nothing
 
                         If _mainList.Count > 0 Then
-                            col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                            If Not OrmManager.CanSortOnClient(_subType, col, _sort, sr) Then
+                            col = New ArrayList(mgr.ConvertIds2Objects(SubType, _mainList, False))
+                            If Not OrmManager.CanSortOnClient(SubType, col, _sort, sr) Then
                                 AcceptDual(mgr)
                                 Return False
                             End If
                             If sr Is Nothing Then
-                                c = New OrmComparer(Of KeyEntity)(_subType, _sort)
+                                c = New OrmComparer(Of KeyEntity)(SubType, _sort)
                             Else
                                 c = sr.CreateSortComparer(_sort)
                             End If
@@ -594,19 +644,19 @@ Namespace Cache
                         Dim i, j As Integer
                         Do
                             If i = _mainList.Count Then
-                                For k As Integer = j To _addedList.Count - 1
-                                    ml.Add(_addedList(k).Identifier)
+                                For k As Integer = j To Added.Count - 1
+                                    ml.Add(Added(k).Identifier)
                                 Next
                                 Exit Do
                             End If
-                            If j = _addedList.Count Then
+                            If j = Added.Count Then
                                 For k As Integer = i To _mainList.Count - 1
                                     ml.Add(_mainList(k))
                                 Next
                                 Exit Do
                             End If
                             Dim ex As IKeyEntity = CType(col(i), IKeyEntity)
-                            Dim ad As IKeyEntity = _addedList(j) 'mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType, False)
+                            Dim ad As IKeyEntity = Added(j) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
                             If c.Compare(ex, ad) < 0 Then
                                 ml.Add(ex.Identifier)
                                 i += 1
@@ -619,14 +669,14 @@ Namespace Cache
                         _mainList = ml
                     End If
 
-                    _addedList.Clear()
+                    Added.Clear()
                 End If
 
-                For Each obj As IKeyEntity In _deletedList
+                For Each obj As IKeyEntity In Deleted
                     CType(_mainList, List(Of Object)).Remove(obj.Identifier)
                 Next
-                needaccept = needaccept OrElse _deletedList.Count > 0
-                _deletedList.Clear()
+                needaccept = needaccept OrElse Deleted.Count > 0
+                Deleted.Clear()
                 _saved = False
                 RemoveNew()
 
@@ -652,23 +702,23 @@ Namespace Cache
         Public Overrides Function _AcceptAdd(ByVal obj As IKeyEntity, ByVal mgr As OrmManager) As Boolean
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Object)).Add(obj.Identifier)
-                _addedList.Remove(obj)
+                Added.Remove(obj)
             Else
                 Dim sr As IOrmSorting = Nothing
-                Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                If Not OrmManager.CanSortOnClient(_subType, col, _sort, sr) Then
+                Dim col As New ArrayList(mgr.ConvertIds2Objects(SubType, _mainList, False))
+                If Not OrmManager.CanSortOnClient(SubType, col, _sort, sr) Then
                     Return False
                 End If
                 Dim c As IComparer = Nothing
                 If sr Is Nothing Then
-                    c = New OrmComparer(Of KeyEntity)(_subType, _sort)
+                    c = New OrmComparer(Of KeyEntity)(SubType, _sort)
                 Else
                     c = sr.CreateSortComparer(_sort)
                 End If
                 If c Is Nothing Then
                     Return False
                 End If
-                Dim ad As IKeyEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
+                Dim ad As IKeyEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, subtype, False)
                 Dim pos As Integer = col.BinarySearch(ad, c)
                 If pos < 0 Then
                     _mainList.Insert(Not pos, obj.Identifier)
@@ -681,19 +731,19 @@ Namespace Cache
             If _sort IsNot Nothing Then
                 Dim sr As IOrmSorting = Nothing
                 'Dim mgr As OrmManager = OrmManager.CurrentManager
-                If OrmManager.CanSortOnClient(_subType, _addedList, _sort, sr) Then
+                If OrmManager.CanSortOnClient(SubType, CType(Added, List(Of IKeyEntity)), _sort, sr) Then
                     Dim c As IComparer = Nothing
                     If sr Is Nothing Then
-                        c = New OrmComparer(Of KeyEntity)(_subType, _sort)
+                        c = New OrmComparer(Of KeyEntity)(SubType, _sort)
                     Else
                         c = sr.CreateSortComparer(_sort)
                     End If
                     If c IsNot Nothing Then
-                        Dim o As IKeyEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
-                        Dim col As New ArrayList(_addedList)
+                        Dim o As IKeyEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, subtype, False)
+                        Dim col As New ArrayList(CType(Added, List(Of IKeyEntity)))
                         Dim pos As Integer = col.BinarySearch(o, c)
                         If pos < 0 Then
-                            _addedList.Insert(Not pos, obj)
+                            Added.Insert(Not pos, obj)
                             Return True
                         End If
                     Else
@@ -706,10 +756,10 @@ Namespace Cache
             Return False
         End Function
 
-        Protected Overrides Function GetRevert(ByVal mgr As OrmManager) As IList(Of EditableListBase)
-            Dim l As New List(Of EditableListBase)
+        Protected Overrides Function GetRevert(ByVal mgr As OrmManager) As IList(Of Relation)
+            Dim l As New List(Of Relation)
             For Each id As Object In _mainList
-                Dim m As M2MCache = mgr.GetM2MNonGeneric(id, _subType, _mainType, GetRealDirect)
+                Dim m As M2MCache = mgr.GetM2MNonGeneric(id, SubType, _mainType, GetRealDirect)
                 If m IsNot Nothing Then
                     l.Add(m.Entry)
                 End If
@@ -717,7 +767,7 @@ Namespace Cache
             Return l
         End Function
 
-        Protected Overrides Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As EditableListBase
+        Protected Overrides Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As M2MRelation
             Dim m As M2MCache = mgr.GetM2MNonGeneric(obj, _mainType, GetRealDirect)
             If m IsNot Nothing Then
                 Return m.Entry
@@ -728,7 +778,7 @@ Namespace Cache
         'Protected Sub AcceptDual()
         '    Dim mgr As OrmManager = OrmManager.CurrentManager
         '    For Each id As Integer In _mainList
-        '        Dim m As M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+        '        Dim m As M2MCache = mgr.GetM2MNonGeneric(id.ToString, subtype, _mainType, GetRealDirect)
         '        If m IsNot Nothing Then
         '            If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
         '                If Not m.Entry.Accept(mgr, _mainId) Then
@@ -760,12 +810,12 @@ Namespace Cache
             Return c
         End Function
 
-        Protected Overrides Function GetCopy() As EditableListBase
-            Return New EditableList(_mainId, _mainList, _mainType, _subType, Key, _sort)
+        Protected Overrides Function GetCopy() As Relation
+            Return New CachedM2MRelation(_mainId, _mainList, _mainType, SubType, Key, _sort)
         End Function
 
         Protected Overrides Sub AcceptDual(ByVal mgr As OrmManager)
-            For Each el As EditableListBase In GetRevert(mgr)
+            For Each el As M2MRelation In GetRevert(mgr)
                 Dim main As _IKeyEntity = CType(mgr.CreateOrmBase(_mainId_, _mainType_), _IKeyEntity)
                 If el.Added.Contains(main) OrElse el.Deleted.Contains(main) Then
                     If Not el.Accept(mgr, main) Then
@@ -775,6 +825,15 @@ Namespace Cache
                 End If
             Next
         End Sub
+
+        Public Overrides Function Accept(ByVal mgr As OrmManager, ByVal obj As Entities.IKeyEntity) As Boolean
+            Dim b As Boolean = MyBase.Accept(mgr, obj)
+            If Added.Count = 0 Then
+                _cantgetCurrent = False
+            End If
+
+            Return b
+        End Function
 #End Region
 
 #Region " Protected properties "
@@ -810,4 +869,5 @@ Namespace Cache
 #End Region
 
     End Class
+
 End Namespace

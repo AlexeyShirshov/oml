@@ -57,7 +57,7 @@ Namespace Entities
             If _tf IsNot Nothing Then
                 Return _tf.First.RawName & "$" & _tf.Second
             Else
-                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
+                Return _op.ObjectSource._ToString & "$" & _op.Field
             End If
         End Function
 
@@ -91,10 +91,12 @@ Namespace Entities
         Private _falias As String
         Private _dst As EntityUnion
 
+#Region " Cache "
         Friend _c As EntityPropertyAttribute
         Friend _pi As Reflection.PropertyInfo
         Friend _realAtt As Field2DbRelations
         Friend _tempMark As String
+#End Region
 
         Public Event OnChange()
 
@@ -125,9 +127,9 @@ Namespace Entities
         '    _osrc = New ObjectSource(entityName)
         'End Sub
 
-        'Public Sub New(ByVal [alias] As ObjectAlias)
-        '    _osrc = New ObjectSource([alias])
-        'End Sub
+        Public Sub New(ByVal op As ObjectProperty)
+            _op = op
+        End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             '_field = propertyAlias
@@ -302,7 +304,14 @@ Namespace Entities
 
         Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
             For Each s As T In selectList
-                c.Add(New MapField2Column(If(String.IsNullOrEmpty(s.PropertyAlias), s.FieldAlias, s.PropertyAlias), s.Column, s.Table, s.Attributes))
+                Dim pa As String = s.PropertyAlias
+                If String.IsNullOrEmpty(pa) Then
+                    pa = s.FieldAlias
+                End If
+                If String.IsNullOrEmpty(pa) Then
+                    pa = s.Column
+                End If
+                c.Add(New MapField2Column(pa, s.Column, s.Table, s.Attributes))
             Next
             Return c
         End Function
@@ -453,7 +462,7 @@ Namespace Entities
 
         Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
             If _op.ObjectSource IsNot Nothing Then
-                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
+                Return _op.ObjectSource._ToString & "$" & _op.Field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -491,13 +500,13 @@ Namespace Entities
                 If _values IsNot Nothing Then
                     b = _column = s._column
                 ElseIf _op.ObjectSource IsNot Nothing Then
-                    b = _op.Field = s._op.Field AndAlso _op.ObjectSource.Equals(_op.ObjectSource)
+                    b = _op.Field = s._op.Field AndAlso _op.ObjectSource.Equals(s._op.ObjectSource)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
                     b = _column = s._column AndAlso _table Is s._table
                 ElseIf _q IsNot Nothing Then
                     b = _q.Equals(s._q)
                 Else
-                    b = _agr.Equals(_agr)
+                    b = _agr.Equals(s._agr)
                 End If
                 Return b
             End If
@@ -514,9 +523,9 @@ Namespace Entities
             Return New Cache.EmptyDependentTypes
         End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
             If _op.ObjectSource IsNot Nothing Then
-                Return _op.ObjectSource.ToStaticString & "$" & _op.Field
+                Return _op.ObjectSource.ToStaticString(mpe, contextFilter) & "$" & _op.Field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -526,9 +535,9 @@ Namespace Entities
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then
-                        Return _q.ToStaticString(mpe)
+                        Return _q.ToStaticString(mpe, contextFilter)
                     ElseIf _agr IsNot Nothing Then
-                        Return _agr.GetStaticString(mpe)
+                        Return _agr.GetStaticString(mpe, contextFilter)
                     Else
                         Throw New NotSupportedException
                         'Return _field
@@ -536,6 +545,12 @@ Namespace Entities
                 End If
             End If
         End Function
+
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
+            If PropType = Entities.PropType.Subquery Then
+                _q.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
 End Namespace

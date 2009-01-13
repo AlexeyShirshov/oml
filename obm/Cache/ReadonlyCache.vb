@@ -33,7 +33,7 @@ Namespace Cache
         Public Event RegisterObjectRemoval(ByVal sender As CacheBase, ByVal obj As ICachedEntity)
 
         Public Event RegisterCollectionCreation(ByVal sender As CacheBase, ByVal t As Type)
-        Public Event RegisterCollectionRemoval(ByVal sender As CacheBase, ByVal ce As CachedItem)
+        Public Event RegisterCollectionRemoval(ByVal sender As CacheBase, ByVal ce As CachedItemBase)
         Public Event CacheHasModification(ByVal sender As CacheBase)
         Public Event CacheHasnotModification(ByVal sender As CacheBase)
 
@@ -69,6 +69,14 @@ Namespace Cache
 
         Public Overridable Function CreateRootDictionary4ExternalObjects() As IDictionary
             Return Hashtable.Synchronized(New Hashtable)
+        End Function
+
+        Public Overridable Function CreateResultsets4SimpleValuesDictionary() As IDictionary
+            Return CreateResultsetsDictionary()
+        End Function
+
+        Public Overridable Function CreateResultsets4AnonymValuesDictionary() As IDictionary
+            Return CreateResultsetsDictionary()
         End Function
 
         Public Overridable Function CreateResultsetsDictionary(ByVal mark As String) As IDictionary
@@ -150,14 +158,14 @@ Namespace Cache
             RaiseEvent RegisterCollectionCreation(Me, t)
         End Sub
 
-        Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As CachedItem)
+        Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As CachedItemBase)
             RaiseEvent RegisterCollectionRemoval(Me, ce)
         End Sub
 
         Public Overridable Sub RemoveEntry(ByVal key As String, ByVal id As String)
             Dim dic As IDictionary = CType(_filters(key), System.Collections.IDictionary)
             If dic IsNot Nothing Then
-                Dim ce As CachedItem = TryCast(dic(id), CachedItem)
+                Dim ce As CachedItemBase = TryCast(dic(id), CachedItemBase)
                 dic.Remove(id)
                 If ce IsNot Nothing Then
                     RegisterRemovalCacheItem(ce)
@@ -178,6 +186,34 @@ Namespace Cache
 
         Protected Function _GetDictionary(ByVal key As String) As IDictionary
             Return CType(_filters(key), IDictionary)
+        End Function
+
+        Public Function GetAnonymDictionary(ByVal key As String) As IDictionary
+            Dim dic As IDictionary = CType(_filters(key), IDictionary)
+            If dic Is Nothing Then
+                Using SyncHelper.AcquireDynamicLock(key)
+                    dic = CType(_filters(key), IDictionary)
+                    If dic Is Nothing Then
+                        dic = CreateResultsets4AnonymValuesDictionary()
+                        _filters.Add(key, dic)
+                    End If
+                End Using
+            End If
+            Return dic
+        End Function
+
+        Public Function GetSimpleDictionary(ByVal key As String) As IDictionary
+            Dim dic As IDictionary = CType(_filters(key), IDictionary)
+            If dic Is Nothing Then
+                Using SyncHelper.AcquireDynamicLock(key)
+                    dic = CType(_filters(key), IDictionary)
+                    If dic Is Nothing Then
+                        dic = CreateResultsets4SimpleValuesDictionary()
+                        _filters.Add(key, dic)
+                    End If
+                End Using
+            End If
+            Return dic
         End Function
 
         Public Function GetDictionary(ByVal key As String) As IDictionary
@@ -829,13 +865,13 @@ Namespace Cache
         Inherits ReadonlyCache
 
         Protected Overrides Function CreateDictionary4ObjectInstances(ByVal t As System.Type) As System.Collections.IDictionary
-            Dim pol As DictionatyCachePolicy = GetPolicy(t)
+            Dim pol As WebCacheDictionaryPolicy = GetPolicy(t)
             Dim args() As Object = Nothing
             Dim dt As Type = Nothing
             If pol Is Nothing Then
                 dt = GetType(Collections.SynchronizedDictionary(Of ))
             Else
-                dt = GetType(OrmDictionary(Of ))
+                dt = GetType(WebCacheEntityDictionary(Of ))
                 args = GetArgs(t, pol)
             End If
             dt = dt.MakeGenericType(New Type() {t})
@@ -843,21 +879,29 @@ Namespace Cache
                 args), System.Collections.IDictionary)
         End Function
 
-        Protected Function GetArgs(ByVal t As Type, ByVal pol As DictionatyCachePolicy) As Object()
+        Protected Function GetArgs(ByVal t As Type, ByVal pol As WebCacheDictionaryPolicy) As Object()
             Return New Object() { _
                 Me, pol.AbsoluteExpiration, pol.SlidingExpiration, _
                 pol.Priority, pol.Dependency _
             }
         End Function
 
-        Protected MustOverride Function GetPolicy(ByVal t As Type) As DictionatyCachePolicy
+        Protected MustOverride Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
 
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter
         End Function
 
-        Public Overrides Function CreateRootDictionary4Queries() As System.Collections.IDictionary
-            Return New HttpCacheDictionary(Of IDictionary)
+        'Public Overrides Function CreateRootDictionary4Queries() As System.Collections.IDictionary
+        '    Return New WebCacheDictionary(Of IDictionary)
+        'End Function
+
+        Public Overrides Function CreateResultsets4SimpleValuesDictionary() As System.Collections.IDictionary
+            Return New WebCacheDictionary(Of CachedItemBase)
+        End Function
+
+        Public Overrides Function CreateResultsets4AnonymValuesDictionary() As System.Collections.IDictionary
+            Return New WebCacheDictionary(Of CachedItemBase)
         End Function
     End Class
 End Namespace

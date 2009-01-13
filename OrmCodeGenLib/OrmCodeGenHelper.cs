@@ -27,6 +27,12 @@ namespace Worm.CodeGen.Core
             return new CodeTypeReferenceExpression(className);
         }
 
+        public static CodeTypeReference GetEntityClassTypeReference(EntityDescription entityDesc)
+        {
+            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc);
+            return new CodeTypeReference(className);
+        }
+
         public static CodeExpression GetPropertyReferenceExpression(PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
             return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity), propertyDesc.PropertyName);

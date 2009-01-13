@@ -108,8 +108,9 @@ Imports Worm
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner.Select(FCtor.prop(GetType(Table1), "Code", "id"))). _
-            ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From( _
+            inner.Select(FCtor.prop(GetType(Table1), "Code", "ID"))). _
+        ToList(Of Table1)()
 
         Assert.AreEqual(2, r.Count)
 

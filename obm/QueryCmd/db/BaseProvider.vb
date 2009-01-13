@@ -19,13 +19,8 @@ Namespace Query.Database
             Protected Sub New()
             End Sub
 
-            Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)), _
-                           ByVal f() As IFilter, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)))
-                _mgr = mgr
-                _q = q
-                _sl = sl
-                _f = f
-                _j = j
+            Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+                Reset(mgr, q)
             End Sub
 
             Public Overloads Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As Cache.CachedItemBase
@@ -43,24 +38,21 @@ Namespace Query.Database
                 End Using
             End Function
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Criteria.Joins.QueryJoin)), _
-                ByVal f() As Criteria.Core.IFilter, ByVal sl As List(Of List(Of Entities.SelectExpression)), _
-                ByVal q As QueryCmd)
-                _j = j
-                _f = f
-                _sl = sl
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
                 _mgr = mgr
                 _q = q
                 _dic = Nothing
 
-                Dim str As String
-                If _q.Table IsNot Nothing Then
-                    str = _q.Table.RawName
-                Else
-                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
-                End If
+                Dim fromKey As String = Nothing
+                'If _q.Table IsNot Nothing Then
+                '    fromKey = _q.Table.RawName
+                'ElseIf _q.FromClause IsNot Nothing AndAlso _q.FromClause.AnyQuery IsNot Nothing Then
+                '    fromKey = _q.FromClause.AnyQuery.ToStaticString(mgr.MappingEngine)
+                'Else
+                '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
+                'End If
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
+                _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextFilter)
 
                 If _dic Is Nothing Then
                     _dic = GetExternalDic(_key)
@@ -70,15 +62,22 @@ Namespace Query.Database
                 End If
 
                 If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
-                    _id = _q.GetDynamicKey(_j, _f)
+                    _id = QueryCmd.GetDynamicKey(_q)
                     _sync = _id & _mgr.GetStaticKey()
                 End If
 
+                ResetDic()
                 ResetStmt()
             End Sub
 
             Public Sub ResetStmt()
                 _stmt = Nothing
+            End Sub
+
+            Public Overridable Sub ResetDic()
+                If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
+                    _dic = _mgr.GetDic(_mgr.Cache, _key)
+                End If
             End Sub
 
             Protected Overridable Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand)
@@ -100,28 +99,30 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Dim almgr As AliasMgr = AliasMgr.Create
-                Dim fi As Object = _mgr.GetFilterInfo
+                'Dim almgr As AliasMgr = AliasMgr.Create
+                Dim fi As Object = _mgr.GetContextFilter
                 Dim i As Integer = 0
                 'Dim q As QueryCmd = _q
                 'Dim sb As New StringBuilder
-                Dim inner As String = Nothing
-                Dim innerColumns As List(Of String) = Nothing
+                'Dim inner As String = Nothing
+                'Dim innerColumns As List(Of String) = Nothing
                 Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
-                For Each q As QueryCmd In New QueryIterator(_q)
-                    Dim columnAliases As New List(Of String)
-                    Dim j As List(Of Worm.Criteria.Joins.QueryJoin) = _j(i)
-                    Dim f As IFilter = Nothing
-                    If _f.Length > i Then
-                        f = _f(i)
-                    End If
-                    inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, j, f, almgr, columnAliases, inner, innerColumns, i, _sl(i))
-                    innerColumns = New List(Of String)(columnAliases)
-                    'q = q.OuterQuery
-                    i += 1
-                Next
+                'For Each q As QueryCmd In New StmtQueryIterator(_q)
+                'Dim columnAliases As New List(Of String)
+                'Dim j As List(Of Worm.Criteria.Joins.QueryJoin) = q._js '_j(i)
+                'Dim f As IFilter = q._f
+                'If _f.Length > i Then
+                '    f = _f(i)
+                'End If
+                'Dim sl As List(Of SelectExpression) = _sl(i)
+                'Dim sl As List(Of SelectExpression) = q._sl
+                'inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, almgr)
+                'innerColumns = New List(Of String)(columnAliases)
+                'q = q.OuterQuery
+                'i += 1
+                'Next
                 'Loop
-                Return inner
+                Return MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, _q, _params)
             End Function
 
             Public Function GetSimpleValues(Of T)() As IList(Of T)
@@ -160,7 +161,9 @@ Namespace Query.Database
 
             Protected Overridable Function ExecMatrix(ByVal cmd As System.Data.Common.DbCommand) As ReadonlyMatrix
                 Dim l As New List(Of ReadOnlyCollection(Of _IEntity))
-                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(Nothing, cmd, l, _q._types, _q._pdic, _sl(_sl.Count - 1))
+                'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
+                Dim sl As List(Of SelectExpression) = _q._sl
+                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(Nothing, cmd, l, _q._types, _q._pdic, sl)
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)
             End Function
@@ -169,21 +172,13 @@ Namespace Query.Database
         Public Class SimpleProvider(Of T)
             Inherits BaseProvider
 
-            Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-
-                Reset(mgr, j, f, sl, q)
+            Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+                MyBase.New(mgr, q)
             End Sub
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                             ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
-                MyBase.Reset(mgr, j, f, sl, q)
-                ResetDic()
-            End Sub
-
-            Public Sub ResetDic()
+            Public Overrides Sub ResetDic()
                 If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
-                    _dic = _mgr.GetDic(_mgr.Cache, _key)
+                    _dic = Cache.GetSimpleDictionary(_key)
                 End If
             End Sub
 

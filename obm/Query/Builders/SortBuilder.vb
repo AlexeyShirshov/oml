@@ -52,6 +52,10 @@ Namespace Query
             Return New SortLink(CType(Nothing, Type), tag, True)
         End Function
 
+        Public Shared Function Exp(ByVal se As SelectExpression) As SortLink
+            Return New SortLink(se)
+        End Function
+
         Public Shared Function prop(ByVal t As Type, ByVal propertyAlias As String) As SortLink
             Return New SortLink(t, propertyAlias)
         End Function
@@ -197,12 +201,26 @@ Namespace Query
             _prev = prev
         End Sub
 
-        'Public Function NextSort(ByVal field As String) As SortOrder
-        '    _f = field
-        '    Return Me
-        'End Function
+        Protected Friend Sub New(ByVal se As SelectExpression)
+            _cmd = se.Query
+            _custom = se.Computed
+            _f = se.Column
+            _os = se.ObjectSource
+            _table = se.Table
+            _values = se.Values
+        End Sub
 
-        Public Function NextSort(ByVal so As SortLink) As SortLink
+        Protected Friend Sub New(ByVal se As SelectExpression, ByVal prev As SortLink)
+            _prev = prev
+            _cmd = se.Query
+            _custom = se.Computed
+            _f = se.Column
+            _os = se.ObjectSource
+            _table = se.Table
+            _values = se.Values
+        End Sub
+
+        Public Function Sort(ByVal so As SortLink) As SortLink
             _prev = so
             Return Me
         End Function
@@ -235,15 +253,11 @@ Namespace Query
             Return New SortLink(table, clm, Me)
         End Function
 
-        'Public Function NextField(ByVal propertyAlias As String) As SortLink
-        '    If _os IsNot Nothing Then
-        '        Return New SortLink(_os, propertyAlias, Me)
-        '    Else
-        '        Return New SortLink(_table, propertyAlias, Me)
-        '    End If
-        'End Function
+        Public Function Exp(ByVal se As SelectExpression) As SortLink
+            Return New SortLink(se, Me)
+        End Function
 
-        Public Function NextExternal(ByVal tag As String) As SortLink
+        Public Function External(ByVal tag As String) As SortLink
             If _os IsNot Nothing Then
                 Return New SortLink(_os, tag, True, Me)
             Else
@@ -280,6 +294,11 @@ Namespace Query
                 'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
+
+        Public Function Order(ByVal o As SortType) As SCtor
+            _order = o
+            Return New SCtor(_os, Me)
+        End Function
 
         Public Function Order(ByVal asc As Boolean) As SCtor
             If IsCustom Then

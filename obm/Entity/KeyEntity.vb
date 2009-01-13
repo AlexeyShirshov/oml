@@ -121,37 +121,37 @@ Namespace Entities
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.DirKey, withLoad)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelationDesc.DirKey, withLoad)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(direct), withLoad)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelationDesc.GetKey(direct), withLoad)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})() As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelation.DirKey, False)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelationDesc.DirKey, False)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal direct As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelation.GetKey(direct), False)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelationDesc.GetKey(direct), False)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal sort As Sort) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelation.DirKey, False)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelationDesc.DirKey, False)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal sort As Sort, ByVal direct As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelation.GetKey(direct), False)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelationDesc.GetKey(direct), False)
                 End Using
             End Function
 
@@ -165,13 +165,13 @@ Namespace Entities
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(True), withLoad, top)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelationDesc.GetKey(True), withLoad, top)
                 End Using
             End Function
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelation.GetKey(direct), withLoad, top)
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelationDesc.GetKey(direct), withLoad, top)
                 End Using
             End Function
 
@@ -191,7 +191,7 @@ Namespace Entities
 
             Public Function FindDistinct(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Dim rel As M2MRelation = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
                     Dim crit As PredicateLink = New PropertyPredicate(New EntityUnion(_o.GetType), OrmBaseT.PKName).eq(_o).[and](CType(criteria, PredicateLink))
                     Return mc.Manager.FindDistinct(Of T)(rel, crit, sort, withLoad)
                 End Using
@@ -199,37 +199,37 @@ Namespace Entities
 
             Public Sub Add(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MAdd(_o, obj, M2MRelation.DirKey)
+                    mc.Manager.M2MAdd(_o, obj, M2MRelationDesc.DirKey)
                 End Using
             End Sub
 
             Public Sub Add(ByVal obj As _IKeyEntity, ByVal direct As Boolean)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MAdd(_o, obj, M2MRelation.GetKey(direct))
+                    mc.Manager.M2MAdd(_o, obj, M2MRelationDesc.GetKey(direct))
                 End Using
             End Sub
 
             Public Sub Delete(ByVal t As Type)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, t, M2MRelation.DirKey)
+                    mc.Manager.M2MDelete(_o, t, M2MRelationDesc.DirKey)
                 End Using
             End Sub
 
             Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, t, M2MRelation.GetKey(direct))
+                    mc.Manager.M2MDelete(_o, t, M2MRelationDesc.GetKey(direct))
                 End Using
             End Sub
 
             Public Sub Delete(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, obj, M2MRelation.DirKey)
+                    mc.Manager.M2MDelete(_o, obj, M2MRelationDesc.DirKey)
                 End Using
             End Sub
 
             Public Sub Delete(ByVal obj As _IKeyEntity, ByVal direct As Boolean)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, obj, M2MRelation.GetKey(direct))
+                    mc.Manager.M2MDelete(_o, obj, M2MRelationDesc.GetKey(direct))
                 End Using
             End Sub
 
@@ -294,7 +294,7 @@ Namespace Entities
             End Function
 
             Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
-                Dim m2m As M2MRelation = _o.MappingEngine.GetM2MRelation(_o.GetType, t, key)
+                Dim m2m As M2MRelationDesc = _o.MappingEngine.GetM2MRelation(_o.GetType, t, key)
                 If m2m Is Nothing Then
                     Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
                 Else
@@ -440,7 +440,7 @@ Namespace Entities
         '<NonSerialized()> _
         'Protected Friend _valProcs As Boolean
         <NonSerialized()> _
-        Protected Friend _m2m As New List(Of EditableListBase)
+        Protected Friend _relations As New List(Of Relation)
 
         '        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         '        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -469,9 +469,12 @@ Namespace Entities
                     Return True
                 End If
 
-                For Each el As EditableListBase In _m2m
-                    If el.HasChanges Then
-                        Return True
+                For Each r As Relation In _relations
+                    Dim el As M2MRelation = TryCast(r, M2MRelation)
+                    If el IsNot Nothing Then
+                        If el.HasChanges Then
+                            Return True
+                        End If
                     End If
                 Next
                 Return MyBase.HasM2MChanges()
@@ -888,17 +891,19 @@ Namespace Entities
                 cache.ConnectedEntityEnum(mgr, t, AddressOf c.Accept)
             End If
 
-            For Each el As EditableListBase In _m2m
+            For Each rl As Relation In _relations
+                Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                If el Is Nothing Then Continue For
                 SyncLock "1efb139gf8bh"
                     For Each o As _IKeyEntity In el.Added
                         'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
+                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
                         m.Added.Remove(Me)
                         m._savedIds.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(m)
                         Else
-                            Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                            Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                             If Not l.Contains(m) Then
                                 l.Add(m)
                             End If
@@ -908,12 +913,12 @@ Namespace Entities
 
                     For Each o As _IKeyEntity In el.Deleted
                         'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
+                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
                         m.Deleted.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
                         Else
-                            Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                            Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                             If Not l.Contains(m) Then
                                 l.Add(m)
                             End If
@@ -925,7 +930,7 @@ Namespace Entities
                     If updateCache AndAlso cache IsNot Nothing Then
                         cache.RemoveM2MQueries(el)
                     Else
-                        Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                        Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                         If Not l.Contains(el) Then
                             l.Add(el)
                         End If
@@ -1386,7 +1391,7 @@ Namespace Entities
                     End If
                 Next
 
-                For Each el As EditableListBase In _m2m
+                For Each el As M2MRelation In _relations
                     el.Reject2()
                 Next
             End Using
@@ -1410,7 +1415,7 @@ Namespace Entities
                 Next
                 _needAccept.Clear()
 
-                For Each el As EditableListBase In _m2m
+                For Each el As M2MRelation In _relations
                     el.Reject(mc, True)
                 Next
                 'End Using
@@ -1634,289 +1639,23 @@ Namespace Entities
         'End Sub
 #End Region
 
-        '#Region " Xml Serialization "
+        Public Shared Shadows Operator <>(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return False
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return Not obj2.Equals(obj1)
+            End If
+            Return Not obj1.Equals(obj2)
+        End Operator
 
-        '        Protected Overridable Function GetSchema() As System.Xml.Schema.XmlSchema Implements System.Xml.Serialization.IXmlSerializable.GetSchema
-        '            Return Nothing
-        '        End Function
-
-        '        Protected Overridable Sub ReadXml(ByVal reader As System.Xml.XmlReader) Implements System.Xml.Serialization.IXmlSerializable.ReadXml
-        '            Dim t As Type = Me.GetType
-
-        '            'If OrmSchema IsNot Nothing Then
-        '            '    Dim arr As Generic.List(Of ColumnAttribute) = OrmSchema.GetSortedFieldList(Me.GetType)
-        '            '    _members_load_state = New BitArray(arr.Count)
-        '            'End If
-
-        '            _loading = True
-
-        '            With reader
-        'l1:
-        '                If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
-        '                    ReadValues(reader)
-
-        '                    Do While .Read
-        '                        Select Case .NodeType
-        '                            Case XmlNodeType.Element
-        '                                ReadValue(.Name, reader)
-        '                            Case XmlNodeType.EndElement
-        '                                If .Name = t.Name Then Exit Do
-        '                        End Select
-        '                    Loop
-        '                Else
-        '                    Do While .Read
-        '                        Select Case .NodeType
-        '                            Case XmlNodeType.Element
-        '                                If .Name = t.Name Then
-        '                                    GoTo l1
-        '                                End If
-        '                        End Select
-        '                    Loop
-        '                End If
-        '            End With
-
-        '            _loading = False
-        '            Using mc As IGetManager = GetMgr()
-        '                Dim schema As OrmManager = mc.Manager.ObjectSchema
-        '                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
-        '            End Using
-        '        End Sub
-
-        '        Protected Overridable Sub WriteXml(ByVal writer As System.Xml.XmlWriter) Implements System.Xml.Serialization.IXmlSerializable.WriteXml
-        '            With writer
-        '                Dim t As Type = Me.GetType
-
-        '                Dim elems As New Generic.List(Of Pair(Of String, Object))
-        '                Dim xmls As New Generic.List(Of Pair(Of String, String))
-
-        '                For Each de As DictionaryEntry In OrmSchema.GetProperties(t)
-        '                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-        '                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-        '                    If c IsNot Nothing AndAlso (OrmSchema.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
-        '                        If IsLoaded Then
-        '                            Dim v As Object = pi.GetValue(Me, Nothing)
-        '                            Dim tt As Type = pi.PropertyType
-        '                            If v IsNot Nothing Then
-        '                                If GetType(OrmBase).IsAssignableFrom(tt) Then
-        '                                    .WriteAttributeString(c.FieldName, CType(v, OrmBase).Identifier.ToString)
-        '                                ElseIf tt.IsArray Then
-        '                                    elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
-        '                                ElseIf tt Is GetType(XmlDocument) Then
-        '                                    xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
-        '                                Else
-        '                                    .WriteAttributeString(c.FieldName, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
-        '                                End If
-        '                            End If
-        '                        ElseIf (OrmSchema.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-        '                            .WriteAttributeString(c.FieldName, pi.GetValue(Me, Nothing).ToString)
-        '                        End If
-        '                    End If
-        '                Next
-
-        '                For Each p As Pair(Of String, Object) In elems
-        '                    .WriteStartElement(p.First)
-        '                    .WriteValue(p.Second)
-        '                    .WriteEndElement()
-        '                Next
-
-        '                For Each p As Pair(Of String, String) In xmls
-        '                    .WriteStartElement(p.First)
-        '                    .WriteCData(p.Second)
-        '                    .WriteEndElement()
-        '                Next
-        '                '.WriteEndElement() 't.Name
-        '            End With
-        '        End Sub
-
-        '        Protected Sub ReadValue(ByVal fieldName As String, ByVal reader As XmlReader)
-        '            reader.Read()
-        '            'Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
-        '            Select Case reader.NodeType
-        '                Case XmlNodeType.CDATA
-        '                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-        '                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
-        '                    Dim x As New XmlDocument
-        '                    x.LoadXml(reader.Value)
-        '                    pi.SetValue(Me, x, Nothing)
-        '                    SetLoaded(c, True, True)
-        '                Case XmlNodeType.Text
-        '                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-        '                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
-        '                    Dim v As String = reader.Value
-        '                    pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
-        '                    SetLoaded(c, True, True)
-        '                    'Using ms As New IO.MemoryStream(Convert.FromBase64String(CStr(v)))
-        '                    '    Dim f As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-        '                    '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
-        '                    '    SetLoaded(c, True)
-        '                    'End Using
-        '            End Select
-        '        End Sub
-
-        '        Protected Sub ReadValues(ByVal reader As XmlReader)
-        '            With reader
-        '                .MoveToFirstAttribute()
-        '                Dim t As Type = Me.GetType
-        '                Dim oschema As IOrmObjectSchemaBase = Nothing
-        '                If OrmSchema IsNot Nothing Then
-        '                    oschema = OrmSchema.GetObjectSchema(t)
-        '                End If
-
-        '                Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
-        '                Do
-
-        '                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
-        '                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(t, .Name)
-
-        '                    Dim att As Field2DbRelations = OrmSchema.GetAttributes(t, c)
-        '                    'Dim not_pk As Boolean = (att And Field2DbRelations.PK) = 0
-
-        '                    'Me.IsLoaded = not_pk
-
-        '                    Dim value As String = .Value
-        '                    If fv IsNot Nothing Then
-        '                        value = CStr(fv.CreateValue(c, Me, value))
-        '                    End If
-
-        '                    If GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
-        '                        'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-        '                        '    CreateObject(.Name, value)
-        '                        '    SetLoaded(c, True)
-        '                        'Else
-        '                        Using mc As IGetManager = GetMgr()
-        '                            Dim v As OrmBase = mc.Manager.CreateDBObject(CInt(value), pi.PropertyType)
-        '                            If pi IsNot Nothing Then
-        '                                pi.SetValue(Me, v, Nothing)
-        '                                SetLoaded(c, True, True)
-        '                            End If
-        '                        End Using
-        '                        'End If
-        '                    Else
-        '                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-        '                        If pi IsNot Nothing Then
-        '                            pi.SetValue(Me, v, Nothing)
-        '                            SetLoaded(c, True, True)
-        '                        End If
-        '                    End If
-
-        '                    'If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-        '                    '    If OrmCache IsNot Nothing Then OrmCache.RegisterCreation(Me.GetType, Identifier)
-        '                    'End If
-
-        '                Loop While .MoveToNextAttribute
-        '            End With
-        '        End Sub
-
-
-        '#End Region
-
-        '#Region " Obsolete "
-
-        '        <Obsolete("Use M2M.Find")> _
-        '        Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
-        '            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
-        '            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-        '                New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
-        '            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-        '            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
-        '        End Function
-
-        '        <Obsolete("Use M2M.Find")> _
-        '        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-        '            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
-        '        End Function
-
-        '        <Obsolete("Use M2M.Find")> _
-        '        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-        '            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
-        '        End Function
-
-        '        <Obsolete("Use M2M.Add")> _
-        '        Public Sub Add(ByVal obj As OrmBase)
-        '            GetMgr.M2MAdd(Me, obj, True)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Add")> _
-        '        Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
-        '            GetMgr.M2MAdd(Me, obj, direct)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Delete")> _
-        '        Public Sub Delete(ByVal t As Type)
-        '            GetMgr.M2MDelete(Me, t, True)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Delete")> _
-        '        Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
-        '            GetMgr.M2MDelete(Me, t, direct)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Delete")> _
-        '        Public Sub Delete(ByVal obj As OrmBase)
-        '            GetMgr.M2MDelete(Me, obj, True)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Delete")> _
-        '        Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
-        '            GetMgr.M2MDelete(Me, obj, direct)
-        '        End Sub
-
-        '        <Obsolete("Use M2M.Cancel")> _
-        '        Public Sub Cancel(ByVal t As Type)
-        '            GetMgr.M2MCancel(Me, t)
-        '        End Sub
-
-        '#End Region
-
-        '        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-        '            Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
-        '            o.Init(Identifier, OrmCache, OrmSchema)
-        '            Using SyncHelper(True)
-        '#If TraceSetState Then
-        '                o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
-        '#Else
-        '                o.SetObjectState(ObjectState)
-        '#End If
-        '                CopyBodyInternal(Me, o)
-        '            End Using
-        '            Return o
-        '        End Function
-
-        'Protected Friend MustOverride Sub CopyBodyInternal(ByVal [from] As OrmBase, ByVal [to] As OrmBase)
-        'Protected MustOverride Function CloneMe() As OrmBase
-        'Protected MustOverride Sub RevertToOriginalVersion()
-        'Protected Friend MustOverride Function CreateOriginalVersion() As OrmBase
-
-        'Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
-        '    Return True
-        'End Function
-
-        'Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
-        '    Return True
-        'End Function
-
-        'Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
-        '    Return True
-        'End Function
-
-        'Public Sub BeginLoading() Implements IEntity.BeginLoading
-        '    _loading = True
-        'End Sub
-
-        'Public Sub CreateCopyForSaveNewEntry() Implements ICachedEntity.CreateCopyForSaveNewEntry
-        '    Dim modified As OrmBase = Clone()
-        '    ObjectState = Orm.ObjectState.Modified
-        '    Using mc As IGetManager = GetMgr()
-        '        mc.Manager.Cache.RegisterModification(modified, Key, ModifiedObject.ReasonEnum.Unknown)
-        '        'If Not _loading AndAlso reason <> ModifiedObject.ReasonEnum.Delete Then
-        '        '    mc.Manager.RaiseBeginUpdate(Me)
-        '        'End If
-        '    End Using
-        'End Sub
-
-        'Public Sub EndLoading() Implements IEntity.EndLoading
-        '    _loading = False
-        'End Sub
+        Public Shared Shadows Operator =(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return True
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return obj2.Equals(obj1)
+            End If
+            Return obj1.Equals(obj2)
+        End Operator
 
         Protected Overrides Function GetCacheKey() As Integer
             Return Identifier.GetHashCode
@@ -1935,13 +1674,13 @@ Namespace Entities
             MyBase.PKLoaded(pkCount)
         End Sub
 
-#Region " M2M "
-        Public Function CreateM2MCmd() As Worm.Query.QueryCmd
+#Region " Relations "
+        Public Function CreateM2MCmd() As Worm.Query.RelationCmd
             If CreateManager IsNot Nothing Then
-                Dim q As New Worm.Query.QueryCmd(Me, CreateManager)
+                Dim q As New Worm.Query.RelationCmd(Me, CreateManager)
                 Return q
             Else
-                Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me)
+                Dim q As Worm.Query.RelationCmd = Worm.Query.RelationCmd.Create(Me)
                 Return q
             End If
         End Function
@@ -1951,53 +1690,65 @@ Namespace Entities
                 Dim q As New Worm.Query.QueryCmd(Me, key, CreateManager)
                 Return q
             Else
-                Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me, key)
+                Dim q As Worm.Query.RelationCmd = Worm.Query.RelationCmd.Create(Me, key)
                 Return q
             End If
         End Function
 
-        Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd().Select(t)
+        Protected Function _Find(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateM2MCmd().Select(t), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd(key).Select(t)
+        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateM2MCmd(key).Select(t), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal entityName As String) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd().Select(entityName)
+        Protected Function _Find(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateM2MCmd().Select(entityName), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal entityName As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
-            Return CreateM2MCmd(key).Select(entityName)
+        Protected Function _Find(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateM2MCmd(key).Select(entityName), RelationCmd)
         End Function
 
-        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase 'Implements _IOrmBase.GetM2M
-            Dim el As EditableListBase = Nothing
+        Protected Function _Find(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateM2MCmd(desc.Key).Select(desc.Rel), RelationCmd)
+        End Function
+
+        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M
+            Dim el As M2MRelation = Nothing
             Using GetSyncRoot()
-                For Each e As EditableListBase In _m2m
-                    If e.SubType Is t AndAlso String.Equals(e.Key, key) Then
-                        el = e
-                        Exit For
+                For Each rl As Relation In _relations
+                    Dim e As M2MRelation = TryCast(rl, M2MRelation)
+                    If String.Equals(e.Key, key) Then
+                        If e.Relation.Type Is Nothing Then
+                            If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
+                                el = e
+                                Exit For
+                            End If
+                        ElseIf e.Relation.Type Is t Then
+                            el = e
+                            Exit For
+                        End If
                     End If
                 Next
                 If el Is Nothing Then
-                    el = New EditableListBase(Me, t, key)
-                    _m2m.Add(el)
+                    el = New M2MRelation(Me, t, key)
+                    _relations.Add(el)
                 End If
             End Using
             Return el
         End Function
 
-        Protected Sub _Add(ByVal obj As IKeyEntity) Implements IM2M.Add
+        Protected Sub _Add(ByVal obj As IKeyEntity) Implements IRelations.Add
             _Add(obj, Nothing)
         End Sub
 
-        Protected Sub _Add(ByVal obj As IKeyEntity, ByVal key As String) Implements IM2M.Add
-            Dim el As EditableListBase = GetM2M(obj.GetType, key)
+        Protected Sub _Add(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Add
+            Dim el As M2MRelation = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
-                    Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
+                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
                     SyncLock "1efb139gf8bh"
                         If Not el2.Added.Contains(Me) Then
                             If el.Deleted.Contains(obj) Then
@@ -2040,15 +1791,15 @@ Namespace Entities
         '    End Using
         'End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IM2M.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IRelations.Delete
             _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IM2M.Delete
-            Dim el As EditableListBase = GetM2M(obj.GetType, key)
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Delete
+            Dim el As M2MRelation = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then
-                    Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
+                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
                     SyncLock "1efb139gf8bh"
                         If Not el2.Deleted.Contains(Me) Then
                             If el.Added.Contains(obj) Then
@@ -2078,54 +1829,88 @@ Namespace Entities
             End Using
         End Sub
 
-        Protected Sub _Cancel(ByVal t As Type) Implements IM2M.Cancel
+        Protected Sub _Cancel(ByVal en As String) Implements IRelations.Cancel
+            _Cancel(New RelationDesc(New EntityUnion(en), Nothing, Nothing))
+        End Sub
+
+        Protected Sub _Cancel(ByVal en As String, ByVal key As String) Implements IRelations.Cancel
+            _Cancel(New RelationDesc(New EntityUnion(en), Nothing, key))
+        End Sub
+
+        Protected Sub _Cancel(ByVal t As Type) Implements IRelations.Cancel
             _Cancel(t, Nothing)
         End Sub
 
-        Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IM2M.Cancel
+        Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IRelations.Cancel
             Using mc As IGetManager = GetMgr()
-                Dim el As EditableListBase = GetM2M(t, key)
+                Dim el As M2MRelation = GetM2M(t, key)
                 el.Reject(mc.Manager, True)
             End Using
         End Sub
 
-        Protected Function _GetAll() As IList(Of EditableListBase) 'Implements _IOrmBase.GetAllEditable
-            Return _m2m
+        Protected Sub _Cancel(ByVal desc As RelationDesc) Implements IRelations.Cancel
+            Throw New NotImplementedException
+        End Sub
+
+        Protected Function _GetAll() As IList(Of Relation) 'Implements _IOrmBase.GetAllEditable
+            Return _relations
         End Function
 
-        Public ReadOnly Property M2MNew() As IM2M
+        Public ReadOnly Property M2MNew() As IRelations
             Get
                 Return Me
             End Get
         End Property
 
-        'Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-        '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
-        '    Dim q As New Worm.Query.QueryCmdBase(Me)
-        '    Return q
-        'End Function
+        Public Function GetRelation(ByVal desc As RelationDesc) As Cache.Relation Implements IRelations.GetRelation
+            Using GetSyncRoot()
+                For Each rl As Relation In _relations
+                    If rl.Relation.Equals(desc) Then
+                        Return rl
+                    End If
+                Next
+                Dim nrl As Relation = Nothing
+                If TypeOf desc Is M2MRelationDesc Then
+                    nrl = New M2MRelation(Me, CType(desc, M2MRelationDesc))
+                Else
+                    nrl = New Relation(Me, desc)
+                End If
+                _relations.Add(nrl)
+                Return nrl
+            End Using
+        End Function
 
-        'Public Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-        '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me, key)
-        '    Dim q As New Worm.Query.QueryCmdBase(Me, key)
-        '    Return q
-        'End Function
+        Public Function GetRelation(ByVal en As String) As Cache.Relation Implements IRelations.GetRelation
+            Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, Nothing))
+        End Function
 
-        Public Function GetRelation(ByVal t As System.Type) As Cache.EditableListBase Implements IM2M.GetRelation
+        Public Function GetRelation(ByVal en As String, ByVal key As String) As Cache.Relation Implements IRelations.GetRelation
+            Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, key))
+        End Function
+
+        Public Function GetRelation(ByVal t As System.Type) As Cache.Relation Implements IRelations.GetRelation
             Return GetM2M(t, Nothing)
         End Function
 
-        Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Cache.EditableListBase Implements IM2M.GetRelation
+        Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Cache.Relation Implements IRelations.GetRelation
             Return GetM2M(t, key)
         End Function
 
-        Public Function GetRelationSchema(ByVal t As System.Type) As Meta.M2MRelation Implements IM2M.GetRelationSchema
+        Public Function GetRelationSchema(ByVal en As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException
+        End Function
+
+        Public Function GetRelationSchema(ByVal en As String, ByVal key As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException
+        End Function
+
+        Public Function GetRelationSchema(ByVal t As System.Type) As Meta.RelationDesc Implements IRelations.GetRelationDesc
             Return GetRelationSchema(t, Nothing)
         End Function
 
-        Public Function GetRelationSchema(ByVal t As System.Type, ByVal key As String) As Meta.M2MRelation Implements IM2M.GetRelationSchema
+        Public Function GetRelationSchema(ByVal t As System.Type, ByVal key As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
             Dim s As ObjectMappingEngine = MappingEngine
-            Dim m2m As M2MRelation = s.GetM2MRelation(Me.GetType, t, key)
+            Dim m2m As M2MRelationDesc = s.GetM2MRelation(Me.GetType, t, key)
             If m2m Is Nothing Then
                 Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
             Else
@@ -2133,77 +1918,77 @@ Namespace Entities
             End If
         End Function
 
-        Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.EditableListBase) Implements IM2M.GetAllRelation
+        Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.Relation) Implements IRelations.GetAllRelation
             Return _GetAll()
         End Function
 
-        Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Search
+        Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(t, text))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, top))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, top))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields, top))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(text))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, top))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top, queryFields))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
             Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, queryFields))
-            Return q
+            Return CType(q, RelationCmd)
         End Function
 
 #End Region
@@ -2268,8 +2053,7 @@ Namespace Entities
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits KeyEntity
-        Implements IComparable(Of T), IPropertyConverter
-        'Implements IComparable(Of T), IOrmProxy(Of T)
+        Implements IComparable(Of T), IPropertyConverter, IComparable
 
         Private _id As Object
 
@@ -2296,11 +2080,11 @@ Namespace Entities
         'End Function
 
         Public Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
+            If other Is Nothing Then
+                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
+                Return 1
+            End If
             Return Math.Sign(ID - other.ID)
-            'If other Is Nothing Then
-            '    'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
-            '    Return 1
-            'End If
             'Return Math.Sign(Identifier - other.Identifier)
         End Function
 
@@ -2444,6 +2228,10 @@ Namespace Entities
         End Operator
 
 #End Region
+
+        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
+            Return CompareTo(TryCast(obj, T))
+        End Function
     End Class
 
 End Namespace

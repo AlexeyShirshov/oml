@@ -64,8 +64,8 @@ Public Class Expressions
             End Get
         End Property
 
-        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
-            Return FormatOper() & "$" & _v.GetStaticString(mpe)
+        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            Return FormatOper() & "$" & _v.GetStaticString(mpe, contextFilter)
         End Function
 
         Public Overrides Function ToString() As String
@@ -92,9 +92,9 @@ Public Class Expressions
         End Function
 
         Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
+            ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Return FormatOper() & FormatParam(s, stmt, pmgr, almgr, columns, filterInfo, inSelect)
+            Return FormatOper() & FormatParam(s, stmt, pmgr, almgr, filterInfo, inSelect)
         End Function
 
         Protected Function FormatOper() As String
@@ -120,8 +120,12 @@ Public Class Expressions
 
         Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, _
             ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal columns As List(Of String), ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Return _v.GetParam(s, stmt, pmgr, almgr, Nothing, columns, filterInfo, inSelect)
+            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+            Dim strCmd As String = _v.GetParam(s, stmt, pmgr, almgr, Nothing, filterInfo, inSelect)
+            If inSelect AndAlso Not String.IsNullOrEmpty(_alias) Then
+                strCmd &= " " & _alias
+            End If
+            Return strCmd
             'Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
             'If p IsNot Nothing Then
             '    Return p.GetParam(s, pmgr, Nothing)
@@ -153,8 +157,8 @@ Public Class Expressions
         Public Shared Function CreateFilter(ByVal schema As ObjectMappingEngine, ByVal lf As UnaryExp, ByVal rf As UnaryExp, ByVal fo As FilterOperation) As IFilter
             Dim leftValue As IFilterValue = lf._v
             Dim rightValue As IFilterValue = rf._v
-            If lf.GetType Is GetType(UnaryExp) AndAlso leftValue.GetType IsNot GetType(RefValue) Then
-                If rf.GetType Is GetType(UnaryExp) AndAlso rightValue.GetType IsNot GetType(RefValue) Then
+            If lf.GetType Is GetType(UnaryExp) Then 'AndAlso leftValue.GetType IsNot GetType(RefValue)
+                If rf.GetType Is GetType(UnaryExp) Then 'AndAlso rightValue.GetType IsNot GetType(RefValue)
                     If leftValue.GetType Is GetType(FieldValue) Then
                         If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
                             Dim lv As FieldValue = CType(leftValue, FieldValue)
@@ -199,6 +203,12 @@ l1:
                 '               Throw New NotImplementedException
             End If
         End Function
+
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
+            If _v IsNot Nothing Then
+                _v.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
     <Serializable()> _
@@ -231,18 +241,27 @@ l1:
         End Property
 
         Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal pmgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
+            ByVal pmgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Return "(" & _left.MakeStmt(s, stmt, pmgr, almgr, columns, filterInfo, inSelect) & FormatOper() & _right.MakeStmt(s, stmt, pmgr, almgr, columns, filterInfo, inSelect) & ")"
+            Return "(" & _left.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect) & FormatOper() & _right.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect) & ")"
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
-            Return _left.ToStaticString(mpe) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Return _left.ToStaticString(mpe, contextFilter) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe, contextFilter)
         End Function
 
         Public Overrides Function _ToString() As String
             Return _left._ToString & "$" & Operation.ToString & "$" & _right._ToString
         End Function
+
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+            If _left IsNot Nothing Then
+                _left.Prepare(executor, schema, filterInfo, stmt)
+            End If
+            If _right IsNot Nothing Then
+                _right.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, BinaryExp))

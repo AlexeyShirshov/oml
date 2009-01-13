@@ -22,7 +22,7 @@ Partial Public Class OrmManager
             p2 = o.GetSecondType
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-            Dim oschema As IEntitySchema = schema.GetObjectSchema(obj.GetType)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(obj.GetType)
             o1 = CType(schema.GetPropertyValue(obj, p1.PropertyName, oschema), IKeyEntity)
             o2 = CType(schema.GetPropertyValue(obj, p2.PropertyName, oschema), IKeyEntity)
         End Sub
@@ -32,7 +32,7 @@ Partial Public Class OrmManager
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim el As EditableList = e.Entry
+            Dim el As CachedM2MRelation = e.Entry
             Dim obj As IKeyEntity = Nothing, subobj As IKeyEntity = Nothing
             Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If Main.Equals(o1) Then
@@ -76,7 +76,7 @@ Partial Public Class OrmManager
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim el As EditableList = e.Entry
+            Dim el As CachedM2MRelation = e.Entry
             Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) Then
                 el.Delete(o2)
@@ -91,7 +91,7 @@ Partial Public Class OrmManager
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim el As EditableList = e.Entry
+            Dim el As CachedM2MRelation = e.Entry
             Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 Return el.Accept(mgr)
@@ -104,7 +104,7 @@ Partial Public Class OrmManager
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim el As EditableList = e.Entry
+            Dim el As CachedM2MRelation = e.Entry
             Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 el.Reject(mgr, False)
@@ -235,6 +235,7 @@ Partial Public Class OrmManager
         End Sub
     End Class
 
+    <Serializable()> _
     Public Structure ExecutionResult
         Public ReadOnly RowCount As Integer
         Public ReadOnly ExecutionTime As TimeSpan
@@ -273,13 +274,13 @@ Partial Public Class OrmManager
         ReadOnly Property Sort() As Sort
         'ReadOnly Property SortType() As SortType
         ReadOnly Property Filter() As IFilter
-        Sub CreateDepends()
+        Sub CreateDepends(ByVal ce As CachedItemBase)
         Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
     End Interface
 
     Public Interface ICacheItemProvoder(Of T As {ICachedEntity})
         Inherits ICacheItemProvoderBase
-        Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
+        Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As UpdatableCachedItem
     End Interface
 
     Public Class PagerSwitcher
@@ -387,7 +388,7 @@ Partial Public Class OrmManager
     End Class
 
     Public Interface ICacheValidator
-        Function ValidateItemFromCache(ByVal ce As CachedItem) As Boolean
+        Function ValidateItemFromCache(ByVal ce As UpdatableCachedItem) As Boolean
         Function ValidateBeforCacheProbe() As Boolean
     End Interface
 
@@ -426,16 +427,23 @@ Partial Public Class OrmManager
         End Property
 
         Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
-        Public MustOverride Sub CreateDepends() Implements ICacheItemProvoderBase.CreateDepends
+        Public MustOverride Sub CreateDepends()
         Public MustOverride ReadOnly Property Filter() As IFilter Implements ICacheItemProvoderBase.Filter
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase.Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As UpdatableCachedItem
+
+        Private Sub CreateDepends(ByVal ce As CachedItemBase) Implements ICacheItemProvoderBase.CreateDepends
+            CType(ce, UpdatableCachedItem).Filter = Filter
+            CType(ce, UpdatableCachedItem).Sort = Sort
+            CreateDepends()
+        End Sub
+
         Private Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase Implements ICacheItemProvoderBase.GetCacheItem
             Return GetCacheItem(CType(ctx.Value, Boolean())(0))
         End Function
 
-        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As UpdatableCachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
     End Class
 
     Public MustInherit Class CustDelegate(Of T As {IKeyEntity, New})

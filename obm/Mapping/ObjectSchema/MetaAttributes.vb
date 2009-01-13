@@ -3,6 +3,7 @@ Imports System
 Namespace Entities.Meta
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
+    <Serializable()> _
     Public NotInheritable Class EntityPropertyAttribute
         Inherits Attribute
         Implements IComparable(Of EntityPropertyAttribute), ICloneable
