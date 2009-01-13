@@ -12,7 +12,8 @@ Namespace Criteria.Core
     Public Interface IFilter
         Inherits IGetFilter, ICloneable, IQueryElement
         'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-        Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As List(Of String)) As String
+        Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+                               ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
@@ -52,7 +53,8 @@ Namespace Criteria.Core
         ReadOnly Property Operation() As FilterOperation
         ReadOnly Property OperToString() As String
         ReadOnly Property OperToStmt(ByVal stmt As StmtGenerator) As String
-        Function GetStaticString() As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Function _ToString() As String
     End Interface
 
     Public Interface IOrmFilterTemplate

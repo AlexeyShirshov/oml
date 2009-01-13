@@ -44,7 +44,7 @@ Namespace Web
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
             Using mt As New ModificationsTracker(mgr)
-                CType(user, ICachedEntity).Delete()
+                CType(user, ICachedEntity).Delete(mgr)
                 mt.AcceptModifications()
             End Using
         End Sub
@@ -249,7 +249,7 @@ Namespace Web
             Dim start As Integer = pageIndex * pageSize
             If start < col.Count Then
                 Dim [end] As Integer = Math.Min((pageIndex - 1) * pageSize, col.Count)
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(GetUserType)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(GetUserType)
                 For i As Integer = start To [end] - 1
                     Dim u As KeyEntity = CType(col(i), KeyEntity)
 
@@ -437,7 +437,7 @@ Namespace Web
             Dim oschema As IEntitySchema = Nothing
             If user IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr()
-                    oschema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                    oschema = mgr.MappingEngine.GetEntitySchema(user.GetType)
                 End Using
             End If
 
@@ -534,7 +534,7 @@ Namespace Web
                         Else
                             Using mgr As OrmManager = _getMgr()
                                 Using user.BeginEdit
-                                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(user.GetType)
                                     mgr.MappingEngine.SetPropertyValue(user, p.Name, p.PropertyValue, oschema)
                                 End Using
                             End Using
@@ -555,7 +555,7 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmManager = _getMgr()
-                        Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                        Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(user.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
@@ -648,7 +648,7 @@ Namespace Web
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(CType(mgr, OrmDBManager), HttpContext.Current.Profile.UserName, AnonymousId, Nothing)
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                    Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then
@@ -714,7 +714,7 @@ Namespace Web
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
             Using mt As New ModificationsTracker(mgr)
-                CType(user, ICachedEntity).Delete()
+                CType(user, ICachedEntity).Delete(mgr)
                 mt.AcceptModifications()
             End Using
         End Sub

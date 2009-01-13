@@ -79,7 +79,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
-                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
                     users.Add(CStr(mgr.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
                 Next
@@ -90,7 +90,7 @@ Namespace Web
         Public Overrides Function GetAllRoles() As String()
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim roles As New Generic.List(Of String)
-                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetRoleType)
                 'Dim col As IEnumerable = FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
                 Dim col As IEnumerable = New Query.QueryCmd().Select(GetRoleType).ToList(mgr)
                 For Each r As IKeyEntity In col
@@ -107,7 +107,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim roles As New Generic.List(Of String)
-                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     roles.Add(CStr(mgr.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
                 Next
@@ -122,7 +122,7 @@ Namespace Web
 
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim users As New Generic.List(Of String)
-                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(UserMapper.GetUserType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 For Each u As IKeyEntity In FindUsersInRoleInternal(mgr, roleName, Nothing)
                     users.Add(CStr(mgr.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
                 Next
@@ -132,7 +132,7 @@ Namespace Web
 
         Public Overrides Function IsUserInRole(ByVal username As String, ByVal roleName As String) As Boolean
             Using mgr As OrmManager = UserMapper.CreateManager
-                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetObjectSchema(GetRoleType)
+                Dim oschema As Meta.IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetRoleType)
                 For Each r As IKeyEntity In GetRolesForUserInternal(mgr, username)
                     If CStr(mgr.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
                         Return True
@@ -190,7 +190,7 @@ Namespace Web
                         For Each role As String In roleNames
                             Dim r As IKeyEntity = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
-                                CType(u, IM2M).Delete(r)
+                                CType(u, IRelations).Delete(r)
                             End If
                         Next
                     End If
@@ -220,7 +220,7 @@ Namespace Web
         Protected Friend Function GetRolesForUserInternal(ByVal mgr As OrmManager, ByVal username As String) As IList
             Dim u As IKeyEntity = MembershipProvider.FindUserByName(mgr, username, Nothing)
             If u IsNot Nothing Then
-                Return CType(u.Find(GetRoleType).ToList(mgr), IList)
+                Return CType(u.GetCmd(GetRoleType).ToList(mgr), IList)
             End If
             Return New IKeyEntity() {}
         End Function
@@ -239,7 +239,7 @@ Namespace Web
             If cascade Then
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
-            CType(role, ICachedEntity).Delete()
+            CType(role, ICachedEntity).Delete(mgr)
             role.SaveChanges(True)
         End Sub
 

@@ -117,7 +117,7 @@ Namespace Criteria.Joins
                 End If
             Next
 
-            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname, Nothing)
+            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname)
         End Function
 
         Public Function JoinTypeString() As String
@@ -150,23 +150,23 @@ Namespace Criteria.Joins
             _condition = _condition.ReplaceFilter(replacement, replacer)
         End Sub
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             If _table IsNot Nothing Then
-                Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
+                Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
                 'ElseIf _type IsNot Nothing Then
                 '    Return gs(_type.ToString, mpe)
                 'Else
                 '    Return gs(_en, mpe)
             Else
-                Return gs(_src.ToStaticString, mpe)
+                Return gs(_src.ToStaticString(mpe, contextFilter), mpe, contextFilter)
             End If
         End Function
 
-        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine) As String
+        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             If _condition IsNot Nothing Then
-                Return s & JoinTypeString() & _condition.GetStaticString(mpe)
+                Return s & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
             Else
-                Return s & JoinTypeString() & _jos.ToStaticString & _key
+                Return s & JoinTypeString() & _jos.ToStaticString(mpe, contextFilter) & _key
                 'If _jt IsNot Nothing Then
                 '    Return s & JoinTypeString() & _jos.ToStaticString & _key
                 'Else
@@ -187,7 +187,7 @@ Namespace Criteria.Joins
                 'Else
                 '    Return gd(_en)
             Else
-                Return gd(_src.ToStaticString)
+                Return gd(_src._ToString)
             End If
         End Function
 
@@ -195,7 +195,7 @@ Namespace Criteria.Joins
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition._ToString
             Else
-                Return s & JoinTypeString() & _jos.ToStaticString & _key
+                Return s & JoinTypeString() & _jos._ToString & _key
                 'If _jt IsNot Nothing Then
                 '    Return s & JoinTypeString() & _jt.ToString & _key
                 'Else
@@ -360,6 +360,12 @@ Namespace Criteria.Joins
         Public Function Clone() As QueryJoin
             Return CType(_Clone(), QueryJoin)
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+            If _src IsNot Nothing AndAlso _src.AnyType Is Nothing AndAlso String.IsNullOrEmpty(_src.AnyEntityName) Then
+                _src.ObjectAlias.Query.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
 End Namespace

@@ -71,10 +71,10 @@ End Class
 'End Interface
 
 ''' <summary>
-''' Класс хранения и управления схемами объектов <see cref="IObjectSchemaBase"/>
+''' Класс хранения и управления схемами объектов <see cref="IEntitySchema"/>
 ''' </summary>
 ''' <remarks>Класс управляет версиями схем объектов, предоставляет удобные обертки для методов
-''' <see cref="IObjectSchemaBase"/> через тип объекта.</remarks>
+''' <see cref="IEntitySchema"/> через тип объекта.</remarks>
 Public Class ObjectMappingEngine
     'Implements ISchemaWithJoins
 
@@ -88,6 +88,8 @@ Public Class ObjectMappingEngine
     Private _version As String
     Private _mapv As ResolveEntity
     Private _mapn As ResolveEntityName
+
+    Public ReadOnly Mark As Guid = Guid.NewGuid
 
     Public Sub New(ByVal version As String)
         _version = version
@@ -136,7 +138,7 @@ Public Class ObjectMappingEngine
 
         Dim sup() As String = Nothing
         If schema IsNot Nothing Then
-            Dim s As IObjectSchemaBase = TryCast(schema, IObjectSchemaBase)
+            Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
             If s IsNot Nothing Then sup = s.GetSuppressedFields()
         End If
 
@@ -259,7 +261,7 @@ Public Class ObjectMappingEngine
 
     Public Function GetMappedFields(ByVal schema As IEntitySchema) As ICollection(Of MapField2Column)
         Dim sup() As String = Nothing
-        Dim s As IObjectSchemaBase = TryCast(schema, IObjectSchemaBase)
+        Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
         If s IsNot Nothing Then sup = s.GetSuppressedFields()
         If sup Is Nothing OrElse sup.Length = 0 Then
             Return schema.GetFieldColumnMap.Values
@@ -274,7 +276,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
-        Dim schema As IEntitySchema = GetObjectSchema(t)
+        Dim schema As IEntitySchema = GetEntitySchema(t)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
@@ -286,7 +288,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
-        Return GetEntityTypeKey(filterInfo, t, GetObjectSchema(t))
+        Return GetEntityTypeKey(filterInfo, t, GetEntitySchema(t))
     End Function
 
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IEntitySchema) As Object
@@ -304,7 +306,7 @@ Public Class ObjectMappingEngine
 
         If String.IsNullOrEmpty(columnName) Then Throw New ArgumentNullException("columnName")
 
-        Dim schema As IEntitySchema = GetObjectSchema(type)
+        Dim schema As IEntitySchema = GetEntitySchema(type)
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
@@ -339,29 +341,29 @@ Public Class ObjectMappingEngine
     '    Return schema.GetM2MRelationColumn(subtype)
     'End Function
 
-    Public Function GetM2MRelations(ByVal s As IEntitySchema) As M2MRelation()
+    Public Function GetM2MRelations(ByVal s As IEntitySchema) As M2MRelationDesc()
         Dim schema As ISchemaWithM2M = TryCast(s, ISchemaWithM2M)
         If schema IsNot Nothing Then
             Return schema.GetM2MRelations
         Else
-            Return New M2MRelation() {}
+            Return New M2MRelationDesc() {}
         End If
     End Function
 
-    Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelation()
+    Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelationDesc()
         If maintype Is Nothing Then
             Throw New ArgumentNullException("maintype")
         End If
 
-        Return GetM2MRelations(GetObjectSchema(maintype))
+        Return GetM2MRelations(GetEntitySchema(maintype))
     End Function
 
-    Public Function GetM2MRelationsForEdit(ByVal maintype As Type) As M2MRelation()
+    Public Function GetM2MRelationsForEdit(ByVal maintype As Type) As M2MRelationDesc()
         If maintype Is Nothing Then
             Throw New ArgumentNullException("maintype")
         End If
 
-        Dim sch As IEntitySchema = GetObjectSchema(maintype)
+        Dim sch As IEntitySchema = GetEntitySchema(maintype)
         Dim editable As IReadonlyObjectSchema = TryCast(sch, IReadonlyObjectSchema)
         Dim schema As ISchemaWithM2M = Nothing
         If editable IsNot Nothing Then
@@ -370,7 +372,7 @@ Public Class ObjectMappingEngine
             schema = TryCast(sch, ISchemaWithM2M)
         End If
         If schema IsNot Nothing Then
-            Dim m As M2MRelation() = schema.GetM2MRelations
+            Dim m As M2MRelationDesc() = schema.GetM2MRelations
             If m Is Nothing AndAlso editable IsNot Nothing Then
                 schema = TryCast(sch, ISchemaWithM2M)
                 If schema IsNot Nothing Then
@@ -383,7 +385,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
+    Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
         'Dim mr() As M2MRelation = GetM2MRelations(maintype)
         'For Each r As M2MRelation In mr
@@ -406,24 +408,24 @@ Public Class ObjectMappingEngine
         Return GetM2MRel(GetM2MRelations(maintype), subtype, key)
     End Function
 
-    Public Function GetM2MRelation(ByVal maintype As Type, ByVal mainSchema As IEntitySchema, ByVal subtype As Type, ByVal key As String) As M2MRelation
-        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
-        Dim mr() As M2MRelation = GetM2MRelations(mainSchema)
+    Public Function GetM2MRelation(ByVal maintype As Type, ByVal mainSchema As IEntitySchema, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
+        If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
+        Dim mr() As M2MRelationDesc = GetM2MRelations(mainSchema)
         Return GetM2MRel(mr, subtype, key)
     End Function
 
-    Private Function GetM2MRel(ByVal mr() As M2MRelation, ByVal subtype As Type, ByVal key As String) As M2MRelation
-        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
-        For Each r As M2MRelation In mr
-            If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
+    Private Function GetM2MRel(ByVal mr() As M2MRelationDesc, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
+        If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
+        For Each r As M2MRelationDesc In mr
+            If r.Rel.GetRealType(Me) Is subtype AndAlso String.Equals(r.Key, key) Then
                 Return r
             End If
         Next
 
-        For Each r As M2MRelation In mr
+        For Each r As M2MRelationDesc In mr
             Dim n As String = r.EntityName
             If String.IsNullOrEmpty(n) Then
-                n = GetEntityNameByType(r.Type)
+                n = GetEntityNameByType(r.Rel.GetRealType(Me))
                 If Not String.IsNullOrEmpty(n) Then
                     Dim n2 As String = GetEntityNameByType(subtype)
                     If String.Equals(n, n2) AndAlso String.Equals(r.Key, key) Then
@@ -441,8 +443,8 @@ Public Class ObjectMappingEngine
         Return Nothing
     End Function
 
-    Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
-        Return GetM2MRel(GetM2MRelations(maintype), subtype, M2MRelation.GetKey(direct))
+    Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelationDesc
+        Return GetM2MRel(GetM2MRelations(maintype), subtype, M2MRelationDesc.GetKey(direct))
         'Dim mr() As M2MRelation = GetM2MRelations(maintype)
         'For Each r As M2MRelation In mr
         '    If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
@@ -463,7 +465,7 @@ Public Class ObjectMappingEngine
         'Return Nothing
     End Function
 
-    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
+    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'For Each r As M2MRelation In GetM2MRelationsForEdit(maintype)
         '    If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.Key = direct) Then
         '        Return r
@@ -474,15 +476,15 @@ Public Class ObjectMappingEngine
         Return GetM2MRel(GetM2MRelationsForEdit(maintype), subtype, key)
     End Function
 
-    Public Function GetRevM2MRelation(ByVal mainType As Type, ByVal subType As Type, ByVal key As String) As M2MRelation
+    Public Function GetRevM2MRelation(ByVal mainType As Type, ByVal subType As Type, ByVal key As String) As M2MRelationDesc
         If mainType Is subType Then
-            Return GetM2MRelation(subType, mainType, M2MRelation.GetRevKey(key))
+            Return GetM2MRelation(subType, mainType, M2MRelationDesc.GetRevKey(key))
         Else
             Return GetM2MRelation(subType, mainType, key)
         End If
     End Function
 
-    Public Function GetRevM2MRelation(ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean) As M2MRelation
+    Public Function GetRevM2MRelation(ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean) As M2MRelationDesc
         If mainType Is subType Then
             Return GetM2MRelation(subType, mainType, Not direct)
         Else
@@ -491,7 +493,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function IsMany2ManyReadonly(ByVal maintype As Type, ByVal subtype As Type) As Boolean
-        Dim r As M2MRelation = GetM2MRelation(maintype, subtype, True)
+        Dim r As M2MRelationDesc = GetM2MRelation(maintype, subtype, True)
 
         If r Is Nothing Then
             Throw New ArgumentException("Relation is not exists")
@@ -530,7 +532,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetConnectedType(ByVal maintype As Type, ByVal subtype As Type) As Type
-        Dim r As M2MRelation = GetM2MRelation(maintype, subtype, True)
+        Dim r As M2MRelationDesc = GetM2MRelation(maintype, subtype, True)
 
         If r Is Nothing Then
             Throw New ArgumentException("Relation is not exists")
@@ -562,7 +564,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetConnectedTypeField(ByVal ct As Type, ByVal t As Type, ByVal direction As Boolean) As String
-        Return GetConnectedTypeField(ct, t, M2MRelation.GetKey(direction))
+        Return GetConnectedTypeField(ct, t, M2MRelationDesc.GetKey(direction))
         'Dim rel As IRelation = GetConnectedTypeRelation(ct)
         'If rel Is Nothing Then
         '    Throw New ArgumentException("Type is not implement IRelation")
@@ -589,7 +591,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("maintype")
         End If
 
-        Dim schema As IEntitySchema = GetObjectSchema(ct)
+        Dim schema As IEntitySchema = GetEntitySchema(ct)
 
         Return TryCast(schema, IRelation)
     End Function
@@ -615,7 +617,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Return ChangeValueType(GetObjectSchema(type), c, o)
+        Return ChangeValueType(GetEntitySchema(type), c, o)
     End Function
 
     Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal c As EntityPropertyAttribute, ByVal o As Object) As Object
@@ -623,7 +625,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("s")
         End If
 
-        Dim schema As IObjectSchemaBase = TryCast(s, IObjectSchemaBase)
+        Dim schema As IEntitySchemaBase = TryCast(s, IEntitySchemaBase)
 
         If o Is Nothing Then Return DBNull.Value
 
@@ -710,7 +712,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetJoinSelectMapping(ByVal t As Type, ByVal subType As Type) As System.Data.Common.DataTableMapping
-        Dim r As M2MRelation = GetM2MRelation(t, subType, True)
+        Dim r As M2MRelationDesc = GetM2MRelation(t, subType, True)
 
         If r Is Nothing Then
             Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", t.Name, subType.Name))
@@ -733,7 +735,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Dim schema As IEntitySchema = GetObjectSchema(type)
+        Dim schema As IEntitySchema = GetEntitySchema(type)
 
         Return GetAttributes(schema, c)
     End Function
@@ -751,7 +753,7 @@ Public Class ObjectMappingEngine
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
         If String.IsNullOrEmpty(field) Then Return False
 
-        Dim schema As IEntitySchema = GetObjectSchema(t)
+        Dim schema As IEntitySchema = GetEntitySchema(t)
 
         Return schema.GetFieldColumnMap.ContainsKey(field)
     End Function
@@ -815,7 +817,7 @@ Public Class ObjectMappingEngine
     Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of EntityPropertyAttribute)
         'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
         If schema Is Nothing Then
-            schema = GetObjectSchema(original_type)
+            schema = GetEntitySchema(original_type)
         End If
         Dim cl_type As String = "columnlist" & original_type.ToString & schema.GetType.ToString
 
@@ -930,7 +932,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("obj")
         End If
 
-        Dim schema As IEntitySchema = GetObjectSchema(obj.GetType)
+        Dim schema As IEntitySchema = GetEntitySchema(obj.GetType)
 
         Return GetPropertyValue(obj, propertyAlias, schema)
         'Dim pi As Reflection.PropertyInfo = Nothing
@@ -1188,7 +1190,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetPropertyTypeByName(ByVal type As Type, ByVal propertyAlias As String) As Type
-        Return GetPropertyTypeByName(type, GetObjectSchema(type), propertyAlias)
+        Return GetPropertyTypeByName(type, GetEntitySchema(type), propertyAlias)
     End Function
 
     Public Function GetPropertyTypeByName(ByVal type As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Type
@@ -1242,7 +1244,7 @@ Public Class ObjectMappingEngine
     Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String) As String
         If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
-        Dim schema As IEntitySchema = GetObjectSchema(type)
+        Dim schema As IEntitySchema = GetEntitySchema(type)
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
@@ -1275,7 +1277,7 @@ Public Class ObjectMappingEngine
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
         'Dim l As New List(Of EntityPropertyAttribute)
-        Return GetColumnByPropertyAlias(main, propertyAlias, GetObjectSchema(main))
+        Return GetColumnByPropertyAlias(main, propertyAlias, GetEntitySchema(main))
     End Function
 
     Public Function GetColumnByPropertyAlias(ByVal main As Type, ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As EntityPropertyAttribute
@@ -1416,7 +1418,7 @@ Public Class ObjectMappingEngine
                                     End Try
                                 End If
 
-                                Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                                 If n IsNot Nothing Then
                                     n.GetSchema(Me, tp)
                                 End If
@@ -1465,7 +1467,7 @@ Public Class ObjectMappingEngine
                                         End Try
                                     End If
 
-                                    Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                    Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                                     If n IsNot Nothing Then
                                         n.GetSchema(Me, tp)
                                     End If
@@ -1521,7 +1523,7 @@ Public Class ObjectMappingEngine
                                         End Try
                                     End If
 
-                                    Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                    Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                                     If n IsNot Nothing Then
                                         n.GetSchema(Me, tp)
                                     End If
@@ -1582,7 +1584,7 @@ Public Class ObjectMappingEngine
                                             End Try
                                         End If
 
-                                        Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                        Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                                         If n IsNot Nothing Then
                                             n.GetSchema(Me, tp)
                                         End If
@@ -1647,7 +1649,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function GetObjectSchema(ByVal t As Type) As IEntitySchema
+    Public Function GetEntitySchema(ByVal t As Type) As IEntitySchema
         Return GetObjectSchema(t, True)
     End Function
 
@@ -1693,7 +1695,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Dim schema As IOrmObjectSchema = CType(GetObjectSchema(type), IOrmObjectSchema)
+        Dim schema As IOrmObjectSchema = CType(GetEntitySchema(type), IOrmObjectSchema)
 
         Return GetJoins(schema, left, right, filterInfo)
     End Function
@@ -1752,7 +1754,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Return GetTables(GetObjectSchema(type))
+        Return GetTables(GetEntitySchema(type))
     End Function
 
     Public Function GetTables(ByVal schema As IEntitySchema) As SourceFragment()
@@ -1777,7 +1779,7 @@ Public Class ObjectMappingEngine
             Dim oschema As IEntitySchema = Nothing
             For Each o As T In col
                 If oschema Is Nothing Then
-                    oschema = Me.GetObjectSchema(o.GetType)
+                    oschema = Me.GetEntitySchema(o.GetType)
                 End If
                 Dim er As Criteria.Values.IEvaluableValue.EvalResult = f.Eval(Me, o, oschema)
                 Select Case er
@@ -1852,7 +1854,7 @@ Public Class ObjectMappingEngine
             d = stmt.Selector
         End If
 
-        Dim oschema As IEntitySchema = schema.GetObjectSchema(t)
+        Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
         Dim tbl As SourceFragment = Nothing
         Dim map As MapField2Column = Nothing
         'Dim fld As String = p.Second
@@ -1883,7 +1885,7 @@ Public Class ObjectMappingEngine
 
 #Region " Gen "
     Public Function GetColumnNameByPropertyAlias(ByVal schema As IEntitySchema, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal columnAliases As List(Of String), ByVal os As EntityUnion) As String
+        ByVal add_alias As Boolean, ByVal os As EntityUnion) As String
 
         If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
@@ -1897,9 +1899,9 @@ Public Class ObjectMappingEngine
             Else
                 c = p._columnName
             End If
-            If columnAliases IsNot Nothing Then
-                columnAliases.Add(p._columnName)
-            End If
+            'If columnAliases IsNot Nothing Then
+            '    columnAliases.Add(p._columnName)
+            'End If
             Return c
         End If
 
@@ -1907,17 +1909,17 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, _
-        ByVal add_alias As Boolean, ByVal os As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        ByVal add_alias As Boolean, ByVal os As EntityUnion) As String
 
         If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
-        Dim schema As IEntitySchema = mpe.GetObjectSchema(type)
+        Dim schema As IEntitySchema = mpe.GetEntitySchema(type)
 
-        Return GetColumnNameByPropertyAlias(schema, propertyAlias, add_alias, columnAliases, os)
+        Return GetColumnNameByPropertyAlias(schema, propertyAlias, add_alias, os)
     End Function
 
     Public Function GetPrimaryKeysName(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal add_alias As Boolean, _
-        ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String()
+        ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String()
         If original_type Is Nothing Then
             Throw New ArgumentNullException("original_type")
         End If
@@ -1932,12 +1934,12 @@ Public Class ObjectMappingEngine
                 If arr Is Nothing Then
                     arr = New Generic.List(Of String)
                     If schema Is Nothing Then
-                        schema = mpe.GetObjectSchema(original_type)
+                        schema = mpe.GetEntitySchema(original_type)
                     End If
 
                     For Each c As EntityPropertyAttribute In mpe.GetSortedFieldList(original_type, schema)
                         If (mpe.GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            arr.Add(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, add_alias, columnAliases, os))
+                            arr.Add(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, add_alias, os))
                         End If
                     Next
 
@@ -1949,12 +1951,13 @@ Public Class ObjectMappingEngine
         Return arr.ToArray
     End Function
 
-    Protected Friend Sub GetPKList(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal schema As IEntitySchema, ByVal ids As StringBuilder, ByVal columnAliases As List(Of String), ByVal os As EntityUnion)
+    Protected Friend Sub GetPKList(ByVal type As Type, ByVal mpe As ObjectMappingEngine, _
+        ByVal schema As IEntitySchema, ByVal ids As StringBuilder, ByVal os As EntityUnion)
         If ids Is Nothing Then
             Throw New ArgumentNullException("ids")
         End If
 
-        For Each pk As String In GetPrimaryKeysName(type, mpe, True, columnAliases, schema, os)
+        For Each pk As String In GetPrimaryKeysName(type, mpe, True, schema, os)
             ids.Append(pk).Append(",")
         Next
         ids.Length -= 1
@@ -1966,7 +1969,7 @@ Public Class ObjectMappingEngine
         'End If
     End Sub
 
-    Protected Friend Function GetSelectColumns(ByVal mpe As ObjectMappingEngine, ByVal props As IEnumerable(Of SelectExpression), ByVal columnAliases As List(Of String)) As String
+    Protected Friend Function GetSelectColumns(ByVal mpe As ObjectMappingEngine, ByVal props As IEnumerable(Of SelectExpression)) As String
         Dim sb As New StringBuilder
         For Each pr As SelectExpression In props
             If pr.PropType = PropType.TableColumn Then
@@ -1978,7 +1981,7 @@ Public Class ObjectMappingEngine
                 End If
                 sb.Append(", ")
             Else
-                sb.Append(GetColumnNameByPropertyAlias(mpe.GetObjectSchema(pr.ObjectSource.GetRealType(mpe)), pr.PropertyAlias, True, columnAliases, pr.ObjectSource)).Append(", ")
+                sb.Append(GetColumnNameByPropertyAlias(mpe.GetEntitySchema(pr.ObjectSource.GetRealType(mpe)), pr.PropertyAlias, True, pr.ObjectSource)).Append(", ")
             End If
         Next
 
@@ -1987,7 +1990,8 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, _
+        ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -1999,7 +2003,7 @@ Public Class ObjectMappingEngine
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
         For Each c As EntityPropertyAttribute In arr
-            sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
+            sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, os)).Append(", ")
         Next
 
         sb.Length -= 2
@@ -2010,7 +2014,9 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal columnAliases As List(Of String), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
+    Protected Friend Function GetSelectColumnListWithoutPK(ByVal original_type As Type, _
+        ByVal mpe As ObjectMappingEngine, ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), _
+        ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -2023,7 +2029,7 @@ Public Class ObjectMappingEngine
         If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
         For Each c As EntityPropertyAttribute In arr
             If (c.Behavior And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, columnAliases, os)).Append(", ")
+                sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, os)).Append(", ")
             End If
         Next
 
@@ -2036,16 +2042,16 @@ Public Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
-        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, True, os, columnAliases)
+    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As EntityUnion) As String
+        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, True, os)
     End Function
 
-    Public Function GetColumnNameByPropertyAlias(ByVal os As IEntitySchema, ByVal propertyAlias As String, ByVal osrc As EntityUnion, Optional ByVal columnAliases As List(Of String) = Nothing) As String
-        Return GetColumnNameByPropertyAlias(os, propertyAlias, True, columnAliases, osrc)
+    Public Function GetColumnNameByPropertyAlias(ByVal os As IEntitySchema, ByVal propertyAlias As String, ByVal osrc As EntityUnion) As String
+        Return GetColumnNameByPropertyAlias(os, propertyAlias, True, osrc)
     End Function
 
-    Protected Function GetColumns4Select(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal columnAliases As List(Of String), ByVal os As EntityUnion) As String
-        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, os, columnAliases)
+    Protected Function GetColumns4Select(ByVal type As Type, ByVal mpe As ObjectMappingEngine, ByVal propertyAlias As String, ByVal os As EntityUnion) As String
+        Return GetColumnNameByPropertyAlias(type, mpe, propertyAlias, os)
     End Function
 #End Region
 
@@ -2056,7 +2062,7 @@ Public Class ObjectMappingEngine
         Dim schema As ObjectMappingEngine = Me
         Dim selectType As Type = selectOS.GetRealType(Me)
         Dim type2join As Type = joinOS.GetRealType(Me)
-        Dim sh As IEntitySchema = schema.GetObjectSchema(type2join)
+        Dim sh As IEntitySchema = schema.GetEntitySchema(type2join)
 
         Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
 
@@ -2065,7 +2071,7 @@ Public Class ObjectMappingEngine
             field = schema.GetJoinFieldNameByType(type2join, selectType, sh)
 
             If String.IsNullOrEmpty(field) Then
-                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
+                Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)
                 If m2m IsNot Nothing Then
                     'l.AddRange(MakeM2MJoin(m2m, joinOS))
                     l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)

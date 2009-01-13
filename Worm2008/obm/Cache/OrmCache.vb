@@ -200,7 +200,7 @@ Namespace Cache
         Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
-        Private _m2mSimpleQueries As New Dictionary(Of EditableListBase, CacheEntryRef)
+        Private _m2mSimpleQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
 
         'Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _jt As New Dictionary(Of Type, List(Of Type))
@@ -463,7 +463,7 @@ Namespace Cache
 #End If
                 For Each t As Type In ts
                     Dim tkey As Object = t
-                    Dim c As ICacheBehavior = TryCast(schema.GetObjectSchema(t), ICacheBehavior)
+                    Dim c As ICacheBehavior = TryCast(schema.GetEntitySchema(t), ICacheBehavior)
                     If c IsNot Nothing Then
                         tkey = c.GetEntityKey(filterInfo)
                     End If
@@ -676,7 +676,7 @@ Namespace Cache
         '            End Using
         '        End Function
 
-        Protected Friend Sub RemoveM2MQueries(ByVal el As EditableListBase)
+        Protected Friend Sub RemoveM2MQueries(ByVal el As M2MRelation)
             If el Is Nothing Then
                 Throw New ArgumentNullException("el")
             End If
@@ -694,7 +694,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub AddM2MSimpleQuery(ByVal el As EditableListBase, ByVal key As String, ByVal id As String)
+        Protected Friend Sub AddM2MSimpleQuery(ByVal el As M2MRelation, ByVal key As String, ByVal id As String)
             If el Is Nothing Then
                 Throw New ArgumentNullException("el")
             End If
@@ -857,10 +857,10 @@ Namespace Cache
             End If
 
             Dim tkey As Object = tt
-            Dim oschema As IEntitySchema = mgr.MappingEngine.GetObjectSchema(tt)
+            Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             If c IsNot Nothing Then
-                tkey = c.GetEntityKey(mgr.GetFilterInfo)
+                tkey = c.GetEntityKey(mgr.GetContextFilter)
             End If
 
             Dim oneLoop As Boolean
@@ -1021,11 +1021,11 @@ Namespace Cache
             End If
 
             If Not fromUpdate Then
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
                 Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                 Dim k As Object = tt
                 If c IsNot Nothing Then
-                    k = c.GetEntityTypeKey(mgr.GetFilterInfo)
+                    k = c.GetEntityTypeKey(mgr.GetContextFilter)
                 End If
 
 #If DebugLocks Then
@@ -1115,7 +1115,7 @@ l1:
             Dim ids As IEnumerable(Of String) = hid.GetIds(h)
             Dim rm As New List(Of String)
             For Each id As String In ids
-                Dim ce As CachedItem = TryCast(dic(id), CachedItem)
+                Dim ce As UpdatableCachedItem = TryCast(dic(id), UpdatableCachedItem)
                 Dim f As IEntityFilter = Nothing
                 If ce IsNot Nothing Then
                     f = TryCast(ce.Filter, IEntityFilter)
@@ -1196,7 +1196,7 @@ l1:
                 ids = hid.GetIds(h)
 
                 For Each id As String In ids
-                    Dim ce As CachedItem = TryCast(dic(id), CachedItem)
+                    Dim ce As UpdatableCachedItem = TryCast(dic(id), UpdatableCachedItem)
                     Dim f As IEntityFilter = Nothing
                     If ce IsNot Nothing Then
                         f = TryCast(ce.Filter, IEntityFilter)
@@ -1508,13 +1508,13 @@ l1:
         End Function
 
         Protected Overrides Function CreateDictionary4ObjectInstances(ByVal t As System.Type) As System.Collections.IDictionary
-            Dim pol As DictionatyCachePolicy = GetPolicy(t)
+            Dim pol As WebCacheDictionaryPolicy = GetPolicy(t)
             Dim args() As Object = Nothing
             Dim dt As Type = Nothing
             If pol Is Nothing Then
                 dt = GetType(Collections.SynchronizedDictionary(Of ))
             Else
-                dt = GetType(OrmDictionary(Of ))
+                dt = GetType(WebCacheEntityDictionary(Of ))
                 args = GetArgs(t, pol)
             End If
             dt = dt.MakeGenericType(New Type() {t})
@@ -1522,14 +1522,14 @@ l1:
                 args), System.Collections.IDictionary)
         End Function
 
-        Protected Function GetArgs(ByVal t As Type, ByVal pol As DictionatyCachePolicy) As Object()
+        Protected Function GetArgs(ByVal t As Type, ByVal pol As WebCacheDictionaryPolicy) As Object()
             Return New Object() { _
                 Me, pol.AbsoluteExpiration, pol.SlidingExpiration, _
                 pol.Priority, pol.Dependency _
             }
         End Function
 
-        Protected MustOverride Function GetPolicy(ByVal t As Type) As DictionatyCachePolicy
+        Protected MustOverride Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
 
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter

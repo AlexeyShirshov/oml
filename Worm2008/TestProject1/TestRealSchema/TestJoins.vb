@@ -125,10 +125,10 @@ Public Class TestJoinsRS
             Dim t As Type = GetType(Table2)
             Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
-            Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetObjectSchema(t)))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t)))
 
             t2 = mgr.Find(Of Table2)(1)
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetObjectSchema(t)))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t)))
         End Using
     End Sub
 

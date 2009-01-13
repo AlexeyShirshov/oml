@@ -1,6 +1,5 @@
 <%@ Assembly Name="Worm.Orm" %>
 <%@ Import Namespace="Worm.Cache" %>
-<%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
@@ -11,7 +10,7 @@
         Protected Function GetDic() As Generic.IDictionary(Of String, Integer)
             Dim key As String = "mydic"
             If Cache(key) Is Nothing Then
-                Cache(key) = New HttpCacheDictionary(Of Integer)
+                Cache(key) = New WebCacheDictionary(Of Integer)
             End If
             
             Return Cache(key)

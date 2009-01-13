@@ -6,6 +6,7 @@ Imports Worm.Query
 
 Namespace Criteria
 
+    <Serializable()> _
     Public Class PredicateLink
         Implements IGetFilter, ICloneable
 

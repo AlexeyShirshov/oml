@@ -485,12 +485,12 @@ Namespace Sorting
 
         Public Overridable Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
-            Dim tos As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(_t)
+            Dim tos As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(_t)
             For Each s As Sort In _s
                 'If s.IsAny Then
                 '    Throw New NotSupportedException("Any sorting is not supported")
                 'End If
-                Dim ss As IEntitySchema = _mgr.MappingEngine.GetObjectSchema(s.ObjectSource.GetRealType(_mgr.MappingEngine))
+                Dim ss As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(s.ObjectSource.GetRealType(_mgr.MappingEngine))
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
                 Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
@@ -528,7 +528,7 @@ Namespace Sorting
                         Dim xc As IComparable = TryCast(xo, IComparable)
                         Dim yc As IComparable = TryCast(yo, IComparable)
                         If xc Is Nothing OrElse yc Is Nothing Then
-                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString & " is not supported IComparable")
+                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString(_mgr.MappingEngine, _mgr.GetContextFilter) & " is not supported IComparable")
                         End If
                         p = xc.CompareTo(yc) * k
                         If p <> 0 Then
@@ -550,7 +550,7 @@ Namespace Sorting
                 Else
                     xo = schema.GetJoinObj(oschema, xo, st)
                 End If
-                Dim os As IEntitySchema = schema.GetObjectSchema(_t)
+                Dim os As IEntitySchema = schema.GetEntitySchema(_t)
                 Dim ss As IOrmSorting = TryCast(os, IOrmSorting)
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)

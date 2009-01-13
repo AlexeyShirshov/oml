@@ -74,6 +74,7 @@ Namespace Query
         Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
     End Interface
 
+    <Serializable()> _
     Public Class Top
         Private _perc As Boolean
         Private _ties As Boolean
@@ -120,6 +121,7 @@ Namespace Query
         End Function
     End Class
 
+    <Serializable()> _
     Public Structure Paging
         Private _start As Integer
         Public Property Start() As Integer
@@ -157,7 +159,7 @@ Namespace Query
         End Property
     End Structure
 
-    Public Class RevQueryIterator
+    Public Class InnerQueryIterator
         Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)
 
         Private _q As QueryCmd
@@ -182,9 +184,9 @@ Namespace Query
         Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
             If _c Is Nothing Then
                 _c = _q
-            ElseIf _c.FromClaus IsNot Nothing Then
-                _c = _c.FromClaus.Query
-            ElseIf _c.FromClaus Is Nothing Then
+            ElseIf _c.FromClause IsNot Nothing Then
+                _c = _c.FromClause.Query
+            ElseIf _c.FromClause Is Nothing Then
                 _c = Nothing
             End If
             Return _c IsNot Nothing
@@ -227,65 +229,52 @@ Namespace Query
         End Function
     End Class
 
-    Public Class QueryIterator
+    Public Class StmtQueryIterator
         Implements IEnumerable(Of QueryCmd)
 
         Private _l As New List(Of QueryCmd)
 
-        Public Sub New(ByVal query As QueryCmd)
-            For Each q As QueryCmd In New RevQueryIterator(query)
-                _l.Insert(0, q)
-            Next
+        Public Sub New(ByVal root As QueryCmd)
+            _l.Add(root)
+            If root.Unions IsNot Nothing Then
+                For Each p As Pair(Of Boolean, QueryCmd) In root.Unions
+                    Dim q As QueryCmd = p.Second
+                    _l.Add(q)
+                Next
+            End If
         End Sub
 
-        'Public ReadOnly Property Current() As QueryCmd Implements System.Collections.Generic.IEnumerator(Of QueryCmd).Current
-        '    Get
-        '        Return _l.GetEnumerator.Current
-        '    End Get
-        'End Property
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
+            Return _l.GetEnumerator
+        End Function
 
-        'Private ReadOnly Property _Current() As Object Implements System.Collections.IEnumerator.Current
-        '    Get
-        '        Return Current
-        '    End Get
-        'End Property
+        Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
+        End Function
+    End Class
 
-        'Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
-        '    If _c Is Nothing Then
-        '        _c = _q
-        '    Else
-        '        _c = _c.OuterQuery
-        '    End If
-        '    Return _c IsNot Nothing
-        'End Function
+    Public Class MetaDataQueryIterator
+        Implements IEnumerable(Of QueryCmd)
 
-        'Public Sub Reset() Implements System.Collections.IEnumerator.Reset
-        '    _c = Nothing
-        'End Sub
+        Private _l As New List(Of QueryCmd)
 
-        '#Region " IDisposable Support "
-        '        Private disposedValue As Boolean = False        ' To detect redundant calls
+        Public Sub New(ByVal root As QueryCmd)
+            AddQuery(root)
+            If root.Unions IsNot Nothing Then
+                For Each p As Pair(Of Boolean, QueryCmd) In root.Unions
+                    Dim q As QueryCmd = p.Second
+                    AddQuery(q)
+                Next
+            End If
+        End Sub
 
-        '        ' IDisposable
-        '        Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-        '            If Not Me.disposedValue Then
-        '                If disposing Then
-        '                    ' TODO: free other state (managed objects).
-        '                End If
-
-        '                ' TODO: free your own state (unmanaged objects).
-        '                ' TODO: set large fields to null.
-        '            End If
-        '            Me.disposedValue = True
-        '        End Sub
-
-        '        ' This code added by Visual Basic to correctly implement the disposable pattern.
-        '        Public Sub Dispose() Implements IDisposable.Dispose
-        '            ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-        '            Dispose(True)
-        '            GC.SuppressFinalize(Me)
-        '        End Sub
-        '#End Region
+        Protected Sub AddQuery(ByVal query As QueryCmd)
+            Dim iq As QueryCmd = Nothing
+            For Each q As QueryCmd In New InnerQueryIterator(query)
+                iq = q
+            Next
+            _l.Add(iq)
+        End Sub
 
         Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
             Return _l.GetEnumerator

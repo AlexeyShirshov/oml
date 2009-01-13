@@ -24,16 +24,16 @@ Namespace Query
         Private _alias As String
         Private _distinct As Boolean
 
-        Private _dontAddAlias As Boolean
+        'Private _dontAddAlias As Boolean
 
-        Protected Friend Property AddAlias() As Boolean
-            Get
-                Return Not _dontAddAlias
-            End Get
-            Set(ByVal value As Boolean)
-                _dontAddAlias = Not value
-            End Set
-        End Property
+        'Protected Friend Property AddAlias() As Boolean
+        '    Get
+        '        Return Not _dontAddAlias
+        '    End Get
+        '    Set(ByVal value As Boolean)
+        '        _dontAddAlias = Not value
+        '    End Set
+        'End Property
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)
             _f = agFunc
@@ -44,7 +44,9 @@ Namespace Query
             MyClass.New(agFunc, String.Empty)
         End Sub
 
-        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, _
+            ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
+            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
 
         Public ReadOnly Property AggFunc() As AggregateFunction
             Get
@@ -71,10 +73,10 @@ Namespace Query
         End Property
 
         Public Function GetAlias() As String
-            If Not _dontAddAlias Then
-                Return _alias
-            End If
-            Return Nothing
+            'If Not _dontAddAlias Then
+            Return _alias
+            'End If
+            'Return Nothing
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -89,98 +91,9 @@ Namespace Query
         End Function
 
         Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
     End Class
-
-    'Public Class [Aggregate]
-    '    Inherits AggregateBase
-
-    '    Private _prop As OrmProperty
-    '    Private _col As Integer
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal t As Type, ByVal field As String)
-    '        MyBase.New(agFunc, columnAlias)
-    '        _prop = New OrmProperty(t, field)
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal table As SourceFragment, ByVal column As String)
-    '        MyBase.New(agFunc, columnAlias)
-    '        _prop = New OrmProperty(table, column)
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal field As String)
-    '        MyBase.New(agFunc)
-    '        _prop = New OrmProperty(t, field)
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal column As String)
-    '        MyBase.New(agFunc)
-    '        _prop = New OrmProperty(CType(Nothing, Type), Nothing)
-    '        _prop.Column = column
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnNum As Integer)
-    '        MyBase.New(agFunc)
-    '        _col = columnNum
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction)
-    '        MyBase.New(agFunc)
-    '        _prop = New OrmProperty(CType(Nothing, Type), Nothing)
-    '    End Sub
-
-    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal table As SourceFragment, ByVal column As String)
-    '        MyBase.New(agFunc)
-    '        _prop = New OrmProperty(table, column)
-    '    End Sub
-
-    '    Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
-    '        Dim s As String = Nothing
-    '        If _prop IsNot Nothing Then
-    '            s = GetColumn(t, schema)
-    '        Else
-    '            s = columnAliases(_col)
-    '        End If
-    '        Return String.Format(GetFunc, s)
-    '    End Function
-
-    '    Protected Function GetFunc() As String
-    '        Dim s As String = Nothing
-    '        Dim d As String = String.Empty
-    '        If Distinct Then
-    '            d = "distinct "
-    '        End If
-    '        s = FormatFunc(AggFunc, d)
-    '        If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
-    '            s = s & " " & [Alias]
-    '        End If
-    '        Return s
-    '    End Function
-
-    '    Protected Function GetColumn(ByVal t As Type, ByVal schema As QueryGenerator) As String
-    '        If _prop.Table IsNot Nothing Then
-    '            Return schema.GetTableName(_prop.Table) & schema.Selector & _prop.Column
-    '        ElseIf Not String.IsNullOrEmpty(_prop.Field) Then
-    '            Dim tt As Type = _prop.Type
-    '            If tt Is Nothing Then tt = t
-
-    '            Return schema.GetColumnNameByFieldNameInternal(tt, _prop.Field, True)
-    '        ElseIf Not String.IsNullOrEmpty(_prop.Column) Then
-    '            Return _prop.Column
-    '        Else
-    '            Return "*"
-    '        End If
-    '    End Function
-
-    '    Public ReadOnly Property Prop() As OrmProperty
-    '        Get
-    '            Return _prop
-    '        End Get
-    '    End Property
-
-
-
-    'End Class
 
     <Serializable()> _
     Public Class [Aggregate]
@@ -192,12 +105,16 @@ Namespace Query
             MyClass.New(agFunc, New UnaryExp(New LiteralValue("*")))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal num As Integer)
-            MyClass.New(agFunc, New UnaryExp(New RefValue(num)))
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty)
+            MyClass.New(agFunc, New UnaryExp(New FieldValue(op)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal propertyAlias As String)
             MyClass.New(agFunc, New UnaryExp(New FieldValue(t, propertyAlias)))
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal entityName As String, ByVal propertyAlias As String)
+            MyClass.New(agFunc, New UnaryExp(New FieldValue(entityName, propertyAlias)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As EntityUnion, ByVal propertyAlias As String)
@@ -222,10 +139,10 @@ Namespace Query
             _oper = operation
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
             Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.MakeStmt(schema, stmt, pmgr, almgr, columnAliases, filterInfo, inSelect))
-            If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
+            s = String.Format(s, _oper.MakeStmt(schema, stmt, pmgr, almgr, filterInfo, inSelect))
+            If Not String.IsNullOrEmpty([Alias]) AndAlso inSelect Then
                 s = s & " " & [Alias]
             End If
             Return s
@@ -283,11 +200,17 @@ Namespace Query
             Return s
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.ToStaticString(mpe))
+            s = String.Format(s, _oper.ToStaticString(mpe, contextFilter))
             Return s
         End Function
+
+        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+            If _oper IsNot Nothing Then
+                _oper.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
     Public Class CustomFuncAggregate
@@ -302,7 +225,7 @@ Namespace Query
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
             Throw New NotImplementedException
         End Function
 
@@ -310,9 +233,13 @@ Namespace Query
             Throw New NotImplementedException
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             Throw New NotImplementedException
         End Function
+
+        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+            Throw New NotImplementedException
+        End Sub
     End Class
 
     'Public Class AggCtor

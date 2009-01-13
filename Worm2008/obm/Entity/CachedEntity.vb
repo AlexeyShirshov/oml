@@ -100,7 +100,7 @@ Namespace Entities
                     Dim mgr As OrmManager = mc.Manager
                     Dim dt As Type = _dst.GetType
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IEntitySchema = schema.GetObjectSchema(dt)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(dt)
                     Dim pk As Boolean, pk_old As PKDesc() = _dst.GetPKValues
                     For Each p As Pair(Of String) In _props
                         'If p = "ID" Then
@@ -769,7 +769,7 @@ Namespace Entities
             'Using m As IGetManager = GetMgr()
             Dim tt As Type = Me.GetType
             Dim schema As ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
             BeginLoading()
             For Each p As PKDesc In pk
                 'Dim c As New EntityPropertyAttribute(p.PropertyAlias)
@@ -960,6 +960,7 @@ l1:
                         pi.SetValue(Me, o, Nothing)
                         If o IsNot Nothing Then
                             o.SetCreateManager(CreateManager)
+                            'RaiseObjectLoaded(o)
                         End If
                     End If
                     'End Using
@@ -989,7 +990,7 @@ l1:
                 Dim t As Type = Me.GetType
                 Dim oschema As IEntitySchema = Nothing
                 If schema IsNot Nothing Then
-                    oschema = schema.GetObjectSchema(t)
+                    oschema = schema.GetEntitySchema(t)
                 End If
 
                 Dim fv As IDBValueConverter = TryCast(Me, IDBValueConverter)
@@ -1082,6 +1083,7 @@ l1:
                                 SetLoaded(.Name, True, True, schema)
                                 If v IsNot Nothing Then
                                     v.SetCreateManager(CreateManager)
+                                    'RaiseObjectLoaded(v)
                                 End If
                             End If
                             'End Using
@@ -1131,7 +1133,7 @@ l1:
             Dim l As New List(Of PKDesc)
             'Using mc As IGetManager = GetMgr()
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
             For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
@@ -1202,7 +1204,7 @@ l1:
                 Dim t As Type = obj.GetType
                 'Using mc As IGetManager = GetMgr()
                 Dim schema As ObjectMappingEngine = MappingEngine
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(t)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
@@ -1314,7 +1316,7 @@ l1:
                 c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, CType(oldObj, _ICachedEntity))}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)
             End If
             UpdateCacheAfterUpdate(c)
-            For Each el As EditableListBase In New List(Of EditableListBase)(_upd.Relations)
+            For Each el As M2MRelation In New List(Of M2MRelation)(_upd.Relations)
                 If c IsNot Nothing Then
                     c.RemoveM2MQueries(el)
                 End If
@@ -1567,17 +1569,24 @@ l1:
             Return True
         End Function
 
-        Public Overridable Function Delete() As Boolean Implements ICachedEntity.Delete
+        Public Function Delete() As Boolean
             Using mc As IGetManager = GetMgr()
-                Return _Delete(mc.Manager, EnsureInCache(mc.Manager))
+                Return Delete(mc.Manager)
             End Using
         End Function
 
+        Public Overridable Function Delete(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.Delete
+            Return _Delete(mgr, EnsureInCache(mgr))
+        End Function
+
         Public Function EnsureLoaded() As CachedEntity
-            'OrmManager.CurrentMediaContent.LoadObject(Me)
             Using mc As IGetManager = GetMgr()
-                Return CType(mc.Manager.GetLoadedObjectFromCacheOrDB(Me, mc.Manager.GetDictionary(Me.GetType)), CachedEntity)
+                Return EnsureLoaded(mc.Manager)
             End Using
+        End Function
+
+        Public Function EnsureLoaded(ByVal mgr As OrmManager) As CachedEntity
+            Return CType(mgr.GetLoadedObjectFromCacheOrDB(Me, mgr.GetDictionary(Me.GetType)), CachedEntity)
         End Function
 
         Protected ReadOnly Property CanEdit() As Boolean
@@ -1683,6 +1692,9 @@ l1:
 
         Public Overloads Function Equals(ByVal obj As CachedEntity) As Boolean
             If obj Is Nothing Then
+                Return False
+            End If
+            If Me.GetType IsNot obj.GetType Then
                 Return False
             End If
             Dim pks() As PKDesc = GetPKValues()

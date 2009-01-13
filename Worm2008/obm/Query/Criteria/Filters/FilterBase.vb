@@ -2,6 +2,8 @@
 Imports Worm.Entities.Meta
 
 Namespace Criteria.Core
+
+    <Serializable()> _
     Public MustInherit Class FilterBase
         Implements IFilter, IValuableFilter
 
@@ -16,9 +18,9 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter._ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
-        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
+        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
 
         Public Function Clone() As IFilter Implements IFilter.Clone
             Return CType(_Clone(), IFilter)
@@ -60,12 +62,13 @@ Namespace Criteria.Core
         '    _v = v
         'End Sub
 
-        Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean) As String
+        Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, _
+            ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return Value.GetParam(schema, stmt, pmgr, Nothing, Nothing, Nothing, Nothing, inSelect)
+            Return Value.GetParam(schema, stmt, pmgr, Nothing, Nothing, Nothing, inSelect)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals
@@ -105,8 +108,15 @@ Namespace Criteria.Core
         '    Throw New NotSupportedException
         '    'Return MakeQueryStmt(schema, Filter, almgr, pname)
         'End Function
+
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+            If _v IsNot Nothing Then
+                _v.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
+    <Serializable()> _
     Public MustInherit Class TemplatedFilterBase
         Inherits FilterBase
         Implements ITemplateFilter
@@ -131,8 +141,8 @@ Namespace Criteria.Core
 
         Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
-            Return _templ.GetStaticString
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Return _templ.GetStaticString(mpe, contextFilter)
         End Function
 
         Public ReadOnly Property Template() As ITemplate Implements ITemplateFilterBase.Template

@@ -2,6 +2,8 @@
 Imports System.Runtime.CompilerServices
 
 Namespace Collections
+
+    <Serializable()> _
     Public Class SynchronizedDictionary(Of T)
         Implements System.Collections.Generic.IDictionary(Of Object, T), IDictionary
 

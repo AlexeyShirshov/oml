@@ -72,7 +72,7 @@ Namespace Configuration
         End Function
 
         Public Shared Function GetValueForContains(ByVal tokens() As String, ByVal sectionName As String, _
-            ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
+            ByVal f As IFullTextSupport, ByVal contextkey As Object) As String
             Dim value As New StringBuilder
 
             'Dim l As Integer = value.Length
@@ -99,7 +99,7 @@ Namespace Configuration
                 End If
 l2:
             Else
-                Dim f2 As IOrmFullTextSupportEx = TryCast(f, IOrmFullTextSupportEx)
+                Dim f2 As IFullTextSupportEx = TryCast(f, IFullTextSupportEx)
                 If f2 IsNot Nothing Then
                     f2.MakeSearchString(contextkey, tokens, value)
                 Else

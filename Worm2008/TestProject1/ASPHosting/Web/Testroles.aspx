@@ -1,7 +1,7 @@
 <%@ Assembly Name="Worm.Orm" %>
+<%@ Import Namespace="Worm" %>
 <%@ Import Namespace="Worm.Cache" %>
 <%@ Import Namespace="Worm.Database" %>
-<%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
@@ -19,9 +19,9 @@
         Public Function CreateDBManager() As OrmReadOnlyDBManager
 #If UseUserInstance Then
             Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-            Return New OrmReadOnlyDBManager(New OrmCache, New SQLGenerator("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+            Return New OrmReadOnlyDBManager(New OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-            Return New OrmReadOnlyDBManager(New OrmCache, New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
+            Return New OrmReadOnlyDBManager(New OrmCache, New objectmappingengine("1"), New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
 #End If
         End Function
     

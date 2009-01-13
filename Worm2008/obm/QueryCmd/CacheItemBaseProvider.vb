@@ -21,9 +21,9 @@ Namespace Query
         End Sub
 
         Protected _mgr As OrmManager
-        Protected _j As List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-        Protected _f() As IFilter
-        Protected _sl As List(Of List(Of SelectExpression))
+        'Protected _j As List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+        'Protected _f() As IFilter
+        'Protected _sl As List(Of List(Of SelectExpression))
         Protected _q As QueryCmd
         Protected _key As String
         Protected _id As String
@@ -48,10 +48,8 @@ Namespace Query
             End Get
         End Property
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-            ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-
-            Reset(mgr, j, f, sl, q)
+        Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+            Reset(mgr, q)
         End Sub
 
         'Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
@@ -69,39 +67,47 @@ Namespace Query
             End Set
         End Property
 
-        Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase.CreateDepends
+        Public Sub CreateDepends(ByVal ce As CachedItemBase) Implements OrmManager.ICacheItemProvoderBase.CreateDepends
+            Dim uce As UpdatableCachedItem = TryCast(ce, UpdatableCachedItem)
+            If uce IsNot Nothing Then
+                If _q.Filter IsNot Nothing Then
+                    uce.Filter = _q.Filter.Filter
+                End If
+                uce.Sort = _q.propSort
+            End If
+
             Dim cache As Cache.OrmCache = TryCast(Me.Cache, Cache.OrmCache)
 
             If cache IsNot Nothing AndAlso Not String.IsNullOrEmpty(_key) Then
                 'Dim notPreciseDependsAD As Boolean
                 'Dim notPreciseDependsU As Boolean
-                If _j IsNot Nothing Then
-                    For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
-                        For Each j As QueryJoin In js
-                            If j.ObjectSource IsNot Nothing Then
-                                Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
-                                'notPreciseDependsAD = True
-                                'notPreciseDependsU = True
-                                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
-                                cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
-                                cache.validate_UpdateType(New Type() {jt}, _key, _id)
-                            End If
-                            'If j.Type IsNot Nothing Then
-                            '    notPreciseDependsAD = True
-                            '    notPreciseDependsU = True
-                            '    '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
-                            '    cache.validate_AddDeleteType(j.Type, _key, _id)
-                            '    cache.validate_UpdateType(j.Type, _key, _id)
-                            'ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                            '    notPreciseDependsAD = True
-                            '    notPreciseDependsU = True
-                            '    '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
-                            '    cache.validate_AddDeleteType(MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
-                            '    cache.validate_UpdateType(MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
-                            'End If
-                        Next
-                    Next
-                End If
+                'If _j IsNot Nothing Then
+                '    For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
+                '        For Each j As QueryJoin In js
+                '            If j.ObjectSource IsNot Nothing Then
+                '                Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
+                '                'notPreciseDependsAD = True
+                '                'notPreciseDependsU = True
+                '                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
+                '                cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                '                cache.validate_UpdateType(New Type() {jt}, _key, _id)
+                '            End If
+                '            'If j.Type IsNot Nothing Then
+                '            '    notPreciseDependsAD = True
+                '            '    notPreciseDependsU = True
+                '            '    '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
+                '            '    cache.validate_AddDeleteType(j.Type, _key, _id)
+                '            '    cache.validate_UpdateType(j.Type, _key, _id)
+                '            'ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                '            '    notPreciseDependsAD = True
+                '            '    notPreciseDependsU = True
+                '            '    '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
+                '            '    cache.validate_AddDeleteType(MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
+                '            '    cache.validate_UpdateType(MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
+                '            'End If
+                '        Next
+                '    Next
+                'End If
 
                 'Dim i As Integer = 0
                 'For Each q As QueryCmd In New QueryIterator(_q)
@@ -112,7 +118,15 @@ Namespace Query
                 'Dim rightType As Boolean = _q.GetSelectedTypes(MappingEngine, types)
                 Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
-                For Each q As QueryCmd In New QueryIterator(_q)
+                For Each q As QueryCmd In New MetaDataQueryIterator(_q)
+                    For Each j As QueryJoin In q._js
+                        If j.ObjectSource IsNot Nothing Then
+                            Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
+                            cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                            cache.validate_UpdateType(New Type() {jt}, _key, _id)
+                        End If
+                    Next
+
                     Dim dp As Cache.IDependentTypes = CType(q, Cache.IQueryDependentTypes).Get(MappingEngine)
 
                     ldp.Add(dp)
@@ -122,15 +136,16 @@ Namespace Query
                     Dim types As ICollection(Of Type) = Nothing
                     Dim rightType As Boolean = q.GetSelectedTypes(MappingEngine, types)
 
-                    If _f IsNot Nothing AndAlso _f.Length > i Then
-                        Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
-                        If vf IsNot Nothing Then
-                            Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
-                            If v IsNot Nothing Then
-                                cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
-                            End If
+                    'If _f IsNot Nothing AndAlso _f.Length > i Then
+                    'Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
+                    Dim vf As IValuableFilter = TryCast(_q._f, IValuableFilter)
+                    If vf IsNot Nothing Then
+                        Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
+                        If v IsNot Nothing Then
+                            cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
                         End If
                     End If
+                    'End If
 
                     'Dim ef As IEntityFilter = Nothing
                     'If _f IsNot Nothing AndAlso _f.Length > i Then
@@ -140,51 +155,54 @@ Namespace Query
                     If cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Immediate Then
                         'notPreciseDependsAD = notPreciseDependsAD OrElse Not Worm.Cache.IsEmpty(dp)
                         'notPreciseDependsU = notPreciseDependsAD
-                        If _f IsNot Nothing AndAlso _f.Length > i Then
-                            Dim added As Boolean = False
-                            If rightType Then
-                                added = cache.validate_AddCalculatedType(types, _key, _id, _f(i), MappingEngine, Mgr.GetFilterInfo)
-                            End If
-
-                            If Not added Then
-                                For Each fff As IFilter In _f(i).GetAllFilters
-                                    Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
-
-                                    If ef Is Nothing Then
-                                        If rightType Then
-                                            cache.validate_AddDeleteType(types, _key, _id)
-                                            cache.validate_UpdateType(types, _key, _id)
-                                            'notPreciseDependsAD = True
-                                            'notPreciseDependsU = True
-                                        End If
-                                    Else
-                                        Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
-                                        Dim t As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
-                                        If t Is Nothing Then
-                                            Throw New NullReferenceException("Type or entity name for OrmFilterTemplate must be specified")
-                                        End If
-
-                                        'Dim t As Type = tmpl.Type
-                                        'If t Is Nothing Then
-                                        '    t = MappingEngine.GetTypeByEntityName(tmpl.EntityName)
-                                        'End If
-
-                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, t)
-                                        cache.validate_AddDependentFilterField(p, _key, _id)
-                                    End If
-                                Next
-                            End If
-                        ElseIf rightType Then
-                            cache.validate_AddDeleteType(types, _key, _id)
+                        'If _f IsNot Nothing AndAlso _f.Length > i Then
+                        Dim fl As IFilter = _q._f
+                        Dim added As Boolean = False
+                        If rightType Then
+                            added = cache.validate_AddCalculatedType(types, _key, _id, fl, MappingEngine, Mgr.GetContextFilter)
                         End If
+
+                        If Not added AndAlso fl IsNot Nothing Then
+                            For Each fff As IFilter In fl.GetAllFilters
+                                Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
+
+                                If ef Is Nothing Then
+                                    If rightType Then
+                                        cache.validate_AddDeleteType(types, _key, _id)
+                                        cache.validate_UpdateType(types, _key, _id)
+                                        'notPreciseDependsAD = True
+                                        'notPreciseDependsU = True
+                                    End If
+                                Else
+                                    Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
+                                    Dim t As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
+                                    If t Is Nothing Then
+                                        Throw New NullReferenceException("Type or entity name for OrmFilterTemplate must be specified")
+                                    End If
+
+                                    'Dim t As Type = tmpl.Type
+                                    'If t Is Nothing Then
+                                    '    t = MappingEngine.GetTypeByEntityName(tmpl.EntityName)
+                                    'End If
+
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, t)
+                                    cache.validate_AddDependentFilterField(p, _key, _id)
+                                End If
+                            Next
+                        End If
+                        'ElseIf rightType Then
+                        '    cache.validate_AddDeleteType(types, _key, _id)
+                        'End If
                     Else
                         If rightType Then
                             cache.validate_AddDeleteType(types, _key, _id)
                             'notPreciseDependsAD = True
                         End If
 
-                        If _f IsNot Nothing AndAlso _f.Length > i Then
-                            For Each fff As IFilter In _f(i).GetAllFilters
+                        'If _f IsNot Nothing AndAlso _f.Length > i Then
+                        Dim fl As IFilter = _q._f
+                        If fl IsNot Nothing Then
+                            For Each fff As IFilter In fl.GetAllFilters
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
@@ -243,7 +261,7 @@ Namespace Query
 
                     If q.Obj IsNot Nothing Then
                         Debug.Assert(types IsNot Nothing AndAlso CType(types, IList(Of Type)).Count = 1)
-                        cache.AddM2MSimpleQuery(q.Obj.GetRelation(CType(types, IList(Of Type))(0), q.M2MKey), _key, _id)
+                        cache.AddM2MSimpleQuery(CType(q.Obj.GetRelation(CType(types, IList(Of Type))(0), q.M2MKey), M2MRelation), _key, _id)
                     End If
 
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
@@ -259,13 +277,13 @@ Namespace Query
 
         Public ReadOnly Property Filter() As Criteria.Core.IFilter Implements OrmManager.ICacheItemProvoderBase.Filter
             Get
-                Return _f(0)
+                Throw New NotSupportedException
+                'Return _f(0)
             End Get
         End Property
 
         Public MustOverride Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
-                                      ByVal f() As IFilter, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
+        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
 
         Protected Function GetExternalDic(ByVal key As String) As IDictionary
             Dim args As New QueryCmd.ExternalDictionaryEventArgs(key)
@@ -383,18 +401,18 @@ Namespace Query
             If cache IsNot Nothing AndAlso cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred Then
                 Dim l As New List(Of Type)
 
-                If _j IsNot Nothing Then
-                    For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
-                        For Each j As QueryJoin In js
-                            l.Add(j.ObjectSource.GetRealType(MappingEngine))
-                            'If j.Type IsNot Nothing Then
-                            '    l.Add(j.Type)
-                            'ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                            '    l.Add(MappingEngine.GetTypeByEntityName(j.EntityName))
-                            'End If
-                        Next
-                    Next
-                End If
+                'If _j IsNot Nothing Then
+                'For Each js As List(Of Worm.Criteria.Joins.QueryJoin) In _j
+                For Each j As QueryJoin In _q._js
+                    l.Add(j.ObjectSource.GetRealType(MappingEngine))
+                    'If j.Type IsNot Nothing Then
+                    '    l.Add(j.Type)
+                    'ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                    '    l.Add(MappingEngine.GetTypeByEntityName(j.EntityName))
+                    'End If
+                Next
+                'Next
+                'End If
 
                 'For Each q As QueryCmd In New QueryIterator(_q)
                 '    Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
@@ -413,10 +431,10 @@ Namespace Query
                     l.AddRange(el)
                 End If
 
-                Dim f As IEntityFilter = Nothing
-                If _f IsNot Nothing AndAlso _f.Length > 0 Then
-                    f = TryCast(_f(0), IEntityFilter)
-                End If
+                Dim f As IEntityFilter = TryCast(_q._f, IEntityFilter)
+                'If _f IsNot Nothing AndAlso _f.Length > 0 Then
+                '    f = TryCast(_f(0), IEntityFilter)
+                'End If
 
                 Return cache.UpdateCacheDeferred(Mgr.MappingEngine, l, f, Sort, Group)
             End If

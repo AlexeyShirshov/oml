@@ -283,6 +283,53 @@ namespace TestsCodeGenLib
 
         [TestMethod]
         [Description("Проверка получения свойств")]
+        public void TestFillPropertiesWithGroups()
+        {
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
+            using (XmlReader rdr = XmlReader.Create(GetFile("groups")))
+            {
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
+                parser.Read();
+            }
+
+            parser.FillTables();
+            parser.FindEntities();
+            parser.FillImports();
+            parser.FillTypes();
+
+
+            OrmObjectsDef ormObjectDef;
+            ormObjectDef = parser.OrmObjectsDef;
+
+            EntityDescription entity;
+            entity = ormObjectDef.Entities.Find(match => match.Identifier == "e1");
+
+            parser.FillProperties(entity);
+
+            Assert.AreEqual<int>(6, entity.Properties.Count);
+            PropertyDescription prop;
+
+            prop = entity.GetProperty("Identifier1");
+            Assert.IsNotNull(prop);
+            Assert.IsNull(prop.Group);
+
+            prop = entity.GetProperty("prop1");
+            Assert.IsNotNull(prop);
+            Assert.IsNotNull(prop.Group);
+            Assert.AreEqual("grp", prop.Group.Name);
+            Assert.IsTrue(prop.Group.Hide);
+
+            prop = entity.GetProperty("prop4");
+            Assert.IsNotNull(prop);
+            Assert.IsNotNull(prop.Group);
+            Assert.AreEqual("grp1", prop.Group.Name);
+            Assert.IsFalse(prop.Group.Hide);
+
+        }
+
+        [TestMethod]
+        [Description("Проверка получения свойств")]
         public void TestFillSuppressedProperties()
         {
             Worm_CodeGen_Core_OrmXmlParserAccessor parser;
@@ -429,12 +476,17 @@ namespace TestsCodeGenLib
 
         public static Stream GetSampleFileStream()
         {
-            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            string resourceName;
-            resourceName = string.Format("{0}.SchemaBased.xml", assembly.GetName().Name);
-
-            return assembly.GetManifestResourceStream(resourceName);
+            string name = "SchemaBased";
+            return GetFile(name);
         }
 
+        private static Stream GetFile(string name)
+        {
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            string resourceName;
+            
+            resourceName = string.Format("{0}.{1}.xml", assembly.GetName().Name, name);
+            return assembly.GetManifestResourceStream(resourceName);
+        }
     }
 }

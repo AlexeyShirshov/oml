@@ -1,4 +1,7 @@
-﻿Namespace Entities.Meta
+﻿Imports Worm.Query
+Imports Worm.Criteria.Core
+
+Namespace Entities.Meta
 
     Public Structure DBType
         Public Size As Integer
@@ -91,28 +94,77 @@
         End Function
     End Class
 
-    Public Class M2MRelation
-        Public ReadOnly Table As SourceFragment
+    Public Class RelationDesc
         Public ReadOnly Column As String
+        Public ReadOnly Key As String
+        Private _eu As EntityUnion
+
+        Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String, ByVal key As String)
+            Me.Column = propertyAlias
+            Me.Key = key
+            _eu = eu
+        End Sub
+
+        Public ReadOnly Property Rel() As EntityUnion
+            Get
+                Return _eu
+            End Get
+        End Property
+
+        Public ReadOnly Property EntityName() As String
+            Get
+                Return _eu.EntityName
+            End Get
+        End Property
+
+        Public ReadOnly Property Type() As Type
+            Get
+                Return _eu.Type
+            End Get
+        End Property
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, RelationDesc))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As RelationDesc) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _eu.Equals(obj._eu) AndAlso String.Equals(Key, obj.Key)
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _eu.GetHashCode Xor If(String.IsNullOrEmpty(Key), 0, Key.GetHashCode)
+        End Function
+    End Class
+
+    Public Class M2MRelationDesc
+        Inherits RelationDesc
+        Public ReadOnly Table As SourceFragment
         Public ReadOnly DeleteCascade As Boolean
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
         Public ReadOnly ConnectedType As Type
-        Public ReadOnly Key As String
+
+        Private _const() As EntityFilter
 
         Public Const RevKey As String = "xxx%rev$"
         Public Const DirKey As String = "xxx%direct$"
 
-        Private _entityName As String
-        Private _type As Type
+        Public Sub New(ByVal type As Type)
+            MyBase.New(New EntityUnion(type), Nothing, Nothing)
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal key As String)
+            MyBase.New(New EntityUnion(type), Nothing, key)
+        End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
-            _type = type
+            MyBase.New(New EntityUnion(type), column, key)
             Me.Table = table
-            Me.Column = column
             Me.DeleteCascade = delete
             Me.Mapping = mapping
-            Me.Key = key
         End Sub
 
         Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
@@ -141,13 +193,10 @@
 
         Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
-            _entityName = entityName
-            _type = generator.GetTypeByEntityName(entityName)
+            MyBase.New(New EntityUnion(entityName), column, key)
             Me.Table = table
-            Me.Column = column
             Me.DeleteCascade = delete
             Me.Mapping = mapping
-            Me.Key = key
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
@@ -158,8 +207,7 @@
         <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
-            MyClass.New(type, table, column, delete, mapping)
-            Key = GetKey(direct)
+            MyClass.New(type, table, column, delete, mapping, GetKey(direct))
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
@@ -172,21 +220,9 @@
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
             ByVal connectedType As Type, ByVal direct As Boolean)
-            MyClass.New(type, table, column, delete, mapping, direct)
+            MyClass.New(type, table, column, delete, mapping, GetKey(direct))
             Me.ConnectedType = connectedType
         End Sub
-
-        Public ReadOnly Property EntityName() As String
-            Get
-                Return _entityName
-            End Get
-        End Property
-
-        Public ReadOnly Property Type() As Type
-            Get
-                Return _type
-            End Get
-        End Property
 
         Public ReadOnly Property non_direct() As Boolean
             Get

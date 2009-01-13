@@ -12,10 +12,12 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Function ParamName(ByVal name As String, ByVal i As Integer) As String
     Public MustOverride Function TopStatement(ByVal top As Integer) As String
+    Public MustOverride ReadOnly Property Left() As String
     Public MustOverride ReadOnly Property GetYear() As String
     Public MustOverride ReadOnly Property GetDate() As String
     Public MustOverride ReadOnly Property Selector() As String
     Public MustOverride ReadOnly Property FTSKey() As String
+    Public MustOverride Function Comment(ByVal s As String) As String
 
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource) As Criteria.ICtor
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource, ByVal propertyAlias As String) As Criteria.CriteriaField
@@ -48,7 +50,13 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
-            ByVal joins As Generic.List(Of QueryJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As Generic.IEnumerable(Of SelectExpression)) As String
+            ByVal almgr As IPrepareTable) As String
 
     Public MustOverride ReadOnly Property SupportParams() As Boolean
+
+    Public Overridable ReadOnly Property IncludeCallStack() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
 End Class

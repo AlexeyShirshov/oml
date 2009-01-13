@@ -6,6 +6,7 @@ Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports System.Collections.ObjectModel
 
 Namespace Cache
 
@@ -29,6 +30,7 @@ Namespace Cache
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity)
         ReadOnly Property IsWeak() As Boolean
+        Function GetAliveCount(ByVal weakList As Object) As Integer
     End Interface
 
     Public Class FakeListConverter
@@ -169,124 +171,56 @@ Namespace Cache
             If Not (start = 0 AndAlso (m.Count = length OrElse length = Integer.MaxValue)) Then
                 Dim l As New List(Of ObjectModel.ReadOnlyCollection(Of _IEntity))
                 For i As Integer = start To Math.Min(start + length, m.Count) - 1
-                    l.Add(m(i))
+                    Dim row As ReadOnlyCollection(Of _IEntity) = m(i)
+                    l.Add(row)
                 Next
-                Return New ReadonlyMatrix(l)
-            Else
-                Return m
+                m = New ReadonlyMatrix(l)
             End If
+
+            Dim dic As New Dictionary(Of Type, IListEdit)
+            For Each row As ReadOnlyCollection(Of _IEntity) In m
+                For j As Integer = 0 To row.Count - 1
+                    Dim e As _IEntity = row(j)
+                    If withLoad(j) AndAlso Not e.IsLoaded Then
+                        Dim t As Type = e.GetType
+                        Dim o2l As IListEdit = Nothing
+                        If Not dic.TryGetValue(t, o2l) Then
+                            o2l = OrmManager.CreateReadonlyList(t)
+                            dic(t) = o2l
+                        End If
+                        o2l.Add(e)
+                    End If
+                Next
+            Next
+
+            For Each ll As ILoadableList In dic.Values
+                ll.LoadObjects()
+            Next
+
+            Return m
+        End Function
+
+        Public Function GetAliveCount(ByVal weakList As Object) As Integer Implements IListObjectConverter.GetAliveCount
+            Return CType(weakList, ICollection).Count
         End Function
     End Class
 
     Public Class ListConverter
         Implements IListObjectConverter
 
-        <Serializable()> _
-        Class ListObjectEntry
-            Private _e As EntityProxy
-            Private ref As WeakReference
-
-            Public Sub New(ByVal o As ICachedEntity)
-                _e = New EntityProxy(o)
-                ref = New WeakReference(o)
-            End Sub
-
-            Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As T
-                Return GetObject(Of T)(mgr.Cache, mgr.GetFilterInfo, mgr.MappingEngine)
-            End Function
-
-            Public Function GetObject(Of T As {_ICachedEntity})(ByVal cache As CacheBase, _
-                ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
-                Dim o As T = CType(ref.Target, T)
-                If o Is Nothing Then
-                    o = CType(cache.GetEntityFromCacheOrCreate(_e.PK, GetType(T), True, filterInfo, schema), T) 'mc.FindObject(id, t)
-                    If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
-                        o = CType(cache.NewObjectManager.GetNew(GetType(T), _e.PK), T)
-                    End If
-                End If
-                Return o
-            End Function
-
-            Public Function GetObject(ByVal mgr As OrmManager) As ICachedEntity
-                Return GetObject(mgr.Cache, mgr.GetFilterInfo, mgr.MappingEngine)
-            End Function
-
-            Public Function GetObject(ByVal cache As CacheBase, _
-                ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As ICachedEntity
-                Dim o As ICachedEntity = CType(ref.Target, ICachedEntity)
-                If o Is Nothing Then
-                    o = cache.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType, True, filterInfo, schema) 'mc.FindObject(id, t)
-                    If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
-                        o = cache.NewObjectManager.GetNew(_e.EntityType, _e.PK)
-                    End If
-                End If
-                Return o
-            End Function
-
-            Public ReadOnly Property ObjName() As String
-                Get
-                    Return _e.ToString
-                End Get
-            End Property
-
-            Public ReadOnly Property IsLoaded() As Boolean
-                Get
-                    Return ref.IsAlive AndAlso CType(ref.Target, ICachedEntity).IsLoaded
-                End Get
-            End Property
-
-            Public ReadOnly Property IsEqual(ByVal obj As ICachedEntity) As Boolean
-                Get
-                    Return New EntityProxy(obj).Equals(_e)
-                End Get
-            End Property
-        End Class
-
-        <Serializable()> _
-        Public Class ListObject
-            Public l As Generic.List(Of ListObjectEntry)
-            Public t As Type
-
-            Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, ByVal sort As Sort) As Boolean
-                'If sort.Previous IsNot Nothing Then
-                '    Return False
-                'End If
-
-                arr = New ArrayList
-                For Each le As ListObjectEntry In l
-                    If Not le.IsLoaded Then
-                        Return False
-                    Else
-                        arr.Add(le.GetObject(mc))
-                    End If
-                Next
-                Return True
-            End Function
-
-            Sub Remove(ByVal obj As ICachedEntity)
-                For i As Integer = 0 To l.Count - 1
-                    Dim le As ListObjectEntry = l(i)
-                    If le.IsEqual(obj) Then
-                        l.RemoveAt(i)
-                        Exit For
-                    End If
-                Next
-            End Sub
-        End Class
-
         Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
             If weak_list Is Nothing Then Return Nothing
-            Dim lo As ListObject = CType(weak_list, ListObject)
-            Dim l As Generic.List(Of ListObjectEntry) = lo.l
+            Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
+            Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
             If mc._externalFilter Is Nothing Then
                 If start < l.Count Then
                     length = Math.Min(start + length, l.Count)
                     For i As Integer = start To length - 1
-                        Dim loe As ListObjectEntry = l(i)
+                        Dim loe As WeakEntityReference = l(i)
                         Dim o As T = loe.GetObject(Of T)(mc)
                         If o IsNot Nothing Then
                             c.List.Add(o)
@@ -300,7 +234,7 @@ Namespace Cache
                 End If
             Else
                 Dim loaded As Integer = 0
-                For Each loe As ListObjectEntry In l
+                For Each loe As WeakEntityReference In l
                     If loe.IsLoaded Then
                         loaded += 1
                     End If
@@ -332,29 +266,35 @@ Namespace Cache
 
         Public Function ToWeakList(ByVal objects As IEnumerable) As Object Implements IListObjectConverter.ToWeakList
             If objects Is Nothing Then Return Nothing
-            Dim l As New Generic.List(Of ListObjectEntry)
-            Dim t As Type = Nothing
-            For Each o As ICachedEntity In objects
-                If t Is Nothing Then t = o.GetType
-                l.Add(New ListObjectEntry(o))
-            Next
-            Dim lo As New ListObject
-            lo.l = l
-            lo.t = t
-            Return lo
+            If GetType(ReadonlyMatrix).IsAssignableFrom(objects.GetType) Then
+                Dim r As ReadonlyMatrix = CType(objects, ReadonlyMatrix)
+                Dim l As New List(Of WeakEntityList)
+                For Each row As ReadOnlyCollection(Of _IEntity) In r
+                    l.Add(CType(ToWeakList(row), WeakEntityList))
+                Next
+                Return New WeakEntityMatrix(l)
+            Else
+                Dim l As New Generic.List(Of WeakEntityReference)
+                Dim t As Type = Nothing
+                For Each o As ICachedEntity In objects
+                    If t Is Nothing Then t = o.GetType
+                    l.Add(New WeakEntityReference(o))
+                Next
+                Return New WeakEntityList(l, t)
+            End If
         End Function
 
         Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
-            Dim lo As ListObject = CType(weak_list, ListObject)
-            Dim l As Generic.List(Of ListObjectEntry) = lo.l
+            Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
+            Dim l As Generic.List(Of WeakEntityReference) = lo.List
 
             If sort Is Nothing Then
-                l.Add(New ListObjectEntry(obj))
+                l.Add(New WeakEntityReference(obj))
             Else
                 Dim arr As ArrayList = Nothing
                 If lo.CanSort(mc, arr, sort) Then
-                    Dim schema As IEntitySchema = mc.MappingEngine.GetObjectSchema(obj.GetType)
+                    Dim schema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     Dim c As IComparer = Nothing
                     If st IsNot Nothing Then
@@ -365,7 +305,7 @@ Namespace Cache
                     If c IsNot Nothing Then
                         Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
                         If pos < 0 Then
-                            l.Insert(Not pos, New ListObjectEntry(obj))
+                            l.Insert(Not pos, New WeakEntityReference(obj))
                         End If
                         Return True
                     End If
@@ -376,15 +316,15 @@ Namespace Cache
         End Function
 
         Public Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity) Implements IListObjectConverter.Delete
-            Dim lo As ListObject = CType(weak_list, ListObject)
+            Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
 
             lo.Remove(obj)
         End Sub
 
         Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
-            Dim lo As ListObject = TryCast(weak_list, ListObject)
+            Dim lo As WeakEntityList = TryCast(weak_list, WeakEntityList)
             If lo IsNot Nothing Then
-                Return lo.l.Count
+                Return lo.Count
             Else
                 Dim l As ICollection = CType(weak_list, ICollection)
                 Return l.Count
@@ -399,10 +339,10 @@ Namespace Cache
 
         Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
-            Dim lo As ListObject = CType(weak_list, ListObject)
-            Dim l As Generic.List(Of ListObjectEntry) = lo.l
+            Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
+            Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim objects As New Generic.List(Of T)
-            For Each loe As ListObjectEntry In l
+            For Each loe As WeakEntityReference In l
                 Dim o As T = loe.GetObject(Of T)(mgr)
                 If o IsNot Nothing Then
                     objects.Add(o)
@@ -414,7 +354,58 @@ Namespace Cache
         End Function
 
         Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
-            Throw New NotImplementedException
+            If weak_list Is Nothing Then Return Nothing
+            Dim wm As WeakEntityMatrix = CType(weak_list, WeakEntityMatrix)
+            Dim r As New List(Of ReadOnlyCollection(Of _IEntity))
+            Dim dic As New Dictionary(Of Type, IListEdit)
+            For i As Integer = start To Math.Min(start + length, wm.Count) - 1
+                Dim wl As WeakEntityList = wm(i)
+                Dim row As New List(Of _IEntity)
+                For j As Integer = 0 To wl.List.Count - 1
+                    Dim wr As WeakEntityReference = wl.List(j)
+                    Dim o As _IEntity = wr.GetObject(mgr)
+                    If o IsNot Nothing Then
+                        row.Add(o)
+                    Else
+                        OrmManager.WriteWarning("Unable to create " & wr.ObjName)
+                    End If
+
+                    If withLoad(j) AndAlso Not o.IsLoaded Then
+                        Dim t As Type = o.GetType
+                        Dim o2l As IListEdit = Nothing
+                        If Not dic.TryGetValue(t, o2l) Then
+                            o2l = OrmManager.CreateReadonlyList(t)
+                            dic(t) = o2l
+                        End If
+                        o2l.Add(o)
+                    End If
+                Next
+
+                r.Add(New ReadOnlyCollection(Of _IEntity)(row))
+            Next
+
+            For Each ll As ILoadableList In dic.Values
+                ll.LoadObjects()
+            Next
+
+            Return New ReadonlyMatrix(r)
+        End Function
+
+        Public Function GetAliveCount(ByVal weakList As Object) As Integer Implements IListObjectConverter.GetAliveCount
+            Dim sum As Integer
+            If GetType(WeakEntityMatrix).IsAssignableFrom(weakList.GetType) Then
+                For Each wl As WeakEntityList In CType(weakList, WeakEntityMatrix)
+                    sum += GetAliveCount(wl)
+                Next
+            Else
+                Dim lo As WeakEntityList = CType(weakList, WeakEntityList)
+                For Each wr As WeakEntityReference In lo.List
+                    If wr.IsAlive Then
+                        sum += 1
+                    End If
+                Next
+            End If
+            Return sum
         End Function
     End Class
 

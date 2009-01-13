@@ -33,7 +33,7 @@
 
         Public ReadOnly Property UniqueName() As String
             Get
-                Return ToStaticString() & "^" & _uqName
+                Return _ToString() & "^" & _uqName
             End Get
         End Property
 
@@ -43,27 +43,32 @@
             End Get
         End Property
 
-        Public Function ToStaticString() As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Dim t As Type = GetRealType(mpe)
+            If t IsNot Nothing Then
+                Return mpe.GetEntityKey(contextFilter, t)
+            Else
+                Return _q.ToStaticString(mpe, contextFilter)
+            End If
+        End Function
+
+        Public Function _ToString() As String
             If _t IsNot Nothing Then
                 Return _t.ToString
             ElseIf Not String.IsNullOrEmpty(_en) Then
                 Return _en
             Else
-                Return String.Empty
-                'Throw New NotImplementedException
+                Return _q._ToString
             End If
         End Function
 
-        'Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-        '    Dim rt As Type = Type
-        '    If rt Is Nothing Then
-        '        rt = schema.GetTypeByEntityName(EntityName)
-        '    End If
-        '    If rt Is Nothing Then
-        '        Throw New NotImplementedException
-        '    End If
-        '    Return rt
-        'End Function
+        Protected Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
+            Dim rt As Type = Type
+            If rt Is Nothing Then
+                rt = schema.GetTypeByEntityName(EntityName)
+            End If
+            Return rt
+        End Function
 
         'Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type
         '    Dim rt As Type = Type
@@ -127,15 +132,26 @@
             End If
         End Function
 
-        Public Function ToStaticString() As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            If mpe Is Nothing Then
+                Throw New ArgumentNullException("mpe")
+            End If
+
+            Dim t As Type = GetRealType(mpe)
+            If t IsNot Nothing Then
+                Return mpe.GetEntityKey(contextFilter, t)
+            Else
+                Return _a.ToStaticString(mpe, contextFilter)
+            End If
+        End Function
+
+        Public Function _ToString() As String
             If _t IsNot Nothing Then
                 Return _t.ToString
             ElseIf Not String.IsNullOrEmpty(_en) Then
                 Return _en
-            ElseIf _a IsNot Nothing Then
-                Return _a.ToStaticString
             Else
-                Throw New NotImplementedException
+                Return _a._ToString()
             End If
         End Function
 
@@ -183,7 +199,7 @@
         Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
             If _calc Is Nothing Then
                 _calc = AnyType
-                If _calc Is Nothing Then
+                If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
                     _calc = schema.GetTypeByEntityName(AnyEntityName)
                 End If
             End If

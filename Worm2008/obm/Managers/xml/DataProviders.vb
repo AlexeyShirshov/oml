@@ -62,7 +62,7 @@ Namespace Xml
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As UpdatableCachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
                 Return True
             End Function
 
@@ -71,7 +71,7 @@ Namespace Xml
                     Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.MappingEngine)
+                        cache.AddDependType(_mgr.GetContextFilter, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -118,8 +118,8 @@ Namespace Xml
             '    End Get
             'End Property
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As UpdatableCachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetEntitySchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -127,11 +127,12 @@ Namespace Xml
                         s = Now.Add(ts)
                     End If
                 End If
-                Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
+                Return New UpdatableCachedItem(s, GetValues(withLoad), _mgr)
+                'Return New UpdatableCachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As UpdatableCachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetEntitySchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -139,7 +140,8 @@ Namespace Xml
                         s = Now.Add(ts)
                     End If
                 End If
-                Return New CachedItem(_sort, s, _f, col, _mgr)
+                Return New UpdatableCachedItem(s, col, _mgr)
+                'Return New UpdatableCachedItem(_sort, s, _f, col, _mgr)
             End Function
         End Class
 
@@ -185,7 +187,7 @@ Namespace Xml
                 Dim c As New Condition.ConditionConstructor
                 c.AddFilter(_f)
                 c.AddFilter(AppendWhere)
-                _mgr.XPathGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, sb, _mgr.GetFilterInfo)
+                _mgr.XPathGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, sb, _mgr.GetContextFilter)
                 If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
                     _mgr.XPathGenerator.AppendOrder(original_type, _sort, sb)
                 End If

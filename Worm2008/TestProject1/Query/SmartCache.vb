@@ -68,7 +68,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestTable()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table1)).Table
+            Dim tbl As SourceFragment = mgr.MappingEngine.GetEntitySchema(GetType(Table1)).Table
 
             Dim q As QueryCmd = New QueryCmd().From(tbl).Where( _
                 Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
@@ -86,7 +86,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table1)).Table
+            Dim tbl As SourceFragment = mgr.MappingEngine.GetEntitySchema(GetType(Table1)).Table
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
                 Ctor.column(tbl, "enum_str").eq(Enum1.sec.ToString))
@@ -104,7 +104,7 @@ Imports Worm.Criteria.Joins
     <TestMethod()> Public Sub TestJoins()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
 
-            Dim tbl As SourceFragment = mgr.MappingEngine.GetObjectSchema(GetType(Table3)).Table
+            Dim tbl As SourceFragment = mgr.MappingEngine.GetEntitySchema(GetType(Table3)).Table
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
                 Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))

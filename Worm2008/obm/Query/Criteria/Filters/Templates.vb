@@ -4,6 +4,8 @@ Imports Worm.Entities.Meta
 Imports Worm.Query
 
 Namespace Criteria.Core
+
+    <Serializable()> _
     Public MustInherit Class TemplateBase
         Implements Worm.Criteria.Core.ITemplate
 
@@ -64,15 +66,18 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public MustOverride Function GetStaticString() As String Implements ITemplate.GetStaticString
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements ITemplate.GetStaticString
 
         Public ReadOnly Property OperToStmt(ByVal stmt As StmtGenerator) As String Implements ITemplate.OperToStmt
             Get
                 Return stmt.Oper2String(_oper)
             End Get
         End Property
+
+        Public MustOverride Function _ToString() As String Implements ITemplate._ToString
     End Class
 
+    <Serializable()> _
     Public Class OrmFilterTemplate
         Inherits TemplateBase
         Implements IOrmFilterTemplate
@@ -139,7 +144,7 @@ Namespace Criteria.Core
                 If o Is Nothing Then
                     Throw New ArgumentException(String.Format("Template type {0} is not match {1}", lt.ToString, obj.GetType))
                 End If
-                Return MakeFilter(schema, schema.GetObjectSchema(lt), CType(o, ICachedEntity))
+                Return MakeFilter(schema, schema.GetEntitySchema(lt), CType(o, ICachedEntity))
             Else
                 Dim v As Object = schema.GetPropertyValue(obj, PropertyAlias, oschema)
                 'If _os.Type IsNot Nothing Then
@@ -199,11 +204,11 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return GetStaticString.GetHashCode
+            Return _ToString.GetHashCode
         End Function
 
-        Public Overrides Function GetStaticString() As String
-            Return ObjectSource.ToStaticString & PropertyAlias & OperToString()
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Return ObjectSource.ToStaticString(mpe, contextFilter) & PropertyAlias & OperToString()
         End Function
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
@@ -229,8 +234,13 @@ Namespace Criteria.Core
         'Public MustOverride ReadOnly Property Operation() As FilterOperation Implements IOrmFilterTemplate.Operation
         'Public MustOverride ReadOnly Property OperToString() As String Implements ITemplate.OperToString
         'Public MustOverride ReadOnly Property OperToStmt() As String Implements ITemplate.OperToStmt
+
+        Public Overrides Function _ToString() As String
+            Return ObjectSource._ToString
+        End Function
     End Class
 
+    <Serializable()> _
     Public Class TableFilterTemplate
         Inherits TemplateBase
 
@@ -261,7 +271,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Overrides Function GetStaticString() As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             Return _tbl.RawName() & _col & OperToString
         End Function
 
@@ -277,9 +287,12 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return GetStaticString.GetHashCode
+            Return _ToString.GetHashCode
         End Function
 
+        Public Overrides Function _ToString() As String
+            Return _tbl.RawName() & _col & OperToString
+        End Function
     End Class
 
 End Namespace

@@ -400,21 +400,21 @@ Namespace Criteria.Joins
             Return _ToString.GetHashCode
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Core.IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Core.IFilter.GetStaticString
             Return _ToString()
         End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
-            Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
-        End Function
+        'Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+        '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
+        'End Function
 
         Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
             Dim map As MapField2Column = Nothing
             Dim os As EntityUnion = Nothing
             If _l.Property.ObjectSource IsNot Nothing Then
-                map = schema.GetObjectSchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
+                map = schema.GetEntitySchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
                 os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
@@ -428,7 +428,7 @@ Namespace Criteria.Joins
             Dim map2 As MapField2Column = Nothing
             Dim os2 As EntityUnion = Nothing
             If _r.Property.ObjectSource IsNot Nothing Then
-                map2 = schema.GetObjectSchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
+                map2 = schema.GetEntitySchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
                 os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
@@ -558,5 +558,9 @@ Namespace Criteria.Joins
         Public Shared Function ChangeEntityJoinToParam(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As TypeWrap(Of Object)) As IFilter
             Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New ScalarValue(value.Value))
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+            'do nothing
+        End Sub
     End Class
 End Namespace

@@ -188,12 +188,12 @@ End Class
 
 Public Class Table1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmDictionary, IOrmSchemaInit, IOrmSorting, IJoinBehavior
+    Implements ISupportAlphabet, ISchemaInit, IOrmSorting, IJoinBehavior
 
     Private _idx As OrmObjectIndex
     'Private _schema As OrmSchemaBase
     Private _tables() As SourceFragment = {New SourceFragment("dbo.Table1")}
-    Private _rels() As M2MRelation
+    Private _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
@@ -239,7 +239,7 @@ Public Class Table1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         Dim t As Type = _schema.GetTypeByEntityName("Table3")
         If t Is Nothing Then
             Throw New InvalidOperationException("Cannot get type Table3")
@@ -248,24 +248,24 @@ Public Class Table1Implementation
 
         If _rels Is Nothing Then
             Dim t1to3 As SourceFragment = TablesImplementation._tables(0)
-            _rels = New M2MRelation() { _
-                New M2MRelation(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
-                New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
-                New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
+                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
+                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
             }
         End If
         Return _rels
     End Function
 
-    Public Overridable Function GetFirstDicField() As String Implements IOrmDictionary.GetFirstDicField
+    Public Overridable Function GetFirstDicField() As String Implements ISupportAlphabet.GetFirstDicField
         Return "Title"
     End Function
 
-    Public Overridable Function GetSecondDicField() As String Implements IOrmDictionary.GetSecondDicField
+    Public Overridable Function GetSecondDicField() As String Implements ISupportAlphabet.GetSecondDicField
         Return Nothing
     End Function
 
-    'Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal type As Type) Implements Worm.Orm.IOrmSchemaInit.GetSchema
+    'Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal type As Type) Implements Worm.Orm.ISchemaInit.GetSchema
     '    _schema = schema
     '    _objectType = type
     'End Sub
@@ -366,19 +366,19 @@ End Class
 
 Public Class Table1Search
     Inherits Table1Implementation
-    Implements IOrmFullTextSupport
+    Implements IFullTextSupport
 
-    Public ReadOnly Property ApplayAsterisk() As Boolean Implements IOrmFullTextSupport.ApplayAsterisk
+    Public ReadOnly Property ApplayAsterisk() As Boolean Implements IFullTextSupport.ApplayAsterisk
         Get
             Return True
         End Get
     End Property
 
-    Public Function GetIndexedFields() As String() Implements IOrmFullTextSupport.GetIndexedFields
+    Public Function GetIndexedFields() As String() Implements IFullTextSupport.GetIndexedFields
         Return New String() {"EnumStr", "Title"}
     End Function
 
-    Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements IOrmFullTextSupport.GetQueryFields
+    Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements IFullTextSupport.GetQueryFields
         If CStr(contextKey) = "sf" Then
             Return New String() {"Title"}
         End If

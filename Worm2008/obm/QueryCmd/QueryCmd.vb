@@ -8,14 +8,18 @@ Imports System.Reflection
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Values
 Imports Worm.Misc
+Imports System.Collections.ObjectModel
 
 Namespace Query
 
+    <Serializable()> _
     Public Class QueryCmd
         Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
 #Region " Classes "
-        Class SelectClause
+
+        <Serializable()> _
+        Class SelectClauseDef
             Private _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
             Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
 
@@ -48,10 +52,12 @@ Namespace Query
             End Property
         End Class
 
-        Class FromClause
+        <Serializable()> _
+        Class FromClauseDef
             Public ObjectSource As EntityUnion
             Public Table As SourceFragment
             Public Query As QueryCmd
+            Private _qeu As EntityUnion
 
             Public Sub New(ByVal table As SourceFragment)
                 Me.Table = table
@@ -76,6 +82,32 @@ Namespace Query
             Public Sub New(ByVal os As EntityUnion)
                 Me.ObjectSource = os
             End Sub
+
+            Public ReadOnly Property QueryEU() As EntityUnion
+                Get
+                    If Query IsNot Nothing Then
+                        If _qeu Is Nothing Then
+                            _qeu = New EntityUnion(New EntityAlias(Query))
+                        End If
+                        Return _qeu
+                    End If
+                    If ObjectSource IsNot Nothing AndAlso ObjectSource.AnyType Is Nothing AndAlso String.IsNullOrEmpty(ObjectSource.AnyEntityName) Then
+                        Return ObjectSource
+                    End If
+                    Return Nothing
+                End Get
+            End Property
+
+            Public ReadOnly Property AnyQuery() As QueryCmd
+                Get
+                    If Query IsNot Nothing Then
+                        Return Query
+                    ElseIf ObjectSource IsNot Nothing AndAlso ObjectSource.AnyType Is Nothing AndAlso String.IsNullOrEmpty(ObjectSource.AnyEntityName) Then
+                        Return ObjectSource.ObjectAlias.Query
+                    End If
+                    Return Nothing
+                End Get
+            End Property
         End Class
 
         Public Class CacheDictionaryRequiredEventArgs
@@ -122,12 +154,12 @@ Namespace Query
             Private _oldct As EntityUnion
             Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Private _cmd As QueryCmd
-            Private _f As FromClause
+            Private _f As FromClauseDef
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
-                If cmd.SelectClaus IsNot Nothing AndAlso cmd.SelectClaus.SelectTypes IsNot Nothing Then
-                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(cmd.SelectClaus.SelectTypes)
+                If cmd.SelectClause IsNot Nothing AndAlso cmd.SelectClause.SelectTypes IsNot Nothing Then
+                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(cmd.SelectClause.SelectTypes)
                 End If
                 _cmd = cmd
                 _f = cmd._from
@@ -136,7 +168,7 @@ Namespace Query
             Public Sub SetCT2Nothing()
                 _cmd._createType = _oldct
                 If _types IsNot Nothing Then
-                    _cmd._sel = New SelectClause(_types)
+                    _cmd._sel = New SelectClauseDef(_types)
                 End If
                 _cmd._from = _f
             End Sub
@@ -179,7 +211,7 @@ Namespace Query
         Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
 
-        Protected _sel As SelectClause
+        Protected _sel As SelectClauseDef
         Protected _filter As IGetFilter
         Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
@@ -194,7 +226,7 @@ Namespace Query
         Protected _clientPage As Paging
         Protected _joins() As QueryJoin
         Protected _autoJoins As Boolean
-        Protected _from As FromClause
+        Protected _from As FromClauseDef
         Protected _hint As String
         Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
         Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
@@ -208,19 +240,34 @@ Namespace Query
         'Private _selectSrc As ObjectSource
         Friend _resDic As Boolean
         Private _appendMain As Boolean?
+        <NonSerialized()> _
         Protected _getMgr As ICreateManager
         Private _name As String
         Private _execCnt As Integer
+        <NonSerialized()> _
         Private _schema As ObjectMappingEngine
         Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _pod As Pair(Of Type, IEntitySchema)
         Private _createType As EntityUnion
+        Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
+        Private _having As IGetFilter
 
-        '#Region " Cache "
-        '        Private _dic As IDictionary(Of ObjectSource, IEntitySchema)
-        '#End Region
+#Region " Cache "
+        <NonSerialized()> _
+        Friend _types As Dictionary(Of EntityUnion, IEntitySchema)
+        <NonSerialized()> _
+        Friend _pdic As Dictionary(Of Type, IDictionary)
+        <NonSerialized()> _
+        Friend _sl As List(Of SelectExpression)
+        <NonSerialized()> _
+        Friend _f As IFilter
+        <NonSerialized()> _
+        Friend _js As List(Of QueryJoin)
+#End Region
+
+        Friend Shared ReadOnly InnerTbl As New SourceFragment
 
         Public ReadOnly Property CreateType() As EntityUnion
             Get
@@ -319,6 +366,7 @@ Namespace Query
         '    _fields = l
         'End Sub
 
+        <NonSerialized()> _
         Private _exec As IExecutor
 
         Public Function GetExecutor(ByVal mgr As OrmManager) As IExecutor
@@ -458,7 +506,7 @@ Namespace Query
                     For Each tp As Pair(Of EntityUnion, Boolean?) In _types
                         t.Add(New Pair(Of EntityUnion, Boolean?)(tp.First, False))
                     Next
-                    cmd._sel = New SelectClause(t)
+                    cmd._sel = New SelectClauseDef(t)
                 End If
             End Sub
 
@@ -469,39 +517,37 @@ Namespace Query
             End Sub
         End Class
 
-        Public Function Prepare(ByVal executor As IExecutor, ByVal js As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
+        Public Shared Sub Prepare(ByVal root As QueryCmd, ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal cs As List(Of List(Of SelectExpression)), ByVal stmt As StmtGenerator) As IFilter()
+            ByVal stmt As StmtGenerator)
 
-            Dim fs As New List(Of IFilter)
-            For Each q As QueryCmd In New QueryIterator(Me)
-                Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
-                Dim c As List(Of SelectExpression) = Nothing
-                Dim f As IFilter = q.Prepare(executor, j, schema, filterInfo, c, stmt)
-                If f IsNot Nothing Then
-                    fs.Add(f)
-                End If
+            'Dim fs As New List(Of IFilter)
+            For Each q As QueryCmd In New StmtQueryIterator(root)
+                'Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
+                'Dim c As List(Of SelectExpression) = Nothing
+                q.Prepare(executor, schema, filterInfo, stmt)
+                'If f IsNot Nothing Then
+                '    fs.Add(f)
+                'End If
 
-                js.Add(j)
-                cs.Add(c)
+                'js.Add(j)
+                'cs.Add(c)
             Next
 
-            Return fs.ToArray
-        End Function
+            'Return fs.ToArray
+        End Sub
 
-        Friend _types As Dictionary(Of EntityUnion, IEntitySchema)
-        Friend _pdic As Dictionary(Of Type, IDictionary)
-
-        Public Function Prepare(ByVal executor As IExecutor, ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), _
+        Public Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByRef cl As List(Of SelectExpression), ByVal stmt As StmtGenerator) As IFilter
+            ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
 
-            cl = New List(Of SelectExpression)
+            _sl = New List(Of SelectExpression)
             _types = New Dictionary(Of EntityUnion, IEntitySchema)
             _pdic = New Dictionary(Of Type, IDictionary)
+            _js = New List(Of QueryJoin)
 
             If propJoins IsNot Nothing Then
-                j.AddRange(propJoins)
+                _js.AddRange(propJoins)
             End If
 
             Dim f As IFilter = Nothing
@@ -510,21 +556,15 @@ Namespace Query
                 f = Filter.Filter()
             End If
 
-            'For Each s As Sort In New Sort.Iterator(_order)
-            '    'If s.Type Is Nothing AndAlso s.Table Is Nothing Then
-            '    '    s.Type = selectType
-            '    'End If
-            '    If s.ObjectSource IsNot Nothing Then
-            '        If s.ObjectSource.GetRealType(schema) Is Nothing AndAlso s.Table Is Nothing Then
-            '            s.ObjectSource = New ObjectSource(selectType)
-            '        End If
+            For Each s As Sort In New Sort.Iterator(_order)
+                s.Prepare(executor, schema, filterInfo, stmt)
+            Next
 
-            '        If s.ObjectSource.GetRealType(schema, Nothing) IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
-            '            s.PropertyAlias = s.Column
-            '            s.Column = Nothing
-            '        End If
-            '    End If
-            'Next
+            If f IsNot Nothing Then
+                For Each fl As IFilter In f.GetAllFilters
+                    fl.Prepare(executor, schema, filterInfo, stmt)
+                Next
+            End If
 
             If Not ClientPaging.IsEmpty Then
                 If executor Is Nothing Then
@@ -542,7 +582,7 @@ Namespace Query
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
                     If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
-                        j.AddRange(joins)
+                        _js.AddRange(joins)
                     End If
                     _appendMain = _appendMain OrElse appendMain
                 End If
@@ -555,15 +595,15 @@ Namespace Query
                     Dim selectedType As Type = selectType
                     Dim filteredType As Type = _m2mObject.GetType
 
-                    'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
+                    'Dim schema2 As IOrmObjectSchema = GetEntitySchema(filteredType)
 
                     'column - select
-                    Dim selected_r As M2MRelation = Nothing
+                    Dim selected_r As M2MRelationDesc = Nothing
                     'column - filter
-                    Dim filtered_r As M2MRelation = Nothing
+                    Dim filtered_r As M2MRelationDesc = Nothing
 
                     filtered_r = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
-                    selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelation.GetRevKey(_m2mKey))
+                    selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelationDesc.GetRevKey(_m2mKey))
 
                     If selected_r Is Nothing Then
                         Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
@@ -596,24 +636,24 @@ Namespace Query
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
-                        j.Add(jn)
-                        If _from IsNot Nothing AndAlso table.Equals(_from.Table) Then
-                            _from = New FromClause(selectOS)
+                        _js.Add(jn)
+                        If _from Is Nothing OrElse table.Equals(_from.Table) Then
+                            _from = New FromClauseDef(selectOS)
                         End If
                         If WithLoad(selectOS, schema) Then
-                            cl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
                         Else
                             GoTo l1
                         End If
                     Else
-                        _from = New FromClause(table)
-                        'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
+                        _from = New FromClauseDef(table)
+                        'Dim os As IOrmObjectSchemaBase = schema.GetEntitySchema(selectedType)
                         'os.GetFieldColumnMap()("ID")._columnName
 l1:
                         Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                         Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                         se.Attributes = Field2DbRelations.PK
-                        cl.Add(se)
+                        _sl.Add(se)
 
                         If SelectTypes(0).First.Equals(selectOS) Then
                         Else
@@ -623,7 +663,7 @@ l1:
 
                     If SelectTypes.Count > 1 Then
                         For i As Integer = 1 To SelectTypes.Count - 1
-                            AddTypeFields(schema, cl, SelectTypes(i))
+                            AddTypeFields(schema, _sl, SelectTypes(i))
                         Next
                     End If
 
@@ -634,14 +674,19 @@ l1:
                     con.AddFilter(tf)
                     f = con.Condition
 
-                    Return f
+                    _f = f
+                    Return
                 End If
 
             End If
 
+            If _from IsNot Nothing AndAlso _from.AnyQuery IsNot Nothing Then
+                Prepare(_from.AnyQuery, executor, schema, filterInfo, stmt)
+            End If
+
             If SelectList IsNot Nothing Then
                 If _createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(_createType.GetRealType(schema)) Then
-                    cl.AddRange(SelectList)
+                    _sl.AddRange(SelectList)
                     For Each se As SelectExpression In SelectList
                         If _from IsNot Nothing Then Exit For
                         CheckFrom(se)
@@ -656,7 +701,7 @@ l1:
                         If os IsNot Nothing Then
                             If Not _types.ContainsKey(os) Then
                                 Dim t As Type = os.GetRealType(schema)
-                                _types.Add(os, schema.GetObjectSchema(t))
+                                _types.Add(os, schema.GetEntitySchema(t))
                             End If
                         End If
                         CheckFrom(se)
@@ -685,31 +730,31 @@ l1:
                                                 If Not find Then
                                                     Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
                                                     se.Attributes = pk.Behavior
-                                                    If Not cl.Contains(se) Then
-                                                        cl.Add(se)
+                                                    If Not _sl.Contains(se) Then
+                                                        _sl.Add(se)
                                                     End If
                                                 End If
                                             End If
                                         Next
                                     End If
-                                    cl.AddRange(col)
+                                    _sl.AddRange(col)
                                 End If
                             End If
                         Next
 
-                        If cl.Count = 0 Then
-                            cl.AddRange(SelectList)
+                        If _sl.Count = 0 Then
+                            _sl.AddRange(SelectList)
                         End If
 
                         If AutoJoins Then
                             Dim selOS As EntityUnion = GetSelectedOS()
                             Dim t As Type = selOS.GetRealType(schema)
-                            Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
+                            Dim selSchema As IEntitySchema = schema.GetEntitySchema(t)
                             For Each se As SelectExpression In SelectList
                                 If se.ObjectSource IsNot Nothing Then
-                                    If Not HasInQuery(se.ObjectSource, j) Then
+                                    If Not HasInQuery(se.ObjectSource, _js) Then
                                         schema.AppendJoin(selOS, se.ObjectSource, _
-                                            f, j, filterInfo, selSchema)
+                                            f, _js, filterInfo, selSchema)
                                     End If
                                 ElseIf se.Table IsNot Nothing Then
                                     Throw New NotImplementedException
@@ -719,7 +764,7 @@ l1:
                             Next
                         End If
                     Else
-                        cl.AddRange(SelectList)
+                        _sl.AddRange(SelectList)
                     End If
                 End If
             Else
@@ -728,13 +773,13 @@ l1:
                         If WithLoad(tp, schema) Then
                             _appendMain = True
                             Dim os As EntityUnion = tp.First
-                            cl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                            _sl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                         Else
                             Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
                             Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
                             se.Into = tp.First
                             se.Attributes = Field2DbRelations.PK
-                            cl.Add(se)
+                            _sl.Add(se)
                         End If
                     Next
                 Else
@@ -745,7 +790,7 @@ l1:
                                 Dim se As New SelectExpression(m._tableName, m._columnName)
                                 se.Attributes = m._newattributes
                                 se.PropertyAlias = m._propertyAlias
-                                cl.Add(se)
+                                _sl.Add(se)
                             Next
                         Else
                             Throw New NotSupportedException
@@ -754,11 +799,11 @@ l1:
                         If SelectTypes.Count > 1 Then
                             Throw New NotSupportedException
                         Else
-                            AddTypeFields(schema, cl, SelectTypes(0), New EntityUnion(New EntityAlias(_from.Query)))
+                            AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU)
                         End If
                     Else
                         For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
-                            AddTypeFields(schema, cl, tp)
+                            AddTypeFields(schema, _sl, tp)
                             'If tp.Second Then
                             '    Throw New NotImplementedException
                             'Else
@@ -769,9 +814,13 @@ l1:
                             'End If
                             If Not _types.ContainsKey(tp.First) Then
                                 Dim t As Type = tp.First.GetRealType(schema)
-                                _types.Add(tp.First, schema.GetObjectSchema(t))
+                                _types.Add(tp.First, schema.GetEntitySchema(t))
                             End If
                         Next
+
+                        If _from Is Nothing Then
+                            _from = New FromClauseDef(SelectTypes(0).First)
+                        End If
 
                         For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
                             Dim t As Type = de.Key.GetRealType(schema)
@@ -786,10 +835,10 @@ l1:
                 If AutoJoins Then
                     Dim selOS As EntityUnion = GetSelectedOS()
                     Dim t As Type = selOS.GetRealType(schema)
-                    Dim selSchema As IEntitySchema = schema.GetObjectSchema(t)
+                    Dim selSchema As IEntitySchema = schema.GetEntitySchema(t)
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
-                        If Not HasInQuery(tp.First, j) Then
-                            schema.AppendJoin(selOS, tp.First, f, j, filterInfo, selSchema)
+                        If Not HasInQuery(tp.First, _js) Then
+                            schema.AppendJoin(selOS, tp.First, f, _js, filterInfo, selSchema)
                         End If
                     Next
                 End If
@@ -800,8 +849,8 @@ l1:
             '        cl.Add(New SelectExpression(a))
             '    Next
             'End If
-            Return f
-        End Function
+            _f = f
+        End Sub
 
         Private Sub CheckFrom(ByVal se As SelectExpression)
             If _from Is Nothing Then
@@ -811,22 +860,24 @@ l1:
                         Dim ep As FieldValue = TryCast(a.Expression.Value, FieldValue)
                         If ep IsNot Nothing Then
                             If ep.Expression.ObjectSource IsNot Nothing Then
-                                _from = New FromClause(ep.Expression.ObjectSource)
+                                _from = New FromClauseDef(ep.Expression.ObjectSource)
                             ElseIf ep.Expression.Table IsNot Nothing Then
-                                _from = New FromClause(ep.Expression.Table)
+                                _from = New FromClauseDef(ep.Expression.Table)
                             Else
                                 Throw New NotSupportedException
                             End If
                         End If
                     End If
                 ElseIf se.Table IsNot Nothing Then
-                    _from = New FromClause(se.Table)
+                    _from = New FromClauseDef(se.Table)
+                ElseIf se.ObjectSource IsNot Nothing Then
+                    _from = New FromClauseDef(se.ObjectSource)
                 End If
             End If
         End Sub
 
         Private Function HasInQuery(ByVal os As EntityUnion, ByVal js As List(Of QueryJoin)) As Boolean
-            If FromClaus IsNot Nothing AndAlso FromClaus.ObjectSource.Equals(os) Then
+            If FromClause IsNot Nothing AndAlso FromClause.ObjectSource.Equals(os) Then
                 Return True
             Else
                 For Each j As QueryJoin In js
@@ -863,50 +914,51 @@ l1:
             End If
         End Sub
 
-        Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of QueryJoin)), _
-            ByVal fs() As IFilter, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String, _
-            ByVal mpe As ObjectMappingEngine, ByRef dic As IDictionary) As String
+        Public Shared Function GetStaticKey(ByVal root As QueryCmd, ByVal mgrKey As String, ByVal cb As Cache.CacheListBehavior, _
+            ByVal fromKey As String, ByVal mpe As ObjectMappingEngine, _
+            ByRef dic As IDictionary, ByVal fi As Object) As String
             Dim key As New StringBuilder
 
             Dim ca As CacheDictionaryRequiredEventArgs = Nothing
             Dim cb_ As Cache.CacheListBehavior = cb
 
             Dim i As Integer = 0
-            For Each q As QueryCmd In New QueryIterator(Me)
+            For Each q As QueryCmd In New MetaDataQueryIterator(root)
                 If i > 0 Then
                     key.Append("$inner:")
                 End If
 
-                Dim f As IFilter = Nothing
-                If fs.Length > i Then
-                    f = fs(i)
-                End If
+                'Dim f As IFilter = _f
+                'If fs.Length > i Then
+                '    f = fs(i)
+                'End If
 
                 'Dim rt As Type = q.SelectedType
                 'If rt Is Nothing AndAlso Not String.IsNullOrEmpty(q.SelectedEntityName) Then
                 '    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
                 'End If
 
-                If Not q.GetStaticKey(key, js(i), f, cb_, sl(i), mpe) Then
+                If Not q.GetStaticKey(key, cb_, mpe, fi) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
-                        RaiseEvent CacheDictionaryRequired(Me, ca)
+                        root.RaiseCacheDictionaryRequired(ca)
                         If ca.GetDictionary Is Nothing Then
                             If cb = Cache.CacheListBehavior.CacheOrThrowException Then
-                                Throw New QueryCmdException("Cannot cache query", Me)
+                                Throw New QueryCmdException("Cannot cache query", root)
                             Else
                                 Return Nothing
                             End If
                         End If
                     End If
-                    q.GetStaticKey(key, js(i), f, Cache.CacheListBehavior.CacheAll, sl(i), mpe)
+                    q.GetStaticKey(key, Cache.CacheListBehavior.CacheAll, mpe, fi)
                     cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
             Next
 
-            key.Append(realTypeKey).Append("$")
+            If Not String.IsNullOrEmpty(fromKey) Then
+                key.Append(fromKey).Append("$")
+            End If
 
             key.Append("$").Append(mgrKey)
 
@@ -918,15 +970,22 @@ l1:
             End If
         End Function
 
-        Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of QueryJoin), _
-            ByVal f As IFilter, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As IList(Of SelectExpression), ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Sub RaiseCacheDictionaryRequired(ByVal ca As CacheDictionaryRequiredEventArgs)
+            RaiseEvent CacheDictionaryRequired(Me, ca)
+        End Sub
+
+        Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, _
+            ByVal cb As Cache.CacheListBehavior, _
+            ByVal mpe As ObjectMappingEngine, ByVal fi As Object) As Boolean
             Dim sb2 As New StringBuilder
+
+            Dim f As IFilter = _f
+            Dim j As List(Of QueryJoin) = _js
 
             If f IsNot Nothing Then
                 Select Case cb
                     Case Cache.CacheListBehavior.CacheAll
-                        sb2.Append(f.GetStaticString(mpe)).Append("$")
+                        sb2.Append(f.GetStaticString(mpe, fi)).Append("$")
                         'Case Cache.CacheListBehavior.CacheOrThrowException
                         '    If TryCast(f, IEntityFilter) IsNot Nothing Then
                         '        sb2.Append(f.GetStaticString(mpe)).Append("$")
@@ -940,7 +999,7 @@ l1:
                         '    End If
                     Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.GetStaticString(mpe)).Append("$")
+                            sb2.Append(f.GetStaticString(mpe, fi)).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
                                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
@@ -968,41 +1027,44 @@ l1:
                                     Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
                             End Select
                         End If
-                        sb2.Append(join.GetStaticString(mpe))
+                        sb2.Append(join.GetStaticString(mpe, fi))
                     End If
                 Next
             End If
 
-            If sb2.Length = 0 Then
-                Dim rt As ICollection(Of Type) = Nothing
-                If GetSelectedTypes(mpe, rt) Then
-                    For Each t As Type In rt
-                        sb2.Append(t.ToString)
-                    Next
-                ElseIf _pod IsNot Nothing Then
-                    sb2.Append(_pod.First.ToString)
-                ElseIf _from IsNot Nothing Then
-                    If _from.Table IsNot Nothing Then
-                        Select Case cb
-                            Case Cache.CacheListBehavior.CacheAll
-                                sb2.Append(_from.Table.RawName)
-                                'Case Cache.CacheListBehavior.CacheOrThrowException
-                            Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
-                                Return False
-                            Case Else
-                                Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
-                        End Select
-                    ElseIf _from.ObjectSource IsNot Nothing Then
-                        sb2.Append(_from.ObjectSource.ToStaticString)
-                    Else
-                        Throw New NotSupportedException
-                    End If
+            If _pod IsNot Nothing Then
+                sb2.Append(_pod.First.ToString).Append("$")
+            End If
+
+            If _from IsNot Nothing Then
+                If _from.Table IsNot Nothing Then
+                    Select Case cb
+                        Case Cache.CacheListBehavior.CacheAll
+                            sb2.Append(_from.Table.RawName)
+                            'Case Cache.CacheListBehavior.CacheOrThrowException
+                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
+                            Return False
+                        Case Else
+                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+                    End Select
+                ElseIf _from.ObjectSource IsNot Nothing Then
+                    'Dim t As Type = _from.ObjectSource.GetRealType(mpe)
+                    'If t Is Nothing Then
+                    '    _from.AnyQuery.GetStaticKey(sb, cb, mpe, fi)
+                    'Else
+                    '    sb.Append(mpe.GetEntityKey(fi, t))
+                    'End If
+                    sb.Append(_from.ObjectSource.ToStaticString(mpe, fi))
                 Else
                     Throw New NotSupportedException
                 End If
+            Else
+                Throw New NotSupportedException
+            End If
 
-                sb2.Append("$")
-            ElseIf cb <> Cache.CacheListBehavior.CacheAll Then
+            sb2.Append("$")
+
+            If cb <> Cache.CacheListBehavior.CacheAll Then
                 If _from IsNot Nothing Then
                     Select Case cb
                         'Case Cache.CacheListBehavior.CacheOrThrowException
@@ -1017,7 +1079,7 @@ l1:
             sb.Append(sb2.ToString)
 
             If _rn IsNot Nothing Then
-                sb.Append(_rn.ToStaticString(mpe))
+                sb.Append(_rn.ToStaticString(mpe, fi))
             End If
 
             If _top IsNot Nothing Then
@@ -1026,11 +1088,22 @@ l1:
 
             sb.Append(_distinct.ToString).Append("$")
 
-            If sl IsNot Nothing Then
-                For Each c As SelectExpression In sl
+            If SelectList IsNot Nothing Then
+                Dim it As IList = SelectList
+                If _types.Count < 2 Then
+                    Dim l As New List(Of SelectExpression)(SelectList)
+                    l.Sort(Function(s1 As SelectExpression, s2 As SelectExpression) s1._ToString.CompareTo(s2._ToString))
+                    it = l
+                End If
+                For Each c As SelectExpression In it
                     If Not GetStaticKeyFromProp(sb, cb, c, mpe) Then
                         Return False
                     End If
+                Next
+                sb.Append("$")
+            ElseIf SelectTypes IsNot Nothing Then
+                For Each t As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                    sb.Append(t.First.ToStaticString(mpe, fi))
                 Next
                 sb.Append("$")
             End If
@@ -1078,26 +1151,29 @@ l1:
             Return True
         End Function
 
-        Public Function GetDynamicKey(ByVal js As List(Of List(Of QueryJoin)), ByVal fs() As IFilter) As String
+        Public Shared Function GetDynamicKey(ByVal root As QueryCmd) As String
             Dim id As New StringBuilder
 
             Dim i As Integer = 0
-            For Each q As QueryCmd In New QueryIterator(Me)
+            For Each q As QueryCmd In New MetaDataQueryIterator(root)
                 If i > 0 Then
                     id.Append("$inner:")
                 End If
-                Dim f As IFilter = Nothing
-                If fs.Length > i Then
-                    f = fs(i)
-                End If
-                q.GetDynamicKey(id, js(i), f)
+                'Dim f As IFilter = Nothing
+                'If fs.Length > i Then
+                '    f = fs(i)
+                'End If
+                q.GetDynamicKey(id)
                 i += 1
             Next
 
             Return id.ToString '& GetType(T).ToString
         End Function
 
-        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of QueryJoin), ByVal f As IFilter)
+        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder)
+            Dim f As IFilter = _f
+            Dim j As List(Of QueryJoin) = _js
+
             If f IsNot Nothing Then
                 sb.Append(f._ToString).Append("$")
             End If
@@ -1133,10 +1209,10 @@ l1:
             Throw New NotSupportedException
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             Dim sb As New StringBuilder
             Dim l As List(Of SelectExpression) = Nothing
-            GetStaticKey(sb, _joins, _filter.Filter, Cache.CacheListBehavior.CacheAll, SelectList, mpe)
+            GetStaticKey(sb, Cache.CacheListBehavior.CacheAll, mpe, contextFilter)
             'If SelectTypes IsNot Nothing Then
             '    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
             '        sb.Append(tp.First.ToStaticString)
@@ -1302,21 +1378,21 @@ l1:
         '    End Set
         'End Property
 
-        Public Property FromClaus() As FromClause
+        Public Property FromClause() As FromClauseDef
             Get
                 Return _from
             End Get
-            Set(ByVal value As FromClause)
+            Set(ByVal value As FromClauseDef)
                 _from = value
                 RenewMark()
             End Set
         End Property
 
-        Public Property SelectClaus() As SelectClause
+        Public Property SelectClause() As SelectClauseDef
             Get
                 Return _sel
             End Get
-            Set(ByVal value As SelectClause)
+            Set(ByVal value As SelectClauseDef)
                 _sel = value
                 RenewMark()
             End Set
@@ -1498,15 +1574,15 @@ l1:
             End Set
         End Property
 
-        'Public Property Aggregates() As ObjectModel.ReadOnlyCollection(Of AggregateBase)
-        '    Get
-        '        Return _aggregates
-        '    End Get
-        '    Set(ByVal value As ObjectModel.ReadOnlyCollection(Of AggregateBase))
-        '        _aggregates = value
-        '        RenewMark()
-        '    End Set
-        'End Property
+        Public Property Unions() As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
+            Get
+                Return _unions
+            End Get
+            Set(ByVal value As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd)))
+                _unions = value
+                RenewMark()
+            End Set
+        End Property
 
         Public Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Get
@@ -1516,7 +1592,7 @@ l1:
                 Return Nothing
             End Get
             Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
-                SelectClaus = New SelectClause(value)
+                SelectClause = New SelectClauseDef(value)
             End Set
         End Property
 
@@ -1554,7 +1630,7 @@ l1:
                 Return Nothing
             End Get
             Set(ByVal value As ObjectModel.ReadOnlyCollection(Of SelectExpression))
-                SelectClaus = New SelectClause(value)
+                SelectClause = New SelectClauseDef(value)
             End Set
         End Property
 
@@ -1595,6 +1671,16 @@ l1:
             End Get
             Set(ByVal value As IGetFilter)
                 _filter = value
+                RenewMark()
+            End Set
+        End Property
+
+        Public Property propHaving() As IGetFilter
+            Get
+                Return _having
+            End Get
+            Set(ByVal value As IGetFilter)
+                _having = value
                 RenewMark()
             End Set
         End Property
@@ -1682,6 +1768,20 @@ l1:
             Return Me
         End Function
 
+        Public Function HavingAdd(ByVal filter As IGetFilter) As QueryCmd
+            If Me.propHaving Is Nothing Then
+                Me.propHaving = filter
+            Else
+                Me.propHaving = Ctor.Filter(filter).and(Me.propHaving)
+            End If
+            Return Me
+        End Function
+
+        Public Function Having(ByVal filter As IGetFilter) As QueryCmd
+            Me.propHaving = filter
+            Return Me
+        End Function
+
         Public Function Into(ByVal t As Type) As QueryCmd
             _createType = New EntityUnion(t)
             Return Me
@@ -1693,32 +1793,51 @@ l1:
         End Function
 
         Public Function From(ByVal t As Type) As QueryCmd
-            _from = New FromClause(t)
+            _from = New FromClauseDef(t)
             RenewMark()
             Return Me
         End Function
 
         Public Function From(ByVal [alias] As EntityAlias) As QueryCmd
-            _from = New FromClause([alias])
+            _from = New FromClauseDef([alias])
             RenewMark()
             Return Me
         End Function
 
         Public Function From(ByVal entityName As String) As QueryCmd
-            _from = New FromClause(entityName)
+            _from = New FromClauseDef(entityName)
             RenewMark()
             Return Me
         End Function
 
         Public Function From(ByVal t As SourceFragment) As QueryCmd
-            _from = New FromClause(t)
+            _from = New FromClauseDef(t)
             RenewMark()
             Return Me
         End Function
 
         Public Function From(ByVal q As QueryCmd) As QueryCmd
-            _from = New FromClause(q)
+            _from = New FromClauseDef(q)
             RenewMark()
+            Return Me
+        End Function
+
+        Public Function Union(ByVal q As QueryCmd) As QueryCmd
+            Unions = New ObjectModel.ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))( _
+                New Pair(Of Boolean, QueryCmd)() {New Pair(Of Boolean, QueryCmd)(False, q)})
+            Return Me
+        End Function
+
+        Public Function UnionAll(ByVal q As QueryCmd) As QueryCmd
+            Unions = New ObjectModel.ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))( _
+                New Pair(Of Boolean, QueryCmd)() {New Pair(Of Boolean, QueryCmd)(True, q)})
+            Return Me
+        End Function
+
+        Public Function [Select](ByVal ParamArray t() As EntityUnion) As QueryCmd
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))( _
+                Array.ConvertAll(Of EntityUnion, Pair(Of EntityUnion, Boolean?))(t, _
+                    Function(item As EntityUnion) New Pair(Of EntityUnion, Boolean?)(item, Nothing)))
             Return Me
         End Function
 
@@ -1748,9 +1867,26 @@ l1:
             Return Me
         End Function
 
-        Friend Sub SelectInt(ByVal t As Type)
-            _sel = New SelectClause(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), Nothing)}))
+        Friend Sub SelectInt(ByVal t As Type, ByVal mpe As ObjectMappingEngine)
+            If _filter IsNot Nothing Then
+                For Each f As IFilter In _filter.Filter.GetAllFilters
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+                    Dim rt As Type = CType(ef.Template, OrmFilterTemplate).ObjectSource.GetRealType(mpe)
+                    If ef IsNot Nothing AndAlso t.IsAssignableFrom(rt) Then
+                        _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(rt), Nothing)}))
+                        Return
+                    End If
+                Next
+            End If
+
+            _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), Nothing)}))
         End Sub
+
+        Public Function [Select](ByVal eu As EntityUnion, ByVal withLoad As Boolean) As QueryCmd
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(eu, withLoad)})
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
+            Return Me
+        End Function
 
         Public Function [Select](ByVal t As Type, ByVal withLoad As Boolean) As QueryCmd
             Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), withLoad)})
@@ -2127,6 +2263,81 @@ l1:
         '    Return ToSimpleList(Of CreateType, T)(_getMgr)
         'End Function
 #End Region
+
+        Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
+            Dim c As New QueryCmd.svct(Me)
+            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                If SelectClause Is Nothing Then
+                    [Select](GetType(TKey), GetType(TValue))
+                End If
+
+                Dim m As ReadonlyMatrix = ToMatrix(mgr)
+
+                Dim d As New Dictionary(Of TKey, IList(Of TValue))
+
+                For Each row As ReadOnlyCollection(Of _IEntity) In m
+                    Dim l As IList(Of TValue) = Nothing
+                    Dim key As TKey = CType(row(0), TKey)
+                    Dim val As TValue = CType(row(1), TValue)
+                    If Not d.TryGetValue(key, l) Then
+                        l = New List(Of TValue)
+                        d(key) = l
+                    End If
+                    l.Add(val)
+                Next
+
+                Return d
+            End Using
+        End Function
+
+        Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)() As IDictionary(Of TKey, IList(Of TValue))
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToDictionary(Of TKey, TValue)(_getMgr)
+        End Function
+
+        Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
+            Using mgr As OrmManager = getMgr.CreateManager
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
+                Return ToDictionary(Of TKey, TValue)(mgr)
+            End Using
+        End Function
+
+        Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
+            Dim m As ReadonlyMatrix = ToMatrix(mgr)
+
+            Dim d As New Dictionary(Of TKey, IList(Of TValue))
+
+            For Each row As ReadOnlyCollection(Of _IEntity) In m
+                Dim l As IList(Of TValue) = Nothing
+                Dim key As TKey = CType(row(0), TKey)
+                Dim val As TValue = CType(row(1), TValue)
+                If Not d.TryGetValue(key, l) Then
+                    l = New List(Of TValue)
+                    d(key) = l
+                End If
+                l.Add(val)
+            Next
+
+            Return d
+        End Function
+
+        Public Function ToSimpleDictionary(Of TKey, TValue)() As IDictionary(Of TKey, IList(Of TValue))
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToSimpleDictionary(Of TKey, TValue)(_getMgr)
+        End Function
+
+        Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
+            Using mgr As OrmManager = getMgr.CreateManager
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
+                Return ToSimpleDictionary(Of TKey, TValue)(mgr)
+            End Using
+        End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
             If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
@@ -2546,7 +2757,12 @@ l1:
 
         Protected Friend Function GetSchemaForCreateType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             If _pod Is Nothing Then
-                Return mpe.GetObjectSchema(GetSelectedType(mpe), False)
+                Dim t As Type = GetSelectedType(mpe)
+                If _createType Is Nothing OrElse _createType.GetRealType(mpe).IsAssignableFrom(t) Then
+                    Return mpe.GetObjectSchema(t, False)
+                Else
+                    Return Nothing
+                End If
             Else
                 Return _pod.Second
             End If
@@ -2593,9 +2809,9 @@ l1:
                 ._from = _from
                 ._top = _top
                 ._rn = _rn
-                '._outer = _outer
+                ._having = _having
                 ._er = _er
-                '._en = _en
+                ._unions = _unions
                 ._resDic = _resDic
                 ._appendMain = _appendMain
                 ._getMgr = _getMgr
@@ -2608,7 +2824,7 @@ l1:
                 ._cacheSort = _cacheSort
                 ._timeout = _timeout
                 ._pod = _pod
-                '._autoFields = _autoFields
+                ._autoFields = _autoFields
             End With
         End Sub
 
@@ -2618,105 +2834,33 @@ l1:
             Return q
         End Function
 
-        '#Region " Factory "
+        Friend Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
 
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})() As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(Nothing, Nothing, False)
-        '        End Function
+            For Each se As SelectExpression In _sl
+                If se.PropType = PropType.ObjectProperty Then
+                    If se.FieldAlias = p Then
+                        Return p
+                    Else
+                        If se.PropertyAlias = p Then
+                            Dim t As Type = se.ObjectSource.GetRealType(mpe)
+                            If t Is Nothing Then
+                                Return _from.AnyQuery.FindColumn(mpe, p)
+                            Else
+                                Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
+                                Dim map As MapField2Column = oschema.GetFieldColumnMap()(se.PropertyAlias)
+                                Return mpe.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
+                            End If
+                        End If
+                    End If
+                Else
+                    If se.Column = p Then
+                        Return p
+                    End If
+                End If
+            Next
 
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter) As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(filter, Nothing, False)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal column As String, ByVal field As String) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
-        '            Dim l As New List(Of OrmProperty)
-        '            l.Add(New OrmProperty(table, column, field))
-        '            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal columnAndField() As Pair(Of String, String)) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
-        '            Dim l As New List(Of OrmProperty)
-        '            For Each f As Pair(Of String, String) In columnAndField
-        '                l.Add(New OrmProperty(table, f.First, f.Second))
-        '            Next
-        '            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
-        '            Dim l As New List(Of OrmProperty)
-        '            l.AddRange(fields)
-        '            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(filter, sort, False)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(table, filter, sort, False)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
-        '            Dim q As New QueryCmd(Of ReturnType)
-        '            With q
-        '                ._filter = filter
-        '                ._order = sort
-        '                ._load = withLoad
-        '            End With
-        '            If sort IsNot Nothing Then
-        '                AddHandler sort.OnChange, AddressOf q.OnSortChanged
-        '            End If
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(filter, sort, withLoad)
-        '            q._table = table
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase) As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(o, Nothing, Nothing, False, Nothing)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal key As String) As QueryCmd(Of ReturnType)
-        '            Return Create(Of ReturnType)(o, Nothing, Nothing, False, key)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal direct As Boolean) As QueryCmd(Of ReturnType)
-        '            Dim key As String
-        '            If direct Then
-        '                key = M2MRelation.DirKey
-        '            Else
-        '                key = M2MRelation.RevKey
-        '            End If
-
-        '            Return Create(Of ReturnType)(o, Nothing, Nothing, False, key)
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean, ByVal key As String) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(filter, sort, withLoad)
-        '            With q
-        '                ._o = o
-        '                ._m2mKey = key
-        '            End With
-
-        '            Return q
-        '        End Function
-
-        '        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal aggregates() As AggregateBase) As QueryCmd(Of ReturnType)
-        '            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(CType(Nothing, IFilter))
-        '            q._aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggregates)
-        '            Return q
-        '        End Function
-
-        '#End Region
+            Return Nothing
+        End Function
 
         Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
             'If SelectedType Is Nothing Then
@@ -3042,25 +3186,30 @@ l1:
 
         Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
             Dim sb As New StringBuilder
-            GetDynamicKey(sb, _joins, _filter.Filter)
+            GetDynamicKey(sb)
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            Return ToStaticString(mpe)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            Return ToStaticString(mpe, contextFilter)
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object) As T
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
-                    Return GetByID(Of T)(id, mgr)
+                    Return GetByID(Of T)(id, ensureLoaded, mgr)
                 End Using
             Else
                 Throw New QueryCmdException("Manager is required", Me)
             End If
+
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object) As T
+            Return GetByID(Of T)(id, False)
+        End Function
+
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
             End If
@@ -3069,20 +3218,85 @@ l1:
             Dim pk As String = Nothing
 
             Dim selou As EntityUnion = GetSelectedOS()
-
+            Dim tp As Type = Nothing
             If selou IsNot Nothing Then
-                Dim tp As Type = selou.GetRealType(mgr.MappingEngine)
+                tp = selou.GetRealType(mgr.MappingEngine)
+                [Select](selou, ensureLoaded)
                 f = Ctor.prop(selou, mgr.MappingEngine.GetPrimaryKeys(tp)(0).PropertyAlias).eq(id)
             Else
+                tp = GetType(T)
+                [Select](tp, ensureLoaded)
                 f = Ctor.prop(GetType(T), mgr.MappingEngine.GetPrimaryKeys(GetType(T))(0).PropertyAlias).eq(id)
+            End If
+
+            If mgr.IsInCache(id, tp) Then
+                Dim o As IKeyEntity = mgr.LoadType(id, tp, ensureLoaded, False)
+                If o IsNot Nothing Then
+                    If _getMgr IsNot Nothing Then
+                        o.SetCreateManager(_getMgr)
+                    End If
+                    Return CType(o, T)
+                End If
             End If
 
             Return Where(f).Single(Of T)()
         End Function
 
+        Protected Function BuildDic(Of T As {New, IEntity})(ByVal mgr As OrmManager, _
+            ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+
+            Dim last As DicIndexT(Of T) = DicIndexT(Of T).CreateRoot(firstPropertyAlias, secondPropertyAlias)
+            Dim root As DicIndexT(Of T) = last
+            Dim first As Boolean = True
+
+            Dim pn As String = SelectList(0).FieldAlias
+            If String.IsNullOrEmpty(pn) Then
+                pn = SelectList(0).Column
+            End If
+            Dim cn As String = SelectList(1).FieldAlias
+            If String.IsNullOrEmpty(cn) Then
+                cn = SelectList(1).Column
+            End If
+
+            For Each a As AnonymousEntity In ToAnonymList(mgr)
+                OrmManager.BuildDic(Of DicIndexT(Of T), T)(CStr(a(pn)), CInt(a(cn)), level, root, last, first, firstPropertyAlias, secondPropertyAlias)
+            Next
+
+            Return root
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal level As Integer) As DicIndexT(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return BuildDictionary(Of T)(_getMgr, level)
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
+
+                Return BuildDictionary(Of T)(mgr, level)
+            End Using
+        End Function
+
         Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
+
             If _group Is Nothing OrElse _group.Count = 0 Then
-                Throw New InvalidOperationException("Group clause not specified")
+                Dim tt As Type = GetType(T)
+                If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
+                    tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
+                End If
+
+                Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
+                Dim idic As ISupportAlphabet = TryCast(oschema, ISupportAlphabet)
+
+                If idic IsNot Nothing Then
+                    Return BuildDictionary(Of T)(mgr, idic.GetFirstDicField, idic.GetSecondDicField, level)
+                Else
+                    Throw New InvalidOperationException("Group clause not specified")
+                End If
             End If
 
             If _group(0).Values Is Nothing OrElse _group(0).Values.Length = 0 Then
@@ -3095,21 +3309,66 @@ l1:
 
             Dim n As String = _group(0).Values(0).Property.Field
 
-            Dim last As DicIndexT(Of T) = DicIndexT(Of T).CreateRoot(n)
-            Dim root As DicIndexT(Of T) = last
-            Dim first As Boolean = True
-
-            For Each a As AnonymousEntity In ToAnonymList(mgr)
-                OrmManager.BuildDic(Of DicIndexT(Of T), T)(CStr(a("Pref")), CInt(a("Count")), 1, root, last, first, n, Nothing)
-            Next
-
-            Return root
+            Return BuildDic(Of T)(mgr, n, Nothing, level)
         End Function
 
-        'Public Function BuildObjDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, _
-        '    ByVal criteria As IGetFilter, ByVal join() As QueryJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
-        '    Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(firstField, secondField)).f)
-        'End Function
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            Dim tt As Type = GetType(T)
+            Dim c As New QueryCmd.svct(Me)
+            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
+                    tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
+                ElseIf _from Is Nothing Then
+                    _from = New FromClauseDef(tt)
+                End If
+
+                Dim s As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, propertyAlias)).GetAllProperties(0)
+
+                [Select](FCtor.Exp(s).count("Count")) _
+                    .GroupBy(FCtor.Exp(s)) _
+                    .Sort(SCtor.custom("Count").desc)
+
+                Return BuildDictionary(Of T)(mgr, level)
+            End Using
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, _
+            ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+
+            If Not String.IsNullOrEmpty(secondPropertyAlias) Then
+                Dim tt As Type = GetType(T)
+
+                If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
+                    tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
+                End If
+
+                Dim s1 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, firstPropertyAlias)).GetAllProperties(0)
+                Dim s2 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, secondPropertyAlias)).GetAllProperties(0)
+
+                Dim c As New QueryCmd.svct(Me)
+                Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                    From( _
+                        New QueryCmd() _
+                            .[Select](FCtor.Exp(s1).count("cnt")) _
+                            .From(tt) _
+                            .GroupBy(FCtor.Exp(s1)) _
+                            .UnionAll( _
+                        New QueryCmd() _
+                            .[Select](FCtor.Exp(s2).count("cnt")) _
+                            .From(tt) _
+                            .GroupBy(FCtor.Exp(s2)) _
+                        ) _
+                    ) _
+                    .Select(FCtor.custom("Pref").sum("cnt", "Count")) _
+                    .GroupBy(FCtor.custom("Pref")).Sort(SCtor.custom("Pref").desc)
+
+                    Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
+                End Using
+            Else
+                Return BuildDictionary(Of T)(mgr, firstPropertyAlias, level)
+            End If
+        End Function
+
     End Class
 
     Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

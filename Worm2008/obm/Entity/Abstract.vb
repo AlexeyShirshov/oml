@@ -1,5 +1,6 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Cache
+Imports Worm.Query
 
 Namespace Entities
     Public Class ObjectSavedArgs
@@ -125,7 +126,7 @@ Namespace Entities
         Function BeginEdit() As IDisposable
         Function BeginAlter() As IDisposable
         Sub CheckEditOrThrow()
-        Function Delete() As Boolean
+        Function Delete(ByVal mgr As OrmManager) As Boolean
     End Interface
 
     Public Interface ICachedEntityEx
@@ -148,42 +149,54 @@ Namespace Entities
         Inherits ICachedEntityEx, _ICachedEntity
     End Interface
 
-    Public Interface IM2M
-        Function Find(ByVal t As Type) As Worm.Query.QueryCmd
-        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Find(ByVal entityName As String) As Worm.Query.QueryCmd
-        Function Find(ByVal entityName As String, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
-        Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
+    Public Interface IRelations
+        Function GetCmd(ByVal t As Type) As Worm.Query.RelationCmd
+        Function GetCmd(ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function GetCmd(ByVal entityName As String) As Worm.Query.RelationCmd
+        Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd
+        Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd
+
+        Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
+        Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
+
         Sub Add(ByVal o As IKeyEntity)
         Sub Add(ByVal o As IKeyEntity, ByVal key As String)
         Sub Delete(ByVal o As IKeyEntity)
         Sub Delete(ByVal o As IKeyEntity, ByVal key As String)
-        'Sub Delete(ByVal t As Type)
-        'Sub Delete(ByVal t As Type, ByVal key As String)
+
         Sub Cancel(ByVal t As Type)
         Sub Cancel(ByVal t As Type, ByVal key As String)
-        Function GetRelationSchema(ByVal t As Type) As M2MRelation
-        Function GetRelationSchema(ByVal t As Type, ByVal key As String) As M2MRelation
-        Function GetRelation(ByVal t As Type) As EditableListBase
-        Function GetRelation(ByVal t As Type, ByVal key As String) As EditableListBase
-        Function GetAllRelation() As Generic.IList(Of EditableListBase)
+        Sub Cancel(ByVal en As String)
+        Sub Cancel(ByVal en As String, ByVal key As String)
+        Sub Cancel(ByVal desc As RelationDesc)
+
+        Function GetRelationDesc(ByVal t As Type) As RelationDesc
+        Function GetRelationDesc(ByVal t As Type, ByVal key As String) As RelationDesc
+        Function GetRelationDesc(ByVal en As String) As RelationDesc
+        Function GetRelationDesc(ByVal en As String, ByVal key As String) As RelationDesc
+
+        Function GetRelation(ByVal t As Type) As Relation
+        Function GetRelation(ByVal t As Type, ByVal key As String) As Relation
+        Function GetRelation(ByVal desc As RelationDesc) As Relation
+        Function GetRelation(ByVal en As String) As Relation
+        Function GetRelation(ByVal en As String, ByVal key As String) As Relation
+        Function GetAllRelation() As Generic.IList(Of Relation)
     End Interface
 
     Public Interface IKeyEntity
-        Inherits _ICachedEntity, IM2M
+        Inherits _ICachedEntity, IRelations
         Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
@@ -199,6 +212,10 @@ Namespace Entities
         'Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
         'Function GetAllEditable() As Generic.IList(Of EditableListBase)
         Sub RejectM2MIntermidiate()
+    End Interface
+
+    Public Interface IOrmEditable(Of T As {KeyEntity})
+        Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface
 
     <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
@@ -223,7 +240,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public ReadOnly Property el() As EditableList
+        Public ReadOnly Property el() As CachedM2MRelation
             Get
                 Return _e.Entry
             End Get
@@ -261,7 +278,7 @@ Namespace Entities
 
     Public Class UpdateCtx
         Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilter)
-        Public Relations As New Generic.List(Of EditableListBase)
+        Public Relations As New Generic.List(Of M2MRelation)
         Public Added As Boolean
         Public Deleted As Boolean
     End Class
@@ -291,6 +308,7 @@ Namespace Entities
 
     End Class
 
+    <Serializable()> _
     Public Class PKWrapper
         Private _id As PKDesc()
         Private _str As String

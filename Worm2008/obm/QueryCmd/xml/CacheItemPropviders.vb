@@ -12,9 +12,8 @@ Namespace Query.Xml
         Class ProviderT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
             Inherits CacheItemBaseProvider
 
-            Public Sub New(ByVal mgr As QueryManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-                MyBase.New(mgr, j, f, q, sl)
+            Public Sub New(ByVal mgr As QueryManager, ByVal q As QueryCmd)
+                MyBase.New(mgr, q)
             End Sub
 
             Public Function GetEntities() As ReadOnlyObjectList(Of ReturnType)
@@ -35,11 +34,10 @@ Namespace Query.Xml
             End Function
 
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
-                Return New CachedItem(GetEntities(), _mgr.Cache)
+                Return New UpdatableCachedItem(GetEntities(), _mgr.Cache)
             End Function
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of QueryJoin)), _
-                                       ByVal f() As Criteria.Core.IFilter, ByVal sl As System.Collections.Generic.List(Of System.Collections.Generic.List(Of Entities.SelectExpression)), ByVal q As QueryCmd)
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
                 Throw New NotImplementedException
             End Sub
         End Class

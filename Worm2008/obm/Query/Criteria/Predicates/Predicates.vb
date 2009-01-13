@@ -566,20 +566,38 @@ Namespace Criteria
         End Function
     End Module
 
-    'Friend Class _CriteriaLink
-    '    Inherits CriteriaLink
+    Public Class AggPredicate
+        Inherits PredicateBase
 
-    '    Private _f As IEntityFilter
+        Private _agg As AggregateBase
 
-    '    Public Sub New(ByVal f As IEntityFilter)
-    '        _f = f
-    '    End Sub
+        Public Sub New(ByVal agg As AggregateBase)
+            _agg = agg
+        End Sub
 
-    '    Public Overrides ReadOnly Property Filter(ByVal t As System.Type) As IEntityFilter
-    '        Get
-    '            Return _f
-    '        End Get
-    '    End Property
-    'End Class
+        Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+            MyBase.New(con, ct)
+        End Sub
+
+        Protected Overrides Function CreateFilter(ByVal v As Values.IFilterValue, ByVal oper As FilterOperation) As Core.IFilter
+            Return New AggFilter(_agg, oper, v)
+        End Function
+
+        Protected Overloads Overrides Function CreateJoinFilter(ByVal t As Entities.Meta.SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overloads Overrides Function CreateJoinFilter(ByVal op As Query.ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overrides Function GetLink(ByVal fl As Core.IFilter) As PredicateLink
+            If ConditionCtor Is Nothing Then
+                ConditionCtor = New Condition.ConditionConstructor
+            End If
+            ConditionCtor.AddFilter(fl, ConditionOper)
+            Return New PredicateLink(CType(ConditionCtor, Condition.ConditionConstructor))
+        End Function
+    End Class
 
 End Namespace

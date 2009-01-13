@@ -114,7 +114,7 @@ Public Class TestSearch
 
             Assert.AreEqual(1, c.Count)
 
-            Dim os As IOrmObjectSchema = CType(mgr.MappingEngine.GetObjectSchema(GetType(Table1)), IOrmObjectSchema)
+            Dim os As IOrmObjectSchema = CType(mgr.MappingEngine.GetEntitySchema(GetType(Table1)), IOrmObjectSchema)
             Dim cn As New Condition.ConditionConstructor
             cn.AddFilter(New TableFilter(os.GetTables(0), "code", New ScalarValue(8923), Worm.Criteria.FilterOperation.Equal))
 

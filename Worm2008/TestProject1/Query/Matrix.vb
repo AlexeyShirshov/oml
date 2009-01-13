@@ -5,6 +5,8 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm
 Imports Worm.Entities
+Imports Worm.Cache
+Imports System.Collections.ObjectModel
 
 <TestClass()> Public Class Matrix
 
@@ -45,6 +47,14 @@ Imports Worm.Entities
     '
 #End Region
 
+    Class localcache
+        Inherits OrmCache
+
+        Protected Overrides Function CreateListConverter() As Worm.Cache.IListObjectConverter
+            Return New ListConverter
+        End Function
+    End Class
+
     <TestMethod()> Public Sub TestSelect()
         Dim t1 As New EntityAlias(GetType(Table1))
         Dim t2 As New EntityAlias(GetType(Table1))
@@ -78,5 +88,95 @@ Imports Worm.Entities
             Select(t1, True).SelectAdd(t2, True)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
+    End Sub
+
+    <TestMethod()> Public Sub TestSelectListConverter()
+        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t2 As New EntityAlias(GetType(Table1))
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared( _
+                                  New ObjectMappingEngine("1"), New localcache))
+
+        q.From(t1). _
+            Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
+            Select(t1, t2)
+
+        Dim m As ReadonlyMatrix = q.ToMatrix
+    End Sub
+
+    <TestMethod()> Public Sub TestSelectCache()
+        Dim c As New OrmCache
+
+        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t2 As New EntityAlias(GetType(Table1))
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        q.From(t1). _
+            Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
+            Select(t1, t2)
+
+        Dim m As ReadonlyMatrix = q.ToMatrix
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(3, m.Count)
+
+        For Each row As ReadOnlyCollection(Of _IEntity) In m
+            Assert.AreEqual(2, row.Count)
+            Assert.IsFalse(row(0).IsLoaded)
+            Assert.IsFalse(row(1).IsLoaded)
+        Next
+
+        m = q.ToMatrix
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(3, m.Count)
+
+        For Each row As ReadOnlyCollection(Of _IEntity) In m
+            Assert.AreEqual(2, row.Count)
+            Assert.IsTrue(row(0).IsLoaded)
+            Assert.IsTrue(row(1).IsLoaded)
+        Next
+    End Sub
+
+    <TestMethod()> Public Sub TestSelectWebCache()
+        Dim c As New localcache
+
+        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t2 As New EntityAlias(GetType(Table1))
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        q.From(t1). _
+            Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
+            Select(t1, t2)
+
+        Dim m As ReadonlyMatrix = q.ToMatrix
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(3, m.Count)
+
+        For Each row As ReadOnlyCollection(Of _IEntity) In m
+            Assert.AreEqual(2, row.Count)
+            Assert.IsFalse(row(0).IsLoaded)
+            Assert.IsFalse(row(1).IsLoaded)
+        Next
+
+        m = q.ToMatrix
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        Assert.AreEqual(3, m.Count)
+
+        For Each row As ReadOnlyCollection(Of _IEntity) In m
+            Assert.AreEqual(2, row.Count)
+            Assert.IsTrue(row(0).IsLoaded)
+            Assert.IsTrue(row(1).IsLoaded)
+        Next
     End Sub
 End Class

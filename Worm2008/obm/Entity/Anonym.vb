@@ -4,6 +4,7 @@ Imports Worm.Entities.Meta
 
 Namespace Entities
 
+    <Serializable()> _
     <DefaultProperty("Item")> _
     Public Class AnonymousEntity
         Inherits Entity
@@ -28,6 +29,7 @@ Namespace Entities
         End Property
     End Class
 
+    <Serializable()> _
     Public Class AnonymousCachedEntity
         Inherits AnonymousEntity
         Implements _ICachedEntity
@@ -112,7 +114,7 @@ Namespace Entities
 
         Public Function GetPKValues() As Meta.PKDesc() Implements ICachedEntity.GetPKValues
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
             Dim l As New List(Of PKDesc)
             For Each pk As String In _pk
                 l.Add(New PKDesc(pk, schema.GetPropertyValue(Me, pk, oschema)))
@@ -129,7 +131,7 @@ Namespace Entities
         Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
             Get
                 Dim schema As Worm.ObjectMappingEngine = MappingEngine
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
                 Dim k As Integer
                 For Each pk As String In _pk
                     k = k Xor schema.GetPropertyValue(Me, pk, oschema).GetHashCode
@@ -184,7 +186,7 @@ Namespace Entities
 
         End Sub
 
-        Public Function Delete() As Boolean Implements ICachedEntity.Delete
+        Public Function Delete(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.Delete
 
         End Function
 

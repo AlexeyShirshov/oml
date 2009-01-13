@@ -191,6 +191,7 @@ Namespace Cache
         End Property
     End Class
 
+    <Serializable()> _
     Public Class CacheKey
         Inherits PKWrapper
 
@@ -208,6 +209,210 @@ Namespace Cache
         Public Overrides Function ToString() As String
             Return _key.ToString
         End Function
+    End Class
+
+    <Serializable()> _
+    Public Class WeakEntityReference
+        Private _e As EntityProxy
+        Private _ref As WeakReference
+
+        Public Sub New(ByVal o As ICachedEntity)
+            _e = New EntityProxy(o)
+            _ref = New WeakReference(o)
+        End Sub
+
+        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As T
+            Return GetObject(Of T)(mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine)
+        End Function
+
+        Public Function GetObject(Of T As {_ICachedEntity})(ByVal cache As CacheBase, _
+            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
+            Dim o As T = CType(_ref.Target, T)
+            If o Is Nothing Then
+                o = CType(cache.GetEntityFromCacheOrCreate(_e.PK, GetType(T), True, filterInfo, schema), T) 'mc.FindObject(id, t)
+                If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
+                    o = CType(cache.NewObjectManager.GetNew(GetType(T), _e.PK), T)
+                End If
+            End If
+            Return o
+        End Function
+
+        Public Function GetObject(ByVal mgr As OrmManager) As ICachedEntity
+            Return GetObject(mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine)
+        End Function
+
+        Public Function GetObject(ByVal cache As CacheBase, _
+            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As ICachedEntity
+            Dim o As ICachedEntity = CType(_ref.Target, ICachedEntity)
+            If o Is Nothing Then
+                o = cache.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType, True, filterInfo, schema) 'mc.FindObject(id, t)
+                If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
+                    o = cache.NewObjectManager.GetNew(_e.EntityType, _e.PK)
+                End If
+            End If
+            Return o
+        End Function
+
+        Public ReadOnly Property ObjName() As String
+            Get
+                Return _e.ToString
+            End Get
+        End Property
+
+        Public ReadOnly Property IsAlive() As Boolean
+            Get
+                Return _ref.IsAlive
+            End Get
+        End Property
+
+        Public ReadOnly Property IsLoaded() As Boolean
+            Get
+                Return _ref.IsAlive AndAlso CType(_ref.Target, ICachedEntity).IsLoaded
+            End Get
+        End Property
+
+        Public ReadOnly Property IsEqual(ByVal obj As ICachedEntity) As Boolean
+            Get
+                If obj Is Nothing Then
+                    Return False
+                End If
+
+                If _ref.IsAlive Then
+                    Return _ref.Target.Equals(obj)
+                Else
+                    Return New EntityProxy(obj).Equals(_e)
+                End If
+            End Get
+        End Property
+    End Class
+
+    <Serializable()> _
+    Public Class WeakEntityList
+        Private _l As Generic.List(Of WeakEntityReference)
+        Private _t As Type
+
+        Public Sub New(ByVal l As List(Of WeakEntityReference), ByVal t As Type)
+            _l = l
+            _t = t
+        End Sub
+
+        Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, ByVal sort As Sorting.Sort) As Boolean
+            'If sort.Previous IsNot Nothing Then
+            '    Return False
+            'End If
+
+            arr = New ArrayList
+            For Each le As WeakEntityReference In _l
+                If Not le.IsLoaded Then
+                    Return False
+                Else
+                    arr.Add(le.GetObject(mc))
+                End If
+            Next
+            Return True
+        End Function
+
+        Public Sub Remove(ByVal obj As ICachedEntity)
+            For i As Integer = 0 To _l.Count - 1
+                Dim le As WeakEntityReference = _l(i)
+                If le.IsEqual(obj) Then
+                    _l.RemoveAt(i)
+                    Exit For
+                End If
+            Next
+        End Sub
+
+        Public ReadOnly Property Count() As Integer
+            Get
+                Return _l.Count
+            End Get
+        End Property
+
+        Public ReadOnly Property List() As List(Of WeakEntityReference)
+            Get
+                Return _l
+            End Get
+        End Property
+    End Class
+
+    <Serializable()> _
+    Public Class WeakEntityMatrix
+        'Implements IEnumerable(Of WeekEntityList)
+        Implements ICollection(Of WeakEntityList), ICollection
+
+        Private _l As List(Of WeakEntityList)
+
+        Public Sub New(ByVal l As List(Of WeakEntityList))
+            _l = l
+        End Sub
+
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of WeakEntityList) Implements System.Collections.Generic.IEnumerable(Of WeakEntityList).GetEnumerator
+            Return _l.GetEnumerator
+        End Function
+
+        Protected Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
+        End Function
+
+        Default Public ReadOnly Property Item(ByVal i As Integer) As WeakEntityList
+            Get
+                Return _l(i)
+            End Get
+        End Property
+
+        Public Sub Add(ByVal item As WeakEntityList) Implements System.Collections.Generic.ICollection(Of WeakEntityList).Add
+            Throw New NotImplementedException
+        End Sub
+
+        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of WeakEntityList).Clear
+            Throw New NotImplementedException
+        End Sub
+
+        Public Function Contains(ByVal item As WeakEntityList) As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityList).Contains
+            Throw New NotImplementedException
+        End Function
+
+        Public Sub CopyTo(ByVal array() As WeakEntityList, ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of WeakEntityList).CopyTo
+            Throw New NotImplementedException
+        End Sub
+
+        Public ReadOnly Property Count() As Integer Implements System.Collections.Generic.ICollection(Of WeakEntityList).Count
+            Get
+                Return _l.Count
+            End Get
+        End Property
+
+        Public ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityList).IsReadOnly
+            Get
+                Return True
+            End Get
+        End Property
+
+        Public Function Remove(ByVal item As WeakEntityList) As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityList).Remove
+            Throw New NotImplementedException
+        End Function
+
+        Protected Sub _CopyTo(ByVal array As System.Array, ByVal index As Integer) Implements System.Collections.ICollection.CopyTo
+            Throw New NotImplementedException
+        End Sub
+
+        Protected ReadOnly Property _Count() As Integer Implements System.Collections.ICollection.Count
+            Get
+                Return Count
+            End Get
+        End Property
+
+        Public ReadOnly Property IsSynchronized() As Boolean Implements System.Collections.ICollection.IsSynchronized
+            Get
+                Return False
+            End Get
+        End Property
+
+        Public ReadOnly Property SyncRoot() As Object Implements System.Collections.ICollection.SyncRoot
+            Get
+                Throw New NotImplementedException
+            End Get
+        End Property
     End Class
 
     Module qd

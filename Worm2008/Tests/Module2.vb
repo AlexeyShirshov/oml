@@ -28,7 +28,7 @@ Module Module2
     <Entities.Meta.Entity("junk", "id", "1")> _
     Public Class TestEditTable
         Inherits Entities.OrmBaseT(Of TestEditTable)
-        Implements Entities.Meta.IOrmEditable(Of TestEditTable)
+        Implements Entities.IOrmEditable(Of TestEditTable)
 
         Private _dt As Date
         Public ReadOnly Property Dt() As Date
@@ -136,7 +136,7 @@ Module Module2
             End Set
         End Property
 
-        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Entities.Meta.IOrmEditable(Of TestEditTable).CopyBody
+        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Entities.IOrmEditable(Of TestEditTable).CopyBody
             With [to]
                 ._name = from._name
                 ._code = from._code

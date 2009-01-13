@@ -155,7 +155,7 @@ Namespace Web
                 End If
                 If u IsNot Nothing Then
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                     Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                         Using u.BeginEdit()
                             schema.SetPropertyValue(u, GetField("Password"), HashPassword(newPassword), oschema)
@@ -218,7 +218,7 @@ Namespace Web
 
                 Dim u As IKeyEntity = UserMapper.CreateUser(CType(mgr, OrmDBManager), username, Nothing, providerUserKey)
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
 
                 schema.SetPropertyValue(u, GetField("Email"), email, oschema)
 
@@ -297,7 +297,7 @@ Namespace Web
                 End If
                 If u IsNot Nothing Then
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                     Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                         Using u.BeginEdit()
                             schema.SetPropertyValue(u, GetField("Password"), HashPassword(psw), oschema)
@@ -327,7 +327,7 @@ Namespace Web
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim lf As String = GetField("IsLockedOut")
                     If schema.HasField(u.GetType, lf) Then
-                        Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                        Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using u.BeginEdit()
                                 schema.SetPropertyValue(u, lf, False, oschema)
@@ -351,7 +351,7 @@ Namespace Web
                     Dim u As IKeyEntity = FindUserByEmail(mgr, user.Email, Nothing)
                     If u IsNot Nothing Then
                         Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                        Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                        Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                         Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                             Using u.BeginEdit()
                                 schema.SetPropertyValue(u, UserMapper.UserNameField, user.Comment, oschema)
@@ -378,7 +378,7 @@ Namespace Web
                 Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim lf As String = GetField("IsLockedOut")
                 Dim tt As System.Type = u.GetType
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(tt)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
                 If schema.HasField(tt, lf) AndAlso CBool(schema.GetPropertyValue(u, lf, oschema)) Then
                     Return False
                 End If
@@ -561,7 +561,7 @@ Namespace Web
             Dim lf As String = GetField("IsLockedOut")
             Dim islockedout As Boolean = False
             Dim ut As System.Type = u.GetType
-            Dim oschema As IEntitySchema = schema.GetObjectSchema(ut)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(ut)
             If schema.HasField(ut, lf) Then
                 islockedout = CBool(schema.GetPropertyValue(u, lf, oschema))
             End If
@@ -717,7 +717,7 @@ Namespace Web
                         Dim dt As Date = CDate(schema.GetPropertyValue(u, laf, Nothing))
                         Dim n As Date = UserMapper.GetNow
                         If n.Subtract(dt).TotalSeconds > 1 Then
-                            Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                            Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                             Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                                 Using u.BeginEdit
                                     schema.SetPropertyValue(u, laf, n, oschema)
@@ -746,7 +746,7 @@ Namespace Web
             Dim ut As System.Type = u.GetType
 
             If schema.HasField(ut, GetField("IsLockedOut")) Then
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(u.GetType)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                 Dim failCnt As Integer = CInt(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtCount"), oschema))
                 Dim startFail As Date = CDate(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtStart"), oschema))
                 Dim endFail As Date = startFail.AddMinutes(PasswordAttemptWindow)

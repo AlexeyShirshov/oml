@@ -65,6 +65,7 @@
     <Compile Include="CodeDomExtensions\CodeEntityInterfaceDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodeEntityTypeDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodeLinqContextDeclaration.cs" />
+    <Compile Include="CodeDomExtensions\CodePropertiesAccessorTypeDeclaration.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />

@@ -411,19 +411,19 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetObjectSchema()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        schema.GetObjectSchema(Nothing)
+        schema.GetEntitySchema(Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentException))> _
     Public Sub TestGetObjectSchema2()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        schema.GetObjectSchema(GetType(SByte))
+        schema.GetEntitySchema(GetType(SByte))
     End Sub
 
     <TestMethod()> _
     Public Sub TestGetObjectSchema3()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Assert.IsNotNull(schema.GetObjectSchema(GetType(Entity3)))
+        Assert.IsNotNull(schema.GetEntitySchema(GetType(Entity3)))
     End Sub
 
     ', ExpectedException(GetType(ArgumentException))

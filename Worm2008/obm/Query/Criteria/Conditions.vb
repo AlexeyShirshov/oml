@@ -103,20 +103,25 @@ Namespace Criteria.Conditions
         <Serializable()> _
         Protected Class ConditionTemplate
             Inherits TemplateBase
+
             Protected _con As Condition
 
             Public Sub New(ByVal con As Condition)
                 _con = con
             End Sub
 
-            Public Overrides Function GetStaticString() As String
+            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
                 Dim sb As New StringBuilder
-                sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString)
+                sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString(mpe, contextFilter))
                 sb.Append(_con.Condition2String())
                 If _con._right IsNot Nothing Then
-                    sb.Append(CType(_con._right, ITemplateFilter).Template.GetStaticString)
+                    sb.Append(CType(_con._right, ITemplateFilter).Template.GetStaticString(mpe, contextFilter))
                 End If
                 Return sb.ToString
+            End Function
+
+            Public Overrides Function _ToString() As String
+                Return _con._ToString
             End Function
         End Class
 
@@ -155,11 +160,11 @@ Namespace Criteria.Conditions
         'End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal colums As List(Of String)) As String Implements IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
             If _right Is Nothing Then
-                Return _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums)
+                Return _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
             End If
-            Return "(" & _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums) & Condition2String() & _right.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, colums) & ")"
+            Return "(" & _left.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, stmt, filterInfo, almgr, pname) & ")"
         End Function
 
         Protected Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
@@ -275,13 +280,13 @@ Namespace Criteria.Conditions
             Return _left._ToString() & Condition2String() & r
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
             Dim r As String = String.Empty
             If _right IsNot Nothing Then
-                r = _right.GetStaticString(mpe)
+                r = _right.GetStaticString(mpe, contextFilter)
             End If
 
-            Return _left.GetStaticString(mpe) & Condition2String() & r
+            Return _left.GetStaticString(mpe, contextFilter) & Condition2String() & r
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
@@ -303,12 +308,23 @@ Namespace Criteria.Conditions
         Public Function Clone() As Core.IFilter Implements Core.IFilter.Clone
             Return CreateMe(_left, _right, _oper)
         End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+            If _left IsNot Nothing Then
+                _left.Prepare(executor, schema, filterInfo, stmt)
+            End If
+            If _right IsNot Nothing Then
+                _right.Prepare(executor, schema, filterInfo, stmt)
+            End If
+        End Sub
     End Class
 
+    <Serializable()> _
     Public Class EntityCondition
         Inherits Condition
         Implements IEntityFilter
 
+        <Serializable()> _
         Protected Class EntityConditionTemplate
             Inherits Condition.ConditionTemplate
             Implements IOrmFilterTemplate

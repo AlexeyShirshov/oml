@@ -226,7 +226,7 @@ Namespace Entities
             If schema Is Nothing Then
                 sb.Append("Cannot get object dump")
             Else
-                Dim oschema As IEntitySchema = schema.GetObjectSchema(Me.GetType)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
                 Dim olr As Boolean = _readRaw
                 _readRaw = True
                 Try
@@ -375,7 +375,7 @@ Namespace Entities
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IEntitySchema = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
+                Dim oschema As IEntitySchema = mc.Manager.MappingEngine.GetEntitySchema(Me.GetType)
                 [to].BeginLoading()
                 CopyProperties([from], [to], mc.Manager, oschema)
                 [to].EndLoading()

@@ -166,6 +166,11 @@ Public Class TestSchema
 
             For Each c As Table1 In col
                 Assert.IsFalse(c.InternalProperties.IsLoaded)
+                If c.ID = 1 OrElse c.ID = 2 Then
+                    Assert.AreEqual(ObjectState.NotLoaded, c.InternalProperties.ObjectState)
+                Else
+                    Assert.AreEqual(ObjectState.NotFoundInSource, c.InternalProperties.ObjectState)
+                End If
             Next
         End Using
     End Sub

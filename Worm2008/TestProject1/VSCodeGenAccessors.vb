@@ -226,9 +226,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("DeleteObject", New System.Type() {GetType(Global.Worm.Entities.KeyEntity)}, args)
     End Sub
 
-    Friend Sub M2MSave(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Worm.Cache.EditableList)
+    Friend Sub M2MSave(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Worm.Cache.CachedM2MRelation)
         Dim args() As Object = New Object() {obj, t, direct, el}
-        m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Type), GetType(Boolean), GetType(Worm.Cache.EditableList)}, args)
+        m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Type), GetType(Boolean), GetType(Worm.Cache.CachedM2MRelation)}, args)
     End Sub
 
     Friend Function GetSearchSection() As String

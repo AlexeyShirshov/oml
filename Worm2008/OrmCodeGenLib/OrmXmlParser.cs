@@ -316,14 +316,34 @@ namespace Worm.CodeGen.Core
             XmlNodeList propertiesList;
             propertiesList = entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
+            FillEntityProperties(entity, propertiesList, null);
+
+            XmlNodeList groupsNodeList =
+                entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Group", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            foreach (XmlElement groupNode in groupsNodeList)
+            {
+                string hideValue = groupNode.GetAttribute("hide");
+                bool hide = string.IsNullOrEmpty(hideValue) ? true : XmlConvert.ToBoolean(hideValue);
+                PropertyGroup group = new PropertyGroup
+                                          {
+                                              Name = groupNode.GetAttribute("name"),
+                                              Hide =  hide
+                                          };
+                propertiesList = groupNode.SelectNodes(string.Format("{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                FillEntityProperties(entity, propertiesList, group);
+            }
+        }
+
+        private void FillEntityProperties(EntityDescription entity, XmlNodeList propertiesList, PropertyGroup group)
+        {
             foreach (XmlNode propertyNode in propertiesList)
             {
-				string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
-            	bool disabled = false, enablePropertyChanged = false;
-            	ObsoleteType obsolete;
+                bool disabled = false, enablePropertyChanged = false;
+                ObsoleteType obsolete;
 
                 XmlElement propertyElement = (XmlElement) propertyNode;
                 description = propertyElement.GetAttribute("description");
@@ -336,9 +356,9 @@ namespace Worm.CodeGen.Core
                 propertyAccessLevelName = propertyElement.GetAttribute("propertyAccessLevel");
                 propertyAlias = propertyElement.GetAttribute("propertyAlias");
                 propertyDisabled = propertyElement.GetAttribute("disabled");
-            	propertyObsolete = propertyElement.GetAttribute("obsolete");
-				propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
-            	enablePropertyChangedAttribute = propertyElement.GetAttribute("enablePropertyChanged");
+                propertyObsolete = propertyElement.GetAttribute("obsolete");
+                propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
+                enablePropertyChangedAttribute = propertyElement.GetAttribute("enablePropertyChanged");
 
                 dbTypeNameAttribute = propertyElement.GetAttribute("dbTypeName");
                 dbTypeSizeAttribute = propertyElement.GetAttribute("dbTypeSize");
@@ -367,23 +387,24 @@ namespace Worm.CodeGen.Core
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
-				if(!string.IsNullOrEmpty(propertyObsolete))
-				{
-					obsolete = (ObsoleteType) Enum.Parse(typeof (ObsoleteType), propertyObsolete);
-				}
-				else
-				{
-					obsolete = ObsoleteType.None;
-				}
+                if(!string.IsNullOrEmpty(propertyObsolete))
+                {
+                    obsolete = (ObsoleteType) Enum.Parse(typeof (ObsoleteType), propertyObsolete);
+                }
+                else
+                {
+                    obsolete = ObsoleteType.None;
+                }
 
-				if (!string.IsNullOrEmpty(enablePropertyChangedAttribute))
-					enablePropertyChanged = XmlConvert.ToBoolean(enablePropertyChangedAttribute);
+                if (!string.IsNullOrEmpty(enablePropertyChangedAttribute))
+                    enablePropertyChanged = XmlConvert.ToBoolean(enablePropertyChangedAttribute);
 
                 PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
                 property.Disabled = disabled;
-            	property.Obsolete = obsolete;
-            	property.ObsoleteDescripton = propertyObsoleteDescription;
-            	property.EnablePropertyChanged = enablePropertyChanged;
+                property.Obsolete = obsolete;
+                property.ObsoleteDescripton = propertyObsoleteDescription;
+                property.EnablePropertyChanged = enablePropertyChanged;
+                property.Group = group;
 
                 property.DbTypeName = dbTypeNameAttribute;
                 if (!string.IsNullOrEmpty(dbTypeSizeAttribute))
