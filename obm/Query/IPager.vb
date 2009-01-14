@@ -1,4 +1,4 @@
-﻿Namespace Web
+﻿Namespace Query
     Public Interface IPager
         Sub SetTotalCount(ByVal cnt As Integer)
         Function GetCurrentPageOffset() As Integer

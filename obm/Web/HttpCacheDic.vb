@@ -17,7 +17,8 @@ Namespace Cache
         <NonSerialized()> _
         Private _dep As Caching.CacheDependency
         Private _remove_del As Caching.CacheItemRemovedCallback
-        Private _name As String = Guid.NewGuid.ToString
+        Private _name2 As String
+        Private Shared _cnt As Integer = 1
 
         Public Sub New()
             _abs_expiration = Caching.Cache.NoAbsoluteExpiration
@@ -32,6 +33,20 @@ Namespace Cache
             _priority = priority
             _dep = dependency
         End Sub
+
+        Protected ReadOnly Property _name() As String
+            Get
+                If String.IsNullOrEmpty(_name2) Then
+                    SyncLock GetType(WebCacheDictionary(Of ))
+                        If String.IsNullOrEmpty(_name2) Then
+                            _name2 = "Worm.Cache." & _cnt
+                            _cnt += 1
+                        End If
+                    End SyncLock
+                End If
+                Return _name2
+            End Get
+        End Property
 
         Protected Function GetKey(ByVal key As String) As String
             'Return _name & ":" & (key Or (_code And Not _mask)).ToString

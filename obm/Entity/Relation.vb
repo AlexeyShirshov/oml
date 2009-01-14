@@ -1,10 +1,10 @@
 Imports System.Collections.Generic
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
-Imports Worm.Entities
 Imports Worm.Query
+Imports Worm.Cache
 
-Namespace Cache
+Namespace Entities
 
     <Serializable()> _
     Public Class Relation

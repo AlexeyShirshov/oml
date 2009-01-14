@@ -389,15 +389,15 @@ Namespace Cache
         Inherits UpdatableCachedItem
 
         Public Sub New(ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
-            ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
-            MyClass.new(mainId, obj, mgr, mainType, subType, Meta.M2MRelationDesc.GetKey(direct))
+            ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean, ByVal sort As Sort)
+            MyClass.new(mainId, obj, mgr, mainType, subType, Meta.M2MRelationDesc.GetKey(direct), sort)
         End Sub
 
         Public Sub New(ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
-            ByVal mainType As Type, ByVal subType As Type, ByVal key As String)
-            'If sort IsNot Nothing Then
-            '    _sort = CType(sort.Clone, Sorting.Sort)
-            'End If
+            ByVal mainType As Type, ByVal subType As Type, ByVal key As String, ByVal sort As Sort)
+            If sort IsNot Nothing Then
+                _sort = CType(sort.Clone, Sorting.Sort)
+            End If
 
             '_st = sortType
             '_cache = mgr.Cache

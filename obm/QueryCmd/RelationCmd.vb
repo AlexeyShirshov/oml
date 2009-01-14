@@ -1,40 +1,83 @@
 ﻿Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports Worm.Cache
 
 Namespace Query
     Public Class RelationCmd
         Inherits QueryCmd
 
+        Private _rel As Relation
         Private _desc As RelationDesc
 
 #Region " Ctors "
-        Public Sub New()
+        Public Sub New(ByVal rel As Relation)
+            _rel = rel
         End Sub
 
-        Public Sub New(ByVal getMgr As CreateManagerDelegate)
+        Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
+            _desc = desc
+        End Sub
+
+        Public Sub New(ByVal desc As RelationDesc)
+            _desc = desc
+        End Sub
+
+        Public Sub New(ByVal rel As Relation, ByVal getMgr As CreateManagerDelegate)
+            MyBase.New(getMgr)
+            _rel = rel
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity)
             MyBase.New(obj)
+            If _desc Is Nothing Then
+                _rel = New Relation(obj, New RelationDesc(New EntityUnion(obj.GetType), Nothing, Nothing))
+            Else
+                _rel = New Relation(obj, _desc)
+            End If
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
             MyBase.New(obj, key)
+            If _desc Is Nothing Then
+                _rel = New Relation(obj, New RelationDesc(New EntityUnion(obj.GetType), Nothing, key))
+            Else
+                _rel = New Relation(obj, _desc)
+            End If
         End Sub
 
-        Public Sub New(ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As IKeyEntity)
+            MyBase.New(obj, desc.Key)
+            _rel = New Relation(obj, desc)
+        End Sub
+
+        Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
+            _desc = desc
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
             MyBase.New(obj, getMgr)
+            If _desc Is Nothing Then
+                _rel = New Relation(obj, New RelationDesc(New EntityUnion(obj.GetType), Nothing, Nothing))
+            Else
+                _rel = New Relation(obj, _desc)
+            End If
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
             MyBase.New(obj, key, getMgr)
+            If _desc Is Nothing Then
+                _rel = New Relation(obj, New RelationDesc(New EntityUnion(obj.GetType), Nothing, key))
+            Else
+                _rel = New Relation(obj, _desc)
+            End If
         End Sub
 
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
+            MyBase.New(obj, desc.Key, getMgr)
+            _rel = New Relation(obj, desc)
+        End Sub
 #End Region
 
         Public Shared Shadows Function Create(ByVal obj As IKeyEntity) As RelationCmd

@@ -1199,7 +1199,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
         Assert.IsNotNull(t)
-        Assert.AreEqual(1, q.ExecCount)
+        Assert.AreEqual(0, q.ExecCount)
         Assert.IsFalse(t.InternalProperties.IsLoaded)
 
         t.Load()
@@ -1217,10 +1217,42 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim t As Table1 = q.GetByID(Of Table1)(1, True)
 
         Assert.IsNotNull(t)
-        Assert.AreEqual(1, q.ExecCount)
+        Assert.AreEqual(0, q.ExecCount)
         Assert.IsTrue(t.InternalProperties.IsLoaded)
 
         t = q.GetByID(Of Table1)(1)
-        Assert.AreEqual(1, q.ExecCount)
+        Assert.AreEqual(0, q.ExecCount)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGetById3()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871)
+
+        Assert.IsNotNull(t)
+        Assert.AreEqual(0, q.ExecCount)
+        Assert.IsFalse(t.InternalProperties.IsLoaded)
+
+        't = q.GetByID(Of Table1)(1)
+        'Assert.AreEqual(0, q.ExecCount)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGetById4()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871, True)
+
+        Assert.IsNull(t)
+
+        't = q.GetByID(Of Table1)(1)
+        'Assert.AreEqual(0, q.ExecCount)
     End Sub
 End Class

@@ -41,6 +41,7 @@ Namespace Query.Database
         Private _procSM As BaseProvider
 
         Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
+        Public Event OnRestoreDefaults(ByVal sender As IExecutor, ByVal mgr As OrmManager, ByVal args As EventArgs) Implements IExecutor.OnRestoreDefaults
 
         Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
             If _procA Is Nothing Then
@@ -516,6 +517,9 @@ Namespace Query.Database
             If Not query.ClientPaging.IsEmpty Then
                 mgr._start = query.ClientPaging.Start
                 mgr._length = query.ClientPaging.Length
+            ElseIf query.Pager IsNot Nothing Then
+                AddHandler mgr.DataAvailable, AddressOf query.OnDataAvailable
+                AddHandler OnRestoreDefaults, AddressOf query.OnRestoreDefaults
             End If
 
             If query.LiveTime <> New TimeSpan Then
@@ -581,6 +585,8 @@ Namespace Query.Database
                 mgr._list = oldList
                 mgr._expiresPattern = oldExp
                 mgr.SetSchema(oldSchema)
+                RaiseEvent OnRestoreDefaults(Me, mgr, EventArgs.Empty)
+
                 RemoveHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
                 'mgr.RaiseObjectCreation = oldC
 

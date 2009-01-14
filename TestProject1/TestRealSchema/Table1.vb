@@ -2,6 +2,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Sorting
+Imports Worm.Query
 
 Public Enum Enum1 As Byte
     first = 1
@@ -65,13 +66,11 @@ Public Class Table1
         End With
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable1(CType(from, Table1), CType([to], Table1))
-    'End Sub
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table1(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Public ReadOnly Property Table2s() As RelationCmd
+        Get
+            Return GetCmd(GetType(Table2))
+        End Get
+    End Property
 
     Public Overridable Sub SetValue( _
         ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized

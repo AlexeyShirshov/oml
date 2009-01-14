@@ -7,7 +7,7 @@ Imports Worm.Query
 Imports Worm
 Imports Worm.Criteria
 
-<TestClass()> Public Class Test
+<TestClass()> Public Class TestNewM2M
 
     Private testContextInstance As TestContext
 
@@ -46,7 +46,7 @@ Imports Worm.Criteria
     '
 #End Region
 
-    <TestMethod()> Public Sub TestAdd()
+    <TestMethod()> Public Sub TestM2MAdd()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             Assert.IsNotNull(q)
@@ -98,7 +98,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod()> Public Sub TestAddScope()
+    <TestMethod()> Public Sub TestM2MAddScope()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             q.Select(GetType(Entity))
@@ -144,7 +144,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod()> Public Sub TestAddNew()
+    <TestMethod()> Public Sub TestM2MAddNew()
         Dim t As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = t
@@ -191,7 +191,7 @@ Imports Worm.Criteria
     End Sub
 
     <TestMethod()> _
-    Public Sub TestDelete()
+    Public Sub TestM2MDelete()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity)).Where(Ctor.prop(GetType(Entity), "ID").eq(1))
 

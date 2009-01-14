@@ -511,9 +511,9 @@ Namespace Database
                         c.AddConnectedDepend(ct, _key, _id)
                     End If
 
-                    Return New M2MCache(_obj.Identifier, l, _mgr, mt, t, _direct)
+                    Return New M2MCache(_obj.Identifier, l, _mgr, mt, t, _direct, _sort)
                 Else
-                    Return New M2MCache(_obj.Identifier, GetValuesInternal(withLoad), _mgr, mt, t, _direct)
+                    Return New M2MCache(_obj.Identifier, GetValuesInternal(withLoad), _mgr, mt, t, _direct, _sort)
                 End If
             End Function
 
@@ -522,7 +522,7 @@ Namespace Database
                 For Each o As T In col
                     ids.Add(o.Identifier)
                 Next
-                Return New M2MCache(_obj.Identifier, ids, _mgr, _obj.GetType, GetType(T), _direct)
+                Return New M2MCache(_obj.Identifier, ids, _mgr, _obj.GetType, GetType(T), _direct, _sort)
             End Function
 
             Public Overrides Sub CreateDepends()
