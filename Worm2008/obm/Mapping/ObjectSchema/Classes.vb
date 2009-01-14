@@ -99,6 +99,11 @@ Namespace Entities.Meta
         Public ReadOnly Key As String
         Private _eu As EntityUnion
 
+        Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String)
+            Me.Column = propertyAlias
+            _eu = eu
+        End Sub
+
         Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String, ByVal key As String)
             Me.Column = propertyAlias
             Me.Key = key

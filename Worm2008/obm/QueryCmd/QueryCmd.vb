@@ -224,6 +224,7 @@ Namespace Query
         Private _liveTime As TimeSpan
         Private _mgrMark As String
         Protected _clientPage As Paging
+        Protected _pager As ipager
         Protected _joins() As QueryJoin
         Protected _autoJoins As Boolean
         Protected _from As FromClauseDef
@@ -1502,6 +1503,32 @@ l1:
             '    _from = New FromClause(value)
             '    RenewMark()
             'End Set
+        End Property
+
+        Private _oldStart As Integer
+        Private _oldLength As Integer
+        Friend Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As OrmManager.ExecutionResult)
+            _pager.SetTotalCount(er.RowCount)
+            _oldStart = mgr._start
+            mgr._start = _pager.GetCurrentPageOffset
+            _oldLength = mgr._length
+            mgr._length = _pager.GetPageSize
+            RemoveHandler mgr.DataAvailable, AddressOf OnDataAvailable
+        End Sub
+
+        Friend Sub OnRestoreDefaults(ByVal e As IExecutor, ByVal mgr As OrmManager, ByVal args As EventArgs)
+            mgr._start = _oldStart
+            mgr._length = _oldLength
+            RemoveHandler e.OnRestoreDefaults, AddressOf OnRestoreDefaults
+        End Sub
+
+        Public Property Pager() As IPager
+            Get
+                Return _pager
+            End Get
+            Set(ByVal value As IPager)
+                _pager = value
+            End Set
         End Property
 
         Public Property ClientPaging() As Paging
@@ -3214,32 +3241,41 @@ l1:
                 Throw New QueryCmdException("Manager is required", Me)
             End If
 
-            Dim f As IGetFilter = Nothing
-            Dim pk As String = Nothing
+            'Dim f As IGetFilter = Nothing
+            'Dim pk As String = Nothing
 
             Dim selou As EntityUnion = GetSelectedOS()
             Dim tp As Type = Nothing
             If selou IsNot Nothing Then
                 tp = selou.GetRealType(mgr.MappingEngine)
-                [Select](selou, ensureLoaded)
-                f = Ctor.prop(selou, mgr.MappingEngine.GetPrimaryKeys(tp)(0).PropertyAlias).eq(id)
+                '[Select](selou, ensureLoaded)
+                'f = Ctor.prop(selou, mgr.MappingEngine.GetPrimaryKeys(tp)(0).PropertyAlias).eq(id)
             Else
                 tp = GetType(T)
-                [Select](tp, ensureLoaded)
-                f = Ctor.prop(GetType(T), mgr.MappingEngine.GetPrimaryKeys(GetType(T))(0).PropertyAlias).eq(id)
+                '[Select](tp, ensureLoaded)
+                'f = Ctor.prop(GetType(T), mgr.MappingEngine.GetPrimaryKeys(GetType(T))(0).PropertyAlias).eq(id)
             End If
 
-            If mgr.IsInCache(id, tp) Then
-                Dim o As IKeyEntity = mgr.LoadType(id, tp, ensureLoaded, False)
-                If o IsNot Nothing Then
-                    If _getMgr IsNot Nothing Then
-                        o.SetCreateManager(_getMgr)
-                    End If
-                    Return CType(o, T)
+            'If mgr.IsInCache(id, tp) Then
+            '    Dim o As IKeyEntity = mgr.LoadType(id, tp, ensureLoaded, False)
+            '    If o IsNot Nothing Then
+            '        If _getMgr IsNot Nothing Then
+            '            o.SetCreateManager(_getMgr)
+            '        End If
+            '        Return CType(o, T)
+            '    End If
+            'End If
+
+            'Return Where(f).Single(Of T)()
+
+            Dim o As IKeyEntity = mgr.LoadType(id, tp, ensureLoaded, False)
+            If o IsNot Nothing Then
+                If _getMgr IsNot Nothing Then
+                    o.SetCreateManager(_getMgr)
                 End If
             End If
 
-            Return Where(f).Single(Of T)()
+            Return CType(o, T)
         End Function
 
         Protected Function BuildDic(Of T As {New, IEntity})(ByVal mgr As OrmManager, _

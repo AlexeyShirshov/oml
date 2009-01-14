@@ -160,7 +160,7 @@ Namespace Xml
         Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
             ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Object), _
             ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Entities.Meta.M2MRelationDesc, _
-            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Cache.CachedM2MRelation)
+            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Entities.CachedM2MRelation)
 
             Throw New NotImplementedException
         End Function

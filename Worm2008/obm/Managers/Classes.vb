@@ -39,7 +39,7 @@ Public Interface IAdminManager
     Function InsertObject(ByVal obj As Entities._ICachedEntity) As Boolean
     Sub DeleteObject(ByVal obj As Entities.ICachedEntity)
     Function Delete(ByVal f As Criteria.Core.IEntityFilter) As Integer
-    Sub M2MSave(ByVal obj As Entities.IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As Cache.M2MRelation)
+    Sub M2MSave(ByVal obj As Entities.IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As Entities.M2MRelation)
 End Interface
 
 Class GetManagerDisposable

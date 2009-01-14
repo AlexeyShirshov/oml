@@ -1675,7 +1675,7 @@ Namespace Entities
         End Sub
 
 #Region " Relations "
-        Public Function CreateM2MCmd() As Worm.Query.RelationCmd
+        Public Function CreateRelCmd() As Worm.Query.RelationCmd
             If CreateManager IsNot Nothing Then
                 Dim q As New Worm.Query.RelationCmd(Me, CreateManager)
                 Return q
@@ -1685,7 +1685,7 @@ Namespace Entities
             End If
         End Function
 
-        Public Function CreateM2MCmd(ByVal key As String) As Worm.Query.QueryCmd
+        Public Function CreateRelCmd(ByVal key As String) As Worm.Query.QueryCmd
             If CreateManager IsNot Nothing Then
                 Dim q As New Worm.Query.QueryCmd(Me, key, CreateManager)
                 Return q
@@ -1695,24 +1695,24 @@ Namespace Entities
             End If
         End Function
 
-        Protected Function _Find(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateM2MCmd().Select(t), RelationCmd)
+        Protected Function GetCmd(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateRelCmd().Select(t), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateM2MCmd(key).Select(t), RelationCmd)
+        Protected Function GetCmd(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateRelCmd(key).Select(t), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateM2MCmd().Select(entityName), RelationCmd)
+        Protected Function GetCmd(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateRelCmd().Select(entityName), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateM2MCmd(key).Select(entityName), RelationCmd)
+        Protected Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateRelCmd(key).Select(entityName), RelationCmd)
         End Function
 
-        Protected Function _Find(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateM2MCmd(desc.Key).Select(desc.Rel), RelationCmd)
+        Protected Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+            Return CType(CreateRelCmd(desc.Key).Select(desc.Rel), RelationCmd)
         End Function
 
         Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M
@@ -1862,7 +1862,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Function GetRelation(ByVal desc As RelationDesc) As Cache.Relation Implements IRelations.GetRelation
+        Public Function GetRelation(ByVal desc As RelationDesc) As Entities.Relation Implements IRelations.GetRelation
             Using GetSyncRoot()
                 For Each rl As Relation In _relations
                     If rl.Relation.Equals(desc) Then
@@ -1880,19 +1880,19 @@ Namespace Entities
             End Using
         End Function
 
-        Public Function GetRelation(ByVal en As String) As Cache.Relation Implements IRelations.GetRelation
+        Public Function GetRelation(ByVal en As String) As Entities.Relation Implements IRelations.GetRelation
             Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, Nothing))
         End Function
 
-        Public Function GetRelation(ByVal en As String, ByVal key As String) As Cache.Relation Implements IRelations.GetRelation
+        Public Function GetRelation(ByVal en As String, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, key))
         End Function
 
-        Public Function GetRelation(ByVal t As System.Type) As Cache.Relation Implements IRelations.GetRelation
+        Public Function GetRelation(ByVal t As System.Type) As Entities.Relation Implements IRelations.GetRelation
             Return GetM2M(t, Nothing)
         End Function
 
-        Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Cache.Relation Implements IRelations.GetRelation
+        Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Return GetM2M(t, key)
         End Function
 
@@ -1918,76 +1918,76 @@ Namespace Entities
             End If
         End Function
 
-        Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.Relation) Implements IRelations.GetAllRelation
+        Public Function GetAllRelation() As System.Collections.Generic.IList(Of Entities.Relation) Implements IRelations.GetAllRelation
             Return _GetAll()
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(t, text))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd().From(New SearchFragment(t, text))
             Return CType(q, RelationCmd)
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, top))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text, top))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, top))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text, type, top))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields, top))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text, type, queryFields, top))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type, queryFields))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text, type, queryFields))
             Return CType(q, RelationCmd)
         End Function
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(t, text, type))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(t, text, type))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd().From(New SearchFragment(text))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd().From(New SearchFragment(text))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, top))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text, top))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text, type, top))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text, type))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, top, queryFields))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text, type, top, queryFields))
             Return CType(q, RelationCmd)
         End Function
 
         Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(key).From(New SearchFragment(text, type, queryFields))
+            Dim q As Worm.Query.QueryCmd = CreateRelCmd(key).From(New SearchFragment(text, type, queryFields))
             Return CType(q, RelationCmd)
         End Function
 

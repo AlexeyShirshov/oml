@@ -4,6 +4,7 @@ Imports System.Collections.Generic
 Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities.Meta
+Imports Worm.Entities
 
 <TestClass()> Public Class Testm2m
 

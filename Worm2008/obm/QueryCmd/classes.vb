@@ -19,6 +19,7 @@ Namespace Query
         End Class
 
         Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As GetCacheItemEventArgs)
+        Event OnRestoreDefaults(ByVal sender As IExecutor, ByVal mgr As OrmManager, ByVal args As EventArgs)
 
         Function ExecEntity(Of ReturnType As {_IEntity})( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)

@@ -165,6 +165,7 @@
     <Compile Include="Query\Builders\SelectListBuilder.vb" />
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Grouping.vb" />
+    <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />
     <Compile Include="Query\ReadonlyMatrix.vb" />
     <Compile Include="Query\Sorting.vb" />
@@ -223,7 +224,6 @@
     <Compile Include="SearchConfiguration.vb" />
     <Compile Include="StmtGenerators\db\SQL2005Schema.vb" />
     <Compile Include="Managers\db\storedprocs.vb" />
-    <Compile Include="Web\IPager.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />
     <Compile Include="Web\Membership.vb" />

@@ -2826,64 +2826,69 @@ l1:
                 End Using
             Next
 
+            Dim vdic As New Dictionary(Of T2, T2)
+            For Each v As T2 In values
+                vdic.Add(v, v)
+            Next
             Dim result As New ReadOnlyList(Of T2)(realType)
             Dim ar As IListEdit = result
             'Dim dic As IDictionary(Of Integer, T) = GetDictionary(realtype)
             If remove_not_found Then
-                'For Each o As T In objs
-                '    If Not withLoad Then
-                '        If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
-                '            ar.Add(o)
-                '        Else
-                '            o.SetObjectState(ObjectState.NotFoundInSource)
-                '        End If
-                '    Else
-                '        If o.IsLoaded Then
-                '            ar.Add(o)
-                '        ElseIf ListConverter.IsWeak Then
-                '            Dim obj As T = Nothing
-                '            If dic.TryGetValue(o.Key, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
-                '                ar.Add(obj)
-                '            Else
-                '                Dim idx As Integer = values.IndexOf(o)
-                '                If idx >= 0 Then
-                '                    Dim ro As T = values(idx)
-                '                    Debug.Assert(ro.IsLoaded)
-                '                    Add2Cache(ro)
-                '                    ar.Add(ro)
-                '                End If
+                Dim i As Integer = 0
+                For Each o As T2 In objs
+                    If i >= start AndAlso i < start + length Then
+                        Dim ro As T2 = Nothing
+                        If vdic.TryGetValue(o, ro) Then
+                            If withLoad Then
+                                If ro.IsLoaded Then
+                                    ar.Add(ro)
+                                End If
+                            Else
+                                ar.Add(ro)
+                            End If
+                        Else
+                            If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
+                                ar.Add(o)
+                            End If
+                        End If
+                    Else
+                        If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
+                            ar.Add(o)
+                        End If
+                    End If
+                    i += 1
+                Next
+                'For Each o As T2 In objs
+                '    Dim pos As Integer = values.IndexOf(o)
+                '    If pos >= 0 Then
+                '        If withLoad Then
+                '            If values(pos).IsLoaded Then
+                '                ar.Add(values(pos))
                 '            End If
                 '        Else
-
+                '            ar.Add(values(pos))
                 '        End If
                 '    End If
                 'Next
-                For Each o As T2 In objs
-                    Dim pos As Integer = values.IndexOf(o)
-                    If pos >= 0 Then
-                        If withLoad Then
-                            If values(pos).IsLoaded Then
-                                ar.Add(values(pos))
+            Else
+                'result = New ReadOnlyList(Of T2)(realType, values)
+                If vdic.Count = 0 Then
+                    result = New ReadOnlyList(Of T2)(realType, objs)
+                Else
+                    Dim i As Integer = 0
+                    For Each o As T2 In objs
+                        If i >= start AndAlso i < start + length Then
+                            Dim ro As T2 = Nothing
+                            If vdic.TryGetValue(o, ro) Then
+                                ar.Add(ro)
+                            Else
+                                ar.Add(o)
                             End If
                         Else
-                            ar.Add(values(pos))
+                            ar.Add(o)
                         End If
-                    End If
-                Next
-            Else
-                result = New ReadOnlyList(Of T2)(realType, values)
-                'If ListConverter.IsWeak Then
-                '    For Each o As T In objs
-                '        Dim obj As T = Nothing
-                '        If dic.TryGetValue(o.Key, obj) Then
-                '            ar.Add(obj)
-                '        Else
-                '            ar.Add(o)
-                '        End If
-                '    Next
-                'Else
-                '    Return objs
-                'End If
+                    Next
+                End If
             End If
             Return result
             'Return New ReadOnlyList(Of T)(values)

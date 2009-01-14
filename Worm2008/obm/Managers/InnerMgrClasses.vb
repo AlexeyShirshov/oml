@@ -290,7 +290,7 @@ Partial Public Class OrmManager
         Private _oldStart As Integer
         Private _oldLength As Integer
         Private _mgr As OrmManager
-        Private _p As Web.IPager
+        Private _p As Query.IPager
 
         Public Sub New(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
             _mgr = mgr
@@ -300,7 +300,7 @@ Partial Public Class OrmManager
             mgr._length = length
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal pager As Web.IPager)
+        Public Sub New(ByVal mgr As OrmManager, ByVal pager As Query.IPager)
             _mgr = mgr
             _p = pager
             AddHandler mgr.DataAvailable, AddressOf OnDataAvailable
