@@ -56,9 +56,9 @@ Namespace Query
 
         'Function CreateByEntityName(ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal obj As IKeyEntity) As QueryCmd
+        Function Create(ByVal obj As IKeyEntity) As RelationCmd
 
-        Function Create(ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
+        Function Create(ByVal obj As IKeyEntity, ByVal key As String) As RelationCmd
 
         'Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -70,9 +70,9 @@ Namespace Query
 
         Function Create(ByVal name As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity) As RelationCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As RelationCmd
     End Interface
 
     <Serializable()> _

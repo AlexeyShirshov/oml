@@ -41,21 +41,28 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overridable ReadOnly Property _main() As IKeyEntity
+        Public Overridable ReadOnly Property Host() As IKeyEntity
             Get
                 Return _host
             End Get
         End Property
 
-        Public ReadOnly Property Relation() As RelationDesc
+        Public Property Relation() As RelationDesc
             Get
                 Return _desc
             End Get
+            Friend Set(ByVal value As RelationDesc)
+                _desc = value
+            End Set
         End Property
 
         Public ReadOnly Property Key() As String
             Get
-                Return _desc.Key
+                If _desc IsNot Nothing Then
+                    Return _desc.Key
+                Else
+                    Return Nothing
+                End If
             End Get
         End Property
 
@@ -163,14 +170,14 @@ Namespace Entities
         End Property
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, M2MRelation))
+            Return Equals(TryCast(obj, Relation))
         End Function
 
-        Public Overloads Function Equals(ByVal obj As M2MRelation) As Boolean
+        Public Overloads Function Equals(ByVal obj As Relation) As Boolean
             If obj Is Nothing Then
                 Return False
             End If
-            Return _mainType Is obj._mainType AndAlso _mainId.Equals(obj._mainId) AndAlso _desc.Equals(obj._desc)
+            Return _mainType Is obj._mainType AndAlso _mainId.Equals(obj._mainId) AndAlso Object.Equals(_desc, obj._desc)
         End Function
 
         Public Overrides Function GetHashCode() As Integer
@@ -307,7 +314,7 @@ Namespace Entities
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of Relation)
-            Return _main.GetAllRelation
+            Return Host.GetAllRelation
         End Function
 
         'Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As List(Of EditableListBase)
@@ -324,8 +331,8 @@ Namespace Entities
 
         Protected Overridable Sub AcceptDual(ByVal mgr As OrmManager)
             For Each el As M2MRelation In GetRevert(mgr)
-                If el.Added.Contains(_main) OrElse el.Deleted.Contains(_main) Then
-                    el.Accept(mgr, _main)
+                If el.Added.Contains(Host) OrElse el.Deleted.Contains(Host) Then
+                    el.Accept(mgr, Host)
                 End If
             Next
         End Sub
@@ -463,7 +470,7 @@ Namespace Entities
         End Function
 
         Protected Overrides Function GetCopy() As Relation
-            Return New M2MRelation(_main, Relation)
+            Return New M2MRelation(Host, Relation)
         End Function
     End Class
 

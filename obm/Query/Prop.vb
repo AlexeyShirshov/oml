@@ -513,7 +513,7 @@ Namespace Entities
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return ToString.GetHashCode
+            Return _ToString.GetHashCode
         End Function
 
         Public Overridable Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get

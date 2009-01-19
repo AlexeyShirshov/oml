@@ -233,8 +233,8 @@ Namespace Query
         Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
         'Protected _returnType As Type
         'Protected _realType As Type
-        Private _m2mObject As IKeyEntity
-        Protected _m2mKey As String
+        'Private _m2mObject As IKeyEntity
+        'Protected _m2mKey As String
         Protected _rn As TableFilter
         'Protected _outer As QueryCmd
         Private _er As OrmManager.ExecutionResult
@@ -337,21 +337,21 @@ Namespace Query
             End Set
         End Property
 
-        Protected Friend Property Obj() As IKeyEntity
-            Get
-                Return _m2mObject
-            End Get
-            Set(ByVal value As IKeyEntity)
-                _m2mObject = value
-                RenewMark()
-            End Set
-        End Property
+        'Protected Friend Property Obj() As IKeyEntity
+        '    Get
+        '        Return _m2mObject
+        '    End Get
+        '    Set(ByVal value As IKeyEntity)
+        '        _m2mObject = value
+        '        RenewMark()
+        '    End Set
+        'End Property
 
-        Protected Friend ReadOnly Property M2MKey() As String
-            Get
-                Return _m2mKey
-            End Get
-        End Property
+        'Protected Friend ReadOnly Property M2MKey() As String
+        '    Get
+        '        Return _m2mKey
+        '    End Get
+        'End Property
 
         Public ReadOnly Property GetMgr() As ICreateManager
             Get
@@ -381,10 +381,13 @@ Namespace Query
             'End If
         End Function
 
-        Protected Friend ReadOnly Property AppendMain() As Boolean?
+        Protected Friend Property AppendMain() As Boolean?
             Get
                 Return _appendMain
             End Get
+            Set(ByVal value As Boolean?)
+                _appendMain = value
+            End Set
         End Property
 
         Protected Sub OnSortChanged()
@@ -415,14 +418,14 @@ Namespace Query
         '    _selectSrc = New ObjectSource(entityName)
         'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity)
-            _m2mObject = obj
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity)
+        '    _m2mObject = obj
+        'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
-            _m2mObject = obj
-            _m2mKey = key
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
+        '    _m2mObject = obj
+        '    _m2mKey = key
+        'End Sub
 
         'Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
         '    _from = New FromClause(table)
@@ -464,27 +467,27 @@ Namespace Query
         '    _getMgr = getMgr
         'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As ICreateManager)
-            _m2mObject = obj
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As ICreateManager)
+        '    _m2mObject = obj
+        '    _getMgr = getMgr
+        'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As CreateManagerDelegate)
-            _m2mObject = obj
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As CreateManagerDelegate)
+        '    _m2mObject = obj
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
-            _m2mObject = obj
-            _m2mKey = key
-            _getMgr = getMgr
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
+        '    _m2mObject = obj
+        '    _m2mKey = key
+        '    _getMgr = getMgr
+        'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As CreateManagerDelegate)
-            _m2mObject = obj
-            _m2mKey = key
-            _getMgr = New CreateManager(getMgr)
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As CreateManagerDelegate)
+        '    _m2mObject = obj
+        '    _m2mKey = key
+        '    _getMgr = New CreateManager(getMgr)
+        'End Sub
 #End Region
 
         Protected Sub RenewMark()
@@ -538,148 +541,9 @@ Namespace Query
             'Return fs.ToArray
         End Sub
 
-        Public Sub Prepare(ByVal executor As IExecutor, _
+        Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
-
-            _sl = New List(Of SelectExpression)
-            _types = New Dictionary(Of EntityUnion, IEntitySchema)
-            _pdic = New Dictionary(Of Type, IDictionary)
-            _js = New List(Of QueryJoin)
-
-            If propJoins IsNot Nothing Then
-                _js.AddRange(propJoins)
-            End If
-
-            Dim f As IFilter = Nothing
-            If Filter IsNot Nothing Then
-                'f = Filter.Filter(selectType)
-                f = Filter.Filter()
-            End If
-
-            For Each s As Sort In New Sort.Iterator(_order)
-                s.Prepare(executor, schema, filterInfo, stmt)
-            Next
-
-            If f IsNot Nothing Then
-                For Each fl As IFilter In f.GetAllFilters
-                    fl.Prepare(executor, schema, filterInfo, stmt)
-                Next
-            End If
-
-            If Not ClientPaging.IsEmpty Then
-                If executor Is Nothing Then
-                    Throw New QueryCmdException("Client paging is not supported in this mode", Me)
-                End If
-                AddHandler executor.OnGetCacheItem, AddressOf New cls2(Me).cl_paging
-            End If
-
-            Dim selectOS As EntityUnion = GetSelectedOS()
-
-            If selectOS IsNot Nothing Then
-                Dim selectType As Type = selectOS.GetRealType(schema)
-
-                If AutoJoins OrElse _m2mObject IsNot Nothing Then
-                    Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
-                    Dim appendMain As Boolean
-                    If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
-                        _js.AddRange(joins)
-                    End If
-                    _appendMain = _appendMain OrElse appendMain
-                End If
-
-                If _m2mObject IsNot Nothing Then
-                    If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
-                        Throw New NotSupportedException("Cannot select individual column in m2m query")
-                    End If
-
-                    Dim selectedType As Type = selectType
-                    Dim filteredType As Type = _m2mObject.GetType
-
-                    'Dim schema2 As IOrmObjectSchema = GetEntitySchema(filteredType)
-
-                    'column - select
-                    Dim selected_r As M2MRelationDesc = Nothing
-                    'column - filter
-                    Dim filtered_r As M2MRelationDesc = Nothing
-
-                    filtered_r = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
-                    selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelationDesc.GetRevKey(_m2mKey))
-
-                    If selected_r Is Nothing Then
-                        Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
-                    End If
-
-                    If filtered_r Is Nothing Then
-                        Dim en As String = schema.GetEntityNameByType(filteredType)
-                        If String.IsNullOrEmpty(en) Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
-                        End If
-
-                        filtered_r = schema.GetM2MRelation(selectedType, schema.GetTypeByEntityName(en), _m2mKey)
-
-                        If filtered_r Is Nothing Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
-                        End If
-                    End If
-
-                    'Dim table As SourceFragment = selected_r.Table
-                    Dim table As SourceFragment = filtered_r.Table
-
-                    If table Is Nothing Then
-                        Throw New ArgumentException("Invalid relation", filteredType.ToString)
-                    End If
-
-                    'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
-
-                    If _appendMain OrElse WithLoad(selectOS, schema) OrElse IsFTS Then
-                        _appendMain = True
-                        Dim jf As New JoinFilter(table, selected_r.Column, _
-                            selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
-                        Dim jn As New QueryJoin(table, JoinType.Join, jf)
-                        _js.Add(jn)
-                        If _from Is Nothing OrElse table.Equals(_from.Table) Then
-                            _from = New FromClauseDef(selectOS)
-                        End If
-                        If WithLoad(selectOS, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        Else
-                            GoTo l1
-                        End If
-                    Else
-                        _from = New FromClauseDef(table)
-                        'Dim os As IOrmObjectSchemaBase = schema.GetEntitySchema(selectedType)
-                        'os.GetFieldColumnMap()("ID")._columnName
-l1:
-                        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                        Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
-                        se.Attributes = Field2DbRelations.PK
-                        _sl.Add(se)
-
-                        If SelectTypes(0).First.Equals(selectOS) Then
-                        Else
-                            Throw New NotImplementedException
-                        End If
-                    End If
-
-                    If SelectTypes.Count > 1 Then
-                        For i As Integer = 1 To SelectTypes.Count - 1
-                            AddTypeFields(schema, _sl, SelectTypes(i))
-                        Next
-                    End If
-
-                    Dim tf As New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
-                    Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
-                    con.AddFilter(f)
-                    con.AddFilter(tf)
-                    f = con.Condition
-
-                    _f = f
-                    Return
-                End If
-
-            End If
+            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion)
 
             If _from IsNot Nothing AndAlso _from.AnyQuery IsNot Nothing Then
                 Prepare(_from.AnyQuery, executor, schema, filterInfo, stmt)
@@ -853,6 +717,61 @@ l1:
             _f = f
         End Sub
 
+        Public Sub Prepare(ByVal executor As IExecutor, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+
+            _sl = New List(Of SelectExpression)
+            _types = New Dictionary(Of EntityUnion, IEntitySchema)
+            _pdic = New Dictionary(Of Type, IDictionary)
+            _js = New List(Of QueryJoin)
+
+            If propJoins IsNot Nothing Then
+                _js.AddRange(propJoins)
+            End If
+
+            Dim f As IFilter = Nothing
+            If Filter IsNot Nothing Then
+                'f = Filter.Filter(selectType)
+                f = Filter.Filter()
+            End If
+
+            For Each s As Sort In New Sort.Iterator(_order)
+                s.Prepare(executor, schema, filterInfo, stmt)
+            Next
+
+            If f IsNot Nothing Then
+                For Each fl As IFilter In f.GetAllFilters
+                    fl.Prepare(executor, schema, filterInfo, stmt)
+                Next
+            End If
+
+            If Not ClientPaging.IsEmpty Then
+                If executor Is Nothing Then
+                    Throw New QueryCmdException("Client paging is not supported in this mode", Me)
+                End If
+                AddHandler executor.OnGetCacheItem, AddressOf New cls2(Me).cl_paging
+            End If
+
+            Dim selectOS As EntityUnion = GetSelectedOS()
+
+            If selectOS IsNot Nothing Then
+                Dim selectType As Type = selectOS.GetRealType(schema)
+
+                If AutoJoins Then
+                    Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
+                    Dim appendMain As Boolean
+                    If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
+                        _js.AddRange(joins)
+                    End If
+                    _appendMain = _appendMain OrElse appendMain
+                End If
+
+            End If
+
+            _Prepare(executor, schema, filterInfo, stmt, f, selectOS)
+        End Sub
+
         Private Sub CheckFrom(ByVal se As SelectExpression)
             If _from Is Nothing Then
                 If se.Aggregate IsNot Nothing Then
@@ -897,7 +816,7 @@ l1:
             Return False
         End Function
 
-        Private Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
+        Protected Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
                                   ByVal tp As Pair(Of EntityUnion, Boolean?), Optional ByVal os As EntityUnion = Nothing)
             Dim t As Type = tp.First.GetRealType(schema)
             If os Is Nothing Then
@@ -2825,10 +2744,10 @@ l1:
                 ._group = _group
                 ._hint = _hint
                 ._joins = _joins
-                ._m2mKey = _m2mKey
+                '._m2mKey = _m2mKey
                 '._load = _load
                 ._mark = ._mark
-                ._m2mObject = _m2mObject
+                '._m2mObject = _m2mObject
                 ._order = _order
                 ._page = _page
                 ._statementMark = _statementMark
@@ -3029,36 +2948,6 @@ l1:
         '    Return q
         'End Function
 
-        Public Shared Function Create(ByVal obj As IKeyEntity, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(obj)
-            Else
-                q = f.Create(obj)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
-
-        Public Shared Function Create(ByVal obj As IKeyEntity, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(obj, key)
-            Else
-                q = f.Create(obj, key)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
-
         'Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
         '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
         '    Dim q As QueryCmd = Nothing
@@ -3112,38 +3001,6 @@ l1:
         '    Return q
         'End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(obj)
-                q.Name = name
-            Else
-                q = f.Create(name, obj)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As QueryCmd = Nothing
-            If f Is Nothing Then
-                q = New QueryCmd(obj, key)
-                q.Name = name
-            Else
-                q = f.Create(name, obj, key)
-            End If
-            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
-            If cm IsNot Nothing Then
-                q._getMgr = cm
-            End If
-            Return q
-        End Function
-
         Public Shared Function Create() As QueryCmd
             Return Create(OrmManager.CurrentManager)
         End Function
@@ -3160,14 +3017,6 @@ l1:
         '    Return CreateByEntityName(entityName, OrmManager.CurrentManager)
         'End Function
 
-        Public Shared Function Create(ByVal obj As IKeyEntity) As QueryCmd
-            Return Create(obj, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
-            Return Create(obj, key, OrmManager.CurrentManager)
-        End Function
-
         'Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
         '    Return Create(name, table, OrmManager.CurrentManager)
         'End Function
@@ -3183,14 +3032,6 @@ l1:
         'Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
         '    Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
         'End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity) As QueryCmd
-            Return Create(name, obj, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As QueryCmd
-            Return Create(name, obj, key, OrmManager.CurrentManager)
-        End Function
 
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
             Dim q As New QueryCmd(New CreateManager(getMgr))
@@ -3445,13 +3286,13 @@ l1:
         '    MyBase.New(entityName)
         'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity)
-            MyBase.New(obj)
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity)
+        '    MyBase.New(obj)
+        'End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
-            MyBase.New(obj, key)
-        End Sub
+        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
+        '    MyBase.New(obj, key)
+        'End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
@@ -3465,13 +3306,13 @@ l1:
         '    MyBase.New(entityName, getMgr)
         'End Sub
 
-        Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
-            MyBase.New(obj, getMgr)
-        End Sub
+        'Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
+        '    MyBase.New(obj, getMgr)
+        'End Sub
 
-        Public Sub New(ByVal obj As _IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
-            MyBase.New(obj, key, getMgr)
-        End Sub
+        'Public Sub New(ByVal obj As _IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
+        '    MyBase.New(obj, key, getMgr)
+        'End Sub
 
 #End Region
 

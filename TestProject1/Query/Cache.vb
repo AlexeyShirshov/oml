@@ -353,9 +353,9 @@ Imports System.Collections.ObjectModel
             Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
             Assert.IsNotNull(e)
 
-            Dim q As New QueryCmd(e)
+            Dim q As New RelationCmd(e)
 
-            Dim q2 As QueryCmd = New QueryCmd(e). _
+            Dim q2 As QueryCmd = New RelationCmd(e). _
                 Where(Ctor.prop(GetType(Entity4), "Title").eq("first"))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -373,7 +373,7 @@ Imports System.Collections.ObjectModel
                 Using s As New ModificationsTracker(mgr)
                     Dim en4 As Entity4 = s.CreateNewObject(Of Entity4)()
                     en4.Title = "xxx"
-                    e.M2MNew.Add(en4)
+                    e.Relations.Add(en4)
 
                     Assert.AreEqual(4, q.ToList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q.LastExecitionResult.CacheHit)

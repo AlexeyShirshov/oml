@@ -138,10 +138,10 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("second", GetType(Table1)).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
 
-        r = t.M2MNew.Search("second").ToList(Of Table1)()
+        r = t.Relations.Search("second").ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
     End Sub
@@ -154,7 +154,7 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("first").ToEntityList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("first").ToEntityList(Of Table1)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         Assert.AreEqual(1, r.Count)

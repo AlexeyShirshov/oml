@@ -70,7 +70,7 @@
 				<oos:Property propertyName="Title" table="tblAlbums" fieldName="title" typeRef="tString" description="Property Title Description" propertyAccessLevel="Assembly"/>
 			</oos:Properties>
 		</oos:Entity>
-		<oos:Entity id="Album2ArtistRelation" name="Album2ArtistRelation" description="Album2ArtistRelation Description" namespace="Relations">
+		<oos:Entity id="Album2ArtistRelation" name="Album2ArtistRelation" description="Album2ArtistRelation Description" namespace="xRelations">
       <oos:Tables inheritsBase="true">
 				<oos:Table ref="tblAl2Ar"/>
 			</oos:Tables>

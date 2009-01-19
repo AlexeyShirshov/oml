@@ -1415,8 +1415,9 @@ Namespace Entities
                 Next
                 _needAccept.Clear()
 
-                For Each el As M2MRelation In _relations
-                    el.Reject(mc, True)
+                For Each rl As Relation In _relations
+                    Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                    If el IsNot Nothing Then el.Reject(mc, True)
                 Next
                 'End Using
             End Using
@@ -1675,24 +1676,58 @@ Namespace Entities
         End Sub
 
 #Region " Relations "
+        Protected Sub _ReplaceRel(ByVal oldRel As Relation, ByVal newRel As Relation) Implements IRelations._ReplaceRel
+            Using GetSyncRoot()
+                If _relations.Count > 0 Then
+                    For Each rl As Relation In _relations
+                        If Object.ReferenceEquals(rl, oldRel) OrElse (oldRel.Relation IsNot Nothing AndAlso rl.Relation.Rel.Equals(oldRel.Relation.Rel)) Then
+                            _relations.Remove(rl)
+                            _relations.Add(newRel)
+                            Return
+                        End If
+                    Next
+                    If oldRel.Relation Is Nothing Then
+                        _relations.Add(newRel)
+                    Else
+                        Throw New KeyNotFoundException("Relation is not found")
+                    End If
+                Else
+                    _relations.Add(newRel)
+                End If
+            End Using
+        End Sub
+
+        Protected Sub AddRel(ByVal rel As Relation)
+            Using GetSyncRoot()
+                For Each rl As Relation In _relations
+                    If rel.Equals(rl) Then
+                        Return
+                    End If
+                Next
+                _relations.Add(rel)
+            End Using
+        End Sub
+
         Public Function CreateRelCmd() As Worm.Query.RelationCmd
+            Dim q As Worm.Query.RelationCmd = Nothing
             If CreateManager IsNot Nothing Then
-                Dim q As New Worm.Query.RelationCmd(Me, CreateManager)
-                Return q
+                q = New Worm.Query.RelationCmd(Me, CreateManager)
             Else
-                Dim q As Worm.Query.RelationCmd = Worm.Query.RelationCmd.Create(Me)
-                Return q
+                q = Worm.Query.RelationCmd.Create(Me)
             End If
+            AddRel(q.Relation)
+            Return q
         End Function
 
         Public Function CreateRelCmd(ByVal key As String) As Worm.Query.QueryCmd
+            Dim q As Worm.Query.RelationCmd = Nothing
             If CreateManager IsNot Nothing Then
-                Dim q As New Worm.Query.QueryCmd(Me, key, CreateManager)
-                Return q
+                q = New Worm.Query.RelationCmd(Me, key, CreateManager)
             Else
-                Dim q As Worm.Query.RelationCmd = Worm.Query.RelationCmd.Create(Me, key)
-                Return q
+                q = Worm.Query.RelationCmd.Create(Me, key)
             End If
+            AddRel(q.Relation)
+            Return q
         End Function
 
         Protected Function GetCmd(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
@@ -1720,7 +1755,7 @@ Namespace Entities
             Using GetSyncRoot()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
-                    If String.Equals(e.Key, key) Then
+                    If M2MRelationDesc.CompareKeys(e.Key, key) Then
                         If e.Relation.Type Is Nothing Then
                             If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
                                 el = e
@@ -1748,7 +1783,7 @@ Namespace Entities
             Dim el As M2MRelation = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
-                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
+                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
                     SyncLock "1efb139gf8bh"
                         If Not el2.Added.Contains(Me) Then
                             If el.Deleted.Contains(obj) Then
@@ -1856,7 +1891,7 @@ Namespace Entities
             Return _relations
         End Function
 
-        Public ReadOnly Property M2MNew() As IRelations
+        Public ReadOnly Property Relations() As IRelations
             Get
                 Return Me
             End Get

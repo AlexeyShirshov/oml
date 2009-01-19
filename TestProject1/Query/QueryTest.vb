@@ -261,7 +261,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
 
-            Dim q As QueryCmd = t1.M2MNew.GetCmd(GetType(Table33))
+            Dim q As QueryCmd = t1.Relations.GetCmd(GetType(Table33))
 
             Assert.AreEqual(3, q.ToList(Of Table3)(mgr).Count)
 
@@ -336,7 +336,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmd(e)
+            Dim q2 As New RelationCmd(e)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
@@ -361,9 +361,9 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
             Assert.IsNotNull(e)
 
-            Dim q As New QueryCmd(e)
+            Dim q As New RelationCmd(e)
 
-            Dim q2 As QueryCmd = New QueryCmd(e). _
+            Dim q2 As QueryCmd = New RelationCmd(e). _
                 Where(Ctor.prop(GetType(Entity4), "Title").eq("first"))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -391,7 +391,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmd(e)
+            Dim q2 As New RelationCmd(e)
             q2.Filter = Ctor.prop(GetType(Entity4), "Title").[like]("b%")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
@@ -412,7 +412,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmd(e)
+            Dim q2 As New RelationCmd(e)
             q2.propSort = SCtor.prop(GetType(Entity4), "Title")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
