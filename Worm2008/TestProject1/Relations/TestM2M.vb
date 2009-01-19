@@ -84,8 +84,10 @@ Imports Worm.Criteria
                 Assert.IsFalse(e.InternalProperties.HasChanges)
                 Assert.IsFalse(e2.InternalProperties.HasChanges)
 
-                l = CType(e, Worm.Entities.IRelations).GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
+                Dim cmd As RelationCmd = CType(e, Worm.Entities.IRelations).GetCmd(GetType(Entity4))
+                l = cmd.ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
+                Assert.IsFalse(cmd.LastExecitionResult.CacheHit)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
@@ -125,7 +127,7 @@ Imports Worm.Criteria
                     Assert.IsFalse(e.InternalProperties.HasM2MChanges)
                     Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
 
-                    e.M2MNew.Add(e2)
+                    e.Relations.Add(e2)
 
                     Assert.IsTrue(e.InternalProperties.HasM2MChanges)
                     Assert.IsTrue(e2.InternalProperties.HasM2MChanges)
@@ -136,7 +138,7 @@ Imports Worm.Criteria
                 Assert.IsFalse(e.InternalProperties.HasM2MChanges)
                 Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
 
-                l = e.M2MNew.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
+                l = e.Relations.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.AreEqual(5, l.Count)
             Finally
                 mgr.Rollback()
@@ -197,17 +199,17 @@ Imports Worm.Criteria
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = e.M2MNew.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = e.Relations.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Dim c As Integer = l.Count
 
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    e.M2MNew.Delete(l(0))
+                    e.Relations.Delete(l(0))
                     s.AcceptModifications()
                 End Using
 
-                Dim q2 As QueryCmd = e.M2MNew.GetCmd(GetType(Entity4))
+                Dim q2 As QueryCmd = e.Relations.GetCmd(GetType(Entity4))
                 l = q2.ToList(Of Entity4)(mgr)
                 Assert.AreEqual(c - 1, l.Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)

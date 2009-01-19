@@ -27,8 +27,8 @@ Namespace Sorting
         Private _del As ExternalSortDelegate
 
         Private _prev As Sort
-        'Private _t As Type
-        'Private _table As SourceFragment
+        Private Shared _empty As Sort = New Sort
+        Private _key As Integer
 
         'Public Event OnChange()
 
@@ -243,9 +243,9 @@ Namespace Sorting
         '    RaiseEvent OnChange()
         'End Sub
 
-        'Public ReadOnly Property Values() As Pair(Of Object, String)()
+        'Public Shared ReadOnly Property Empty() As Sort
         '    Get
-        '        Return _values
+        '        Return _empty
         '    End Get
         'End Property
 
@@ -258,15 +258,17 @@ Namespace Sorting
             End Set
         End Property
 
-        'Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
-        '    Return ObjectMappingEngine.ExtractValues(schema, aliases, _values).ToArray
-        'End Function
+        Public Function GetOnlyKey(ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Sort
+            Dim s As New Sort
+            s._key = GetStaticString(schema, contextFilter).GetHashCode
+            Return s
+        End Function
 
-        'Public ReadOnly Property Table() As SourceFragment
-        '    Get
-        '        Return _table
-        '    End Get
-        'End Property
+        Public ReadOnly Property Key() As Integer
+            Get
+                Return _key
+            End Get
+        End Property
 
         'Public Property Type() As Type
         '    Get
@@ -424,12 +426,16 @@ Namespace Sorting
         End Function
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim s As New Sort(_prev, ObjectSource, PropertyAlias, _order, _ext, _del)
-            s.Computed = Computed
-            s.Table = Table
-            s.Values = Values
-            s.Column = Column
-            Return s
+            If _key <> 0 Then
+                Return Me
+            Else
+                Dim s As New Sort(_prev, ObjectSource, PropertyAlias, _order, _ext, _del)
+                s.Computed = Computed
+                s.Table = Table
+                s.Values = Values
+                s.Column = Column
+                Return s
+            End If
         End Function
     End Class
 

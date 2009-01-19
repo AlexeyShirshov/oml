@@ -952,7 +952,7 @@ l1:
             If Not del.Created Then
                 Dim psort As Sort = del.Sort
 
-                If ce.SortEquals(psort) OrElse psort Is Nothing Then
+                If ce.SortEquals(psort, MappingEngine, GetContextFilter) OrElse psort Is Nothing Then
                     If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce) Then
                         del.Renew = True
                         GoTo l1
@@ -1373,6 +1373,7 @@ l1:
         End If
 
         If del.Renew Then
+            If Not _dont_cache_lists Then del.CreateDepends(ce)
             _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not del.Created, _loadedInLastFetch)
             Return ce
         End If
@@ -1419,7 +1420,7 @@ l1:
         If _externalFilter Is Nothing Then
             Dim psort As Sort = del.Sort
 
-            If ce_.SortEquals(psort) OrElse psort Is Nothing Then
+            If ce_.SortEquals(psort, MappingEngine, GetContextFilter) OrElse psort Is Nothing Then
                 If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce_.SortExpires Then
                     Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
                     Dim ce2 As UpdatableCachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
@@ -1479,7 +1480,7 @@ l1:
         '    Return False
         'End If
 
-        If sort.IsCustom Then
+        If sort.IsCustom OrElse sort.Query IsNot Nothing Then
             Return False
         End If
 
@@ -2316,26 +2317,29 @@ l1:
             Next
 
             Dim c As OrmCache = TryCast(_cache, OrmCache)
-            For Each el As M2MRelation In obj.GetAllRelation
-                'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
-                If c IsNot Nothing Then c.RemoveM2MQueries(el)
+            If c IsNot Nothing Then
+                For Each rl As Relation In obj.GetAllRelation
+                    Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                    'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
+                    If el IsNot Nothing Then c.RemoveM2MQueries(el)
 
-                'For Each o As IOrmBase In el.Added
-                '    'Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                '    Dim oel As EditableListBase = o.GetRelation(tt1, el.Key)
-                '    oel.Added.Remove(oldId)
-                '    oel.Added.Add(obj.Identifier)
-                'Next
+                    'For Each o As IOrmBase In el.Added
+                    '    'Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                    '    Dim oel As EditableListBase = o.GetRelation(tt1, el.Key)
+                    '    oel.Added.Remove(oldId)
+                    '    oel.Added.Add(obj.Identifier)
+                    'Next
 
-                'el.MainId = obj.Identifier
+                    'el.MainId = obj.Identifier
 
-                '_cache.AddM2MQuery(el, p.First, p.Second)
-                'Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
-                'If dic IsNot Nothing Then
-                '    dic.Remove(p.Second)
-                'End If
-                '_cache.RemoveEntry(p)
-            Next
+                    '_cache.AddM2MQuery(el, p.First, p.Second)
+                    'Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
+                    'If dic IsNot Nothing Then
+                    '    dic.Remove(p.Second)
+                    'End If
+                    '_cache.RemoveEntry(p)
+                Next
+            End If
         End If
     End Sub
 
@@ -3252,13 +3256,16 @@ l1:
                             Next
 
                             If orm._relations.Count > 0 Then
-                                For Each elb As M2MRelation In orm._relations
-                                    Dim el As M2MRelation = elb.PrepareSave(Me)
-                                    If el IsNot Nothing Then
-                                        M2MSave(orm, el)
-                                        'elb.Saved = True
-                                        elb._savedIds.AddRange(el.Added)
-                                        hasNew = hasNew OrElse elb.HasNew
+                                For Each rl As Relation In orm._relations
+                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                    If elb IsNot Nothing Then
+                                        Dim el As M2MRelation = elb.PrepareSave(Me)
+                                        If el IsNot Nothing Then
+                                            M2MSave(orm, el)
+                                            'elb.Saved = True
+                                            elb._savedIds.AddRange(el.Added)
+                                            hasNew = hasNew OrElse elb.HasNew
+                                        End If
                                     End If
                                 Next
                             End If

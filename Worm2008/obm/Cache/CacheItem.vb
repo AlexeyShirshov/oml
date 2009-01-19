@@ -285,13 +285,15 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function SortEquals(ByVal sort As Sort) As Boolean
+        Public Function SortEquals(ByVal sort As Sort, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
             If _sort Is Nothing Then
                 If sort Is Nothing Then
                     Return True
                 Else
                     Return False
                 End If
+            ElseIf _sort.Key <> 0 Then
+                Return _sort.Key = sort.GetOnlyKey(schema, contextFilter).Key
             Else
                 Return _sort.Equals(sort)
             End If

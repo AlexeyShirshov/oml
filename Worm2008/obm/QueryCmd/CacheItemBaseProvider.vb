@@ -69,11 +69,13 @@ Namespace Query
 
         Public Sub CreateDepends(ByVal ce As CachedItemBase) Implements OrmManager.ICacheItemProvoderBase.CreateDepends
             Dim uce As UpdatableCachedItem = TryCast(ce, UpdatableCachedItem)
-            If uce IsNot Nothing Then
-                If _q.Filter IsNot Nothing Then
-                    uce.Filter = _q.Filter.Filter
+            If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
+                Dim srt As Sort = _q.propSort
+                If srt.Query IsNot Nothing Then
+                    uce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextFilter)
+                Else
+                    uce.Sort = srt
                 End If
-                uce.Sort = _q.propSort
             End If
 
             Dim cache As Cache.OrmCache = TryCast(Me.Cache, Cache.OrmCache)
@@ -160,6 +162,11 @@ Namespace Query
                         Dim added As Boolean = False
                         If rightType Then
                             added = cache.validate_AddCalculatedType(types, _key, _id, fl, MappingEngine, Mgr.GetContextFilter)
+                            If uce IsNot Nothing Then
+                                If _q.Filter IsNot Nothing Then
+                                    uce.Filter = _q.Filter.Filter
+                                End If
+                            End If
                         End If
 
                         If Not added AndAlso fl IsNot Nothing Then
@@ -225,6 +232,7 @@ Namespace Query
                         End If
                     End If
 
+
                     For Each s As Sort In New Sort.Iterator(q.propSort)
                         If Not String.IsNullOrEmpty(s.SortBy) Then
                             Dim t As Type = Nothing
@@ -259,11 +267,15 @@ Namespace Query
                         Next
                     End If
 
-                    If q.Obj IsNot Nothing Then
-                        Debug.Assert(types IsNot Nothing AndAlso CType(types, IList(Of Type)).Count = 1)
-                        cache.AddM2MSimpleQuery(CType(q.Obj.GetRelation(CType(types, IList(Of Type))(0), q.M2MKey), M2MRelation), _key, _id)
-                    End If
+                    Dim rq As RelationCmd = TryCast(q, RelationCmd)
 
+                    If rq IsNot Nothing Then
+                        Dim m2m As M2MRelation = TryCast(rq.Relation, M2MRelation)
+                        If m2m IsNot Nothing Then
+                            Debug.Assert(types IsNot Nothing AndAlso CType(types, IList(Of Type)).Count = 1)
+                            cache.AddM2MSimpleQuery(m2m, _key, _id)
+                        End If
+                    End If
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
                     '    Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
 

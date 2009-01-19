@@ -110,10 +110,13 @@ Namespace Entities.Meta
             _eu = eu
         End Sub
 
-        Public ReadOnly Property Rel() As EntityUnion
+        Public Property Rel() As EntityUnion
             Get
                 Return _eu
             End Get
+            Friend Set(ByVal value As EntityUnion)
+                _eu = value
+            End Set
         End Property
 
         Public ReadOnly Property EntityName() As String
@@ -136,7 +139,7 @@ Namespace Entities.Meta
             If obj Is Nothing Then
                 Return False
             End If
-            Return _eu.Equals(obj._eu) AndAlso String.Equals(Key, obj.Key)
+            Return Object.Equals(_eu, obj._eu) AndAlso M2MRelationDesc.CompareKeys(Key, obj.Key)
         End Function
 
         Public Overrides Function GetHashCode() As Integer
@@ -250,6 +253,19 @@ Namespace Entities.Meta
                 Return DirKey
             Else
                 Return key
+            End If
+        End Function
+
+        Public Shared Function CompareKeys(ByVal key1 As String, ByVal key2 As String) As Boolean
+            If key1 Is Nothing AndAlso key2 Is Nothing Then
+                Return True
+            Else
+                If (key1 Is Nothing AndAlso key2 = DirKey) OrElse _
+                    (key2 Is Nothing AndAlso key1 = DirKey) Then
+                    Return True
+                Else
+                    Return String.Equals(key1, key2)
+                End If
             End If
         End Function
     End Class
