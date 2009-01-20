@@ -60,5 +60,10 @@ namespace Worm.CodeGen.Core.Descriptors
         {
             return _entity.Name.GetHashCode() ^ base.GetHashCode();
         }
+
+        public override string ToString()
+        {
+            return FieldName + "$" + Entity.Name;
+        }
     }
 }

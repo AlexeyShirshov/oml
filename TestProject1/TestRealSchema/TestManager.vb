@@ -1313,14 +1313,14 @@ Public Class TestManagerRS
         _new_objects.Add(CInt(CType(obj, IKeyEntity).Identifier), CType(obj, KeyEntity))
     End Sub
 
-    Public Function GetIdentity(ByVal type As Type) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
+    Public Function GetIdentity(ByVal type As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return New PKDesc() {New PKDesc("id", _id)}
     End Function
 
     Public Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing)(0).Value)
+        Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew

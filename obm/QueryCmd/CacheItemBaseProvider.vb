@@ -232,7 +232,6 @@ Namespace Query
                         End If
                     End If
 
-
                     For Each s As Sort In New Sort.Iterator(q.propSort)
                         If Not String.IsNullOrEmpty(s.SortBy) Then
                             Dim t As Type = Nothing
@@ -276,6 +275,7 @@ Namespace Query
                             cache.AddM2MSimpleQuery(m2m, _key, _id)
                         End If
                     End If
+
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
                     '    Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
 

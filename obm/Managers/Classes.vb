@@ -1,4 +1,6 @@
-﻿<Serializable()> _
+﻿Imports Worm.Entities
+
+<Serializable()> _
 Public NotInheritable Class OrmManagerException
     Inherits Exception
 
@@ -102,6 +104,7 @@ Class ManagerWrapper
         If Not mgr.MappingEngine.Equals(schema) AndAlso schema IsNot Nothing Then
             _oldSchema = mgr.MappingEngine
             mgr.SetSchema(schema)
+            AddHandler mgr.ObjectLoaded, AddressOf OnObjectLoaded
         End If
     End Sub
 
@@ -110,6 +113,10 @@ Class ManagerWrapper
             Return _mgr
         End Get
     End Property
+
+    Protected Sub OnObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
+        CType(o, _IEntity).SetSpecificSchema(sender.MappingEngine)
+    End Sub
 
 #Region " IDisposable Support "
     Private disposedValue As Boolean = False        ' To detect redundant calls
@@ -120,6 +127,8 @@ Class ManagerWrapper
             If disposing Then
                 ' TODO: free other state (managed objects).
             End If
+
+            RemoveHandler _mgr.ObjectLoaded, AddressOf OnObjectLoaded
 
             If _oldSchema IsNot Nothing Then
                 _mgr.SetSchema(_oldSchema)

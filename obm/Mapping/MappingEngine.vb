@@ -1059,13 +1059,13 @@ Public Class ObjectMappingEngine
             pi.SetValue(obj, value, Nothing)
             'End Using
         Else
-            If obj.IsLoaded Then
+            'If obj.IsLoaded Then
+            '    ov.SetValueOptimized(propertyAlias, oschema, value)
+            'Else
+            Using obj.SyncHelper(False, propertyAlias)
                 ov.SetValueOptimized(propertyAlias, oschema, value)
-            Else
-                Using obj.SyncHelper(False, propertyAlias)
-                    ov.SetValueOptimized(propertyAlias, oschema, value)
-                End Using
-            End If
+            End Using
+            'End If
         End If
 
     End Sub
@@ -1086,13 +1086,13 @@ Public Class ObjectMappingEngine
             pi.SetValue(obj, value, Nothing)
             'End Using
         Else
-            If obj.IsLoaded Then
+            'If obj.IsLoaded Then
+            '    ov.SetValueOptimized(propertyAlias, oschema, value)
+            'Else
+            Using obj.SyncHelper(False, propertyAlias)
                 ov.SetValueOptimized(propertyAlias, oschema, value)
-            Else
-                Using obj.SyncHelper(False, propertyAlias)
-                    ov.SetValueOptimized(propertyAlias, oschema, value)
-                End Using
-            End If
+            End Using
+            'End If
         End If
     End Sub
 

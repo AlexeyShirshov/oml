@@ -1897,6 +1897,16 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function Paging(ByVal start As Integer, ByVal length As Integer) As QueryCmd
+            ClientPaging = New Paging(start, length)
+            Return Me
+        End Function
+
+        Public Function Paging(ByVal pager As IPager) As QueryCmd
+            Me.Pager = pager
+            Return Me
+        End Function
+
         'Public Function [SelectAgg](ByVal aggrs() As AggregateBase) As QueryCmd
         '    Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggrs)
         '    Return Me

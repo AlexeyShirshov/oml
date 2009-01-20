@@ -3702,7 +3702,7 @@ l1:
                             appendMain = True
                         Else
                             If Not types.Contains(type2join) Then
-                                AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join)
+                                AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2)
                             End If
                         End If
                     End If
@@ -3748,12 +3748,14 @@ l1:
 
     Public Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal filterInfo As Object, ByVal l As List(Of QueryJoin), _
-        ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type)
+        ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type, _
+        ByVal t2jSchema As IEntitySchema)
+
         Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
 
         If String.IsNullOrEmpty(field) Then
 
-            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetEntitySchema(type2join))
+            field = schema.GetJoinFieldNameByType(type2join, selectType, t2jSchema)
 
             If String.IsNullOrEmpty(field) Then
                 Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)
@@ -3773,10 +3775,9 @@ l1:
             types.Add(type2join)
         End If
 
-        Dim sh As IEntitySchema = schema.GetEntitySchema(type2join)
-        Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
+        Dim ts As IMultiTableObjectSchema = TryCast(t2jSchema, IMultiTableObjectSchema)
         If ts IsNot Nothing Then
-            Dim pk_table As SourceFragment = sh.Table
+            Dim pk_table As SourceFragment = t2jSchema.Table
             For i As Integer = 1 To ts.GetTables.Length - 1
                 Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
                 Dim join As QueryJoin = Nothing
@@ -3791,7 +3792,7 @@ l1:
                 End If
             Next
 
-            Dim cfs As IContextObjectSchema = TryCast(sh, IContextObjectSchema)
+            Dim cfs As IContextObjectSchema = TryCast(t2jSchema, IContextObjectSchema)
             If cfs IsNot Nothing Then
                 Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
                 If newfl IsNot Nothing Then
