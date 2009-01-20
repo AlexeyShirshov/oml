@@ -4,7 +4,7 @@ Imports System.Collections.Generic
 
 Namespace Cache
     Public Interface INewObjectsStore
-        Function GetPKForNewObject(ByVal t As Type) As PKDesc()
+        Function GetPKForNewObject(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As PKDesc()
         Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
         Sub AddNew(ByVal obj As _ICachedEntity)
         Sub RemoveNew(ByVal obj As _ICachedEntity)
@@ -63,8 +63,8 @@ Namespace Cache
             Return o
         End Function
 
-        Public Function GetPKForNewObject(ByVal t As System.Type) As Entities.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
-            Dim dic As IDictionary = ObjectMappingEngine.GetMappedProperties(t)
+        Public Function GetPKForNewObject(ByVal t As System.Type, ByVal mpe As ObjectMappingEngine) As Entities.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
+            Dim dic As IDictionary = mpe.GetProperties(t)
             Dim l As New List(Of PKDesc)
             For Each de As DictionaryEntry In dic
                 Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)

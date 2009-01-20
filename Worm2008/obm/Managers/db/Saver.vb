@@ -748,7 +748,7 @@ l1:
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Return CreateNewObject(Of T)(NewObjectManager.GetPKForNewObject(GetType(T))(0).Value)
+            Return CreateNewObject(Of T)(NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)(0).Value)
         End Function
 
         Public Function CreateNewEntity(Of T As {_ICachedEntity, New})() As T
@@ -756,7 +756,7 @@ l1:
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T))
+            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
             Return CreateNewObject(Of T)(pk)
         End Function
 
@@ -793,7 +793,7 @@ l1:
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t))
+            Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t, _mgr.MappingEngine))
         End Function
 
         Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IKeyEntity

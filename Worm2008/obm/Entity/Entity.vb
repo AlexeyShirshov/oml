@@ -177,7 +177,7 @@ Namespace Entities
             End If
         End Function
 
-        Protected ReadOnly Property MappingEngine() As ObjectMappingEngine
+        Protected ReadOnly Property MappingEngine() As ObjectMappingEngine Implements _IEntity.MappingEngine
             Get
                 If _schema IsNot Nothing Then
                     Return _schema

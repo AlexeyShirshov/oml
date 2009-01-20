@@ -26,10 +26,10 @@ Public Class TestTracker
     End Sub
 
     Public Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing)(0).Value)
+        Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
-    Public Function GetIdentity(ByVal t As Type) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
+    Public Function GetIdentity(ByVal t As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return New PKDesc() {New PKDesc(OrmBaseT.PKName, i)}

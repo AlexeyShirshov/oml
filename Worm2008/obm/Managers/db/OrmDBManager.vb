@@ -11,6 +11,7 @@ Namespace Database
         Inherits OrmReadOnlyDBManager
 
         Private _upd As New DBUpdater
+        Private _idstr As String
 
         Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, mpe, stmtGen, connectionString)
@@ -22,7 +23,12 @@ Namespace Database
 
         Protected Friend Overrides ReadOnly Property IdentityString() As String
             Get
-                Return GetType(OrmReadOnlyDBManager).ToString
+                If String.IsNullOrEmpty(_idstr) AndAlso Not String.IsNullOrEmpty(_connStr) Then
+                    _idstr = GetType(OrmReadOnlyDBManager).ToString & _connStr
+                Else
+                    Return GetType(OrmReadOnlyDBManager).ToString & _connStr
+                End If
+                Return _idstr
             End Get
         End Property
 

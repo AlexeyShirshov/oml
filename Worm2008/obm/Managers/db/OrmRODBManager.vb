@@ -386,7 +386,7 @@ Namespace Database
 
         End Class
 
-        Private _connStr As String
+        Protected _connStr As String
         Private _tran As System.Data.Common.DbTransaction
         Private _closeConnOnCommit As ConnAction
         Private _conn As System.Data.Common.DbConnection
@@ -549,9 +549,15 @@ l1:
             End If
         End Sub
 
+        Private _idstr As String
         Protected Friend Overrides ReadOnly Property IdentityString() As String
             Get
-                Return MyBase.IdentityString & _connStr
+                If String.IsNullOrEmpty(_idstr) AndAlso Not String.IsNullOrEmpty(_connStr) Then
+                    _idstr = MyBase.IdentityString & _connStr
+                Else
+                    Return MyBase.IdentityString & _connStr
+                End If
+                Return _idstr
             End Get
         End Property
 

@@ -70,6 +70,7 @@ Namespace Entities
         ReadOnly Property IsLoading() As Boolean
         Sub SetMgrString(ByVal str As String)
         Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
+        ReadOnly Property MappingEngine() As ObjectMappingEngine
     End Interface
 
     Public Interface IEntity

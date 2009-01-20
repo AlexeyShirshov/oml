@@ -6,6 +6,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm
 
 <TestClass()> Public Class TestManager
     Implements INewObjectsStore, Worm.ICreateManager
@@ -612,10 +613,10 @@ Imports Worm.Query
     Private _l As New Dictionary(Of Integer, KeyEntity)
 
     Private Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing)(0).Value)
+        Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
-    Private Function GetIdentity(ByVal t As Type) As Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
+    Private Function GetIdentity(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return New PKDesc() {New PKDesc("id", _id)}

@@ -6,6 +6,18 @@ Imports Worm.Entities
 
 Namespace Cache
 
+    Friend Module DicKeys
+        Private _cnt As Integer = 1
+
+        Public Function [Get]() As Integer
+            SyncLock GetType(DicKeys)
+                Dim old As Integer = _cnt
+                _cnt += 1
+                Return old
+            End SyncLock
+        End Function
+    End Module
+
     <Serializable()> _
     Public Class WebCacheDictionary(Of TValue)
         Implements System.Collections.Generic.IDictionary(Of String, TValue), IDictionary
@@ -18,7 +30,6 @@ Namespace Cache
         Private _dep As Caching.CacheDependency
         Private _remove_del As Caching.CacheItemRemovedCallback
         Private _name2 As String
-        Private Shared _cnt As Integer = 1
 
         Public Sub New()
             _abs_expiration = Caching.Cache.NoAbsoluteExpiration
@@ -39,8 +50,7 @@ Namespace Cache
                 If String.IsNullOrEmpty(_name2) Then
                     SyncLock GetType(WebCacheDictionary(Of ))
                         If String.IsNullOrEmpty(_name2) Then
-                            _name2 = "Worm.Cache." & _cnt
-                            _cnt += 1
+                            _name2 = "Worm.Cache." & DicKeys.Get
                         End If
                     End SyncLock
                 End If

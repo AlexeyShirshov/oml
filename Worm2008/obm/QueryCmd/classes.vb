@@ -125,32 +125,33 @@ Namespace Query
     <Serializable()> _
     Public Structure Paging
         Private _start As Integer
-        Public Property Start() As Integer
+        Public ReadOnly Property Start() As Integer
             Get
                 Return _start
             End Get
-            Set(ByVal value As Integer)
-                _start = value
-                _ne = True
-            End Set
+            'Set(ByVal value As Integer)
+            '    _start = value
+            '    _ne = True
+            'End Set
         End Property
 
         Private _len As Integer
-        Public Property Length() As Integer
+        Public ReadOnly Property Length() As Integer
             Get
                 Return _len
             End Get
-            Set(ByVal value As Integer)
-                _len = value
-                _ne = True
-            End Set
+            'Set(ByVal value As Integer)
+            '    _len = value
+            '    _ne = True
+            'End Set
         End Property
 
         Private _ne As Boolean
 
         Public Sub New(ByVal start As Integer, ByVal length As Integer)
-            Me.Start = start
-            Me.Length = length
+            Me._start = start
+            Me._len = length
+            _ne = True
         End Sub
 
         Public ReadOnly Property IsEmpty() As Boolean

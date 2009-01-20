@@ -4,6 +4,7 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm
+Imports Worm.Database
 
 <TestClass()> Public Class TestRel
 
@@ -52,6 +53,86 @@ Imports Worm
         Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
 
         Assert.AreEqual(2, r.Count)
+
+        For Each t2 As Table2 In r
+            Assert.IsFalse(t2.InternalProperties.IsLoaded)
+        Next
     End Sub
 
+    <TestMethod()> Public Sub TestFindFilter()
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.Where(Ctor.prop(GetType(Table2), "Money").eq(2)).ToList(Of Table2)()
+
+        Assert.AreEqual(1, r.Count)
+
+        Assert.AreEqual(Of Decimal)(2, r(0).Money)
+    End Sub
+
+    <TestMethod()> Public Sub TestFindTop()
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.Top(1).Sort(SCtor.prop(GetType(Table2), "Money").desc).ToList(Of Table2)()
+
+        Assert.AreEqual(1, r.Count)
+
+        Assert.AreEqual(Of Decimal)(2, r(0).Money)
+    End Sub
+
+    <TestMethod()> Public Sub TestLoad()
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+
+        t.Table2s.Load()
+
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
+
+        Assert.AreEqual(2, r.Count)
+
+        For Each t2 As Table2 In r
+            Assert.IsTrue(t2.InternalProperties.IsLoaded)
+        Next
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadRange()
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+
+        t.Table2s.Load(0, 1)
+
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
+
+        Assert.AreEqual(2, r.Count)
+
+        Assert.IsTrue(r(0).InternalProperties.IsLoaded)
+        Assert.IsFalse(r(1).InternalProperties.IsLoaded)
+    End Sub
+
+    <TestMethod()> Public Sub TestAdd()
+
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
+            Dim q1 As New QueryCmd()
+            Dim t As Table1 = q1.GetByID(Of Table1)(1, False, mgr)
+
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    Dim t2 As Table2 = mt.CreateNewObject(Of Table2)()
+                    Assert.IsNull(t2.Tbl)
+
+                    t.Table2s.add(t2)
+
+                    Assert.IsNotNull(t2.Tbl)
+                End Using
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class
