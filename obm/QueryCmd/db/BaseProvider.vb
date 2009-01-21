@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports System.Collections.ObjectModel
+Imports Worm.Query.QueryCmd
 
 Namespace Query.Database
 
@@ -16,10 +17,37 @@ Namespace Query.Database
             Protected _params As ParamMgr
             Private _cmdType As System.Data.CommandType
 
+            Private _oldct As EntityUnion
+            Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
+            Private _f As FromClauseDef
+
             Protected Sub New()
             End Sub
 
+            'Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd, ByVal ct As EntityUnion, _
+            '               ByVal types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)), _
+            '               ByVal f As FromClauseDef)
+            '    _oldct = ct
+            '    _types = types
+            '    _f = f
+            '    Reset(mgr, q)
+            'End Sub
+
+            Public Sub SetTemp(ByVal q As QueryCmd)
+                q._from = _f
+                q._createType = _oldct
+                If _types IsNot Nothing AndAlso q._sel Is Nothing Then
+                    q._sel = New SelectClauseDef(_types)
+                End If
+            End Sub
+
             Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+                _oldct = q.CreateType
+                If q.SelectClause IsNot Nothing AndAlso q.SelectClause.SelectTypes IsNot Nothing Then
+                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(q.SelectClause.SelectTypes)
+                End If
+                _f = q.FromClause
+
                 Reset(mgr, q)
             End Sub
 
@@ -167,13 +195,26 @@ Namespace Query.Database
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)
             End Function
+
+            Public Overrides Sub CopyTo(ByVal cp As CacheItemBaseProvider)
+                MyBase.CopyTo(cp)
+                With CType(cp, BaseProvider)
+                    ._cmdType = _cmdType
+                    ._stmt = _stmt
+                    ._params = _params
+                End With
+            End Sub
         End Class
 
         Public Class SimpleProvider(Of T)
             Inherits BaseProvider
 
-            Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
-                MyBase.New(mgr, q)
+            'Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+            '    MyBase.New(mgr, q)
+            'End Sub
+
+            Public Sub New(ByVal bp As BaseProvider)
+                bp.CopyTo(Me)
             End Sub
 
             Public Overrides Sub ResetDic()

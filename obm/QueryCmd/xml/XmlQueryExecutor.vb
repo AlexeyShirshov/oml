@@ -29,24 +29,38 @@
         '    Throw New NotImplementedException
         'End Function
 
-        Public Sub Reset(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
-            Throw New NotImplementedException
-        End Sub
+        'Public Sub Reset(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
+        '    Throw New NotImplementedException
+        'End Sub
 
-        Public Sub Reset1(Of CreateType As {New, Entities._ICachedEntity}, ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
-            Throw New NotImplementedException
-        End Sub
+        'Public Sub Reset1(Of CreateType As {New, Entities._ICachedEntity}, ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
+        '    Throw New NotImplementedException
+        'End Sub
 
-        Public Sub ResetEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
-            Throw New NotImplementedException
-        End Sub
+        'Public Sub ResetEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
+        '    Throw New NotImplementedException
+        'End Sub
 
-        Public Sub ResetEntity1(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
-            Throw New NotImplementedException
-        End Sub
+        'Public Sub ResetEntity1(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
+        '    Throw New NotImplementedException
+        'End Sub
 
         Public Function Exec1(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
             Throw New NotImplementedException
         End Function
+
+        Public Sub ClearCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ClearCache
+            Throw New NotImplementedException
+        End Sub
+
+        Public Sub RenewCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal v As Boolean) Implements IExecutor.RenewCache
+            Throw New NotImplementedException
+        End Sub
+
+        Public ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean Implements IExecutor.IsInCache
+            Get
+                Throw New NotImplementedException
+            End Get
+        End Property
     End Class
 End Namespace

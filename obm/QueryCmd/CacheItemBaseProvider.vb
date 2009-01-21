@@ -29,7 +29,14 @@ Namespace Query
         Protected _id As String
         Protected _sync As String
         Protected _dic As IDictionary
+
+#Region " Cache "
         Private _dp() As Cache.IDependentTypes
+#End Region
+
+        Public Sub SetDependency(ByVal p As CacheItemBaseProvider)
+            _dp = p._dp
+        End Sub
 
         Public Sub SetMark(ByVal q As QueryCmd)
             _m = q.Mark
@@ -324,7 +331,9 @@ Namespace Query
         End Property
 
         Public Sub ResetCache()
-            _dic.Remove(Id)
+            If _dic IsNot Nothing Then
+                _dic.Remove(_id)
+            End If
         End Sub
 
         Public ReadOnly Property Key() As String
@@ -402,11 +411,22 @@ Namespace Query
             End Get
         End Property
 
-        'Public ReadOnly Property SelectedType() As Type
-        '    Get
-        '        Return _q.SelectedType
-        '    End Get
-        'End Property
+        Public Overridable Sub CopyTo(ByVal cp As CacheItemBaseProvider)
+            With cp
+                ._created = _created
+                ._dic = _dic
+                ._dp = _dp
+                ._id = _id
+                ._key = _key
+                ._m = _m
+                ._renew = _renew
+                ._sm = _sm
+                ._sync = _sync
+
+                ._mgr = _mgr
+                ._q = _q
+            End With
+        End Sub
 
         Protected Function ValidateFromCache() As Boolean
             Dim cache As Cache.OrmCache = TryCast(Mgr.Cache, Cache.OrmCache)

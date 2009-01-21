@@ -528,13 +528,33 @@ Imports System.Runtime.Serialization.Formatters.Binary
             q.Select(GetType(Entity4))
             q.ToList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.IsInCache(mgr))
 
             q.ToList(Of Entity4)(mgr)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-            q.Renew(Of Entity4)(mgr)
+            q.RenewCache(mgr, True)
             q.ToList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestRenew2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim q As QueryCmd = New QueryCmd()
+            q.Select(GetType(Entity4))
+
+            Assert.IsFalse(q.IsInCache(mgr))
+
+            q.ToList(Of Entity4)(mgr)
+
+            Assert.IsTrue(q.IsInCache(mgr))
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            q.ToList(Of Entity4)(mgr)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.IsInCache(mgr))
+
         End Using
     End Sub
 
@@ -585,7 +605,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-            q.Reset(Of NonCache)(mgr)
+            q.ClearCache(mgr)
 
             l = q.ToObjectList(Of NonCache)(mgr)
 

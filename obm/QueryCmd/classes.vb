@@ -41,11 +41,9 @@ Namespace Query
         Function ExecSimple(Of ReturnType)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
-        Sub Reset(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-
-        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-        Sub ResetEntity(Of CreateType As {_IEntity, New}, ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub RenewCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal v As Boolean)
+        Sub ClearCache(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 
     End Interface
 
