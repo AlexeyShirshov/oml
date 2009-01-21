@@ -4,6 +4,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
+Imports Worm.Query.QueryCmd
 
 'Imports Worm.Database.Sorting
 
@@ -34,177 +35,21 @@ Namespace Query.Database
         Private Const RowNumberOrder As String = "qiervfnkasdjvn"
 
         Private _proc As BaseProvider
-        Private _procT As BaseProvider
-        Private _procA As BaseProvider
-        Private _procAT As BaseProvider
-        Private _procS As BaseProvider
-        Private _procSM As BaseProvider
+        'Private _procT As BaseProvider
+        'Private _procA As BaseProvider
+        'Private _procAT As BaseProvider
+        'Private _procS As BaseProvider
+        'Private _procSM As BaseProvider
 
         Public Event OnGetCacheItem(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs) Implements IExecutor.OnGetCacheItem
         Public Event OnRestoreDefaults(ByVal sender As IExecutor, ByVal mgr As OrmManager, ByVal args As EventArgs) Implements IExecutor.OnRestoreDefaults
 
-        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
-            If _procA Is Nothing Then
-                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-                'If query.Joins IsNot Nothing Then
-                '    j.AddRange(query.Joins)
-                'End If
+#Region " Get providers "
 
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        'query.SelectedType = GetType(ReturnType)
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
+        Protected Delegate Function InitTypesDelegate(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 
-                'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
-                '    query.SelectedType = Nothing
-                'End If
-
-                InitTypes(mgr, query, GetType(ReturnType))
-
-                QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                'If query.Filter IsNot Nothing Then
-                '    f = query.Filter.Filter(GetType(ReturnType))
-                'End If
-
-                'If query.AutoJoins Then
-                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                '        j.AddRange(joins)
-                '    End If
-                'End If
-
-                'If query.Obj IsNot Nothing Then
-                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                'Else
-                _procA = New ProviderAnonym(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
-                'End If
-            Else
-                Dim p As ProviderAnonym(Of ReturnType) = CType(_procA, ProviderAnonym(Of ReturnType))
-
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        'query.SelectedType = GetType(ReturnType)
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
-
-                'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
-                '    query.SelectedType = Nothing
-                'End If
-
-                InitTypes(mgr, query, GetType(ReturnType))
-
-                If _procA.QMark <> query.Mark Then
-                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                    p.Reset(mgr, query)
-                Else
-                    p.Init(mgr, query)
-                    If _procA.QSMark <> query.SMark Then
-                        p.ResetStmt()
-                    End If
-                    If query._resDic Then
-                        p.ResetDic()
-                    End If
-                End If
-            End If
-
-            _procA.SetMark(query)
-
-            Return CType(_procA, ProviderAnonym(Of ReturnType))
-        End Function
-
-        Protected Function GetProcessorAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
-            If _procAT Is Nothing Then
-                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-                'If query.Joins IsNot Nothing Then
-                '    j.AddRange(query.Joins)
-                'End If
-
-                'If query.SelectedType Is Nothing AndAlso Not String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '    query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                'End If
-
-                'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
-                '    query.SelectedType = Nothing
-                'End If
-
-                InitTypes(mgr, query, GetType(CreateType))
-
-                QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                'If query.Filter IsNot Nothing Then
-                '    f = query.Filter.Filter(GetType(ReturnType))
-                'End If
-
-                'If query.AutoJoins Then
-                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                '        j.AddRange(joins)
-                '    End If
-                'End If
-
-                'If query.Obj IsNot Nothing Then
-                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                'Else
-                _procAT = New ProviderAnonym(Of CreateType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
-                'End If
-            Else
-                Dim p As ProviderAnonym(Of CreateType, ReturnType) = CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
-
-                'If query.SelectedType Is Nothing AndAlso Not String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '    query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                'End If
-
-                'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
-                '    query.SelectedType = Nothing
-                'End If
-
-                InitTypes(mgr, query, GetType(CreateType))
-
-                If _procAT.QMark <> query.Mark Then
-                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                    p.Reset(mgr, query)
-                Else
-                    p.Init(mgr, query)
-                    If _procAT.QSMark <> query.SMark Then
-                        p.ResetStmt()
-                    End If
-                    If query._resDic Then
-                        p.ResetDic()
-                    End If
-                End If
-            End If
-
-            _procAT.SetMark(query)
-
-            Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
-        End Function
-
-        Protected Shared Sub InitTypes(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
-                                       ByVal type As Type)
-            If Not type.IsInterface Then
-                If query.CreateType Is Nothing Then
-                    query.Into(type)
-                End If
-            End If
-
-            If Not GetType(AnonymousEntity).IsAssignableFrom(type) Then
-                If query.NeedSelectType(mgr.MappingEngine) Then
-                    query.SelectInt(query.CreateType.AnyType, mgr.MappingEngine)
-                End If
-            End If
-
-            If query.CreateType Is Nothing Then
-                query.Into(query.GetSelectedType(mgr.MappingEngine))
-            End If
-        End Sub
-
-        Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
+        Protected Function GetProvider(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
+            ByVal d As InitTypesDelegate) As BaseProvider
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
                 'If query.Joins IsNot Nothing Then
@@ -219,7 +64,21 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                InitTypes(mgr, query, GetType(ReturnType))
+                Dim r As Boolean
+                If d Is Nothing Then
+                    If query.NeedSelectType(mgr.MappingEngine) Then
+                        Throw New ExecutorException("Cannot get provider")
+                    End If
+                Else
+                    r = d(mgr, query)
+                End If
+
+                'Dim ct As EntityUnion = query.CreateType
+                'Dim types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = Nothing
+                'If query.SelectClause IsNot Nothing AndAlso query.SelectClause.SelectTypes IsNot Nothing Then
+                '    types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(query.SelectClause.SelectTypes)
+                'End If
+                'Dim f As FromClauseDef = query.FromClause
 
                 QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
                 'If query.Filter IsNot Nothing Then
@@ -236,11 +95,11 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New Provider(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
+                _proc = New BaseProvider(mgr, query)
                 'End If
             Else
-                Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
-
+                Dim p As BaseProvider = _proc
+                p.SetTemp(query)
                 'If query.SelectedType Is Nothing Then
                 '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
                 '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
@@ -249,240 +108,416 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                InitTypes(mgr, query, GetType(ReturnType))
+                'InitTypes(mgr,query,GetType(CreateType))
 
                 If _proc.QMark <> query.Mark Then
-                    query.Prepare(Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
                     p.Reset(mgr, query)
                 Else
                     p.Init(mgr, query)
                     If _proc.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
-                    If query._resDic Then
-                        p.ResetDic()
-                    End If
+                    'If query._resDic Then
+                    '    p.ResetDic()
+                    'End If
                 End If
                 p.Created = False
             End If
 
             _proc.SetMark(query)
 
-            Return CType(_proc, Provider(Of ReturnType))
+            Return _proc
+        End Function
+
+        Protected Shared Function InitTypes(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
+                                       ByVal type As Type) As Boolean
+            Dim r As Boolean
+
+            If Not type.IsInterface Then
+                If query.CreateType Is Nothing Then
+                    query.Into(type)
+                End If
+            End If
+
+            If Not GetType(AnonymousEntity).IsAssignableFrom(type) Then
+                If query.NeedSelectType(mgr.MappingEngine) Then
+                    query.SelectInt(query.CreateType.AnyType, mgr.MappingEngine)
+                    r = True
+                End If
+            End If
+
+            If query.CreateType Is Nothing Then
+                query.Into(query.GetSelectedType(mgr.MappingEngine))
+            End If
+
+            Return r
+        End Function
+
+        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
+            'If _procA Is Nothing Then
+            '    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+            '    'If query.Joins IsNot Nothing Then
+            '    '    j.AddRange(query.Joins)
+            '    'End If
+
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        'query.SelectedType = GetType(ReturnType)
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
+
+            '    'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
+            '    '    query.SelectedType = Nothing
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(ReturnType))
+
+            '    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '    'If query.Filter IsNot Nothing Then
+            '    '    f = query.Filter.Filter(GetType(ReturnType))
+            '    'End If
+
+            '    'If query.AutoJoins Then
+            '    '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+            '    '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+            '    '        j.AddRange(joins)
+            '    '    End If
+            '    'End If
+
+            '    'If query.Obj IsNot Nothing Then
+            '    '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+            '    'Else
+            '    _procA = New ProviderAnonym(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
+            '    'End If
+            'Else
+            '    Dim p As ProviderAnonym(Of ReturnType) = CType(_procA, ProviderAnonym(Of ReturnType))
+
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        'query.SelectedType = GetType(ReturnType)
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
+
+            '    'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
+            '    '    query.SelectedType = Nothing
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(ReturnType))
+
+            '    If _procA.QMark <> query.Mark Then
+            '        QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '        p.Reset(mgr, query)
+            '    Else
+            '        p.Init(mgr, query)
+            '        If _procA.QSMark <> query.SMark Then
+            '            p.ResetStmt()
+            '        End If
+            '        If query._resDic Then
+            '            p.ResetDic()
+            '        End If
+            '    End If
+            'End If
+
+            '_procA.SetMark(query)
+
+            'Return CType(_procA, ProviderAnonym(Of ReturnType))
+            Return New ProviderAnonym(Of ReturnType)(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))))
+        End Function
+
+        Protected Function GetProcessorAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
+            'If _procAT Is Nothing Then
+            '    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+            '    'If query.Joins IsNot Nothing Then
+            '    '    j.AddRange(query.Joins)
+            '    'End If
+
+            '    'If query.SelectedType Is Nothing AndAlso Not String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '    query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    'End If
+
+            '    'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
+            '    '    query.SelectedType = Nothing
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(CreateType))
+
+            '    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '    'If query.Filter IsNot Nothing Then
+            '    '    f = query.Filter.Filter(GetType(ReturnType))
+            '    'End If
+
+            '    'If query.AutoJoins Then
+            '    '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+            '    '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+            '    '        j.AddRange(joins)
+            '    '    End If
+            '    'End If
+
+            '    'If query.Obj IsNot Nothing Then
+            '    '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+            '    'Else
+            '    _procAT = New ProviderAnonym(Of CreateType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
+            '    'End If
+            'Else
+            '    Dim p As ProviderAnonym(Of CreateType, ReturnType) = CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
+
+            '    'If query.SelectedType Is Nothing AndAlso Not String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '    query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    'End If
+
+            '    'If GetType(AnonymousEntity).IsAssignableFrom(query.SelectedType) Then
+            '    '    query.SelectedType = Nothing
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(CreateType))
+
+            '    If _procAT.QMark <> query.Mark Then
+            '        QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '        p.Reset(mgr, query)
+            '    Else
+            '        p.Init(mgr, query)
+            '        If _procAT.QSMark <> query.SMark Then
+            '            p.ResetStmt()
+            '        End If
+            '        If query._resDic Then
+            '            p.ResetDic()
+            '        End If
+            '    End If
+            'End If
+
+            '_procAT.SetMark(query)
+
+            'Return CType(_procAT, ProviderAnonym(Of CreateType, ReturnType))
+            Return New ProviderAnonym(Of CreateType, ReturnType)(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))))
+        End Function
+
+        Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
+            'If _proc Is Nothing Then
+            '    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+            '    'If query.Joins IsNot Nothing Then
+            '    '    j.AddRange(query.Joins)
+            '    'End If
+
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(ReturnType))
+
+            '    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '    'If query.Filter IsNot Nothing Then
+            '    '    f = query.Filter.Filter(GetType(ReturnType))
+            '    'End If
+
+            '    'If query.AutoJoins Then
+            '    '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+            '    '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+            '    '        j.AddRange(joins)
+            '    '    End If
+            '    'End If
+
+            '    'If query.Obj IsNot Nothing Then
+            '    '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+            '    'Else
+            '    _proc = New Provider(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
+            '    'End If
+            'Else
+            '    Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
+
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
+
+            '    InitTypes(mgr, query, GetType(ReturnType))
+
+            '    If _proc.QMark <> query.Mark Then
+            '        query.Prepare(Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '        p.Reset(mgr, query)
+            '    Else
+            '        p.Init(mgr, query)
+            '        If _proc.QSMark <> query.SMark Then
+            '            p.ResetStmt()
+            '        End If
+            '        If query._resDic Then
+            '            p.ResetDic()
+            '        End If
+            '    End If
+            '    p.Created = False
+            'End If
+
+            '_proc.SetMark(query)
+
+            'Return CType(_proc, Provider(Of ReturnType))
+            Return New Provider(Of ReturnType)(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))))
         End Function
 
         Protected Function GetProcessorT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderT(Of CreateType, ReturnType)
-            If _procT Is Nothing Then
-                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-                'If query.Joins IsNot Nothing Then
-                '    j.AddRange(query.Joins)
-                'End If
+            'If _procT Is Nothing Then
+            '    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+            '    'If query.Joins IsNot Nothing Then
+            '    '    j.AddRange(query.Joins)
+            '    'End If
 
-                'If query.SelectedType Is Nothing Then
-                '    If query.Src Is Nothing Then
-                '        If Not String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '            query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '        Else
-                '            query.SelectedType = GetType(CreateType)
-                '        End If
-                '    Else
-                '        query.SelectedType = query.Src.GetRealType(mgr.MappingEngine)
-                '    End If
-                'End If
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If query.Src Is Nothing Then
+            '    '        If Not String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '            query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '        Else
+            '    '            query.SelectedType = GetType(CreateType)
+            '    '        End If
+            '    '    Else
+            '    '        query.SelectedType = query.Src.GetRealType(mgr.MappingEngine)
+            '    '    End If
+            '    'End If
 
-                'If GetType(AnonymousCachedEntity).IsAssignableFrom(query.SelectedType) Then
-                '    query.SelectedType = Nothing
-                'End If
+            '    'If GetType(AnonymousCachedEntity).IsAssignableFrom(query.SelectedType) Then
+            '    '    query.SelectedType = Nothing
+            '    'End If
 
-                InitTypes(mgr, query, GetType(CreateType))
+            '    InitTypes(mgr, query, GetType(CreateType))
 
-                QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                'If query.Filter IsNot Nothing Then
-                '    f = query.Filter.Filter(GetType(ReturnType))
-                'End If
+            '    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '    'If query.Filter IsNot Nothing Then
+            '    '    f = query.Filter.Filter(GetType(ReturnType))
+            '    'End If
 
-                'If query.AutoJoins Then
-                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                '        j.AddRange(joins)
-                '    End If
-                'End If
+            '    'If query.AutoJoins Then
+            '    '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+            '    '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+            '    '        j.AddRange(joins)
+            '    '    End If
+            '    'End If
 
-                'If query.Obj IsNot Nothing Then
-                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                'Else
-                _procT = New ProviderT(Of CreateType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
-                'End If
-            Else
-                Dim p As Provider(Of ReturnType) = CType(_procT, Provider(Of ReturnType))
+            '    'If query.Obj IsNot Nothing Then
+            '    '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+            '    'Else
+            '    _procT = New ProviderT(Of CreateType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), query)
+            '    'End If
+            'Else
+            '    Dim p As Provider(Of ReturnType) = CType(_procT, Provider(Of ReturnType))
 
-                'If query.SelectedType Is Nothing Then
-                '    If query.Src Is Nothing Then
-                '        If Not String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '            query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '        Else
-                '            query.SelectedType = GetType(CreateType)
-                '        End If
-                '    Else
-                '        query.SelectedType = query.Src.GetRealType(mgr.MappingEngine)
-                '    End If
-                'End If
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If query.Src Is Nothing Then
+            '    '        If Not String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '            query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '        Else
+            '    '            query.SelectedType = GetType(CreateType)
+            '    '        End If
+            '    '    Else
+            '    '        query.SelectedType = query.Src.GetRealType(mgr.MappingEngine)
+            '    '    End If
+            '    'End If
 
-                InitTypes(mgr, query, GetType(CreateType))
+            '    InitTypes(mgr, query, GetType(CreateType))
 
-                If _procT.QMark <> query.Mark Then
-                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                    p.Reset(mgr, query)
-                Else
-                    p.Init(mgr, query)
-                    If _procT.QSMark <> query.SMark Then
-                        p.ResetStmt()
-                    End If
-                    If query._resDic Then
-                        p.ResetDic()
-                    End If
-                End If
-                p.Created = False
-            End If
+            '    If _procT.QMark <> query.Mark Then
+            '        QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '        p.Reset(mgr, query)
+            '    Else
+            '        p.Init(mgr, query)
+            '        If _procT.QSMark <> query.SMark Then
+            '            p.ResetStmt()
+            '        End If
+            '        If query._resDic Then
+            '            p.ResetDic()
+            '        End If
+            '    End If
+            '    p.Created = False
+            'End If
 
-            _procT.SetMark(query)
+            '_procT.SetMark(query)
 
-            Return CType(_procT, ProviderT(Of CreateType, ReturnType))
-        End Function
-
-        Protected Function GetProcessor(ByVal mgr As OrmManager, ByVal query As QueryCmd) As BaseProvider
-            If _procS Is Nothing Then
-                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-                'If query.Joins IsNot Nothing Then
-                '    j.AddRange(query.Joins)
-                'End If
-
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
-
-                'InitTypes(mgr,query,GetType(CreateType))
-
-                QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                'If query.Filter IsNot Nothing Then
-                '    f = query.Filter.Filter(GetType(ReturnType))
-                'End If
-
-                'If query.AutoJoins Then
-                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                '        j.AddRange(joins)
-                '    End If
-                'End If
-
-                'If query.Obj IsNot Nothing Then
-                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                'Else
-                _procS = New BaseProvider(mgr, query)
-                'End If
-            Else
-                Dim p As BaseProvider = CType(_procS, BaseProvider)
-
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
-
-                'InitTypes(mgr,query,GetType(CreateType))
-
-                If _procS.QMark <> query.Mark Then
-                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                    p.Reset(mgr, query)
-                Else
-                    p.Init(mgr, query)
-                    If _procS.QSMark <> query.SMark Then
-                        p.ResetStmt()
-                    End If
-                    'If query._resDic Then
-                    '    p.ResetDic()
-                    'End If
-                End If
-                p.Created = False
-            End If
-
-            _procS.SetMark(query)
-
-            Return CType(_procS, BaseProvider)
+            'Return CType(_procT, ProviderT(Of CreateType, ReturnType))
+            Return New ProviderT(Of CreateType, ReturnType)(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))))
         End Function
 
         Protected Function GetProcessorS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As BaseProvider
-            If _procSM Is Nothing Then
-                Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
-                'If query.Joins IsNot Nothing Then
-                '    j.AddRange(query.Joins)
-                'End If
+            'If _procSM Is Nothing Then
+            '    Dim j As New List(Of List(Of Worm.Criteria.Joins.QueryJoin))
+            '    'If query.Joins IsNot Nothing Then
+            '    '    j.AddRange(query.Joins)
+            '    'End If
 
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
 
-                'InitTypes(mgr,query,GetType(CreateType))
+            '    'InitTypes(mgr,query,GetType(CreateType))
 
-                QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                'If query.Filter IsNot Nothing Then
-                '    f = query.Filter.Filter(GetType(ReturnType))
-                'End If
+            '    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '    'If query.Filter IsNot Nothing Then
+            '    '    f = query.Filter.Filter(GetType(ReturnType))
+            '    'End If
 
-                'If query.AutoJoins Then
-                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                '        j.AddRange(joins)
-                '    End If
-                'End If
+            '    'If query.AutoJoins Then
+            '    '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+            '    '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+            '    '        j.AddRange(joins)
+            '    '    End If
+            '    'End If
 
-                'If query.Obj IsNot Nothing Then
-                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                'Else
-                _procSM = New SimpleProvider(Of T)(mgr, query)
-                'End If
-            Else
-                Dim p As BaseProvider = CType(_procSM, BaseProvider)
+            '    'If query.Obj IsNot Nothing Then
+            '    '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+            '    'Else
+            '    _procSM = New SimpleProvider(Of T)(mgr, query)
+            '    'End If
+            'Else
+            '    Dim p As BaseProvider = CType(_procSM, BaseProvider)
 
-                'If query.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
-                '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
-                '    Else
-                '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
-                '    End If
-                'End If
+            '    'If query.SelectedType Is Nothing Then
+            '    '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
+            '    '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
+            '    '    Else
+            '    '        query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.SelectedEntityName)
+            '    '    End If
+            '    'End If
 
-                'InitTypes(mgr,query,GetType(CreateType))
+            '    'InitTypes(mgr,query,GetType(CreateType))
 
-                If _procSM.QMark <> query.Mark Then
-                    QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
-                    p.Reset(mgr, query)
-                Else
-                    p.Init(mgr, query)
-                    If _procSM.QSMark <> query.SMark Then
-                        p.ResetStmt()
-                    End If
-                    'If query._resDic Then
-                    '    p.ResetDic()
-                    'End If
-                End If
-                p.Created = False
-            End If
+            '    If _procSM.QMark <> query.Mark Then
+            '        QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.GetContextFilter, mgr.StmtGenerator)
+            '        p.Reset(mgr, query)
+            '    Else
+            '        p.Init(mgr, query)
+            '        If _procSM.QSMark <> query.SMark Then
+            '            p.ResetStmt()
+            '        End If
+            '        'If query._resDic Then
+            '        '    p.ResetDic()
+            '        'End If
+            '    End If
+            '    p.Created = False
+            'End If
 
-            _procSM.SetMark(query)
+            '_procSM.SetMark(query)
 
-            Return CType(_procSM, BaseProvider)
+            'Return CType(_procSM, BaseProvider)
+            Return New SimpleProvider(Of T)(GetProvider(mgr, query, Nothing))
         End Function
+
+        Protected Function GetProcessor(ByVal mgr As OrmManager, ByVal query As QueryCmd) As BaseProvider
+            Return GetProvider(mgr, query, Nothing)
+        End Function
+#End Region
 
         Protected Delegate Function GetCeDelegate( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManager.ICacheItemProvoderBase) As Worm.Cache.CachedItemBase
@@ -565,6 +600,8 @@ Namespace Query.Database
 
                 Dim ce As Cache.CachedItemBase = d(mgr, query, dic, id, sync, p)
                 p.Clear()
+                _proc.Clear()
+                _proc.SetDependency(p)
                 Dim args As New IExecutor.GetCacheItemEventArgs
                 RaiseEvent OnGetCacheItem(Me, args)
                 Dim created As Boolean = args.Created
@@ -1263,7 +1300,7 @@ Namespace Query.Database
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
             If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.propSort, sb, mpe, almgr, params, filterInfo, query.SelectList, query.Table, query.GetSchemaForCreateType(mpe), False)
+                s.CreateSelectExpressionFormater().Format(query.propSort, sb, mpe, almgr, params, filterInfo, query.SelectList, query.Table, query.GetSchemaForSelectType(mpe), False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
@@ -1409,21 +1446,41 @@ Namespace Query.Database
         End Sub
 #End Region
 
-        Public Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
-            GetProcessor(Of ReturnType)(mgr, query).Renew = True
+        Public Sub ClearCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ClearCache
+            GetProvider(mgr, query, Nothing).ResetCache()
         End Sub
 
-        Public Sub Reset(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
-            GetProcessorT(Of CreateType, ReturnType)(mgr, query).Renew = True
+        Public Sub RenewCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal v As Boolean) Implements IExecutor.RenewCache
+            GetProvider(mgr, query, Nothing).Renew = v
         End Sub
 
-        Public Sub ResetEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
-            GetProcessorAnonym(Of ReturnType)(mgr, query).ResetCache()
-        End Sub
+        Public ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean Implements IExecutor.IsInCache
+            Get
+                Dim p As BaseProvider = GetProvider(mgr, query, Nothing)
+                Dim d As IDictionary = p.Dic
+                If d IsNot Nothing Then
+                    Return d.Contains(p.Id)
+                Else
+                    Return False
+                End If
+            End Get
+        End Property
 
-        Public Sub ResetEntity(Of CreateType As {New, _IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
-            GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query).ResetCache()
-        End Sub
+        'Public Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
+        '    GetProcessor(Of ReturnType)(mgr, query).Renew = True
+        'End Sub
+
+        'Public Sub Reset(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.Reset
+        '    GetProcessorT(Of CreateType, ReturnType)(mgr, query).Renew = True
+        'End Sub
+
+        'Public Sub ResetEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
+        '    GetProcessorAnonym(Of ReturnType)(mgr, query).ResetCache()
+        'End Sub
+
+        'Public Sub ResetEntity(Of CreateType As {New, _IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetEntity
+        '    GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query).ResetCache()
+        'End Sub
     End Class
 
 End Namespace

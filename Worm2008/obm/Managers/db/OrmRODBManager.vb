@@ -1411,7 +1411,7 @@ l1:
 
         End Sub
 
-        Public Sub LoadMultipleObjects(ByVal createType As Type, _
+        Public Sub QueryObjects(ByVal createType As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression), _
             ByVal oschema As IEntitySchema, _
@@ -1456,7 +1456,7 @@ l1:
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, _
-            ByVal selectList As List(Of SelectExpression))
+             ByVal selectList As List(Of SelectExpression))
 
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
@@ -1804,7 +1804,11 @@ l1:
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     'Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)(oschema)
+                    Dim dic As IDictionary = Nothing
+                    Dim selectType As Type = GetType(T)
+                    If selectType IsNot Nothing Then
+                        dic = GetDictionary(selectType, oschema)
+                    End If
                     Dim il As IListEdit = TryCast(values, IListEdit)
                     If il IsNot Nothing Then
                         values = il.List
@@ -1875,7 +1879,7 @@ l1:
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal values As IList, ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
-            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
+            ByVal dic As IDictionary, ByRef loaded As Integer, _
             ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
@@ -1891,8 +1895,8 @@ l1:
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, CType(dic, IDictionary), True, lock, oschema, fields_idx)
-                AfterLoadingProcess(CType(dic, System.Collections.IDictionary), obj, lock, ro)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx)
+                AfterLoadingProcess(dic, obj, lock, ro)
 #If DEBUG Then
                 Dim ce As CachedEntity = TryCast(ro, CachedEntity)
                 If ce IsNot Nothing Then ce.Invariant()

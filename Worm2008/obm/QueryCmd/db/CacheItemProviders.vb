@@ -26,9 +26,12 @@ Namespace Query.Database
             'Private _sync As String
             'Private _dic As IDictionary
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
-                MyBase.new(mgr, q)
+            Public Sub New(ByVal bp As BaseProvider)
+                bp.CopyTo(Me)
             End Sub
+            'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
+            '    MyBase.new(mgr, q)
+            'End Sub
 
             'Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.QueryJoin)), _
             '    ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
@@ -106,7 +109,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -123,7 +126,7 @@ Namespace Query.Database
                 'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                dbm.LoadMultipleObjects(t, cmd, rr, sl, oschema, fields)
+                dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -183,15 +186,19 @@ Namespace Query.Database
         Class ProviderAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})
             Inherits ProviderAnonym(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
-                MyBase.New(mgr, q)
+            Public Sub New(ByVal bp As BaseProvider)
+                MyBase.New(bp)
             End Sub
+
+            'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
+            '    MyBase.New(mgr, q)
+            'End Sub
 
             Protected Overrides Function ExecStmtObject(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -210,7 +217,13 @@ Namespace Query.Database
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
+                Dim createType As Type = GetType(CreateType)
+                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                    dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                Else
+                    dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                End If
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -233,13 +246,17 @@ Namespace Query.Database
             'Private _sync As String
             'Private _dic As IDictionary
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
-                MyBase.New(mgr, q)
-                '_mgr = mgr
-                '_q = q
-
-                'Reset(j, f, q.SelectedType)
+            Public Sub New(ByVal bp As BaseProvider)
+                MyBase.New(bp)
             End Sub
+
+            'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
+            '    MyBase.New(mgr, q)
+            '    '_mgr = mgr
+            '    '_q = q
+
+            '    'Reset(j, f, q.SelectedType)
+            'End Sub
 
             Public Overrides Sub ResetDic()
                 If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
@@ -418,7 +435,13 @@ Namespace Query.Database
                 'dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, rr, sl)
+                Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
+                Dim createType As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                Dim t As Type = selectType
+                If t Is Nothing Then
+                    t = createType
+                End If
+                dbm.LoadMultipleObjects(t, cmd, rr, sl)
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -519,15 +542,19 @@ Namespace Query.Database
         Class ProviderT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
             Inherits Provider(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
-                MyBase.New(mgr, q)
+            Public Sub New(ByVal bp As BaseProvider)
+                MyBase.New(bp)
             End Sub
+
+            'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal q As QueryCmd)
+            '    MyBase.New(mgr, q)
+            'End Sub
 
             Protected Overrides Function ExecStmtObject(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IEntitySchema = _q.GetSchemaForCreateType(_mgr.MappingEngine)
+                Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -546,7 +573,13 @@ Namespace Query.Database
                 'dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
+                Dim createType As Type = GetType(CreateType)
+                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                    dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                Else
+                    dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                End If
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

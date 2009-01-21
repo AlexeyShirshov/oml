@@ -211,7 +211,7 @@ Namespace Query
         Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
 
-        Protected _sel As SelectClauseDef
+        Friend _sel As SelectClauseDef
         Protected _filter As IGetFilter
         Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
@@ -227,7 +227,7 @@ Namespace Query
         Protected _pager As ipager
         Protected _joins() As QueryJoin
         Protected _autoJoins As Boolean
-        Protected _from As FromClauseDef
+        Friend _from As FromClauseDef
         Protected _hint As String
         Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
         Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
@@ -251,7 +251,7 @@ Namespace Query
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _pod As Pair(Of Type, IEntitySchema)
-        Private _createType As EntityUnion
+        Friend _createType As EntityUnion
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
 
@@ -649,7 +649,7 @@ Namespace Query
                     Next
                 Else
                     If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
-                        Dim s As IEntitySchema = GetSchemaForCreateType(schema)
+                        Dim s As IEntitySchema = GetSchemaForSelectType(schema)
                         If s IsNot Nothing Then
                             For Each m As MapField2Column In s.GetFieldColumnMap
                                 Dim se As New SelectExpression(m._tableName, m._columnName)
@@ -2711,7 +2711,7 @@ Namespace Query
             End If
         End Function
 
-        Protected Friend Function GetSchemaForCreateType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
+        Protected Friend Function GetSchemaForSelectType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             If _pod Is Nothing Then
                 Dim t As Type = GetSelectedType(mpe)
                 If _createType Is Nothing OrElse _createType.GetRealType(mpe).IsAssignableFrom(t) Then
@@ -2724,21 +2724,50 @@ Namespace Query
             End If
         End Function
 
-        Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
-            GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
+        Public Sub ClearCache(ByVal mgr As OrmManager)
+            GetExecutor(mgr).ClearCache(mgr, Me)
         End Sub
 
-        Public Sub RenewDyn(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
-            GetExecutor(mgr).Reset(Of ReturnType)(mgr, Me)
+        Public Sub RenewCache(ByVal mgr As OrmManager, ByVal v As Boolean)
+            GetExecutor(mgr).RenewCache(mgr, Me, v)
         End Sub
 
-        Public Sub Renew(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
-            GetExecutor(mgr).Reset(Of CreateType, ReturnType)(mgr, Me)
+        Public ReadOnly Property IsInCache(ByVal mgr As OrmManager) As Boolean
+            Get
+                Return GetExecutor(mgr).IsInCache(mgr, Me)
+            End Get
+        End Property
+
+        Public Sub ClearCache()
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+            Using mgr As OrmManager = GetMgr.CreateManager
+                GetExecutor(mgr).ClearCache(mgr, Me)
+            End Using
         End Sub
 
-        Public Sub Renew(Of CreateReturnType As {_ICachedEntity, New})(ByVal mgr As OrmManager)
-            GetExecutor(mgr).Reset(Of CreateReturnType, CreateReturnType)(mgr, Me)
+        Public Sub RenewCache(ByVal v As Boolean)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Using mgr As OrmManager = GetMgr.CreateManager
+                GetExecutor(mgr).RenewCache(mgr, Me, v)
+            End Using
         End Sub
+
+        Public ReadOnly Property IsInCache() As Boolean
+            Get
+                If _getMgr Is Nothing Then
+                    Throw New InvalidOperationException("OrmManager required")
+                End If
+
+                Using mgr As OrmManager = GetMgr.CreateManager
+                    Return GetExecutor(mgr).IsInCache(mgr, Me)
+                End Using
+            End Get
+        End Property
 
         Public Sub CopyTo(ByVal o As QueryCmd)
             With o
