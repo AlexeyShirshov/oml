@@ -94,6 +94,9 @@
 	</oos:Entities>
 	<oos:EntityRelations>
 		<oos:Relation table="tblAl2Ar" underlyingEntity="Album2ArtistRelation">
+      <oos:Constants>
+        <oos:Constant name="ttt" value="xxx"/>
+      </oos:Constants>
 			<oos:Left entity="eArtist" fieldName="artist_id" cascadeDelete="false" accessorName="Artist"/>
 			<oos:Right entity="eAlbum" fieldName="album_id" cascadeDelete="true" accessorName="Album"/>
 		</oos:Relation>

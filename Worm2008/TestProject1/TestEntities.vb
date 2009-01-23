@@ -8,6 +8,7 @@ Imports Worm.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
+Imports Worm.Query
 
 Public Interface IEnt
     Inherits _IKeyEntity
@@ -138,7 +139,7 @@ Public Class EntitySchema1v1Implementation
     Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
             _rels = New M2MRelationDesc() { _
-                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
+                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, Nothing, Ctor.column(_schema.GetSharedSourceFragment("dbo", "[1to2]"), "xxx").eq("yyy")) _
                 }
         End If
         Return _rels
@@ -619,8 +620,8 @@ Public Class EntitySchema5v1Implementation
         If _rels Is Nothing Then
             Dim t As New SourceFragment("dbo.[3to3]")
             _rels = New M2MRelationDesc() { _
-                New M2MRelationDesc(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, True), _
-                New M2MRelationDesc(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, False) _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey), _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey) _
             }
         End If
         Return _rels

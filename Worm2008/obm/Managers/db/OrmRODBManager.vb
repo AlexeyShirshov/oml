@@ -60,7 +60,7 @@ Namespace Database
 
                                 Dim b As ConnAction = mgr.TestConn(cmd)
                                 Try
-                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
+                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
 
                                     inv = True
                                 Finally
@@ -101,7 +101,7 @@ Namespace Database
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
                                             If sel Then
-                                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False)
+                                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
                                             Else
                                                 Dim r As Integer = cmd.ExecuteNonQuery()
                                                 If r = 0 Then
@@ -177,7 +177,7 @@ Namespace Database
 
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
-                                            mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
+                                            mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, True)
                                         Finally
                                             mgr.CloseConn(b)
                                         End Try
@@ -201,7 +201,7 @@ Namespace Database
                                             Dim b As ConnAction = mgr.TestConn(cmd)
                                             Try
                                                 If sel Then
-                                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, True)
+                                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, True)
                                                 Else
                                                     cmd.ExecuteNonQuery()
                                                 End If
@@ -1120,16 +1120,17 @@ l1:
                 'Dim olds As ObjectState = obj.ObjectState
                 Dim b As ConnAction = TestConn(cmd)
                 Try
-                    'Dim newObj As Boolean = obj.ObjectState = ObjectState.Created
-                    Dim sync_key As String = "LoadSngObj" & obj.Key & original_type.ToString
+                    Dim k As String = String.Empty
+                    If obj.IsPKLoaded Then
+                        k = obj.Key.ToString
+                    End If
+                    Dim cr As Boolean = obj.ObjectState = ObjectState.Created
+                    Dim sync_key As String = "LoadSngObj" & k & original_type.ToString
                     'Using obj.GetSyncRoot()
                     Using SyncHelper.AcquireDynamicLock(sync_key)
                         'Using obj.GetSyncRoot()
-                        LoadSingleObject(cmd, cols, obj, True, True, False)
-                        'If newObj AndAlso obj.ObjectState = ObjectState.None OrElse obj.ObjectState = ObjectState.NotLoaded Then
-                        '    _cache.UnregisterModification(obj)
-                        '    NormalizeObject(obj, GetDictionary(obj.GetType))
-                        'End If
+                        LoadSingleObject(cmd, cols, obj, True, True, True, False)
+                        obj.CorrectStateAfterLoading(cr)
                         If obj.ObjectState <> ObjectState.NotFoundInSource Then
                             Add2Cache(obj)
                             obj.AcceptChanges(True, True)
@@ -1148,16 +1149,17 @@ l1:
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
            ByVal arr As IList(Of SelectExpression), ByVal obj As _ICachedEntity, _
-           ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+           ByVal fromRS As Boolean, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType)
 
-            LoadSingleObject(cmd, arr, obj, check_pk, load, modifiedloaded, dic)
+            LoadSingleObject(cmd, arr, obj, fromRS, check_pk, load, modifiedloaded, dic)
+
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal arr As IList(Of SelectExpression), ByVal obj As _ICachedEntity, _
+            ByVal arr As IList(Of SelectExpression), ByVal obj As _ICachedEntity, ByVal fromRS As Boolean, _
             ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean, _
             ByVal dic As IDictionary)
             Invariant()
@@ -1191,7 +1193,7 @@ l1:
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(obj)) Then
                                 Dim lock As IDisposable = Nothing
                                 Try
-                                    LoadFromDataReader(obj, dr, arr, check_pk, dic, False, lock, oschema, cm)
+                                    LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm)
                                     obj.CorrectStateAfterLoading(False)
                                 Finally
                                     If lock IsNot Nothing Then
@@ -2393,7 +2395,7 @@ l1:
                         Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
                         ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
                         If o IsNot Nothing Then
-                            o.SetCreateManager(obj.CreateManager)
+                            If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
                             RaiseObjectLoaded(o)
                         End If
                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)

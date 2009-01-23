@@ -1878,11 +1878,11 @@ l1:
         Return _cache.GetOrmDictionary(GetContextFilter, t, _schema, schema)
     End Function
 
-    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of Object, T)
         Return _cache.GetOrmDictionary(Of T)(GetContextFilter, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else

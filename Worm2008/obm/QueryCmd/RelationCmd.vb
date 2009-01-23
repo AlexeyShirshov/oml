@@ -211,6 +211,14 @@ Namespace Query
         End Property
 #End Region
 
+        Public Overrides Sub CopyTo(ByVal o As QueryCmd)
+            MyBase.CopyTo(o)
+            With CType(o, RelationCmd)
+                ._rel = _rel
+                ._desc = _desc
+            End With
+        End Sub
+
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion)

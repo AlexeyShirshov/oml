@@ -246,6 +246,21 @@ namespace Worm.CodeGen.Core.Descriptors
 	        }
 	    }
 
+	    private readonly List<EntityRelationDescription> _relations = new List<EntityRelationDescription>();
+
+	    public ICollection<EntityRelationDescription> EntityRelations
+	    {
+	        get
+	        {
+	            return _relations;
+	        }
+	    }
+
+        public List<EntityRelationDescription> GetEntityRelations(bool withDisabled)
+        {
+            return _relations.FindAll(r => !r.Disabled);
+        }
+
 		//public string QualifiedIdentifier
 		//{
 		//    get

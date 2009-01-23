@@ -1018,11 +1018,12 @@ Namespace Database.Storedprocs
                     '_props = mgr.MappingEngine.GetProperties(original_type, _oschema)
                     _cm = _oschema.GetFieldColumnMap
                 End If
-                Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
+                'Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
+                Dim dic As IDictionary = mgr.GetDictionary(original_type)
                 Dim loaded As Integer
                 Dim cols As IList(Of SelectExpression) = GetColumns() '.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
                 'New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
-                mgr.LoadFromResultSet(Of T)(_l, cols, dr, CType(dic, System.Collections.IDictionary), loaded, _oschema, _cm)
+                mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _oschema, _cm)
                 _loaded += loaded
             End Sub
 

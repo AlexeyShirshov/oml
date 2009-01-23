@@ -755,29 +755,29 @@ Imports System.Runtime.Serialization.Formatters.Binary
         End Using
     End Sub
 
-    <TestMethod()> Public Sub TestWrapper()
-        Dim t As New TestManager
+    '<TestMethod()> Public Sub TestWrapper()
+    '    Dim t As New TestManager
 
-        'Dim q As OrmQueryCmd(Of Entity) = OrmQueryCmd(Of Entity).Create(t)
+    '    'Dim q As OrmQueryCmd(Of Entity) = OrmQueryCmd(Of Entity).Create(t)
 
-        Dim q As New OrmQueryCmd(Of Entity)(t)
-        q.Select(GetType(Entity))
+    '    Dim q As New OrmQueryCmd(Of Entity)(t)
+    '    q.Select(GetType(Entity))
 
-        Dim r As ReadOnlyList(Of Entity) = q
+    '    Dim r As ReadOnlyList(Of Entity) = q
 
-        Assert.AreEqual(13, r.Count)
-    End Sub
+    '    Assert.AreEqual(13, r.Count)
+    'End Sub
 
-    <TestMethod()> Public Sub TestWrapper2()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            'Dim q As OrmQueryCmd(Of Entity) = QueryCmd.Create(GetType(Entity)).GetOrmCommand(Of Entity)(mgr)
-            Dim q As OrmQueryCmd(Of Entity) = QueryCmd.CreateAndGetOrmCommand(Of Entity)(mgr)
+    '<TestMethod()> Public Sub TestWrapper2()
+    '    Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+    '        'Dim q As OrmQueryCmd(Of Entity) = QueryCmd.Create(GetType(Entity)).GetOrmCommand(Of Entity)(mgr)
+    '        Dim q As OrmQueryCmd(Of Entity) = QueryCmd.CreateAndGetOrmCommand(Of Entity)(mgr)
 
-            Dim r As ReadOnlyList(Of Entity) = q
+    '        Dim r As ReadOnlyList(Of Entity) = q
 
-            Assert.AreEqual(13, r.Count)
-        End Using
-    End Sub
+    '        Assert.AreEqual(13, r.Count)
+    '    End Using
+    'End Sub
 
     <TestMethod()> Public Sub TestColumns()
 
@@ -1251,7 +1251,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(-59871)
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871, False)
 
         Assert.IsNotNull(t)
         Assert.AreEqual(0, q.ExecCount)

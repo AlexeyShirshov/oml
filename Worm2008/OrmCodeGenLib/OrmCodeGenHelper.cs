@@ -23,7 +23,7 @@ namespace Worm.CodeGen.Core
 
         public static CodeExpression GetEntityClassReferenceExpression(EntityDescription entityDesc)
         {
-            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc);
+            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc, true);
             return new CodeTypeReferenceExpression(className);
         }
 

@@ -215,6 +215,50 @@ namespace Worm.CodeGen.Core
                 }
                 FillProperties(entity);
                 FillSuppresedProperties(entity);
+                FillEntityRelations(entity);
+            }
+        }
+
+        private void FillEntityRelations(EntityDescription entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            XmlNode entityNode;
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+
+            XmlNodeList relationsList;
+            relationsList = entityNode.SelectNodes(
+                string.Format("{0}:Relations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+
+            foreach(XmlElement relationNode in relationsList)
+            {
+                string entityId = relationNode.GetAttribute("entity");
+
+                var relationEntity = _ormObjectsDef.GetEntity(entityId);
+
+                string propertyAlias = relationNode.GetAttribute("propertyAlias");
+
+                string name = relationNode.GetAttribute("name");
+
+                string accessorName = relationNode.GetAttribute("accessorName");
+
+                string disabledAttribute = relationNode.GetAttribute("disabled");
+
+                bool disabled = string.IsNullOrEmpty(disabledAttribute)
+                                    ? false
+                                    : XmlConvert.ToBoolean(disabledAttribute);
+
+                EntityRelationDescription relation = new EntityRelationDescription
+                                                         {
+                                                             SourceEntity = entity,
+                                                             Entity = relationEntity,
+                                                             PropertyAlias = propertyAlias,
+                                                             Name = name,
+                                                             AccessorName = accessorName,
+                                                             Disabled = disabled
+                                                         };
+                entity.EntityRelations.Add(relation);
             }
         }
 
@@ -479,6 +523,26 @@ namespace Worm.CodeGen.Core
 
 				RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);
+
+			    XmlNodeList constantsNodeList =
+			        relationNode.SelectNodes(string.Format("{0}:Constants/{0}:Constant", OrmObjectsDef.NS_PREFIX), _nsMgr);
+
+			    foreach (XmlElement constantNode in constantsNodeList)
+			    {
+			        string name = constantNode.GetAttribute("name");
+			        string value = constantNode.GetAttribute("value");
+
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(value))
+                        continue;
+
+			        RelationConstantDescriptor con = new RelationConstantDescriptor
+			                                             {
+			                                                 Name = name,
+			                                                 Value = value
+			                                             };
+
+			        relation.Constants.Add(con);
+			    }
 			} 
 			#endregion
 			#region SelfRelations

@@ -64,6 +64,11 @@
           <xs:documentation>Suppressed properties list</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="Relations" type="EntitySimpleRelationsCollection_t" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>One to Many relations</xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
     <xs:attribute name="id" type="xs:Name" use="required">
       <xs:annotation>
@@ -312,6 +317,15 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:complexType name="EntitySimpleRelationsCollection_t">
+    <xs:annotation>
+      <xs:documentation>One to Many relations collection</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Relation" type="EntitySimpleRelation_t">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="EntityRelationsCollection_t">
     <xs:annotation>
       <xs:documentation>Коллекция связей сущностей</xs:documentation>
@@ -349,11 +363,21 @@
 	  </xs:choice>      
     </xs:sequence>
   </xs:complexType>
+  <xs:complexType name="Constants_t">
+    <xs:sequence minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="Constant" minOccurs="1" maxOccurs="1" type="Constant_t" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Constant_t">
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="value" type="xs:string" />
+  </xs:complexType>
   <xs:complexType name="EntitySelfRelation_t">
 	<xs:annotation>
 	  <xs:documentation>Связь сущности самой с собой</xs:documentation>
 	</xs:annotation>
 	<xs:all>
+    <xs:element name="Constants" type="Constants_t" minOccurs="0" maxOccurs="1" />
 	  <xs:element name="Direct" type="SelfDirectionTarget_t" minOccurs="1" maxOccurs="1"></xs:element>
 	  <xs:element name="Reverse" type="SelfDirectionTarget_t" minOccurs="1" maxOccurs="1"></xs:element>
 	</xs:all>
@@ -383,6 +407,7 @@
       <xs:documentation>Связь сущностей</xs:documentation>
     </xs:annotation>
     <xs:all>
+      <xs:element name="Constants" type="Constants_t" minOccurs="0" maxOccurs="1" />
       <xs:element name="Left" type="LinkTarget_t" minOccurs="1" maxOccurs="1">
       </xs:element>
       <xs:element name="Right" type="LinkTarget_t" minOccurs="1" maxOccurs="1">
@@ -393,9 +418,39 @@
         <xs:documentation>Имя таблицы связи</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="underlyingEntity" type="Name_t" use="optional">
+    <xs:attribute name="underlyingEntity" type="xs:Name" use="optional">
       <xs:annotation>
         <xs:documentation>Сущность</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">
+      <xs:annotation>
+        <xs:documentation>Disable relation</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="EntitySimpleRelation_t">
+    <xs:annotation>
+      <xs:documentation>One to Many relation</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="entity" type="xs:Name" use="required">
+      <xs:annotation>
+        <xs:documentation>Имя таблицы связи</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="propertyAlias" type="Name_t" use="optional">
+      <xs:annotation>
+        <xs:documentation></xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:Name" use="optional">
+      <xs:annotation>
+        <xs:documentation>Relation name</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="accessorName" type="xs:Name" use="optional">
+      <xs:annotation>
+        <xs:documentation>Accesor property name.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">

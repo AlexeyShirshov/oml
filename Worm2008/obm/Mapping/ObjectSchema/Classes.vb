@@ -154,7 +154,7 @@ Namespace Entities.Meta
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
         Public ReadOnly ConnectedType As Type
 
-        Private _const() As EntityFilter
+        Private _const() As IFilter
 
         Public Const RevKey As String = "xxx%rev$"
         Public Const DirKey As String = "xxx%direct$"
@@ -167,6 +167,16 @@ Namespace Entities.Meta
             MyBase.New(New EntityUnion(type), Nothing, key)
         End Sub
 
+        Public Sub New(ByVal entityName As String)
+            MyBase.New(New EntityUnion(entityName), Nothing, Nothing)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal key As String)
+            MyBase.New(New EntityUnion(entityName), Nothing, key)
+        End Sub
+
+#Region " Type ctors "
+
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
             MyBase.New(New EntityUnion(type), column, key)
@@ -175,47 +185,17 @@ Namespace Entities.Meta
             Me.Mapping = mapping
         End Sub
 
-        Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
-            MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String, ByVal connectedType As Type)
+            MyClass.New(type, table, column, delete, mapping, key)
             Me.ConnectedType = connectedType
         End Sub
 
-        <Obsolete("direct parameter is obsolete")> _
-        Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type, ByVal direct As Boolean)
-            MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
-            Me.ConnectedType = connectedType
-        End Sub
-
-        Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
-            MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
-        End Sub
-
-        <Obsolete("direct parameter is obsolete")> _
-        Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
-            MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
-        End Sub
-
-        Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
-            MyBase.New(New EntityUnion(entityName), column, key)
-            Me.Table = table
-            Me.DeleteCascade = delete
-            Me.Mapping = mapping
-        End Sub
-
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
-            MyClass.New(type, table, column, delete, mapping, DirKey)
-        End Sub
-
-        <Obsolete("direct parameter is obsolete")> _
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
-            MyClass.New(type, table, column, delete, mapping, GetKey(direct))
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
+            ByVal key As String, ByVal connectedType As Type, ByVal constFields() As IFilter)
+            MyClass.New(type, table, column, delete, mapping, key, connectedType)
+            _const = constFields
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
@@ -224,13 +204,83 @@ Namespace Entities.Meta
             Me.ConnectedType = connectedType
         End Sub
 
-        <Obsolete("direct parameter is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
-            ByVal connectedType As Type, ByVal direct As Boolean)
-            MyClass.New(type, table, column, delete, mapping, GetKey(direct))
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
+            MyClass.New(type, table, column, delete, mapping, DirKey)
+        End Sub
+
+#End Region
+
+#Region " Entityname ctors "
+
+        Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
+            MyBase.New(New EntityUnion(entityName), column, key)
+            Me.Table = table
+            Me.DeleteCascade = delete
+            Me.Mapping = mapping
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String, ByVal connectedType As Type)
+            MyClass.New(entityName, table, column, delete, mapping, key)
             Me.ConnectedType = connectedType
         End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
+            ByVal key As String, ByVal connectedType As Type, ByVal constFields() As IFilter)
+            MyClass.New(entityName, table, column, delete, mapping, key, connectedType)
+            _const = constFields
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
+            MyClass.New(entityName, table, column, delete, mapping, DirKey)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
+            MyClass.New(entityName, table, column, delete, mapping)
+            Me.ConnectedType = connectedType
+        End Sub
+
+#End Region
+
+        '<Obsolete("direct parameter is obsolete")> _
+        'Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type, ByVal direct As Boolean)
+        '    MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
+        '    Me.ConnectedType = connectedType
+        'End Sub
+
+        ''<Obsolete("direct parameter is obsolete")> _
+        ''Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+        ''    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
+        ''    MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
+        ''End Sub
+
+        ''Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+        ''    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
+        ''    MyBase.New(New EntityUnion(entityName), column, key)
+        ''    Me.Table = table
+        ''    Me.DeleteCascade = delete
+        ''    Me.Mapping = mapping
+        ''End Sub
+
+        '<Obsolete("direct parameter is obsolete")> _
+        'Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
+        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
+        '    MyClass.New(type, table, column, delete, mapping, GetKey(direct))
+        'End Sub
+
+        '<Obsolete("direct parameter is obsolete")> _
+        'Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
+        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
+        '    ByVal connectedType As Type, ByVal direct As Boolean)
+        '    MyClass.New(type, table, column, delete, mapping, GetKey(direct))
+        '    Me.ConnectedType = connectedType
+        'End Sub
 
         Public ReadOnly Property non_direct() As Boolean
             Get

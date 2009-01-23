@@ -249,8 +249,8 @@ Public Class Table1Implementation
             Dim t1to3 As SourceFragment = TablesImplementation._tables(0)
             _rels = New M2MRelationDesc() { _
                 New M2MRelationDesc(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
-                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
-                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
+                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey, GetType(Tables1to1)), _
+                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, GetType(Tables1to1)) _
             }
         End If
         Return _rels

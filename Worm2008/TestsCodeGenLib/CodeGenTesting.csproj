@@ -88,6 +88,7 @@
     <EmbeddedResource Include="m2mCheck2.xml" />
     <EmbeddedResource Include="m2mCheck3.xml" />
     <EmbeddedResource Include="m2mCheck4.xml" />
+    <Content Include="entityRelations.xml" />
     <Content Include="tables.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
