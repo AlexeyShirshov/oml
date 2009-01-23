@@ -227,7 +227,8 @@ Namespace Xml
             '    values = New Generic.List(Of T)
             'End If
 
-            Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+            'Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+            Dim dic As IDictionary = GetDictionary(original_type)
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
@@ -248,7 +249,8 @@ Namespace Xml
             Return d.CreateNavigator
         End Function
 
-        Protected Sub LoadFromNodeIterator(Of T As {New, _IEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
+        Protected Sub LoadFromNodeIterator(Of T As {New, _IEntity})(ByVal node As XPathNavigator, _
+            ByVal dic As IDictionary, _
             ByVal values As IList, ByRef loaded As Integer, ByVal oschema As IEntitySchema)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
@@ -258,7 +260,7 @@ Namespace Xml
                 obj.BeginLoading()
                 Dim pk() As PKDesc = orm.GetPKValues
                 If LoadPK(oschema, node, orm) Then
-                    obj = CType(NormalizeObject(orm, CType(dic, System.Collections.IDictionary)), T)
+                    obj = CType(NormalizeObject(orm, dic), T)
                     If obj.ObjectState = ObjectState.Created Then
                         orm.CreateCopyForSaveNewEntry(Me, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew

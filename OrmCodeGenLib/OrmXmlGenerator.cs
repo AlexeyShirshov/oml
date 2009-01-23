@@ -162,11 +162,12 @@ namespace Worm.CodeGen.Core
             _ormXmlDocumentMain.DocumentElement.AppendChild(relationsNode);
             foreach (RelationDescriptionBase rel in _ormObjectsDef.Relations)
             {
+                XmlElement relationElement;
                 if (rel is RelationDescription)
                 {
 					RelationDescription relation = (RelationDescription)rel;
 
-                    XmlElement relationElement = CreateElement("Relation");
+                    relationElement = CreateElement("Relation");
 
                     relationElement.SetAttribute("table", relation.Table.Identifier);
                     if (relation.Disabled)
@@ -205,7 +206,7 @@ namespace Worm.CodeGen.Core
                 {
 					SelfRelationDescription relation = (SelfRelationDescription)rel;
 
-                    XmlElement relationElement = CreateElement("SelfRelation");
+                    relationElement = CreateElement("SelfRelation");
 
                     relationElement.SetAttribute("table", relation.Table.Identifier);
                     relationElement.SetAttribute("entity", relation.Entity.Identifier);
@@ -238,8 +239,23 @@ namespace Worm.CodeGen.Core
                     }
                     relationElement.AppendChild(directElement);
                     relationElement.AppendChild(reverseElement);
-                    relationsNode.AppendChild(relationElement);
+                    
                 }
+                if (rel.Constants.Count > 0)
+                {
+                    var constantsElement = CreateElement("Constants");
+                    relationElement.InsertBefore(constantsElement, relationElement.FirstChild);
+
+                    foreach (var constantDescriptor in rel.Constants)
+                    {
+                        var constantElement = CreateElement("Constant");
+                        constantsElement.AppendChild(constantElement);
+
+                        constantElement.SetAttribute("name", constantDescriptor.Name);
+                        constantElement.SetAttribute("value", constantDescriptor.Value);
+                    }
+                }
+                relationsNode.AppendChild(relationElement);
 			}
         }
 
@@ -301,6 +317,32 @@ namespace Worm.CodeGen.Core
                         groupNode.SetAttribute("hide", XmlConvert.ToString(propertyGroup.Hide));
 
                     FillEntityProperties(props, groupNode);
+                }
+                if (entity.EntityRelations.Count > 0)
+                {
+                    XmlNode relationsNode = CreateElement("Relations");
+
+                    foreach (var entityRelation in entity.EntityRelations)
+                    {
+                        var relationNode = CreateElement("Relation");
+
+                        relationNode.SetAttribute("entity", entityRelation.Entity.Identifier);
+
+                        if (!string.IsNullOrEmpty(entityRelation.PropertyAlias))
+                            relationNode.SetAttribute("propertyAlias", entityRelation.PropertyAlias);
+
+                        if (!string.IsNullOrEmpty(entityRelation.Name))
+                            relationNode.SetAttribute("name", entityRelation.Name);
+
+                        if (!string.IsNullOrEmpty(entityRelation.AccessorName))
+                            relationNode.SetAttribute("accessorName", entityRelation.AccessorName);
+
+                        if (!entityRelation.Disabled)
+                            relationNode.SetAttribute("disabled", XmlConvert.ToString(entityRelation.Disabled));
+                        relationsNode.AppendChild(relationNode);
+                    }
+
+                    entityElement.AppendChild(relationsNode);
                 }
 
                 entitiesNode.AppendChild(entityElement);

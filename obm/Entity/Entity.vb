@@ -419,8 +419,8 @@ Namespace Entities
                 ElseIf ObjectState = ObjectState.NotLoaded Then
                     If IsLoaded Then SetObjectState(ObjectState.None)
                 ElseIf ObjectState = Entities.ObjectState.None Then
-                Else
-                    Debug.Assert(False)
+                    'Else
+                    '    Debug.Assert(False)
                 End If
             Else
                 If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)

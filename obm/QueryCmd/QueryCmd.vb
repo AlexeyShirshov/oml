@@ -2769,7 +2769,7 @@ Namespace Query
             End Get
         End Property
 
-        Public Sub CopyTo(ByVal o As QueryCmd)
+        Public Overridable Sub CopyTo(ByVal o As QueryCmd)
             With o
                 '._aggregates = _aggregates
                 ._appendMain = _appendMain
@@ -2920,20 +2920,20 @@ Namespace Query
             Return dp.Get
         End Function
 
-        Public Function GetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As New OrmQueryCmd(Of T)()
-            CopyTo(q)
-            If _getMgr Is Nothing Then
-                q.Exec(mgr)
-            End If
-            Return q
-        End Function
+        'Public Function GetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        '    'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+        '    Dim q As New OrmQueryCmd(Of T)()
+        '    CopyTo(q)
+        '    If _getMgr Is Nothing Then
+        '        q.Exec(mgr)
+        '    End If
+        '    Return q
+        'End Function
 
-        Public Function GetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
-            Dim mgr As OrmManager = OrmManager.CurrentManager
-            Return GetOrmCommand(Of T)(mgr)
-        End Function
+        'Public Function GetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
+        '    Dim mgr As OrmManager = OrmManager.CurrentManager
+        '    Return GetOrmCommand(Of T)(mgr)
+        'End Function
 
 #Region " Create methods "
 
@@ -2952,10 +2952,10 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim selectType As Type = GetType(T)
-            Return Create(mgr).GetOrmCommand(Of T)(mgr)
-        End Function
+        'Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        '    Dim selectType As Type = GetType(T)
+        '    Return Create(mgr).GetOrmCommand(Of T)(mgr)
+        'End Function
 
         'Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
         '    Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
@@ -3003,10 +3003,10 @@ Namespace Query
         '    Return q
         'End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim selectType As Type = GetType(T)
-            Return Create(name, mgr).GetOrmCommand(Of T)(mgr)
-        End Function
+        'Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        '    Dim selectType As Type = GetType(T)
+        '    Return Create(name, mgr).GetOrmCommand(Of T)(mgr)
+        'End Function
 
         Public Shared Function Create(ByVal name As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
@@ -3044,9 +3044,9 @@ Namespace Query
             Return Create(OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
-            Return CreateAndGetOrmCommand(Of T)(OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
+        '    Return CreateAndGetOrmCommand(Of T)(OrmManager.CurrentManager)
+        'End Function
 
         'Public Shared Function Create(ByVal selectType As Type) As QueryCmd
         '    Return Create(selectType, OrmManager.CurrentManager)
@@ -3060,9 +3060,9 @@ Namespace Query
         '    Return Create(name, table, OrmManager.CurrentManager)
         'End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String) As OrmQueryCmd(Of T)
-            Return CreateAndGetOrmCommand(Of T)(name, OrmManager.CurrentManager)
-        End Function
+        'Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IKeyEntity})(ByVal name As String) As OrmQueryCmd(Of T)
+        '    Return CreateAndGetOrmCommand(Of T)(name, OrmManager.CurrentManager)
+        'End Function
 
         Public Shared Function Create(ByVal name As String) As QueryCmd
             Return Create(name, OrmManager.CurrentManager)
@@ -3148,7 +3148,23 @@ Namespace Query
 
             'Return Where(f).Single(Of T)()
 
-            Dim o As IKeyEntity = mgr.LoadType(id, tp, ensureLoaded, False)
+            Dim o As IKeyEntity = Nothing
+            If GetType(T) IsNot tp Then
+                'o = mgr.LoadType(id, tp, ensureLoaded, False)
+                If ensureLoaded Then
+                    o = mgr.GetOrmBaseFromCacheOrDB(id, tp)
+                Else
+                    o = mgr.GetOrmBaseFromCacheOrCreate(id, tp)
+                End If
+            Else
+                'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
+                If ensureLoaded Then
+                    o = mgr.GetOrmBaseFromCacheOrDB(Of T)(id)
+                Else
+                    o = mgr.GetOrmBaseFromCacheOrCreate(Of T)(id)
+                End If
+            End If
+
             If o IsNot Nothing Then
                 If _getMgr IsNot Nothing Then
                     o.SetCreateManager(_getMgr)
@@ -3287,95 +3303,95 @@ Namespace Query
 
     End Class
 
-    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})
-        Inherits QueryCmd
-        Implements Generic.IEnumerable(Of T)
+    '    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})
+    '        Inherits QueryCmd
+    '        Implements Generic.IEnumerable(Of T)
 
-        Private _preCmp As ReadOnlyList(Of T)
-        Private _oldMark As Guid
+    '        Private _preCmp As ReadOnlyList(Of T)
+    '        Private _oldMark As Guid
 
-        Public Sub Exec(ByVal mgr As OrmManager)
-            _preCmp = ToOrmListDyn(Of T)(mgr)
-            _oldMark = _mark
-        End Sub
+    '        Public Sub Exec(ByVal mgr As OrmManager)
+    '            _preCmp = ToOrmListDyn(Of T)(mgr)
+    '            _oldMark = _mark
+    '        End Sub
 
-        Public Shared Widening Operator CType(ByVal cmd As OrmQueryCmd(Of T)) As ReadOnlyList(Of T)
-            If cmd._getMgr IsNot Nothing Then
-                Return cmd.ToOrmList(Of T, T)(cmd._getMgr)
-            ElseIf cmd._preCmp IsNot Nothing AndAlso cmd._oldMark = cmd._mark Then
-                Return cmd._preCmp
-            Else
-                Throw New InvalidOperationException("Cannot convert to list")
-            End If
-        End Operator
+    '        Public Shared Widening Operator CType(ByVal cmd As OrmQueryCmd(Of T)) As ReadOnlyList(Of T)
+    '            If cmd._getMgr IsNot Nothing Then
+    '                Return cmd.ToOrmList(Of T, T)(cmd._getMgr)
+    '            ElseIf cmd._preCmp IsNot Nothing AndAlso cmd._oldMark = cmd._mark Then
+    '                Return cmd._preCmp
+    '            Else
+    '                Throw New InvalidOperationException("Cannot convert to list")
+    '            End If
+    '        End Operator
 
-#Region " Ctors "
-        Public Sub New()
-        End Sub
+    '#Region " Ctors "
+    '        Public Sub New()
+    '        End Sub
 
-        'Public Sub New(ByVal table As SourceFragment)
-        '    MyBase.New(table)
-        'End Sub
+    '        'Public Sub New(ByVal table As SourceFragment)
+    '        '    MyBase.New(table)
+    '        'End Sub
 
-        'Public Sub New(ByVal selectType As Type)
-        '    MyBase.New(selectType)
-        'End Sub
+    '        'Public Sub New(ByVal selectType As Type)
+    '        '    MyBase.New(selectType)
+    '        'End Sub
 
-        'Public Sub New(ByVal entityName As String)
-        '    MyBase.New(entityName)
-        'End Sub
+    '        'Public Sub New(ByVal entityName As String)
+    '        '    MyBase.New(entityName)
+    '        'End Sub
 
-        'Public Sub New(ByVal obj As IKeyEntity)
-        '    MyBase.New(obj)
-        'End Sub
+    '        'Public Sub New(ByVal obj As IKeyEntity)
+    '        '    MyBase.New(obj)
+    '        'End Sub
 
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
-        '    MyBase.New(obj, key)
-        'End Sub
+    '        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
+    '        '    MyBase.New(obj, key)
+    '        'End Sub
 
-        Public Sub New(ByVal getMgr As ICreateManager)
-            MyBase.New(getMgr)
-        End Sub
+    '        Public Sub New(ByVal getMgr As ICreateManager)
+    '            MyBase.New(getMgr)
+    '        End Sub
 
-        'Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
-        '    MyBase.New(selectType, getMgr)
-        'End Sub
+    '        'Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
+    '        '    MyBase.New(selectType, getMgr)
+    '        'End Sub
 
-        'Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
-        '    MyBase.New(entityName, getMgr)
-        'End Sub
+    '        'Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
+    '        '    MyBase.New(entityName, getMgr)
+    '        'End Sub
 
-        'Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
-        '    MyBase.New(obj, getMgr)
-        'End Sub
+    '        'Public Sub New(ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
+    '        '    MyBase.New(obj, getMgr)
+    '        'End Sub
 
-        'Public Sub New(ByVal obj As _IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
-        '    MyBase.New(obj, key, getMgr)
-        'End Sub
+    '        'Public Sub New(ByVal obj As _IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
+    '        '    MyBase.New(obj, key, getMgr)
+    '        'End Sub
 
-#End Region
+    '#End Region
 
-        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of T) Implements System.Collections.Generic.IEnumerable(Of T).GetEnumerator
-            Return CType(Me, ReadOnlyList(Of T)).GetEnumerator
-        End Function
+    '        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of T) Implements System.Collections.Generic.IEnumerable(Of T).GetEnumerator
+    '            Return CType(Me, ReadOnlyList(Of T)).GetEnumerator
+    '        End Function
 
-        Protected Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
-            Return GetEnumerator()
-        End Function
+    '        Protected Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+    '            Return GetEnumerator()
+    '        End Function
 
-        'Public Overrides Property SelectedType() As System.Type
-        '    Get
-        '        If MyBase.SelectedType Is Nothing Then
-        '            Return GetType(T)
-        '        Else
-        '            Return MyBase.SelectedType
-        '        End If
-        '    End Get
-        '    Set(ByVal value As System.Type)
-        '        MyBase.SelectedType = value
-        '    End Set
-        'End Property
-    End Class
+    '        'Public Overrides Property SelectedType() As System.Type
+    '        '    Get
+    '        '        If MyBase.SelectedType Is Nothing Then
+    '        '            Return GetType(T)
+    '        '        Else
+    '        '            Return MyBase.SelectedType
+    '        '        End If
+    '        '    End Get
+    '        '    Set(ByVal value As System.Type)
+    '        '        MyBase.SelectedType = value
+    '        '    End Set
+    '        'End Property
+    '    End Class
 
     'Public Class QueryCmd(Of ReturnType As {_ICachedEntity, New})
     '    Inherits QueryCmdBase

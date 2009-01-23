@@ -3,6 +3,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports Worm.Query
+Imports System.Collections.Generic
 
 Namespace Criteria
 
@@ -400,6 +401,15 @@ Namespace Criteria
         Public Function Clone() As PredicateLink
             Return CType(_Clone(), PredicateLink)
         End Function
+
+        Public Shared Widening Operator CType(ByVal p As PredicateLink) As IFilter()
+            'Dim l As New List(Of EntityFilter)
+            'For Each f As EntityFilter In p.Filter.GetAllFilters
+            '    l.Add(f)
+            'Next
+            'Return l.ToArray
+            Return New List(Of IFilter)(p.Filter.GetAllFilters).ToArray
+        End Operator
     End Class
 
 End Namespace

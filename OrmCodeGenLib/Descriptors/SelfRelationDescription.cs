@@ -11,6 +11,7 @@ namespace Worm.CodeGen.Core.Descriptors
         private readonly bool _disabled;
         private readonly SelfRelationTarget _left;
         private readonly SelfRelationTarget _right;
+        private readonly List<RelationConstantDescriptor> _constants;
 
         public TableDescription Table
         {
@@ -39,6 +40,15 @@ namespace Worm.CodeGen.Core.Descriptors
             _disabled = disabled;
             _left = left;
             _right = right;
+            _constants = new List<RelationConstantDescriptor>();
+        }
+
+        public IList<RelationConstantDescriptor> Constants
+        {
+            get
+            {
+                return _constants;
+            }
         }
 
         public SelfRelationTarget Left

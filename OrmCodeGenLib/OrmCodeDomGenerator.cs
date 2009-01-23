@@ -2649,7 +2649,7 @@ namespace Worm.CodeGen.Core
                 string fieldName = entity == relationDescription.Left.Entity ? relationDescription.Right.FieldName : relationDescription.Left.FieldName;
                 bool cascadeDelete = entity == relationDescription.Left.Entity ? relationDescription.Right.CascadeDelete : relationDescription.Left.CascadeDelete;
 
-                return new CodeExpression[] {GetM2MRelationCreationExpression(relatedEntity, relationDescription.Table, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null)};
+                return new CodeExpression[] { GetM2MRelationCreationExpression(relatedEntity, relationDescription.Table, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null, relationDescription.Constants) };
             }
         	throw new ArgumentException("To realize m2m relation on self use SelfRelation instead.");
         }
@@ -2661,14 +2661,14 @@ namespace Worm.CodeGen.Core
 				{
 					GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity,
 					                                 relationDescription.Direct.FieldName, relationDescription.Direct.CascadeDelete,
-					                                 true),
+					                                 true, relationDescription.Constants),
 					GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity,
-					                                 relationDescription.Reverse.FieldName, relationDescription.Reverse.CascadeDelete, false)
+					                                 relationDescription.Reverse.FieldName, relationDescription.Reverse.CascadeDelete, false, relationDescription.Constants)
 				};
 
 		}
 
-    	private static CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, TableDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct)
+    	private static CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, TableDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct, IList<RelationConstantDescriptor> relationConstants)
         {
 			//if (underlyingEntity != null && direct.HasValue)
 			//    throw new NotImplementedException("M2M relation on self cannot have underlying entity.");
@@ -2723,12 +2723,31 @@ namespace Worm.CodeGen.Core
     		CodeObjectCreateExpression result =
     			new CodeObjectCreateExpression(
     				new CodeTypeReference(typeof (M2MRelationDesc)),
-                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
+                    //new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
 					entityTypeExpression,
 					tableExpression,
 					fieldExpression,
 					cascadeDeleteExpression,
 					mappingExpression);
+
+            if (direct.HasValue)
+            {
+                string f = "DirKey";
+                if (!direct.Value)
+                    f = "RevKey";
+
+                result.Parameters.Add(
+                    new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)), f)
+                );
+                //CodeExpression directExpression = new CodePrimitiveExpression(direct.Value);
+                //result.Parameters.Add(
+                //    directExpression
+                //);
+            }
+			else
+            {
+            	result.Parameters.Add(new CodePrimitiveExpression("default"));
+            }
 
             if (underlyingEntity != null)
             {
@@ -2744,12 +2763,30 @@ namespace Worm.CodeGen.Core
 					connectedTypeExpression
                 );
             }
-            if (direct.HasValue)
+			else
             {
-                CodeExpression directExpression = new CodePrimitiveExpression(direct.Value);
-                result.Parameters.Add(
-					directExpression
-                );
+				result.Parameters.Add(new CodePrimitiveExpression(null));
+            }
+            if (relationConstants != null && relationConstants.Count > 0)
+            {
+                RelationConstantDescriptor constant = relationConstants[0];
+                //Ctor.column(_schema.Table, "name").eq("value");
+                CodeExpression exp = new CodeMethodInvokeExpression(
+                    new CodeMethodInvokeExpression(
+                        new CodeTypeReferenceExpression(typeof (Ctor)),
+                        "column",
+                        tableExpression,
+                        new CodePrimitiveExpression(constant.Name)
+                        ),
+                    "eq",
+                    new CodePrimitiveExpression(constant.Value));
+				for (int i = 1; i < relationConstants.Count; i++)
+				{
+					constant = relationConstants[i];
+					exp = new CodeMethodInvokeExpression(new CodeMethodInvokeExpression(exp, "column", tableExpression, new CodePrimitiveExpression(constant.Name)), "eq", new CodePrimitiveExpression(constant.Value));
+				}
+            	exp = new CodePropertyReferenceExpression(exp, "Filter");
+                result.Parameters.Add(new CodeArrayCreateExpression(new CodeTypeReference(typeof (Worm.Criteria.Core.IFilter)), new CodeExpression[] {exp}));
             }
     		return result;
         }
