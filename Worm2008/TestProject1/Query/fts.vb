@@ -56,11 +56,11 @@ Imports Worm.Criteria.Joins
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
 
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
 
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch2()
@@ -72,13 +72,13 @@ Imports Worm.Criteria.Joins
         q.From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q = New QueryCmd(Function() TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1")))
         q.From(New Entities.Meta.SearchFragment(GetType(Table1), "xxx"))
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch3()
@@ -91,17 +91,17 @@ Imports Worm.Criteria.Joins
         q.Join(JCtor.join(GetType(Table3)).[on](GetType(Table3), "Ref").eq(GetType(Table1), "ID"))
 
         Assert.AreEqual(2, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(2, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.Where(Ctor.prop(GetType(Table3), "Code").eq(2))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch4()
@@ -114,7 +114,7 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop("Table3", "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearch5()
@@ -127,7 +127,7 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop(GetType(Table1), "Code").eq(2)).From(tbl)
 
         Assert.AreEqual(0, q.ToList(Of Table1)().Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2M()
@@ -141,9 +141,9 @@ Imports Worm.Criteria.Joins
         Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
 
-        r = t.Relations.Search("second").ToList(Of Table1)()
+        r = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2MDyn()
@@ -154,8 +154,8 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("first").ToEntityList(Of Table1)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("first", GetType(Table1)).ToEntityList(Of Table1)()
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(1, r.Count)
     End Sub

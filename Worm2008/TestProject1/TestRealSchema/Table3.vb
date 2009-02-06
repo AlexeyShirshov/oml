@@ -70,7 +70,7 @@ Public Class Table3
             _trigger = True
             Return Nothing
         Else
-            _obj = mgr.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
+            _obj = mgr.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
             Return _obj
         End If
     End Function
@@ -137,7 +137,7 @@ Public Class Table3
                 _code = value
                 If _trigger Then
                     _trigger = False
-                    _obj = Worm.OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
+                    _obj = Worm.OrmManager.CurrentManager.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
                 End If
             End Using
         End Set

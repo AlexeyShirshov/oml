@@ -36,13 +36,13 @@
           <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@propertyName" />
         </xs:key>
-        <xs:unique name="propName">
+        <!--<xs:unique name="propName">
           <xs:annotation>
             <xs:documentation>Колонки сущности должны быть уникальны</xs:documentation>
           </xs:annotation>
           <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@fieldName" />
-        </xs:unique>
+        </xs:unique>-->
         <xs:keyref name="propTableRef" refer="TableId">
           <xs:annotation>
             <xs:documentation>Ссылка на таблицы</xs:documentation>
@@ -110,6 +110,18 @@
 			  <xs:documentation>Определяет генерировать интерфейс для сущности</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+		<xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>Определяет генерить ли сущность или нет</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="cacheCheckRequired" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>
+					Опредяет требуется ли роверка по кэшу при прямой ссылке на объект.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
   </xs:complexType>
   <xs:complexType name="SupperessedPropertiesCollection_t">
     <xs:annotation>
@@ -148,7 +160,7 @@
         </xs:keyref>
       </xs:element>
     </xs:sequence>
-	<xs:attribute name="inheritsBase" type="xs:boolean" use="optional">
+	<xs:attribute name="inheritsBase" type="xs:boolean" use="optional" default="true">
 		<xs:annotation>
 			<xs:documentation>
 				Inherits table list from base entity.
@@ -322,7 +334,7 @@
       <xs:documentation>One to Many relations collection</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="Relation" type="EntitySimpleRelation_t">
+      <xs:element name="Relation" type="EntitySimpleRelation_t" minOccurs="0" maxOccurs="unbounded">
       </xs:element>
     </xs:sequence>
   </xs:complexType>

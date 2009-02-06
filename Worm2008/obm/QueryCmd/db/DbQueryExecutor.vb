@@ -5,6 +5,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports Worm.Query.QueryCmd
+Imports Worm.Cache
 
 'Imports Worm.Database.Sorting
 
@@ -99,7 +100,6 @@ Namespace Query.Database
                 'End If
             Else
                 Dim p As BaseProvider = _proc
-                p.SetTemp(query)
                 'If query.SelectedType Is Nothing Then
                 '    If String.IsNullOrEmpty(query.SelectedEntityName) Then
                 '        query.SelectedType = If(query.CreateType IsNot Nothing, query.CreateType, GetType(ReturnType))
@@ -115,6 +115,7 @@ Namespace Query.Database
                     p.Reset(mgr, query)
                 Else
                     p.Init(mgr, query)
+                    p.SetTemp(query)
                     If _proc.QSMark <> query.SMark Then
                         p.ResetStmt()
                     End If
@@ -528,6 +529,10 @@ Namespace Query.Database
 
         Protected Delegate Function GetProcessorDelegate() As BaseProvider
 
+        Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
+            CType(o, _IEntity).SetSpecificSchema(mgr.MappingEngine)
+        End Sub
+
         Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal o As IEntity)
             CType(o, _IEntity).SetSpecificSchema(mgr.MappingEngine)
         End Sub
@@ -571,6 +576,7 @@ Namespace Query.Database
                 'mgr.RaiseObjectCreation = True
                 mgr.SetSchema(query.Schema)
                 AddHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
+                AddHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
             End If
 
             Dim c As New QueryCmd.svct(query)
@@ -607,7 +613,7 @@ Namespace Query.Database
                 Dim created As Boolean = args.Created
                 'query._load = oldLoad
 
-                query.LastExecitionResult = mgr.GetLastExecitionResult
+                query.LastExecutionResult = mgr.GetLastExecutionResult
 
                 mgr.RaiseOnDataAvailable()
 
@@ -625,6 +631,7 @@ Namespace Query.Database
                 RaiseEvent OnRestoreDefaults(Me, mgr, EventArgs.Empty)
 
                 RemoveHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
+                RemoveHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
                 'mgr.RaiseObjectCreation = oldC
 
                 Return res
@@ -698,8 +705,6 @@ Namespace Query.Database
 
         Public Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager, _
             ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
-
-            'Dim p As ProcessorT(Of SelectType, ReturnType) = GetProcessorT(Of SelectType, ReturnType)(mgr, query)
 
             Return CType(_Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
                 Function() GetProcessorT(Of SelectType, ReturnType)(mgr, query), _
@@ -1213,18 +1218,19 @@ Namespace Query.Database
                             Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).PropertyAlias
 
                             'Dim jl As JoinLink = JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk)
+                            Dim tbl As SourceFragment = CType(t22t1.Table.Clone, SourceFragment)
                             Dim jl As JoinLink = Nothing
                             If pk IsNot Nothing Then
-                                jl = JCtor.join(t22t1.Table).[on](t22t1.Table, t12t2.Column).eq(pk.First, pk.Second)
+                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
                             Else
-                                jl = JCtor.join(t22t1.Table).[on](t22t1.Table, t12t2.Column).eq(t2, t2_pk)
+                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(t2, t2_pk)
                             End If
 
                             If almgr.ContainsKey(oschema.Table, join.ObjectSource) Then
-                                jl.[and](t22t1.Table, t22t1.Column).eq(t, t1_pk)
+                                jl.[and](tbl, t22t1.Column).eq(t, t1_pk)
                                 needAppend = False
                             Else
-                                cond = Ctor.column(t22t1.Table, t22t1.Column).eq(t, t1_pk).Filter
+                                cond = Ctor.column(tbl, t22t1.Column).eq(t, t1_pk).Filter
                             End If
 
                             Dim js() As QueryJoin = jl
@@ -1454,12 +1460,29 @@ Namespace Query.Database
             GetProvider(mgr, query, Nothing).Renew = v
         End Sub
 
+        Public Sub ResetObjects(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetObjects
+            Dim p As BaseProvider = GetProvider(mgr, query, Nothing)
+            Dim d As IDictionary = p.Dic
+            If d IsNot Nothing Then
+                Dim ce As UpdatableCachedItem = CType(d(p.Id), UpdatableCachedItem)
+                If ce IsNot Nothing Then
+                    ce.Clear(mgr)
+                End If
+            End If
+        End Sub
+
         Public ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean Implements IExecutor.IsInCache
             Get
                 Dim p As BaseProvider = GetProvider(mgr, query, Nothing)
                 Dim d As IDictionary = p.Dic
                 If d IsNot Nothing Then
-                    Return d.Contains(p.Id)
+                    Dim ce As UpdatableCachedItem = CType(d(p.Id), UpdatableCachedItem)
+                    If ce IsNot Nothing Then
+                        Dim cv As ICacheValidator = TryCast(p, ICacheValidator)
+                        Return cv Is Nothing OrElse (cv.ValidateBeforCacheProbe AndAlso cv.ValidateItemFromCache(ce))
+                    Else
+                        Return False
+                    End If
                 Else
                     Return False
                 End If

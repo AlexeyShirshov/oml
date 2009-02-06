@@ -64,14 +64,23 @@ namespace Worm.CodeGen.Core
             }
         }
 
+		public List<EntityDescription> ActiveEntities
+		{
+			get
+			{
+				return _entities.FindAll(e => !e.Disabled);
+			}
+		}
+
 	    public IList<EntityDescription> FlatEntities
 	    {
 	        get
 	        {
 	            IList<EntityDescription> baseFlatEntities = ((BaseSchema == null) ? new List<EntityDescription>() : BaseSchema.FlatEntities);
-	            int count = Entities.Count + ((BaseSchema == null) ? 0 : baseFlatEntities.Count);
+	        	var entities = ActiveEntities;
+	        	int count = entities.Count + ((BaseSchema == null) ? 0 : baseFlatEntities.Count);
 	            var list = new List<EntityDescription>(count);
-	            list.AddRange(Entities);
+	            list.AddRange(entities);
 
 	            foreach (EntityDescription baseEntityDescription in baseFlatEntities)
 	            {
@@ -195,7 +204,7 @@ namespace Worm.CodeGen.Core
         public EntityDescription GetEntity(string entityId, bool throwNotFoundException)
         {
             EntityDescription entity;
-            entity = Entities.Find(delegate(EntityDescription match) { return match.Identifier == entityId;});
+            entity = ActiveEntities.Find(delegate(EntityDescription match) { return match.Identifier == entityId;});
             if(entity == null && Includes.Count != 0)
                 foreach (OrmObjectsDef objectsDef in Includes)
                 {

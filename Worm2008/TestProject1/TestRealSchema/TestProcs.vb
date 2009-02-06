@@ -245,7 +245,7 @@ Public Class P1Proc
 
     Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Pair(Of Table1, Integer)) = CType(result, Global.System.Collections.Generic.List(Of Pair(Of Global.TestProject1.Table1, Integer)))
-        Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(dr.GetInt32(0))
+        Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(dr.GetInt32(0))
         Dim cnt As Integer = dr.GetInt32(1)
         l.Add(New Pair(Of Table1, Integer)(t1, cnt))
     End Sub
@@ -288,7 +288,7 @@ Public Class P2Proc
 
     Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Table1) = CType(result, Global.System.Collections.Generic.List(Of Global.TestProject1.Table1))
-        Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(dr.GetInt32(0))
+        Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(dr.GetInt32(0))
         l.Add(t1)
     End Sub
 

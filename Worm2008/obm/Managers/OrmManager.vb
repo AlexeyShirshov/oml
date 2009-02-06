@@ -33,7 +33,7 @@ Partial Public MustInherit Class OrmManager
     Friend _prev As OrmManager = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
-    Private _schema As ObjectMappingEngine
+    Friend _schema As ObjectMappingEngine
     'Private _findnew As FindNew
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
@@ -51,7 +51,7 @@ Partial Public MustInherit Class OrmManager
     'Public Delegate Function FindNew(ByVal type As Type, ByVal id As Integer) As OrmBase
     'Public Delegate Sub RemoveNew(ByVal type As Type, ByVal id As Integer)
 
-    Protected _cs As String
+    'Protected _cs As String
     'Protected _prevs As String
 
     <ThreadStatic()> _
@@ -102,13 +102,14 @@ Partial Public MustInherit Class OrmManager
         End Set
     End Property
 
-    Public ReadOnly Property GetLastExecitionResult() As ExecutionResult
+    Public ReadOnly Property GetLastExecutionResult() As ExecutionResult
         Get
             Return _er
         End Get
     End Property
 
     Public Event ObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
+    Public Event ObjectRestoredFromCache(ByVal sender As OrmManager, ByVal created As Boolean, ByVal o As ICachedEntity)
     Public Event BeginUpdate(ByVal sender As OrmManager, ByVal o As ICachedEntity)
     Public Event BeginDelete(ByVal sender As OrmManager, ByVal o As ICachedEntity)
 
@@ -216,11 +217,13 @@ Partial Public MustInherit Class OrmManager
     'End Property
 
     Public Sub ResetLocalStorage()
-        If _prev IsNot Nothing Then
-            Assert(Not _prev._disposed, "Previous MediaContent cannot be disposed. CallStack: " & _cs)
+#If TraceManagerCreation Then
+        If _prev IsNot Nothing AndAlso Not String.IsNullOrEmpty(_callstack) Then
+            Assert(Not _prev._disposed, "Previous MediaContent cannot be disposed. CallStack: " & _callstack)
             'Assert(Not prev.disposed, "Previous MediaContent cannot be disposed. CallStack: " & _s & "PrevCallStack: " & _prevs)
             'Assert(Not prev.disposed, "Previous MediaContent cannot be disposed.")
         End If
+#End If
         CurrentManager = _prev
         'Thread.SetData(LocalStorage, prev)
         ''If prev Is Nothing Then
@@ -301,6 +304,10 @@ Partial Public MustInherit Class OrmManager
 
     Protected Friend Sub RaiseBeginDelete(ByVal o As ICachedEntity)
         RaiseEvent BeginDelete(Me, o)
+    End Sub
+
+    Protected Friend Sub RaiseObjectRestored(ByVal created As Boolean, ByVal o As ICachedEntity)
+        RaiseEvent ObjectRestoredFromCache(Me, created, o)
     End Sub
 
     'Public Property FindNewDelegate() As FindNew
@@ -615,7 +622,7 @@ Partial Public MustInherit Class OrmManager
                     If edic.TryGetValue(o.Identifier, el) Then
                         For Each id As Object In el.Current
                             If target IsNot Nothing Then
-                                target.Add(GetOrmBaseFromCacheOrCreate(Of T)(id))
+                                target.Add(GetKeyEntityFromCacheOrCreate(Of T)(id))
                             End If
                         Next
                         'Cache.AddRelationValue(o.GetType, type2load)
@@ -727,7 +734,7 @@ Partial Public MustInherit Class OrmManager
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type) As IKeyEntity
+    Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type) As IKeyEntity
         '#If DEBUG Then
         '        If Not GetType(IOrmBase).IsAssignableFrom(type) Then
         '            Throw New ArgumentException(String.Format("The type {0} must be derived from iOrmBase", type))
@@ -752,7 +759,7 @@ Partial Public MustInherit Class OrmManager
         Return CType(NormalizeObject(o, GetDictionary(type)), IKeyEntity)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As IKeyEntity
+    Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As IKeyEntity
         Dim o As IKeyEntity = CreateOrmBase(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), add2CacheOnCreate)
@@ -762,7 +769,7 @@ Partial Public MustInherit Class OrmManager
         Return CType(obj, IKeyEntity)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrCreate(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+    Public Function GetKeyEntityFromCacheOrCreate(Of T As {IKeyEntity, New})(ByVal id As Object) As T
         'Dim o As T = CreateObject(Of T)(id)
         'Assert(o IsNot Nothing, "Object must be created: " & id.ToString & ". Type - " & GetType(T).ToString)
         'Using o.GetSyncRoot()
@@ -779,7 +786,7 @@ Partial Public MustInherit Class OrmManager
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrCreate(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal add2CacheOnCreate As Boolean) As T
+    Public Function GetKeyEntityFromCacheOrCreate(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal add2CacheOnCreate As Boolean) As T
         'Dim o As T = CreateObject(Of T)(id)
         'Assert(o IsNot Nothing, "Object must be created: " & id.ToString & ". Type - " & GetType(T).ToString)
         'Using o.GetSyncRoot()
@@ -800,20 +807,20 @@ Partial Public MustInherit Class OrmManager
         Return CType(obj, T)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+    Public Function GetKeyEntityFromCacheOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
         Dim o As T = CreateOrmBase(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetOrmBaseFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
+    Public Function GetKeyEntityFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
         Dim o As IKeyEntity = CreateOrmBase(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
     End Function
 
     Public Function [Get](Of T As {IKeyEntity, New})(ByVal id As Object) As T
-        Return GetOrmBaseFromCacheOrDB(Of T)(id)
+        Return GetKeyEntityFromCacheOrDB(Of T)(id)
     End Function
 
     Public Function [Get](Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
@@ -1329,7 +1336,8 @@ l1:
     End Function
 
     Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal ctx As TypeWrap(Of Object), ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItemBase
+        ByVal ctx As TypeWrap(Of Object), ByVal del As ICacheItemProvoderBase, _
+        ByVal vdel As ValDelegate) As CachedItemBase
 
         Invariant()
 
@@ -2235,7 +2243,7 @@ l1:
         Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct).First
         For Each id As Integer In m.Entry.Current
             'm.Entry.Delete(id)
-            M2MDelete(mainobj, CType(GetOrmBaseFromCacheOrCreate(id, t), _IKeyEntity), direct)
+            M2MDelete(mainobj, CType(GetKeyEntityFromCacheOrCreate(id, t), _IKeyEntity), direct)
         Next
     End Sub
 
@@ -2310,7 +2318,7 @@ l1:
                     Dim m As M2MCache = CType(dic(id), M2MCache)
 
                     For Each oid As Integer In m.Entry.Current
-                        Dim o As _IKeyEntity = CType(GetOrmBaseFromCacheOrCreate(oid, r.Rel.GetRealType(MappingEngine), False), _IKeyEntity)
+                        Dim o As _IKeyEntity = CType(GetKeyEntityFromCacheOrCreate(oid, r.Rel.GetRealType(MappingEngine), False), _IKeyEntity)
                         M2MSubUpdate(o, obj, oldId, obj.GetType)
                     Next
                 End If
@@ -2589,7 +2597,7 @@ l1:
         Dim r As Integer = 0
         'Dim dic As IDictionary = GetDictionary(t)
         For Each id As Integer In ids
-            Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(id, t, False)
+            Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(id, t, False)
             If o.IsLoaded OrElse o.ObjectState = ObjectState.Created Then
                 r += 1
             End If
@@ -2618,7 +2626,7 @@ l1:
         Dim r As Integer = 0
         'Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
         For Each id As Object In ids
-            Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
+            Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(Of T)(id, False)
             If o.IsLoaded OrElse o.ObjectState = ObjectState.Created Then
                 'If dic.ContainsKey(GetKeyFromPK(Of T)(id)) Then
                 r += 1
@@ -3041,7 +3049,7 @@ l1:
             Dim type As Type = GetType(T)
 
             For Each id As Object In ids
-                Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
+                Dim obj As T = GetKeyEntityFromCacheOrCreate(Of T)(id, True)
 
                 If obj IsNot Nothing Then
                     CType(arr, IListEdit).Add(obj)
@@ -3070,7 +3078,7 @@ l1:
                 length = Math.Min(length + start, ids.Count)
                 For i As Integer = start To length - 1
                     Dim id As Object = ids(i)
-                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
+                    Dim obj As T = GetKeyEntityFromCacheOrCreate(Of T)(id, True)
 
                     If obj IsNot Nothing Then
                         CType(arr, IListEdit).Add(obj)
@@ -3298,13 +3306,16 @@ l1:
                             Next
 
                             If orm._relations.Count > 0 Then
-                                For Each elb As M2MRelation In orm._relations
-                                    Dim el As M2MRelation = elb.PrepareSave(Me)
-                                    If el IsNot Nothing Then
-                                        M2MSave(orm, el)
-                                        'elb.Saved = True
-                                        elb._savedIds.AddRange(el.Added)
-                                        hasNew = hasNew OrElse elb.HasNew
+                                For Each rl As Relation In orm._relations
+                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                    If elb IsNot Nothing Then
+                                        Dim el As M2MRelation = elb.PrepareSave(Me)
+                                        If el IsNot Nothing Then
+                                            M2MSave(orm, el)
+                                            'elb.Saved = True
+                                            elb._savedIds.AddRange(el.Added)
+                                            hasNew = hasNew OrElse elb.HasNew
+                                        End If
                                     End If
                                 Next
                             End If
@@ -3678,6 +3689,10 @@ l1:
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of QueryJoin)
         Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
+        Dim ictx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
+        If ictx IsNot Nothing AndAlso ictx.GetContextFilter(filterInfo) IsNot Nothing Then
+            appendMain = True
+        End If
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters

@@ -45,7 +45,7 @@
 	</oos:Types>
 	<oos:Entities>
 		<oos:Entity id="eArtist" name="Artist" description="Artist Description" makeInterface="true" >
-      <oos:Tables inheritsBase="true">
+      <oos:Tables>
 				<oos:Table ref="tblArtists"/>
 				<oos:Table ref="tblSiteAccess"/>
 			</oos:Tables>
@@ -61,7 +61,7 @@
 			</oos:Properties>
 		</oos:Entity>
     <oos:Entity id="eAlbum" name="Album" description="Album Description" namespace="AlbumNS" behaviour="ForcePartial">
-      <oos:Tables inheritsBase="true">
+      <oos:Tables>
 				<oos:Table ref="tblAlbums"/>
 				<oos:Table ref="tblSiteAccess"/>
 			</oos:Tables>
@@ -71,7 +71,7 @@
 			</oos:Properties>
 		</oos:Entity>
 		<oos:Entity id="Album2ArtistRelation" name="Album2ArtistRelation" description="Album2ArtistRelation Description" namespace="xRelations">
-      <oos:Tables inheritsBase="true">
+      <oos:Tables>
 				<oos:Table ref="tblAl2Ar"/>
 			</oos:Tables>
 			<oos:Properties>
@@ -82,7 +82,7 @@
 			</oos:Properties>
 		</oos:Entity>
 	  <oos:Entity id="eA2B" name="Artist2Band" description="Artist2Band description">
-      <oos:Tables inheritsBase="true">
+      <oos:Tables>
 		  <oos:Table ref="tbla2b"/>
 		</oos:Tables>
 		<oos:Properties>
@@ -91,6 +91,15 @@
 		  <oos:Property propertyName="Artist" table="tbla2b" fieldName="artist_id" typeRef="tArtist" description="band"  />
 		</oos:Properties>
 	  </oos:Entity>
+		<oos:Entity id="disabledEntity" name="DisabledEntity" description="DisabledEntity description" disabled="true">
+			<oos:Tables>
+				<oos:Table ref="tbla2b"/>
+			</oos:Tables>
+			<oos:Properties>
+				<oos:Property propertyName="ID" attributes="PK" table="tbla2b" fieldName="id" typeRef="tInt32" description="relation id"/>
+				<oos:Property propertyName="Band" table="tbla2b" fieldName="band_id" typeRef="tArtist" description="band"  />
+			</oos:Properties>
+		</oos:Entity>
 	</oos:Entities>
 	<oos:EntityRelations>
 		<oos:Relation table="tblAl2Ar" underlyingEntity="Album2ArtistRelation">

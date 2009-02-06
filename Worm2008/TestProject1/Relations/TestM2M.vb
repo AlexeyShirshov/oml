@@ -87,7 +87,7 @@ Imports Worm.Criteria
                 Dim cmd As RelationCmd = CType(e, Worm.Entities.IRelations).GetCmd(GetType(Entity4))
                 l = cmd.ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
-                Assert.IsFalse(cmd.LastExecitionResult.CacheHit)
+                Assert.IsFalse(cmd.LastExecutionResult.CacheHit)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
@@ -212,7 +212,7 @@ Imports Worm.Criteria
                 Dim q2 As QueryCmd = e.Relations.GetCmd(GetType(Entity4))
                 l = q2.ToList(Of Entity4)(mgr)
                 Assert.AreEqual(c - 1, l.Count)
-                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q2.LastExecutionResult.CacheHit)
 
             Finally
                 mgr.Rollback()

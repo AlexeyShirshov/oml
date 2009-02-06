@@ -411,7 +411,7 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetObjectSchema()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        schema.GetEntitySchema(Nothing)
+        schema.GetEntitySchema(CStr(Nothing))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentException))> _
@@ -504,7 +504,7 @@ End Class
     Public Sub TestAlter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             'Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Object() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
-            Dim e As Entity4 = mgr.GetOrmBaseFromCacheOrCreate(Of Entity4)(2)
+            Dim e As Entity4 = mgr.GetKeyEntityFromCacheOrCreate(Of Entity4)(2)
             Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
             Dim expected As String = "wrtbg"
             e.Title = "345"

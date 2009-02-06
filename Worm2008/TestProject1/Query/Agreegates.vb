@@ -63,12 +63,12 @@ Imports Worm.Misc
             Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             i = q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         End Using
     End Sub

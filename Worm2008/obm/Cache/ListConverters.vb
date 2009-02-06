@@ -29,8 +29,10 @@ Namespace Cache
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity)
+        Sub Clear(ByVal weak_list As Object, ByVal mgr As OrmManager)
         ReadOnly Property IsWeak() As Boolean
         Function GetAliveCount(ByVal weakList As Object) As Integer
+
     End Interface
 
     Public Class FakeListConverter
@@ -58,7 +60,7 @@ Namespace Cache
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
             ElseIf mc._externalFilter IsNot Nothing Then
-                Dim er As OrmManager.ExecutionResult = mc.GetLastExecitionResult
+                Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
                 Dim l As Integer = 0
                 If er.LoadedInResultset.HasValue Then
                     l = er.LoadedInResultset.Value
@@ -150,6 +152,10 @@ Namespace Cache
             l.Remove(obj)
         End Sub
 
+        Public Sub Delete(ByVal weak_list As Object, ByVal mgr As OrmManager) Implements IListObjectConverter.Clear
+            'do nothing
+        End Sub
+
         Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
             Dim l As IList = CType(weak_list, IList)
             Return l.Count
@@ -203,6 +209,7 @@ Namespace Cache
         Public Function GetAliveCount(ByVal weakList As Object) As Integer Implements IListObjectConverter.GetAliveCount
             Return CType(weakList, ICollection).Count
         End Function
+
     End Class
 
     Public Class ListConverter
@@ -216,12 +223,13 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim dic As IDictionary = mc.Cache.GetOrmDictionary(mc.GetContextFilter, GetType(T), mc.MappingEngine)
             If mc._externalFilter Is Nothing Then
                 If start < l.Count Then
                     length = Math.Min(start + length, l.Count)
                     For i As Integer = start To length - 1
                         Dim loe As WeakEntityReference = l(i)
-                        Dim o As T = loe.GetObject(Of T)(mc)
+                        Dim o As T = loe.GetObject(Of T)(mc, dic)
                         If o IsNot Nothing Then
                             c.List.Add(o)
                         Else
@@ -238,7 +246,7 @@ Namespace Cache
                     If loe.IsLoaded Then
                         loaded += 1
                     End If
-                    Dim o As T = loe.GetObject(Of T)(mc)
+                    Dim o As T = loe.GetObject(Of T)(mc, dic)
                     If o IsNot Nothing Then
                         c.List.Add(o)
                     Else
@@ -246,7 +254,7 @@ Namespace Cache
                     End If
                 Next
                 If loaded < l.Count Then
-                    Dim er As OrmManager.ExecutionResult = mc.GetLastExecitionResult
+                    Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
                     If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, loaded) Then
                         'c = FromWeakList(Of T)(weak_list, mc)
                         c.LoadObjects()
@@ -280,7 +288,7 @@ Namespace Cache
                     If t Is Nothing Then t = o.GetType
                     l.Add(New WeakEntityReference(o))
                 Next
-                Return New WeakEntityList(l, t)
+                Return New WeakEntityList(l)
             End If
         End Function
 
@@ -311,7 +319,6 @@ Namespace Cache
                     End If
                 End If
             End If
-
             Return False
         End Function
 
@@ -319,6 +326,12 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
 
             lo.Remove(obj)
+        End Sub
+
+        Public Sub Delete(ByVal weak_list As Object, ByVal mgr As OrmManager) Implements IListObjectConverter.Clear
+            Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
+
+            lo.Clear(mgr)
         End Sub
 
         Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
@@ -342,8 +355,9 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim objects As New Generic.List(Of T)
+            Dim dic As IDictionary = mgr.Cache.GetOrmDictionary(mgr.GetContextFilter, GetType(T), mgr.MappingEngine)
             For Each loe As WeakEntityReference In l
-                Dim o As T = loe.GetObject(Of T)(mgr)
+                Dim o As T = loe.GetObject(Of T)(mgr, dic)
                 If o IsNot Nothing Then
                     objects.Add(o)
                 Else
@@ -361,9 +375,13 @@ Namespace Cache
             For i As Integer = start To Math.Min(start + length, wm.Count) - 1
                 Dim wl As WeakEntityList = wm(i)
                 Dim row As New List(Of _IEntity)
+                Dim odic As IDictionary = Nothing
                 For j As Integer = 0 To wl.List.Count - 1
                     Dim wr As WeakEntityReference = wl.List(j)
-                    Dim o As _IEntity = wr.GetObject(mgr)
+                    If odic Is Nothing Then
+                        odic = mgr.Cache.GetOrmDictionary(mgr.GetContextFilter, wr.EntityType, mgr.MappingEngine)
+                    End If
+                    Dim o As ICachedEntity = wr.GetObject(mgr, odic)
                     If o IsNot Nothing Then
                         row.Add(o)
                     Else
@@ -407,6 +425,7 @@ Namespace Cache
             End If
             Return sum
         End Function
+
     End Class
 
 End Namespace

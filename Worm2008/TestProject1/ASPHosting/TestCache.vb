@@ -154,6 +154,22 @@ Public Class TestCache
                 Debug.WriteLine(sw.GetStringBuilder.ToString)
             End If
             Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+
+            sw.GetStringBuilder.Length = 0
+
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", "resetCmd", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+
+            sw.GetStringBuilder.Length = 0
+
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", "reset", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
     End Sub
 

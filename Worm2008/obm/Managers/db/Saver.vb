@@ -355,7 +355,20 @@ l1:
                         owr = New ObjectWrap(Of ICachedEntity)(o)
                         _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                         Dim os As ObjectState = o.ObjectState
-                        If _mgr.SaveChanges(o, False) Then
+                        Dim oldME As ObjectMappingEngine = Nothing
+                        Dim blb As Boolean
+                        Try
+                            If Not _mgr.MappingEngine.Equals(o.MappingEngine) Then
+                                oldME = _mgr._schema
+                                _mgr._schema = o.MappingEngine
+                            End If
+                            blb = _mgr.SaveChanges(o, False)
+                        Finally
+                            If oldME IsNot Nothing Then
+                                _mgr._schema = oldME
+                            End If
+                        End Try
+                        If blb Then
                             _lockList(owr).Dispose()
                             _lockList.Remove(owr)
                             RaiseEvent ObjectPostponed(Me, o)

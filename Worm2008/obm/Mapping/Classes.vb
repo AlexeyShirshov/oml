@@ -20,9 +20,9 @@ Namespace Entities.Meta
         Private _table As String
         Private _schema As String
         Private _uqName As String = Guid.NewGuid.GetHashCode.ToString
-#If DEBUG Then
-        Private _stack As String = Environment.StackTrace
-#End If
+        '#If DEBUG Then
+        '        Private _stack As String = Environment.StackTrace
+        '#End If
 
         Public Sub New()
 

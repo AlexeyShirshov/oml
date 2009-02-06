@@ -180,8 +180,8 @@ namespace Worm.CodeGen.Core
 
         public Dictionary<string, CodeCompileUnit> GetFullDom()
         {
-            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.Entities.Count * (Settings.Split?2:1));
-            foreach (EntityDescription entity in _ormObjectsDefinition.Entities)
+            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count * (Settings.Split?2:1));
+            foreach (EntityDescription entity in _ormObjectsDefinition.ActiveEntities)
             {
                 foreach (var pair in GetEntityCompileUnits(entity.Identifier))
                 {
@@ -993,7 +993,7 @@ namespace Worm.CodeGen.Core
 
 			        #region m2m relation methods
 
-			        CreateM2MMethodsSet(entity, entityClass);
+					CreateM2MMethodsSet(entity, entityClass);
 
 			        #endregion
 
@@ -1009,11 +1009,11 @@ namespace Worm.CodeGen.Core
 
 			        #endregion энам табличек
 
-			        #region метод public SourceFragment GetTypeMainTable(Type type)
+					//#region метод public SourceFragment GetTypeMainTable(Type type)
 
-			        CreateGetTypeMainTableMethod(entity, entitySchemaDefClass);
+					//CreateGetTypeMainTableMethod(entity, entitySchemaDefClass);
 
-			        #endregion метод public static SourceFragment GetMainTable()
+					//#endregion метод public static SourceFragment GetMainTable()
 
 			        #region поле _idx
 
@@ -2693,26 +2693,31 @@ namespace Worm.CodeGen.Core
             //    );
             entityTypeExpression = OrmCodeGenHelper.GetEntityNameReferenceExpression(relatedEntity);
 
-            if (underlyingEntity == null)
-                tableExpression = new CodeMethodInvokeExpression(
-                    //new CodeCastExpression(
-                        //new CodeTypeReference(typeof(Worm.IDbSchema)),
-                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")
-                        ,
-                    "GetSharedTable",
-                    new CodePrimitiveExpression(relationTable.Name)
-                    );
-            else
-                tableExpression = new CodeMethodInvokeExpression(
-                    new CodeThisReferenceExpression(),
-                    "GetTypeMainTable",
-                    new CodeMethodInvokeExpression(
-                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
-                        "GetTypeByEntityName",
-                        OrmCodeGenHelper.GetEntityNameReferenceExpression(underlyingEntity)
-                        //new CodePrimitiveExpression(underlyingEntity.Name)
-                        )
-                    );
+			if (underlyingEntity == null)
+				tableExpression = new CodeMethodInvokeExpression(
+					//new CodeCastExpression(
+					//new CodeTypeReference(typeof(Worm.IDbSchema)),
+						new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")
+						,
+					"GetSharedTable",
+					new CodePrimitiveExpression(relationTable.Name)
+					);
+			else
+				tableExpression = new CodePropertyReferenceExpression(
+					new CodeMethodInvokeExpression(
+						new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
+						"GetEntitySchema", OrmCodeGenHelper.GetEntityNameReferenceExpression(underlyingEntity)),
+					"Table");
+				//tableExpression = new CodeMethodInvokeExpression(
+				//    new CodeThisReferenceExpression(),
+				//    "GetTypeMainTable",
+				//    new CodeMethodInvokeExpression(
+				//        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
+				//        "GetTypeByEntityName",
+				//        OrmCodeGenHelper.GetEntityNameReferenceExpression(underlyingEntity)
+				//        //new CodePrimitiveExpression(underlyingEntity.Name)
+				//        )
+				//    );
 
             fieldExpression = new CodePrimitiveExpression(fieldName);
 
@@ -2730,24 +2735,14 @@ namespace Worm.CodeGen.Core
 					cascadeDeleteExpression,
 					mappingExpression);
 
-            if (direct.HasValue)
+			string f = "DirKey";
+            if (direct.HasValue && !direct.Value)
             {
-                string f = "DirKey";
-                if (!direct.Value)
-                    f = "RevKey";
-
-                result.Parameters.Add(
-                    new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)), f)
-                );
-                //CodeExpression directExpression = new CodePrimitiveExpression(direct.Value);
-                //result.Parameters.Add(
-                //    directExpression
-                //);
+            	f = "RevKey";
             }
-			else
-            {
-            	result.Parameters.Add(new CodePrimitiveExpression("default"));
-            }
+			result.Parameters.Add(
+					new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)), f)
+				);
 
             if (underlyingEntity != null)
             {
@@ -3119,10 +3114,15 @@ namespace Worm.CodeGen.Core
 
             #region property GetStatements
 
-            CodeExpression getUsingExpression = new CodeMethodInvokeExpression(
+            CodeMethodInvokeExpression getUsingExpression = new CodeMethodInvokeExpression(
                 new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "Read"),
 				OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc)
                 );
+
+			if(propertyDesc.PropertyType.IsEntityType && propertyDesc.PropertyType.Entity.CacheCheckRequired)
+			{
+				getUsingExpression.Parameters.Add(new CodePrimitiveExpression(true));
+			}
 
             CodeStatement[] getInUsingStatements = new CodeStatement[]
                 {
@@ -3382,6 +3382,12 @@ namespace Worm.CodeGen.Core
 
         private void CreateGetTablesMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
         {
+			if ((entity.BaseEntity == null && entity.Tables.Count == 0) || (entity.BaseEntity != null && entity.Tables.Count == 0 && !entity.InheritsBaseTables))
+				throw new OrmCodeGenException("Список таблиц сущности пуст.");
+
+			if (entity.BaseEntity != null && entity.InheritsBaseTables && entity.Tables.Count == 0)
+				return;
+
             CodeMemberMethod method;
             method = new CodeMemberMethod();
             entitySchemaDefClass.Members.Add(method);
@@ -3520,24 +3526,35 @@ namespace Worm.CodeGen.Core
 
         private void CreateTablesLinkEnum(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
         {
-            CodeTypeDeclaration tablesEnum = new CodeTypeDeclaration("TablesLink");
-            tablesEnum.Attributes = MemberAttributes.Public;
-            if (entity.BaseEntity != null)
-                tablesEnum.Attributes |= MemberAttributes.New;
+			if (!entity.InheritsBaseTables || entity.Tables.Count > 0)
+			{
+				var fullTables = entity.CompleteEntity.Tables;
 
-            tablesEnum.IsClass = false;
-            tablesEnum.IsEnum = true;
-            tablesEnum.IsPartial = false;
-            int tableNum = 0;
-            tablesEnum.Members.AddRange(entity.CompleteEntity.Tables.ConvertAll<CodeTypeMember>(delegate(TableDescription tbl)
-                                                                                                {
-                                                                                                    var enumMember = new CodeMemberField{
-                                                                                                        InitExpression = new CodePrimitiveExpression(tableNum++),
-                                                                                                        Name = OrmCodeGenNameHelper.GetSafeName(tbl.Identifier)
-                                                                                                            };
-                                                                                                    return enumMember;
-                                                                                                }).ToArray());
-            entitySchemaDefClass.Members.Add(tablesEnum);
+				CodeTypeDeclaration tablesEnum = new CodeTypeDeclaration("TablesLink");
+				tablesEnum.Attributes = MemberAttributes.Public;
+				if (entity.BaseEntity != null)
+					tablesEnum.Attributes |= MemberAttributes.New;
+
+				tablesEnum.IsClass = false;
+				tablesEnum.IsEnum = true;
+				tablesEnum.IsPartial = false;
+				int tableNum = 0;
+
+				tablesEnum.Members.AddRange(fullTables.ConvertAll<CodeTypeMember>(delegate(TableDescription tbl)
+				                                                                  	{
+				                                                                  		var enumMember = new CodeMemberField
+				                                                                  		                 	{
+				                                                                  		                 		InitExpression =
+				                                                                  		                 			new CodePrimitiveExpression(
+				                                                                  		                 			tableNum++),
+				                                                                  		                 		Name =
+				                                                                  		                 			OrmCodeGenNameHelper.
+				                                                                  		                 			GetSafeName(tbl.Identifier)
+				                                                                  		                 	};
+				                                                                  		return enumMember;
+				                                                                  	}).ToArray());
+				entitySchemaDefClass.Members.Add(tablesEnum);
+			}
         }
 
         private void ProcessSplitOption(EntityDescription entity, CodeTypeDeclaration entityClass, ref CodeTypeDeclaration entitySchemaDefClass, ICollection<CodeCompileFileUnit> result)

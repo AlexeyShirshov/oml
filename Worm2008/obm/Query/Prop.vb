@@ -119,13 +119,17 @@ Namespace Entities
 #Region " Public ctors "
 
 #Region " Type ctors "
-        'Public Sub New(ByVal t As Type)
-        '    _osrc = New ObjectSource(t)
-        'End Sub
+        Public Sub New(ByVal op As ObjectProperty, ByVal intoPropertyAlias As String, ByVal into As Type)
+            _op = op
+            _falias = intoPropertyAlias
+            _dst = New EntityUnion(into)
+        End Sub
 
-        'Public Sub New(ByVal entityName As String)
-        '    _osrc = New ObjectSource(entityName)
-        'End Sub
+        Public Sub New(ByVal op As ObjectProperty, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+            _op = op
+            _falias = intoPropertyAlias
+            _dst = New EntityUnion(intoEntityName)
+        End Sub
 
         Public Sub New(ByVal op As ObjectProperty)
             _op = op

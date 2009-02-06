@@ -1077,7 +1077,7 @@ l1:
                                     Throw New OrmManagerException("Cannot find type for entity " & en)
                                 End If
                             End If
-                            Dim v As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(value, type_created)
+                            Dim v As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(value, type_created)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
                                 SetLoaded(.Name, True, True, schema)
@@ -1205,6 +1205,9 @@ l1:
                 'Using mc As IGetManager = GetMgr()
                 Dim schema As ObjectMappingEngine = MappingEngine
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
+                If Not Object.Equals(obj.MappingEngine, schema) Then
+                    obj.SetSpecificSchema(schema)
+                End If
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)

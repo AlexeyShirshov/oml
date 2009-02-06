@@ -209,7 +209,7 @@ Namespace Web
                 If usernameToMatch IsNot Nothing Then
                     f = CType(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
-                Dim cmd As New Query.RelationCmd(r)
+                Dim cmd As New Query.RelationCmd(r, UserMapper.GetUserType)
                 cmd.Where(f).Select(UserMapper.GetUserType, WithLoad)
                 Return cmd.ToList(mgr)
                 'Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)

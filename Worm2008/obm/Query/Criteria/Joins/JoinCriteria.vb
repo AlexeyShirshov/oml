@@ -79,15 +79,15 @@ Namespace Criteria.Joins
         '    End Get
         'End Property
 
-        'Protected ReadOnly Property JC() As JCtor
-        '    Get
-        '        Return _jc
-        '    End Get
-        'End Property
-
-        Protected Friend Sub AddFilter(ByVal jf As IFilter)
-            _jc(_jc.Count - 1).Condition = jf
+        Protected Friend Sub AddFilterCon()
+            If _c IsNot Nothing Then
+                _jc(_jc.Count - 1).Condition = _c.Condition
+            End If
         End Sub
+
+        'Protected Friend Sub AddFilter(ByVal jf As IFilter)
+        '    _jc(_jc.Count - 1).Condition = jf
+        'End Sub
 
         Protected Friend Sub AddType(ByVal os As EntityUnion)
             _jc(_jc.Count - 1).M2MObjectSource = os
@@ -112,100 +112,96 @@ Namespace Criteria.Joins
         End Sub
 
         Public Function join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function join(ByVal t As Type) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function join(ByVal entityName As String) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.Join, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function left_join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function left_join(ByVal t As Type) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function left_join(ByVal entityName As String) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function right_join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function right_join(ByVal t As Type) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function right_join(ByVal entityName As String) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function Join(ByVal table As SourceFragment) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function left_join(ByVal table As SourceFragment) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Function right_join(ByVal table As SourceFragment) As JoinCondition
-            AddFilter(_c.Condition)
+            AddFilterCon()
             Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
             _jc.Add(j)
             Return New JoinCondition(_jc)
         End Function
 
         Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin()
-            If jl._c IsNot Nothing Then
-                jl.AddFilter(jl._c.Condition)
-            End If
+            jl.AddFilterCon()
             Return jl._jc.ToArray
         End Operator
 
         Public Function ToList() As IList(Of QueryJoin)
-            If _c IsNot Nothing Then
-                AddFilter(_c.Condition)
-            End If
+            AddFilterCon
             Return _jc
         End Function
 

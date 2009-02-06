@@ -107,9 +107,21 @@ Namespace Entities
 
         End Sub
 
-        'Protected Overridable Sub _PrepareLoadingUpdate()
-
-        'End Sub
+        Protected Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+            If checkEntity Then
+                Using mc As IGetManager = GetMgr()
+                    If mc IsNot Nothing Then
+                        Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+                        Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
+                        Dim o As ICachedEntity = TryCast(mpe.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
+                        If o IsNot Nothing AndAlso Not mc.Manager.IsInCachePrecise(o) Then
+                            mpe.SetPropertyValue(Me, propertyAlias, mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType), schema)
+                        End If
+                    End If
+                End Using
+            End If
+            Return SyncHelper(reader, propertyAlias)
+        End Function
 
         Protected Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable Implements _IEntity.SyncHelper
             Dim err As Boolean = True
@@ -136,6 +148,10 @@ Namespace Entities
 
         Protected Function Read(ByVal propertyAlias As String) As IDisposable
             Return SyncHelper(True, propertyAlias)
+        End Function
+
+        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+            Return SyncHelper(True, propertyAlias, checkEntity)
         End Function
 
         Protected Function Write(ByVal propertyAlias As String) As IDisposable
@@ -423,7 +439,13 @@ Namespace Entities
                     '    Debug.Assert(False)
                 End If
             Else
-                If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
+                If ObjectState = ObjectState.NotLoaded Then
+                    If IsLoaded Then
+                        SetObjectState(ObjectState.None)
+                        'Else
+                        '    SetObjectState(ObjectState.NotFoundInSource)
+                    End If
+                End If
             End If
         End Sub
 

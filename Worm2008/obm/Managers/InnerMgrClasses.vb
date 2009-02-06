@@ -34,7 +34,7 @@ Partial Public Class OrmManager
 
             Dim el As CachedM2MRelation = e.Entry
             Dim obj As IKeyEntity = Nothing, subobj As IKeyEntity = Nothing
-            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(el.MainId, el.MainType)
             If Main.Equals(o1) Then
                 obj = o1
                 subobj = o2
@@ -77,7 +77,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As CachedM2MRelation = e.Entry
-            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) Then
                 el.Delete(o2)
             ElseIf main.Equals(o2) Then
@@ -92,7 +92,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As CachedM2MRelation = e.Entry
-            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 Return el.Accept(mgr)
             End If
@@ -105,7 +105,7 @@ Partial Public Class OrmManager
             End If
 
             Dim el As CachedM2MRelation = e.Entry
-            Dim main As IKeyEntity = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            Dim main As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(el.MainId, el.MainType)
             If main.Equals(o1) OrElse main.Equals(o2) Then
                 el.Reject(mgr, False)
             End If
@@ -386,11 +386,6 @@ Partial Public Class OrmManager
             GC.SuppressFinalize(Me)
         End Sub
     End Class
-
-    Public Interface ICacheValidator
-        Function ValidateItemFromCache(ByVal ce As UpdatableCachedItem) As Boolean
-        Function ValidateBeforCacheProbe() As Boolean
-    End Interface
 
     Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity})
         Implements ICacheItemProvoder(Of T)

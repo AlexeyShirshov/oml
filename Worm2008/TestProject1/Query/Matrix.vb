@@ -117,7 +117,7 @@ Imports System.Collections.ObjectModel
             Select(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
 
@@ -128,10 +128,10 @@ Imports System.Collections.ObjectModel
         Next
 
         m = q.ToMatrix
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
 
@@ -155,7 +155,7 @@ Imports System.Collections.ObjectModel
             Select(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
 
@@ -166,10 +166,10 @@ Imports System.Collections.ObjectModel
         Next
 
         m = q.ToMatrix
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
 

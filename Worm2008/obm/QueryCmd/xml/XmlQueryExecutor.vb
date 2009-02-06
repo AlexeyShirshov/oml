@@ -62,5 +62,9 @@
                 Throw New NotImplementedException
             End Get
         End Property
+
+        Public Sub ResetObjects(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetObjects
+            Throw New NotImplementedException
+        End Sub
     End Class
 End Namespace

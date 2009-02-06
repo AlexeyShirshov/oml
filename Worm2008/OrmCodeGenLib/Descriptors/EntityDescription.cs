@@ -277,6 +277,8 @@ namespace Worm.CodeGen.Core.Descriptors
 			EntityDescription resultOne =
 				new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description ?? oldOne.Description,
 									  newOne.OrmObjectsDef);
+			if(oldOne != null)
+				resultOne.CacheCheckRequired = oldOne.CacheCheckRequired;
 
 			//добавляем новые таблички
 			foreach (TableDescription newTable in newOne.Tables)
@@ -335,7 +337,7 @@ namespace Worm.CodeGen.Core.Descriptors
 						{
 						    TypeDescription newType1 = newType;
 						    EntityDescription newEntity =
-								resultOne.OrmObjectsDef.Entities.Find(
+								resultOne.OrmObjectsDef.ActiveEntities.Find(
 								    matchEntity =>
 								    matchEntity.BaseEntity != null && matchEntity.BaseEntity.Identifier == newType1.Entity.Identifier);
 							if (newEntity != null)
@@ -379,6 +381,10 @@ namespace Worm.CodeGen.Core.Descriptors
 	    public bool UseGenerics { get; set; }
 
 	    public bool MakeInterface { get; set; }
+
+		public bool Disabled { get; set; }
+
+		public bool CacheCheckRequired { get; set; }
 
 	    public bool EnableCommonEventRaise
 		{

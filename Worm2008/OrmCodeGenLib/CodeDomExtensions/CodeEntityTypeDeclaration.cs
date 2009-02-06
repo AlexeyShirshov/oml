@@ -122,7 +122,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         new CodeTypeReference(typeof(M2MRelationDesc)),
                         entityTypeExpression);
 
-                    accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
+					accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
 
                     var staticProperty = new CodeMemberProperty
                     {
@@ -173,6 +173,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     var desc = new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(M2MRelationDesc)),
                         entityTypeExpression);
+
+					accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
 
                     var staticProperty = new CodeMemberProperty
                     {
@@ -228,7 +230,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 	        foreach (var entityRelation in m_entity.GetEntityRelations(false))
 	        {
 
-	            string accessorName = entityRelation.AccessorName ?? OrmCodeGenNameHelper.GetMultipleForm(entityRelation.Entity.Name);
+				string accessorName = string.IsNullOrEmpty(entityRelation.AccessorName) ? OrmCodeGenNameHelper.GetMultipleForm(entityRelation.Entity.Name) : entityRelation.AccessorName;
 
 	            var staticProperty = new CodeMemberProperty
 	                                     {

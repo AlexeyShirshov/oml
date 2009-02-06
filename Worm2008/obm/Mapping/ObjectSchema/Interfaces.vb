@@ -86,7 +86,17 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IReadonlyObjectSchema
+        <Flags()> _
+        Enum Operation
+            Delete = 1
+            Insert = 2
+            Update = 4
+            M2M = 8
+            All = 15
+        End Enum
+
         Function GetEditableSchema() As IEntitySchema
+        ReadOnly Property SupportedOperation() As Operation
     End Interface
 
     Public Interface IPKInsertValues

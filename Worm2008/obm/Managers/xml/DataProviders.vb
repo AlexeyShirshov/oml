@@ -35,7 +35,7 @@ Namespace Xml
                 _id = id
             End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
+            Public Overridable Function Validate() As Boolean Implements ICacheValidator.ValidateBeforCacheProbe
                 If _f IsNot Nothing Then
                     Dim c As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If c IsNot Nothing Then
@@ -62,7 +62,7 @@ Namespace Xml
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As UpdatableCachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As UpdatableCachedItem) As Boolean Implements ICacheValidator.ValidateItemFromCache
                 Return True
             End Function
 

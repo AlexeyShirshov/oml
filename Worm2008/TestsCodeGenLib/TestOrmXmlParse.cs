@@ -127,7 +127,8 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
-            Assert.AreEqual<int>(4, ormObjectDef.Entities.Count);
+            Assert.AreEqual<int>(5, ormObjectDef.Entities.Count);
+			Assert.AreEqual<int>(4, ormObjectDef.ActiveEntities.Count);
             Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) {return match.Identifier == "eArtist" && match.Name == "Artist";}));
             Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) { return match.Identifier == "eAlbum" && match.Name == "Album"; }));
             Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation" && match.Name == "Album2ArtistRelation"; }));
