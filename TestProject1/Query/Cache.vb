@@ -73,7 +73,7 @@ Imports System.Collections.ObjectModel
                 End Using
 
                 Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -94,7 +94,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.AcceptModifications()
@@ -121,7 +121,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.Saver.AcceptInBatch = True
@@ -140,7 +140,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
-            Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(3)
+            Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(3)
             Assert.IsNotNull(t1)
 
             Dim q As New QueryCmd()
@@ -158,7 +158,7 @@ Imports System.Collections.ObjectModel
                 End Using
 
                 Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -179,7 +179,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.AcceptModifications()
@@ -263,17 +263,17 @@ Imports System.Collections.ObjectModel
 
             Dim r As ReadOnlyList(Of Table2) = q.ToOrmList(Of Table2)(mgr)
             Assert.AreEqual(2, r.Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             mgr.BeginTransaction()
             Try
-                Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(3)
+                Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(3)
                 t1.Enum = Enum1.first
                 t1.SaveChanges(True)
 
                 r = q.ToOrmList(Of Table2)(mgr)
                 Assert.AreEqual(0, r.Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -291,7 +291,7 @@ Imports System.Collections.ObjectModel
         q.Select(t).Top(2).Sort(SCtor.prop(t, "DT"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(2, r(1).ID)
 
@@ -299,7 +299,7 @@ Imports System.Collections.ObjectModel
 
         r = q.ToList(Of Table1)()
 
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(3, r(1).ID)
 
@@ -315,34 +315,34 @@ Imports System.Collections.ObjectModel
         q.Select(t)
 
         q.ToList(Of Entity4)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.ToList(Of Entity4)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         q.Sort(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.Sort(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.CacheSort = True
 
         q.ToList(Of Entity4)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.ToList(Of Entity4)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         q.Sort(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         q.Sort(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
     End Sub
 
     <TestMethod()> Public Sub TestM2M()
@@ -350,12 +350,12 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = tm
 
-            Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
+            Dim e As Entity = mgr.GetKeyEntityFromCacheOrDB(Of Entity)(1)
             Assert.IsNotNull(e)
 
-            Dim q As New RelationCmd(e)
+            Dim q As New RelationCmd(e, GetType(Entity4))
 
-            Dim q2 As QueryCmd = New RelationCmd(e). _
+            Dim q2 As QueryCmd = New RelationCmd(e, GetType(Entity4)). _
                 Where(Ctor.prop(GetType(Entity4), "Title").eq("first"))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -376,19 +376,19 @@ Imports System.Collections.ObjectModel
                     e.Relations.Add(en4)
 
                     Assert.AreEqual(4, q.ToList(Of Entity4)(mgr).Count)
-                    Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                    Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
                     Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
-                    Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+                    Assert.IsTrue(q2.LastExecutionResult.CacheHit)
 
                     s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(5, q.ToList(Of Entity4)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
                 Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
-                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q2.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -421,10 +421,10 @@ Imports System.Collections.ObjectModel
                 End Using
 
                 Assert.AreNotEqual(f, q.ToList(Of Entity4)(mgr)(0))
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
                 Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
-                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q2.LastExecutionResult.CacheHit)
 
             Finally
                 mgr.Rollback()
@@ -453,7 +453,7 @@ Imports System.Collections.ObjectModel
                 End Using
 
                 Assert.AreEqual(f, q.ToList(Of Table1)(mgr)(0))
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             Finally
                 mgr.Rollback()
@@ -471,7 +471,7 @@ Imports System.Collections.ObjectModel
 
         Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)()
 
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, l.Count)
 
@@ -481,15 +481,15 @@ Imports System.Collections.ObjectModel
         Next
 
         Dim l2 As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         q.Select(FCtor.prop(GetType(Table1), "Title").prop(GetType(Table1), "Code"))
         l2 = q.ToList(Of Table1)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         q.Select(FCtor.prop(GetType(Table1), "Code").prop(GetType(Table1), "Title"))
         l2 = q.ToList(Of Table1)()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
     End Sub
 
@@ -504,15 +504,15 @@ Imports System.Collections.ObjectModel
 
         Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList
 
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(2, l.Count)
 
         l = q.ToAnonymList()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         q.Select(FCtor.prop(GetType(Table2), "Money").prop(GetType(Table1), "Title")).From(GetType(Table1))
         l = q.ToAnonymList()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
     End Sub
 
@@ -526,11 +526,11 @@ Imports System.Collections.ObjectModel
         q.From(GetType(Table1)).Join(JCtor.join(GetType(Table2)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1"))
 
         Dim l As ReadonlyMatrix = q.ToMatrix
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(2, l.Count)
 
         l = q.ToMatrix()
-        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(0), GetType(Table1))
@@ -544,7 +544,7 @@ Imports System.Collections.ObjectModel
 
         q.Select(FCtor.prop(GetType(Table2), "Money").prop(GetType(Table1), "Title"))
         l = q.ToMatrix()
-        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(1), GetType(Table1))

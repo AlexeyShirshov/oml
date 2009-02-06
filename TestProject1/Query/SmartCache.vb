@@ -58,10 +58,10 @@ Imports Worm.Criteria.Joins
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -76,10 +76,10 @@ Imports Worm.Criteria.Joins
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -94,10 +94,10 @@ Imports Worm.Criteria.Joins
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -113,10 +113,10 @@ Imports Worm.Criteria.Joins
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheWhatCan
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -176,12 +176,12 @@ End Class
             Assert.AreEqual(0, dic.Count)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             Assert.AreEqual(1, dic.Count)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             Assert.AreEqual(1, dic.Count)
         End Using
@@ -202,10 +202,10 @@ End Class
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheOrThrowException
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table1)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 

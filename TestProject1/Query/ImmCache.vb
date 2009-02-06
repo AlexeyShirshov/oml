@@ -70,7 +70,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             Finally
                 mgr.Rollback()
@@ -88,7 +88,7 @@ Imports Worm.Criteria
             Assert.IsNotNull(q)
 
             Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             mgr.BeginTransaction()
             Try
@@ -99,7 +99,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -120,14 +120,14 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -155,7 +155,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -185,7 +185,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -206,7 +206,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.Saver.AcceptInBatch = True
@@ -214,7 +214,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsTrue(q.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -231,18 +231,18 @@ Imports Worm.Criteria
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim t As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
                     s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -324,7 +324,7 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(3, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -345,14 +345,14 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim f As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    Dim f As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
                     f.EnumStr = Enum1.sec
 
                     s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(1, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -385,10 +385,10 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreNotEqual(f, q.ToList(Of Entity4)(mgr)(0))
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
                 Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
-                Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q2.LastExecutionResult.CacheHit)
 
             Finally
                 mgr.Rollback()

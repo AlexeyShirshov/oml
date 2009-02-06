@@ -29,6 +29,26 @@ Namespace Entities
             _desc = desc
         End Sub
 
+        Public Shared Function MetaEquals(ByVal r1 As Relation, ByVal r2 As Relation, ByVal schema As ObjectMappingEngine) As Boolean
+            If Object.ReferenceEquals(r1, r2) Then
+                Return True
+            End If
+
+            If r2.Relation IsNot Nothing AndAlso r1.Relation IsNot Nothing Then
+                Dim e1 As EntityUnion = r1.Relation.Rel
+                Dim e2 As EntityUnion = r2.Relation.Rel
+                If Not String.IsNullOrEmpty(e1.EntityName) AndAlso Not String.IsNullOrEmpty(e2.EntityName) Then
+                    Return e1.EntityName = e2.EntityName
+                ElseIf e1.Type IsNot Nothing AndAlso e2.Type IsNot Nothing Then
+                    Return e1.Type Is e2.Type
+                Else
+                    Return e1.GetRealType(schema) Is e2.GetRealType(schema)
+                End If
+            End If
+
+            Return False
+        End Function
+
         Protected Overridable ReadOnly Property _mainId() As Object
             Get
                 Return _host.Identifier
@@ -126,6 +146,23 @@ Namespace Entities
         Protected Overridable Function PreAdd(ByVal obj As IKeyEntity) As Boolean
             Return False
         End Function
+
+        Public Sub Merge(ByVal cmd As RelationCmd, ByVal col As IList(Of IKeyEntity), ByVal removeNotInList As Boolean)
+            'Dim cmd As RelationCmd = Relation.CreateCmd(Host)
+            Dim cur As IList = cmd.ToList
+            If removeNotInList Then
+                For Each o As IKeyEntity In cur
+                    If Not col.Contains(o) Then
+                        Delete(o)
+                    End If
+                Next
+            End If
+            For Each o As IKeyEntity In col
+                If Not cur.Contains(o) Then
+                    Add(o)
+                End If
+            Next
+        End Sub
 
         Public Sub Add(ByVal obj As IKeyEntity)
             Using SyncRoot

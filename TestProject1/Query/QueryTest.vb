@@ -259,7 +259,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
     <TestMethod()> Public Sub TestDistinct()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))
-            Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+            Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrDB(Of Table1)(1)
 
             Dim q As QueryCmd = t1.Relations.GetCmd(GetType(Table33))
 
@@ -336,7 +336,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New RelationCmd(e)
+            Dim q2 As New RelationCmd(e, GetType(Entity4))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
@@ -358,12 +358,12 @@ Imports System.Runtime.Serialization.Formatters.Binary
     <TestMethod()> Public Sub TestM2M2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
-            Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
+            Dim e As Entity = mgr.GetKeyEntityFromCacheOrDB(Of Entity)(1)
             Assert.IsNotNull(e)
 
-            Dim q As New RelationCmd(e)
+            Dim q As New RelationCmd(e, GetType(Entity4))
 
-            Dim q2 As QueryCmd = New RelationCmd(e). _
+            Dim q2 As QueryCmd = New RelationCmd(e, GetType(Entity4)). _
                 Where(Ctor.prop(GetType(Entity4), "Title").eq("first"))
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -391,7 +391,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New RelationCmd(e)
+            Dim q2 As New RelationCmd(e, GetType(Entity4))
             q2.Filter = Ctor.prop(GetType(Entity4), "Title").[like]("b%")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
@@ -412,7 +412,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New RelationCmd(e)
+            Dim q2 As New RelationCmd(e, GetType(Entity4))
             q2.propSort = SCtor.prop(GetType(Entity4), "Title")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
@@ -485,7 +485,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             Assert.IsTrue(r(0).IsPKLoaded)
 
@@ -493,14 +493,14 @@ Imports System.Runtime.Serialization.Formatters.Binary
             r = q.ToList(Of Entity, IEnt)(mgr)
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             q = New QueryCmd()
             q.Select(GetType(Entity))
             Dim r2 As IList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
             Assert.IsNotNull(r2)
             Assert.AreEqual(13, r2.Count)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             'q.SelectedType = GetType(Entity)
             'Dim r As List(Of Entity)
@@ -527,15 +527,15 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Dim q As QueryCmd = New QueryCmd()
             q.Select(GetType(Entity4))
             q.ToList(Of Entity4)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Assert.IsTrue(q.IsInCache(mgr))
 
             q.ToList(Of Entity4)(mgr)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             q.RenewCache(mgr, True)
             q.ToList(Of Entity4)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -549,10 +549,10 @@ Imports System.Runtime.Serialization.Formatters.Binary
             q.ToList(Of Entity4)(mgr)
 
             Assert.IsTrue(q.IsInCache(mgr))
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Entity4)(mgr)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Assert.IsTrue(q.IsInCache(mgr))
 
         End Using
@@ -603,13 +603,13 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             l = q.ToObjectList(Of NonCache)(mgr)
 
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             q.ClearCache(mgr)
 
             l = q.ToObjectList(Of NonCache)(mgr)
 
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         End Using
     End Sub
@@ -620,43 +620,43 @@ Imports System.Runtime.Serialization.Formatters.Binary
             q.Select(GetType(Entity))
 
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             Dim q2 As New QueryCmd()
             q2.Select(GetType(Entity4))
 
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
-            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q2.LastExecutionResult.CacheHit)
 
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
-            Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q2.LastExecutionResult.CacheHit)
 
             q.DontCache = True
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
             q.DontCache = False
 
             q2.DontCache = True
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
-            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q2.LastExecutionResult.CacheHit)
             q2.DontCache = False
 
             q.LiveTime = TimeSpan.FromSeconds(5)
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
             Threading.Thread.Sleep(5100)
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q2.LiveTime = TimeSpan.FromSeconds(5)
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
-            Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q2.LastExecutionResult.CacheHit)
             Threading.Thread.Sleep(5100)
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
-            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q2.LastExecutionResult.CacheHit)
 
             Dim bf As New BinaryFormatter
             Using ms As New IO.MemoryStream
@@ -666,10 +666,10 @@ Imports System.Runtime.Serialization.Formatters.Binary
                 Diagnostics.Debug.WriteLine(ms.ToArray.Length)
             End Using
 
-            Using ms As New IO.MemoryStream
-                bf.Serialize(ms, q)
-                Diagnostics.Debug.WriteLine(ms.ToArray.Length)
-            End Using
+            'Using ms As New IO.MemoryStream
+            '    bf.Serialize(ms, q)
+            '    Diagnostics.Debug.WriteLine(ms.ToArray.Length)
+            'End Using
 
             'Dim bf2 As New BinaryFormatter
             'Using ms2 As New IO.MemoryStream
@@ -695,11 +695,11 @@ Imports System.Runtime.Serialization.Formatters.Binary
             q.ExternalCacheMark = "ldgn"
 
             q.ToList(Of Entity)(mgr)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Assert.AreEqual(1, dic.Count)
 
             q.ToList(Of Entity)(mgr)
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             'q.ToEntityList(Of Entity)(mgr)
             'Assert.IsFalse(q.LastExecitionResult.CacheHit)
@@ -747,11 +747,11 @@ Imports System.Runtime.Serialization.Formatters.Binary
             q.Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
 
             Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             q.ToList(Of Table2)(mgr)
 
-            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
         End Using
     End Sub
 
@@ -1089,7 +1089,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
 
         Using mgr As OrmManager = q.GetMgr.CreateManager
-            Dim t As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
+            Dim t As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
 
             Assert.IsFalse(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))
@@ -1274,5 +1274,20 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
         't = q.GetByID(Of Table1)(1)
         'Assert.AreEqual(0, q.ExecCount)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestInSubQuery()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Table1))
+
+        Dim t As ICollection(Of Table2) = New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))) _
+            .Where(Ctor.prop(GetType(Table2), "Table1").in(q)) _
+            .ToList(Of Table2)()
+
+        Assert.AreEqual(2, t.Count)
     End Sub
 End Class

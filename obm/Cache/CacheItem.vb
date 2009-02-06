@@ -96,8 +96,8 @@ Namespace Cache
             ByVal withLoad() As Boolean, ByVal created As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix
-
-            Return mgr.ListConverter.FromWeakList(_col, mgr, start, length, withLoad, created, successed)
+            Dim lc As IListObjectConverter = mgr.ListConverter
+            Return lc.FromWeakList(_col, mgr, start, length, withLoad, created, successed)
             'If Not (start = 0 AndAlso (_col.Count = length OrElse length = Integer.MaxValue)) Then
             '    Dim list As IList = TryCast(_col, IList)
             '    Dim r As New List(Of T)
@@ -310,13 +310,14 @@ Namespace Cache
             ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
-            'Using p As New CoreFramework.Debuging.OutputTimer("From week list")
-            Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, start, length, withLoad, created, successed)
-            'End Using
+            Dim lc As IListObjectConverter = mgr.ListConverter
+            Return lc.FromWeakList(Of T)(_obj, mgr, start, length, withLoad, created, successed)
         End Function
 
-        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-            Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
+        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})( _
+            ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+            Dim lc As IListObjectConverter = mgr.ListConverter
+            Return lc.FromWeakList(Of T)(_obj, mgr)
         End Function
 
         'Public Sub SetObjectList(ByVal mc As OrmManager, ByVal value As OrmBase())
@@ -368,6 +369,10 @@ Namespace Cache
 
         Public Overridable Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
             mgr.ListConverter.Delete(_obj, obj)
+        End Sub
+
+        Public Overridable Sub Clear(ByVal mgr As OrmManager)
+            mgr.ListConverter.Clear(_obj, mgr)
         End Sub
 
         Public Property Filter() As IFilter
@@ -458,7 +463,8 @@ Namespace Cache
 
         Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, _
-            ByVal start As Integer, ByVal length As Integer, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
+            ByVal start As Integer, ByVal length As Integer, _
+            ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
             Dim tt As Type = GetType(T)
             Dim r As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))

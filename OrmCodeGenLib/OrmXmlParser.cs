@@ -329,10 +329,15 @@ namespace Worm.CodeGen.Core
 
             	string useGenericsAttribute = entityElement.GetAttribute("useGenerics");
             	string makeInterfaceAttribute = entityElement.GetAttribute("makeInterface");
+            	string disbledAttribute = entityElement.GetAttribute("disabled");
+				string cacheCheckRequiredAttribute = entityElement.GetAttribute("cacheCheckRequired");
 
 				bool useGenerics = !string.IsNullOrEmpty(useGenericsAttribute) && XmlConvert.ToBoolean(useGenericsAttribute);
             	bool makeInterface = !string.IsNullOrEmpty(makeInterfaceAttribute) &&
             	                     XmlConvert.ToBoolean(makeInterfaceAttribute);
+            	bool disabled = !string.IsNullOrEmpty(disbledAttribute) && XmlConvert.ToBoolean(disbledAttribute);
+            	bool cacheCheckRequired = !string.IsNullOrEmpty(cacheCheckRequiredAttribute) &&
+            	                          XmlConvert.ToBoolean(cacheCheckRequiredAttribute);
 
                 if (!string.IsNullOrEmpty(behaviourName))
                     behaviour = (EntityBehaviuor) Enum.Parse(typeof (EntityBehaviuor), behaviourName);
@@ -342,6 +347,8 @@ namespace Worm.CodeGen.Core
                 entity.Behaviour = behaviour;
             	entity.UseGenerics = useGenerics;
             	entity.MakeInterface = makeInterface;
+            	entity.Disabled = disabled;
+            	entity.CacheCheckRequired = cacheCheckRequired;
 
                 _ormObjectsDef.Entities.Add(entity);
 

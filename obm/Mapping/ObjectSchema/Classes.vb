@@ -1,5 +1,6 @@
 ﻿Imports Worm.Query
 Imports Worm.Criteria.Core
+Imports System.Collections.Generic
 
 Namespace Entities.Meta
 
@@ -145,6 +146,45 @@ Namespace Entities.Meta
         Public Overrides Function GetHashCode() As Integer
             Return _eu.GetHashCode Xor If(String.IsNullOrEmpty(Key), 0, Key.GetHashCode)
         End Function
+
+        Public Overridable Sub Load(ByVal mgr As OrmManager, ByVal objs As IList(Of IKeyEntity), _
+                                    ByVal start As Integer, ByVal length As Integer)
+            Dim lookups As New Dictionary(Of IKeyEntity, IList)
+            Dim newc As New List(Of IKeyEntity)
+            Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
+            Dim rcmd As RelationCmd = Nothing
+
+            For i As Integer = start To start + length - 1
+                Dim o As IKeyEntity = objs(i)
+                rcmd = CreateCmd(o)
+                If rcmd.IsInCache(mgr) Then
+                    lookups.Add(o, rcmd.ToList)
+                    hasInCache.Add(o, Nothing)
+                Else
+                    newc.Add(o)
+                End If
+            Next
+
+            If rcmd Is Nothing Then
+                Return
+            End If
+
+            Dim ids As New List(Of Object)
+            For Each o As IKeyEntity In newc
+                ids.Add(o.Identifier)
+            Next
+
+            Throw New NotImplementedException
+            'Dim c As New List(Of T)
+
+            'mgr.GetObjects(ids, rcmd, c, True, Column, False)
+
+        End Sub
+
+        Public Overridable Function CreateCmd(ByVal o As IKeyEntity) As RelationCmd
+            Return o.GetCmd(Me)
+        End Function
+
     End Class
 
     Public Class M2MRelationDesc

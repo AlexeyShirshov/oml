@@ -221,15 +221,32 @@ Namespace Cache
             _ref = New WeakReference(o)
         End Sub
 
-        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As T
-            Return GetObject(Of T)(mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine)
+        Public Sub Reset()
+            _ref.Target = Nothing
+        End Sub
+
+        Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk() As PKDesc, ByVal type As Type, _
+            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, cache, schema)
+
+            o.SetObjectState(ObjectState.NotLoaded)
+
+            Dim co As ICachedEntity = cache.NormalizeObject(o, False, False, dic, addOnCreate, Nothing)
+
+            mgr.RaiseObjectRestored(ReferenceEquals(co, o), co)
+
+            Return co
         End Function
 
-        Public Function GetObject(Of T As {_ICachedEntity})(ByVal cache As CacheBase, _
-            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
+        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal dic As IDictionary) As T
+            Return GetObject(Of T)(mgr, mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine, dic)
+        End Function
+
+        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
+            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As T
             Dim o As T = CType(_ref.Target, T)
             If o Is Nothing Then
-                o = CType(cache.GetEntityFromCacheOrCreate(_e.PK, GetType(T), True, filterInfo, schema), T) 'mc.FindObject(id, t)
+                o = CType(GetEntityFromCacheOrCreate(mgr, cache, _e.PK, GetType(T), True, filterInfo, schema, dic), T) 'mc.FindObject(id, t)
                 If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
                     o = CType(cache.NewObjectManager.GetNew(GetType(T), _e.PK), T)
                 End If
@@ -237,21 +254,27 @@ Namespace Cache
             Return o
         End Function
 
-        Public Function GetObject(ByVal mgr As OrmManager) As ICachedEntity
-            Return GetObject(mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine)
+        Public Function GetObject(ByVal mgr As OrmManager, ByVal dic As IDictionary) As ICachedEntity
+            Return GetObject(mgr, mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine, dic)
         End Function
 
-        Public Function GetObject(ByVal cache As CacheBase, _
-            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As ICachedEntity
+        Public Function GetObject(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
+            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
             Dim o As ICachedEntity = CType(_ref.Target, ICachedEntity)
             If o Is Nothing Then
-                o = cache.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType, True, filterInfo, schema) 'mc.FindObject(id, t)
+                o = GetEntityFromCacheOrCreate(mgr, cache, _e.PK, _e.EntityType, True, filterInfo, schema, dic) 'mc.FindObject(id, t)
                 If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
                     o = cache.NewObjectManager.GetNew(_e.EntityType, _e.PK)
                 End If
             End If
             Return o
         End Function
+
+        Protected Friend ReadOnly Property Obj() As ICachedEntity
+            Get
+                Return CType(_ref.Target, ICachedEntity)
+            End Get
+        End Property
 
         Public ReadOnly Property ObjName() As String
             Get
@@ -284,39 +307,63 @@ Namespace Cache
                 End If
             End Get
         End Property
+
+        Public ReadOnly Property EntityType() As Type
+            Get
+                Return _e.EntityType
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
     Public Class WeakEntityList
         Private _l As Generic.List(Of WeakEntityReference)
-        Private _t As Type
+        'Private _t As Type
 
-        Public Sub New(ByVal l As List(Of WeakEntityReference), ByVal t As Type)
+        Public Sub New(ByVal l As List(Of WeakEntityReference))
             _l = l
-            _t = t
+            '_t = t
         End Sub
 
-        Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, ByVal sort As Sorting.Sort) As Boolean
+        Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, _
+                                ByVal sort As Sorting.Sort) As Boolean
             'If sort.Previous IsNot Nothing Then
             '    Return False
             'End If
 
             arr = New ArrayList
+            Dim dic As IDictionary = Nothing
             For Each le As WeakEntityReference In _l
                 If Not le.IsLoaded Then
                     Return False
                 Else
-                    arr.Add(le.GetObject(mc))
+                    If dic Is Nothing Then
+                        dic = mc.Cache.GetOrmDictionary(mc.GetContextFilter, le.EntityType, mc.MappingEngine)
+                    End If
+                    Dim o As ICachedEntity = le.GetObject(mc, dic)
+                    arr.Add(o)
                 End If
             Next
             Return True
         End Function
+
+        Public Sub Clear(ByVal mgr As OrmManager)
+            For i As Integer = 0 To _l.Count - 1
+                Dim le As WeakEntityReference = _l(i)
+                Dim o As ICachedEntity = le.Obj
+                If o IsNot Nothing Then
+                    mgr.RemoveObjectFromCache(CType(o, _ICachedEntity))
+                End If
+                le.Reset()
+            Next
+        End Sub
 
         Public Sub Remove(ByVal obj As ICachedEntity)
             For i As Integer = 0 To _l.Count - 1
                 Dim le As WeakEntityReference = _l(i)
                 If le.IsEqual(obj) Then
                     _l.RemoveAt(i)
+                    le.Reset()
                     Exit For
                 End If
             Next

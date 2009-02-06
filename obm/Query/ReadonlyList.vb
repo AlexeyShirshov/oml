@@ -12,6 +12,7 @@ End Interface
 Friend Interface ILoadableList
     Inherits IListEdit
     Sub LoadObjects()
+    Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
 End Interface
 
 <Serializable()> _
@@ -198,6 +199,10 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
             Return Me
         End If
     End Function
+
+    Private Sub _LoadObjects(ByVal start As Integer, ByVal length As Integer) Implements ILoadableList.LoadObjects
+        LoadObjects(start, length)
+    End Sub
 
     Private Sub _LoadObjects() Implements ILoadableList.LoadObjects
         LoadObjects()

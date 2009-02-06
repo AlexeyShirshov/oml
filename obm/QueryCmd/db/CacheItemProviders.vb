@@ -231,7 +231,7 @@ Namespace Query.Database
 
         Class Provider(Of ReturnType As {ICachedEntity})
             Inherits ProviderAnonym(Of ReturnType)
-            Implements OrmManager.ICacheValidator, ICacheItemProvoder(Of ReturnType)
+            Implements ICacheValidator, ICacheItemProvoder(Of ReturnType)
 
             'Private _stmt As String
             'Private _params As ParamMgr
@@ -436,10 +436,10 @@ Namespace Query.Database
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
                 Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
-                Dim createType As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
+                'Dim createType As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
                 Dim t As Type = selectType
                 If t Is Nothing Then
-                    t = createType
+                    t = _q.CreateType.GetRealType(dbm.MappingEngine)
                 End If
                 dbm.LoadMultipleObjects(t, cmd, rr, sl)
                 _q.ExecCount += 1
@@ -507,7 +507,7 @@ Namespace Query.Database
             '    ResetDic()
             'End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
+            Public Overridable Function Validate() As Boolean Implements ICacheValidator.ValidateBeforCacheProbe
                 'If _f IsNot Nothing Then
                 '    For Each f_ As IFilter In _f
                 '        If f_ IsNot Nothing Then
@@ -534,7 +534,7 @@ Namespace Query.Database
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As UpdatableCachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+            Public Overridable Function Validate(ByVal ce As UpdatableCachedItem) As Boolean Implements ICacheValidator.ValidateItemFromCache
                 Return ValidateFromCache()
             End Function
         End Class

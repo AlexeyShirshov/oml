@@ -281,6 +281,13 @@ namespace Worm.CodeGen.Core
 				if (entity.MakeInterface)
 					entityElement.SetAttribute("makeInterface", XmlConvert.ToString(entity.MakeInterface));
 
+				if (entity.Disabled)
+					entityElement.SetAttribute("disabled", XmlConvert.ToString(entity.Disabled));
+
+				if (entity.CacheCheckRequired)
+					entityElement.SetAttribute("cacheCheckRequired", XmlConvert.ToString(entity.CacheCheckRequired));
+				
+
                 XmlNode tablesNode = CreateElement("Tables");
                 foreach (TableDescription table in entity.Tables)
                 {
@@ -288,8 +295,12 @@ namespace Worm.CodeGen.Core
                     tableElement.SetAttribute("ref", table.Identifier);
                     tablesNode.AppendChild(tableElement);
                 }
-            	((XmlElement) tablesNode).SetAttribute("inheritsBase", XmlConvert.ToString(entity.InheritsBaseTables));
-                entityElement.AppendChild(tablesNode);
+				if(!entity.InheritsBaseTables)
+				{
+					((XmlElement)tablesNode).SetAttribute("inheritsBase", XmlConvert.ToString(entity.InheritsBaseTables));
+				}
+				
+				entityElement.AppendChild(tablesNode);	
 
                 XmlNode propertiesNode = CreateElement("Properties");
                 List<PropertyDescription> properties = entity.Properties.FindAll(p => p.Group == null);
@@ -426,7 +437,7 @@ namespace Worm.CodeGen.Core
 
         private void FillTables()
         {
-            XmlNode tablesNode = CreateElement("Tables");
+            XmlElement tablesNode = CreateElement("Tables");
             _ormXmlDocumentMain.DocumentElement.AppendChild(tablesNode);
             foreach (TableDescription table in _ormObjectsDef.Tables)
             {

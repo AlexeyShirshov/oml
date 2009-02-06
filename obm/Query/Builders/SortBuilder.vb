@@ -273,24 +273,24 @@ Namespace Query
             Return CreateCustom(sortexpression, Me, values)
         End Function
 
-        Public ReadOnly Property asc() As SCtor
+        Public ReadOnly Property asc() As SortLink
             Get
                 If IsCustom Then
                     Throw New InvalidOperationException("Sort is custom")
                 End If
                 _order = SortType.Asc
-                Return New SCtor(_os, Me)
+                Return Me
                 'Return New Sort(_f, SortType.Asc, _ext)
             End Get
         End Property
 
-        Public ReadOnly Property desc() As SCtor
+        Public ReadOnly Property desc() As SortLink
             Get
                 'If IsCustom Then
                 '    Throw New InvalidOperationException("Sort is custom")
                 'End If
                 _order = SortType.Desc
-                Return New SCtor(_os, Me)
+                Return Me
                 'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
@@ -300,7 +300,7 @@ Namespace Query
             Return New SCtor(_os, Me)
         End Function
 
-        Public Function Order(ByVal asc As Boolean) As SCtor
+        Public Function Order(ByVal asc As Boolean) As SortLink
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
@@ -312,13 +312,13 @@ Namespace Query
             End If
         End Function
 
-        Public Function Order(ByVal orderParam As String) As SCtor
+        Public Function Order(ByVal orderParam As String) As SortLink
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
 
             _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
-            Return New SCtor(_os, Me) 'New Sort(_f, _, _ext)
+            Return Me 'New Sort(_f, _, _ext)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As SortLink) As Sort

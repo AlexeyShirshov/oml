@@ -5,6 +5,7 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm
 Imports Worm.Database
+Imports Worm.Cache
 
 <TestClass()> Public Class TestRel
 
@@ -84,7 +85,9 @@ Imports Worm.Database
     End Sub
 
     <TestMethod()> Public Sub TestLoad()
-        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
 
@@ -99,12 +102,75 @@ Imports Worm.Database
         Next
     End Sub
 
-    <TestMethod()> Public Sub TestLoadRange()
-        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    <TestMethod()> Public Sub TestLoad2()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
 
-        t.Table2s.Load(0, 1)
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
+
+        Assert.AreEqual(2, r.Count)
+
+        For Each t2 As Table2 In r
+            Assert.IsFalse(t2.InternalProperties.IsLoaded)
+        Next
+
+        t.Table2s.Load()
+
+        Assert.IsTrue(r(0).InternalProperties.IsLoaded)
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadRange()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+        Dim q As RelationCmd = t.Table2s
+        q.Load(0, 1)
+
+        Assert.AreEqual(1, q.LastExecutionResult.RowCount)
+
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
+
+        Assert.AreEqual(2, r.Count)
+
+        Assert.IsTrue(r(0).InternalProperties.IsLoaded)
+        Assert.IsFalse(r(1).InternalProperties.IsLoaded)
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadRange2()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+        Dim q As RelationCmd = t.Table2s
+
+        Dim r As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)()
+
+        Assert.AreEqual(2, r.Count)
+
+        Assert.IsFalse(r(0).InternalProperties.IsLoaded)
+        Assert.IsFalse(r(1).InternalProperties.IsLoaded)
+
+        q.Load(0, 1)
+
+        Assert.IsTrue(r(0).InternalProperties.IsLoaded)
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadRange2005()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
+
+        Dim t As Table1 = q1.GetByID(Of Table1)(1)
+        Dim q As RelationCmd = t.Table2s
+        q.Load(0, 1)
+
+        Assert.AreEqual(1, q.LastExecutionResult.RowCount)
 
         Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
 
@@ -126,7 +192,7 @@ Imports Worm.Database
                     Dim t2 As Table2 = mt.CreateNewObject(Of Table2)()
                     Assert.IsNull(t2.Tbl)
 
-                    t.Table2s.add(t2)
+                    t.Table2s.Add(t2)
 
                     Assert.IsNotNull(t2.Tbl)
                 End Using

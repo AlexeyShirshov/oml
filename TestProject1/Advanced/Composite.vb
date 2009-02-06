@@ -93,6 +93,12 @@ Public Class CompositeSchema
     Public Function GetEditableSchema() As IEntitySchema Implements IReadonlyObjectSchema.GetEditableSchema
         Return New CompositeEditableSchema
     End Function
+
+    Public ReadOnly Property SupportedOperation() As Worm.Entities.Meta.IReadonlyObjectSchema.Operation Implements Worm.Entities.Meta.IReadonlyObjectSchema.SupportedOperation
+        Get
+            Return IReadonlyObjectSchema.Operation.All
+        End Get
+    End Property
 End Class
 
 Public Class CompositeEditableSchema

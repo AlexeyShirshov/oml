@@ -557,7 +557,7 @@ Namespace Criteria.Values
         End Sub
 
         Public Function GetOrmValue(ByVal mgr As OrmManager) As IKeyEntity
-            Return mgr.GetOrmBaseFromCacheOrCreate(Value, _t)
+            Return mgr.GetKeyEntityFromCacheOrCreate(Value, _t)
         End Function
 
         Public ReadOnly Property OrmType() As Type

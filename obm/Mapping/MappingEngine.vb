@@ -230,14 +230,14 @@ Public Class ObjectMappingEngine
         Dim key As String = "properties" & s
         Dim h As IDictionary = CType(map(key), IDictionary)
         If h Is Nothing Then
-            SyncLock String.Intern(key)
+            Using SyncHelper.AcquireDynamicLock(key)
                 h = CType(map(key), IDictionary)
                 If h Is Nothing Then
                     h = GetMappedProperties(t, schema)
 
                     map(key) = h
                 End If
-            End SyncLock
+            End Using
         End If
         Return h
     End Function
@@ -366,7 +366,7 @@ Public Class ObjectMappingEngine
         Dim sch As IEntitySchema = GetEntitySchema(maintype)
         Dim editable As IReadonlyObjectSchema = TryCast(sch, IReadonlyObjectSchema)
         Dim schema As ISchemaWithM2M = Nothing
-        If editable IsNot Nothing Then
+        If editable IsNot Nothing AndAlso (editable.SupportedOperation And IReadonlyObjectSchema.Operation.M2M) = IReadonlyObjectSchema.Operation.M2M Then
             schema = TryCast(editable.GetEditableSchema, ISchemaWithM2M)
         Else
             schema = TryCast(sch, ISchemaWithM2M)
@@ -823,7 +823,7 @@ Public Class ObjectMappingEngine
 
         Dim arr As Generic.List(Of EntityPropertyAttribute) = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
         If arr Is Nothing Then
-            SyncLock String.Intern(cl_type)
+            Using SyncHelper.AcquireDynamicLock(cl_type)
                 arr = CType(map(cl_type), Generic.List(Of EntityPropertyAttribute))
                 If arr Is Nothing Then
                     arr = New Generic.List(Of EntityPropertyAttribute)
@@ -836,7 +836,7 @@ Public Class ObjectMappingEngine
 
                     map.Add(cl_type, arr)
                 End If
-            End SyncLock
+            End Using
         End If
         Return arr
     End Function
@@ -1181,7 +1181,7 @@ Public Class ObjectMappingEngine
             If r Is Nothing AndAlso id IsNot Nothing Then
                 Try
                     'Dim id As Integer = Convert.ToInt32(o)
-                    r = OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(id, subType)
+                    r = OrmManager.CurrentManager.GetKeyEntityFromCacheOrCreate(id, subType)
                 Catch ex As InvalidCastException
                 End Try
             End If
@@ -1386,7 +1386,7 @@ Public Class ObjectMappingEngine
                 Try
                     types = assembly.GetTypes
                 Catch ex As Reflection.ReflectionTypeLoadException
-                    Debug.Print("Worm error during loading types: " & ex.ToString)
+                    Debug.WriteLine("Worm error during loading types: " & ex.ToString)
                 End Try
 
                 If types Is Nothing Then Continue For
@@ -1651,7 +1651,11 @@ Public Class ObjectMappingEngine
 
     Public Function GetEntitySchema(ByVal t As Type) As IEntitySchema
         Return GetObjectSchema(t, True)
-    End Function
+	End Function
+
+	Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
+		Return GetObjectSchema(GetTypeByEntityName(entityName), True)
+	End Function
 
     Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IEntitySchema
         If t Is Nothing Then

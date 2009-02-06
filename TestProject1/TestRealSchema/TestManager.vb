@@ -206,7 +206,7 @@ Public Class TestManagerRS
     Public Sub TestValidateCache2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.ObjectSchema)
-            Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
+            Dim t1 As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
 
             Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
@@ -759,7 +759,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestDeleteNotLoaded()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
+            Dim t As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
             Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
             t.Delete()
             Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
@@ -821,11 +821,11 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim cc As ICollection(Of Table1) = mgr.FindTop(Of Table1)(10, Nothing, Nothing, True)
 
-            Assert.AreEqual(3, mgr.GetLastExecitionResult.RowCount)
-            Assert.IsFalse(mgr.GetLastExecitionResult.CacheHit)
+            Assert.AreEqual(3, mgr.GetLastExecutionResult.RowCount)
+            Assert.IsFalse(mgr.GetLastExecutionResult.CacheHit)
 
-            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecitionResult.ExecutionTime.ToString)
-            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecitionResult.FetchTime.ToString)
+            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecutionResult.ExecutionTime.ToString)
+            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecutionResult.FetchTime.ToString)
 
             Dim t As Table1 = mgr.Find(Of Table1)(1)
             t.Load()

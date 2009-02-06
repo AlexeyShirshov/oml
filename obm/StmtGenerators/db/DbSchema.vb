@@ -156,12 +156,6 @@ Namespace Database
             End Get
         End Property
 
-        Public Overridable ReadOnly Property SupportRowNumber() As Boolean
-            Get
-                Return False
-            End Get
-        End Property
-
         Public Overrides Function ParamName(ByVal name As String, ByVal i As Integer) As String
             Return "@" & name & i
         End Function
@@ -342,7 +336,7 @@ Namespace Database
 
                     Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     Dim es As IEntitySchema = oschema
-                    If rs IsNot Nothing Then
+                    If rs IsNot Nothing AndAlso (rs.SupportedOperation And IReadonlyObjectSchema.Operation.Insert) = IReadonlyObjectSchema.Operation.Insert Then
                         es = rs.GetEditableSchema
                     End If
                     Dim js As IOrmObjectSchema = TryCast(es, IOrmObjectSchema)
@@ -872,7 +866,7 @@ l1:
                     Dim oschema As IEntitySchema = mpe.GetEntitySchema(rt)
                     Dim esch As IEntitySchema = oschema
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
-                    If ro IsNot Nothing Then
+                    If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Update) = IReadonlyObjectSchema.Operation.Update Then
                         esch = ro.GetEditableSchema
                     End If
 
@@ -1076,7 +1070,7 @@ l1:
                     Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
                     Dim relSchema As IEntitySchema = oschema
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
-                    If ro IsNot Nothing Then
+                    If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Delete) = IReadonlyObjectSchema.Operation.Delete Then
                         relSchema = ro.GetEditableSchema
                     End If
 

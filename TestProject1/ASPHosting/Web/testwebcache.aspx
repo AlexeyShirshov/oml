@@ -12,12 +12,16 @@
     Public Class webcache
         Inherits Worm.Cache.WebCache
         
-        Protected Overrides Function GetPolicy(ByVal t As System.Type) As Worm.Cache.WebCacheDictionatyPolicy
-            Return WebCacheDictionatyPolicy.CreateDefault
+        Protected Overrides Function GetPolicy(ByVal t As System.Type) As Worm.Cache.WebCacheDictionaryPolicy
+            Return WebCacheDictionaryPolicy.CreateDefault
         End Function
     End Class
     
     Protected _wc As New webcache
+    
+    Protected Function _CreateDBManager() As OrmManager
+        Return CreateDBManager
+    End Function
     
     Protected Function CreateDBManager() As OrmReadOnlyDBManager
 #If UseUserInstance Then
@@ -31,29 +35,45 @@
     
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
         Dim sb As New StringBuilder
-        Using mgr As OrmReadOnlyDBManager = CreateDBManager()
-            Dim o As New WebCacheEntityDictionary(Of TestProject1.Table1)(mgr.Cache)
-            
-            'mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
-            'Dim a As New ArrayList
-            'For i As Integer = 0 To 5500000
-            '    a.Add(New Data.DataSet)
-            'Next
-            'GC.Collect(3, GCCollectionMode.Forced)
-            For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
-                o.Add(t.Identifier, t)
-            Next
-            
-            For Each k As DictionaryEntry In Cache
-                sb.Append(k.Key).Append(" = ").AppendLine(k.Value.ToString)
-                sb.Append("<br/>")
-            Next
-            
-            pre.InnerHtml = sb.ToString
-            
-        End Using
         
+        If Request.QueryString.ToString = "reset" Then
+            Using mgr As OrmReadOnlyDBManager = CreateDBManager()
+                Dim q As Query.QueryCmd = New Query.QueryCmd().Select(GetType(TestProject1.Table1))
+                Dim r As ReadOnlyList(Of TestProject1.Table1) = q.ToList(Of TestProject1.Table1)(mgr)
+                
+                q.ResetObjects(mgr)
+                
+                r = q.ToList(Of TestProject1.Table1)(mgr)
+
+                Dim s As String = r(0).Name
+            End Using
+        ElseIf Request.QueryString.ToString = "resetCmd" Then
+            Dim q As Query.QueryCmd = New Worm.Query.QueryCmd(AddressOf _CreateDBManager).Select(GetType(TestProject1.Table1))
+            Dim r As ReadOnlyList(Of TestProject1.Table1) = q.ToList(Of TestProject1.Table1)()
+            
+            q.ResetObjects()
+            
+            r = q.ToList(Of TestProject1.Table1)()
+            
+            Dim s As String = r(0).Name
+        Else
+            Using mgr As OrmReadOnlyDBManager = CreateDBManager()
+    
+                Dim o As New WebCacheEntityDictionary(Of TestProject1.Table1)(_wc)
+    
+                For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
+                    o.Add(t.Identifier, t)
+                Next
+            
+                For Each k As DictionaryEntry In Cache
+                    sb.Append(k.Key).Append(" = ").AppendLine(k.Value.ToString)
+                    sb.Append("<br/>")
+                Next
+            End Using
+        End If
         
+        pre.InnerHtml = sb.ToString
+            
     End Sub
     
     Public Function GetTime() As Date

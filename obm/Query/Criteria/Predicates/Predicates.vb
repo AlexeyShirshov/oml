@@ -191,12 +191,20 @@ Namespace Criteria
             Return GetLink(CreateFilter(New SubQuery(t, Nothing), FilterOperation.NotIn))
         End Function
 
-        Public Overloads Function [in](ByVal t As Type, ByVal fieldName As String) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing, fieldName), FilterOperation.In))
+        Public Overloads Function [in](ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
+            Return GetLink(CreateFilter(New SubQuery(t, Nothing, propertyAlias), FilterOperation.In))
         End Function
 
-        Public Overloads Function not_in(ByVal t As Type, ByVal fieldName As String) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing, fieldName), FilterOperation.NotIn))
+        Public Overloads Function not_in(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
+            Return GetLink(CreateFilter(New SubQuery(t, Nothing, propertyAlias), FilterOperation.NotIn))
+        End Function
+
+        Public Overloads Function [in](ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.In))
+        End Function
+
+        Public Overloads Function [not_in](ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.NotIn))
         End Function
 
         Public Function exists(ByVal t As Type, ByVal joinField As String) As PredicateLink

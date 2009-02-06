@@ -2386,13 +2386,15 @@ l1:
                         Dim type_created As Type = propType
                         Dim en As String = MappingEngine.GetEntityNameByType(type_created)
                         If Not String.IsNullOrEmpty(en) Then
-                            type_created = MappingEngine.GetTypeByEntityName(en)
-
+                            Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                            If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                                type_created = cr
+                            End If
                             If type_created Is Nothing Then
                                 Throw New OrmManagerException("Cannot find type for entity " & en)
                             End If
                         End If
-                        Dim o As IKeyEntity = GetOrmBaseFromCacheOrCreate(value, type_created)
+                        Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
                         ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
                         If o IsNot Nothing Then
                             If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
@@ -2737,13 +2739,17 @@ l1:
                                 ar.Add(ro)
                             End If
                         Else
-                            If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
+                            If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created AndAlso o.ObjectState <> ObjectState.NotLoaded Then
                                 ar.Add(o)
+                                'Else
+                                '    o.SetObjectState(ObjectState.NotFoundInSource)
                             End If
                         End If
                     Else
-                        If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
+                        If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created AndAlso o.ObjectState <> ObjectState.NotLoaded Then
                             ar.Add(o)
+                            'Else
+                            '    o.SetObjectState(ObjectState.NotFoundInSource)
                         End If
                     End If
                     i += 1

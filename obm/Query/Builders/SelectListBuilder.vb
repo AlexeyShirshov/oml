@@ -38,7 +38,19 @@ Namespace Query
 
         Public Shared Function prop(ByVal op As ObjectProperty) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(op.ObjectSource, op.Field))
+            f.GetAllProperties.Add(New SelectExpression(op))
+            Return f
+        End Function
+
+        Public Shared Function prop(ByVal op As ObjectProperty, ByVal intoPropertyAlias As String, ByVal into As Type) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(op, intoPropertyAlias, into))
+            Return f
+        End Function
+
+        Public Shared Function prop(ByVal op As ObjectProperty, ByVal intoPropertyAlias As String, ByVal intoEntityName As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(op, intoPropertyAlias, intoEntityName))
             Return f
         End Function
 

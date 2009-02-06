@@ -43,6 +43,8 @@ Namespace Query
 
         Sub RenewCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal v As Boolean)
         Sub ClearCache(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub ResetObjects(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+
         ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 
     End Interface
@@ -54,9 +56,13 @@ Namespace Query
 
         'Function CreateByEntityName(ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal obj As IKeyEntity) As RelationCmd
+        Function Create(ByVal rel As Relation) As RelationCmd
 
-        Function Create(ByVal obj As IKeyEntity, ByVal key As String) As RelationCmd
+        Function Create(ByVal desc As RelationDesc) As RelationCmd
+
+        Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
+
+        Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
 
         'Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -68,9 +74,9 @@ Namespace Query
 
         Function Create(ByVal name As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal key As String) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
     End Interface
 
     <Serializable()> _

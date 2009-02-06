@@ -12,7 +12,7 @@ Imports System.Collections.ObjectModel
 
 Namespace Query
 
-    <Serializable()> _
+    '<Serializable()> _
     Public Class QueryCmd
         Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
@@ -174,25 +174,33 @@ Namespace Query
             End Sub
         End Class
 
-        Private Class cls
+        Protected Class SetManagerHelper
+            Implements IDisposable
+
             Private _m As CreateManagerDelegate
             Private _gm As ICreateManager
+            Private _mgr As OrmManager
 
-            Public Sub New(ByVal getMgr As CreateManagerDelegate)
+            Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate)
                 _m = getMgr
+                _mgr = mgr
+                Subscribe()
             End Sub
 
-            Public Sub New(ByVal getMgr As ICreateManager)
+            Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager)
                 _gm = getMgr
+                _mgr = mgr
+                Subscribe()
             End Sub
 
-            'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-            '    If _m Is Nothing Then
-            '        args.Manager = _gm.CreateManager
-            '    Else
-            '        args.Manager = _m()
-            '    End If
-            'End Sub
+            Protected Sub Subscribe()
+                AddHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
+                AddHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
+            End Sub
+
+            Public Sub ObjectRestored(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
+                ObjectCreated(mgr, o)
+            End Sub
 
             Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
                 'AddHandler o.ManagerRequired, AddressOf GetManager
@@ -202,8 +210,51 @@ Namespace Query
                     CType(o, _IEntity).SetCreateManager(New CreateManager(_m))
                 End If
             End Sub
+
+#Region " IDisposable Support "
+            Private disposedValue As Boolean = False        ' To detect redundant calls
+
+            ' IDisposable
+            Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+                If Not Me.disposedValue Then
+                    If disposing Then
+                        ' TODO: free other state (managed objects).
+                    End If
+
+                    RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
+                    RemoveHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
+                End If
+                Me.disposedValue = True
+            End Sub
+
+            ' This code added by Visual Basic to correctly implement the disposable pattern.
+            Public Sub Dispose() Implements IDisposable.Dispose
+                ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+                Dispose(True)
+                GC.SuppressFinalize(Me)
+            End Sub
+#End Region
+
         End Class
 
+        'Private Class occc
+        '    Private _cm As ICreateManager
+        '    Public Sub New(ByVal cm As ICreateManager)
+        '        _cm = cm
+        '    End Sub
+        '    Public Sub ObjectCreated(ByVal o As ICachedEntity)
+        '        o.SetCreateManager(_cm)
+        '    End Sub
+
+        'End Class
+
+        'Public Function GetDeleg() As Cache.IListObjectConverter.ObjectCreatedEventHandler
+        '    If _getMgr IsNot Nothing Then
+        '        Return AddressOf New occc(_getMgr).ObjectCreated
+        '    Else
+        '        Return Nothing
+        '    End If
+        'End Function
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
@@ -224,7 +275,7 @@ Namespace Query
         Private _liveTime As TimeSpan
         Private _mgrMark As String
         Protected _clientPage As Paging
-        Protected _pager As ipager
+        Protected _pager As IPager
         Protected _joins() As QueryJoin
         Protected _autoJoins As Boolean
         Friend _from As FromClauseDef
@@ -241,11 +292,11 @@ Namespace Query
         'Private _selectSrc As ObjectSource
         Friend _resDic As Boolean
         Private _appendMain As Boolean?
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Protected _getMgr As ICreateManager
         Private _name As String
         Private _execCnt As Integer
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Private _schema As ObjectMappingEngine
         Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
@@ -256,15 +307,15 @@ Namespace Query
         Private _having As IGetFilter
 
 #Region " Cache "
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Friend _types As Dictionary(Of EntityUnion, IEntitySchema)
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Friend _pdic As Dictionary(Of Type, IDictionary)
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Friend _sl As List(Of SelectExpression)
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Friend _f As IFilter
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Friend _js As List(Of QueryJoin)
 #End Region
 
@@ -328,7 +379,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property LastExecitionResult() As OrmManager.ExecutionResult
+        Public Property LastExecutionResult() As OrmManager.ExecutionResult
             Get
                 Return _er
             End Get
@@ -367,7 +418,7 @@ Namespace Query
         '    _fields = l
         'End Sub
 
-        <NonSerialized()> _
+        '<NonSerialized()> _
         Private _exec As IExecutor
 
         Public Function GetExecutor(ByVal mgr As OrmManager) As IExecutor
@@ -635,7 +686,7 @@ Namespace Query
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
-                        If WithLoad(tp, schema) Then
+                        If _WithLoad(tp, schema) Then
                             _appendMain = True
                             Dim os As EntityUnion = tp.First
                             _sl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
@@ -822,7 +873,7 @@ Namespace Query
             If os Is Nothing Then
                 os = tp.First
             End If
-            If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse WithLoad(tp, schema) Then
+            If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse _WithLoad(tp, schema) Then
                 cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
             Else
                 For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t)
@@ -1254,13 +1305,13 @@ Namespace Query
 
         End Function
 
-        Protected Function WithLoad(ByVal os As EntityUnion, ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Function _WithLoad(ByVal os As EntityUnion, ByVal mpe As ObjectMappingEngine) As Boolean
             'If _from IsNot Nothing Then
             '    Return _from.ObjectSource.Equals(os)
             'Else
             For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                 If tp.First.Equals(os) Then
-                    Return WithLoad(tp, mpe)
+                    Return _WithLoad(tp, mpe)
                 End If
             Next
             'End If
@@ -1268,7 +1319,7 @@ Namespace Query
             Return False
         End Function
 
-        Protected Function WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Function _WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
             Return tp.Second.HasValue AndAlso tp.Second.Value
         End Function
 
@@ -1530,7 +1581,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
+        Public Overridable Property SelectTypes() As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Get
                 If _sel IsNot Nothing Then
                     Return _sel.SelectTypes
@@ -1817,10 +1868,12 @@ Namespace Query
             If _filter IsNot Nothing Then
                 For Each f As IFilter In _filter.Filter.GetAllFilters
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
-                    Dim rt As Type = CType(ef.Template, OrmFilterTemplate).ObjectSource.GetRealType(mpe)
-                    If ef IsNot Nothing AndAlso t.IsAssignableFrom(rt) Then
-                        _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(rt), Nothing)}))
-                        Return
+                    If ef IsNot Nothing Then
+                        Dim rt As Type = CType(ef.Template, OrmFilterTemplate).ObjectSource.GetRealType(mpe)
+                        If t.IsAssignableFrom(rt) Then
+                            _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(rt), Nothing)}))
+                            Return
+                        End If
                     End If
                 Next
             End If
@@ -1947,8 +2000,9 @@ Namespace Query
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
             Using mgr As OrmManager = getMgr.CreateManager
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToMatrix(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToMatrix(mgr)
+                End Using
             End Using
         End Function
 
@@ -1978,9 +2032,9 @@ Namespace Query
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToList(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToList(mgr)
+                End Using
             End Using
         End Function
 
@@ -1998,9 +2052,9 @@ Namespace Query
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToList(Of CreateType, ReturnType)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToList(Of CreateType, ReturnType)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2018,9 +2072,9 @@ Namespace Query
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToList(Of CreateReturnType)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToList(Of CreateReturnType)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2045,9 +2099,9 @@ Namespace Query
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToAnonymList(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToAnonymList(mgr)
+                End Using
             End Using
         End Function
 
@@ -2066,10 +2120,9 @@ Namespace Query
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManager = getMgr()
             Try
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
-                Return ToEntityList(Of T)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToEntityList(Of T)(mgr)
+                End Using
             Finally
                 If mgr IsNot Nothing Then
                     mgr.Dispose()
@@ -2079,10 +2132,9 @@ Namespace Query
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
-                Return ToEntityList(Of T)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToEntityList(Of T)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2121,9 +2173,9 @@ Namespace Query
 
         Public Function ToOrmListDyn(Of T As {_IKeyEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return ToOrmListDyn(Of T)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToOrmListDyn(Of T)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2177,9 +2229,9 @@ Namespace Query
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
-                Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
+                End Using
             End Using
         End Function
 
@@ -2256,8 +2308,9 @@ Namespace Query
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
-                Return ToDictionary(Of TKey, TValue)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToDictionary(Of TKey, TValue)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2290,8 +2343,9 @@ Namespace Query
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
-                Return ToSimpleDictionary(Of TKey, TValue)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToSimpleDictionary(Of TKey, TValue)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2314,9 +2368,9 @@ Namespace Query
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
-                Return ToPODList(Of T)(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToPODList(Of T)(mgr)
+                End Using
             End Using
         End Function
 
@@ -2666,7 +2720,7 @@ Namespace Query
 
         Public Function [SingleOrDefaultSimple](Of T)(ByVal mgr As OrmManager) As T
             Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
-            If l.Count <> 1 Then
+            If l.Count > 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then
                 Return l(0)
@@ -2676,7 +2730,7 @@ Namespace Query
 
         Public Function [SingleOrDefaultSimple](Of T)(ByVal getMgr As ICreateManager) As T
             Dim l As IList(Of T) = ToSimpleList(Of T)(getMgr)
-            If l.Count <> 1 Then
+            If l.Count > 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then
                 Return l(0)
@@ -2686,7 +2740,7 @@ Namespace Query
 
         Public Function [SingleOrDefaultSimple](Of T)() As T
             Dim l As IList(Of T) = ToSimpleList(Of T)()
-            If l.Count <> 1 Then
+            If l.Count > 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
             ElseIf l.Count = 1 Then
                 Return l(0)
@@ -2768,6 +2822,24 @@ Namespace Query
                 End Using
             End Get
         End Property
+
+        Public Sub ResetObjects()
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            ResetObjects(_getMgr)
+        End Sub
+
+        Public Sub ResetObjects(ByVal getMgr As ICreateManager)
+            Using mgr As OrmManager = getMgr.CreateManager
+                ResetObjects(mgr)
+            End Using
+        End Sub
+
+        Public Sub ResetObjects(ByVal mgr As OrmManager)
+            GetExecutor(mgr).ResetObjects(mgr, Me)
+        End Sub
 
         Public Overridable Sub CopyTo(ByVal o As QueryCmd)
             With o
@@ -3152,16 +3224,16 @@ Namespace Query
             If GetType(T) IsNot tp Then
                 'o = mgr.LoadType(id, tp, ensureLoaded, False)
                 If ensureLoaded Then
-                    o = mgr.GetOrmBaseFromCacheOrDB(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
                 Else
-                    o = mgr.GetOrmBaseFromCacheOrCreate(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
                 End If
             Else
                 'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
                 If ensureLoaded Then
-                    o = mgr.GetOrmBaseFromCacheOrDB(Of T)(id)
+                    o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
                 Else
-                    o = mgr.GetOrmBaseFromCacheOrCreate(Of T)(id)
+                    o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
                 End If
             End If
 
@@ -3207,9 +3279,25 @@ Namespace Query
 
         Public Function BuildDictionary(Of T As {New, IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return BuildDictionary(Of T)(mgr, level)
+                End Using
+            End Using
+        End Function
 
-                Return BuildDictionary(Of T)(mgr, level)
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return BuildDictionary(Of T)(_getMgr, propertyAlias, level)
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return BuildDictionary(Of T)(mgr, propertyAlias, level)
+                End Using
             End Using
         End Function
 
@@ -3248,6 +3336,15 @@ Namespace Query
             Dim tt As Type = GetType(T)
             Dim c As New QueryCmd.svct(Me)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                Dim g As ObjectModel.ReadOnlyCollection(Of Grouping) = Nothing
+                If _group IsNot Nothing Then
+                    g = New ObjectModel.ReadOnlyCollection(Of Grouping)(_group)
+                End If
+                Dim srt As Sort = Nothing
+                If _order IsNot Nothing Then
+                    srt = _order
+                End If
+
                 If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                     tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
                 ElseIf _from Is Nothing Then
@@ -3256,11 +3353,16 @@ Namespace Query
 
                 Dim s As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, propertyAlias)).GetAllProperties(0)
 
-                [Select](FCtor.Exp(s).count("Count")) _
-                    .GroupBy(FCtor.Exp(s)) _
-                    .Sort(SCtor.custom("Count").desc)
+                Try
+                    [Select](FCtor.Exp(s).count("Count")) _
+                        .GroupBy(FCtor.Exp(s)) _
+                        .Sort(SCtor.custom("Count").desc)
 
-                Return BuildDictionary(Of T)(mgr, level)
+                    Return BuildDictionary(Of T)(mgr, level)
+                Finally
+                    _group = g
+                    _order = srt
+                End Try
             End Using
         End Function
 
@@ -3279,22 +3381,37 @@ Namespace Query
 
                 Dim c As New QueryCmd.svct(Me)
                 Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                    From( _
-                        New QueryCmd() _
-                            .[Select](FCtor.Exp(s1).count("cnt")) _
-                            .From(tt) _
-                            .GroupBy(FCtor.Exp(s1)) _
-                            .UnionAll( _
-                        New QueryCmd() _
-                            .[Select](FCtor.Exp(s2).count("cnt")) _
-                            .From(tt) _
-                            .GroupBy(FCtor.Exp(s2)) _
-                        ) _
-                    ) _
-                    .Select(FCtor.custom("Pref").sum("cnt", "Count")) _
-                    .GroupBy(FCtor.custom("Pref")).Sort(SCtor.custom("Pref").desc)
 
-                    Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
+                    Dim g As ObjectModel.ReadOnlyCollection(Of Grouping) = Nothing
+                    If _group IsNot Nothing Then
+                        g = New ObjectModel.ReadOnlyCollection(Of Grouping)(_group)
+                    End If
+                    Dim srt As Sort = Nothing
+                    If _order IsNot Nothing Then
+                        srt = _order
+                    End If
+
+                    Try
+                        From( _
+                            New QueryCmd() _
+                                .[Select](FCtor.Exp(s1).count("cnt")) _
+                                .From(tt) _
+                                .GroupBy(FCtor.Exp(s1)) _
+                                .UnionAll( _
+                            New QueryCmd() _
+                                .[Select](FCtor.Exp(s2).count("cnt")) _
+                                .From(tt) _
+                                .GroupBy(FCtor.Exp(s2)) _
+                            ) _
+                        ) _
+                        .Select(FCtor.custom("Pref").sum("cnt", "Count")) _
+                        .GroupBy(FCtor.custom("Pref")).Sort(SCtor.custom("Pref").desc)
+
+                        Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
+                    Finally
+                        _group = g
+                        _order = srt
+                    End Try
                 End Using
             Else
                 Return BuildDictionary(Of T)(mgr, firstPropertyAlias, level)

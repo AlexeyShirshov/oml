@@ -41,4 +41,9 @@ Namespace Cache
         Function GetUpdate() As IEnumerable(Of Type)
     End Interface
 
+    Public Interface ICacheValidator
+        Function ValidateItemFromCache(ByVal ce As UpdatableCachedItem) As Boolean
+        Function ValidateBeforCacheProbe() As Boolean
+    End Interface
+
 End Namespace

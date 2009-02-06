@@ -59,4 +59,11 @@ Public MustInherit Class StmtGenerator
             Return False
         End Get
     End Property
+
+    Public Overridable ReadOnly Property SupportRowNumber() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
 End Class
