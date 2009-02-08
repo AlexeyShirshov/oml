@@ -144,7 +144,7 @@ namespace Worm.CodeGen.Core.Descriptors
             foreach (var relationUnique in relationUniques)
             {
                 if (relationUnique.Value > 1)
-                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи.");
+                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи." + relationUnique.Key);
             }
 			return l;
 		}
@@ -196,7 +196,7 @@ namespace Worm.CodeGen.Core.Descriptors
             foreach (var relationUnique in relationUniques)
             {
                 if (relationUnique.Value > 1)
-                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи.");
+                    throw new OrmCodeGenException("Существуют дублирующиеся M2M связи." + relationUnique.Key);
             }
             return l;
 		}

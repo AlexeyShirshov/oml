@@ -60,7 +60,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         throw new OrmCodeGenException(
                             string.Format(
                                 "Существуют неоднозначные связи между '{0}' и '{1}'. конкретизируйте их через accessorName.",
-                                lst[1].Left.Entity, lst[1].Right.Entity));
+                                lst[0].Left.Entity.Name, lst[0].Right.Entity.Name));
                     accessorName = relatedEntity.Name;
                 }
                 accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
