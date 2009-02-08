@@ -902,13 +902,13 @@ namespace Worm.CodeGen.Core
                         {
                             CreateGetKeyMethodCompositePK(entityClass);
                             CreateGetPKValuesMethodCompositePK(entityClass);
-                            CreateSetPKMethodCompositePK(entityClass);
+                            CreateSetPKMethod(entityClass, true);
                         }
                         else
                         {
                             UpdateGetKeyMethodCompositePK(entityClass);
                             UpdateGetPKValuesMethodCompositePK(entityClass);
-                            UpdateSetPKMethodCompositePK(entityClass);
+                            UpdateSetPKMethod(entityClass, true);
                         }
 
                         OverrideEqualsMethodCompositePK(entityClass);
@@ -916,6 +916,15 @@ namespace Worm.CodeGen.Core
                     else
                     {
                         OverrideIdentifierProperty(entityClass);
+                        if (entity.BaseEntity == null)
+                        {
+                            CreateSetPKMethod(entityClass, false);
+                        }
+                        else
+                        {
+                            UpdateGetPKValuesMethodCompositePK(entityClass);
+                            UpdateSetPKMethod(entityClass, false);
+                        }
                     }
 
 			        #endregion
@@ -1669,7 +1678,7 @@ namespace Worm.CodeGen.Core
 
 
 
-        private void UpdateSetPKMethodCompositePK(CodeEntityTypeDeclaration entityClass)
+        private void UpdateSetPKMethod(CodeEntityTypeDeclaration entityClass, bool composite)
         {
             EntityDescription entity = entityClass.Entity;
             if (entity.PkProperties.Count == 0)
@@ -1692,37 +1701,44 @@ namespace Worm.CodeGen.Core
                                                                new CodeArgumentReferenceExpression(
                                                                    meth.Parameters[0].Name)));
 
-            meth.Statements.Add(
-                Delegates.CodePatternForeachStatement(
-                    new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
-                    new CodeArgumentReferenceExpression("pks"),
-                    entity.PkProperties.
-                    ConvertAll<CodeStatement>(
-                        delegate(PropertyDescription pd_)
-                        {
-                            //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
-                            CodeTypeReference typeReference = pd_.PropertyType;
-                            return new CodeConditionStatement(
-                                new CodeBinaryOperatorExpression(
-                                    new CodeFieldReferenceExpression(new CodeVariableReferenceExpression("pk"),
-                                        "PropertyAlias"),
-                                    CodeBinaryOperatorType.ValueEquality,
-                                    new CodePrimitiveExpression(pd_.PropertyAlias)),
-                                new CodeAssignStatement(
-                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), OrmCodeGenNameHelper.GetPrivateMemberName(pd_.PropertyName)),
-                                    new CodeCastExpression(
-                                        typeReference,
-                                        new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
-                                       new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("pk"), "Value"),
-                                       new CodeTypeOfExpression(typeReference))
-                                   )
-                                )
+            if (composite)
+            {
+                meth.Statements.Add(
+                    Delegates.CodePatternForeachStatement(
+                        new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
+                        new CodeArgumentReferenceExpression("pks"),
+                        entity.PkProperties.
+                        ConvertAll<CodeStatement>(
+                            delegate(PropertyDescription pd_)
+                            {
+                                //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
+                                CodeTypeReference typeReference = pd_.PropertyType;
+                                return new CodeConditionStatement(
+                                    new CodeBinaryOperatorExpression(
+                                        new CodeFieldReferenceExpression(new CodeVariableReferenceExpression("pk"),
+                                            "PropertyAlias"),
+                                        CodeBinaryOperatorType.ValueEquality,
+                                        new CodePrimitiveExpression(pd_.PropertyAlias)),
+                                    new CodeAssignStatement(
+                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), OrmCodeGenNameHelper.GetPrivateMemberName(pd_.PropertyName)),
+                                        new CodeCastExpression(
+                                            typeReference,
+                                            new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
+                                           new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("pk"), "Value"),
+                                           new CodeTypeOfExpression(typeReference))
+                                       )
+                                    )
 
-                            );
-                        }
-                     ).ToArray()
-                )
-            );
+                                );
+                            }
+                         ).ToArray()
+                    )
+                );
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private void UpdateGetPKValuesMethodCompositePK(CodeEntityTypeDeclaration entityClass)
@@ -1857,7 +1873,7 @@ namespace Worm.CodeGen.Core
             entityClass.Members.Add(property);
         }
 
-        private void CreateSetPKMethodCompositePK(CodeEntityTypeDeclaration entityClass)
+        private void CreateSetPKMethod(CodeEntityTypeDeclaration entityClass, bool composite)
         {
             EntityDescription entity = entityClass.Entity;
             CodeMemberMethod meth = new CodeMemberMethod();
@@ -1873,35 +1889,44 @@ namespace Worm.CodeGen.Core
                     new CodeTypeReference(new CodeTypeReference(typeof(PKDesc)),1),"pks")
                 );
 
-            meth.Statements.Add(
-                Delegates.CodePatternForeachStatement(
-                    new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
-                    new CodeArgumentReferenceExpression("pks"),
-                    entity.PkProperties.
-                    ConvertAll<CodeStatement>(
-                        delegate(PropertyDescription pd_) {
-                            //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
-                            CodeTypeReference typeReference = pd_.PropertyType;
-                            return new CodeConditionStatement(
-                                new CodeBinaryOperatorExpression(
-                                    new CodeFieldReferenceExpression(new CodeVariableReferenceExpression("pk"),
-                                        "PropertyAlias"),
-                                    CodeBinaryOperatorType.ValueEquality,
-                                    new CodePrimitiveExpression(pd_.PropertyAlias)),
-                                new CodeAssignStatement(
-                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), OrmCodeGenNameHelper.GetPrivateMemberName(pd_.PropertyName)),
-                                    new CodeCastExpression(
-                                        typeReference,
-                                        new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
-                                       new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("pk"),"Value"),
-                                       new CodeTypeOfExpression(typeReference))
-                                   )
-                                )
-                            
-                            );}
-                     ).ToArray()
-                )
-            );
+            if (composite)
+            {
+                meth.Statements.Add(
+                    Delegates.CodePatternForeachStatement(
+                        new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
+                        new CodeArgumentReferenceExpression("pks"),
+                        entity.PkProperties.
+                        ConvertAll<CodeStatement>(
+                            delegate(PropertyDescription pd_)
+                            {
+                                //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
+                                CodeTypeReference typeReference = pd_.PropertyType;
+                                return new CodeConditionStatement(
+                                    new CodeBinaryOperatorExpression(
+                                        new CodeFieldReferenceExpression(new CodeVariableReferenceExpression("pk"),
+                                            "PropertyAlias"),
+                                        CodeBinaryOperatorType.ValueEquality,
+                                        new CodePrimitiveExpression(pd_.PropertyAlias)),
+                                    new CodeAssignStatement(
+                                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), OrmCodeGenNameHelper.GetPrivateMemberName(pd_.PropertyName)),
+                                        new CodeCastExpression(
+                                            typeReference,
+                                            new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
+                                           new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("pk"), "Value"),
+                                           new CodeTypeOfExpression(typeReference))
+                                       )
+                                    )
+
+                                );
+                            }
+                         ).ToArray()
+                    )
+                );
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private void CreateGetPKValuesMethodCompositePK(CodeEntityTypeDeclaration entityClass)
