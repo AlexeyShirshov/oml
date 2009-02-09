@@ -17,8 +17,7 @@ Namespace Criteria.Core
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
-        'Function ToString() As String
-        'Function ToStaticString() As String
+        Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter
         Overloads Function Clone() As IFilter
     End Interface
 

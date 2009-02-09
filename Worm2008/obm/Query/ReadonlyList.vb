@@ -142,15 +142,19 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
         MyBase.new()
     End Sub
 
+    Public Sub New(ByVal t As Type, ByVal col As IEnumerable(Of T))
+        MyBase.New(col)
+    End Sub
+
     Public Sub New(ByVal col As IEnumerable(Of T))
         MyBase.New(col)
     End Sub
 
-    Public Sub New(ByVal list As List(Of T))
+    Public Sub New(ByVal t As Type, ByVal list As List(Of T))
         MyBase.New(list)
     End Sub
 
-    Public Sub New(ByVal list As ReadOnlyEntityList(Of T))
+    Public Sub New(ByVal t As Type, ByVal list As ReadOnlyEntityList(Of T))
         MyBase.New(list)
     End Sub
 

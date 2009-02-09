@@ -196,6 +196,14 @@ Namespace Query
             Return New JoinLink(m2mType, _j)
         End Function
 
+        Public Function onM2M(ByVal m2mAlias As EntityAlias) As JoinLink
+            Return New JoinLink(New EntityUnion(m2mAlias), _j)
+        End Function
+
+        Public Function onM2M(ByVal m2mKey As String, ByVal m2mAlias As EntityAlias) As JoinLink
+            Return New JoinLink(New EntityUnion(m2mAlias), m2mKey, _j)
+        End Function
+
         Public Function onM2M(ByVal m2mOS As EntityUnion) As JoinLink
             Return New JoinLink(m2mOS, _j)
         End Function

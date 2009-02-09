@@ -111,10 +111,7 @@ Namespace Criteria.Joins
             End If
 
             For Each f As IFilter In Condition.GetAllFilters
-                Dim jf As JoinFilter = TryCast(f, JoinFilter)
-                If jf IsNot Nothing Then
-                    jf.SetUnion(os_)
-                End If
+                f.SetUnion(os_)
             Next
 
             Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname)

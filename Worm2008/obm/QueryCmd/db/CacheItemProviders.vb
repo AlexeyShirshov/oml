@@ -446,7 +446,7 @@ Namespace Query.Database
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
                 'End If
-                Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), Global.Worm.ReadOnlyObjectList(Of ReturnType))
+                Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr, t), Global.Worm.ReadOnlyObjectList(Of ReturnType))
             End Function
 
             'Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager

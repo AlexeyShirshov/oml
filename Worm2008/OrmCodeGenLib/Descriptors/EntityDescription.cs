@@ -72,19 +72,35 @@ namespace Worm.CodeGen.Core.Descriptors
 			get { return _ormObjectsDef; }
 		}
 
+		public bool HasPk
+		{
+			get
+			{
+				return GetPKCount() > 0;
+			}
+		}
+
         public bool HasSinglePK
         {
             get
             {
-                int s = 0;
-                foreach (var propertyDescription in CompleteEntity.Properties)
-                {
-                    if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
-                        s++;
-                }
-                return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
+            	int s = GetPKCount();
+            	return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
             }
         }
+
+		protected int GetPKCount()
+		{
+			int s = 0;
+			foreach (var propertyDescription in CompleteEntity.Properties)
+			{
+				if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) 
+					//&& propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32))
+					)
+					s++;
+			}
+			return s;
+		}
 
 		public PropertyDescription GetProperty(string propertyId)
 		{

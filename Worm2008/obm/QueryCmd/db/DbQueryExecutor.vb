@@ -1204,15 +1204,17 @@ Namespace Query.Database
                         Dim needAppend As Boolean = True
                         Dim cond As IFilter = join.Condition
 
-                        If cond Is Nothing AndAlso (join.M2MJoinType IsNot Nothing OrElse join.M2MJoinEntityName IsNot Nothing) Then
-                            Dim t2 As Type = join.M2MJoinType
-                            If t2 Is Nothing Then
-                                t2 = mpe.GetTypeByEntityName(join.M2MJoinEntityName)
-                            End If
+                        If cond Is Nothing AndAlso join.M2MObjectSource IsNot Nothing Then
+                            Dim t2 As Type = join.M2MObjectSource.GetRealType(mpe)
 
                             Dim oschema2 As IEntitySchema = mpe.GetEntitySchema(t2)
 
                             Dim t12t2 As Entities.Meta.M2MRelationDesc = mpe.GetM2MRelation(t, oschema, t2, join.M2MKey)
+
+                            If t12t2 Is Nothing Then
+                                Throw New ExecutorException(String.Format("M2M relation between {0} and {1} not found", t, t2))
+                            End If
+
                             Dim t22t1 As Entities.Meta.M2MRelationDesc = mpe.GetM2MRelation(t2, oschema2, t, join.M2MKey)
 
                             Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).PropertyAlias
@@ -1227,7 +1229,7 @@ Namespace Query.Database
                                 jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(t2, t2_pk)
                             End If
 
-                            If almgr.ContainsKey(oschema.Table, join.ObjectSource) Then
+                            If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
                                 jl.[and](tbl, t22t1.Column).eq(t, t1_pk)
                                 needAppend = False
                             Else
@@ -1236,7 +1238,7 @@ Namespace Query.Database
 
                             Dim js() As QueryJoin = jl
 
-                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.ObjectSource))
+                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
                         End If
 
                         If needAppend Then
@@ -1252,7 +1254,7 @@ Namespace Query.Database
 
                             Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
                             FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, filter, f, query.AppendMain, _
-                                           Function() " on " & cond.MakeQueryStmt(mpe, s, filterInfo, almgr, params))
+                                           Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, filterInfo, almgr, params))
                         End If
                         'tbl = s.GetTables(t)(0)
                     Else
@@ -1445,7 +1447,7 @@ Namespace Query.Database
 
             ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
 
-            s.AppendWhere(mpe, os, query._f, almgr, sb, filterInfo, params)
+            s.AppendWhere(mpe, os, query._f, almgr, sb, filterInfo, params, query.GetSelectedOS)
 
             FormGroupBy(mpe, query, almgr, sb, s, defaultTbl, os)
 

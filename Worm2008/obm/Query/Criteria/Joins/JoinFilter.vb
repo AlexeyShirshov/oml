@@ -25,6 +25,8 @@ Namespace Criteria.Joins
         Friend _oper As FilterOperation
 
         Private _eu As EntityUnion
+        Private _eu2 As EntityUnion
+
 #Region " Ctors "
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
@@ -285,9 +287,14 @@ Namespace Criteria.Joins
 
 #End Region
 
-        Public Sub SetUnion(ByVal eu As EntityUnion)
-            _eu = eu
-        End Sub
+        Public Function SetUnion(ByVal eu As EntityUnion) As IFilter Implements IFilter.SetUnion
+            If _eu Is Nothing Then
+                _eu = eu
+            Else
+                _eu2 = eu
+            End If
+            Return Me
+        End Function
 
         Public ReadOnly Property Left() As FieldReference
             Get
@@ -415,7 +422,17 @@ Namespace Criteria.Joins
             Dim os As EntityUnion = Nothing
             If _l.Property.ObjectSource IsNot Nothing Then
                 map = schema.GetEntitySchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
-                os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
+                If _l.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                    If almgr.ContainsKey(map._tableName, _l.Property.ObjectSource) Then
+                        os = _l.Property.ObjectSource
+                    ElseIf almgr.ContainsKey(map._tableName, _eu2) Then
+                        os = _eu2
+                    Else
+                        os = _eu
+                    End If
+                Else
+                    os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
+                End If
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
@@ -429,7 +446,17 @@ Namespace Criteria.Joins
             Dim os2 As EntityUnion = Nothing
             If _r.Property.ObjectSource IsNot Nothing Then
                 map2 = schema.GetEntitySchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
-                os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
+                If _r.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                    If almgr.ContainsKey(map2._tableName, _r.Property.ObjectSource) Then
+                        os2 = _r.Property.ObjectSource
+                    ElseIf almgr.ContainsKey(map2._tableName, _eu2) Then
+                        os2 = _eu2
+                    Else
+                        os2 = _eu
+                    End If
+                Else
+                    os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
+                End If
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then

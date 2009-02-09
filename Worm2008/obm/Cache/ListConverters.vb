@@ -46,10 +46,12 @@ Namespace Cache
                 c = CType(weak_list, ReadOnlyEntityList(Of T))
             Catch ex As InvalidCastException
                 Dim l As New Generic.List(Of T)
+                Dim rt As Type = Nothing
                 For Each o As T In CType(weak_list, IList)
                     l.Add(o)
+                    rt = o.GetType
                 Next
-                c = CType(OrmManager.CreateReadonlyList(GetType(T), l), ReadOnlyEntityList(Of T))
+                c = CType(OrmManager.CreateReadonlyList(GetType(T), l, rt), ReadOnlyEntityList(Of T))
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso Not created Then
