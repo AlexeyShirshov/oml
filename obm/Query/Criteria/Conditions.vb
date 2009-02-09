@@ -135,6 +135,16 @@ Namespace Criteria.Conditions
             _oper = [operator]
         End Sub
 
+        Public Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter Implements IFilter.SetUnion
+            If _left IsNot Nothing Then
+                _left.SetUnion(eu)
+            End If
+            If _right IsNot Nothing Then
+                _right.SetUnion(eu)
+            End If
+            Return Me
+        End Function
+
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
             Dim res As ICollection(Of IFilter) = _left.GetAllFilters
 

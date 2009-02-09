@@ -1624,7 +1624,8 @@ l1:
         End Function
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
+            Optional ByVal os As EntityUnion = Nothing) As Boolean
 
             Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
@@ -1637,7 +1638,13 @@ l1:
             If schema IsNot Nothing Then
                 Dim cs As IContextObjectSchema = TryCast(schema, IContextObjectSchema)
                 If cs IsNot Nothing Then
-                    con.AddFilter(cs.GetContextFilter(filter_info))
+                    Dim f As IFilter = cs.GetContextFilter(filter_info)
+                    If f IsNot Nothing Then
+                        If os IsNot Nothing Then
+                            f.SetUnion(os)
+                        End If
+                        con.AddFilter(f)
+                    End If
                 End If
             End If
 

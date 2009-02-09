@@ -359,9 +359,9 @@ Namespace Criteria.Core
                     Dim [alias] As String = String.Empty
 
                     If almgr IsNot Nothing Then
-                        Debug.Assert(almgr.ContainsKey(map._tableName, Nothing), "There is not alias for table " & map._tableName.RawName)
+                        Debug.Assert(almgr.ContainsKey(map._tableName, _eu), "There is not alias for table " & map._tableName.RawName)
                         Try
-                            [alias] = almgr.GetAlias(map._tableName, Nothing) & stmt.Selector
+                            [alias] = almgr.GetAlias(map._tableName, _eu) & stmt.Selector
                         Catch ex As KeyNotFoundException
                             Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                         End Try
@@ -551,6 +551,11 @@ Namespace Criteria.Core
         Private _fo As FilterOperation
         Private _left As UnaryExp
         Private _right As UnaryExp
+        Private _eu As EntityUnion
+
+        Public Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter Implements IFilter.SetUnion
+            Throw New NotImplementedException
+        End Function
 
         Public Sub New(ByVal left As UnaryExp, ByVal right As UnaryExp, ByVal fo As FilterOperation)
             _left = left

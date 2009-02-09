@@ -8,6 +8,7 @@ Namespace Criteria.Core
         Implements IFilter, IValuableFilter
 
         Private _v As IFilterValue
+        Protected _eu As Query.EntityUnion
 
         Public Sub New(ByVal value As IFilterValue)
             If value Is Nothing Then
@@ -21,6 +22,11 @@ Namespace Criteria.Core
         Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
         Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
+
+        Public Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter Implements IFilter.SetUnion
+            _eu = eu
+            Return Me
+        End Function
 
         Public Function Clone() As IFilter Implements IFilter.Clone
             Return CType(_Clone(), IFilter)

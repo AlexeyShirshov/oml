@@ -25,6 +25,11 @@ Namespace Criteria.Joins
             AddType(os)
         End Sub
 
+        Protected Friend Sub New(ByVal os As EntityUnion, ByVal key As String, ByVal jc As List(Of QueryJoin))
+            _jc = jc
+            AddType(os, key)
+        End Sub
+
         Protected Friend Sub New(ByVal t As Type, ByVal jc As List(Of QueryJoin))
             _jc = jc
             AddType(t)
@@ -85,9 +90,10 @@ Namespace Criteria.Joins
             End If
         End Sub
 
-        'Protected Friend Sub AddFilter(ByVal jf As IFilter)
-        '    _jc(_jc.Count - 1).Condition = jf
-        'End Sub
+        Protected Friend Sub AddType(ByVal os As EntityUnion, ByVal key As String)
+            _jc(_jc.Count - 1).M2MObjectSource = os
+            _jc(_jc.Count - 1).M2MKey = key
+        End Sub
 
         Protected Friend Sub AddType(ByVal os As EntityUnion)
             _jc(_jc.Count - 1).M2MObjectSource = os
@@ -110,6 +116,13 @@ Namespace Criteria.Joins
             _jc(_jc.Count - 1).M2MJoinEntityName = entityName
             _jc(_jc.Count - 1).M2MKey = key
         End Sub
+
+        Public Function join(ByVal ea As EntityAlias) As JoinCondition
+            AddFilterCon()
+            Dim j As New QueryJoin(ea, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
+            _jc.Add(j)
+            Return New JoinCondition(_jc)
+        End Function
 
         Public Function join(ByVal eu As EntityUnion) As JoinCondition
             AddFilterCon()

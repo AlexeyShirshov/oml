@@ -2499,6 +2499,18 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {l}), IListEdit)
     End Function
 
+    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IEnumerable, ByVal et As Type) As IListEdit
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(t) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(t) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {et, l}), IListEdit)
+    End Function
+
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
         Dim evaluated As Boolean
         Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, evaluated)

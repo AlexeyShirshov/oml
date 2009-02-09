@@ -345,7 +345,7 @@ namespace Worm.CodeGen.Core
 			            CodeTypeReference entityType;
 			            if (_ormObjectsDefinition.EntityBaseType == null)
 			            {
-                            entityType = new CodeTypeReference(entity.HasSinglePK ? typeof(KeyEntity) : typeof (CachedEntity));
+                            entityType = new CodeTypeReference(entity.HasSinglePK ? typeof(KeyEntity) : entity.HasPk ? typeof (CachedEntity) : typeof(Entity));
                             //else if(entity.HasIntPK)
                                 
                             //else
@@ -629,7 +629,7 @@ namespace Worm.CodeGen.Core
 			            ctr = new CodeConstructor();
 			            ctr.Attributes = MemberAttributes.Public;
 			            // параметры конструктора
-			            ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof (int), "id"));
+						ctr.Parameters.Add(new CodeParameterDeclarationExpression(entity.PkProperty.PropertyType, "id"));
 			            ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof (CacheBase), "cache"));
 			            ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof (ObjectMappingEngine),
 			                                                                      "schema"));
@@ -901,28 +901,29 @@ namespace Worm.CodeGen.Core
                         if (entity.BaseEntity == null)
                         {
                             CreateGetKeyMethodCompositePK(entityClass);
-                            CreateGetPKValuesMethodCompositePK(entityClass);
+                            CreateGetPKValuesMethod(entityClass);
                             CreateSetPKMethod(entityClass, true);
                         }
                         else
                         {
                             UpdateGetKeyMethodCompositePK(entityClass);
-                            UpdateGetPKValuesMethodCompositePK(entityClass);
+                            UpdateGetPKValuesMethod(entityClass);
                             UpdateSetPKMethod(entityClass, true);
                         }
 
                         OverrideEqualsMethodCompositePK(entityClass);
 			        }
-                    else
+                    else if(entity.HasPk)
                     {
                         OverrideIdentifierProperty(entityClass);
                         if (entity.BaseEntity == null)
                         {
                             CreateSetPKMethod(entityClass, false);
+                        	CreateGetPKValuesMethod(entityClass);
                         }
                         else
                         {
-                            UpdateGetPKValuesMethodCompositePK(entityClass);
+                            UpdateGetPKValuesMethod(entityClass);
                             UpdateSetPKMethod(entityClass, false);
                         }
                     }
@@ -1741,7 +1742,7 @@ namespace Worm.CodeGen.Core
             }
         }
 
-        private void UpdateGetPKValuesMethodCompositePK(CodeEntityTypeDeclaration entityClass)
+        private void UpdateGetPKValuesMethod(CodeEntityTypeDeclaration entityClass)
         {
             EntityDescription entity = entityClass.Entity;
             if (entity.PkProperties.Count == 0)
@@ -1925,11 +1926,25 @@ namespace Worm.CodeGen.Core
             }
             else
             {
-                throw new NotImplementedException();
+            	var pkProperty = entity.PkProperty;
+				meth.Statements.Add(
+				new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+																			OrmCodeGenNameHelper.GetPrivateMemberName(pkProperty.PropertyName)),
+						new CodeCastExpression(pkProperty.PropertyType,
+							new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
+								new CodeFieldReferenceExpression(
+									new CodeIndexerExpression(
+										new CodeArgumentReferenceExpression("pks"), new CodePrimitiveExpression(0)), 
+										"Value"),
+								new CodeTypeOfExpression(pkProperty.PropertyType)
+							)
+						)
+				)
+			);
             }
         }
 
-        private void CreateGetPKValuesMethodCompositePK(CodeEntityTypeDeclaration entityClass)
+        private void CreateGetPKValuesMethod(CodeEntityTypeDeclaration entityClass)
         {
             EntityDescription entity = entityClass.Entity;
             CodeMemberMethod meth = new CodeMemberMethod();
@@ -2157,9 +2172,10 @@ namespace Worm.CodeGen.Core
             entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
             if(entityClass.Entity.HasSinglePK)
                 entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IKeyEntity)));
-            else
+            else if(entityClass.Entity.HasPk)
                 entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_ICachedEntity)));
-                
+            else
+				entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IEntity)));
 
     		entityClass.EntityInterfaceDeclaration = entityInterface;
     		entityClass.EntityPropertiesInterfaceDeclaration = entityPropertiesInterface;
