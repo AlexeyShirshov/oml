@@ -109,6 +109,9 @@ Namespace Cache
                             End If
                         Next
                     End If
+                    If mc.GetRev Then
+                        l.Reverse()
+                    End If
                     c = CType(OrmManager.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
                 End If
             End If
@@ -180,6 +183,9 @@ Namespace Cache
                     Dim row As ReadOnlyCollection(Of _IEntity) = m(i)
                     l.Add(row)
                 Next
+                If mgr.GetRev Then
+                    l.Reverse()
+                End If
                 m = New ReadonlyMatrix(l)
             End If
 
@@ -231,7 +237,11 @@ Namespace Cache
                         Dim loe As WeakEntityReference = l(i)
                         Dim o As T = loe.GetObject(Of T)(mc, dic)
                         If o IsNot Nothing Then
-                            c.List.Add(o)
+                            If mc.GetRev Then
+                                c.List.Insert(0, o)
+                            Else
+                                c.List.Add(o)
+                            End If
                         Else
                             OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                         End If
@@ -405,6 +415,10 @@ Namespace Cache
             For Each ll As ILoadableList In dic.Values
                 ll.LoadObjects()
             Next
+
+            If mgr.GetRev Then
+                r.Reverse()
+            End If
 
             Return New ReadonlyMatrix(r)
         End Function
