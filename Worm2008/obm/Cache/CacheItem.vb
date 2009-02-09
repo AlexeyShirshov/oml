@@ -86,6 +86,10 @@ Namespace Cache
                         i += 1
                     Next
                 End If
+                If mgr.GetRev Then
+                    r.Reverse()
+                End If
+
                 Return New ReadOnlyObjectList(Of T)(r)
             Else
                 Return CType(_col, ReadOnlyObjectList(Of T))

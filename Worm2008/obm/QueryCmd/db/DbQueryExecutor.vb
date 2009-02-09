@@ -551,6 +551,7 @@ Namespace Query.Database
             Dim oldCache As Boolean = mgr._dont_cache_lists
             Dim oldStart As Integer = mgr._start
             Dim oldLength As Integer = mgr._length
+            Dim oldRev As Boolean = mgr._rev
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
             'Dim oldC As Boolean = mgr.RaiseObjectCreation
 

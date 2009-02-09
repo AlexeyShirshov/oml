@@ -797,7 +797,7 @@ Namespace Query
                 Next
             End If
 
-            If Not ClientPaging.IsEmpty Then
+            If Not ClientPaging.IsEmpty OrElse _pager IsNot Nothing Then
                 If executor Is Nothing Then
                     Throw New QueryCmdException("Client paging is not supported in this mode", Me)
                 End If
@@ -1477,18 +1477,23 @@ Namespace Query
 
         Private _oldStart As Integer
         Private _oldLength As Integer
+        Private _oldRev As Boolean
+
         Friend Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As OrmManager.ExecutionResult)
             _pager.SetTotalCount(er.RowCount)
             _oldStart = mgr._start
             mgr._start = _pager.GetCurrentPageOffset
             _oldLength = mgr._length
             mgr._length = _pager.GetPageSize
+            _oldRev = mgr._rev
+            mgr._rev = _pager.GetReverse
             RemoveHandler mgr.DataAvailable, AddressOf OnDataAvailable
         End Sub
 
         Friend Sub OnRestoreDefaults(ByVal e As IExecutor, ByVal mgr As OrmManager, ByVal args As EventArgs)
             mgr._start = _oldStart
             mgr._length = _oldLength
+            mgr._rev = _oldRev
             RemoveHandler e.OnRestoreDefaults, AddressOf OnRestoreDefaults
         End Sub
 

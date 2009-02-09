@@ -1048,6 +1048,41 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
     End Sub
 
+    Class P
+        Implements IPager
+
+        Public Function GetCurrentPageOffset() As Integer Implements Worm.Query.IPager.GetCurrentPageOffset
+            Return 0
+        End Function
+
+        Public Function GetPageSize() As Integer Implements Worm.Query.IPager.GetPageSize
+            Return 2
+        End Function
+
+        Public Function GetReverse() As Boolean Implements Worm.Query.IPager.GetReverse
+            Return True
+        End Function
+
+        Public Sub SetTotalCount(ByVal cnt As Integer) Implements Worm.Query.IPager.SetTotalCount
+
+        End Sub
+    End Class
+
+    <TestMethod()> Public Sub TestClientPagingIPager()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Table1), True).Paging(New P).Sort(SCtor.prop(GetType(Table1), "ID").desc)
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
+
+        Assert.AreEqual(2, l.Count)
+        Assert.IsTrue(l(0).InternalProperties.IsLoaded)
+
+        Assert.AreEqual(2, l(0).ID)
+        Assert.AreEqual(3, l(1).ID)
+    End Sub
+
     <TestMethod()> Public Sub TestSelectEntity()
 
         Dim q As New QueryCmd(Function() _

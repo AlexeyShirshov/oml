@@ -69,6 +69,7 @@ Partial Public MustInherit Class OrmManager
     Friend _expiresPattern As Date
     Protected Friend _start As Integer
     Protected Friend _length As Integer = Integer.MaxValue
+    Protected Friend _rev As Boolean
     Protected _er As ExecutionResult
     Friend _externalFilter As IFilter
     Protected Friend _loadedInLastFetch As Integer
@@ -79,6 +80,11 @@ Partial Public MustInherit Class OrmManager
 #If TraceManagerCreation Then
     Private _callstack As String
 #End If
+
+    Protected Friend Function GetRev() As Boolean
+        Return _rev
+    End Function
+
     Protected Friend Function GetStart() As Integer
         If _externalFilter IsNot Nothing Then
             Return 0
