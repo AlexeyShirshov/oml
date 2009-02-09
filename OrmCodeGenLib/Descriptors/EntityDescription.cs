@@ -417,7 +417,9 @@ namespace Worm.CodeGen.Core.Descriptors
                 if (HasSinglePK) 
                     foreach (var propertyDescription in CompleteEntity.Properties)
                     {
-                        if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) && propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32)))
+                        if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) 
+                            //&& propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32))
+                            )
                             return propertyDescription;
                     }
                 throw new InvalidOperationException("Only usable with single PK");

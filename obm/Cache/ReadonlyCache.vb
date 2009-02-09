@@ -697,7 +697,7 @@ Namespace Cache
             Return a
         End Function
 
-        Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
+        Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean) As IKeyEntity
 
             Return GetOrmBaseFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
