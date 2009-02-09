@@ -102,6 +102,45 @@ Imports Worm
     End Sub
 
     <TestMethod()> _
+    Public Sub TestEditCreated()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim o As New Entity4(1, mgr.Cache, mgr.MappingEngine)
+            Assert.AreEqual(ObjectState.Created, o.InternalProperties.ObjectState)
+            o.Title = "asdfasdf"
+            Assert.AreEqual(ObjectState.Created, o.InternalProperties.ObjectState)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestEditConcurent()
+        Dim c As New OrmCache
+        Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
+            Dim o As Entity4 = mgr.Find(Of Entity4)(1)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
+        End Using
+
+        Dim t1 As New Threading.Thread(AddressOf wt)
+        Dim t2 As New Threading.Thread(AddressOf wt)
+
+        t1.Start(New Pair(Of String, OrmCache)("1", c))
+        t2.Start(New Pair(Of String, OrmCache)("2", c))
+        t1.Join()
+        t2.Join()
+    End Sub
+
+    Private Sub wt(ByVal o As Object)
+        Dim c As OrmCache = CType(o, Pair(Of String, OrmCache)).Second
+        Dim id As String = CType(o, Pair(Of String, OrmCache)).First
+
+        Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
+            mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "ID").greater_than(0))
+        End Using
+
+        Dim e As Entity4 = CType(c.GetKeyEntityFromCacheOrCreate(1, GetType(Entity4), False), Entity4)
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestM2M()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(1)
