@@ -121,7 +121,11 @@ Namespace Cache
 #End If
 
         Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity)
-            Debug.Assert(ShadowCopy(obj) Is Nothing)
+            'Debug.Assert()
+            Dim sc As ObjectModification = ShadowCopy(obj)
+            If sc IsNot Nothing Then
+                Throw New OrmManagerException(String.Format("Object is going to die {0}:{1}. Stack {2}", sc.Proxy.EntityType, sc.Proxy.PK(0).Value, sc.StackTrace))
+            End If
             RaiseEvent RegisterObjectRemoval(Me, obj)
             obj.RemoveFromCache(Me)
 #If TraceCreation Then
@@ -700,10 +704,10 @@ Namespace Cache
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean) As IKeyEntity
 
-            Return GetOrmBaseFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
+            Return GetKeyEntityFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
         End Function
 
-        Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
+        Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As IKeyEntity
 
             Dim o As IKeyEntity = KeyEntity.CreateOrmBase(id, type, Me, schema)

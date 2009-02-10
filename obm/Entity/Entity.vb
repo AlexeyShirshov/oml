@@ -115,7 +115,12 @@ Namespace Entities
                         Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
                         Dim o As ICachedEntity = TryCast(mpe.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
                         If o IsNot Nothing AndAlso Not mc.Manager.IsInCachePrecise(o) Then
-                            mpe.SetPropertyValue(Me, propertyAlias, mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType), schema)
+                            Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
+                            If ov IsNot Nothing Then
+                                ov.SetValueOptimized(propertyAlias, schema, mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType))
+                            Else
+                                Throw New OrmObjectException("Check read requires IOptimizedValues")
+                            End If
                         End If
                     End If
                 End Using
