@@ -2064,6 +2064,7 @@ l1:
                                     ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
                                         Return obj
                                     Else
+                                        lock = obj.GetSyncRoot
                                         obj.BeginLoading()
                                     End If
                                 Else
@@ -2083,7 +2084,6 @@ l1:
                 End If
 
                 If pk_count < selectList.Count Then
-                    lock = obj.GetSyncRoot
                     If obj.ObjectState = ObjectState.Deleted OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                         Return obj
                     End If

@@ -134,10 +134,17 @@ Imports Worm
         Dim id As String = CType(o, Pair(Of String, OrmCache)).First
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
-            mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "ID").greater_than(0))
+            If id = "1" Then
+                mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "ID").greater_than(0), Nothing, True)
+            Else
+                mgr.Find(Of Entity4)(Ctor.prop(GetType(Entity4), "ID").less_than(100000), Nothing, True)
+            End If
+
+            Dim e As Entity4 = CType(c.GetKeyEntityFromCacheOrCreate(1, GetType(Entity4), False, Nothing, mgr.MappingEngine), Entity4)
+
+            Assert.AreNotEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
         End Using
 
-        Dim e As Entity4 = CType(c.GetKeyEntityFromCacheOrCreate(1, GetType(Entity4), False), Entity4)
     End Sub
 
     <TestMethod()> _
