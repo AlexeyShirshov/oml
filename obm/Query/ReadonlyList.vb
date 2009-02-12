@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Criteria.Core
+Imports Worm.Entities.Meta
 
 Friend Interface IListEdit
     Inherits IList
@@ -92,6 +93,10 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
             End If
         Next
         Return New ReadOnlyList(Of T)(l.Keys)
+    End Function
+
+    Public Function LoadChildren(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As IList(Of Entities._IKeyEntity)
+        Return rd.Load(Me, loadWithObjects)
     End Function
 
     Public Function LoadChilds(Of ChildType As {New, Entities.IKeyEntity})() As ReadOnlyList(Of ChildType)

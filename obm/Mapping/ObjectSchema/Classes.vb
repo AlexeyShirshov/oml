@@ -147,8 +147,24 @@ Namespace Entities.Meta
             Return _eu.GetHashCode Xor If(String.IsNullOrEmpty(Key), 0, Key.GetHashCode)
         End Function
 
-        Public Overridable Sub Load(ByVal mgr As OrmManager, ByVal objs As IList(Of IKeyEntity), _
-                                    ByVal start As Integer, ByVal length As Integer)
+        Public Overridable Function Load(Of T As IKeyEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+
+        End Function
+
+        Public Overridable Function Load(Of T As IKeyEntity)(ByVal mgr As OrmManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+
+        End Function
+
+        Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As ICreateManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+
+        End Function
+
+        Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As CreateManagerDelegate, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+
+        End Function
+
+        Public Overridable Function Load(Of T As IKeyEntity)(ByVal mgr As OrmManager, ByVal objs As IList(Of T), _
+                                    ByVal start As Integer, ByVal length As Integer, ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
             Dim lookups As New Dictionary(Of IKeyEntity, IList)
             Dim newc As New List(Of IKeyEntity)
             Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
@@ -166,7 +182,7 @@ Namespace Entities.Meta
             Next
 
             If rcmd Is Nothing Then
-                Return
+                Return New List(Of _IKeyEntity)
             End If
 
             Dim ids As New List(Of Object)
@@ -179,7 +195,7 @@ Namespace Entities.Meta
 
             'mgr.GetObjects(ids, rcmd, c, True, Column, False)
 
-        End Sub
+        End Function
 
         Public Overridable Function CreateCmd(ByVal o As IKeyEntity) As RelationCmd
             Return o.GetCmd(Me)

@@ -2354,14 +2354,27 @@ Namespace Query
             End Using
         End Function
 
+        Public Function ToObjectList(Of T As _IEntity)() As ReadOnlyObjectList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToObjectList(Of T)(_getMgr)
+        End Function
+
+        Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToObjectList(Of T)(mgr)
+                End Using
+            End Using
+        End Function
+
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
             If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
-                'Dim c As New svct(Me)
-                '_createType = GetType(T)
-                'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                '    Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
-                'End Using
                 Return GetExecutor(mgr).ExecEntity(Of AnonymousEntity, T)(mgr, Me)
+            ElseIf GetType(CachedEntity).IsAssignableFrom(GetType(T)) Then
+                Return CType(ToList(mgr), Global.Worm.ReadOnlyObjectList(Of T))
             Else
                 Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
             End If
@@ -3251,10 +3264,10 @@ Namespace Query
             Return CType(o, T)
         End Function
 
-        Protected Function BuildDic(Of T As {New, IEntity})(ByVal mgr As OrmManager, _
+        Protected Function BuildDic(Of T As {New, _IEntity})(ByVal mgr As OrmManager, _
             ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
 
-            Dim last As DicIndexT(Of T) = DicIndexT(Of T).CreateRoot(firstPropertyAlias, secondPropertyAlias)
+            Dim last As DicIndexT(Of T) = DicIndexT(Of T).CreateRoot(firstPropertyAlias, secondPropertyAlias, Me)
             Dim root As DicIndexT(Of T) = last
             Dim first As Boolean = True
 
@@ -3274,7 +3287,7 @@ Namespace Query
             Return root
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal level As Integer) As DicIndexT(Of T)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -3282,7 +3295,7 @@ Namespace Query
             Return BuildDictionary(Of T)(_getMgr, level)
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr)
                     Return BuildDictionary(Of T)(mgr, level)
@@ -3290,7 +3303,7 @@ Namespace Query
             End Using
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -3298,7 +3311,15 @@ Namespace Query
             Return BuildDictionary(Of T)(_getMgr, propertyAlias, level)
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return BuildDictionary(Of T)(_getMgr, propertyAlias, secondPropertyAlias, level)
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, level)
@@ -3306,7 +3327,16 @@ Namespace Query
             End Using
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, _
+            ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return BuildDictionary(Of T)(mgr, propertyAlias, secondPropertyAlias, level)
+                End Using
+            End Using
+        End Function
+
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
 
             If _group Is Nothing OrElse _group.Count = 0 Then
                 Dim tt As Type = GetType(T)
@@ -3337,7 +3367,7 @@ Namespace Query
             Return BuildDic(Of T)(mgr, n, Nothing, level)
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Dim tt As Type = GetType(T)
             Dim c As New QueryCmd.svct(Me)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
@@ -3371,7 +3401,7 @@ Namespace Query
             End Using
         End Function
 
-        Public Function BuildDictionary(Of T As {New, IEntity})(ByVal mgr As OrmManager, _
+        Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, _
             ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
 
             If Not String.IsNullOrEmpty(secondPropertyAlias) Then
