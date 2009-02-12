@@ -1861,6 +1861,11 @@ l1:
         Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
             Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
             ro.CorrectStateAfterLoading(notFromCache)
+#If DEBUG Then
+            If ro.ObjectState = ObjectState.Created Then
+                Throw New ApplicationException(notFromCache.ToString & "")
+            End If
+#End If
             'If notFromCache Then
             '    If ro.ObjectState = ObjectState.None OrElse ro.ObjectState = ObjectState.NotLoaded Then
             '        Dim co As _ICachedEntity = TryCast(ro, _ICachedEntity)
@@ -1966,9 +1971,6 @@ l1:
             'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            'Dim load As Boolean = a
-            'Using obj.GetSyncRoot()
-            'Dim d As IDisposable = Nothing
             obj.BeginLoading()
             Dim existing As Boolean
             Try
@@ -2115,7 +2117,11 @@ l1:
                             Continue For
                         End If
 
-                        'Dim att As Field2DbRelations = attrs(idx + displacement)
+#If DEBUG Then
+                        If Not obj.IsLoading Then
+                            Throw New OrmManagerException(obj.ObjName & "is not in loading")
+                        End If
+#End If
 
                         ParseValueFromDb(dr, att, idx, obj, pi, propertyAlias, oschema, value, _
                                          ce, check_pk, fac, c)
@@ -2146,6 +2152,10 @@ l1:
 
             If ce IsNot Nothing Then
                 ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
+            End If
+
+            If existing AndAlso obj.ObjectState = ObjectState.Created Then
+                Throw New ApplicationException
             End If
 
             RaiseObjectLoaded(obj)
