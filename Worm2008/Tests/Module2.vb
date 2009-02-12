@@ -152,7 +152,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 1000
-    Private Const threadCount As Integer = 10
+    Private Const threadCount As Integer = 2
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -178,14 +178,14 @@ Module Module2
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub2)
             trd.Add(t)
-            t = New Threading.Thread(AddressOf Load)
-            trd.Add(t)
-            t = New Threading.Thread(AddressOf Unload)
-            trd.Add(t)
-            t = New Threading.Thread(AddressOf DeleteSub)
-            trd.Add(t)
-            t = New Threading.Thread(AddressOf AddSub)
-            trd.Add(t)
+            't = New Threading.Thread(AddressOf Load)
+            'trd.Add(t)
+            ''t = New Threading.Thread(AddressOf Unload)
+            ''trd.Add(t)
+            't = New Threading.Thread(AddressOf DeleteSub)
+            'trd.Add(t)
+            't = New Threading.Thread(AddressOf AddSub)
+            'trd.Add(t)
 
             'Dim t As New Threading.Thread(AddressOf AddSub)
             'trd.Add(t)
@@ -309,7 +309,7 @@ Module Module2
                                         End Using
                                         If done Then
                                             Debug.Assert(st.Saver.AffectedObjects.Count > 0)
-                                            Debug.Assert(t.InternalProperties.OriginalCopy IsNot Nothing)
+                                            'Debug.Assert(t.InternalProperties.OriginalCopy IsNot Nothing)
                                         End If
                                         'Debug.Assert(Not done OrElse st.Saver.AffectedObjects.Count > 0)
                                         'Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
@@ -320,7 +320,7 @@ Module Module2
                                     End Using
                                     If done Then
                                         Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
-                                        Dim s, s2, s3 As String
+                                        Dim s As String ', s2, s3 As String
                                         If t.InternalProperties.ObjectState <> Entities.ObjectState.Deleted Then
                                             s = sw.GetStringBuilder.ToString
                                         End If

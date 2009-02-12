@@ -59,7 +59,13 @@ Namespace Entities
             End Get
         End Property
 
+#If DEBUG Then
+        Public _lstack As String
+#End If
         Protected Sub BeginLoading() Implements _IEntity.BeginLoading
+#If DEBUG Then
+            _lstack = Environment.StackTrace
+#End If
             _loading = True
         End Sub
 
@@ -233,6 +239,9 @@ Namespace Entities
 
         Protected Sub EndLoading() Implements _IEntity.EndLoading
             _loading = False
+#If DEBUG Then
+            _lstack = String.Empty
+#End If
         End Sub
 
         Protected Overridable ReadOnly Property ObjName() As String Implements _IEntity.ObjName

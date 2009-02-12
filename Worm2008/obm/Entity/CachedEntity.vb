@@ -1155,7 +1155,7 @@ l1:
             Get
                 Using SyncHelper(False)
                     If _copy Is Nothing Then
-                        If (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) AndAlso ObjectState <> Entities.ObjectState.Created Then
+                        If (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) AndAlso ObjectState <> Entities.ObjectState.Created AndAlso ObjectState <> Entities.ObjectState.Deleted Then
                             Using gm As IGetManager = GetMgr()
                                 _copy = CType(gm.Manager.GetObjectFromStorage(Me), CachedEntity)
                             End Using
@@ -1682,10 +1682,10 @@ l1:
 
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
             If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None)) Then
-                d = SyncHelper(True)
                 If Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None) AndAlso Not IsPropertyLoaded(propertyAlias) Then
                     Load()
                 End If
+                d = SyncHelper(True)
             End If
         End Sub
 

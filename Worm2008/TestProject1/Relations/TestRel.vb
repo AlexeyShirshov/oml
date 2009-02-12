@@ -91,7 +91,7 @@ Imports Worm.Cache
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
 
-        t.Table2s.Load()
+        t.Table2s.LoadObjects()
 
         Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.ToList(Of Table2)()
 
@@ -117,7 +117,7 @@ Imports Worm.Cache
             Assert.IsFalse(t2.InternalProperties.IsLoaded)
         Next
 
-        t.Table2s.Load()
+        t.Table2s.LoadObjects()
 
         Assert.IsTrue(r(0).InternalProperties.IsLoaded)
     End Sub
@@ -129,7 +129,7 @@ Imports Worm.Cache
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
         Dim q As RelationCmd = t.Table2s
-        q.Load(0, 1)
+        q.LoadObjects(0, 1)
 
         Assert.AreEqual(1, q.LastExecutionResult.RowCount)
 
@@ -156,7 +156,7 @@ Imports Worm.Cache
         Assert.IsFalse(r(0).InternalProperties.IsLoaded)
         Assert.IsFalse(r(1).InternalProperties.IsLoaded)
 
-        q.Load(0, 1)
+        q.LoadObjects(0, 1)
 
         Assert.IsTrue(r(0).InternalProperties.IsLoaded)
     End Sub
@@ -168,7 +168,7 @@ Imports Worm.Cache
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
         Dim q As RelationCmd = t.Table2s
-        q.Load(0, 1)
+        q.LoadObjects(0, 1)
 
         Assert.AreEqual(1, q.LastExecutionResult.RowCount)
 

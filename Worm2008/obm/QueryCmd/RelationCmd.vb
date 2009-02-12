@@ -528,23 +528,23 @@ l1:
             Return Me
         End Function
 
-        Public Sub Load()
+        Public Sub LoadObjects()
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Load(_getMgr)
+            LoadObjects(_getMgr)
         End Sub
 
-        Public Sub Load(ByVal getMgr As ICreateManager)
+        Public Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr)
-                    Load(mgr)
+                    LoadObjects(mgr)
                 End Using
             End Using
         End Sub
 
-        Public Sub Load(ByVal mgr As OrmManager)
+        Public Sub LoadObjects(ByVal mgr As OrmManager)
             Dim os As EntityUnion = GetSelectedOS()
             If os Is Nothing Then
                 Throw New QueryCmdException("You must select type", Me)
@@ -565,23 +565,23 @@ l1:
             End If
         End Sub
 
-        Public Sub Load(ByVal start As Integer, ByVal length As Integer)
+        Public Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Load(_getMgr, start, length)
+            LoadObjects(_getMgr, start, length)
         End Sub
 
-        Public Sub Load(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
+        Public Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr)
-                    Load(mgr, start, length)
+                    LoadObjects(mgr, start, length)
                 End Using
             End Using
         End Sub
 
-        Public Sub Load(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
+        Public Sub LoadObjects(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
             Dim os As EntityUnion = GetSelectedOS()
             If os Is Nothing Then
                 Throw New QueryCmdException("You must select type", Me)

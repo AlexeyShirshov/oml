@@ -243,7 +243,7 @@ Imports Worm.Misc
 
             Assert.AreEqual(5, l.Count)
 
-            Dim last As DicIndexT(Of Entity4) = DicIndexT(Of Entity4).CreateRoot("Title")
+            Dim last As DicIndexT(Of Entity4) = DicIndexT(Of Entity4).CreateRoot("Title", q)
             Dim root As DicIndexT(Of Entity4) = last
             Dim first As Boolean = True
 
@@ -296,24 +296,37 @@ Imports Worm.Misc
             Assert.AreEqual("2", root.ChildIndexes(0).Name)
             Assert.AreEqual(3, root.ChildIndexes(0).Count)
 
+            Assert.AreEqual(3, root.ChildIndexes(0).FindElements( _
+                            New CreateManager(Function() TestManager.CreateManager(New ObjectMappingEngine("1")))).Count)
+            For Each e As Entity4 In root.ChildIndexes(0).FindElements( _
+                            New CreateManager(Function() TestManager.CreateManager(New ObjectMappingEngine("1"))))
+                Assert.IsTrue(e.Title.StartsWith("2"))
+            Next
+
         End Using
     End Sub
 
     <TestMethod()> Public Sub TestBuildDicUnion()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))
-            Dim q As New QueryCmd()
+        Dim c As New Cache.ReadonlyCache
 
-            Dim root As DicIndexT(Of Table1) = q.BuildDictionary(Of Table1)(mgr, "Title", "EnumStr", 1)
+        Dim q As New QueryCmd( _
+                        New CreateManager(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c)))
 
-            Assert.AreEqual(2, root.ChildIndexes.Length)
+        Dim root As DicIndexT(Of Table1) = q.BuildDictionary(Of Table1)("Title", "EnumStr", 1)
 
-            Assert.AreEqual("s", root.ChildIndexes(0).Name)
-            Assert.AreEqual(3, root.ChildIndexes(0).Count)
+        Assert.AreEqual(2, root.ChildIndexes.Length)
 
-            Assert.AreEqual("f", root.ChildIndexes(1).Name)
-            Assert.AreEqual(3, root.ChildIndexes(1).Count)
+        Assert.AreEqual("s", root.ChildIndexes(0).Name)
+        Assert.AreEqual(3, root.ChildIndexes(0).Count)
 
-        End Using
+        Assert.AreEqual("f", root.ChildIndexes(1).Name)
+        Assert.AreEqual(3, root.ChildIndexes(1).Count)
+
+        Assert.AreEqual(2, root.ChildIndexes(1).FindElements.Count)
+
+        For Each e As Table1 In root.ChildIndexes(1).FindElements
+            Assert.IsTrue(e.Name.StartsWith("f") OrElse e.EnumStr.ToString.StartsWith("f"))
+        Next
     End Sub
 
     <TestMethod()> Public Sub TestOrder2()

@@ -3600,7 +3600,7 @@ l1:
         Return roots
     End Function
 
-    Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, IEntity})(ByVal name As String, ByVal cnt As Integer, _
+    Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, _IEntity})(ByVal name As String, ByVal cnt As Integer, _
         ByVal level As Integer, ByVal root As T, ByRef last As T, _
         ByRef first As Boolean, ByVal firstField As String, ByVal secField As String)
         'If name.Length = 0 Then name = "<без имени>"
@@ -3625,7 +3625,7 @@ l1:
         If p Is root And name <> "" Then
             If name(0) = "'" Then
                 Dim s As New T
-                DicIndexT(Of T2).Init(s, "'", Nothing, 0, firstField, secField)
+                DicIndexT(Of T2).Init(s, "'", Nothing, 0, firstField, secField, root.Cmd)
                 p = CType(root.Dictionary(s), T)
                 If p IsNot Nothing Then GoTo l1
             End If
@@ -3634,7 +3634,7 @@ l1:
                 Dim c As Integer = 0
                 If k = name.Length Then c = cnt
                 Dim s As New T
-                DicIndexT(Of T2).Init(s, name.Substring(0, k), _prev, c, firstField, secField)
+                DicIndexT(Of T2).Init(s, name.Substring(0, k), _prev, c, firstField, secField, root.Cmd)
                 If _prev Is root Then
                     If root.Dictionary.Contains(s.Name) Then
                         s = CType(root.Dictionary(s.Name), T)
@@ -3658,7 +3658,7 @@ l1:
             current = _prev
         Else
             current = New T
-            DicIndexT(Of T2).Init(current, name, p, cnt, firstField, secField)
+            DicIndexT(Of T2).Init(current, name, p, cnt, firstField, secField, root.Cmd)
             p.AddChild(current)
             root.Add2Dictionary(current)
         End If
@@ -3668,7 +3668,7 @@ l1:
         last = current
     End Sub
 
-    Protected Shared Function GetParent(Of T As {New, IEntity})(ByVal mi As DicIndexT(Of T), ByVal level As Integer) As DicIndexT(Of T)
+    Protected Shared Function GetParent(Of T As {New, _IEntity})(ByVal mi As DicIndexT(Of T), ByVal level As Integer) As DicIndexT(Of T)
         Dim p As DicIndexT(Of T) = mi
         For i As Integer = 0 To level
             If p Is Nothing Then Return p
