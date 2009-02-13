@@ -436,31 +436,33 @@ Namespace Entities
         End Property
 
         Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
-            If objectWasCreated Then
-                If ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Created Then
-                    If IsLoaded Then
-                        SetObjectState(ObjectState.None)
-                    Else
-                        SetObjectState(ObjectState.NotLoaded)
-                    End If
-                    'ElseIf ObjectState = Orm.ObjectState.Created Then
-                    '    Debug.Assert(Not IsLoaded)
-                    '    SetObjectState(ObjectState.NotLoaded)
-                ElseIf ObjectState = ObjectState.NotLoaded Then
-                    If IsLoaded Then SetObjectState(ObjectState.None)
-                ElseIf ObjectState = Entities.ObjectState.None Then
-                    'Else
-                    '    Debug.Assert(False)
-                End If
-            Else
-                If ObjectState = ObjectState.NotLoaded Then
-                    If IsLoaded Then
-                        SetObjectState(ObjectState.None)
+            Using SyncHelper(False)
+                If objectWasCreated Then
+                    If ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Created Then
+                        If IsLoaded Then
+                            SetObjectState(ObjectState.None)
+                        Else
+                            SetObjectState(ObjectState.NotLoaded)
+                        End If
+                        'ElseIf ObjectState = Orm.ObjectState.Created Then
+                        '    Debug.Assert(Not IsLoaded)
+                        '    SetObjectState(ObjectState.NotLoaded)
+                    ElseIf ObjectState = ObjectState.NotLoaded Then
+                        If IsLoaded Then SetObjectState(ObjectState.None)
+                    ElseIf ObjectState = Entities.ObjectState.None Then
                         'Else
-                        '    SetObjectState(ObjectState.NotFoundInSource)
+                        '    Debug.Assert(False)
+                    End If
+                Else
+                    If ObjectState = ObjectState.NotLoaded Then
+                        If IsLoaded Then
+                            SetObjectState(ObjectState.None)
+                            'Else
+                            '    SetObjectState(ObjectState.NotFoundInSource)
+                        End If
                     End If
                 End If
-            End If
+            End Using
         End Sub
 
         Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean

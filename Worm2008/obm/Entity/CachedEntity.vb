@@ -1380,15 +1380,17 @@ l1:
                     End If
 
                     Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
-                    If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
-                        'Debug.Assert(False)
-                        'Throw New OrmObjectException
-                        Return
-                    End If
+                    If mo IsNot Nothing Then
+                        If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
+                            'Debug.Assert(False)
+                            'Throw New OrmObjectException
+                            Return
+                        End If
 
-                    If ObjectState = Entities.ObjectState.Modified AndAlso (mo.Reason = ObjectModification.ReasonEnum.Delete) Then
-                        Debug.Assert(False)
-                        Throw New OrmObjectException
+                        If ObjectState = Entities.ObjectState.Modified AndAlso (mo.Reason = ObjectModification.ReasonEnum.Delete) Then
+                            Debug.Assert(False)
+                            Throw New OrmObjectException
+                        End If
                     End If
 
                     'Debug.WriteLine(Environment.StackTrace)
@@ -1422,7 +1424,9 @@ l1:
                     End If
 
 #If TraceSetState Then
-                    SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
+                    If mo isnot Nothing then
+                        SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
+                    end if
 #Else
                     SetObjectStateClear(olds)
 #End If

@@ -168,9 +168,11 @@ Namespace Database
         Public ReadOnly Property AffectedObjects() As ICollection(Of _ICachedEntity)
             Get
                 Dim l As New List(Of _ICachedEntity)(_objects)
-                For Each o As _ICachedEntity In _removed
-                    l.Remove(o)
-                Next
+                Using SyncHelper.AcquireDynamicLock("akdfvnd")
+                    For Each o As _ICachedEntity In _removed
+                        l.Remove(o)
+                    Next
+                End Using
                 Return l
             End Get
         End Property
@@ -293,7 +295,11 @@ Namespace Database
         End Sub
 
         Protected Sub ObjRejected(ByVal o As ICachedEntity)
-            If Not _startSave Then _removed.Add(o)
+            If Not _startSave Then
+                Using SyncHelper.AcquireDynamicLock("akdfvnd")
+                    _removed.Add(o)
+                End Using
+            End If
         End Sub
 
         Protected Function GetObjWrap(ByVal obj As ICachedEntity) As ObjectWrap(Of ICachedEntity)
