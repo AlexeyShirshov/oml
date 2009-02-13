@@ -40,99 +40,99 @@ Namespace Database
                 Dim cols As Generic.List(Of EntityPropertyAttribute) = Nothing
                 Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
                 Dim inv As Boolean
-                Using obj.GetSyncRoot()
-                    Dim cmdtext As String = Nothing
-                    Try
-                        cmdtext = mgr.SQLGenerator.Update(mgr.MappingEngine, obj, mgr.GetContextFilter, params, cols, upd)
-                    Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
-                        Return False
-                    End Try
-                    If cmdtext.Length > 0 Then
-                        If mgr.SQLGenerator.SupportMultiline Then
-                            Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
-                                With cmd
-                                    .CommandType = System.Data.CommandType.Text
-                                    .CommandText = cmdtext
-                                    For Each p As System.Data.Common.DbParameter In params
-                                        .Parameters.Add(p)
-                                    Next
-                                End With
-
-                                Dim b As ConnAction = mgr.TestConn(cmd)
-                                Try
-                                    mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
-
-                                    inv = True
-                                Finally
-                                    mgr.CloseConn(b)
-                                End Try
-
-                            End Using
-                        Else
-                            Dim tran As System.Data.Common.DbTransaction = mgr.Transaction
-                            mgr.BeginTransaction()
-                            Try
-                                Dim prev_error As Boolean = False
-                                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, mgr.SQLGenerator.EndLine)
-                                    If stmt = String.Empty Then Continue For
-                                    Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
-                                        Dim sel As Boolean = stmt.IndexOf("select") >= 0
-                                        With cmd
-                                            .CommandType = System.Data.CommandType.Text
-                                            .CommandText = stmt
-                                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                                p.RemoveAt(0)
-                                            Next
-                                        End With
-
-                                        If stmt.StartsWith("{{error}}") Then
-                                            If prev_error Then
-                                                cmd.CommandText = stmt.Remove(0, 9).Trim
-                                            Else
-                                                Continue For
-                                            End If
-                                        ElseIf prev_error Then
-                                            Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
-                                        End If
-
-                                        prev_error = False
-                                        Dim b As ConnAction = mgr.TestConn(cmd)
-                                        Try
-                                            If sel Then
-                                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
-                                            Else
-                                                Dim r As Integer = cmd.ExecuteNonQuery()
-                                                If r = 0 Then
-                                                    prev_error = True
-                                                    If _mcSwitch.TraceWarning Then
-                                                        WriteLine(cmd.CommandText & " affected 0 rows!")
-                                                    End If
-                                                    'Debug.WriteLine(Environment.StackTrace.ToString)
-                                                End If
-                                            End If
-                                        Finally
-                                            mgr.CloseConn(b)
-                                        End Try
-                                    End Using
+                'Using obj.GetSyncRoot()
+                Dim cmdtext As String = Nothing
+                Try
+                    cmdtext = mgr.SQLGenerator.Update(mgr.MappingEngine, obj, mgr.GetContextFilter, params, cols, upd)
+                Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                    Return False
+                End Try
+                If cmdtext.Length > 0 Then
+                    If mgr.SQLGenerator.SupportMultiline Then
+                        Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
+                            With cmd
+                                .CommandType = System.Data.CommandType.Text
+                                .CommandText = cmdtext
+                                For Each p As System.Data.Common.DbParameter In params
+                                    .Parameters.Add(p)
                                 Next
+                            End With
+
+                            Dim b As ConnAction = mgr.TestConn(cmd)
+                            Try
+                                mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
 
                                 inv = True
                             Finally
-                                If tran Is Nothing Then
-                                    mgr.Commit()
-                                End If
+                                mgr.CloseConn(b)
                             End Try
-                        End If
-                    End If
 
-                    If inv Then
-                        obj.UpdateCtx.UpdatedFields = upd
-                        'Это было вне юзинга
-                        'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
+                        End Using
+                    Else
+                        Dim tran As System.Data.Common.DbTransaction = mgr.Transaction
+                        mgr.BeginTransaction()
+                        Try
+                            Dim prev_error As Boolean = False
+                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, mgr.SQLGenerator.EndLine)
+                                If stmt = String.Empty Then Continue For
+                                Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
+                                    Dim sel As Boolean = stmt.IndexOf("select") >= 0
+                                    With cmd
+                                        .CommandType = System.Data.CommandType.Text
+                                        .CommandText = stmt
+                                        Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+                                        For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                            .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+                                            p.RemoveAt(0)
+                                        Next
+                                    End With
+
+                                    If stmt.StartsWith("{{error}}") Then
+                                        If prev_error Then
+                                            cmd.CommandText = stmt.Remove(0, 9).Trim
+                                        Else
+                                            Continue For
+                                        End If
+                                    ElseIf prev_error Then
+                                        Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
+                                    End If
+
+                                    prev_error = False
+                                    Dim b As ConnAction = mgr.TestConn(cmd)
+                                    Try
+                                        If sel Then
+                                            mgr.LoadSingleObject(cmd, cols.ConvertAll(Of SelectExpression)(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, obj.GetType)), obj, False, False, False, False)
+                                        Else
+                                            Dim r As Integer = cmd.ExecuteNonQuery()
+                                            If r = 0 Then
+                                                prev_error = True
+                                                If _mcSwitch.TraceWarning Then
+                                                    WriteLine(cmd.CommandText & " affected 0 rows!")
+                                                End If
+                                                'Debug.WriteLine(Environment.StackTrace.ToString)
+                                            End If
+                                        End If
+                                    Finally
+                                        mgr.CloseConn(b)
+                                    End Try
+                                End Using
+                            Next
+
+                            inv = True
+                        Finally
+                            If tran Is Nothing Then
+                                mgr.Commit()
+                            End If
+                        End Try
                     End If
-                End Using
+                End If
+
+                If inv Then
+                    obj.UpdateCtx.UpdatedFields = upd
+                    'Это было вне юзинга
+                    'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
+                End If
+                'End Using
                 Return True
             End Function
 
@@ -1861,11 +1861,6 @@ l1:
         Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
             Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
             ro.CorrectStateAfterLoading(notFromCache)
-#If DEBUG Then
-            If ro.ObjectState = ObjectState.Created Then
-                Throw New ApplicationException(notFromCache.ToString & "")
-            End If
-#End If
             'If notFromCache Then
             '    If ro.ObjectState = ObjectState.None OrElse ro.ObjectState = ObjectState.NotLoaded Then
             '        Dim co As _ICachedEntity = TryCast(ro, _ICachedEntity)
@@ -1905,8 +1900,10 @@ l1:
                 Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx)
                 AfterLoadingProcess(dic, obj, lock, ro)
 #If DEBUG Then
-                Dim ce As CachedEntity = TryCast(ro, CachedEntity)
-                If ce IsNot Nothing Then ce.Invariant()
+                If lock IsNot Nothing Then
+                    Dim ce As CachedEntity = TryCast(ro, CachedEntity)
+                    If ce IsNot Nothing Then ce.Invariant()
+                End If
 #End If
                 Dim orm As _ICachedEntity = TryCast(ro, _ICachedEntity)
                 If orm Is Nothing OrElse orm.IsPKLoaded Then
@@ -1973,6 +1970,7 @@ l1:
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
             obj.BeginLoading()
             Dim existing As Boolean
+            Dim robj As ICachedEntity = Nothing
             Try
                 Dim pk_count As Integer = 0
                 'Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
@@ -2052,26 +2050,25 @@ l1:
                         'lock = True
 
                         If dic IsNot Nothing Then
-                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
+                            robj = NormalizeObject(ce, dic, fromRS)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
-                            obj = robj
-                            ce = CType(obj, _ICachedEntity)
+                            ce = CType(robj, _ICachedEntity)
                             SyncLock dic
                                 If fromCache Then
-                                    If obj.ObjectState = ObjectState.Created Then
-                                        Using obj.GetSyncRoot
-                                            Return obj
-                                        End Using
-                                    ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                                        Return obj
+                                    If robj.ObjectState = ObjectState.Created Then
+                                        'Using robj.GetSyncRoot
+                                        Return robj
+                                        'End Using
+                                    ElseIf robj.ObjectState = ObjectState.Modified OrElse robj.ObjectState = ObjectState.Deleted Then
+                                        Return robj
                                     Else
                                         existing = True
                                     End If
                                 Else
                                     If fromRS Then
                                     Else
-                                        If obj.ObjectState = ObjectState.Created Then
+                                        If robj.ObjectState = ObjectState.Created Then
                                             ce.CreateCopyForSaveNewEntry(Me, oldpk)
                                             'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                                         End If
@@ -2085,10 +2082,14 @@ l1:
                 End If
 
                 If pk_count < selectList.Count Then
+                    If robj IsNot Nothing Then
+                        obj = robj
+                    End If
+
                     lock = obj.GetSyncRoot
 #If DEBUG Then
                     If existing AndAlso obj.IsLoading Then
-                        Throw New OrmManagerException(obj.ObjName & "is already loading")
+                        Throw New OrmManagerException(obj.ObjName & "is already loading" & CType(obj, Entity)._lstack)
                     End If
 #End If
                     obj.BeginLoading()
@@ -2152,10 +2153,6 @@ l1:
 
             If ce IsNot Nothing Then
                 ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
-            End If
-
-            If existing AndAlso obj.ObjectState = ObjectState.Created Then
-                Throw New ApplicationException
             End If
 
             RaiseObjectLoaded(obj)

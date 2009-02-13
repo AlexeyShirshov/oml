@@ -152,7 +152,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 1000
-    Private Const threadCount As Integer = 10
+    Private Const threadCount As Integer = 4
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -174,14 +174,10 @@ Module Module2
         For i As Integer = 0 To threadCount
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
-            t = New Threading.Thread(AddressOf QuerySub)
+            t = New Threading.Thread(AddressOf Load)
             trd.Add(t)
-            t = New Threading.Thread(AddressOf QuerySub2)
+            t = New Threading.Thread(AddressOf Unload)
             trd.Add(t)
-            't = New Threading.Thread(AddressOf Load)
-            'trd.Add(t)
-            ''t = New Threading.Thread(AddressOf Unload)
-            ''trd.Add(t)
             't = New Threading.Thread(AddressOf DeleteSub)
             'trd.Add(t)
             't = New Threading.Thread(AddressOf AddSub)
@@ -189,6 +185,13 @@ Module Module2
 
             'Dim t As New Threading.Thread(AddressOf AddSub)
             'trd.Add(t)
+        Next
+        For i As Integer = 0 To 1
+            Dim t As Threading.Thread = Nothing
+            t = New Threading.Thread(AddressOf QuerySub)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf QuerySub2)
+            trd.Add(t)
         Next
         For i As Integer = 0 To trd.Count - 1
             Dim t As Threading.Thread = trd(i)
@@ -208,7 +211,7 @@ Module Module2
     End Sub
 
     Sub Load(ByVal o As Object)
-        For i As Integer = 0 To iterCount
+        For i As Integer = 0 To iterCount * 4
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -240,7 +243,7 @@ Module Module2
     End Sub
 
     Sub Unload(ByVal o As Object)
-        For i As Integer = 0 To iterCount
+        For i As Integer = 0 To iterCount * 4
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -419,7 +422,7 @@ Module Module2
                                         End If
                                     End Using
                                 End If
-                                If st.Saver.AffectedObjects.Count > 4 Then Exit For
+                                If st.Saver.AffectedObjects.Count > 4 Then Exit Do
                             Loop While True
                             st.AcceptModifications()
                         End Using
@@ -448,7 +451,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount * 2
+        For i As Integer = 0 To iterCount
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
@@ -482,7 +485,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount * 2
+        For i As Integer = 0 To iterCount
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
