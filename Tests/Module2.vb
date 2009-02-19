@@ -152,7 +152,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 1000
-    Private Const threadCount As Integer = 4
+    Private Const threadCount As Integer = 2
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -174,14 +174,14 @@ Module Module2
         For i As Integer = 0 To threadCount
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
-            t = New Threading.Thread(AddressOf Load)
-            trd.Add(t)
-            t = New Threading.Thread(AddressOf Unload)
-            trd.Add(t)
-            't = New Threading.Thread(AddressOf DeleteSub)
+            't = New Threading.Thread(AddressOf Load)
             'trd.Add(t)
-            't = New Threading.Thread(AddressOf AddSub)
+            't = New Threading.Thread(AddressOf Unload)
             'trd.Add(t)
+            t = New Threading.Thread(AddressOf DeleteSub)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf AddSub)
+            trd.Add(t)
 
             'Dim t As New Threading.Thread(AddressOf AddSub)
             'trd.Add(t)
