@@ -140,7 +140,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Overloads Sub Load() Implements ICachedEntity.Load
+        Public Overloads Sub Load(ByVal propertyAlias As String) Implements ICachedEntity.Load
 
         End Sub
 
@@ -200,7 +200,7 @@ Namespace Entities
         '    End Get
         'End Property
 
-        Public Overloads Sub Load(ByVal mgr As OrmManager) Implements _ICachedEntity.Load
+        Public Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
 
         End Sub
     End Class

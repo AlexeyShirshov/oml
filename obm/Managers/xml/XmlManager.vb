@@ -173,7 +173,7 @@ Namespace Xml
             Return Nothing
         End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
             Throw New NotImplementedException
         End Sub
 
@@ -203,11 +203,11 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormater, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
+        Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
+        Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormatter) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 

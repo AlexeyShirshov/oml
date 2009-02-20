@@ -9,7 +9,7 @@ Imports Worm.Query
 
 Namespace Web
     Public Interface IUserMapping
-        Function CreateManager() As OrmManager
+        Inherits ICreateManager
         Property ApplicationName() As String
         ReadOnly Property LastActivityField() As String
         ReadOnly Property IsAnonymousField() As String

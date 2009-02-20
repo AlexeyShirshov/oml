@@ -197,6 +197,7 @@ Public Class EntitySchema1v3Implementation
 End Class
 
 <Entity(GetType(EntitySchema2v1Implementation), "1"), _
+Entity(GetType(EntitySchema2v11Implementation), "1.1"), _
 Entity(GetType(EntitySchema2v2Implementation), "2")> _
 Public Class Entity2
     Inherits Entity
@@ -248,6 +249,17 @@ Public Class EntitySchema2v1Implementation
             _coladded = True
         End If
         Return idx
+    End Function
+End Class
+
+Public Class EntitySchema2v11Implementation
+    Inherits EntitySchema2v1Implementation
+    Implements IDefferedLoading
+
+    Public Function GetDefferedLoadPropertiesGroups() As String()() Implements Worm.Entities.Meta.IDefferedLoading.GetDefferedLoadPropertiesGroups
+        Return New String()() { _
+            New String() {"Str"} _
+        }
     End Function
 End Class
 

@@ -67,6 +67,8 @@ Public Class Tables1to1
                 Return _table1
             Case "Table1Back"
                 Return _table1back
+            Case "ID"
+                Return Identifier
             Case Else
                 Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)

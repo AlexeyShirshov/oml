@@ -120,8 +120,8 @@ Imports Worm
             Assert.IsTrue(o.InternalProperties.IsLoaded)
         End Using
 
-        Dim t1 As New Threading.Thread(AddressOf wt)
-        Dim t2 As New Threading.Thread(AddressOf wt)
+        Dim t1 As New System.Threading.Thread(AddressOf wt)
+        Dim t2 As New System.Threading.Thread(AddressOf wt)
 
         t1.Start(New Pair(Of String, OrmCache)("1", c))
         t2.Start(New Pair(Of String, OrmCache)("2", c))
@@ -1357,6 +1357,24 @@ Imports Worm
             Using e.BeginEdit
 
             End Using
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestDefferedLoading()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1.1"))
+            Dim e As Entity2 = mgr.Find(Of Entity2)(10)
+
+            Assert.IsNotNull(e)
+
+            Assert.IsFalse(e.InternalProperties.IsLoaded)
+            Assert.IsFalse(e.InternalProperties.IsPropertyLoaded("Str"))
+
+            Dim s As String = e.Str
+
+            Assert.IsTrue(e.InternalProperties.IsLoaded)
+            Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Str"))
+
         End Using
     End Sub
 

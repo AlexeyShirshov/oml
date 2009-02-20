@@ -430,6 +430,9 @@ Namespace Criteria.Joins
                     Else
                         os = _eu
                     End If
+                ElseIf _l.Property.ObjectSource.IsQuery Then
+                    map = New MapField2Column(Nothing, map._columnName, _l.Property.ObjectSource.ObjectAlias.Tbl)
+                    os = _l.Property.ObjectSource
                 Else
                     os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
                 End If
@@ -454,6 +457,9 @@ Namespace Criteria.Joins
                     Else
                         os2 = _eu
                     End If
+                ElseIf _r.Property.ObjectSource.IsQuery Then
+                    map2 = New MapField2Column(Nothing, map2._columnName, _r.Property.ObjectSource.ObjectAlias.Tbl)
+                    os2 = _r.Property.ObjectSource
                 Else
                     os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
                 End If

@@ -118,7 +118,11 @@ Namespace Criteria.Joins
         End Function
 
         Public Function JoinTypeString() As String
-            Select Case _joinType
+            Return JoinTypeString(_joinType)
+        End Function
+
+        Public Shared Function JoinTypeString(ByVal type As JoinType) As String
+            Select Case type
                 Case Worm.Criteria.Joins.JoinType.Join
                     Return " join "
                 Case Worm.Criteria.Joins.JoinType.LeftOuterJoin
@@ -130,7 +134,7 @@ Namespace Criteria.Joins
                 Case Worm.Criteria.Joins.JoinType.CrossJoin
                     Return " cross join "
                 Case Else
-                    Throw New ObjectMappingException("invalid join type " & _joinType.ToString)
+                    Throw New ObjectMappingException("invalid join type " & type.ToString)
             End Select
         End Function
 
@@ -219,23 +223,23 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        Public Property M2MJoinType() As Type
-            Get
-                Return _jos.Type
-            End Get
-            Set(ByVal value As Type)
-                _jos = New EntityUnion(value)
-            End Set
-        End Property
+        'Public Property M2MJoinType() As Type
+        '    Get
+        '        Return _jos.Type
+        '    End Get
+        '    Set(ByVal value As Type)
+        '        _jos = New EntityUnion(value)
+        '    End Set
+        'End Property
 
-        Public Property M2MJoinEntityName() As String
-            Get
-                Return _jos.EntityName
-            End Get
-            Set(ByVal value As String)
-                _jos = New EntityUnion(value)
-            End Set
-        End Property
+        'Public Property M2MJoinEntityName() As String
+        '    Get
+        '        Return _jos.EntityName
+        '    End Get
+        '    Set(ByVal value As String)
+        '        _jos = New EntityUnion(value)
+        '    End Set
+        'End Property
 
         Public Property ObjectSource() As EntityUnion
             Get

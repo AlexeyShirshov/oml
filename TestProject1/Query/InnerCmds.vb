@@ -44,7 +44,7 @@ Imports Worm
     '
 #End Region
 
-    <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestInner()
+    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> Public Sub TestInner()
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -62,7 +62,7 @@ Imports Worm
         Next
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestInnerWrongLoad()
+    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> Public Sub TestInnerWrongLoad()
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -162,6 +162,7 @@ Imports Worm
     <TestMethod()> Public Sub TestSelectInner()
         Dim inner As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
+
         inner.From(GetType(Entity4)).Select(FCtor.prop(GetType(Entity4), "Title")). _
             Where(Ctor.prop(GetType(Entity), "ID").eq(GetType(Entity4), "ID"))
 
@@ -182,6 +183,97 @@ Imports Worm
             Else
                 Assert.IsNotNull(e("Title"))
             End If
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestJoinSubquery()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)).Select(GetType(Entity4))
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Entity)) _
+            .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
+
+        Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)()
+
+        Assert.AreEqual(12, r.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestJoinSubqueryLJ()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)).Select(GetType(Entity4))
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Entity)) _
+            .Join(JCtor.left_join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
+
+        Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)()
+
+        Assert.AreEqual(13, r.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestJoinSubquerySel()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)).Select(GetType(Entity4), True)
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(FCtor.prop(GetType(Entity), "ID").prop(al, "Title")) _
+            .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
+
+        Dim r As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
+
+        Assert.AreEqual(12, r.Count)
+
+        For Each e As Entities.AnonymousEntity In r
+            Assert.IsNotNull(e("ID"))
+            Assert.IsNotNull(e("Title"))
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestJoinSubqueryWhere()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)).Select(GetType(Entity4), True)
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(FCtor.prop(GetType(Entity), "ID").prop(al, "Title")) _
+            .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID"))) _
+            .Where(Ctor.prop(al, "Title").like("b%"))
+
+        Dim r As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
+
+        Assert.AreEqual(3, r.Count)
+
+        For Each e As Entities.AnonymousEntity In r
+            Assert.IsNotNull(e("ID"))
+            Assert.IsNotNull(e("Title"))
         Next
     End Sub
 End Class

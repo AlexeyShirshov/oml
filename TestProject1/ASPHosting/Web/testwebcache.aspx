@@ -38,14 +38,24 @@
         
         If Request.QueryString.ToString = "reset" Then
             Using mgr As OrmReadOnlyDBManager = CreateDBManager()
-                Dim q As Query.QueryCmd = New Query.QueryCmd().Select(GetType(TestProject1.Table1))
+                Dim q As Query.QueryCmd = New Query.QueryCmd().Select(GetType(TestProject1.Table1), True)
                 Dim r As ReadOnlyList(Of TestProject1.Table1) = q.ToList(Of TestProject1.Table1)(mgr)
                 
                 q.ResetObjects(mgr)
                 
                 r = q.ToList(Of TestProject1.Table1)(mgr)
 
-                Dim s As String = r(0).Name
+                For Each t As TestProject1.Table1 In r
+                    If t.InternalProperties.ObjectState <> Entities.ObjectState.None Then
+                        Throw New ApplicationException
+                    End If
+                    If Not t.InternalProperties.IsLoaded Then
+                        Throw New ApplicationException
+                    End If
+                    If t.Name Is Nothing Then
+                        Throw New ApplicationException
+                    End If
+                Next
             End Using
         ElseIf Request.QueryString.ToString = "resetCmd" Then
             Dim q As Query.QueryCmd = New Worm.Query.QueryCmd(AddressOf _CreateDBManager).Select(GetType(TestProject1.Table1))

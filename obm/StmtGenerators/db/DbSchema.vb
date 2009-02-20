@@ -1635,7 +1635,7 @@ l1:
             '    con.AddFilter(schema.GetFilter(filter_info))
             'End If
 
-            If schema IsNot Nothing Then
+            If schema IsNot Nothing AndAlso (os Is Nothing OrElse Not os.IsQuery) Then
                 Dim cs As IContextObjectSchema = TryCast(schema, IContextObjectSchema)
                 If cs IsNot Nothing Then
                     Dim f As IFilter = cs.GetContextFilter(filter_info)
@@ -1950,7 +1950,7 @@ l1:
         End Function
 
         Public Function MakeSearchStatement(ByVal mpe As ObjectMappingEngine, ByVal searchType As Type, ByVal selectType As Type, _
-            ByVal fts As IFtsStringFormater, ByVal fields As ICollection(Of Pair(Of String, Type)), _
+            ByVal fts As IFtsStringFormatter, ByVal fields As ICollection(Of Pair(Of String, Type)), _
             ByVal sectionName As String, ByVal joins As ICollection(Of Worm.Criteria.Joins.QueryJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
             ByVal top As Integer, ByVal table As String, _

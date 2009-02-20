@@ -268,8 +268,25 @@ Namespace Entities
             _dst = New EntityUnion(intoEntityName)
         End Sub
 
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, _
+            ByVal prop As ObjectProperty)
+            _column = computed
+            _values = values
+            _falias = prop.Field
+            _dst = prop.ObjectSource
+        End Sub
+
+        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, _
+            ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations)
+            _column = computed
+            _values = values
+            _falias = prop.Field
+            _dst = prop.ObjectSource
+            _attr = attr
+        End Sub
+
         Public Sub New(ByVal computed As String, ByVal values() As FieldReference)
-            MyClass.New(computed, values, Nothing)
+            MyClass.New(computed, values, CStr(Nothing))
         End Sub
 
         Public Sub New(ByVal q As QueryCmd)

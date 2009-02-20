@@ -174,14 +174,14 @@ Module Module2
         For i As Integer = 0 To threadCount
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
-            't = New Threading.Thread(AddressOf Load)
-            'trd.Add(t)
-            't = New Threading.Thread(AddressOf Unload)
-            'trd.Add(t)
-            t = New Threading.Thread(AddressOf DeleteSub)
+            t = New Threading.Thread(AddressOf Load)
             trd.Add(t)
-            t = New Threading.Thread(AddressOf AddSub)
+            t = New Threading.Thread(AddressOf Unload)
             trd.Add(t)
+            't = New Threading.Thread(AddressOf DeleteSub)
+            'trd.Add(t)
+            't = New Threading.Thread(AddressOf AddSub)
+            'trd.Add(t)
 
             'Dim t As New Threading.Thread(AddressOf AddSub)
             'trd.Add(t)
@@ -211,7 +211,7 @@ Module Module2
     End Sub
 
     Sub Load(ByVal o As Object)
-        For i As Integer = 0 To iterCount * 4
+        For i As Integer = 0 To iterCount * 8
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -243,7 +243,7 @@ Module Module2
     End Sub
 
     Sub Unload(ByVal o As Object)
-        For i As Integer = 0 To iterCount * 4
+        For i As Integer = 0 To iterCount * 8
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -393,7 +393,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount
+        For i As Integer = 0 To iterCount * 4
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean

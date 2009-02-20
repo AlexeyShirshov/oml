@@ -21,6 +21,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     Inherits ReadOnlyEntityList(Of T)
 
     Private _rt As Type
+    Private Shared _empty As New ReadOnlyList(Of T)
 
     Public Sub New(ByVal realType As Type)
         MyBase.new()
@@ -51,6 +52,12 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         MyBase.New(list)
         _rt = realType
     End Sub
+
+    Public Shared ReadOnly Property Empty() As ReadOnlyList(Of T)
+        Get
+            Return _empty
+        End Get
+    End Property
 
     Public Overrides Function LoadObjects() As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
@@ -169,7 +176,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
             Dim l As New List(Of T)
             For Each obj As T In _l
                 If Not obj.IsLoaded Then
-                    obj.Load()
+                    obj.Load(Nothing)
                 End If
                 l.Add(obj)
             Next
@@ -186,7 +193,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
             For i As Integer = start To Math.Max(Count, start + length) - 1
                 Dim obj As T = _l(i)
                 If Not obj.IsLoaded Then
-                    obj.Load()
+                    obj.Load(Nothing)
                 End If
                 If obj.IsLoaded Then
                     l.Add(obj)

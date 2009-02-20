@@ -505,17 +505,21 @@ Namespace Entities
             End Get
         End Property
 
-        Public Overridable Sub Load() Implements ICachedEntity.Load
+        Public Sub Load()
+            Load(CStr(Nothing))
+        End Sub
+
+        Public Overridable Sub Load(ByVal propertyAlias As String) Implements ICachedEntity.Load
             Using mc As IGetManager = GetMgr()
                 If mc Is Nothing Then
                     Throw New InvalidOperationException("OrmManager required")
                 End If
 
-                Load(mc.Manager)
+                Load(mc.Manager, propertyAlias)
             End Using
         End Sub
 
-        Public Sub Load(ByVal mgr As OrmManager) Implements _ICachedEntity.Load
+        Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
             Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
@@ -533,7 +537,7 @@ Namespace Entities
             End If
             Dim olds As ObjectState = ObjectState
             'Using mc As IGetManager = GetMgr()
-            mgr.LoadObject(Me)
+            mgr.LoadObject(Me, propertyAlias)
             'End Using
             If olds = Entities.ObjectState.Created AndAlso ObjectState = Entities.ObjectState.Modified Then
                 AcceptChanges(True, True)
@@ -561,12 +565,12 @@ Namespace Entities
 
         Protected Overrides Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
-                Debug.Assert(value <> Entities.ObjectState.None OrElse IsLoaded)
+                Debug.Assert(value <> Entities.ObjectState.None OrElse IsLoaded, String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                 If value = Entities.ObjectState.None AndAlso Not IsLoaded Then
                     Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                 End If
 
-                Debug.Assert(Not _upd.Deleted)
+                Debug.Assert(Not _upd.Deleted, String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 If _upd.Deleted Then
                     Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 End If
@@ -701,7 +705,7 @@ Namespace Entities
             'unreg = unreg OrElse _state <> Orm.ObjectState.Created
             If setState Then
                 SetObjectStateClear(Entities.ObjectState.None)
-                Debug.Assert(IsLoaded)
+                Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
                 If Not IsLoaded Then
                     Throw New OrmObjectException(ObjName & "Cannot set state None while object is not loaded")
                 End If
@@ -1687,7 +1691,7 @@ l1:
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
             If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None)) Then
                 If Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None) AndAlso Not IsPropertyLoaded(propertyAlias) Then
-                    Load()
+                    Load(propertyAlias)
                 End If
                 d = SyncHelper(True)
             End If
