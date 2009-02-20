@@ -103,14 +103,14 @@ Namespace Entities
         Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
         Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
-        Overloads Sub Load(ByVal mgr As OrmManager)
+        Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
     End Interface
 
     Public Interface ICachedEntity
         Inherits _IEntity
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
-        Sub Load()
+        Sub Load(ByVal propertyAlias As String)
         Sub RemoveFromCache(ByVal cache As CacheBase)
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean

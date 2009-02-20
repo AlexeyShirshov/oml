@@ -58,9 +58,9 @@ Namespace Web
                 _throwExceptionInValidate = CBool(config("throwExceptionInValidate"))
             End If
 
-            If HttpContext.Current IsNot Nothing Then
-                AddHandler HttpContext.Current.ApplicationInstance.PostAuthorizeRequest, AddressOf UpdateLastActivity
-            End If
+            'If HttpContext.Current IsNot Nothing Then
+            '    AddHandler HttpContext.Current.ApplicationInstance.PostAuthorizeRequest, AddressOf UpdateLastActivity
+            'End If
 
             MyBase.Initialize(name, config)
         End Sub
@@ -716,13 +716,17 @@ Namespace Web
                     If Not String.IsNullOrEmpty(laf) Then
                         Dim dt As Date = CDate(schema.GetPropertyValue(u, laf, Nothing))
                         Dim n As Date = UserMapper.GetNow
-                        If n.Subtract(dt).TotalSeconds > 1 Then
+                        If n.Subtract(dt).TotalSeconds > 10 Then
                             Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                             Using st As New ModificationsTracker(CType(mgr, OrmReadOnlyDBManager))
                                 Using u.BeginEdit
                                     schema.SetPropertyValue(u, laf, n, oschema)
                                 End Using
                                 st.AcceptModifications()
+                                Dim onlineSpan As TimeSpan = New TimeSpan(0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0)
+                                If dt <= n.Subtract(onlineSpan) Then
+                                    OnUserComeback(mgr, u)
+                                End If
                             End Using
                         End If
                     End If
@@ -823,6 +827,16 @@ l1:
 
         Protected Overridable Sub UserBlocked(ByVal user As IKeyEntity)
 
+        End Sub
+
+        Protected Overridable Sub OnUserComeback(ByVal mgr As OrmManager, ByVal user As IKeyEntity)
+
+        End Sub
+
+        Public Sub SubscribeUpdateLastActivity()
+            If HttpContext.Current IsNot Nothing Then
+                AddHandler HttpContext.Current.ApplicationInstance.PostAuthorizeRequest, AddressOf UpdateLastActivity
+            End If
         End Sub
     End Class
 End Namespace

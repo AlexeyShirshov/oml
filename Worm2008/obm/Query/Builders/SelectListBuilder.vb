@@ -116,6 +116,18 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function custom(ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(expression, params, prop, attr))
+            Return f
+        End Function
+
+        Public Shared Function custom(ByVal prop As ObjectProperty, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(expression, params, prop))
+            Return f
+        End Function
+
         Public Shared Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, propertyAlias, intoType))

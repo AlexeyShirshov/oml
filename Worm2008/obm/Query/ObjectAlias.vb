@@ -6,6 +6,7 @@
         Private _en As String
         Private _q As Worm.Query.QueryCmd
         Private _uqName As String = Guid.NewGuid.GetHashCode.ToString
+        Private _tbl As Entities.Meta.SourceFragment
 
         Public Sub New(ByVal t As Type)
             _t = t
@@ -70,6 +71,14 @@
             Return rt
         End Function
 
+        Friend Property Tbl() As Entities.Meta.SourceFragment
+            Get
+                Return _tbl
+            End Get
+            Set(ByVal value As Entities.Meta.SourceFragment)
+                _tbl = value
+            End Set
+        End Property
         'Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type
         '    Dim rt As Type = Type
         '    If rt Is Nothing Then
@@ -201,10 +210,18 @@
                 _calc = AnyType
                 If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
                     _calc = schema.GetTypeByEntityName(AnyEntityName)
+                ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
+                    _calc = _a.Query.GetSelectedOS.GetRealType(schema)
                 End If
             End If
             Return _calc
         End Function
+
+        Public ReadOnly Property IsQuery() As Boolean
+            Get
+                Return _a IsNot Nothing AndAlso _a.Query IsNot Nothing
+            End Get
+        End Property
 
         'Public Function GetRealType(ByVal schema As ObjectMappingEngine, ByVal defaultType As Type) As Type
         '    Dim rt As Type = AnyType
@@ -256,6 +273,7 @@
         Public Overloads Function Equals(ByVal obj As ObjectProperty) As Boolean
             Return ObjectSource.Equals(obj.ObjectSource) AndAlso Field = obj.Field
         End Function
+
     End Structure
 
 End Namespace

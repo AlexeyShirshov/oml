@@ -154,7 +154,7 @@ Namespace Entities.Meta
         Function GetJoinField(ByVal t As Type) As String
     End Interface
 
-    Public Interface IFtsStringFormater
+    Public Interface IFtsStringFormatter
         Function GetFtsString(ByVal section As String, ByVal contextKey As Object, ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
         Function GetTokens() As String()
     End Interface
@@ -173,4 +173,7 @@ Namespace Entities.Meta
         Function GetSuppressedFields() As String()
     End Interface
 
+    Public Interface IDefferedLoading
+        Function GetDefferedLoadPropertiesGroups() As String()()
+    End Interface
 End Namespace

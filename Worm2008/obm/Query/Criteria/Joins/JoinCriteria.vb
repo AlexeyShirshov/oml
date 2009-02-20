@@ -100,20 +100,20 @@ Namespace Criteria.Joins
         End Sub
 
         Protected Friend Sub AddType(ByVal t As Type)
-            _jc(_jc.Count - 1).M2MJoinType = t
+            _jc(_jc.Count - 1).M2MObjectSource = New EntityUnion(t)
         End Sub
 
         Protected Friend Sub AddType(ByVal t As Type, ByVal key As String)
-            _jc(_jc.Count - 1).M2MJoinType = t
+            _jc(_jc.Count - 1).M2MObjectSource = New EntityUnion(t)
             _jc(_jc.Count - 1).M2MKey = key
         End Sub
 
         Protected Friend Sub AddType(ByVal entityName As String)
-            _jc(_jc.Count - 1).M2MJoinEntityName = entityName
+            _jc(_jc.Count - 1).M2MObjectSource = New EntityUnion(entityName)
         End Sub
 
         Protected Friend Sub AddType(ByVal entityName As String, ByVal key As String)
-            _jc(_jc.Count - 1).M2MJoinEntityName = entityName
+            _jc(_jc.Count - 1).M2MObjectSource = New EntityUnion(entityName)
             _jc(_jc.Count - 1).M2MKey = key
         End Sub
 

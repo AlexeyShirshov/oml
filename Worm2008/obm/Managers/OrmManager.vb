@@ -122,8 +122,6 @@ Partial Public MustInherit Class OrmManager
     'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManager, ByVal r As ExecutionResult)
 
-    Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IFullTextSupport, ByVal contextKey As Object) As String
-
     Public Shared ReadOnly Property ExecSource() As TraceSource
         Get
             Return _tsExec
@@ -2682,7 +2680,7 @@ l1:
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
             'Dim ss() As String = Split4FullTextSearch()
             'Dim join As QueryJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
-            Return Search(Of T)(type2search, contextKey, sort, Nothing, New FtsDef([string], GetSearchSection))
+            Return Search(Of T)(type2search, contextKey, sort, Nothing, New FtsDefaultFormatter([string], GetSearchSection))
             'End If
             'Return New ReadOnlyList(Of T)()
         Else
@@ -2694,81 +2692,30 @@ l1:
         Return Search(Of T)([string], sort, contextKey, Nothing)
     End Function
 
-    Class FtsDef
-        Implements IFtsStringFormater
-
-        Private Class FProxy
-
-            Private _t As Type
-
-            Public Sub New(ByVal t As Type)
-                _t = t
-            End Sub
-
-            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
-                ByVal f As IFullTextSupport, ByVal contextkey As Object) As String
-                Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
-            End Function
-        End Class
-
-        Private _toks() As String
-        Private _del As ValueForSearchDelegate
-        'Private _sectionName As String
-
-        Public Sub New(ByVal s As String, ByVal sectionName As String)
-            _toks = Split4FullTextSearch(s, sectionName)
-            '  _sectionName = sectionName
-        End Sub
-
-        Public Sub New(ByVal s As String, ByVal sectionName As String, ByVal del As ValueForSearchDelegate)
-            MyClass.New(s, sectionName)
-            _del = del
-        End Sub
-
-        Public Function GetFtsString(ByVal section As String, ByVal contextKey As Object, _
-            ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormater.GetFtsString
-            If _del Is Nothing Then
-                If ftsString = "freetexttable" Then
-                    Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
-                ElseIf ftsString = "containstable" Then
-                    Return Configuration.SearchSection.GetValueForContains(_toks, section, f, contextKey)
-                Else
-                    Throw New NotSupportedException
-                End If
-            Else
-                Return _del(_toks, section, f, contextKey)
-            End If
-        End Function
-
-        Public Function GetTokens() As String() Implements IFtsStringFormater.GetTokens
-            Return _toks
-        End Function
-    End Class
-
     Public Function Search(Of T As {IKeyEntity, New})(ByVal [string] As String, ByVal sort As Sort, _
         ByVal contextKey As Object, ByVal filter As IFilter) As ReadOnlyList(Of T)
         Invariant()
 
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-            Return Search(Of T)(GetType(T), contextKey, sort, filter, New FtsDef([string], GetSearchSection))
+            Return Search(Of T)(GetType(T), contextKey, sort, filter, New FtsDefaultFormatter([string], GetSearchSection))
         End If
         Return New ReadOnlyList(Of T)()
     End Function
 
     Public Function Search(Of T As {IKeyEntity, New})(ByVal [string] As String, ByVal sort As Sort, _
         ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
-        ByVal limit As Integer, ByVal del As ValueForSearchDelegate) As ReadOnlyList(Of T)
+        ByVal limit As Integer, ByVal del As FtsDefaultFormatter.ValueForSearchDelegate) As ReadOnlyList(Of T)
         Invariant()
 
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-            Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, New FtsDef([string], GetSearchSection, del))
+            Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, New FtsDefaultFormatter([string], GetSearchSection, del))
         End If
         Return New ReadOnlyList(Of T)()
     End Function
 
     Public Function Search(Of T As {IKeyEntity, New})(ByVal [string] As String, ByVal sort As Sort, _
        ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
-       ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
+       ByVal limit As Integer, ByVal frmt As IFtsStringFormatter) As ReadOnlyList(Of T)
         Invariant()
 
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
@@ -2788,7 +2735,7 @@ l1:
     '    Return New List(Of T)()
     'End Function
 
-    Protected Shared Function Split4FullTextSearch(ByVal str As String, ByVal sectionName As String) As String()
+    Public Shared Function Split4FullTextSearch(ByVal str As String, ByVal sectionName As String) As String()
         If str Is Nothing Then
             Throw New ArgumentNullException("str parameter cannot be nothing")
         End If
@@ -2901,7 +2848,7 @@ l1:
         Return r.ToArray
     End Function
 
-    Protected Shared Function Split4FullTextSearchInternal(ByVal str As String) As String()
+    Public Shared Function Split4FullTextSearchInternal(ByVal str As String) As String()
         If str Is Nothing Then
             Throw New ArgumentNullException("str parameter cannot be nothing")
         End If
@@ -3403,11 +3350,11 @@ l1:
 
     Protected MustOverride Function SearchEx(Of T As {IKeyEntity, New})(ByVal type2search As Type, _
         ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
-        ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
+        ByVal limit As Integer, ByVal frmt As IFtsStringFormatter) As ReadOnlyList(Of T)
 
     Protected MustOverride Function Search(Of T As {IKeyEntity, New})( _
         ByVal type2search As Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
-        ByVal frmt As IFtsStringFormater, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
+        ByVal frmt As IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
 
     Protected Friend MustOverride Function GetStaticKey() As String
 
@@ -3445,7 +3392,7 @@ l1:
     Protected MustOverride Function GetObjects(Of T As {IKeyEntity, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
        ByVal relation As M2MRelationDesc, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, CachedM2MRelation)
 
-    Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
+    Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
     Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)

@@ -1119,23 +1119,28 @@ Imports System.Runtime.Serialization.Formatters.Binary
     <TestMethod()> _
     Public Sub TestGetMgr()
         Dim cache As New ReadonlyCache
+        Dim schema As New ObjectMappingEngine("1")
 
         Dim q As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
+            TestManagerRS.CreateManagerShared(schema, cache))
 
+        Dim t As Table1 = Nothing
         Using mgr As OrmManager = q.GetMgr.CreateManager
-            Dim t As Table1 = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
+            t = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
 
             Assert.IsFalse(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))
         End Using
 
+        Assert.IsTrue(cache.IsInCachePrecise(t, Nothing, schema))
+
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
-        For Each t As Table1 In l
-            Assert.IsFalse(t.InternalProperties.IsLoaded)
-            Assert.IsNotNull(t.Name)
-            Assert.IsTrue(t.InternalProperties.IsLoaded)
+        For Each tt As Table1 In l
+            Assert.IsTrue(cache.IsInCachePrecise(tt, Nothing, schema))
+            Assert.IsFalse(tt.InternalProperties.IsLoaded)
+            Assert.IsNotNull(tt.Name)
+            Assert.IsTrue(tt.InternalProperties.IsLoaded)
         Next
     End Sub
 
@@ -1324,5 +1329,61 @@ Imports System.Runtime.Serialization.Formatters.Binary
             .ToList(Of Table2)()
 
         Assert.AreEqual(2, t.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestDefLoading()
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1.1")))
+
+        Dim e As Entity2 = q.GetByID(Of Entity2)(10)
+
+        Assert.IsFalse(e.InternalProperties.IsLoaded)
+        Assert.IsFalse(e.InternalProperties.IsPropertyLoaded("Str"))
+
+        e.Load()
+
+        Assert.IsFalse(e.InternalProperties.IsLoaded)
+        Assert.IsFalse(e.InternalProperties.IsPropertyLoaded("Str"))
+
+        Dim s As String = e.Str
+
+        Assert.IsTrue(e.InternalProperties.IsLoaded)
+        Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Str"))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestDefLoadingQuery()
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1.1")))
+
+        Dim r As ReadOnlyList(Of Entity2) = q.Where(Ctor.prop(GetType(Entity2), "ID").greater_than(0)) _
+            .Select(GetType(Entity2), True) _
+            .ToOrmList(Of Entity2)()
+
+        For Each e As Entity2 In r
+            Assert.IsFalse(e.InternalProperties.IsLoaded)
+            Assert.IsFalse(e.InternalProperties.IsPropertyLoaded("Str"))
+
+            Dim s As String = e.Str
+
+            Assert.IsTrue(e.InternalProperties.IsLoaded)
+            Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Str"))
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestCustomSel()
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        Dim r As ReadOnlyObjectList(Of AnonymousEntity) = q _
+            .Select(FCtor.prop(GetType(Entity2), "ID").custom("a", "1")) _
+            .Sort(SCtor.custom("a")) _
+            .ToAnonymList
+
+        For Each e As AnonymousEntity In r
+            Assert.AreEqual(1, e("a"))
+        Next
     End Sub
 End Class

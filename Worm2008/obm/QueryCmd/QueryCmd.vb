@@ -155,11 +155,16 @@ Namespace Query
             Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Private _cmd As QueryCmd
             Private _f As FromClauseDef
+            Private _sssl As ObjectModel.ReadOnlyCollection(Of SelectExpression)
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
-                If cmd.SelectClause IsNot Nothing AndAlso cmd.SelectClause.SelectTypes IsNot Nothing Then
-                    _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(cmd.SelectClause.SelectTypes)
+                If cmd.SelectClause IsNot Nothing Then
+                    If cmd.SelectClause.SelectTypes IsNot Nothing Then
+                        _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(cmd.SelectClause.SelectTypes)
+                    ElseIf cmd.SelectClause.SelectList IsNot Nothing Then
+                        _sssl = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(cmd.SelectClause.SelectList)
+                    End If
                 End If
                 _cmd = cmd
                 _f = cmd._from
@@ -167,8 +172,14 @@ Namespace Query
 
             Public Sub SetCT2Nothing()
                 _cmd._createType = _oldct
-                If _types IsNot Nothing Then
+                If _types Is Nothing AndAlso _sssl Is Nothing Then
+                    _cmd._sel = Nothing
+                ElseIf _types IsNot Nothing Then
                     _cmd._sel = New SelectClauseDef(_types)
+                ElseIf _sssl IsNot Nothing Then
+                    _cmd._sel = New SelectClauseDef(_sssl)
+                Else
+                    Throw New NotSupportedException
                 End If
                 _cmd._from = _f
             End Sub
@@ -660,6 +671,12 @@ Namespace Query
 
                         If _sl.Count = 0 Then
                             _sl.AddRange(SelectList)
+                        Else
+                            For Each se As SelectExpression In SelectList
+                                If se.IsCustom Then
+                                    _sl.Add(se)
+                                End If
+                            Next
                         End If
 
                         If AutoJoins Then
@@ -686,14 +703,33 @@ Namespace Query
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                        Dim os As EntityUnion = tp.First
+                        Dim rt As Type = tp.First.GetRealType(schema)
+                        Dim oschema As IEntitySchema = schema.GetEntitySchema(rt)
                         If _WithLoad(tp, schema) Then
                             _appendMain = True
-                            Dim os As EntityUnion = tp.First
-                            _sl.AddRange(schema.GetSortedFieldList(tp.First.GetRealType(schema)).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                            _sl.AddRange(schema.GetSortedFieldList(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                         Else
-                            Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
+                            Dim ctx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
+                            If ctx IsNot Nothing Then
+                                Dim cf As IFilter = ctx.GetContextFilter(filterInfo)
+                                If cf IsNot Nothing Then
+                                    _appendMain = True
+                                    _sl.AddRange(schema.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                                    Continue For
+                                End If
+                            End If
+
+                            Dim jb As IJoinBehavior = TryCast(oschema, IJoinBehavior)
+                            If jb IsNot Nothing AndAlso jb.AlwaysJoinMainTable Then
+                                _appendMain = True
+                                _sl.AddRange(schema.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                                Continue For
+                            End If
+
+                            Dim pk As String = schema.GetPrimaryKeys(rt, oschema)(0).PropertyAlias
                             Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
-                            se.Into = tp.First
+                            se.Into = os
                             se.Attributes = Field2DbRelations.PK
                             _sl.Add(se)
                         End If
@@ -1334,20 +1370,27 @@ Namespace Query
             End Get
         End Property
 
-        'Public Property SelectedEntityName() As String
-        '    Get
-        '        If _selectSrc Is Nothing Then
-        '            Return Nothing
-        '        End If
-        '        Return _selectSrc.AnyEntityName
-        '    End Get
-        '    Set(ByVal value As String)
-        '        If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
-        '            Throw New QueryCmdException("Cannot change SelectedType", Me)
-        '        End If
-        '        _selectSrc = New ObjectSource(value)
-        '    End Set
-        'End Property
+        Public ReadOnly Property IsRealFTS() As Boolean
+            Get
+                If _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso GetType(SearchFragment).IsAssignableFrom(_from.Table.GetType) Then
+                    Return True
+                End If
+
+                If _from IsNot Nothing AndAlso _from.AnyQuery IsNot Nothing AndAlso _from.AnyQuery.IsFTS Then
+                    Return True
+                End If
+
+                If propJoins IsNot Nothing Then
+                    For Each j As QueryJoin In propJoins
+                        If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.IsQuery AndAlso j.ObjectSource.ObjectAlias.Query.IsFTS Then
+                            Return True
+                        End If
+                    Next
+                End If
+
+                Return False
+            End Get
+        End Property
 
         Public Property FromClause() As FromClauseDef
             Get
@@ -1808,6 +1851,12 @@ Namespace Query
 
         Public Function From(ByVal entityName As String) As QueryCmd
             _from = New FromClauseDef(entityName)
+            RenewMark()
+            Return Me
+        End Function
+
+        Public Function From(ByVal os As EntityUnion) As QueryCmd
+            _from = New FromClauseDef(os)
             RenewMark()
             Return Me
         End Function
@@ -2276,6 +2325,47 @@ Namespace Query
         '    Return ToSimpleList(Of CreateType, T)(_getMgr)
         'End Function
 #End Region
+
+        Public Function Count(ByVal mgr As OrmManager) As Integer
+            Dim s As Sort = _order
+            Dim p As Paging = _clientPage
+            Dim pp As IPager = _pager
+            Dim rf As TableFilter = _rn
+            Try
+                _order = Nothing
+                _clientPage = Nothing
+                _pager = Nothing
+                _rn = Nothing
+                Dim c As New QueryCmd.svct(Me)
+                Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                    If FromClause Is Nothing Then
+                        From(SelectTypes(0).First)
+                    End If
+                    Return [Select](FCtor.count).SingleSimple(Of Integer)(mgr)
+                End Using
+            Finally
+                propSort = s
+                _clientPage = p
+                _pager = pp
+                _rn = rf
+            End Try
+        End Function
+
+        Public Function Count(ByVal getMgr As ICreateManager) As Integer
+            Using mgr As OrmManager = getMgr.CreateManager
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return Count(mgr)
+                End Using
+            End Using
+        End Function
+
+        Public Function Count() As Integer
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return Count(_getMgr)
+        End Function
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
             Dim c As New QueryCmd.svct(Me)
@@ -3165,6 +3255,12 @@ Namespace Query
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
             Dim q As New QueryCmd(New CreateManager(getMgr))
             q.From(New SearchFragment(t, searchText))
+            Return q
+        End Function
+
+        Public Shared Function Search(ByVal entityName As String, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
+            Dim q As New QueryCmd(New CreateManager(getMgr))
+            q.From(New SearchFragment(New EntityUnion(entityName), searchText))
             Return q
         End Function
 

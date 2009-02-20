@@ -61,10 +61,14 @@ Namespace Entities
 
 #If DEBUG Then
         Public _lstack As String
+        Public _estack As String
 #End If
         Protected Sub BeginLoading() Implements _IEntity.BeginLoading
 #If DEBUG Then
             _lstack = Environment.StackTrace
+#End If
+#If DEBUG Then
+            _estack = String.Empty
 #End If
             _loading = True
         End Sub
@@ -242,6 +246,9 @@ Namespace Entities
 #If DEBUG Then
             _lstack = String.Empty
 #End If
+#If DEBUG Then
+            _estack = Environment.StackTrace
+#End If
         End Sub
 
         Protected Overridable ReadOnly Property ObjName() As String Implements _IEntity.ObjName
@@ -406,9 +413,11 @@ Namespace Entities
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
                 Dim oschema As IEntitySchema = mc.Manager.MappingEngine.GetEntitySchema(Me.GetType)
-                [to].BeginLoading()
-                CopyProperties([from], [to], mc.Manager, oschema)
-                [to].EndLoading()
+                Using [to].GetSyncRoot
+                    [to].BeginLoading()
+                    CopyProperties([from], [to], mc.Manager, oschema)
+                    [to].EndLoading()
+                End Using
             End Using
         End Sub
 
