@@ -193,13 +193,13 @@ namespace TestsCodeGenLib
             OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
             settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
 
-            settings.Split = false;
+			//settings.Split = false;
             CompileCode(prov, settings, XmlReader.Create(stream));
 
-            stream.Position = 0;
+			//stream.Position = 0;
 
-            settings.Split = true;
-            CompileCode(prov, settings, XmlReader.Create(stream));
+			//settings.Split = true;
+			//CompileCode(prov, settings, XmlReader.Create(stream));
            
         }
 
@@ -211,7 +211,7 @@ namespace TestsCodeGenLib
                 odef = OrmObjectsDef.LoadFromXml(reader);
             }
             OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
-            Dictionary<string, CodeCompileUnit> dic = gen.GetFullDom();
+            Dictionary<string,CodeCompileUnit> dic = gen.GetFullDom();
 
             
             CompilerParameters prms = new CompilerParameters();
@@ -293,13 +293,13 @@ namespace TestsCodeGenLib
             OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
             settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
 
-            settings.Split = false;
+			//settings.Split = false;
             CompileCode(prov, settings, XmlReader.Create(stream));
 
-            stream.Position = 0;
+			//stream.Position = 0;
 
-            settings.Split = true;
-            CompileCode(prov, settings, XmlReader.Create(stream));
+			//settings.Split = true;
+			//CompileCode(prov, settings, XmlReader.Create(stream));
         }
     }
 }

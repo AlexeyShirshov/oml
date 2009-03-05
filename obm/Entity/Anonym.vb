@@ -158,7 +158,7 @@ Namespace Entities
 
         End Sub
 
-        Public Sub RemoveFromCache(ByVal cache As Cache.CacheBase) Implements ICachedEntity.RemoveFromCache
+        Public Sub RemoveFromCache(ByVal cache As Cache.CacheBase) Implements ICachedEntity.RemoveOriginalCopy
 
         End Sub
 

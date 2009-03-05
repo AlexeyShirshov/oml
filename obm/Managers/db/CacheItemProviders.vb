@@ -75,7 +75,7 @@ Namespace Database
                     Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        cache.AddDependType(_mgr.GetContextFilter, tt, _key, _id, _f, _mgr.MappingEngine)
+                        cache.AddDependType(_mgr.GetContextInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -191,7 +191,7 @@ Namespace Database
                         Dim c As New Condition.ConditionConstructor
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
-                        _mgr.SQLGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, almgr, sb, _mgr.GetContextFilter, params)
+                        _mgr.SQLGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, almgr, sb, _mgr.GetContextInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
                             _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing, Nothing)
                         End If
@@ -227,11 +227,11 @@ Namespace Database
             End Function
 
             Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of EntityPropertyAttribute))
-                sb.Append(_mgr.SQLGenerator.Select(_mgr.MappingEngine, t, almgr, pmgr, arr, Nothing, _mgr.GetContextFilter))
+                sb.Append(_mgr.SQLGenerator.Select(_mgr.MappingEngine, t, almgr, pmgr, arr, Nothing, _mgr.GetContextInfo))
             End Sub
 
             Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of EntityPropertyAttribute))
-                sb.Append(_mgr.SQLGenerator.SelectID(_mgr.MappingEngine, t, almgr, pmgr, _mgr.GetContextFilter))
+                sb.Append(_mgr.SQLGenerator.SelectID(_mgr.MappingEngine, t, almgr, pmgr, _mgr.GetContextInfo))
             End Sub
         End Class
 
@@ -292,11 +292,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
-                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetContextFilter, arr))
+                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetContextInfo, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
-                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, False, _asc, Nothing, _mgr.GetContextFilter, Nothing))
+                sb.Append(_mgr.SQLGenerator.SelectWithJoin(_mgr.MappingEngine, t, almgr, pmgr, _join, False, _asc, Nothing, _mgr.GetContextInfo, Nothing))
             End Sub
 
             Public Overrides Sub CreateDepends()
@@ -305,7 +305,7 @@ Namespace Database
                     Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        cache.AddFilterlessDependType(_mgr.GetContextFilter, tt, _key, _id, _mgr.MappingEngine)
+                        cache.AddFilterlessDependType(_mgr.GetContextInfo, tt, _key, _id, _mgr.MappingEngine)
                     End If
                 End If
             End Sub
@@ -329,7 +329,7 @@ Namespace Database
                 Dim s As IEntitySchema = mgr.MappingEngine.GetEntitySchema(relation.Rel.GetRealType(mgr.MappingEngine))
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
 
-                If s IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetContextFilter) IsNot Nothing Then
+                If s IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetContextInfo) IsNot Nothing Then
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
@@ -348,18 +348,18 @@ Namespace Database
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
-                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetContextFilter, arr))
+                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetContextInfo, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of EntityPropertyAttribute))
-                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetContextFilter, Nothing))
+                sb.Append(Mgr.SQLGenerator.SelectDistinct(_mgr.MappingEngine, t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetContextInfo, Nothing))
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
                 Dim s As IEntitySchema = Mgr.MappingEngine.GetEntitySchema(_rel.Rel.GetRealType(Mgr.MappingEngine))
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
                 If cs IsNot Nothing Then
-                    Return CType(cs.GetContextFilter(Mgr.GetContextFilter), IFilter)
+                    Return CType(cs.GetContextFilter(Mgr.GetContextInfo), IFilter)
                 Else
                     Return Nothing
                 End If
@@ -401,7 +401,7 @@ Namespace Database
                         Dim almgr As AliasMgr = AliasMgr.Create
 
                         Dim sb As New StringBuilder
-                        sb.Append(_mgr.SQLGenerator.SelectM2M(_mgr.MappingEngine, almgr, _obj, t, _f, _mgr.GetContextFilter, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
+                        sb.Append(_mgr.SQLGenerator.SelectM2M(_mgr.MappingEngine, almgr, _obj, t, _f, _mgr.GetContextInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
                             _mgr.SQLGenerator.AppendOrder(_mgr.MappingEngine, _sort, almgr, sb, True, Nothing, Nothing, Nothing)

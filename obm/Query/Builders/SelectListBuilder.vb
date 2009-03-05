@@ -36,6 +36,12 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function prop(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(op, [alias]))
+            Return f
+        End Function
+
         Public Shared Function prop(ByVal op As ObjectProperty) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(op))
@@ -116,15 +122,15 @@ Namespace Query
             Return f
         End Function
 
-        Public Shared Function custom(ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal attr As Field2DbRelations, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(expression, params, prop, attr))
+            f.GetAllProperties.Add(New SelectExpression(expression, params, intoProp, attr))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal prop As ObjectProperty, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(expression, params, prop))
+            f.GetAllProperties.Add(New SelectExpression(expression, params, intoProp))
             Return f
         End Function
 
@@ -149,6 +155,12 @@ Namespace Query
         Public Shared Function count(ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Count, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New FieldValue(exp)))))
             Return f
         End Function
 
@@ -282,6 +294,11 @@ Namespace Query
 
             Public Function sum(ByVal column As String, ByVal [alias] As String) As Int
                 GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New LiteralValue(column)))))
+                Return Me
+            End Function
+
+            Public Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New FieldValue(exp)))))
                 Return Me
             End Function
 

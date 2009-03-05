@@ -16,6 +16,7 @@ Namespace Entities
     Public Class FieldReference
         Private _op As ObjectProperty
         Private _tf As Pair(Of SourceFragment, String)
+        Private _c As Criteria.Core.CustomFilter.TemplateCls
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             _op = New ObjectProperty(t, propertyAlias)
@@ -41,6 +42,16 @@ Namespace Entities
             _tf = New Pair(Of SourceFragment, String)(table, column)
         End Sub
 
+        Public Sub New(ByVal customFilter As Criteria.Core.CustomFilter.TemplateCls)
+            _c = customFilter
+        End Sub
+
+        Public ReadOnly Property CustomTemplate() As Criteria.Core.CustomFilter.TemplateCls
+            Get
+                Return _c
+            End Get
+        End Property
+
         Public ReadOnly Property [Property]() As ObjectProperty
             Get
                 Return _op
@@ -56,6 +67,8 @@ Namespace Entities
         Public Overrides Function ToString() As String
             If _tf IsNot Nothing Then
                 Return _tf.First.RawName & "$" & _tf.Second
+            ElseIf _c IsNot Nothing Then
+                Return _c.ToString
             Else
                 Return _op.ObjectSource._ToString & "$" & _op.Field
             End If
@@ -70,7 +83,7 @@ Namespace Entities
                 Return False
             End If
 
-            Return Object.Equals(_tf, obj._tf) OrElse Object.Equals(_op, obj._op)
+            Return Object.Equals(_tf, obj._tf) OrElse Object.Equals(_op, obj._op) OrElse Object.Equals(_c, obj._c)
         End Function
     End Class
 
@@ -119,6 +132,11 @@ Namespace Entities
 #Region " Public ctors "
 
 #Region " Type ctors "
+        Public Sub New(ByVal op As ObjectProperty, ByVal [alias] As String)
+            _op = op
+            _falias = [alias]
+        End Sub
+
         Public Sub New(ByVal op As ObjectProperty, ByVal intoPropertyAlias As String, ByVal into As Type)
             _op = op
             _falias = intoPropertyAlias

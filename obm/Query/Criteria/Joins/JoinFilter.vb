@@ -11,14 +11,6 @@ Namespace Criteria.Joins
     Public Class JoinFilter
         Implements Core.IFilter
 
-        'Friend _d1 As Pair(Of String)
-        'Friend _e1 As Pair(Of ObjectSource, String)
-        'Friend _t1 As Pair(Of SourceFragment, String)
-
-        'Friend _d2 As Pair(Of String)
-        'Friend _e2 As Pair(Of ObjectSource, String)
-        'Friend _t2 As Pair(Of SourceFragment, String)
-
         Private _l As FieldReference
         Private _r As FieldReference
 
@@ -122,6 +114,21 @@ Namespace Criteria.Joins
 
             If op2.ObjectSource IsNot Nothing Then
                 f = New FieldReference(op2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal op As ObjectProperty, ByVal cf As CustomFilter.TemplateCls, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If op.ObjectSource IsNot Nothing Then
+                f = New FieldReference(op)
+            End If
+            _l = f
+
+            If cf IsNot Nothing Then
+                f = New FieldReference(cf)
             End If
             _r = f
 
@@ -418,11 +425,23 @@ Namespace Criteria.Joins
         Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
+            Dim [alias] As String = String.Empty
+            Dim alias2 As String = String.Empty
+
             Dim map As MapField2Column = Nothing
             Dim os As EntityUnion = Nothing
             If _l.Property.ObjectSource IsNot Nothing Then
-                map = schema.GetEntitySchema(_l.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_l.Property.Field)
-                If _l.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(_l.Property.ObjectSource.GetRealType(schema))
+                If _l.Property.ObjectSource IsNot Nothing AndAlso _l.Property.ObjectSource.IsQuery Then
+                    If oschema.GetFieldColumnMap.ContainsKey(_l.Property.Field) Then
+                        map = oschema.GetFieldColumnMap(_l.Property.Field)
+                        map = New MapField2Column(Nothing, map._columnName, _l.Property.ObjectSource.ObjectAlias.Tbl)
+                    Else
+                        map = New MapField2Column(Nothing, _l.Property.Field, _l.Property.ObjectSource.ObjectAlias.Tbl)
+                    End If
+                    os = _l.Property.ObjectSource
+                ElseIf _l.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                    map = oschema.GetFieldColumnMap(_l.Property.Field)
                     If almgr.ContainsKey(map._tableName, _l.Property.ObjectSource) Then
                         os = _l.Property.ObjectSource
                     ElseIf almgr.ContainsKey(map._tableName, _eu2) Then
@@ -430,10 +449,8 @@ Namespace Criteria.Joins
                     Else
                         os = _eu
                     End If
-                ElseIf _l.Property.ObjectSource.IsQuery Then
-                    map = New MapField2Column(Nothing, map._columnName, _l.Property.ObjectSource.ObjectAlias.Tbl)
-                    os = _l.Property.ObjectSource
                 Else
+                    map = oschema.GetFieldColumnMap(_l.Property.Field)
                     os = If(_eu IsNot Nothing, _eu, _l.Property.ObjectSource)
                 End If
                 'ElseIf _d1 IsNot Nothing Then
@@ -441,6 +458,8 @@ Namespace Criteria.Joins
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
                 os = _eu
+            ElseIf _l.CustomTemplate IsNot Nothing Then
+                [alias] = _l.CustomTemplate.MakeStmt(schema, stmt, almgr)
             Else
                 Throw New InvalidOperationException
             End If
@@ -448,8 +467,17 @@ Namespace Criteria.Joins
             Dim map2 As MapField2Column = Nothing
             Dim os2 As EntityUnion = Nothing
             If _r.Property.ObjectSource IsNot Nothing Then
-                map2 = schema.GetEntitySchema(_r.Property.ObjectSource.GetRealType(schema)).GetFieldColumnMap(_r.Property.Field)
-                If _r.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(_r.Property.ObjectSource.GetRealType(schema))
+                If _r.Property.ObjectSource IsNot Nothing AndAlso _r.Property.ObjectSource.IsQuery Then
+                    If oschema.GetFieldColumnMap.ContainsKey(_r.Property.Field) Then
+                        map2 = oschema.GetFieldColumnMap(_r.Property.Field)
+                        map2 = New MapField2Column(Nothing, map2._columnName, _r.Property.ObjectSource.ObjectAlias.Tbl)
+                    Else
+                        map2 = New MapField2Column(Nothing, _r.Property.Field, _r.Property.ObjectSource.ObjectAlias.Tbl)
+                    End If
+                    os2 = _r.Property.ObjectSource
+                ElseIf _r.Property.ObjectSource IsNot Nothing AndAlso _eu IsNot Nothing Then
+                    map2 = oschema.GetFieldColumnMap(_r.Property.Field)
                     If almgr.ContainsKey(map2._tableName, _r.Property.ObjectSource) Then
                         os2 = _r.Property.ObjectSource
                     ElseIf almgr.ContainsKey(map2._tableName, _eu2) Then
@@ -457,10 +485,8 @@ Namespace Criteria.Joins
                     Else
                         os2 = _eu
                     End If
-                ElseIf _r.Property.ObjectSource.IsQuery Then
-                    map2 = New MapField2Column(Nothing, map2._columnName, _r.Property.ObjectSource.ObjectAlias.Tbl)
-                    os2 = _r.Property.ObjectSource
                 Else
+                    map2 = oschema.GetFieldColumnMap(_r.Property.Field)
                     os2 = If(_eu IsNot Nothing, _eu, _r.Property.ObjectSource)
                 End If
                 'ElseIf _d2 IsNot Nothing Then
@@ -468,13 +494,13 @@ Namespace Criteria.Joins
             ElseIf _r.Column IsNot Nothing Then
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
                 os2 = _eu
+            ElseIf _r.CustomTemplate IsNot Nothing Then
+                [alias2] = _r.CustomTemplate.MakeStmt(schema, stmt, almgr)
             Else
                 Throw New InvalidOperationException
             End If
 
-            Dim [alias] As String = String.Empty
-
-            If almgr IsNot Nothing Then
+            If String.IsNullOrEmpty([alias]) AndAlso almgr IsNot Nothing Then
                 Debug.Assert(almgr.ContainsKey(map._tableName, os), "There is not alias for table " & map._tableName.RawName)
                 Try
                     [alias] = almgr.GetAlias(map._tableName, os) & stmt.Selector
@@ -483,9 +509,8 @@ Namespace Criteria.Joins
                 End Try
             End If
 
-            Dim alias2 As String = String.Empty
-            'If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
-            If almgr IsNot Nothing Then
+
+            If String.IsNullOrEmpty(alias2) AndAlso almgr IsNot Nothing Then
                 Debug.Assert(almgr.ContainsKey(map2._tableName, os2), "There is not alias for table " & map2._tableName.RawName)
                 Try
                     alias2 = almgr.GetAlias(map2._tableName, os2) & stmt.Selector
@@ -494,7 +519,17 @@ Namespace Criteria.Joins
                 End Try
             End If
 
-            Return [alias] & map._columnName & stmt.Oper2String(_oper) & alias2 & map2._columnName
+            Dim lp As String = [alias]
+            If map IsNot Nothing Then
+                lp &= map._columnName
+            End If
+
+            Dim rp As String = alias2
+            If map2 IsNot Nothing Then
+                rp &= map2._columnName
+            End If
+
+            Return lp & stmt.Oper2String(_oper) & rp
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
@@ -595,5 +630,13 @@ Namespace Criteria.Joins
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
             'do nothing
         End Sub
+
+        Public Function RemoveFilter(ByVal f As Core.IFilter) As IFilter Implements Core.IFilter.RemoveFilter
+            If Equals(f) Then
+                Return Nothing
+                'Throw New InvalidOperationException("Cannot remove self")
+            End If
+            Return Me
+        End Function
     End Class
 End Namespace

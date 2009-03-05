@@ -10,7 +10,7 @@ Namespace Entities.Meta
 
         Private _fieldName As String
         Private _behavior As Field2DbRelations
-        'Private _table As String
+        Private _ver As String
         Private _column As String
         Private _idx As Integer = -1
         Private _db As DBType
@@ -71,14 +71,14 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        'Public Property TableName() As String
-        '    Get
-        '        Return _table
-        '    End Get
-        '    Set(ByVal value As String)
-        '        _table = value
-        '    End Set
-        'End Property
+        Public Property SchemaVersion() As String
+            Get
+                Return _ver
+            End Get
+            Set(ByVal value As String)
+                _ver = value
+            End Set
+        End Property
 
         Public Property Index() As Integer
             Get

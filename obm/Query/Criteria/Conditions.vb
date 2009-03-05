@@ -327,6 +327,41 @@ Namespace Criteria.Conditions
                 _right.Prepare(executor, schema, filterInfo, stmt)
             End If
         End Sub
+
+        Public Function RemoveFilter(ByVal f As Core.IFilter) As IFilter Implements Core.IFilter.RemoveFilter
+            If _oper = ConditionOperator.And Then
+                If _left IsNot Nothing Then
+                    If _left.Equals(f) Then
+                        _left = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("1"))
+                    Else
+                        _left = _left.RemoveFilter(f)
+                    End If
+                End If
+                If _right IsNot Nothing Then
+                    If _right.Equals(f) Then
+                        _right = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("1"))
+                    Else
+                        _right = _right.RemoveFilter(f)
+                    End If
+                End If
+            Else
+                If _left IsNot Nothing Then
+                    If _left.Equals(f) Then
+                        _left = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("0"))
+                    Else
+                        _left = _left.RemoveFilter(f)
+                    End If
+                End If
+                If _right IsNot Nothing Then
+                    If _right.Equals(f) Then
+                        _right = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("0"))
+                    Else
+                        _right = _right.RemoveFilter(f)
+                    End If
+                End If
+            End If
+            Return New Condition(_left, _right, _oper)
+        End Function
     End Class
 
     <Serializable()> _

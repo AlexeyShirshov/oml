@@ -1354,12 +1354,31 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
     <TestMethod()> _
     Public Sub TestDefLoadingQuery()
+        Dim c As New ReadonlyCache
+
         Dim q As New QueryCmd(Function() _
-            TestManager.CreateManager(New ObjectMappingEngine("1.1")))
+            TestManager.CreateManager(c, New ObjectMappingEngine("1.1")))
 
         Dim r As ReadOnlyList(Of Entity2) = q.Where(Ctor.prop(GetType(Entity2), "ID").greater_than(0)) _
             .Select(GetType(Entity2), True) _
             .ToOrmList(Of Entity2)()
+
+        For Each e As Entity2 In r
+            Assert.IsFalse(e.InternalProperties.IsLoaded)
+            Assert.IsFalse(e.InternalProperties.IsPropertyLoaded("Str"))
+
+            'Dim s As String = e.Str
+
+            'Assert.IsTrue(e.InternalProperties.IsLoaded)
+            'Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Str"))
+        Next
+
+
+        r = q.Where(Ctor.prop(GetType(Entity2), "ID").greater_than(0)) _
+            .Select(GetType(Entity2), True) _
+            .ToOrmList(Of Entity2)()
+
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         For Each e As Entity2 In r
             Assert.IsFalse(e.InternalProperties.IsLoaded)

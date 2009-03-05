@@ -66,9 +66,15 @@ Public Class Table1
         End With
     End Sub
 
+    Public Shared ReadOnly Property Table2Relation() As RelationDesc
+        Get
+            Return New RelationDesc(New EntityUnion(GetType(Table2)), "Table1")
+        End Get
+    End Property
+
     Public ReadOnly Property Table2s() As RelationCmd
         Get
-            Return GetCmd(GetType(Table2))
+            Return GetCmd(Table2Relation)
         End Get
     End Property
 

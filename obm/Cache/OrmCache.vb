@@ -860,7 +860,7 @@ Namespace Cache
             Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             If c IsNot Nothing Then
-                tkey = c.GetEntityKey(mgr.GetContextFilter)
+                tkey = c.GetEntityKey(mgr.GetContextInfo)
             End If
 
             Dim oneLoop As Boolean
@@ -1025,7 +1025,7 @@ Namespace Cache
                 Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                 Dim k As Object = tt
                 If c IsNot Nothing Then
-                    k = c.GetEntityTypeKey(mgr.GetContextFilter)
+                    k = c.GetEntityTypeKey(mgr.GetContextInfo)
                 End If
 
 #If DebugLocks Then
@@ -1415,8 +1415,8 @@ l1:
             End Using
         End Sub
 
-        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity)
-            MyBase.RegisterRemoval(obj)
+        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity, ByVal mgr As OrmManager)
+            MyBase.RegisterRemoval(obj, mgr)
             RemoveDepends(obj)
         End Sub
         ''' <summary>

@@ -19,6 +19,7 @@ Namespace Criteria.Core
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
         Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter
         Overloads Function Clone() As IFilter
+        Function RemoveFilter(ByVal f As IFilter) As IFilter
     End Interface
 
     Public Interface ITemplateFilterBase

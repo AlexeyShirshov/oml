@@ -161,6 +161,8 @@ namespace Worm.CodeGen.Core.Descriptors
             get { return Name; }
         }
 
+		public string DefferedLoadGroup { get; set; }
+
         #region ICloneable Members
 
         public object Clone()

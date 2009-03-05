@@ -557,4 +557,44 @@ Imports System.Collections.ObjectModel
         Next
 
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestModifCache()
+        Dim c As New OrmCache
+        Dim s As New ObjectMappingEngine("1")
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(s, c))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1)
+
+        Assert.IsTrue(c.IsInCachePrecise(t, Nothing, s))
+
+        Assert.IsFalse(t.InternalProperties.IsLoaded)
+        Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
+
+        t.Name = "353"
+
+        Assert.IsTrue(t.InternalProperties.IsLoaded)
+        Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
+
+        Dim dic As System.Collections.IDictionary = c.GetOrmDictionary(Nothing, GetType(Table1), s)
+
+        Dim id As CacheKey = New CacheKey(t)
+
+        dic.Remove(id)
+
+        Assert.IsFalse(c.IsInCachePrecise(t, Nothing, s))
+
+        Assert.IsNotNull(t.InternalProperties.OriginalCopy)
+        Assert.IsNotNull(c.ShadowCopy(t, s))
+
+        t = q.GetByID(Of Table1)(1)
+
+        Assert.IsNotNull(t.InternalProperties.OriginalCopy)
+        Assert.IsNotNull(c.ShadowCopy(t, s))
+
+        Assert.IsTrue(t.InternalProperties.IsLoaded)
+        Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
+    End Sub
+
 End Class

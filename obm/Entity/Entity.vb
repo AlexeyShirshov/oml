@@ -44,7 +44,7 @@ Namespace Entities
         <NonSerialized()> _
         Private _cm As ICreateManager
         <NonSerialized()> _
-        Private _schema As ObjectMappingEngine
+        Protected _schema As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChanged

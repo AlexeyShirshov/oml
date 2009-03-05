@@ -151,10 +151,10 @@ Namespace Cache
 
         Public ReadOnly User As Object
         '<CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        'Public ReadOnly Obj As _ICachedEntity
+        Private _obj As _ICachedEntity
         Public ReadOnly DateTime As Date
         Public ReadOnly Reason As ReasonEnum
-        Private _obj As EntityProxy
+        'Private _obj As EntityProxy
         Private _oldpk() As PKDesc
 
 #If DEBUG Then
@@ -171,18 +171,25 @@ Namespace Cache
             'Me.Obj = obj
             Me.User = user
             Me.Reason = reason
-            _obj = New EntityProxy(obj)
+            '_obj = New EntityProxy(obj)
+            _obj = obj
             _oldpk = pk
 #If DEBUG Then
             _stack = Environment.StackTrace
 #End If
         End Sub
 
-        Public ReadOnly Property Proxy() As EntityProxy
+        Public ReadOnly Property Obj() As ICachedEntity
             Get
                 Return _obj
             End Get
         End Property
+
+        'Public ReadOnly Property Proxy() As EntityProxy
+        '    Get
+        '        Return _obj
+        '    End Get
+        'End Property
 
         Public ReadOnly Property OlPK() As PKDesc()
             Get
@@ -231,7 +238,7 @@ Namespace Cache
 
             o.SetObjectState(ObjectState.NotLoaded)
 
-            Dim co As ICachedEntity = cache.NormalizeObject(o, False, False, dic, addOnCreate, Nothing)
+            Dim co As ICachedEntity = cache.NormalizeObject(o, False, False, dic, addOnCreate, mgr)
 
             mgr.RaiseObjectRestored(ReferenceEquals(co, o), co)
 
@@ -239,23 +246,23 @@ Namespace Cache
         End Function
 
         Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal dic As IDictionary) As T
-            Return GetObject(Of T)(mgr, mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine, dic)
+            Return GetObject(Of T)(mgr, mgr.Cache, mgr.GetContextInfo, mgr.MappingEngine, dic)
         End Function
 
         Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
             ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As T
             Dim o As T = CType(_ref.Target, T)
             If o Is Nothing Then
-                o = CType(GetEntityFromCacheOrCreate(mgr, cache, _e.PK, GetType(T), True, filterInfo, schema, dic), T) 'mc.FindObject(id, t)
+                o = CType(GetEntityFromCacheOrCreate(mgr, cache, _e.PK, _e.EntityType, True, filterInfo, schema, dic), T) 'mc.FindObject(id, t)
                 If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
-                    o = CType(cache.NewObjectManager.GetNew(GetType(T), _e.PK), T)
+                    o = CType(cache.NewObjectManager.GetNew(_e.EntityType, _e.PK), T)
                 End If
             End If
             Return o
         End Function
 
         Public Function GetObject(ByVal mgr As OrmManager, ByVal dic As IDictionary) As ICachedEntity
-            Return GetObject(mgr, mgr.Cache, mgr.GetContextFilter, mgr.MappingEngine, dic)
+            Return GetObject(mgr, mgr.Cache, mgr.GetContextInfo, mgr.MappingEngine, dic)
         End Function
 
         Public Function GetObject(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
@@ -338,7 +345,7 @@ Namespace Cache
                     Return False
                 Else
                     If dic Is Nothing Then
-                        dic = mc.Cache.GetOrmDictionary(mc.GetContextFilter, le.EntityType, mc.MappingEngine)
+                        dic = mc.Cache.GetOrmDictionary(mc.GetContextInfo, le.EntityType, mc.MappingEngine)
                     End If
                     Dim o As ICachedEntity = le.GetObject(mc, dic)
                     arr.Add(o)

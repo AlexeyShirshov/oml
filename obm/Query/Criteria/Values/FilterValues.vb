@@ -176,7 +176,12 @@ Namespace Criteria.Values
                 d = stmt.Selector
             End If
 
-            If _p.Table Is Nothing Then
+            If _p.IsCustom Then
+                Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
+                Dim sb As New StringBuilder
+                f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
+                Return sb.ToString
+            ElseIf _p.Table Is Nothing Then
 
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
 

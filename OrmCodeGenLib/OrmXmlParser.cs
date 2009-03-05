@@ -318,7 +318,7 @@ namespace Worm.CodeGen.Core
             foreach (XmlNode entityNode in entitiesList)
             {
                 string id, name, description, nameSpace, behaviourName;
-                EntityBehaviuor behaviour = EntityBehaviuor.Default;
+                EntityBehaviuor behaviour = EntityBehaviuor.ForcePartial;
 
                 XmlElement entityElement = (XmlElement) entityNode;
                 id = entityElement.GetAttribute("id");
@@ -389,7 +389,7 @@ namespace Worm.CodeGen.Core
         {
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute, defferedLoadGroup;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
@@ -414,6 +414,8 @@ namespace Worm.CodeGen.Core
                 dbTypeNameAttribute = propertyElement.GetAttribute("dbTypeName");
                 dbTypeSizeAttribute = propertyElement.GetAttribute("dbTypeSize");
                 dbTypeNullableAttribute = propertyElement.GetAttribute("dbTypeNullable");
+
+            	defferedLoadGroup = propertyElement.GetAttribute("defferedLoadGroup");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -462,6 +464,7 @@ namespace Worm.CodeGen.Core
                     property.DbTypeSize = XmlConvert.ToInt32(dbTypeSizeAttribute);
                 if (!string.IsNullOrEmpty(dbTypeNullableAttribute))
                     property.DbTypeNullable = XmlConvert.ToBoolean(dbTypeNullableAttribute);
+            	property.DefferedLoadGroup = defferedLoadGroup;
 
                 entity.Properties.Add(property);
             }

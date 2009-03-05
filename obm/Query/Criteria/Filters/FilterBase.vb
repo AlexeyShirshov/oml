@@ -120,6 +120,14 @@ Namespace Criteria.Core
                 _v.Prepare(executor, schema, filterInfo, stmt)
             End If
         End Sub
+
+        Public Function RemoveFilter(ByVal f As IFilter) As IFilter Implements IFilter.RemoveFilter
+            If Equals(f) Then
+                Return Nothing
+            Else
+                Return Me
+            End If
+        End Function
     End Class
 
     <Serializable()> _

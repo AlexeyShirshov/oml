@@ -60,7 +60,7 @@
 				<oos:Property propertyName="TestDisabled" table="tblArtists" fieldName="disabled" typeRef="tInt32Nullable" description="Property Title Description" propertyAccessLevel="Assembly" disabled="true"/>
 			</oos:Properties>
 		</oos:Entity>
-    <oos:Entity id="eAlbum" name="Album" description="Album Description" namespace="AlbumNS" behaviour="ForcePartial">
+    <oos:Entity id="eAlbum" name="Album" description="Album Description" namespace="AlbumNS">
       <oos:Tables>
 				<oos:Table ref="tblAlbums"/>
 				<oos:Table ref="tblSiteAccess"/>

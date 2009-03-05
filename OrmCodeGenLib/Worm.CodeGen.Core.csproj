@@ -66,9 +66,13 @@
     <Compile Include="CodeDomExtensions\CodeEntityTypeDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodeLinqContextDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodePropertiesAccessorTypeDeclaration.cs" />
+    <Compile Include="CodeDomExtensions\CodeSchemaDefTypeDeclaration.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeCsMemberOperatorOverride.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeMemberOperatorOverride.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeVbConversionOperator.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeCsForeachStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeForeachStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeVbForeachStatement.cs" />

@@ -231,54 +231,60 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
-            Dim dic As IDictionary = mc.Cache.GetOrmDictionary(mc.GetContextFilter, GetType(T), mc.MappingEngine)
-            If mc._externalFilter Is Nothing Then
-                If start < l.Count Then
-                    length = Math.Min(start + length, l.Count)
-                    For i As Integer = start To length - 1
-                        Dim loe As WeakEntityReference = l(i)
+            Dim realT As Type = Nothing
+            If l.Count > 0 Then
+                realT = l(0).EntityType
+            End If
+            If realT IsNot Nothing Then
+                Dim dic As IDictionary = mc.Cache.GetOrmDictionary(mc.GetContextInfo, realT, mc.MappingEngine)
+                If mc._externalFilter Is Nothing Then
+                    If start < l.Count Then
+                        length = Math.Min(start + length, l.Count)
+                        For i As Integer = start To length - 1
+                            Dim loe As WeakEntityReference = l(i)
+                            Dim o As T = loe.GetObject(Of T)(mc, dic)
+                            If o IsNot Nothing Then
+                                If mc.GetRev Then
+                                    c.List.Insert(0, o)
+                                Else
+                                    c.List.Add(o)
+                                End If
+                            Else
+                                OrmManager.WriteWarning("Unable to create " & loe.ObjName)
+                            End If
+                        Next
+                        If withLoad AndAlso Not created Then
+                            c.LoadObjects()
+                        End If
+                    End If
+                Else
+                    Dim loaded As Integer = 0
+                    For Each loe As WeakEntityReference In l
+                        If loe.IsLoaded Then
+                            loaded += 1
+                        End If
                         Dim o As T = loe.GetObject(Of T)(mc, dic)
                         If o IsNot Nothing Then
-                            If mc.GetRev Then
-                                c.List.Insert(0, o)
-                            Else
-                                c.List.Add(o)
-                            End If
+                            c.List.Add(o)
                         Else
                             OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                         End If
                     Next
-                    If withLoad AndAlso Not created Then
-                        c.LoadObjects()
+                    If loaded < l.Count Then
+                        Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
+                        If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, loaded) Then
+                            'c = FromWeakList(Of T)(weak_list, mc)
+                            c.LoadObjects()
+                        Else
+                            successed = IListObjectConverter.ExtractListResult.NeedLoad
+                            Return CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+                        End If
                     End If
-                End If
-            Else
-                Dim loaded As Integer = 0
-                For Each loe As WeakEntityReference In l
-                    If loe.IsLoaded Then
-                        loaded += 1
+                    Dim s As Boolean = True
+                    c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
+                    If Not s Then
+                        successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                     End If
-                    Dim o As T = loe.GetObject(Of T)(mc, dic)
-                    If o IsNot Nothing Then
-                        c.List.Add(o)
-                    Else
-                        OrmManager.WriteWarning("Unable to create " & loe.ObjName)
-                    End If
-                Next
-                If loaded < l.Count Then
-                    Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
-                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, loaded) Then
-                        'c = FromWeakList(Of T)(weak_list, mc)
-                        c.LoadObjects()
-                    Else
-                        successed = IListObjectConverter.ExtractListResult.NeedLoad
-                        Return CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
-                    End If
-                End If
-                Dim s As Boolean = True
-                c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
-                If Not s Then
-                    successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
             End If
             Return c
@@ -367,7 +373,7 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim objects As New Generic.List(Of T)
-            Dim dic As IDictionary = mgr.Cache.GetOrmDictionary(mgr.GetContextFilter, GetType(T), mgr.MappingEngine)
+            Dim dic As IDictionary = mgr.Cache.GetOrmDictionary(mgr.GetContextInfo, GetType(T), mgr.MappingEngine)
             For Each loe As WeakEntityReference In l
                 Dim o As T = loe.GetObject(Of T)(mgr, dic)
                 If o IsNot Nothing Then
@@ -391,7 +397,7 @@ Namespace Cache
                 For j As Integer = 0 To wl.List.Count - 1
                     Dim wr As WeakEntityReference = wl.List(j)
                     If odic Is Nothing Then
-                        odic = mgr.Cache.GetOrmDictionary(mgr.GetContextFilter, wr.EntityType, mgr.MappingEngine)
+                        odic = mgr.Cache.GetOrmDictionary(mgr.GetContextInfo, wr.EntityType, mgr.MappingEngine)
                     End If
                     Dim o As ICachedEntity = wr.GetObject(mgr, odic)
                     If o IsNot Nothing Then

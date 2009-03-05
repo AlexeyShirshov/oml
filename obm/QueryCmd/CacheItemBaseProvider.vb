@@ -79,7 +79,7 @@ Namespace Query
             If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
                 Dim srt As Sort = _q.propSort
                 If srt.Query IsNot Nothing Then
-                    uce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextFilter)
+                    uce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
                 Else
                     uce.Sort = srt
                 End If
@@ -168,7 +168,7 @@ Namespace Query
                         Dim fl As IFilter = _q._f
                         Dim added As Boolean = False
                         If rightType Then
-                            added = cache.validate_AddCalculatedType(types, _key, _id, fl, MappingEngine, Mgr.GetContextFilter)
+                            added = cache.validate_AddCalculatedType(types, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
                             If uce IsNot Nothing Then
                                 If _q.Filter IsNot Nothing Then
                                     uce.Filter = _q.Filter.Filter

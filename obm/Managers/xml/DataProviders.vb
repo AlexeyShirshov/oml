@@ -71,7 +71,7 @@ Namespace Xml
                     Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
                     If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        cache.AddDependType(_mgr.GetContextFilter, tt, _key, _id, _f, _mgr.MappingEngine)
+                        cache.AddDependType(_mgr.GetContextInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -187,7 +187,7 @@ Namespace Xml
                 Dim c As New Condition.ConditionConstructor
                 c.AddFilter(_f)
                 c.AddFilter(AppendWhere)
-                _mgr.XPathGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, sb, _mgr.GetContextFilter)
+                _mgr.XPathGenerator.AppendWhere(_mgr.MappingEngine, original_type, c.Condition, sb, _mgr.GetContextInfo)
                 If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
                     _mgr.XPathGenerator.AppendOrder(original_type, _sort, sb)
                 End If

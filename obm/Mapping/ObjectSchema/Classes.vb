@@ -147,42 +147,91 @@ Namespace Entities.Meta
             Return _eu.GetHashCode Xor If(String.IsNullOrEmpty(Key), 0, Key.GetHashCode)
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
-
+        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As IKeyEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+            Return Load(Of T, ReturnType)(objs, 0, objs.Count, loadWithObjects)
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity)(ByVal mgr As OrmManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+        'Public Overridable Function Load(Of T As IKeyEntity)(ByVal mgr As OrmManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
 
-        End Function
+        'End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As ICreateManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+        'Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As ICreateManager, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
 
-        End Function
+        'End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As CreateManagerDelegate, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+        'Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As CreateManagerDelegate, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
 
-        End Function
+        'End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity)(ByVal mgr As OrmManager, ByVal objs As IList(Of T), _
-                                    ByVal start As Integer, ByVal length As Integer, ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
+        Class cls
+            Private _ids As List(Of Object)
+            Private _f As FieldReference
+
+            Public Sub New(ByVal ids As List(Of Object))
+                _ids = ids
+            End Sub
+
+            Public Sub OnModifyFilter(ByVal sender As RelationCmd, ByVal args As RelationCmd.ModifyFilter)
+                'Dim tf As TableFilter = TryCast(args.RelFilter, TableFilter)
+                'If tf IsNot Nothing Then
+                '    _f = New FieldReference(tf.Template.Table, tf.Template.Column)
+                'Else
+                '    Dim ef As EntityFilter = TryCast(args.RelFilter, EntityFilter)
+                '    _f = New FieldReference(ef.Template.ObjectSource, ef.Template.PropertyAlias)
+                'End If
+                'args.RelFilter = New CustomFilter("1", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("1"))
+                'args.Modified = True
+                'sender.SetBatchFilter(_ids, _f)
+                Dim inv As New Criteria.Values.InValue(_ids)
+                Dim tf As TableFilter = TryCast(args.RelFilter, TableFilter)
+                If tf IsNot Nothing Then
+                    Dim tt As New TableFilterTemplate(tf.Template.Table, tf.Template.Column, Criteria.FilterOperation.In)
+                    args.RelFilter = New TableFilter(inv, tt)
+                Else
+                    Dim ef As EntityFilter = TryCast(args.RelFilter, EntityFilter)
+                    Dim tt As New OrmFilterTemplate(ef.Template.ObjectSource, ef.Template.PropertyAlias, Criteria.FilterOperation.In)
+                    args.RelFilter = New EntityFilter(inv, tt)
+                End If
+                args.Modified = True
+                sender.OptimizeInFilter(args.RelFilter)
+            End Sub
+
+            Private ReadOnly Property BatchFilter() As Pair(Of List(Of Object), FieldReference)
+                Get
+                    Return New Pair(Of List(Of Object), FieldReference)(_ids, _f)
+                End Get
+            End Property
+        End Class
+
+        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As IKeyEntity)(ByVal objs As IList(Of T), _
+                                    ByVal start As Integer, ByVal length As Integer, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Dim lookups As New Dictionary(Of IKeyEntity, IList)
             Dim newc As New List(Of IKeyEntity)
             Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
             Dim rcmd As RelationCmd = Nothing
+            Dim rt As Type = Nothing
 
             For i As Integer = start To start + length - 1
                 Dim o As IKeyEntity = objs(i)
-                rcmd = CreateCmd(o)
-                If rcmd.IsInCache(mgr) Then
-                    lookups.Add(o, rcmd.ToList)
-                    hasInCache.Add(o, Nothing)
-                Else
-                    newc.Add(o)
+                If rt Is Nothing Then rt = o.GetType
+                If o.ObjectState <> ObjectState.Created Then
+                    Dim ncmd As RelationCmd = CreateCmd(o)
+                    If ncmd.IsInCache Then
+                        lookups.Add(o, ncmd.ToList)
+                        hasInCache.Add(o, Nothing)
+                    Else
+                        newc.Add(o)
+                    End If
+                    If rcmd Is Nothing Then
+                        rcmd = ncmd
+                    End If
                 End If
             Next
 
             If rcmd Is Nothing Then
-                Return New List(Of _IKeyEntity)
+                Return New ReadOnlyList(Of ReturnType)
+            Else
+                rcmd = CType(rcmd.Clone, RelationCmd)
             End If
 
             Dim ids As New List(Of Object)
@@ -190,11 +239,58 @@ Namespace Entities.Meta
                 ids.Add(o.Identifier)
             Next
 
-            Throw New NotImplementedException
-            'Dim c As New List(Of T)
+            Dim c As New cls(ids)
+            AddHandler rcmd.OnModifyFilter, AddressOf c.OnModifyFilter
+            rcmd.RenewMark()
 
-            'mgr.GetObjects(ids, rcmd, c, True, Column, False)
+            Dim op As New ObjectProperty(rcmd.RelationDesc.Rel, rcmd.RelationDesc.Column)
+            Dim rtt As Type = Nothing
+            Dim mpe As ObjectMappingEngine = Nothing
+            Dim oschema As IEntitySchema = Nothing
+            Using mgr As OrmManager = rcmd.GetMgr.CreateManager
+                mpe = mgr.MappingEngine
+                rtt = op.ObjectSource.GetRealType(mpe)
+                oschema = mpe.GetEntitySchema(rtt)
+            End Using
 
+            If loadWithObjects Then
+                rcmd.WithLoad(True)
+            Else
+                Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                se.AddRange(FCtor.prop(op).GetAllProperties)
+                rcmd.Select(se.ToArray)
+            End If
+
+            Dim r As ReadOnlyList(Of ReturnType) = CType(rcmd.ToList, ReadOnlyList(Of ReturnType))
+
+            For Each o As ReturnType In r
+                Dim v As IKeyEntity = CType(mpe.GetPropertyValue(o, op.Field, oschema), IKeyEntity)
+                Dim ll As IList = Nothing
+                If Not lookups.TryGetValue(v, ll) Then
+                    ll = New ReadOnlyList(Of ReturnType)
+                    lookups.Add(v, ll)
+                End If
+                CType(ll, IListEdit).Add(o)
+            Next
+
+            Dim l As New ReadOnlyList(Of ReturnType)
+            For i As Integer = start To start + length - 1
+                Dim o As IKeyEntity = objs(i)
+                Dim v As IList = Nothing
+                If lookups.TryGetValue(o, v) Then
+                    For Each oo As IEntity In v
+                        CType(l, IListEdit).Add(oo)
+                    Next
+                Else
+                    v = New ReadOnlyList(Of ReturnType)
+                End If
+                Dim ncmd As RelationCmd = CreateCmd(o)
+                If Not hasInCache.ContainsKey(o) Then
+                    ncmd.SetCache(v)
+                End If
+            Next
+
+            Return l
         End Function
 
         Public Overridable Function CreateCmd(ByVal o As IKeyEntity) As RelationCmd

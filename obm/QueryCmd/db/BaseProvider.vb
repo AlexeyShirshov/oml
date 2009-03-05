@@ -15,6 +15,7 @@ Namespace Query.Database
 
             Private _stmt As String
             Protected _params As ParamMgr
+            Protected _almgr As IPrepareTable
             Private _cmdType As System.Data.CommandType
 
             Private _oldct As EntityUnion
@@ -80,7 +81,7 @@ Namespace Query.Database
                 '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
                 'End If
 
-                _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextFilter)
+                _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextInfo)
 
                 If _dic Is Nothing Then
                     _dic = GetExternalDic(_key)
@@ -127,30 +128,17 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                'Dim almgr As AliasMgr = AliasMgr.Create
-                Dim fi As Object = _mgr.GetContextFilter
+                Dim fi As Object = _mgr.GetContextInfo
                 Dim i As Integer = 0
-                'Dim q As QueryCmd = _q
-                'Dim sb As New StringBuilder
-                'Dim inner As String = Nothing
-                'Dim innerColumns As List(Of String) = Nothing
                 Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
-                'For Each q As QueryCmd In New StmtQueryIterator(_q)
-                'Dim columnAliases As New List(Of String)
-                'Dim j As List(Of Worm.Criteria.Joins.QueryJoin) = q._js '_j(i)
-                'Dim f As IFilter = q._f
-                'If _f.Length > i Then
-                '    f = _f(i)
-                'End If
-                'Dim sl As List(Of SelectExpression) = _sl(i)
-                'Dim sl As List(Of SelectExpression) = q._sl
-                'inner = MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, q, _params, almgr)
-                'innerColumns = New List(Of String)(columnAliases)
-                'q = q.OuterQuery
-                'i += 1
-                'Next
-                'Loop
-                Return MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, _q, _params)
+                _almgr = AliasMgr.Create
+                If _q._optimizeIn IsNot Nothing Then
+                    _q._f = _q._f.RemoveFilter(_q._optimizeIn)
+                    If _q._f Is Nothing Then
+                        _q._f = New CustomFilter("1", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("1"))
+                    End If
+                End If
+                Return MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, _q, _params, _almgr)
             End Function
 
             Public Function GetSimpleValues(Of T)() As IList(Of T)

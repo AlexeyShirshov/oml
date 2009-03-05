@@ -574,7 +574,7 @@ Partial Public MustInherit Class OrmManager
                     Dim key As String = GetM2MKey(tt1, type2load, direct)
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                         'key &= criteria.Filter(type2load).GetStaticString(_schema)
-                        key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+                        key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
                     End If
 
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -639,7 +639,7 @@ Partial Public MustInherit Class OrmManager
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                             'key &= criteria.Filter(type2load).GetStaticString(_schema)
-                            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+                            key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
@@ -884,7 +884,7 @@ Partial Public MustInherit Class OrmManager
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
         End If
 
         If joins IsNot Nothing Then
@@ -899,7 +899,7 @@ Partial Public MustInherit Class OrmManager
             key &= aspect.GetStaticKey
         End If
 
-        key &= _schema.GetEntityKey(GetContextFilter, GetType(T))
+        key &= _schema.GetEntityKey(GetContextInfo, GetType(T))
 
         Return key & GetStaticKey()
     End Function
@@ -963,7 +963,7 @@ l1:
             If Not del.Created Then
                 Dim psort As Sort = del.Sort
 
-                If ce.SortEquals(psort, MappingEngine, GetContextFilter) OrElse psort Is Nothing Then
+                If ce.SortEquals(psort, MappingEngine, GetContextInfo) OrElse psort Is Nothing Then
                     If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce) Then
                         del.Renew = True
                         GoTo l1
@@ -1143,7 +1143,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.GetStaticString(_schema, GetContextFilter) & GetStaticKey() & _schema.GetEntityKey(GetContextFilter, t)
+        Return filter.GetStaticString(_schema, GetContextInfo) & GetStaticKey() & _schema.GetEntityKey(GetContextInfo, t)
     End Function
 
     Public Function Find(Of T As {IKeyEntity, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
@@ -1159,7 +1159,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain)
         Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
@@ -1175,7 +1175,7 @@ l1:
 
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        If HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain) Then
+        If HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain) Then
             Dim c As Condition.ConditionConstructor = New Condition.ConditionConstructor
             c.AddFilter(filter)
             Return FindWithJoins(Of T)(Nothing, joins, New PredicateLink(c), sort, withLoad)
@@ -1258,7 +1258,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetContextFilter, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain)
         Return FindWithJoins(Of T)(StmtGenerator.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
@@ -1432,7 +1432,7 @@ l1:
         If _externalFilter Is Nothing Then
             Dim psort As Sort = del.Sort
 
-            If ce_.SortEquals(psort, MappingEngine, GetContextFilter) OrElse psort Is Nothing Then
+            If ce_.SortEquals(psort, MappingEngine, GetContextInfo) OrElse psort Is Nothing Then
                 If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce_.SortExpires Then
                     Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
                     Dim ce2 As UpdatableCachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
@@ -1443,7 +1443,9 @@ l1:
             Else
                 'Dim loaded As Integer = 0
                 Dim objs As ReadOnlyEntityList(Of T) = ce_.GetObjectList(Of T)(Me)
-                If objs IsNot Nothing AndAlso objs.Count > 0 Then
+                If objs IsNot Nothing Then
+                    If objs.Count = 0 Then Return True
+
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
                         Dim ce2 As UpdatableCachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
@@ -1838,7 +1840,7 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            If Cache.ShadowCopy(obj) IsNot Nothing Then
+            If Cache.ShadowCopy(obj, Me) IsNot Nothing Then
                 Return False
             End If
 
@@ -1859,10 +1861,10 @@ l1:
                 End If
             End If
 
-            _cache.RegisterRemoval(obj)
+            _cache.RegisterRemoval(obj, Me)
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(obj) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(obj, Me) Is Nothing)
         End Using
         Return True
     End Function
@@ -1883,31 +1885,31 @@ l1:
     End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextFilter, t, _schema)
+        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema)
     End Function
 
     Public Function GetDictionary(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextFilter, t, _schema, schema)
+        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema, schema)
     End Function
 
     Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of Object, T)
-        Return _cache.GetOrmDictionary(Of T)(GetContextFilter, _schema)
+        Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema)
     End Function
 
     Public Function GetDictionary(Of T As _ICachedEntity)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else
-            Return _cache.GetOrmDictionary(Of T)(GetContextFilter, _schema, oschema)
+            Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema, oschema)
         End If
     End Function
 
     Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
-        Return _cache.IsInCachePrecise(obj, GetContextFilter, _schema)
+        Return _cache.IsInCachePrecise(obj, GetContextInfo, _schema)
     End Function
 
     Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
-        Return _cache.IsInCache(id, t, GetContextFilter, _schema)
+        Return _cache.IsInCache(id, t, GetContextInfo, _schema)
     End Function
 
     <Conditional("DEBUG")> _
@@ -2057,11 +2059,11 @@ l1:
         ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
-        Dim key As String = "distinct" & _schema.GetEntityKey(GetContextFilter, GetType(T))
+        Dim key As String = "distinct" & _schema.GetEntityKey(GetContextInfo, GetType(T))
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
         End If
 
         If relation IsNot Nothing Then
@@ -2106,7 +2108,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
-        Return _schema.GetEntityKey(GetContextFilter, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextFilter, tt2) & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(GetContextInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextInfo, tt2) & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {IKeyEntity, New})(ByVal obj As _IKeyEntity, ByVal criteria As IGetFilter, _
@@ -2120,7 +2122,7 @@ l1:
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(tt2).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -2162,7 +2164,7 @@ l1:
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key &= criteria.Filter(tt2).GetStaticString(_schema)
-            key &= criteria.Filter().GetStaticString(_schema, GetContextFilter)
+            key &= criteria.Filter().GetStaticString(_schema, GetContextInfo)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -3132,7 +3134,7 @@ l1:
         Return Nothing
     End Function
 
-    Protected Friend Overridable Function GetContextFilter() As Object
+    Protected Friend Overridable Function GetContextInfo() As Object
         Return Nothing
     End Function
 
@@ -3512,9 +3514,9 @@ l1:
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             'key = criteria.Filter(tt).GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
-            key = criteria.Filter().GetStaticString(_schema, GetContextFilter) & _schema.GetEntityKey(GetContextFilter, tt) & GetStaticKey() & "Dics"
+            key = criteria.Filter().GetStaticString(_schema, GetContextInfo) & _schema.GetEntityKey(GetContextInfo, tt) & GetStaticKey() & "Dics"
         Else
-            key = _schema.GetEntityKey(GetContextFilter, tt) & GetStaticKey() & "Dics"
+            key = _schema.GetEntityKey(GetContextInfo, tt) & GetStaticKey() & "Dics"
         End If
 
         If joins IsNot Nothing Then

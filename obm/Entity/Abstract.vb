@@ -111,7 +111,7 @@ Namespace Entities
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub Load(ByVal propertyAlias As String)
-        Sub RemoveFromCache(ByVal cache As CacheBase)
+        Sub RemoveOriginalCopy(ByVal cache As CacheBase)
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity

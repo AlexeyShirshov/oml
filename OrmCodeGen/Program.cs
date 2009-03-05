@@ -194,7 +194,7 @@ namespace Worm.CodeGen.CodeGenerator
             var gen = new OrmCodeDomGenerator(ormObjectsDef, settings);
 
             
-            settings.Split = split;
+			//settings.Split = split;
             settings.LanguageSpecificHacks = languageHacks;
 
             Console.WriteLine("Generation entities from file '{0}' using these settings:", inputFilename);

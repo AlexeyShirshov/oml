@@ -126,7 +126,25 @@ Namespace Query.Database
                 'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
+                Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
+                If batch IsNot Nothing Then
+                    Dim pcnt As Integer = _params.Params.Count
+                    Dim nidx As Integer = pcnt
+                    For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
+                        Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                            With newCmd
+                                .CommandText = cmd.CommandText & cmd_str.First
+                                _params.AppendParams(.Parameters, 0, pcnt)
+                                _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                nidx = cmd_str.Second
+                            End With
+                            dbm.QueryObjects(t, newCmd, rr, sl, oschema, fields)
+                        End Using
+                    Next
+                Else
+                    dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
+                End If
+
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -219,11 +237,33 @@ Namespace Query.Database
                 Dim sl As List(Of SelectExpression) = _q._sl
                 Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
                 Dim createType As Type = GetType(CreateType)
-                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
-                    dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
+                If batch IsNot Nothing Then
+                    Dim pcnt As Integer = _params.Params.Count
+                    Dim nidx As Integer = pcnt
+                    For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
+                        Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                            With newCmd
+                                .CommandText = cmd.CommandText & cmd_str.First
+                                _params.AppendParams(.Parameters, 0, pcnt)
+                                _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                nidx = cmd_str.Second
+                            End With
+                            If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                                dbm.QueryObjects(selectType, newCmd, rr, sl, oschema, fields)
+                            Else
+                                dbm.QueryObjects(Of CreateType)(newCmd, rr, sl, oschema, fields)
+                            End If
+                        End Using
+                    Next
                 Else
-                    dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                    If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                        dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                    Else
+                        dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                    End If
                 End If
+
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
@@ -441,7 +481,25 @@ Namespace Query.Database
                 If t Is Nothing Then
                     t = _q.CreateType.GetRealType(dbm.MappingEngine)
                 End If
-                dbm.LoadMultipleObjects(t, cmd, rr, sl)
+                Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
+                If batch IsNot Nothing Then
+                    Dim pcnt As Integer = _params.Params.Count
+                    Dim nidx As Integer = pcnt
+                    For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
+                        Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                            With newCmd
+                                .CommandText = cmd.CommandText & cmd_str.First
+                                _params.AppendParams(.Parameters, 0, pcnt)
+                                _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                nidx = cmd_str.Second
+                            End With
+                            dbm.LoadMultipleObjects(t, newCmd, rr, sl)
+                        End Using
+                    Next
+                Else
+                    dbm.LoadMultipleObjects(t, cmd, rr, sl)
+                End If
+
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -575,10 +633,31 @@ Namespace Query.Database
                 Dim sl As List(Of SelectExpression) = _q._sl
                 Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
                 Dim createType As Type = GetType(CreateType)
-                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
-                    dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
+                If batch IsNot Nothing Then
+                    Dim pcnt As Integer = _params.Params.Count
+                    Dim nidx As Integer = pcnt
+                    For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
+                        Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                            With newCmd
+                                .CommandText = cmd.CommandText & cmd_str.First
+                                _params.AppendParams(.Parameters, 0, pcnt)
+                                _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                nidx = cmd_str.Second
+                            End With
+                            If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                                dbm.QueryObjects(selectType, newCmd, rr, sl, oschema, fields)
+                            Else
+                                dbm.QueryObjects(Of CreateType)(newCmd, rr, sl, oschema, fields)
+                            End If
+                        End Using
+                    Next
                 Else
-                    dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                    If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                        dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                    Else
+                        dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                    End If
                 End If
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))

@@ -316,6 +316,7 @@ Namespace Query
         Friend _createType As EntityUnion
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
+        Friend _optimizeIn As IFilter
 
 #Region " Cache "
         '<NonSerialized()> _
@@ -331,6 +332,27 @@ Namespace Query
 #End Region
 
         Friend Shared ReadOnly InnerTbl As New SourceFragment
+
+        Public Sub OptimizeInFilter(ByVal inFilter As IFilter)
+            _optimizeIn = inFilter
+        End Sub
+
+        Friend ReadOnly Property GetBatchStruct() As Pair(Of List(Of Object), FieldReference)
+            Get
+                If _optimizeIn Is Nothing Then Return Nothing
+
+                Dim tmf As TemplatedFilterBase = CType(_optimizeIn, TemplatedFilterBase)
+                Dim ftemp As TableFilterTemplate = TryCast(tmf.Template, TableFilterTemplate)
+                Dim fr As FieldReference = Nothing
+                If ftemp IsNot Nothing Then
+                    fr = New FieldReference(ftemp.Table, ftemp.Column)
+                Else
+                    Dim ef As OrmFilterTemplate = TryCast(tmf.Template, OrmFilterTemplate)
+                    fr = New FieldReference(ef.ObjectSource, ef.PropertyAlias)
+                End If
+                Return New Pair(Of List(Of Object), FieldReference)(CType(CType(tmf.Value, InValue).Value, List(Of Object)), fr)
+            End Get
+        End Property
 
         Public ReadOnly Property CreateType() As EntityUnion
             Get
@@ -552,7 +574,7 @@ Namespace Query
         'End Sub
 #End Region
 
-        Protected Sub RenewMark()
+        Protected Friend Sub RenewMark()
             _mark = Guid.NewGuid 'Environment.TickCount
             '_dic = Nothing
         End Sub
@@ -637,8 +659,9 @@ Namespace Query
 
                         For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
                             Dim t As Type = de.Key.GetRealType(schema)
+                            Dim oschema As IEntitySchema = de.Value
                             If Not _pdic.ContainsKey(t) Then
-                                Dim dic As IDictionary = schema.GetProperties(t, de.Value)
+                                Dim dic As IDictionary = schema.GetProperties(t, oschema)
                                 _pdic.Add(t, dic)
 
                                 Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
@@ -664,7 +687,32 @@ Namespace Query
                                             End If
                                         Next
                                     End If
-                                    _sl.AddRange(col)
+                                    Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
+                                    If df IsNot Nothing Then
+                                        Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
+                                        If sss IsNot Nothing Then
+                                            For Each se As SelectExpression In col
+                                                Dim found As Boolean = False
+                                                For Each ss() As String In sss
+                                                    For Each pr As String In ss
+                                                        If se.PropertyAlias = pr Then
+                                                            found = True
+                                                            GoTo l2
+                                                        End If
+                                                    Next
+                                                Next
+l2:
+                                                If Not found Then
+                                                    _sl.Add(se)
+                                                End If
+                                            Next
+                                        Else
+                                            GoTo l1
+                                        End If
+                                    Else
+l1:
+                                        _sl.AddRange(col)
+                                    End If
                                 End If
                             End If
                         Next
@@ -673,7 +721,7 @@ Namespace Query
                             _sl.AddRange(SelectList)
                         Else
                             For Each se As SelectExpression In SelectList
-                                If se.IsCustom Then
+                                If se.IsCustom OrElse se.Aggregate IsNot Nothing Then
                                     _sl.Add(se)
                                 End If
                             Next
@@ -796,11 +844,6 @@ Namespace Query
                 End If
             End If
 
-            'If _aggregates IsNot Nothing Then
-            '    For Each a As AggregateBase In _aggregates
-            '        cl.Add(New SelectExpression(a))
-            '    Next
-            'End If
             _f = f
         End Sub
 
@@ -909,10 +952,27 @@ Namespace Query
             If os Is Nothing Then
                 os = tp.First
             End If
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
             If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse _WithLoad(tp, schema) Then
-                cl.AddRange(schema.GetSortedFieldList(t).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                Dim l As New List(Of SelectExpression)(schema.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
+                If df IsNot Nothing Then
+                    Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
+                    If sss IsNot Nothing Then
+                        For Each ss() As String In sss
+                            For Each pr As String In ss
+                                Dim pr2 As String = pr
+                                Dim idx As Integer = l.FindIndex(Function(pa As SelectExpression) pa.PropertyAlias = pr2)
+                                If idx >= 0 Then
+                                    l.RemoveAt(idx)
+                                End If
+                            Next
+                        Next
+                    End If
+                End If
+                cl.AddRange(l)
             Else
-                For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t)
+                For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
                     Dim se As New SelectExpression(os, c.PropertyAlias)
                     se.Attributes = c.Behavior
                     se.Column = c.Column
@@ -2476,7 +2536,7 @@ Namespace Query
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, GetMgr)
                     Return ToPODList(Of T)(mgr)
                 End Using
             End Using
@@ -2993,7 +3053,7 @@ Namespace Query
             End With
         End Sub
 
-        Public Function Clone() As Object Implements System.ICloneable.Clone
+        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
             Dim q As New QueryCmd
             CopyTo(q)
             Return q
@@ -3540,7 +3600,7 @@ Namespace Query
 
                         Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
                     Finally
-                        _group = g
+                        Group = g
                         _order = srt
                     End Try
                 End Using

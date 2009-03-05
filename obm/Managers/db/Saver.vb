@@ -262,7 +262,7 @@ Namespace Database
                 AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
                 If o.HasChanges Then
-                    Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o)
+                    Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o, _mgr)
                     Dim oc As ICachedEntity = o.OriginalCopy
                     If o.ObjectState = ObjectState.Deleted Then
                         _deleted.Add(o)
@@ -528,7 +528,7 @@ l1:
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
+                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, _mgr) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     If o.UpdateCtx.UpdatedFields IsNot Nothing Then
@@ -557,7 +557,7 @@ l1:
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
+                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, _mgr) Is Nothing)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
@@ -840,11 +840,11 @@ l1:
 #If DEBUG Then
                         If o.HasChanges Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                            If _mgr.Cache.ShadowCopy(o) IsNot Nothing Then
-                                If _mgr.Cache.ShadowCopy(o).Reason = ObjectModification.ReasonEnum.Delete Then
+                            If _mgr.Cache.ShadowCopy(o, _mgr) IsNot Nothing Then
+                                If _mgr.Cache.ShadowCopy(o, _mgr).Reason = ObjectModification.ReasonEnum.Delete Then
                                     Debug.Assert(_saver._deleted.Contains(o))
                                     Debug.Assert(Not _saver._updated.Contains(o))
-                                ElseIf _mgr.Cache.ShadowCopy(o).Reason = ObjectModification.ReasonEnum.Edit Then
+                                ElseIf _mgr.Cache.ShadowCopy(o, _mgr).Reason = ObjectModification.ReasonEnum.Edit Then
                                     'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
                                     Debug.Assert(Not _saver._deleted.Contains(o))
                                     Debug.Assert(_saver._updated.Contains(o))

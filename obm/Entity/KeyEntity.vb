@@ -1716,7 +1716,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu)
             End If
-            AddRel(q.Relation)
+            AddRel(q._rel)
             Return q
         End Function
 
@@ -1727,7 +1727,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu, key)
             End If
-            AddRel(q.Relation)
+            AddRel(q._rel)
             Return q
         End Function
 
@@ -1738,7 +1738,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(New Relation(Me, desc))
             End If
-            AddRel(q.Relation)
+            AddRel(q._rel)
             Return q
         End Function
 

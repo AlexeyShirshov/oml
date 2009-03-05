@@ -107,15 +107,24 @@ Namespace Database
                         If t Is Nothing Then
                             Throw New Entities.SelectFormaterException("Table is not specified for column " & se.Column)
                         End If
+                        Dim al As String = Nothing
                         If Not String.IsNullOrEmpty(t.Name) Then
                             If inSelect Then
-                                sb.Append(t.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                                al = t.UniqueName(se.ObjectSource) & schema.Delimiter
                             Else
-                                sb.Append(almgr.GetAlias(se.Table, Nothing)).Append(_s.Selector)
+                                al = almgr.GetAlias(se.Table, Nothing) & _s.Selector
                             End If
                         End If
+                        If Not String.IsNullOrEmpty(al) Then
+                            sb.Append(al)
+                        End If
                         sb.Append(se.Column)
-                        If cols IsNot Nothing Then cols.Append(se.Column)
+                        If cols IsNot Nothing Then
+                            If Not String.IsNullOrEmpty(al) Then
+                                cols.Append(al)
+                            End If
+                            cols.Append(se.Column)
+                        End If
                     Case Entities.PropType.ObjectProperty
                         Dim t As Type = se.ObjectSource.GetRealType(schema)
                         If t IsNot Nothing Then
@@ -123,19 +132,22 @@ Namespace Database
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
                             Dim map As MapField2Column = cm(se.PropertyAlias)
                             If inSelect Then
+                                Dim al As String = Nothing
                                 If se.ObjectSource.IsQuery Then
                                     Dim tbl As SourceFragment = se.ObjectSource.ObjectAlias.Tbl
                                     If tbl Is Nothing Then
                                         tbl = New SourceFragment
                                         se.ObjectSource.ObjectAlias.Tbl = tbl
                                     End If
-                                    sb.Append(tbl.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                                    al = tbl.UniqueName(se.ObjectSource)
                                 Else
-                                    sb.Append(map._tableName.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+                                    al = map._tableName.UniqueName(se.ObjectSource)
                                 End If
                                 Dim col As String = schema.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
-                                sb.Append(col)
-                                If cols IsNot Nothing Then cols.Append(col)
+                                sb.Append(al).Append(schema.Delimiter).Append(col)
+                                If cols IsNot Nothing Then
+                                    cols.Append(al).Append(schema.Delimiter).Append(col)
+                                End If
                             Else
                                 If cm.TryGetValue(se.PropertyAlias, map) Then
                                     sb.Append(almgr.GetAlias(map._tableName, se.ObjectSource)).Append(_s.Selector).Append(map._columnName)

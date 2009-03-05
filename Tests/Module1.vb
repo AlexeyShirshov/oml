@@ -50,22 +50,30 @@ Module Module1
     End Class
 
     Sub main()
-        Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
-            For i As Integer = 0 To 10000
-                mgr.Find(Of TestProject1.Table1)(Ctor.prop(GetType(TestProject1.Table1), "ID").eq(i + 1000), Nothing, False)
-                If i Mod 1000 = 0 Then
-                    Console.WriteLine(i / 1000)
-                End If
-            Next
-            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.MappingEngine)
-            t.CreatedAt = Now
-            mgr.BeginTransaction()
-            Try
-                t.SaveChanges(True)
-            Finally
-                mgr.Rollback()
-            End Try
-        End Using
+        'Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
+        '    For i As Integer = 0 To 10000
+        '        mgr.Find(Of TestProject1.Table1)(Ctor.prop(GetType(TestProject1.Table1), "ID").eq(i + 1000), Nothing, False)
+        '        If i Mod 1000 = 0 Then
+        '            Console.WriteLine(i / 1000)
+        '        End If
+        '    Next
+        '    Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.MappingEngine)
+        '    t.CreatedAt = Now
+        '    mgr.BeginTransaction()
+        '    Try
+        '        t.SaveChanges(True)
+        '    Finally
+        '        mgr.Rollback()
+        '    End Try
+        'End Using
+
+        Dim l As New List(Of WeakEntityReference)
+        For i As Integer = 0 To 500000
+            l.Add(New WeakEntityReference(New TestProject1.Table1))
+            If (i Mod 100) = 0 Then
+                Console.WriteLine(i)
+            End If
+        Next
     End Sub
 
     Sub Main4()
