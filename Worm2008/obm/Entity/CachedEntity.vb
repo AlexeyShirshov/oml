@@ -47,6 +47,7 @@ Namespace Entities
         Protected _key As Integer
         Private _loaded As Boolean
         Private _loaded_members As BitArray
+        Private _sver As String
 
         <NonSerialized()> _
         Private _upd As New UpdateCtx
@@ -406,9 +407,9 @@ Namespace Entities
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
-                    Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList()
+                    Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(schema)
                     For i As Integer = 0 To arr.Count - 1
-                        If Not _members_load_state(i) Then
+                        If Not _members_load_state(i, arr.Count, schema) Then
                             'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
                             'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                             allloaded = False
@@ -422,16 +423,74 @@ Namespace Entities
             End Using
         End Function
 
-        Protected Property _members_load_state(ByVal idx As Integer) As Boolean
+        Protected Property _members_load_state(ByVal idx As Integer, ByVal cnt As Integer, ByVal mpe As ObjectMappingEngine) As Boolean
             Get
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(SortedColumnAttributeCount)
+                If _loaded_members Is Nothing OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version) Then
+                    Dim l As List(Of EntityPropertyAttribute) = Nothing
+                    If cnt = 0 Then
+                        If IsPKLoaded Then
+                            l = SortedColumnAttributeList(mpe)
+                            cnt = l.Count
+                        Else
+                            cnt = SortedColumnAttributeCount(mpe)
+                        End If
+                    End If
+                    _loaded_members = New BitArray(cnt)
+                    _sver = If(mpe Is Nothing, "w-x", mpe.Version)
+                    If IsPKLoaded Then
+                        If l Is Nothing Then l = SortedColumnAttributeList(mpe)
+                        Dim oschema As IEntitySchema = Nothing
+                        If mpe IsNot Nothing Then
+                            oschema = mpe.GetEntitySchema(Me.GetType)
+                        End If
+                        For i As Integer = 0 To l.Count - 1
+                            Dim c As EntityPropertyAttribute = l(i)
+                            If oschema Is Nothing Then
+                                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    _loaded_members(i) = True
+                                End If
+                            Else
+                                If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    _loaded_members(i) = True
+                                End If
+                            End If
+                        Next
+                    End If
                 End If
                 Return _loaded_members(idx)
             End Get
             Set(ByVal value As Boolean)
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(SortedColumnAttributeCount)
+                If _loaded_members Is Nothing OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version) Then
+                    Dim l As List(Of EntityPropertyAttribute) = Nothing
+                    If cnt = 0 Then
+                        If IsPKLoaded Then
+                            l = SortedColumnAttributeList(mpe)
+                            cnt = l.Count
+                        Else
+                            cnt = SortedColumnAttributeCount(mpe)
+                        End If
+                    End If
+                    _loaded_members = New BitArray(cnt)
+                    _sver = If(mpe Is Nothing, "w-x", mpe.Version)
+                    If IsPKLoaded Then
+                        If l Is Nothing Then l = SortedColumnAttributeList(mpe)
+                        Dim oschema As IEntitySchema = Nothing
+                        If mpe IsNot Nothing Then
+                            oschema = mpe.GetEntitySchema(Me.GetType)
+                        End If
+                        For i As Integer = 0 To l.Count - 1
+                            Dim c As EntityPropertyAttribute = l(i)
+                            If oschema Is Nothing Then
+                                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    _loaded_members(i) = True
+                                End If
+                            Else
+                                If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    _loaded_members(i) = True
+                                End If
+                            End If
+                        Next
+                    End If
                 End If
                 _loaded_members(idx) = value
             End Set
@@ -447,18 +506,20 @@ Namespace Entities
         Private Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
             Dim idx As Integer = c.Index
-            If idx = -1 Then
-                Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList()
+            Dim cnt As Integer
+            If idx = -1 OrElse (schema IsNot Nothing AndAlso schema.Version <> c.SchemaVersion) Then
+                Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(schema)
                 idx = arr.BinarySearch(c)
+                cnt = arr.Count
                 c.Index = idx
+                If schema IsNot Nothing Then c.SchemaVersion = schema.Version
             End If
 
             If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.PropertyAlias)
 
             If idx >= 0 Then
-                'Using SyncHelper(False)
-                Dim old As Boolean = _members_load_state(idx)
-                _members_load_state(idx) = loaded
+                Dim old As Boolean = _members_load_state(idx, cnt, schema)
+                _members_load_state(idx, cnt, schema) = loaded
                 Return old
                 'End Using
             End If
@@ -489,7 +550,7 @@ Namespace Entities
             If Not CanEdit Then Throw New ObjectStateException(ObjName & "Object is not editable")
         End Sub
 
-        Public Overridable Sub RemoveFromCache(ByVal cache As CacheBase) Implements ICachedEntity.RemoveFromCache
+        Public Overridable Sub RemoveOriginalCopy(ByVal cache As CacheBase) Implements ICachedEntity.RemoveOriginalCopy
             _copy = Nothing
         End Sub
 
@@ -520,7 +581,7 @@ Namespace Entities
         End Sub
 
         Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -544,18 +605,18 @@ Namespace Entities
             ElseIf IsLoaded Then
                 SetObjectState(Entities.ObjectState.None)
             End If
-            Invariant()
+            Invariant(mgr)
         End Sub
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         <Conditional("DEBUG")> _
-        Public Sub Invariant()
+        Public Sub Invariant(ByVal mgr As OrmManager)
             Using SyncHelper(True)
                 If IsLoaded AndAlso _
                     ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
                    (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Entities.ObjectState.Modified AndAlso OrmCache.ShadowCopy(Me) Is Nothing Then
+                If ObjectState = Entities.ObjectState.Modified AndAlso OrmCache.ShadowCopy(Me, mgr) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
                     SetObjectStateClear(Entities.ObjectState.None)
                     Load()
@@ -565,12 +626,12 @@ Namespace Entities
 
         Protected Overrides Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
-                Debug.Assert(value <> Entities.ObjectState.None OrElse IsLoaded, String.Format("Cannot set state none while object {0} is not loaded", ObjName))
+                'Debug.Assert(value <> Entities.ObjectState.None OrElse IsLoaded, String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                 If value = Entities.ObjectState.None AndAlso Not IsLoaded Then
                     Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                 End If
 
-                Debug.Assert(Not _upd.Deleted, String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
+                'Debug.Assert(Not _upd.Deleted, String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 If _upd.Deleted Then
                     Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 End If
@@ -588,15 +649,16 @@ Namespace Entities
         Private Sub SetLoaded(ByVal value As Boolean) Implements _ICachedEntity.SetLoaded
             Using SyncHelper(False)
                 Using mc As IGetManager = GetMgr()
+                    Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
                     If value AndAlso Not _loaded Then
-                        Dim cnt As Integer = SortedColumnAttributeCount()
+                        Dim cnt As Integer = SortedColumnAttributeCount(mpe)
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i) = True
+                            _members_load_state(i, cnt, mpe) = True
                         Next
                     ElseIf Not value AndAlso _loaded Then
-                        Dim cnt As Integer = SortedColumnAttributeCount()
+                        Dim cnt As Integer = SortedColumnAttributeCount(mpe)
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i) = False
+                            _members_load_state(i, cnt, mpe) = False
                         Next
                     End If
                     _loaded = value
@@ -623,7 +685,7 @@ Namespace Entities
                     AcceptRelationalChanges(updateCache, mc)
 
                     If (ObjectState <> Entities.ObjectState.None OrElse Not WrappedProperties) Then
-                        mo = RemoveVersionData(mc.Cache, setState)
+                        mo = RemoveVersionData(mc.Cache, mc.MappingEngine, mc.GetContextInfo, setState)
                         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
                             '_valProcs = False
@@ -699,20 +761,21 @@ Namespace Entities
         '    End If
         'End Sub
 
-        Protected Function RemoveVersionData(ByVal cache As CacheBase, ByVal setState As Boolean) As _ICachedEntity
+        Protected Function RemoveVersionData(ByVal cache As CacheBase, _
+            ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal setState As Boolean) As _ICachedEntity
             Dim mo As _ICachedEntity = Nothing
 
             'unreg = unreg OrElse _state <> Orm.ObjectState.Created
             If setState Then
                 SetObjectStateClear(Entities.ObjectState.None)
-                Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
+                'Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
                 If Not IsLoaded Then
                     Throw New OrmObjectException(ObjName & "Cannot set state None while object is not loaded")
                 End If
             End If
             'If unreg Then
             mo = CType(OriginalCopy, _ICachedEntity)
-            cache.UnregisterModification(Me)
+            cache.UnregisterModification(Me, mpe, context)
             _copy = Nothing
             '_mo = Nothing
             'End If
@@ -1137,15 +1200,24 @@ l1:
             Dim l As New List(Of PKDesc)
             'Using mc As IGetManager = GetMgr()
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
-            For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
-                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)))
-                End If
-            Next
-            'End Using
+            If schema Is Nothing Then
+                For Each kv As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(Me.GetType)
+                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
+                    If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, Nothing)))
+                    End If
+                Next
+            Else
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
+                For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
+                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
+                    If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)))
+                    End If
+                Next
+            End If
             Return l.ToArray
         End Function
 
@@ -1255,7 +1327,7 @@ l1:
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1336,7 +1408,7 @@ l1:
                 Using SyncHelper(True)
                     If ObjectState = Entities.ObjectState.Modified Then
                         'Using mc As IGetManager = GetMgr()
-                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
+                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
                         'If mo Is Nothing Then mo = _mo
                         If mo IsNot Nothing Then
                             If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1383,7 +1455,7 @@ l1:
                         End If
                     End If
 
-                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me)
+                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
                     If mo IsNot Nothing Then
                         If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
                             'Debug.Assert(False)
@@ -1420,7 +1492,7 @@ l1:
                     If olds <> Entities.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
-                        RemoveVersionData(mgr.Cache, False)
+                        RemoveVersionData(mgr.Cache, mgr.MappingEngine, mgr.GetContextInfo, False)
                     End If
 
                     If newid IsNot Nothing Then
@@ -1448,7 +1520,7 @@ l1:
                         End If
                         ' End Using
 
-                        mgr.Cache.UnregisterModification(Me)
+                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, mgr.GetContextInfo)
                         _copy = Nothing
                         _loaded = False
                         '_loaded_members = New BitArray(_loaded_members.Count)
@@ -1463,7 +1535,7 @@ l1:
                     'Else
                     '    Throw New OrmObjectException(ObjName & "Rejecting changes in the state " & _state.ToString & " is not allowed")
                 End If
-                Invariant()
+                Invariant(mgr)
             End Using
         End Sub
 
@@ -1545,7 +1617,7 @@ l1:
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj)
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr)
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -1645,8 +1717,11 @@ l1:
             Return False
         End Function
 
-        Protected Function SortedColumnAttributeCount() As Integer
-            Dim schema As ObjectMappingEngine = MappingEngine
+        Protected Function SortedColumnAttributeCount(ByVal sch As ObjectMappingEngine) As Integer
+            Dim schema As ObjectMappingEngine = sch
+            If schema Is Nothing Then
+                schema = MappingEngine
+            End If
             If schema Is Nothing Then
                 If _attList IsNot Nothing Then
                     Return _attList.Count
@@ -1659,8 +1734,11 @@ l1:
         End Function
 
         Private _attList As List(Of EntityPropertyAttribute)
-        Protected Function SortedColumnAttributeList() As List(Of EntityPropertyAttribute)
-            Dim schema As ObjectMappingEngine = MappingEngine
+        Protected Function SortedColumnAttributeList(ByVal sch As ObjectMappingEngine) As List(Of EntityPropertyAttribute)
+            Dim schema As ObjectMappingEngine = sch
+            If schema Is Nothing Then
+                schema = MappingEngine
+            End If
             If schema Is Nothing Then
                 If _attList Is Nothing Then
                     Dim l As New List(Of EntityPropertyAttribute)
@@ -1682,10 +1760,10 @@ l1:
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
             Dim c As New EntityPropertyAttribute(propertyAlias, String.Empty)
-            Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList()
+            Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
             Dim idx As Integer = arr.BinarySearch(c)
             If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias)
-            Return _members_load_state(idx)
+            Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), MappingEngine)
         End Function
 
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)

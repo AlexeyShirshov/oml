@@ -180,7 +180,7 @@ namespace Worm.CodeGen.Core
 
         public Dictionary<string, CodeCompileUnit> GetFullDom()
         {
-            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count * (Settings.Split?2:1));
+            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count);
             foreach (EntityDescription entity in _ormObjectsDefinition.ActiveEntities)
             {
                 foreach (var pair in GetEntityCompileUnits(entity.Identifier))
@@ -287,7 +287,6 @@ namespace Worm.CodeGen.Core
 
 			        CodeCompileFileUnit entityUnit;
 			        CodeNamespace nameSpace;
-			        CodeTypeDeclaration entitySchemaDefClass;
 			        CodeEntityTypeDeclaration entityClass;
 			        CodeTypeDeclaration propertiesClass;
 			        CodeTypeDeclaration fieldsClass = null;
@@ -322,8 +321,7 @@ namespace Worm.CodeGen.Core
 			        // параметры класса
 			        entityClass.IsClass = true;
 			        entityClass.IsPartial = entity.Behaviour == EntityBehaviuor.PartialObjects ||
-			                                entity.Behaviour == EntityBehaviuor.ForcePartial ||
-			                                Settings.Split;
+			                                entity.Behaviour == EntityBehaviuor.ForcePartial;
 			        entityClass.Attributes = MemberAttributes.Public;
 			        entityClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.Public;
 
@@ -345,7 +343,7 @@ namespace Worm.CodeGen.Core
 			            CodeTypeReference entityType;
 			            if (_ormObjectsDefinition.EntityBaseType == null)
 			            {
-                            entityType = new CodeTypeReference(entity.HasSinglePK ? typeof(KeyEntity) : entity.HasPk ? typeof (CachedEntity) : typeof(Entity));
+                            entityType = new CodeTypeReference(entity.HasSinglePk ? typeof(KeyEntity) : entity.HasPk ? typeof (CachedEntity) : typeof(Entity));
                             //else if(entity.HasIntPK)
                                 
                             //else
@@ -395,15 +393,9 @@ namespace Worm.CodeGen.Core
 
 			        #region определение схемы
 
-			        entitySchemaDefClass =
-			            new CodeTypeDeclaration(OrmCodeGenNameHelper.GetEntitySchemaDefClassName(entity));
+			        
 
-			        entitySchemaDefClass.IsClass = true;
-			        entitySchemaDefClass.IsPartial = entityClass.IsPartial;
-			        entitySchemaDefClass.Attributes = entityClass.Attributes;
-			        if (entity.BaseEntity != null)
-			            entitySchemaDefClass.Attributes |= MemberAttributes.New;
-			        entitySchemaDefClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
+			        
 
 			        #endregion определение схемы
 
@@ -522,8 +514,20 @@ namespace Worm.CodeGen.Core
 
 			            instancedPropertyAliasClass.Members.Add(instancedPropertyAliasClassCotr);
 
-			            instancedPropertyAliasClass.Members.Add(new CodeMemberField(new CodeTypeReference(typeof (EntityAlias)),
-			                                                       OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias")));
+                    	var instancedPropertyAliasfield = new CodeMemberField(new CodeTypeReference(typeof (EntityAlias)),
+                    	                                OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias"));
+                    	instancedPropertyAliasClass.Members.Add(instancedPropertyAliasfield);
+
+                    	instancedPropertyAliasClass.Members.Add(
+							Delegates.CodeMemberOperatorOverride(
+								Worm.CodeGen.Core.CodeDomPatterns.OperatorType.Implicit, 
+								new CodeTypeReference(typeof (EntityAlias)),
+								new []{new CodeParameterDeclarationExpression(new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
+																		  instancedPropertyAliasClass.Name), "entityAlias")},
+								new CodeStatement[] { new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeArgumentReferenceExpression("entityAlias"), instancedPropertyAliasfield.Name)) }
+
+									)
+							);
 
                         if (entity.BaseEntity != null)
                         {
@@ -623,7 +627,7 @@ namespace Worm.CodeGen.Core
 			        RaiseEntityCtorCreated(entityClass, ctr);
 
 			        //if(
-			        if (entity.HasSinglePK)
+			        if (entity.HasSinglePk)
 			        {
 			            // параметризированный конструктор
 			            ctr = new CodeConstructor();
@@ -896,7 +900,7 @@ namespace Worm.CodeGen.Core
 
 			        CodeMemberMethod createobjectMethod = null;
 
-			        if (!entity.HasSinglePK)
+			        if (!entity.HasSinglePk)
 			        {
                         if (entity.BaseEntity == null)
                         {
@@ -915,11 +919,13 @@ namespace Worm.CodeGen.Core
 			        }
                     else if(entity.HasPk)
                     {
-                        OverrideIdentifierProperty(entityClass);
+						OverrideIdentifierProperty(entityClass);
                         if (entity.BaseEntity == null)
                         {
+							
                             CreateSetPKMethod(entityClass, false);
                         	CreateGetPKValuesMethod(entityClass);
+							
                         }
                         else
                         {
@@ -1009,13 +1015,13 @@ namespace Worm.CodeGen.Core
 
 			        #region обработка директивы Split
 
-			        ProcessSplitOption(entity, entityClass, ref entitySchemaDefClass, result);
+					//ProcessSplitOption(entity, entityClass, ref entitySchemaDefClass, result);
 
 			        #endregion обработка директивы Split
 
 			        #region энам табличек
 
-			        CreateTablesLinkEnum(entity, entitySchemaDefClass);
+					CreateTablesLinkEnum(entity, entityClass.SchemaDef);
 
 			        #endregion энам табличек
 
@@ -1031,7 +1037,7 @@ namespace Worm.CodeGen.Core
 			            new CodeMemberField(
 			                new CodeTypeReference(typeof (IndexedCollection<string, MapField2Column>)),
 			                "_idx");
-			        entitySchemaDefClass.Members.Add(field);
+			        entityClass.SchemaDef.Members.Add(field);
 
 			        #endregion поле _idx
 
@@ -1039,25 +1045,25 @@ namespace Worm.CodeGen.Core
 
 			        field = new CodeMemberField(new CodeTypeReference(typeof (SourceFragment[])), "_tables");
 			        field.Attributes = MemberAttributes.Private;
-			        entitySchemaDefClass.Members.Add(field);
+					entityClass.SchemaDef.Members.Add(field);
 
 			        #endregion поле _tables
 
 			        #region метод SourceFragment[] GetTables()
 
-			        CreateGetTablesMethod(entity, entitySchemaDefClass);
+					CreateGetTablesMethod(entity, entityClass.SchemaDef);
 
 			        #endregion метод SourceFragment[] GetTables()
 
 			        #region метод SourceFragment GetTable(...)
 
-			        CreateGetTableMethod(entity, entitySchemaDefClass);
+					CreateGetTableMethod(entity, entityClass.SchemaDef);
 
 			        #endregion метод SourceFragment GetTable(...)
 
 			        #region bool ChangeValueType(EntityPropertyAttribute c, object value, ref object newvalue)
 
-			        CreateChangeValueTypeMethod(entity, entitySchemaDefClass);
+					CreateChangeValueTypeMethod(entity, entityClass.SchemaDef);
 
 			        #endregion bool ChangeValueType(EntityPropertyAttribute c, object value, ref object newvalue)
 
@@ -1067,7 +1073,7 @@ namespace Worm.CodeGen.Core
 			            entity.BaseEntity == null)
 			        {
 			            method = new CodeMemberMethod();
-			            entitySchemaDefClass.Members.Add(method);
+						entityClass.SchemaDef.Members.Add(method);
 			            method.Name = "GetJoins";
 			            // тип возвращаемого значения
 			            method.ReturnType = new CodeTypeReference(typeof (Criteria.Joins.QueryJoin));
@@ -1122,7 +1128,7 @@ namespace Worm.CodeGen.Core
 			        {
 
 			            method = new CodeMemberMethod();
-			            entitySchemaDefClass.Members.Add(method);
+						entityClass.SchemaDef.Members.Add(method);
 			            method.Name = "GetSuppressedFields";
 			            // тип возвращаемого значения
 			            method.ReturnType = new CodeTypeReference(typeof (string[]));
@@ -1163,7 +1169,7 @@ namespace Worm.CodeGen.Core
 			        if (entity.Behaviour != EntityBehaviuor.PartialObjects && entity.BaseEntity == null)
 			        {
 			            method = new CodeMemberMethod();
-			            entitySchemaDefClass.Members.Add(method);
+						entityClass.SchemaDef.Members.Add(method);
 			            method.Name = "GetContextFilter";
 			            // тип возвращаемого значения
 			            method.ReturnType = new CodeTypeReference(typeof (Criteria.Core.IFilter));
@@ -1188,7 +1194,7 @@ namespace Worm.CodeGen.Core
 
 			        #region сущность имеет связи "многие ко многим"
 
-                    EmitM2M(entity, entitySchemaDefClass);
+					EmitM2M(entity, entityClass.SchemaDef);
 
 			        #region метод получения связанных сущностей
 
@@ -1216,7 +1222,7 @@ namespace Worm.CodeGen.Core
 			        #region Worm.Orm.Collections.IndexedCollection<string, Worm.Orm.MapField2Column> GetFieldColumnMap()
 
 			        method = new CodeMemberMethod();
-			        entitySchemaDefClass.Members.Add(method);
+					entityClass.SchemaDef.Members.Add(method);
 			        method.Name = "GetFieldColumnMap";
 			        // тип возвращаемого значения
 			        method.ReturnType =
@@ -1238,7 +1244,7 @@ namespace Worm.CodeGen.Core
 			            "_forIdxLock"
 			            );
 			        forIdxLockField.InitExpression = new CodeObjectCreateExpression(forIdxLockField.Type);
-			        entitySchemaDefClass.Members.Add(forIdxLockField);
+					entityClass.SchemaDef.Members.Add(forIdxLockField);
 			        List<CodeStatement> condTrueStatements = new List<CodeStatement>();
 			        condTrueStatements.Add(
 			            new CodeVariableDeclarationStatement(
@@ -1314,9 +1320,9 @@ namespace Worm.CodeGen.Core
 			        {
 			            SelfRelationDescription sd = relation as SelfRelationDescription;
 			            if (sd == null)
-			                ImplementIRelation((RelationDescription) relation, entity, entitySchemaDefClass);
+							ImplementIRelation((RelationDescription)relation, entity, entityClass.SchemaDef);
 			            else
-			                ImplementIRelation(sd, entity, entitySchemaDefClass);
+							ImplementIRelation(sd, entity, entityClass.SchemaDef);
 			        }
 
 			        //SelfRelationDescription selfRelation;
@@ -1346,11 +1352,11 @@ namespace Worm.CodeGen.Core
 			                "_entityType"
 			                );
 			            schemaField.Attributes = MemberAttributes.Family;
-			            entitySchemaDefClass.Members.Add(schemaField);
+						entityClass.SchemaDef.Members.Add(schemaField);
 			            typeField.Attributes = MemberAttributes.Family;
-			            entitySchemaDefClass.Members.Add(typeField);
+						entityClass.SchemaDef.Members.Add(typeField);
 			            method = new CodeMemberMethod();
-			            entitySchemaDefClass.Members.Add(method);
+						entityClass.SchemaDef.Members.Add(method);
 			            method.Name = "GetSchema";
 			            // тип возвращаемого значения
 			            method.ReturnType = null;
@@ -1855,14 +1861,14 @@ namespace Worm.CodeGen.Core
                                    Attributes = MemberAttributes.Public | MemberAttributes.Override
                                };
             PropertyDescription pkProperty = entityClass.Entity.PkProperty;
-            property.GetStatements.Add(new CodeMethodReturnStatement(new CodePropertyReferenceExpression(new CodeThisReferenceExpression(),
-                                                                           pkProperty.PropertyName)));
+            property.GetStatements.Add(new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+                                                                           OrmCodeGenNameHelper.GetPrivateMemberName(pkProperty.PropertyName))));
             //Convert.ChangeType(object, type);
             //var typeReference = new CodeTypeReference(pkProperty.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pkProperty.PropertyType.Entity, true) : pkProperty.PropertyType.TypeName);
             CodeTypeReference typeReference = pkProperty.PropertyType;
             property.SetStatements.Add(
-                new CodeAssignStatement(new CodePropertyReferenceExpression(new CodeThisReferenceExpression(),
-                                                                            pkProperty.PropertyName),
+				new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+																		   OrmCodeGenNameHelper.GetPrivateMemberName(pkProperty.PropertyName)),
                         new CodeCastExpression(typeReference, 
                             new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(typeof(Convert)), "ChangeType",
                                 new CodePropertySetValueReferenceExpression(),
@@ -2170,7 +2176,7 @@ namespace Worm.CodeGen.Core
 			entityInterface.TypeAttributes = entityPropertiesInterface.TypeAttributes = TypeAttributes.Public | TypeAttributes.Interface;
     		
             entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
-            if(entityClass.Entity.HasSinglePK)
+            if(entityClass.Entity.HasSinglePk)
                 entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IKeyEntity)));
             else if(entityClass.Entity.HasPk)
                 entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_ICachedEntity)));
@@ -3598,64 +3604,64 @@ namespace Worm.CodeGen.Core
 			}
         }
 
-        private void ProcessSplitOption(EntityDescription entity, CodeTypeDeclaration entityClass, ref CodeTypeDeclaration entitySchemaDefClass, ICollection<CodeCompileFileUnit> result)
-        {
-            CodeNamespace nameSpace;
-            if (Settings.Split)
-            {
-                var entitySchemaDefUnit = new CodeCompileFileUnit
-                                                          {
-                                                              Filename = OrmCodeGenNameHelper.GetEntitySchemaDefFileName(entity)
-                                                          };
+		//private void ProcessSplitOption(EntityDescription entity, CodeTypeDeclaration entityClass, ref CodeTypeDeclaration entitySchemaDefClass, ICollection<CodeCompileFileUnit> result)
+		//{
+		//    CodeNamespace nameSpace;
+		//    if (Settings.Split)
+		//    {
+		//        var entitySchemaDefUnit = new CodeCompileFileUnit
+		//                                                  {
+		//                                                      Filename = OrmCodeGenNameHelper.GetEntitySchemaDefFileName(entity)
+		//                                                  };
 
-				nameSpace = new CodeNamespace(entity.Namespace);
-				entitySchemaDefUnit.Namespaces.Add(nameSpace);               
+		//        nameSpace = new CodeNamespace(entity.Namespace);
+		//        entitySchemaDefUnit.Namespaces.Add(nameSpace);               
 
-				//nameSpace.Imports.Add(new CodeNamespaceImport("System"));
-				//nameSpace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
-				//nameSpace.Imports.Add(new CodeNamespaceImport("Worm.Orm"));
+		//        //nameSpace.Imports.Add(new CodeNamespaceImport("System"));
+		//        //nameSpace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
+		//        //nameSpace.Imports.Add(new CodeNamespaceImport("Worm.Orm"));
 
-				// partial класс сущности для схемы
-                var entityClassSchemaDefPart = new CodeTypeDeclaration
-                                                   {
-                                                       IsClass = entityClass.IsClass,
-                                                       IsPartial = entityClass.IsPartial,
-                                                       Name = entityClass.Name,
-                                                       Attributes = entityClass.Attributes,
-                                                       TypeAttributes = entityClass.TypeAttributes
-                                                   };
+		//        // partial класс сущности для схемы
+		//        var entityClassSchemaDefPart = new CodeTypeDeclaration
+		//                                           {
+		//                                               IsClass = entityClass.IsClass,
+		//                                               IsPartial = entityClass.IsPartial,
+		//                                               Name = entityClass.Name,
+		//                                               Attributes = entityClass.Attributes,
+		//                                               TypeAttributes = entityClass.TypeAttributes
+		//                                           };
 
-                nameSpace.Types.Add(entityClassSchemaDefPart);
+		//        nameSpace.Types.Add(entityClassSchemaDefPart);
 
-                var entitySchemaDefClassPart = new CodeTypeDeclaration
-                                                   {
-                                                       IsClass = entitySchemaDefClass.IsClass,
-                                                       IsPartial = entitySchemaDefClass.IsPartial,
-                                                       Name = entitySchemaDefClass.Name,
-                                                       Attributes = entitySchemaDefClass.Attributes,
-                                                       TypeAttributes = entitySchemaDefClass.TypeAttributes
-                                                   };
+		//        var entitySchemaDefClassPart = new CodeTypeDeclaration
+		//                                           {
+		//                                               IsClass = entitySchemaDefClass.IsClass,
+		//                                               IsPartial = entitySchemaDefClass.IsPartial,
+		//                                               Name = entitySchemaDefClass.Name,
+		//                                               Attributes = entitySchemaDefClass.Attributes,
+		//                                               TypeAttributes = entitySchemaDefClass.TypeAttributes
+		//                                           };
 
 
-                entityClassSchemaDefPart.Members.Add(entitySchemaDefClassPart);
+		//        entityClassSchemaDefPart.Members.Add(entitySchemaDefClassPart);
 
-                entitySchemaDefClass = entitySchemaDefClassPart;
-                result.Add(entitySchemaDefUnit);
-            }
-            else
-            {
-                entityClass.Members.Add(entitySchemaDefClass);
-            }
-            if (entity.BaseEntity == null)
-            {
-                entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof (IOrmObjectSchema)));
-                entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof (ISchemaInit)));
-            }
-            else
-            {
-                entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName(entity.BaseEntity)));
-            }
-        }
+		//        entitySchemaDefClass = entitySchemaDefClassPart;
+		//        result.Add(entitySchemaDefUnit);
+		//    }
+		//    else
+		//    {
+		//        entityClass.Members.Add(entitySchemaDefClass);
+		//    }
+		//    if (entity.BaseEntity == null)
+		//    {
+		//        entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof (IOrmObjectSchema)));
+		//        entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof (ISchemaInit)));
+		//    }
+		//    else
+		//    {
+		//        entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName(entity.BaseEntity)));
+		//    }
+		//}
 
         private static CodeExpression GetPropAttributesEnumValues(IEnumerable<string> attrs)
         {
@@ -3695,7 +3701,7 @@ namespace Worm.CodeGen.Core
             }
         }
 
-		public CodeStatement CodePatternDoubleCheckLock(CodeExpression lockExpression, CodeExpression condition, params CodeStatement[] statements)
+		public static CodeStatement CodePatternDoubleCheckLock(CodeExpression lockExpression, CodeExpression condition, params CodeStatement[] statements)
 		{
 			if (condition == null)
 				throw new ArgumentNullException("condition");
@@ -3710,7 +3716,5 @@ namespace Worm.CodeGen.Core
 					)
 				);
 		}
-
-        
     }
 }

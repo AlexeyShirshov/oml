@@ -2052,7 +2052,7 @@ l1:
             If tf Is Nothing Then
                 sb.Append(GetTableName(searchTable))
             Else
-                sb.Append(tf.GetRealTable)
+                sb.Append(tf.GetRealTable("*"))
                 appendMain = True
             End If
             sb.Append(",")

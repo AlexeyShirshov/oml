@@ -102,8 +102,8 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Return New ReadOnlyList(Of T)(l.Keys)
     End Function
 
-    Public Function LoadChildren(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As IList(Of Entities._IKeyEntity)
-        Return rd.Load(Me, loadWithObjects)
+    Public Function LoadChildren(Of ReturnType As Entities.IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+        Return rd.Load(Of T, ReturnType)(Me, loadWithObjects)
     End Function
 
     Public Function LoadChilds(Of ChildType As {New, Entities.IKeyEntity})() As ReadOnlyList(Of ChildType)

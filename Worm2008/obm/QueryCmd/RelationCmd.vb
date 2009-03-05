@@ -11,10 +11,13 @@ Namespace Query
     Public Class RelationCmd
         Inherits QueryCmd
 
-        Private _rel As Relation
+        Friend _rel As Relation
         Private _desc As RelationDesc
 
 #Region " Ctors "
+        Protected Sub New()
+        End Sub
+
         Public Sub New(ByVal rel As Relation)
             _rel = rel
             [Select](rel.Relation.Rel)
@@ -287,6 +290,36 @@ Namespace Query
         End Property
 #End Region
 
+        Public Class ModifyFilter
+            Inherits EventArgs
+
+            Private _f As IFilter
+            Public Property RelFilter() As IFilter
+                Get
+                    Return _f
+                End Get
+                Set(ByVal value As IFilter)
+                    _f = value
+                End Set
+            End Property
+
+            Private _m As Boolean
+            Public Property Modified() As Boolean
+                Get
+                    Return _m
+                End Get
+                Set(ByVal value As Boolean)
+                    _m = value
+                End Set
+            End Property
+
+            Public Sub New(ByVal f As IFilter)
+                _f = f
+            End Sub
+        End Class
+
+        Public Event OnModifyFilter(ByVal sender As RelationCmd, ByVal args As ModifyFilter)
+
         Public Overrides Sub CopyTo(ByVal o As QueryCmd)
             MyBase.CopyTo(o)
             With CType(o, RelationCmd)
@@ -294,6 +327,12 @@ Namespace Query
                 ._desc = _desc
             End With
         End Sub
+
+        Public Overrides Function Clone() As Object
+            Dim q As New RelationCmd
+            CopyTo(q)
+            Return q
+        End Function
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
@@ -318,10 +357,6 @@ Namespace Query
             End If
 
             If _m2mObject IsNot Nothing Then
-                If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
-                    Throw New NotSupportedException("Cannot select individual column in m2m query")
-                End If
-
                 Dim selectedType As Type = selectType
                 Dim filteredType As Type = _m2mObject.GetType
 
@@ -332,6 +367,10 @@ Namespace Query
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
+                    If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
+                        Throw New NotSupportedException("Cannot select individual column in m2m query")
+                    End If
+
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
 
@@ -397,19 +436,30 @@ l1:
                     addf = New TableFilter(table, filtered_r.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
                 Else
-                    If _WithLoad(selectOS, schema) Then
-                        _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                    If SelectList Is Nothing Then
+                        If _WithLoad(selectOS, schema) Then
+                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                        Else
+                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                            Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
+                            se.Attributes = Field2DbRelations.PK
+                            _sl.Add(se)
+                        End If
                     Else
-                        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                        Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
-                        se.Attributes = Field2DbRelations.PK
-                        _sl.Add(se)
+                        _sl.AddRange(SelectList)
                     End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
 
                     If _from Is Nothing Then _from = New FromClauseDef(selectOS)
+                End If
+
+                Dim mf As New ModifyFilter(addf)
+                RaiseEvent OnModifyFilter(Me, mf)
+
+                If mf.Modified Then
+                    addf = mf.RelFilter
                 End If
 
                 Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
@@ -619,7 +669,13 @@ l1:
         End Sub
 
         Public Sub Add(ByVal o As IKeyEntity)
-            Relation.Add(o)
+            If o IsNot Nothing Then
+                Relation.Add(o)
+                Using gm As IGetManager = o.GetMgr
+                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                    mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                End Using
+            End If
         End Sub
 
         Public Sub Remove(ByVal o As IKeyEntity)
@@ -628,6 +684,16 @@ l1:
 
         Public Sub Merge(ByVal col As IList(Of IKeyEntity), ByVal removeNotInList As Boolean)
             Relation.Merge(Me, col, removeNotInList)
+        End Sub
+
+        Friend Sub SetCache(ByVal l As IEnumerable)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Using mgr As OrmManager = GetMgr.CreateManager
+                CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
+            End Using
         End Sub
     End Class
 End Namespace

@@ -565,7 +565,7 @@ Namespace Cache
 
         Protected Overridable Sub CacheItemRemovedCallback1(ByVal key As String, ByVal value As Object, _
             ByVal reason As Caching.CacheItemRemovedReason)
-            _mc.RegisterRemoval(CType(value, KeyEntity))
+            _mc.RegisterRemoval(CType(value, KeyEntity), Nothing)
         End Sub
 
         Protected ReadOnly Property collection() As ICollection(Of KeyValuePair(Of String, TValue))

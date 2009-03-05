@@ -84,7 +84,7 @@ namespace Worm.CodeGen.VSTool
                     //    break;
                 }
                 settings.PrivateMembersPrefix = "m_";
-                settings.Split = false;
+                //settings.Split = false;
 
                 OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
                 CodeCompileUnit compileUnit = generator.GetFullSingleUnit();

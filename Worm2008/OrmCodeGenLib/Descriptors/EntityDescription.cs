@@ -23,7 +23,7 @@ namespace Worm.CodeGen.Core.Descriptors
 		}
 
 		public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity)
-			: this(id, name, nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.Default)
+			: this(id, name, nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.ForcePartial)
 		{
 
 		}
@@ -76,23 +76,39 @@ namespace Worm.CodeGen.Core.Descriptors
 		{
 			get
 			{
+				return GetPKCount(false) > 0;
+			}
+		}
+
+		public bool HasPkFlatEntity
+		{
+			get
+			{
 				return GetPKCount() > 0;
 			}
 		}
 
-        public bool HasSinglePK
+
+
+        public bool HasSinglePk
         {
             get
             {
-            	int s = GetPKCount();
-            	return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePK);
+				int s = GetPKCount();
+				return (BaseEntity == null && s == 1) || (BaseEntity != null && BaseEntity.HasSinglePk);   	
             }
         }
 
 		protected int GetPKCount()
 		{
+			return GetPKCount(true);
+		}
+
+		protected int GetPKCount(bool flatEntity)
+		{
 			int s = 0;
-			foreach (var propertyDescription in CompleteEntity.Properties)
+			var properties = flatEntity ? CompleteEntity.Properties : Properties;
+			foreach (var propertyDescription in properties)
 			{
 				if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) 
 					//&& propertyDescription.PropertyType.IsClrType && propertyDescription.PropertyType.ClrType.IsAssignableFrom(typeof(Int32))
@@ -293,8 +309,20 @@ namespace Worm.CodeGen.Core.Descriptors
 			EntityDescription resultOne =
 				new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description ?? oldOne.Description,
 									  newOne.OrmObjectsDef);
-			if(oldOne != null)
+			if (oldOne != null)
+			{
 				resultOne.CacheCheckRequired = oldOne.CacheCheckRequired;
+				resultOne.Behaviour = oldOne.Behaviour;
+				resultOne.MakeInterface = oldOne.MakeInterface;
+				resultOne.UseGenerics = oldOne.UseGenerics;
+			}
+			else
+			{
+				resultOne.CacheCheckRequired = newOne.CacheCheckRequired;
+				resultOne.Behaviour = newOne.Behaviour;
+				resultOne.MakeInterface = newOne.MakeInterface;
+				resultOne.UseGenerics = newOne.UseGenerics;
+			}
 
 			//добавляем новые таблички
 			foreach (TableDescription newTable in newOne.Tables)
@@ -414,7 +442,7 @@ namespace Worm.CodeGen.Core.Descriptors
 	    {
             get
             {
-                if (HasSinglePK) 
+                if (HasSinglePk) 
                     foreach (var propertyDescription in CompleteEntity.Properties)
                     {
                         if (propertyDescription.HasAttribute(Entities.Meta.Field2DbRelations.PK) 
@@ -433,5 +461,36 @@ namespace Worm.CodeGen.Core.Descriptors
 	            return Properties.FindAll(p => p.HasAttribute(Entities.Meta.Field2DbRelations.PK));
 	        }
 	    }
+
+		public bool HasDefferedLoadableProperties
+		{
+			get
+			{
+				return Properties.Exists(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
+			}
+		}
+
+		public PropertyDescription[][] GetDefferedLoadProperties()
+		{
+			Dictionary<string, List<PropertyDescription>> groups = new Dictionary<string, List<PropertyDescription>>();
+
+			foreach (var property in Properties)
+			{
+				if (property.Disabled || string.IsNullOrEmpty(property.DefferedLoadGroup))
+					continue;
+
+				List<PropertyDescription> lst;
+				if (!groups.TryGetValue(property.DefferedLoadGroup, out lst))
+					groups[property.DefferedLoadGroup] = lst = new List<PropertyDescription>();
+
+				lst.Add(property);
+			}
+			var res = new List<PropertyDescription[]>();
+			foreach (var list in groups.Values)
+			{
+				res.Add(list.ToArray());
+			}
+			return res.ToArray();
+		}
 	}
 }

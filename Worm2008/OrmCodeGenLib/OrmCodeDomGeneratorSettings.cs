@@ -22,6 +22,7 @@ namespace Worm.CodeGen.Core
         //    get { return _behaviour == OrmObjectGeneratorBehaviour.PartialObjects || _split || Partial; }
         //}
 
+		[Obsolete("Don't even think about entity's class and entity's schema def class declaration in separate files.", true)]
         public bool Split
         {
             get { return _split; }

@@ -7,13 +7,13 @@ Namespace Query
         Class GetCacheItemEventArgs
             Inherits EventArgs
 
-            Private _created As Boolean
+            Private _notCreated As Boolean
             Public Property Created() As Boolean
                 Get
-                    Return _created
+                    Return Not _notCreated
                 End Get
                 Set(ByVal value As Boolean)
-                    _created = value
+                    _notCreated = Not value
                 End Set
             End Property
         End Class

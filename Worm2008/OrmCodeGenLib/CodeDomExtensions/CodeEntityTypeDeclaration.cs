@@ -15,6 +15,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 		private EntityDescription m_entity;
 		private CodeEntityInterfaceDeclaration m_entityInterface;
 	    private readonly CodeTypeReference m_typeReference;
+		private CodeSchemaDefTypeDeclaration m_schema;
 	    private readonly Dictionary<string, CodePropertiesAccessorTypeDeclaration> m_propertiesAccessor;
 
 		public CodeEntityTypeDeclaration()
@@ -22,7 +23,6 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			m_typeReference = new CodeTypeReference();
 		    m_propertiesAccessor = new Dictionary<string, CodePropertiesAccessorTypeDeclaration>();
             PopulateMembers += OnPopulateMembers;
-
 		}
 
         protected virtual void OnPopulateMembers(object sender, System.EventArgs e)
@@ -30,10 +30,15 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
             OnPopulatePropertiesAccessors();
             OnPupulateEntityRelations();
             OnPupulateM2MRelations();
-
+        	OnPopulateSchema();
         }
 
-	    protected virtual void OnPupulateM2MRelations()
+		protected virtual void OnPopulateSchema()
+		{
+			Members.Add(SchemaDef);
+		}
+
+		protected virtual void OnPupulateM2MRelations()
 	    {
             var relationDescType = new CodeTypeReference(typeof(M2MRelationDesc));
 	        foreach (var relation in m_entity.GetRelations(false))
@@ -322,6 +327,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			m_typeReference.BaseType = FullName;
 		}
 
+		public CodeSchemaDefTypeDeclaration SchemaDef
+		{
+			get
+			{
+				if(m_schema == null)
+				{
+					m_schema = new CodeSchemaDefTypeDeclaration(this);
+				}
+				return m_schema;
+			}
+		}
+
 		public new string Name
 		{
 			get
@@ -379,6 +396,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 	    public CodeEntityInterfaceDeclaration EntityPropertiesInterfaceDeclaration { get; set; }
 
+		public CodeSchemaDefTypeDeclaration SchemaDefDeclaration { get; set; }
+
 	    public CodeTypeReference TypeReference
 		{
 			get { return m_typeReference; }
@@ -387,6 +406,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 		protected void EnsureName()
 		{
 			base.Name = Name;
+			m_typeReference.BaseType = FullName;
 		}
 	}
 }

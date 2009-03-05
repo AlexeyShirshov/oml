@@ -1808,13 +1808,41 @@ Public Class ObjectMappingEngine
         End If
         For Each p As FieldReference In _values
             If p.Property.ObjectSource IsNot Nothing Then
-                Dim t As Type = p.Property.ObjectSource.GetRealType(schema) 'CType(o, Type)
-                'If Not GetType(IEntity).IsAssignableFrom(t) Then
-                '    Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
-                'End If
-                'lastt = t
-
-                FormatType(t, stmt, p.Property.Field, schema, aliases, values, Nothing)
+                If p.Property.ObjectSource.IsQuery Then
+                    Dim tbl As SourceFragment = p.Property.ObjectSource.ObjectAlias.Tbl
+                    If tbl Is Nothing Then
+                        tbl = New SourceFragment
+                        p.Property.ObjectSource.ObjectAlias.Tbl = tbl
+                    End If
+                    Dim t As Type = p.Property.ObjectSource.GetRealType(schema)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
+                    Dim clm As String = p.Property.Field
+                    Dim map As MapField2Column = Nothing
+                    If oschema.GetFieldColumnMap.TryGetValue(clm, map) Then
+                        clm = map._columnName
+                    End If
+                    Dim [alias] As String = Nothing
+                    If aliases IsNot Nothing Then
+                        Debug.Assert(aliases.ContainsKey(tbl, p.Property.ObjectSource), "There is not alias for table " & tbl.RawName)
+                        Try
+                            [alias] = aliases.GetAlias(tbl, p.Property.ObjectSource)
+                        Catch ex As KeyNotFoundException
+                            Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
+                        End Try
+                    End If
+                    If Not String.IsNullOrEmpty([alias]) Then
+                        values.Add([alias] & d & clm)
+                    Else
+                        values.Add(tbl.UniqueName(p.Property.ObjectSource) & d & clm)
+                    End If
+                Else
+                    Dim t As Type = p.Property.ObjectSource.GetRealType(schema) 'CType(o, Type)
+                    'If Not GetType(IEntity).IsAssignableFrom(t) Then
+                    '    Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
+                    'End If
+                    'lastt = t
+                    FormatType(t, stmt, p.Property.Field, schema, aliases, values, Nothing)
+                End If
             ElseIf p.Column IsNot Nothing Then
                 Dim tbl As SourceFragment = p.Column.First 'CType(o, SourceFragment)
                 Dim clm As String = p.Column.Second

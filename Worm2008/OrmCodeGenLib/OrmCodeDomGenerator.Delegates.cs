@@ -1,12 +1,13 @@
 ﻿using System;
 using System.CodeDom;
+using Worm.CodeGen.Core.CodeDomPatterns;
 using Worm.CodeGen.Core.Descriptors;
 
 namespace Worm.CodeGen.Core
 {
     public partial class OrmCodeDomGenerator
     {
-        protected static class Delegates
+        public static class Delegates
         {
             public delegate void UpdateSetValueMethodDelegate(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod);
             public delegate CodeStatement[] CodePatternUsingStatementsDelegate(CodeExpression usingExpression, params CodeStatement[] statements);
@@ -15,6 +16,10 @@ namespace Worm.CodeGen.Core
             public delegate CodeStatement CodePatternLockStatementDelegate(CodeExpression lockExpression, params CodeStatement[] statements);
             public delegate CodeExpression CodePatternXorExpressionDelegate(CodeExpression left, CodeExpression right);
             public delegate CodeStatement CodePatternForeachStatementDelegate(CodeExpression init, CodeExpression iter, params CodeStatement[] statements);
+
+        	public delegate CodeTypeMember CodeMemberOperatorOverrideDelegate(
+        		OperatorType op, CodeTypeReference returnType, CodeParameterDeclarationExpression[] prms,
+        		CodeStatement[] statements);
 
             public static event GetSettingsDelegate SettingsRequied;
 
@@ -120,6 +125,19 @@ namespace Worm.CodeGen.Core
                     return CodePatternForeachStatementDelegates.CommonStatement;
                 }
             }
+
+        	public static CodeMemberOperatorOverrideDelegate CodeMemberOperatorOverride
+        	{
+        		get
+        		{
+					OrmCodeDomGeneratorSettings settings = GetSettings();
+					if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateCsForeachStatement) == LanguageSpecificHacks.GenerateCsForeachStatement)
+						return CodeMemberOperatorOverrideDelegates.CsStatement;
+					if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateVbForeachStatement) == LanguageSpecificHacks.GenerateVbForeachStatement)
+						return CodeMemberOperatorOverrideDelegates.VbStatement;
+					return CodeMemberOperatorOverrideDelegates.CommonStatement;
+        		}
+        	}
             /// <summary>
             /// void UpdateSetValueMethodDelegate(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod);
             /// </summary>
@@ -200,7 +218,7 @@ namespace Worm.CodeGen.Core
                                                  new CodeFieldReferenceExpression(
                                                      new CodeThisReferenceExpression(), field.Name),
                                                  new CodeCastExpression(field.Type,
-                                                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(new CodeTypeReference(typeof(System.Convert))), "ChangeType", 
+                                                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(new CodeTypeReference(typeof(Convert))), "ChangeType", 
                                                                         new CodeArgumentReferenceExpression("value"), new CodeTypeOfExpression(field.Type)))));
                     }
                     else
@@ -311,17 +329,17 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeStatement[] CSUsing(CodeExpression usingExpression, params CodeStatement[] statements)
                 {
-                    return new CodeStatement[] { new CodeDomPatterns.CodeCSUsingStatement(usingExpression, statements) };
+                    return new CodeStatement[] { new CodeCSUsingStatement(usingExpression, statements) };
                 }
 
                 public static CodeStatement[] VBUsing(CodeExpression usingExpression, params CodeStatement[] statements)
                 {
-                    return new CodeStatement[] { new CodeDomPatterns.CodeVBUsingStatement(usingExpression, statements) };
+                    return new CodeStatement[] { new CodeVBUsingStatement(usingExpression, statements) };
                 }
 
                 public static CodeStatement[] CommonUsing(CodeExpression usingExpression, params CodeStatement[] statements)
                 {
-                    return CodeDomPatterns.CommonPatterns.CodePatternUsingStatement(usingExpression, statements);
+                    return CommonPatterns.CodePatternUsingStatement(usingExpression, statements);
                 }
             }
 
@@ -331,17 +349,17 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeExpression CsExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return new CodeDomPatterns.CodeCsIsExpression(typeReference, expression);
+                    return new CodeCsIsExpression(typeReference, expression);
                 }
 
                 public static CodeExpression VbExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return new CodeDomPatterns.CodeVbIsExpression(typeReference, expression);
+                    return new CodeVbIsExpression(typeReference, expression);
                 }
 
                 public static CodeExpression CommonExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return CodeDomPatterns.CommonPatterns.CodeIsExpression(typeReference, expression);
+                    return CommonPatterns.CodeIsExpression(typeReference, expression);
                 }
             }
 
@@ -351,17 +369,17 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeExpression CsExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return new CodeDomPatterns.CodeCsAsExpression(typeReference, expression);
+                    return new CodeCsAsExpression(typeReference, expression);
                 }
 
                 public static CodeExpression VbExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return new CodeDomPatterns.CodeVbAsExpression(typeReference, expression);
+                    return new CodeVbAsExpression(typeReference, expression);
                 }
 
                 public static CodeExpression CommonExpression(CodeTypeReference typeReference, CodeExpression expression)
                 {
-                    return CodeDomPatterns.CommonPatterns.CodeAsExpression(typeReference, expression);
+                    return CommonPatterns.CodeAsExpression(typeReference, expression);
                 }
             }
 
@@ -370,17 +388,17 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeStatement CsStatement(CodeExpression lockExpression, params CodeStatement[] statements)
                 {
-                    return new CodeDomPatterns.CodeCsLockStatement(lockExpression, statements);
+                    return new CodeCsLockStatement(lockExpression, statements);
                 }
 
                 public static CodeStatement VbStatement(CodeExpression lockExpression, params CodeStatement[] statements)
                 {
-                    return new CodeDomPatterns.CodeVbLockStatement(lockExpression, statements);
+                    return new CodeVbLockStatement(lockExpression, statements);
                 }
 
                 public static CodeStatement CommonStatement(CodeExpression lockExpression, params CodeStatement[] statements)
                 {
-                    return CodeDomPatterns.CommonPatterns.CodePatternLock(lockExpression, statements);
+                    return CommonPatterns.CodePatternLock(lockExpression, statements);
                 }
             }
 
@@ -388,12 +406,12 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeExpression CsExpression(CodeExpression left, CodeExpression right)
                 {
-                    return new CodeDomPatterns.CodeCsXorExpression(left, right);
+                    return new CodeCsXorExpression(left, right);
                 }
 
                 public static CodeExpression VbExpression(CodeExpression left, CodeExpression right)
                 {
-                    return new CodeDomPatterns.CodeVbXorExpression(left, right);
+                    return new CodeVbXorExpression(left, right);
                 }
 
                 public static CodeExpression CommonExpression(CodeExpression left, CodeExpression right)
@@ -406,12 +424,12 @@ namespace Worm.CodeGen.Core
             {
                 public static CodeStatement CsStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
                 {
-                    return new CodeDomPatterns.CodeCsForeachStatement(init, iter, stmts);
+                    return new CodeCsForeachStatement(init, iter, stmts);
                 }
 
                 public static CodeStatement VbStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
                 {
-                    return new CodeDomPatterns.CodeVbForeachStatement(init, iter, stmts);
+                    return new CodeVbForeachStatement(init, iter, stmts);
                 }
 
                 public static CodeStatement CommonStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
@@ -419,6 +437,44 @@ namespace Worm.CodeGen.Core
                     throw new NotImplementedException();
                 }
             }
+
+			public static class CodeMemberOperatorOverrideDelegates
+			{
+				public static CodeMemberOperatorOverride CsStatement(
+					OperatorType op, CodeTypeReference returnType, CodeParameterDeclarationExpression[] prms,
+					CodeStatement[] statements)
+				{
+					return new CodeCsMemberOperatorOverride
+					       	{
+
+					       		Operator = op,
+					       		ReturnType = returnType,
+					       		Parameters = prms,
+					       		Statements = statements
+					       	};
+				}
+
+				public static CodeMemberOperatorOverride VbStatement(
+					OperatorType op, CodeTypeReference returnType, CodeParameterDeclarationExpression[] prms,
+					CodeStatement[] statements)
+				{
+					return new CodeVbMemberOperatorOverride
+					       	{
+
+						Operator = op,
+						ReturnType = returnType,
+						Parameters = prms,
+						Statements = statements
+					};
+				}
+
+				public static CodeMemberOperatorOverride CommonStatement(
+					OperatorType op, CodeTypeReference returnType, CodeParameterDeclarationExpression[] prms,
+					CodeStatement[] statements)
+				{
+					throw new NotImplementedException();
+				}
+			}
         }
     }
 }

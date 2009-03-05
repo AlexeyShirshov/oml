@@ -116,6 +116,10 @@ Namespace Criteria
             End If
         End Function
 
+        Public Function eq(ByVal al As EntityAlias, ByVal propertyAlias As String) As PredicateLink
+            Return GetLink(CreateJoinFilter(New ObjectProperty(al, propertyAlias), FilterOperation.Equal))
+        End Function
+
         Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
             Return GetLink(CreateJoinFilter(New ObjectProperty(t, propertyAlias), FilterOperation.Equal))
         End Function
@@ -411,12 +415,12 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(Table, Column, op, FilterOperation.Equal)
+            Dim j As New JoinFilter(Table, Column, op, fo)
             Return j
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(Table, column, t, column, FilterOperation.Equal)
+            Dim j As New JoinFilter(Table, column, t, column, fo)
             Return j
         End Function
     End Class
@@ -477,7 +481,8 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Throw New NotImplementedException
+            Dim j As New JoinFilter(op, New CustomFilter.TemplateCls(fo, _format, _values), fo)
+            Return j
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter

@@ -5,7 +5,7 @@ Imports Worm.Query
 Namespace Entities.Meta
 
     Public Interface ITableFunction
-        ReadOnly Property GetRealTable() As String
+        Function GetRealTable(ByVal column As String) As String
     End Interface
 
     Public Interface ISearchTable

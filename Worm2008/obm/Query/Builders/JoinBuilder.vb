@@ -15,6 +15,7 @@ Namespace Query
     Public Class JCtor
         Private _j As New List(Of QueryJoin)
 
+#Region " Inner joins "
         Public Shared Function join(ByVal t As Type) As JoinCondition
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
             Dim jc As New JCtor
@@ -43,6 +44,23 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
+        Public Shared Function join(ByVal table As SourceFragment) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
+
+#End Region
+
+#Region " Left joins "
+        Public Shared Function left_join(ByVal table As SourceFragment) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
+
         Public Shared Function left_join(ByVal t As Type) As JoinCondition
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
             Dim jc As New JCtor
@@ -64,6 +82,10 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
+#End Region
+
+#Region " Right joins "
+
         Public Shared Function right_join(ByVal t As Type) As JoinCondition
             Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
             Dim jc As New JCtor
@@ -78,20 +100,6 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
-            Dim jc As New JCtor
-            jc._j.Add(j)
-            Return New JoinCondition(jc._j)
-        End Function
-
-        Public Shared Function left_join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
-            Dim jc As New JCtor
-            jc._j.Add(j)
-            Return New JoinCondition(jc._j)
-        End Function
-
         Public Shared Function right_join(ByVal table As SourceFragment) As JoinCondition
             Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
             Dim jc As New JCtor
@@ -99,72 +107,45 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        'Public Function AddJoin(ByVal t As Type) As JoinCondition
-        '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+#End Region
 
-        'Public Function AddLeftJoin(ByVal t As Type) As JoinCondition
-        '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+#Region " Full joins "
+        Public Shared Function full_join(ByVal t As Type) As JoinCondition
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.FullJoin, CType(Nothing, IFilter))
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 
-        'Public Function AddRightJoin(ByVal t As Type) As JoinCondition
-        '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
-        '    Dim jc As New JCtor
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+        Public Shared Function full_join(ByVal entityName As String) As JoinCondition
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 
-        'Public Function AddJoin(ByVal table As SourceFragment) As JoinCondition
-        '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
-        '    Dim jc As New JCtor
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+        Public Shared Function full_join(ByVal [alias] As EntityAlias) As JoinCondition
+            Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 
-        'Public Function AddLeftJoin(ByVal table As SourceFragment) As JoinCondition
-        '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
-        '    Dim jc As New JCtor
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+        Public Shared Function full_join(ByVal os As EntityUnion) As JoinCondition
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 
-        'Public Function AddRightJoin(ByVal table As SourceFragment) As JoinCondition
-        '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
-        '    Dim jc As New JCtor
-        '    _j.Add(j)
-        '    Return New JoinCondition(Me)
-        'End Function
+        Public Shared Function full_join(ByVal table As SourceFragment) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 
-        'Protected Friend Function AddFilter(ByVal jf As IFilter) As JCtor
-        '    _j(_j.Count - 1).Condition = jf
-        '    Return Me
-        'End Function
-
-        'Protected Friend Function AddType(ByVal t As Type) As JCtor
-        '    _j(_j.Count - 1).M2MJoinType = t
-        '    Return Me
-        'End Function
-
-        'Protected Friend Function AddType(ByVal t As Type, ByVal key As String) As JCtor
-        '    _j(_j.Count - 1).M2MJoinType = t
-        '    _j(_j.Count - 1).M2MKey = key
-        '    Return Me
-        'End Function
-
-        'Protected Friend Function AddType(ByVal entityName As String) As JCtor
-        '    _j(_j.Count - 1).M2MJoinEntityName = entityName
-        '    Return Me
-        'End Function
-
-        'Protected Friend Function AddType(ByVal entityName As String, ByVal key As String) As JCtor
-        '    _j(_j.Count - 1).M2MJoinEntityName = entityName
-        '    _j(_j.Count - 1).M2MKey = key
-        '    Return Me
-        'End Function
+#End Region
 
         Public Function Joins() As IList(Of QueryJoin)
             Return _j

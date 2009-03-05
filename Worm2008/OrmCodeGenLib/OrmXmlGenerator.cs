@@ -274,7 +274,7 @@ namespace Worm.CodeGen.Core
                     entityElement.SetAttribute("description", entity.Description);
                 if (entity.Namespace != entity.OrmObjectsDef.Namespace)
                     entityElement.SetAttribute("namespace", entity.Namespace);
-				if(entity.Behaviour != EntityBehaviuor.Default)
+				if(entity.Behaviour != EntityBehaviuor.ForcePartial)
 					entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
 				if (entity.UseGenerics)
 					entityElement.SetAttribute("useGenerics", XmlConvert.ToString(entity.UseGenerics));
@@ -396,6 +396,8 @@ namespace Worm.CodeGen.Core
                     propertyElement.SetAttribute("dbTypeSize", XmlConvert.ToString(property.DbTypeSize.Value));
                 if (property.DbTypeNullable.HasValue)
                     propertyElement.SetAttribute("dbTypeNullable", XmlConvert.ToString(property.DbTypeNullable.Value));
+				if (!string.IsNullOrEmpty(property.DefferedLoadGroup))
+					propertyElement.SetAttribute("defferedLoadGroup", property.DefferedLoadGroup);
                 propertiesNode.AppendChild(propertyElement);
             }
         }

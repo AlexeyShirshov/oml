@@ -73,6 +73,27 @@ Imports Worm.Misc
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestMaxCustom()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim q As New QueryCmd()
+
+            Dim cust As SelectExpression = FCtor.custom("isnull({0},1)", New FieldReference(GetType(Entity4), "ID")).GetAllProperties(0)
+
+            q.Select(FCtor.max(cust, "s")).From(GetType(Entity4))
+
+            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
+
+            Assert.AreEqual(12, i)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
+
+            i = q.ToSimpleList(Of Integer)(mgr)(0)
+
+            Assert.AreEqual(12, i)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
+
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestCount()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()

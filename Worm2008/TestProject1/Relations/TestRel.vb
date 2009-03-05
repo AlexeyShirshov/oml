@@ -201,4 +201,44 @@ Imports Worm.Cache
             End Try
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestLoadBatch()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
+
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1), q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
+
+        Table1.Table2Relation.Load(Of Table1, Table2)(t, False)
+
+        Assert.IsTrue(q1.GetByID(Of Table1)(1).Table2s.IsInCache)
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadBatchLoad()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
+
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1), q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
+
+        Dim r As ReadOnlyList(Of Table2) = Table1.Table2Relation.Load(Of Table1, Table2)(t, True)
+
+        Assert.AreEqual(2, r.Count)
+
+        For Each tb As Table2 In r
+            Assert.IsTrue(tb.InternalProperties.IsLoaded)
+        Next
+    End Sub
+
+    <TestMethod()> Public Sub TestLoadBatch2()
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
+
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1), q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
+
+        Dim r As ReadOnlyList(Of Entities.IKeyEntity) = Table1.Table2Relation.Load(Of Table1, Entities.IKeyEntity)(t, False)
+
+        Assert.AreEqual(2, r.Count)
+    End Sub
 End Class
