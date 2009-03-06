@@ -344,7 +344,8 @@ namespace Worm.CodeGen.Core
 
 
                 entity = new EntityDescription(id, name, nameSpace, description, _ormObjectsDef);
-                entity.Behaviour = behaviour;
+
+				entity.Behaviour = behaviour;
             	entity.UseGenerics = useGenerics;
             	entity.MakeInterface = makeInterface;
             	entity.Disabled = disabled;

@@ -95,7 +95,7 @@
         <xs:documentation>ИД базовой сущности</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="behaviour" type="EntityBehaviour_t" use="optional" default="ForcePartial">
+    <xs:attribute name="behaviour" type="EntityBehaviour_t" use="optional" default="Default">
       <xs:annotation>
         <xs:documentation>Entity generator behaviour</xs:documentation>
       </xs:annotation>
@@ -639,11 +639,11 @@
   </xs:simpleType>
   <xs:simpleType name="EntityBehaviour_t">
     <xs:restriction base="xs:string">
-      <!--<xs:enumeration value="Default">
+      <xs:enumeration value="Default">
         <xs:annotation>
           <xs:documentation>Default behaviour when generator creates default classes(entity and schema) with full method set.</xs:documentation>
         </xs:annotation>
-      </xs:enumeration>-->
+      </xs:enumeration>
       <xs:enumeration value="PartialObjects">
         <xs:annotation>
           <xs:documentation>'Partial object' behaviour when generator creates classes(entity and schema) without user depended behaviour for future extension.</xs:documentation>

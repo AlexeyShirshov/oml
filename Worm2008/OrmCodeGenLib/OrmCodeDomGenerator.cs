@@ -320,8 +320,9 @@ namespace Worm.CodeGen.Core
 
 			        // параметры класса
 			        entityClass.IsClass = true;
-			        entityClass.IsPartial = entity.Behaviour == EntityBehaviuor.PartialObjects ||
-			                                entity.Behaviour == EntityBehaviuor.ForcePartial;
+			    	var behaviour = entity.CompleteEntity.Behaviour;
+			    	entityClass.IsPartial = behaviour == EntityBehaviuor.PartialObjects ||
+			                                behaviour == EntityBehaviuor.ForcePartial;
 			        entityClass.Attributes = MemberAttributes.Public;
 			        entityClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.Public;
 

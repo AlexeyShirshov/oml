@@ -69,6 +69,7 @@ Partial Public MustInherit Class OrmManager
     Friend _expiresPattern As Date
     Protected Friend _start As Integer
     Protected Friend _length As Integer = Integer.MaxValue
+    Protected Friend _op As Boolean
     Protected Friend _rev As Boolean
     Protected _er As ExecutionResult
     Friend _externalFilter As IFilter
@@ -98,6 +99,12 @@ Partial Public MustInherit Class OrmManager
         End If
         Return _length
     End Function
+
+    Protected Friend ReadOnly Property IsPagingOptimized() As Boolean
+        Get
+            Return _op
+        End Get
+    End Property
 
     Public Property StmtGenerator() As StmtGenerator
         Get

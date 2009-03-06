@@ -274,7 +274,7 @@ namespace Worm.CodeGen.Core
                     entityElement.SetAttribute("description", entity.Description);
                 if (entity.Namespace != entity.OrmObjectsDef.Namespace)
                     entityElement.SetAttribute("namespace", entity.Namespace);
-				if(entity.Behaviour != EntityBehaviuor.ForcePartial)
+				if(entity.Behaviour != EntityBehaviuor.Default)
 					entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
 				if (entity.UseGenerics)
 					entityElement.SetAttribute("useGenerics", XmlConvert.ToString(entity.UseGenerics));

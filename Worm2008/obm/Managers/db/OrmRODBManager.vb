@@ -1221,11 +1221,11 @@ l1:
                                 If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(obj)) Then
 
                                     If fromRS Then
-                                        Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm)
+                                        Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0)
                                         AfterLoadingProcess(dic, obj, lock, ro)
                                         obj = CType(ro, _ICachedEntity)
                                     Else
-                                        LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm)
+                                        LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0)
                                         obj.CorrectStateAfterLoading(False)
                                     End If
 
@@ -1887,9 +1887,11 @@ l1:
                             dr.GetOrdinal(c1.Column).CompareTo(dr.GetOrdinal(c2.Column)))
                     End If
 
+                    Dim rownum As Integer = 0
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(values, selectList, dr, dic, _loadedInLastFetch, oschema, fields_idx)
+                        LoadFromResultSet(Of T)(values, selectList, dr, dic, _loadedInLastFetch, rownum, oschema, fields_idx)
+                        rownum += 1
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1924,7 +1926,7 @@ l1:
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal values As IList, ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
-            ByVal dic As IDictionary, ByRef loaded As Integer, _
+            ByVal dic As IDictionary, ByRef loaded As Integer, ByVal rownum As Integer, _
             ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
@@ -1940,7 +1942,7 @@ l1:
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx, rownum)
                 AfterLoadingProcess(dic, obj, lock, ro)
 #If DEBUG Then
                 If lock IsNot Nothing Then
@@ -1995,8 +1997,8 @@ l1:
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.Common.DbDataReader, _
             ByVal selectList As IList(Of SelectExpression), ByVal check_pk As Boolean, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
-            ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column) _
-            ) As _IEntity
+            ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal rownum As Integer) As _IEntity
 
             If selectList.Count > dr.FieldCount Then
                 Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", dr.FieldCount, selectList.Count))
@@ -2109,7 +2111,7 @@ l1:
                         'Threading.Monitor.Enter(dic)
                         'lock = True
 
-                        If dic IsNot Nothing Then
+                        If dic IsNot Nothing AndAlso (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
                             robj = NormalizeObject(ce, dic, fromRS)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 

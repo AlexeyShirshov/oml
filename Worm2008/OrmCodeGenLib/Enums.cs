@@ -15,10 +15,10 @@ namespace Worm.CodeGen.Core
 
     public enum EntityBehaviuor
     {
-		///// <summary>
-		///// Default behaviour when generator creates default classes(entity and schema) with full method set.
-		///// </summary>
-		//Default = 0,
+		/// <summary>
+		/// Default behaviour when generator creates default classes(entity and schema) with full method set.
+		/// </summary>
+		Default = 0,
         /// <summary>
         /// 'Partial object' behaviour when generator creates classes(entity and schema) without user depended behaviour for future extension.
         /// </summary>
@@ -26,7 +26,7 @@ namespace Worm.CodeGen.Core
         /// <summary>
         /// Force 'partial' modifier with default behaviour.
         /// </summary>
-        ForcePartial = 0,
+        ForcePartial = 2,
         ///// <summary>
         ///// Set abstract modifier.
         ///// </summary>

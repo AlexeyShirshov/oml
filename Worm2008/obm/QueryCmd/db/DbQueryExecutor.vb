@@ -204,11 +204,12 @@ Namespace Query.Database
             Dim oldLength As Integer = mgr._length
             Dim oldRev As Boolean = mgr._rev
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
-            'Dim oldC As Boolean = mgr.RaiseObjectCreation
+            Dim op As Boolean = mgr.IsPagingOptimized
 
             If Not query.ClientPaging.IsEmpty Then
                 mgr._start = query.ClientPaging.Start
                 mgr._length = query.ClientPaging.Length
+                mgr._op = query.ClientPaging.OptimizeCache
             ElseIf query.Pager IsNot Nothing Then
                 AddHandler mgr.DataAvailable, AddressOf query.OnDataAvailable
                 AddHandler OnRestoreDefaults, AddressOf query.OnRestoreDefaults
@@ -277,6 +278,7 @@ Namespace Query.Database
                 mgr._dont_cache_lists = oldCache
                 mgr._start = oldStart
                 mgr._length = oldLength
+                mgr._op = op
                 mgr._list = oldList
                 mgr._expiresPattern = oldExp
                 mgr.SetSchema(oldSchema)
