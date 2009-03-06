@@ -1023,7 +1023,7 @@ Namespace Database.Storedprocs
                 Dim loaded As Integer
                 Dim cols As IList(Of SelectExpression) = GetColumns() '.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
                 'New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
-                mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _oschema, _cm)
+                mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _l.Count, _oschema, _cm)
                 _loaded += loaded
             End Sub
 

@@ -158,6 +158,20 @@ Namespace Query
             _ne = True
         End Sub
 
+        Public Sub New(ByVal start As Integer, ByVal length As Integer, ByVal optimizeCache As Boolean)
+            Me._start = start
+            Me._len = length
+            _ne = True
+            Me._oc = optimizeCache
+        End Sub
+
+        Private _oc As Boolean
+        Public ReadOnly Property OptimizeCache() As Boolean
+            Get
+                Return _oc
+            End Get
+        End Property
+
         Public ReadOnly Property IsEmpty() As Boolean
             Get
                 Return Not _ne
