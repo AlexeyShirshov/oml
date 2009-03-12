@@ -84,7 +84,7 @@ Public Class MyProfile
                 Throw New ArgumentException("User with a name " & name & " is not found")
             Else
                 If createIfNotExist Then
-                    Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
+                    Dim u As MyUser = mgr.CreateKeyEntity(Of MyUser)(-100)
                     u.LastActivity = GetNow()
                     u.IsAnonymous = True
                     u.UserName = name
@@ -112,7 +112,7 @@ Public Class MyProfile
     End Function
 
     Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
-        Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
+        Dim u As MyUser = mgr.CreateKeyEntity(Of MyUser)(-100)
         u.UserName = name
         Return u
     End Function

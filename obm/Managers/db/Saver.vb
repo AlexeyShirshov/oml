@@ -806,7 +806,7 @@ l1:
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
-            Dim o As T = _mgr.CreateOrmBase(Of T)(id)
+            Dim o As T = _mgr.CreateKeyEntity(Of T)(id)
             'Dim o As New T
             'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
             NewObjectManager.AddNew(o)

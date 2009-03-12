@@ -769,6 +769,12 @@ Namespace Database.Storedprocs
             Return wl
         End Function
 
+        Public Shadows Function GetResult(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                Return GetResult(CType(mgr, OrmReadOnlyDBManager))
+            End Using
+        End Function
+
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyObjectList(Of T)
             'Dim ce As CachedItem = CType(MyBase.GetResult(mgr), CachedItem)
             '_count = ce.GetCount(mgr)

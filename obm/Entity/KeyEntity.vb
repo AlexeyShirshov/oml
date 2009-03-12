@@ -1665,7 +1665,7 @@ Namespace Entities
 
         Protected Overrides Function CreateObject() As Entity
             Using gm As IGetManager = GetMgr()
-                Return CType(gm.Manager.CreateOrmBase(Identifier, Me.GetType), Entity)
+                Return CType(gm.Manager.CreateKeyEntity(Identifier, Me.GetType), Entity)
             End Using
         End Function
 
