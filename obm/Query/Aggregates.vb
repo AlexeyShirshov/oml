@@ -92,7 +92,7 @@ Namespace Query
 
         Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
         Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
-        Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
+        Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
     End Class
 
     <Serializable()> _
@@ -206,9 +206,9 @@ Namespace Query
             Return s
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             If _oper IsNot Nothing Then
-                _oper.Prepare(executor, schema, filterInfo, stmt)
+                _oper.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
     End Class
@@ -237,7 +237,7 @@ Namespace Query
             Throw New NotImplementedException
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             Throw New NotImplementedException
         End Sub
     End Class

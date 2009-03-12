@@ -215,6 +215,11 @@ Namespace Query
                 Return Me
             End Function
 
+            Public Function prop(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(op.ObjectSource, op.Field, [alias]))
+                Return Me
+            End Function
+
             Public Function column(ByVal table As SourceFragment, ByVal tableColumn As String) As Int
                 GetAllProperties.Add(New SelectExpression(table, tableColumn))
                 Return Me

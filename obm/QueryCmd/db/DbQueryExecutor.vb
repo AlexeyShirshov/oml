@@ -225,9 +225,9 @@ Namespace Query.Database
                 mgr._list = query.ExternalCacheMark
             End If
 
-            If query.Schema IsNot Nothing Then
+            If query.MappingEngine IsNot Nothing Then
                 'mgr.RaiseObjectCreation = True
-                mgr.SetSchema(query.Schema)
+                mgr.SetSchema(query.MappingEngine)
                 AddHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
                 AddHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
             End If
@@ -299,8 +299,8 @@ Namespace Query.Database
             Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
             Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
-            If query.CommandTimed.HasValue Then
-                dbm.CommandTimeout = query.CommandTimed
+            If query.CommandTimout.HasValue Then
+                dbm.CommandTimeout = query.CommandTimout
             End If
 
             Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, gp, d, d2)

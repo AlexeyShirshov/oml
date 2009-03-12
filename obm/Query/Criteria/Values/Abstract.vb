@@ -9,7 +9,7 @@ Namespace Criteria.Values
         Function _ToString() As String
         Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator)
+            ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
     End Interface
 
     Public Interface INonTemplateValue

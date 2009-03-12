@@ -350,6 +350,9 @@ Namespace Entities
                 If String.IsNullOrEmpty(pa) Then
                     pa = s.Column
                 End If
+                If String.IsNullOrEmpty(pa) Then
+                    Throw New OrmManagerException("Alias for property in custom type is not specified")
+                End If
                 c.Add(New MapField2Column(pa, s.Column, s.Table, s.Attributes))
             Next
             Return c
@@ -585,9 +588,9 @@ Namespace Entities
             End If
         End Function
 
-        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If PropType = Entities.PropType.Subquery Then
-                _q.Prepare(executor, schema, filterInfo, stmt)
+                _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
     End Class

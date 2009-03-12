@@ -654,7 +654,7 @@ l1:
 
         Private disposedValue As Boolean
         Private _disposing As Boolean
-        'Private _objs As New List(Of OrmBase)
+        Private _disposeMgr As Boolean
         Private _mgr As OrmManager
         Private _saver As ObjectListSaver
         Private _restore As OnErrorEnum
@@ -676,6 +676,15 @@ l1:
             AddHandler mgr.BeginDelete, AddressOf Delete
             _mgr = mgr
             _saver = CreateSaver(mgr)
+        End Sub
+
+        Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal disposeMgr As Boolean)
+            MyClass.New(mgr)
+            _disposeMgr = disposeMgr
+        End Sub
+
+        Public Sub New(ByVal getMgr As ICreateManager)
+            MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
         End Sub
 
         Protected ReadOnly Property NewObjectManager() As INewObjectsStore
@@ -862,27 +871,34 @@ l1:
 #Region " IDisposable Support "
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-            If Not Me.disposedValue AndAlso _created Then
-                Dim rlb As Boolean = True
-                Try
-                    _disposing = True
-                    _saver.Dispose()
-                    'rlb = False
-                Finally
-                    _disposing = False
+            If Not Me.disposedValue Then
+                If _created Then
+                    Dim rlb As Boolean = True
+                    Try
+                        _disposing = True
+                        _saver.Dispose()
+                        'rlb = False
+                    Finally
+                        _disposing = False
 
-                    RemoveHandler _mgr.BeginDelete, AddressOf Delete
-                    RemoveHandler _mgr.BeginUpdate, AddressOf Add
+                        RemoveHandler _mgr.BeginDelete, AddressOf Delete
+                        RemoveHandler _mgr.BeginUpdate, AddressOf Add
 
-                    If _saver.Error Then
-                        _Rollback()
-                    End If
+                        If _saver.Error Then
+                            _Rollback()
+                        End If
 
-                    Me.disposedValue = True
-                End Try
-                If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
+                        Me.disposedValue = True
+                    End Try
+                    If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
 
-                RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
+                    RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
+                End If
+
+                If _disposeMgr AndAlso _mgr IsNot Nothing Then
+                    _mgr.Dispose()
+                    _mgr = Nothing
+                End If
             End If
         End Sub
 

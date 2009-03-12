@@ -14,9 +14,9 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
 
         }
 
-        public CodeVbForeachStatement(CodeExpression initExpression,
-            CodeExpression iterExpression, params CodeStatement[] statements)
-            : base(initExpression, iterExpression, statements)
+        public CodeVbForeachStatement(CodeTypeReference iterationItemType, string iterationItemName,
+			CodeExpression iterExpression, params CodeStatement[] statements)
+			: base(iterationItemType, iterationItemName, iterExpression, statements)
         {
         }   
 
@@ -28,9 +28,8 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
                 System.CodeDom.Compiler.CodeGeneratorOptions opts = new System.CodeDom.Compiler.CodeGeneratorOptions();
                 using (System.CodeDom.Compiler.IndentedTextWriter tw = new System.CodeDom.Compiler.IndentedTextWriter(new StringWriter(), opts.IndentString))
                 {
-                    tw.Write("For Each ");
-                    provider.GenerateCodeFromExpression(InitStatement, tw, opts);
-                    ((StringWriter)tw.InnerWriter).GetStringBuilder().Replace("ByVal pk ", "pk ");
+                    tw.Write("For Each {0} As ", provider.CreateValidIdentifier(IterationItemName));
+					provider.GenerateCodeFromExpression(new CodeTypeReferenceExpression(IterationItemType), tw, opts);
                     tw.Write(" in ");
                     provider.GenerateCodeFromExpression(IterExpression, tw, opts);
                     tw.WriteLine();

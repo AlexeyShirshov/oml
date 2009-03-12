@@ -15,7 +15,7 @@ namespace Worm.CodeGen.Core
             public delegate CodeExpression CodePatternAsExpressionDelegate(CodeTypeReference typeReference, CodeExpression expression);
             public delegate CodeStatement CodePatternLockStatementDelegate(CodeExpression lockExpression, params CodeStatement[] statements);
             public delegate CodeExpression CodePatternXorExpressionDelegate(CodeExpression left, CodeExpression right);
-            public delegate CodeStatement CodePatternForeachStatementDelegate(CodeExpression init, CodeExpression iter, params CodeStatement[] statements);
+			public delegate CodeStatement CodePatternForeachStatementDelegate(CodeTypeReference iterationItemType, string iterationItemName, CodeExpression iterExpression, params CodeStatement[] statements);
 
         	public delegate CodeTypeMember CodeMemberOperatorOverrideDelegate(
         		OperatorType op, CodeTypeReference returnType, CodeParameterDeclarationExpression[] prms,
@@ -422,17 +422,20 @@ namespace Worm.CodeGen.Core
 
             public static class CodePatternForeachStatementDelegates
             {
-                public static CodeStatement CsStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+				public static CodeStatement CsStatement(CodeTypeReference iterationItemType, string iterationItemName,
+			CodeExpression iterExpression, params CodeStatement[] statements)
                 {
-                    return new CodeCsForeachStatement(init, iter, stmts);
+                    return new CodeCsForeachStatement(iterationItemType, iterationItemName, iterExpression, statements);
                 }
 
-                public static CodeStatement VbStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+				public static CodeStatement VbStatement(CodeTypeReference iterationItemType, string iterationItemName,
+			CodeExpression iterExpression, params CodeStatement[] statements)
                 {
-                    return new CodeVbForeachStatement(init, iter, stmts);
+					return new CodeVbForeachStatement(iterationItemType, iterationItemName, iterExpression, statements);
                 }
 
-                public static CodeStatement CommonStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+				public static CodeStatement CommonStatement(CodeTypeReference iterationItemType, string iterationItemName,
+			CodeExpression iterExpression, params CodeStatement[] statements)
                 {
                     throw new NotImplementedException();
                 }

@@ -8,34 +8,46 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
 {
     public abstract class CodeForeachStatementBase : CodeSnippetStatement
     {
-        private CodeExpression m_initStatement;
+        private CodeTypeReference m_iterationItemType;
+    	private string m_iterationItemName;
         private CodeExpression m_iterExpression;
         private CodeStatement[] m_statements;
 
-        public CodeForeachStatementBase()
+    	protected CodeForeachStatementBase()
         {
 
         }
 
-        public CodeForeachStatementBase(CodeExpression initExpression,
+    	protected CodeForeachStatementBase(CodeTypeReference iterationItemType, string iterationItemName,
             CodeExpression iterExpression, params CodeStatement[] statements)
         {
-            m_initStatement = initExpression;
+            m_iterationItemType = iterationItemType;
+			m_iterationItemName = iterationItemName;
             m_iterExpression = iterExpression;
             m_statements = statements;
             RefreshValue();
         }
 
 
-        public CodeExpression InitStatement
+        public CodeTypeReference IterationItemType
         {
-			get { return m_initStatement; }
+			get { return m_iterationItemType; }
             set
             {
-                m_initStatement = value;
+                m_iterationItemType = value;
                 RefreshValue();
             }
         }
+
+		public string IterationItemName
+		{
+			get { return m_iterationItemName; }
+			set
+			{
+				m_iterationItemName = value;
+				RefreshValue();
+			}
+		}
 
         public CodeExpression IterExpression
         {

@@ -1841,7 +1841,7 @@ Public Class ObjectMappingEngine
                     '    Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
                     'End If
                     'lastt = t
-                    FormatType(t, stmt, p.Property.Field, schema, aliases, values, Nothing)
+                    FormatType(t, stmt, p.Property.Field, schema, aliases, values, p.Property.ObjectSource)
                 End If
             ElseIf p.Column IsNot Nothing Then
                 Dim tbl As SourceFragment = p.Column.First 'CType(o, SourceFragment)

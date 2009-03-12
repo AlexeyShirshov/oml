@@ -33,118 +33,195 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 			var method = new CodeMemberMethod
 			             	{
-								Name = "GetDefferedLoadPropertiesGroups",
-								Attributes = MemberAttributes.Public,
-								ReturnType = new CodeTypeReference(typeof(string[][]))
+			             		Name = "GetDefferedLoadPropertiesGroups",
+			             		Attributes = MemberAttributes.Public,
+			             		ReturnType = new CodeTypeReference(typeof (string[][]))
 			             	};
 
 			// string[][] result;
-			method.Statements.Add(new CodeVariableDeclarationStatement(method.ReturnType, "result"));
+			//method.Statements.Add(new CodeVariableDeclarationStatement(method.ReturnType, "result"));
 
 			var defferedLoadPropertiesGrouped = m_entityClass.Entity.GetDefferedLoadProperties();
 
-			var field = new CodeMemberField(method.ReturnType, OrmCodeGenNameHelper.GetPrivateMemberName(method.Name));
+			var baseFieldName = method.Name;
+
+			var fieldName = OrmCodeGenNameHelper.GetPrivateMemberName(method.Name);
+			var dicFieldName = OrmCodeGenNameHelper.GetPrivateMemberName(baseFieldName + "Dic");
+			var dicFieldTypeReference = new CodeTypeReference(typeof (Dictionary<string, List<string>>));
+
+			if (m_entityClass.Entity.BaseEntity == null ||
+			    !m_entityClass.Entity.BaseEntity.HasDefferedLoadablePropertiesInHierarhy)
+			{
+
+				var dicField = new CodeMemberField(dicFieldTypeReference, dicFieldName)
+				               	{
+				               		Attributes = MemberAttributes.Family,
+				               		InitExpression = new CodeObjectCreateExpression(dicFieldTypeReference)
+				               	};
+				Members.Add(dicField);
+			}
+
+			var field = new CodeMemberField(method.ReturnType, fieldName);
 			Members.Add(field);
-			var lockObj = new CodeMemberField(new CodeTypeReference(typeof (object)),
-			                                  OrmCodeGenNameHelper.GetPrivateMemberName(method.Name));
+
+			var lockObjFieldName = OrmCodeGenNameHelper.GetPrivateMemberName(baseFieldName + "Lock");
+
+			var lockObj = new CodeMemberField(new CodeTypeReference(typeof (object)), lockObjFieldName);
 			lockObj.InitExpression = new CodeObjectCreateExpression(lockObj.Type);
 			Members.Add(lockObj);
 
 			CodeExpression condition = new CodeBinaryOperatorExpression(
-					new CodeFieldReferenceExpression(
-						new CodeThisReferenceExpression(),
-						field.Name
-						),
-					CodeBinaryOperatorType.IdentityEquality,
-					new CodePrimitiveExpression(null)
-					);
+				new CodeFieldReferenceExpression(
+					new CodeThisReferenceExpression(),
+					field.Name
+					),
+				CodeBinaryOperatorType.IdentityEquality,
+				new CodePrimitiveExpression(null));
 
 			CodeStatementCollection inlockStatemets = new CodeStatementCollection();
 
-			var array = new CodeArrayCreateExpression(new CodeTypeReference(typeof(string[])));
+			CodeVariableDeclarationStatement listVar =
+				new CodeVariableDeclarationStatement(new CodeTypeReference(typeof (List<string>)), "lst");
+			inlockStatemets.Add(listVar);
 
 			foreach (var propertyDescriptions in defferedLoadPropertiesGrouped)
 			{
-				var innerArray = new CodeArrayCreateExpression(new CodeTypeReference(typeof(string)));
-				array.Initializers.Add(innerArray);
-				foreach (var propertyDescription in propertyDescriptions)
+				inlockStatemets.Add(
+					new CodeConditionStatement(
+						new CodeBinaryOperatorExpression(
+							new CodeMethodInvokeExpression(
+								new CodeFieldReferenceExpression(
+									new CodeThisReferenceExpression(),
+									dicFieldName
+									),
+								"TryGetValue",
+								new CodePrimitiveExpression(propertyDescriptions.Key),
+								new CodeDirectionExpression(FieldDirection.Out, new CodeVariableReferenceExpression(listVar.Name))
+								),
+							CodeBinaryOperatorType.ValueEquality,
+							new CodePrimitiveExpression(false)
+
+							),
+						new CodeAssignStatement(new CodeVariableReferenceExpression(listVar.Name),
+						                        new CodeObjectCreateExpression(
+						                        	new CodeTypeReference(typeof (List<string>)))),
+						new CodeExpressionStatement(new CodeMethodInvokeExpression(
+						                            	new CodeFieldReferenceExpression(
+						                            		new CodeThisReferenceExpression(), dicFieldName
+						                            		),
+						                            	"Add",
+						                            	new CodePrimitiveExpression(propertyDescriptions.Key),
+						                            	new CodeVariableReferenceExpression(listVar.Name))
+
+							))
+					);
+
+				foreach (var propertyDescription in propertyDescriptions.Value)
 				{
-					innerArray.Initializers.Add(OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDescription));
+					inlockStatemets.Add(new CodeMethodInvokeExpression(new CodeVariableReferenceExpression(listVar.Name), "Add",
+					                                                   OrmCodeGenHelper.GetFieldNameReferenceExpression(
+					                                                   	propertyDescription)));
 				}
 			}
+			// List<string[]> res = new List<string[]>();
+			// foreach(List<string> lst in m_GetDefferedLoadPropertiesGroupsDic.Values)
+			// {
+			//		res.Add(lst.ToArray());
+			// }
+			// m_GetDefferedLoadPropertiesGroups = res.ToArray()
 
-			inlockStatemets.Add(new CodeVariableDeclarationStatement(
-										method.ReturnType,
-										"groups",
-										array
-										));
+
+			inlockStatemets.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(List<string[]>)), "res", new CodeObjectCreateExpression(new CodeTypeReference(typeof(List<string[]>)))));
+			inlockStatemets.Add(
+				OrmCodeDomGenerator.Delegates.CodePatternForeachStatement(
+					new CodeTypeReference(typeof(List<string>)), "l",
+					new CodePropertyReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName + "Dic"), "Values"),
+					new CodeExpressionStatement(new CodeMethodInvokeExpression(
+						new CodeVariableReferenceExpression("res"),
+                        "Add",
+						new CodeMethodInvokeExpression(
+							new CodeArgumentReferenceExpression("l"),
+							"ToArray"
+						)
+			                    	))));
+
+			inlockStatemets.Add(
+				new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName),
+				                        new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("res"), "ToArray")));
+
+
+			//inlockStatemets.Add(new CodeVariableDeclarationStatement(
+			//                            method.ReturnType,
+			//                            "groups",
+			//                            array
+			//                            ));
 
 			if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.CompleteEntity.HasDefferedLoadableProperties)
 			{
-				method.Attributes |= MemberAttributes.Override;
+				//method.Attributes |= MemberAttributes.Override;
 
-				// string[][] baseArray;
-				var tempVar = new CodeVariableDeclarationStatement(method.ReturnType, "baseGroups");
+				//// string[][] baseArray;
+				//var tempVar = new CodeVariableDeclarationStatement(method.ReturnType, "baseGroups");
 
-				inlockStatemets.Add(tempVar);
-				// baseArray = base.GetDefferedLoadPropertiesGroups()
-				inlockStatemets.Add(new CodeAssignStatement(new CodeVariableReferenceExpression("baseGroups"),
-				                                              new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(),
-				                                                                             method.Name)));
+				//inlockStatemets.Add(tempVar);
+				//// baseArray = base.GetDefferedLoadPropertiesGroups()
+				//inlockStatemets.Add(new CodeAssignStatement(new CodeVariableReferenceExpression("baseGroups"),
+				//                                              new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(),
+				//                                                                             method.Name)));
 
-				// Array.Resize<string[]>(ref groups, baseGroups.Length, groups.Length)
-				inlockStatemets.Add(
-					new CodeMethodInvokeExpression(
-						new CodeMethodReferenceExpression(
-							new CodeTypeReferenceExpression(new CodeTypeReference(typeof(Array))),
-							"Resize",
-							new CodeTypeReference(typeof(string[]))),
-						new CodeDirectionExpression(FieldDirection.Ref,
-													new CodeVariableReferenceExpression("groups")),
-						new CodeBinaryOperatorExpression(
-							new CodePropertyReferenceExpression(
-								new CodeVariableReferenceExpression("baseGroups"),
-								"Length"
-								),
-							CodeBinaryOperatorType.Add,
-							new CodePropertyReferenceExpression(
-								new CodeVariableReferenceExpression("groups"),
-								"Length"
-								)
-							)
-						)
-					);
-				// Array.Copy(baseGroups, 0, groups, groups.Length - baseGroups.Length, baseGroups.Length)
-				inlockStatemets.Add(
-					new CodeMethodInvokeExpression(
-						new CodeTypeReferenceExpression(typeof(Array)),
-						"Copy",
-						new CodeVariableReferenceExpression("baseGroups"),
-						new CodePrimitiveExpression(0),
-						new CodeVariableReferenceExpression("groups"),
-						new CodeBinaryOperatorExpression(
-							new CodePropertyReferenceExpression(
-								new CodeVariableReferenceExpression("groups"), "Length"),
-							CodeBinaryOperatorType.Subtract,
-							new CodePropertyReferenceExpression(
-								new CodeVariableReferenceExpression("baseGroups"), "Length")
-							),
-						new CodePropertyReferenceExpression(
-							new CodeVariableReferenceExpression("baseGroups"), "Length")
-						)
-					);
+				//// Array.Resize<string[]>(ref groups, baseGroups.Length, groups.Length)
+				//inlockStatemets.Add(
+				//    new CodeMethodInvokeExpression(
+				//        new CodeMethodReferenceExpression(
+				//            new CodeTypeReferenceExpression(new CodeTypeReference(typeof(Array))),
+				//            "Resize",
+				//            new CodeTypeReference(typeof(string[]))),
+				//        new CodeDirectionExpression(FieldDirection.Ref,
+				//                                    new CodeVariableReferenceExpression("groups")),
+				//        new CodeBinaryOperatorExpression(
+				//            new CodePropertyReferenceExpression(
+				//                new CodeVariableReferenceExpression("baseGroups"),
+				//                "Length"
+				//                ),
+				//            CodeBinaryOperatorType.Add,
+				//            new CodePropertyReferenceExpression(
+				//                new CodeVariableReferenceExpression("groups"),
+				//                "Length"
+				//                )
+				//            )
+				//        )
+				//    );
+				//// Array.Copy(baseGroups, 0, groups, groups.Length - baseGroups.Length, baseGroups.Length)
+				//inlockStatemets.Add(
+				//    new CodeMethodInvokeExpression(
+				//        new CodeTypeReferenceExpression(typeof(Array)),
+				//        "Copy",
+				//        new CodeVariableReferenceExpression("baseGroups"),
+				//        new CodePrimitiveExpression(0),
+				//        new CodeVariableReferenceExpression("groups"),
+				//        new CodeBinaryOperatorExpression(
+				//            new CodePropertyReferenceExpression(
+				//                new CodeVariableReferenceExpression("groups"), "Length"),
+				//            CodeBinaryOperatorType.Subtract,
+				//            new CodePropertyReferenceExpression(
+				//                new CodeVariableReferenceExpression("baseGroups"), "Length")
+				//            ),
+				//        new CodePropertyReferenceExpression(
+				//            new CodeVariableReferenceExpression("baseGroups"), "Length")
+				//        )
+				//    );
 			}
 			else
 			{				
 				method.ImplementationTypes.Add(new CodeTypeReference(typeof (Worm.Entities.Meta.IDefferedLoading)));
 			}
 
-			inlockStatemets.Add(
-					new CodeAssignStatement(
-						new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), field.Name),
-						new CodeVariableReferenceExpression("groups")
-						)
-					);
+			//inlockStatemets.Add(
+			//        new CodeAssignStatement(
+			//            ,
+			//            new CodeVariableReferenceExpression("groups")
+			//            )
+			//        );
 
 			List<CodeStatement> statements = new List<CodeStatement>(inlockStatemets.Count);
 			foreach (CodeStatement statemet in inlockStatemets)
@@ -161,14 +238,14 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 					statements.ToArray()
 					)
 				);
+
+			
+
 			method.Statements.Add(
 				new CodeMethodReturnStatement(
-					new CodeFieldReferenceExpression(
-						new CodeThisReferenceExpression(),
-						field.Name
-						)
-					)
-				);
+					new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName)
+				)
+			);
 
 			Members.Add(method);
 		}
@@ -197,7 +274,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 		private void OnPopulateIDefferedLoadingInterface()
 		{
-			if (m_entityClass == null || m_entityClass.Entity == null || !m_entityClass.Entity.HasDefferedLoadableProperties || m_entityClass.Entity.BaseEntity.CompleteEntity.HasDefferedLoadableProperties)
+			if (m_entityClass == null || m_entityClass.Entity == null || !m_entityClass.Entity.HasDefferedLoadableProperties || (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.CompleteEntity.HasDefferedLoadableProperties))
 				return;
 
 			BaseTypes.Add(new CodeTypeReference(typeof (Worm.Entities.Meta.IDefferedLoading)));

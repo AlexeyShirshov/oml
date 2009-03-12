@@ -708,12 +708,12 @@ Namespace Criteria.Core
         '    End Get
         'End Property
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _left IsNot Nothing Then
-                _left.Prepare(executor, schema, filterInfo, stmt)
+                _left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
             If _right IsNot Nothing Then
-                _right.Prepare(executor, schema, filterInfo, stmt)
+                _right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
 
@@ -848,9 +848,9 @@ Namespace Criteria.Core
             Return _agg.GetStaticString(mpe, contextFilter) & TemplateBase.OperToStringInternal(_fo)
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) 'Implements Values.IQueryElement.Prepare
-            _agg.Prepare(executor, schema, filterInfo, stmt)
-            MyBase.Prepare(executor, schema, filterInfo, stmt)
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
+            _agg.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            MyBase.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
     End Class
 End Namespace
