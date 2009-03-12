@@ -7,61 +7,63 @@ using Worm.Query;
 
 namespace Worm.CodeGen.Core.CodeDomExtensions
 {
-	/// <summary>
-	/// Обертка над <see cref="CodeTypeDeclaration"/> применительно к <see cref="EntityDescription"/>
-	/// </summary>
-	public class CodeEntityTypeDeclaration : CodeTypeDeclaration
-	{
-		private EntityDescription m_entity;
-		private CodeEntityInterfaceDeclaration m_entityInterface;
-	    private readonly CodeTypeReference m_typeReference;
-		private CodeSchemaDefTypeDeclaration m_schema;
-	    private readonly Dictionary<string, CodePropertiesAccessorTypeDeclaration> m_propertiesAccessor;
+    /// <summary>
+    /// Обертка над <see cref="CodeTypeDeclaration"/> применительно к <see cref="EntityDescription"/>
+    /// </summary>
+    public class CodeEntityTypeDeclaration : CodeTypeDeclaration
+    {
+        private EntityDescription m_entity;
+        private CodeEntityInterfaceDeclaration m_entityInterface;
+        private readonly CodeTypeReference m_typeReference;
+        private CodeSchemaDefTypeDeclaration m_schema;
+        private readonly Dictionary<string, CodePropertiesAccessorTypeDeclaration> m_propertiesAccessor;
+        private bool _useType;
 
-		public CodeEntityTypeDeclaration()
-		{
-			m_typeReference = new CodeTypeReference();
-		    m_propertiesAccessor = new Dictionary<string, CodePropertiesAccessorTypeDeclaration>();
+        public CodeEntityTypeDeclaration(bool useType)
+        {
+            m_typeReference = new CodeTypeReference();
+            m_propertiesAccessor = new Dictionary<string, CodePropertiesAccessorTypeDeclaration>();
             PopulateMembers += OnPopulateMembers;
-		}
+            _useType = useType;
+        }
 
         protected virtual void OnPopulateMembers(object sender, System.EventArgs e)
         {
             OnPopulatePropertiesAccessors();
             OnPupulateEntityRelations();
             OnPupulateM2MRelations();
-        	OnPopulateSchema();
+            OnPopulateSchema();
         }
 
-		protected virtual void OnPopulateSchema()
-		{
-			Members.Add(SchemaDef);
-		}
+        protected virtual void OnPopulateSchema()
+        {
+            Members.Add(SchemaDef);
+        }
 
-		protected virtual void OnPupulateM2MRelations()
-	    {
+        protected virtual void OnPupulateM2MRelations()
+        {
             var relationDescType = new CodeTypeReference(typeof(M2MRelationDesc));
-	        foreach (var relation in m_entity.GetRelations(false))
-	        {
+            foreach (var relation in m_entity.GetRelations(false))
+            {
                 if (relation.Left.Entity == relation.Right.Entity)
                     throw new ArgumentException("To realize m2m relation on self use SelfRelation instead.");
 
-                    LinkTarget link = relation.Left.Entity == m_entity ? relation.Right : relation.Left;
-                    
-                    var accessorName = link.AccessorName;
+                LinkTarget link = relation.Left.Entity == m_entity ? relation.Right : relation.Left;
+
+                var accessorName = link.AccessorName;
                 var relatedEntity = link.Entity;
 
-                if(string.IsNullOrEmpty(accessorName))
+                if (string.IsNullOrEmpty(accessorName))
                 {
                     // существуют похожие релейшены, но не имеющие имени акссесора
                     var lst =
                         link.Entity.GetRelations(false).FindAll(
                             r =>
                             r.Left != link && r.Right != link &&
-                            ((r.Left.Entity == m_entity && string.IsNullOrEmpty(r.Right.AccessorName)) 
+                            ((r.Left.Entity == m_entity && string.IsNullOrEmpty(r.Right.AccessorName))
                                 || (r.Right.Entity == m_entity && string.IsNullOrEmpty(r.Left.AccessorName))));
 
-                    if(lst.Count > 0)
+                    if (lst.Count > 0)
                         throw new OrmCodeGenException(
                             string.Format(
                                 "Существуют неоднозначные связи между '{0}' и '{1}'. конкретизируйте их через accessorName.",
@@ -70,26 +72,23 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 }
                 accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
 
-                
-                    
+                var entityTypeExpression = _useType ? OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(relatedEntity) : OrmCodeGenHelper.GetEntityNameReferenceExpression(relatedEntity);
 
-                    var entityTypeExpression = OrmCodeGenHelper.GetEntityNameReferenceExpression(relatedEntity);
-                    var desc = new CodeObjectCreateExpression(
-                        new CodeTypeReference(typeof (M2MRelationDesc)),
-                        entityTypeExpression);
+                var desc = new CodeObjectCreateExpression(
+                    new CodeTypeReference(typeof(M2MRelationDesc)), entityTypeExpression);
 
-                    var staticProperty = new CodeMemberProperty
-                    {
-                        Name = accessorName + "Relation",
-                        HasGet = true,
-                        HasSet = false,
-                        Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
-                        Type = relationDescType
-                    };
+                var staticProperty = new CodeMemberProperty
+                {
+                    Name = accessorName + "Relation",
+                    HasGet = true,
+                    HasSet = false,
+                    Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                    Type = relationDescType
+                };
 
-	            staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
 
-	            Members.Add(staticProperty);
+                Members.Add(staticProperty);
 
 
                 var memberProperty = new CodeMemberProperty
@@ -114,7 +113,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
                 Members.Add(memberProperty);
-	        }
+            }
 
             foreach (var relation in m_entity.GetSelfRelations(false))
             {
@@ -127,7 +126,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         new CodeTypeReference(typeof(M2MRelationDesc)),
                         entityTypeExpression);
 
-					accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
+                    accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
 
                     var staticProperty = new CodeMemberProperty
                     {
@@ -139,8 +138,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
-                    desc.Parameters.Add(                       
-                            new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof (M2MRelationDesc)),
+                    desc.Parameters.Add(
+                            new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
                                                              "DirKey"));
 
                     Members.Add(staticProperty);
@@ -179,7 +178,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         new CodeTypeReference(typeof(M2MRelationDesc)),
                         entityTypeExpression);
 
-					accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
+                    accessorName = OrmCodeGenNameHelper.GetMultipleForm(accessorName);
 
                     var staticProperty = new CodeMemberProperty
                     {
@@ -224,30 +223,30 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 
 
-                
-            }
-	    }
 
-	    protected virtual void OnPupulateEntityRelations()
-	    {
+            }
+        }
+
+        protected virtual void OnPupulateEntityRelations()
+        {
             var relationDescType = new CodeTypeReference(typeof(RelationDesc));
 
-	        foreach (var entityRelation in m_entity.GetEntityRelations(false))
-	        {
+            foreach (var entityRelation in m_entity.GetEntityRelations(false))
+            {
 
-				string accessorName = string.IsNullOrEmpty(entityRelation.AccessorName) ? OrmCodeGenNameHelper.GetMultipleForm(entityRelation.Entity.Name) : entityRelation.AccessorName;
+                string accessorName = string.IsNullOrEmpty(entityRelation.AccessorName) ? OrmCodeGenNameHelper.GetMultipleForm(entityRelation.Entity.Name) : entityRelation.AccessorName;
 
-	            var staticProperty = new CodeMemberProperty
-	                                     {
-	                                         Name = accessorName + "Relation",
+                var staticProperty = new CodeMemberProperty
+                                         {
+                                             Name = accessorName + "Relation",
                                              HasGet = true,
                                              HasSet = false,
                                              Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
                                              Type = relationDescType
-	                                     };
+                                         };
 
-	            
-	            staticProperty.GetStatements.Add(
+
+                staticProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeObjectCreateExpression(
                             relationDescType,
@@ -261,18 +260,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
 
-	            Members.Add(staticProperty);
+                Members.Add(staticProperty);
 
-	            var memberProperty = new CodeMemberProperty
-	                                     {
-	                                         Name = accessorName,
-	                                         HasGet = true,
-	                                         HasSet = false,
-	                                         Attributes =
-	                                             MemberAttributes.Public | MemberAttributes.Final,
-                                                 Type = new CodeTypeReference(typeof(RelationCmd))
-	                                     };
-	            memberProperty.GetStatements.Add(
+                var memberProperty = new CodeMemberProperty
+                                         {
+                                             Name = accessorName,
+                                             HasGet = true,
+                                             HasSet = false,
+                                             Attributes =
+                                                 MemberAttributes.Public | MemberAttributes.Final,
+                                             Type = new CodeTypeReference(typeof(RelationCmd))
+                                         };
+                memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
                             new CodeThisReferenceExpression(),
@@ -284,129 +283,130 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         )
                     )
                 );
-	            Members.Add(memberProperty);
-	        }
-	    }
+                Members.Add(memberProperty);
+            }
+        }
 
-	    protected virtual void OnPopulatePropertiesAccessors()
-	    {
-	        foreach (var propertyDescription in Entity.Properties)
-	        {
-                if(propertyDescription.Group == null)
+        protected virtual void OnPopulatePropertiesAccessors()
+        {
+            foreach (var propertyDescription in Entity.Properties)
+            {
+                if (propertyDescription.Group == null)
                     continue;
-	            CodePropertiesAccessorTypeDeclaration accessor;
+                CodePropertiesAccessorTypeDeclaration accessor;
                 if (!m_propertiesAccessor.TryGetValue(propertyDescription.Group.Name, out accessor))
                     m_propertiesAccessor[propertyDescription.Group.Name] =
                         new CodePropertiesAccessorTypeDeclaration(Entity, propertyDescription.Group);
-	            
-	        }
-	        foreach (var accessor in m_propertiesAccessor.Values)
-	        {
-	            Members.Add(accessor);
+
+            }
+            foreach (var accessor in m_propertiesAccessor.Values)
+            {
+                Members.Add(accessor);
                 //var field = new CodeMemberField(new CodeTypeReference(accessor.FullName),
                 //                                OrmCodeGenNameHelper.GetPrivateMemberName(accessor.Name));
                 //field.InitExpression = new CodeObjectCreateExpression(field.Type, new CodeThisReferenceExpression());
 
-	            var property = new CodeMemberProperty
-	                               {
+                var property = new CodeMemberProperty
+                                   {
                                        Type = new CodeTypeReference(accessor.FullName),
-	                                   Name = accessor.Group.Name,
-	                                   HasGet = true,
-	                                   HasSet = false
-	                               };
+                                       Name = accessor.Group.Name,
+                                       HasGet = true,
+                                       HasSet = false
+                                   };
                 property.GetStatements.Add(new CodeMethodReturnStatement(new CodeObjectCreateExpression(property.Type, new CodeThisReferenceExpression())));
-	            Members.Add(property);
-	        }
+                Members.Add(property);
+            }
 
-            
-	    }
 
-	    public CodeEntityTypeDeclaration(EntityDescription entity) : this()
-		{
-			Entity = entity;
-			m_typeReference.BaseType = FullName;
-		}
+        }
 
-		public CodeSchemaDefTypeDeclaration SchemaDef
-		{
-			get
-			{
-				if(m_schema == null)
-				{
-					m_schema = new CodeSchemaDefTypeDeclaration(this);
-				}
-				return m_schema;
-			}
-		}
+        public CodeEntityTypeDeclaration(EntityDescription entity, bool useType)
+            : this(useType)
+        {
+            Entity = entity;
+            m_typeReference.BaseType = FullName;
+        }
 
-		public new string Name
-		{
-			get
-			{
-				if (Entity != null)
-					return OrmCodeGenNameHelper.GetEntityClassName(Entity, false);
-				return null;
-			}
-		}
+        public CodeSchemaDefTypeDeclaration SchemaDef
+        {
+            get
+            {
+                if (m_schema == null)
+                {
+                    m_schema = new CodeSchemaDefTypeDeclaration(this);
+                }
+                return m_schema;
+            }
+        }
 
-		public string FullName
-		{
-			get
-			{
-				return OrmCodeGenNameHelper.GetEntityClassName(Entity, true);
-			}
-		}
+        public new string Name
+        {
+            get
+            {
+                if (Entity != null)
+                    return OrmCodeGenNameHelper.GetEntityClassName(Entity, false);
+                return null;
+            }
+        }
 
-		public EntityDescription Entity
-		{
-			get { return m_entity; }
-			set
-			{
-				m_entity = value;
-				EnsureName();
-			}
-		}
+        public string FullName
+        {
+            get
+            {
+                return OrmCodeGenNameHelper.GetEntityClassName(Entity, true);
+            }
+        }
 
-		public CodeEntityInterfaceDeclaration EntityInterfaceDeclaration
-		{
-			get
-			{
-				return m_entityInterface;
-			}
-			set
-			{
-				if(m_entityInterface != null)
-				{
-					m_entityInterface.EnsureData();
-					// удалить существующий из списка дочерних типов
-					if(this.BaseTypes.Contains(m_entityInterface.TypeReference))
-					{
-						BaseTypes.Remove(m_entityInterface.TypeReference);
-					}
-					
-				}
-				m_entityInterface = value;
-				if (m_entityInterface != null)
-				{
-					BaseTypes.Add(m_entityInterface.TypeReference);
-					m_entityInterface.EnsureData();
-				}
-			}
-		}
+        public EntityDescription Entity
+        {
+            get { return m_entity; }
+            set
+            {
+                m_entity = value;
+                EnsureName();
+            }
+        }
 
-	    public CodeEntityInterfaceDeclaration EntityPropertiesInterfaceDeclaration { get; set; }
+        public CodeEntityInterfaceDeclaration EntityInterfaceDeclaration
+        {
+            get
+            {
+                return m_entityInterface;
+            }
+            set
+            {
+                if (m_entityInterface != null)
+                {
+                    m_entityInterface.EnsureData();
+                    // удалить существующий из списка дочерних типов
+                    if (this.BaseTypes.Contains(m_entityInterface.TypeReference))
+                    {
+                        BaseTypes.Remove(m_entityInterface.TypeReference);
+                    }
 
-		public CodeSchemaDefTypeDeclaration SchemaDefDeclaration { get; set; }
+                }
+                m_entityInterface = value;
+                if (m_entityInterface != null)
+                {
+                    BaseTypes.Add(m_entityInterface.TypeReference);
+                    m_entityInterface.EnsureData();
+                }
+            }
+        }
 
-	    public CodeTypeReference TypeReference
-		{
-			get { return m_typeReference; }
-		}
+        public CodeEntityInterfaceDeclaration EntityPropertiesInterfaceDeclaration { get; set; }
 
-		protected void EnsureName()
-		{
-			base.Name = Name;
-			m_typeReference.BaseType = FullName;
-		}
-	}
+        public CodeSchemaDefTypeDeclaration SchemaDefDeclaration { get; set; }
+
+        public CodeTypeReference TypeReference
+        {
+            get { return m_typeReference; }
+        }
+
+        protected void EnsureName()
+        {
+            base.Name = Name;
+            m_typeReference.BaseType = FullName;
+        }
+    }
 }

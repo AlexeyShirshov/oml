@@ -17,6 +17,8 @@ namespace Worm.CodeGen.Core
 
     public partial class OrmCodeDomGenerator
     {
+        #region Events
+
         protected internal class EntityClassCreatedEventArgs : EventArgs
         {
 			private readonly CodeEntityTypeDeclaration m_typeDeclaration;
@@ -127,33 +129,33 @@ namespace Worm.CodeGen.Core
 			{
 				s_ctrl.EventDelegates.RemoveHandler(EntityGeneratorController.EntityClassCtorCreatedKey, value);
 			}
-			
-		}
 
+        }
+        
+        #endregion
 
+        protected internal class EntityGeneratorController : IDisposable
+        {
+            public System.ComponentModel.EventHandlerList EventDelegates = new System.ComponentModel.EventHandlerList();
 
-		protected internal class EntityGeneratorController : IDisposable
-		{
-			public System.ComponentModel.EventHandlerList EventDelegates = new System.ComponentModel.EventHandlerList();
+            public static readonly object EntityClassCreatedKey = new object();
+            public static readonly object PropertyCreatedKey = new object();
+            public static readonly object EntityClassCtorCreatedKey = new object();
 
-			public static readonly object EntityClassCreatedKey = new object();
-			public static readonly object PropertyCreatedKey = new object();
-			public static readonly object EntityClassCtorCreatedKey = new object();
+            //public event EventHandler<EntityClassCreatedEventArgs> EntityClassCreated;
+            //public event EventHandler<EntityPropertyCreatedEventArgs> PropertyCreated;
+            //public event EventHandler<EntityCtorCreatedEventArgs> EntityClassCtorCreated;	
 
-			//public event EventHandler<EntityClassCreatedEventArgs> EntityClassCreated;
-			//public event EventHandler<EntityPropertyCreatedEventArgs> PropertyCreated;
-			//public event EventHandler<EntityCtorCreatedEventArgs> EntityClassCtorCreated;	
+            #region IDisposable Members
 
-			#region IDisposable Members
+            public void Dispose()
+            {
+                if (EventDelegates != null)
+                    EventDelegates.Dispose();
+            }
 
-			public void Dispose()
-			{
-				if (EventDelegates != null)
-					EventDelegates.Dispose();	
-			}
-
-			#endregion
-		}
+            #endregion
+        }
 
         private readonly OrmObjectsDef _ormObjectsDefinition;
         private readonly OrmCodeDomGeneratorSettings _ormCodeDomGeneratorSettings;
@@ -315,7 +317,7 @@ namespace Worm.CodeGen.Core
 			        //nameSpace.Imports.Add(new CodeNamespaceImport("Worm.Orm"));
 
 			        // класс сущности
-			        entityClass = new CodeEntityTypeDeclaration(entity);
+			        entityClass = new CodeEntityTypeDeclaration(entity, Settings.UseTypeInProps);
 			        nameSpace.Types.Add(entityClass);
 
 			        // параметры класса
@@ -489,10 +491,14 @@ namespace Worm.CodeGen.Core
 			                                         Attributes = MemberAttributes.Family,
 			                                     };
 
-                        var propertyAliasClassCotr = new CodeConstructor { Attributes = MemberAttributes.Public };
+                        var propertyAliasClassCtor = new CodeConstructor { Attributes = MemberAttributes.Public };
 
-			            propertyAliasClassCotr.BaseConstructorArgs.Add(OrmCodeGenHelper.GetEntityNameReferenceExpression(entity));
-			            propertyAliasClass.Members.Add(propertyAliasClassCotr);
+                        if (Settings.UseTypeInProps)
+                            propertyAliasClassCtor.BaseConstructorArgs.Add(OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(entity));
+                        else		            
+                            propertyAliasClassCtor.BaseConstructorArgs.Add(OrmCodeGenHelper.GetEntityNameReferenceExpression(entity));
+			            
+                        propertyAliasClass.Members.Add(propertyAliasClassCtor);
 			            propertyAliasClass.BaseTypes.Add(new CodeTypeReference(typeof (EntityAlias)));
                                                          
 
@@ -502,18 +508,18 @@ namespace Worm.CodeGen.Core
                                                               Attributes = MemberAttributes.Family,
 			                                              };
 
-			            var instancedPropertyAliasClassCotr = new CodeConstructor{Attributes= MemberAttributes.Public};
+			            var instancedPropertyAliasClassCtor = new CodeConstructor{Attributes= MemberAttributes.Public};
 
-                        instancedPropertyAliasClassCotr.Parameters.Add(
+                        instancedPropertyAliasClassCtor.Parameters.Add(
 			                new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (EntityAlias)), "objectAlias"));
 
-			            instancedPropertyAliasClassCotr.Statements.Add(
+			            instancedPropertyAliasClassCtor.Statements.Add(
 			                new CodeAssignStatement(
 			                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
 			                                                     OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias")),
 			                    new CodeArgumentReferenceExpression("objectAlias")));
 
-			            instancedPropertyAliasClass.Members.Add(instancedPropertyAliasClassCotr);
+			            instancedPropertyAliasClass.Members.Add(instancedPropertyAliasClassCtor);
 
                     	var instancedPropertyAliasfield = new CodeMemberField(new CodeTypeReference(typeof (EntityAlias)),
                     	                                OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias"));
@@ -575,7 +581,7 @@ namespace Worm.CodeGen.Core
 
 			        #endregion custom attribute EntityAttribute
 
-                    #region OBjectAlias methods
+                    #region ObjectAlias methods
                     if (propertyAliasClass != null)
 			        {
 			            var createMethod = new CodeMemberMethod
@@ -3005,7 +3011,7 @@ namespace Worm.CodeGen.Core
                     Type type = typeof(ObjectProperty);
                     var propConst = new CodeMemberField(type, OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyName))
                                         {
-                                            InitExpression = new CodeObjectCreateExpression(type, OrmCodeGenHelper.GetEntityNameReferenceExpression(entity), OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc)),
+                                            InitExpression = new CodeObjectCreateExpression(type, Settings.UseTypeInProps ? OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(entity) : OrmCodeGenHelper.GetEntityNameReferenceExpression(entity), OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc)),
                                             Attributes = (MemberAttributes.Private | MemberAttributes.Static |MemberAttributes.Final)
                                         };
 

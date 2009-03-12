@@ -52,6 +52,7 @@ namespace Worm.CodeGen.CodeGenerator
                 Console.WriteLine("  -cnS\t- class name suffix (null by default)");
                 Console.WriteLine("  -fnP\t- file name prefix (null by default)");
                 Console.WriteLine("  -fnS\t- file name suffix (null by default)");
+                Console.WriteLine("  -propsT\t- use type instead of entity name in props (false by default)");
                 return;
             }
 
@@ -140,6 +141,11 @@ namespace Worm.CodeGen.CodeGenerator
             if (cmdLine["cnS"] != null)
             {
                 settings.ClassNameSuffix = cmdLine["cnS"];
+            }
+
+            if (cmdLine["propsT"] != null)
+            {
+                settings.UseTypeInProps = true;
             }
 
             if(!System.IO.File.Exists(inputFilename))

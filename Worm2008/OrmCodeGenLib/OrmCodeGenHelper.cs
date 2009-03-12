@@ -33,6 +33,11 @@ namespace Worm.CodeGen.Core
             return new CodeTypeReference(className);
         }
 
+        public static CodeTypeOfExpression GetEntityClassTypeReferenceExpression(EntityDescription entityDesc)
+        {
+            return new CodeTypeOfExpression(GetEntityClassTypeReference(entityDesc));
+        }
+
         public static CodeExpression GetPropertyReferenceExpression(PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
             return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity), propertyDesc.PropertyName);
