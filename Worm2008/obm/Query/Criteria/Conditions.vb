@@ -319,12 +319,12 @@ Namespace Criteria.Conditions
             Return CreateMe(_left, _right, _oper)
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _left IsNot Nothing Then
-                _left.Prepare(executor, schema, filterInfo, stmt)
+                _left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
             If _right IsNot Nothing Then
-                _right.Prepare(executor, schema, filterInfo, stmt)
+                _right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
 

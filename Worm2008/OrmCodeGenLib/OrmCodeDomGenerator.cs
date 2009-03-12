@@ -1713,7 +1713,7 @@ namespace Worm.CodeGen.Core
             {
                 meth.Statements.Add(
                     Delegates.CodePatternForeachStatement(
-                        new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
+                        new CodeTypeReference(typeof(PKDesc)), "pk",
                         new CodeArgumentReferenceExpression("pks"),
                         entity.PkProperties.
                         ConvertAll<CodeStatement>(
@@ -1901,7 +1901,7 @@ namespace Worm.CodeGen.Core
             {
                 meth.Statements.Add(
                     Delegates.CodePatternForeachStatement(
-                        new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
+                        new CodeTypeReference(typeof(PKDesc)), "pk",
                         new CodeArgumentReferenceExpression("pks"),
                         entity.PkProperties.
                         ConvertAll<CodeStatement>(

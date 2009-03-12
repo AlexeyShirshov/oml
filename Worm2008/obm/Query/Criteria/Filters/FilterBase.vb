@@ -115,9 +115,9 @@ Namespace Criteria.Core
         '    'Return MakeQueryStmt(schema, Filter, almgr, pname)
         'End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Values.IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _v IsNot Nothing Then
-                _v.Prepare(executor, schema, filterInfo, stmt)
+                _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
 

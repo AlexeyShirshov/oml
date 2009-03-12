@@ -336,7 +336,7 @@ Namespace Query
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion)
+            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, ByVal isAnonym As Boolean)
 
             If selectOS Is Nothing Then
                 Throw New QueryCmdException("RelationCmd must not select more than one type", Me)

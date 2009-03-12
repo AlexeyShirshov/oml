@@ -375,7 +375,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property CommandTimed() As Nullable(Of Integer)
+        Public Property CommandTimout() As Nullable(Of Integer)
             Get
                 Return _timeout
             End Get
@@ -384,7 +384,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Schema() As ObjectMappingEngine
+        Public Property MappingEngine() As ObjectMappingEngine
             Get
                 Return _schema
             End Get
@@ -609,11 +609,13 @@ Namespace Query
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator)
 
+            Dim isanonym As Boolean = root._createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(root._createType.GetRealType(schema))
+
             'Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New StmtQueryIterator(root)
                 'Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 'Dim c As List(Of SelectExpression) = Nothing
-                q.Prepare(executor, schema, filterInfo, stmt)
+                q.Prepare(executor, schema, filterInfo, stmt, isanonym)
                 'If f IsNot Nothing Then
                 '    fs.Add(f)
                 'End If
@@ -627,14 +629,15 @@ Namespace Query
 
         Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion)
+            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, _
+            ByVal isAnonym As Boolean)
 
             If _from IsNot Nothing AndAlso _from.AnyQuery IsNot Nothing Then
                 Prepare(_from.AnyQuery, executor, schema, filterInfo, stmt)
             End If
 
             If SelectList IsNot Nothing Then
-                If _createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(_createType.GetRealType(schema)) Then
+                If isAnonym Then
                     _sl.AddRange(SelectList)
                     For Each se As SelectExpression In SelectList
                         If _from IsNot Nothing Then Exit For
@@ -721,7 +724,7 @@ l1:
                             _sl.AddRange(SelectList)
                         Else
                             For Each se As SelectExpression In SelectList
-                                If se.IsCustom OrElse se.Aggregate IsNot Nothing Then
+                                If se.IsCustom OrElse se.Aggregate IsNot Nothing OrElse se.PropType = PropType.TableColumn Then
                                     _sl.Add(se)
                                 End If
                             Next
@@ -849,7 +852,7 @@ l1:
 
         Public Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator) Implements IQueryElement.Prepare
+            ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
 
             _sl = New List(Of SelectExpression)
             _types = New Dictionary(Of EntityUnion, IEntitySchema)
@@ -867,12 +870,12 @@ l1:
             End If
 
             For Each s As Sort In New Sort.Iterator(_order)
-                s.Prepare(executor, schema, filterInfo, stmt)
+                s.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             Next
 
             If f IsNot Nothing Then
                 For Each fl As IFilter In f.GetAllFilters
-                    fl.Prepare(executor, schema, filterInfo, stmt)
+                    fl.Prepare(executor, schema, filterInfo, stmt, isAnonym)
                 Next
             End If
 
@@ -899,7 +902,7 @@ l1:
 
             End If
 
-            _Prepare(executor, schema, filterInfo, stmt, f, selectOS)
+            _Prepare(executor, schema, filterInfo, stmt, f, selectOS, isAnonym)
         End Sub
 
         Private Sub CheckFrom(ByVal se As SelectExpression)

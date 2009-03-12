@@ -470,7 +470,15 @@ namespace Worm.CodeGen.Core.Descriptors
 			}
 		}
 
-		public PropertyDescription[][] GetDefferedLoadProperties()
+		public bool HasDefferedLoadablePropertiesInHierarhy
+		{
+			get
+			{
+				return CompleteEntity.Properties.Exists(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
+			}
+		}
+
+		public Dictionary<string, List<PropertyDescription>> GetDefferedLoadProperties()
 		{
 			Dictionary<string, List<PropertyDescription>> groups = new Dictionary<string, List<PropertyDescription>>();
 
@@ -485,12 +493,13 @@ namespace Worm.CodeGen.Core.Descriptors
 
 				lst.Add(property);
 			}
-			var res = new List<PropertyDescription[]>();
-			foreach (var list in groups.Values)
-			{
-				res.Add(list.ToArray());
-			}
-			return res.ToArray();
+			return groups;
+			//var res = new List<PropertyDescription[]>();
+			//foreach (var list in groups.Values)
+			//{
+			//    res.Add(list.ToArray());
+			//}
+			//return res.ToArray();
 		}
 	}
 }

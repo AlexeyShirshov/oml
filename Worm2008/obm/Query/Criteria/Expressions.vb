@@ -204,9 +204,9 @@ l1:
             End If
         End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator) Implements Criteria.Values.IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _v IsNot Nothing Then
-                _v.Prepare(executor, schema, filterInfo, stmt)
+                _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
     End Class
@@ -254,12 +254,12 @@ l1:
             Return _left._ToString & "$" & Operation.ToString & "$" & _right._ToString
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator)
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             If _left IsNot Nothing Then
-                _left.Prepare(executor, schema, filterInfo, stmt)
+                _left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
             If _right IsNot Nothing Then
-                _right.Prepare(executor, schema, filterInfo, stmt)
+                _right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
 

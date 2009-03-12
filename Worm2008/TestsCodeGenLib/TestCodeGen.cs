@@ -286,6 +286,24 @@ namespace TestsCodeGenLib
             }
         }
 
+		[TestMethod]
+		public void TestVBCodeDefferedLoading()
+		{
+			using (Stream stream = Resources.GetXmlDocumentStream("deffered"))
+			{
+				TestVBCodeInternal(stream);
+			}
+		}
+
+		[TestMethod]
+		public void TestCSCodeDefferedLoading()
+		{
+			using (Stream stream = Resources.GetXmlDocumentStream("deffered"))
+			{
+				TestCSCodeInternal(stream);
+			}
+		}
+
         public void TestVBCodeInternal(Stream stream)
         {
             CodeDomProvider prov = new Microsoft.VisualBasic.VBCodeProvider();

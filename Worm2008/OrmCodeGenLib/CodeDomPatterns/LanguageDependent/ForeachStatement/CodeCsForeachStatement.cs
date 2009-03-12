@@ -14,9 +14,9 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
 
         }
 
-        public CodeCsForeachStatement(CodeExpression initExpression,
-            CodeExpression iterExpression, params CodeStatement[] statements)
-			: base(initExpression, iterExpression, statements)
+		public CodeCsForeachStatement(CodeTypeReference iterationItemType, string iterationItemName,
+			CodeExpression iterExpression, params CodeStatement[] statements)
+			: base(iterationItemType, iterationItemName, iterExpression, statements)
         {
         }   
      
@@ -30,8 +30,8 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
                 {
                     
                     tw.Write("foreach (");
-                    provider.GenerateCodeFromExpression(InitStatement, tw, opts);
-                    tw.Write(" in ");
+                	provider.GenerateCodeFromExpression(new CodeTypeReferenceExpression(IterationItemType), tw, opts);
+                	tw.Write(" {0} in ", provider.CreateValidIdentifier(IterationItemName));                	
                     provider.GenerateCodeFromExpression(IterExpression, tw, opts);
                     tw.WriteLine(")");
                     tw.WriteLine("{");
