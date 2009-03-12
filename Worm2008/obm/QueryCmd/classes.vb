@@ -280,12 +280,6 @@ Namespace Query
 
         Public Sub New(ByVal root As QueryCmd)
             AddQuery(root)
-            If root.Unions IsNot Nothing Then
-                For Each p As Pair(Of Boolean, QueryCmd) In root.Unions
-                    Dim q As QueryCmd = p.Second
-                    AddQuery(q)
-                Next
-            End If
         End Sub
 
         Protected Sub AddQuery(ByVal query As QueryCmd)
@@ -294,6 +288,12 @@ Namespace Query
                 iq = q
             Next
             _l.Add(iq)
+            If iq.Unions IsNot Nothing Then
+                For Each p As Pair(Of Boolean, QueryCmd) In iq.Unions
+                    Dim q As QueryCmd = p.Second
+                    AddQuery(q)
+                Next
+            End If
         End Sub
 
         Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator

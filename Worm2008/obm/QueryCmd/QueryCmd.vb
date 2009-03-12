@@ -995,7 +995,7 @@ l1:
             Dim i As Integer = 0
             For Each q As QueryCmd In New MetaDataQueryIterator(root)
                 If i > 0 Then
-                    key.Append("$inner:")
+                    key.Append("$nextq:")
                 End If
 
                 'Dim f As IFilter = _f
