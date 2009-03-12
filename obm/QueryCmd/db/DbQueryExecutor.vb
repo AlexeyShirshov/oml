@@ -237,7 +237,7 @@ Namespace Query.Database
 
                 Dim p As BaseProvider = CType(gp(), BaseProvider)
 
-                mgr._dont_cache_lists = query.DontCache OrElse query.HasInnerQuery OrElse p.Dic Is Nothing OrElse query.IsRealFTS
+                mgr._dont_cache_lists = query.DontCache OrElse p.Dic Is Nothing OrElse query.IsRealFTS
 
                 If Not mgr._dont_cache_lists Then
                     key = p.Key

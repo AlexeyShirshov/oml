@@ -99,7 +99,7 @@ namespace Worm.CodeGen.XmlGenerator
 						--	where ccu.table_name = t.table_name and ccu.table_schema = t.table_schema and ccu.constraint_name = cc.constraint_name) < 2
 						--and (tc.constraint_type <> 'CHECK' or tc.constraint_type is null)
 						YYYYY
-						and (t.table_name XXXXX like @tn or @tn is null)
+						and (t.table_schema+t.table_name XXXXX like @tn or @tn is null)
 						order by t.table_schema,t.table_name,c.ordinal_position";
 
 					string slist = string.Empty;
