@@ -13,6 +13,7 @@ namespace Worm.CodeGen.Core
         private string _fileNameSuffix = string.Empty;
         private string _classNamePrefix = string.Empty;
         private string _classNameSuffix = string.Empty;
+        private bool _useTypeInProps;
         //private bool _partial = false;
         //private OrmObjectGeneratorBehaviour _behaviour = OrmObjectGeneratorBehaviour.Objects;
         private LanguageSpecificHacks _languageSpecificHacks; 
@@ -21,6 +22,18 @@ namespace Worm.CodeGen.Core
         //{
         //    get { return _behaviour == OrmObjectGeneratorBehaviour.PartialObjects || _split || Partial; }
         //}
+
+        public bool UseTypeInProps
+        {
+            get
+            {
+                return _useTypeInProps;
+            }
+            set
+            {
+                _useTypeInProps = value;
+            }
+        }
 
 		[Obsolete("Don't even think about entity's class and entity's schema def class declaration in separate files.", true)]
         public bool Split
