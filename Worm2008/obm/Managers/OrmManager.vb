@@ -765,13 +765,13 @@ Partial Public MustInherit Class OrmManager
         '            End SyncLock
         '        End If
         '        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), IOrmBase)
-        Dim o As IKeyEntity = CreateOrmBase(id, type)
+        Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, GetDictionary(type)), IKeyEntity)
     End Function
 
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As IKeyEntity
-        Dim o As IKeyEntity = CreateOrmBase(id, type)
+        Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), add2CacheOnCreate)
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
@@ -792,7 +792,7 @@ Partial Public MustInherit Class OrmManager
         '    End If
         'End Using
         'Return o
-        Dim o As T = CreateOrmBase(Of T)(id)
+        Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
@@ -809,7 +809,7 @@ Partial Public MustInherit Class OrmManager
         '    End If
         'End Using
         'Return o
-        Dim o As T = CreateOrmBase(Of T)(id)
+        Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary), add2CacheOnCreate)
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
@@ -819,13 +819,13 @@ Partial Public MustInherit Class OrmManager
     End Function
 
     Public Function GetKeyEntityFromCacheOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
-        Dim o As T = CreateOrmBase(Of T)(id)
+        Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     Public Function GetKeyEntityFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
-        Dim o As IKeyEntity = CreateOrmBase(id, type)
+        Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
     End Function
@@ -1620,11 +1620,11 @@ l1:
         Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), IKeyEntity)
     End Function
 
-    Public Function CreateOrmBase(ByVal id As Object, ByVal t As Type) As IKeyEntity
-        Return KeyEntity.CreateOrmBase(id, t, _cache, _schema)
+    Public Function CreateKeyEntity(ByVal id As Object, ByVal t As Type) As IKeyEntity
+        Return KeyEntity.CreateKeyEntity(id, t, _cache, _schema)
     End Function
 
-    Public Function CreateOrmBase(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+    Public Function CreateKeyEntity(Of T As {IKeyEntity, New})(ByVal id As Object) As T
         Return KeyEntity.CreateOrmBase(Of T)(id, _cache, _schema)
     End Function
 
@@ -1671,7 +1671,7 @@ l1:
     Protected Function LoadTypeInternal(Of T As {IKeyEntity, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
-        Dim o As T = CreateOrmBase(Of T)(id)
+        Dim o As T = CreateKeyEntity(Of T)(id)
         Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
     End Function
 
@@ -2643,7 +2643,7 @@ l1:
     End Function
 
     Public Function GetKeyFromPK(Of T As {New, IKeyEntity})(ByVal id As Object) As Integer
-        Dim o As T = CreateOrmBase(Of T)(id)
+        Dim o As T = CreateKeyEntity(Of T)(id)
         Return o.Key
     End Function
 

@@ -860,10 +860,10 @@ Namespace Entities
 
         Protected Overrides Sub AcceptDual(ByVal mgr As OrmManager)
             For Each el As M2MRelation In GetRevert(mgr)
-                Dim main As _IKeyEntity = CType(mgr.CreateOrmBase(_mainId_, _mainType_), _IKeyEntity)
+                Dim main As _IKeyEntity = CType(mgr.CreateKeyEntity(_mainId_, _mainType_), _IKeyEntity)
                 If el.Added.Contains(main) OrElse el.Deleted.Contains(main) Then
                     If Not el.Accept(mgr, main) Then
-                        Dim smain As _IKeyEntity = CType(mgr.CreateOrmBase(el.MainId, el.MainType), _IKeyEntity)
+                        Dim smain As _IKeyEntity = CType(mgr.CreateKeyEntity(el.MainId, el.MainType), _IKeyEntity)
                         mgr.M2MCancel(smain, MainType)
                     End If
                 End If

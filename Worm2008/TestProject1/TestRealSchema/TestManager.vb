@@ -623,8 +623,8 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjects4()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim tt1 As Table1 = mgr.CreateOrmBase(Of Table1)(1)
-            Dim tt2 As Table1 = mgr.CreateOrmBase(Of Table1)(1)
+            Dim tt1 As Table1 = mgr.CreateKeyEntity(Of Table1)(1)
+            Dim tt2 As Table1 = mgr.CreateKeyEntity(Of Table1)(1)
 
             mgr.LoadObjects(New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(New Table1() {tt1, tt2})))
         End Using
@@ -633,7 +633,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjects5()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim tt1 As Table2 = mgr.CreateOrmBase(Of Table2)(1)
+            Dim tt1 As Table2 = mgr.CreateKeyEntity(Of Table2)(1)
 
             Dim t As ICollection(Of Table2) = mgr.LoadObjects(Of Table2)( _
                 New Worm.ReadOnlyList(Of Table2)(New List(Of Table2)(New Table2() {tt1})), New String() {"Table1"}, 0, 1)

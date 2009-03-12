@@ -553,7 +553,7 @@ Namespace Entities
 #End Region
 
 #Region " Create methods "
-        Public Shared Function CreateOrmBase(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IKeyEntity
+        Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IKeyEntity
             Dim o As IKeyEntity = CType(Activator.CreateInstance(t), IKeyEntity)
             o.Init(id, cache, schema)
             Return o
@@ -567,7 +567,7 @@ Namespace Entities
 
         Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
             If GetType(IKeyEntity).IsAssignableFrom(GetType(T)) Then
-                Return CType(CreateOrmBase(pk(0).Value, GetType(T), cache, schema), T)
+                Return CType(CreateKeyEntity(pk(0).Value, GetType(T), cache, schema), T)
             Else
                 Return CreateEntity(Of T)(pk, cache, schema)
             End If
@@ -575,7 +575,7 @@ Namespace Entities
 
         Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _ICachedEntity
             If GetType(IKeyEntity).IsAssignableFrom(type) Then
-                Return CreateOrmBase(pk(0).Value, type, cache, schema)
+                Return CreateKeyEntity(pk(0).Value, type, cache, schema)
             Else
                 Return CreateEntity(pk, type, cache, schema)
             End If

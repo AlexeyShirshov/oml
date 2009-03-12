@@ -619,7 +619,7 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return dic.Contains(New CacheKey(KeyEntity.CreateOrmBase(id, t, Me, schema)))
+            Return dic.Contains(New CacheKey(KeyEntity.CreateKeyEntity(id, t, Me, schema)))
         End Function
 
         Public Property NewObjectManager() As INewObjectsStore
@@ -742,7 +742,7 @@ Namespace Cache
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As IKeyEntity
 
-            Dim o As IKeyEntity = KeyEntity.CreateOrmBase(id, type, Me, schema)
+            Dim o As IKeyEntity = KeyEntity.CreateKeyEntity(id, type, Me, schema)
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim obj As _ICachedEntity = NormalizeObject(o, False, False, _

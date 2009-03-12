@@ -365,7 +365,7 @@ Module Module2
                     Try
                         Using st As New ModificationsTracker(mgr)
                             'Dim t As New TestEditTable(GetIdentity, mgr.Cache, mgr.ObjectSchema)
-                            Dim t As TestEditTable = mgr.CreateOrmBase(Of TestEditTable)(GetIdentity)
+                            Dim t As TestEditTable = mgr.CreateKeyEntity(Of TestEditTable)(GetIdentity)
                             t.Name = Guid.NewGuid.ToString
                             If r.NextDouble > 0.3 Then
                                 t.Code = r.Next(1000)
