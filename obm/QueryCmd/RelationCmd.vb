@@ -13,6 +13,7 @@ Namespace Query
 
         Friend _rel As Relation
         Private _desc As RelationDesc
+        Private _fo As Criteria.FilterOperation = Criteria.FilterOperation.Equal
 
 #Region " Ctors "
         Protected Sub New()
@@ -275,6 +276,15 @@ Namespace Query
 #End Region
 
 #Region " Properties "
+        Public Property FilterOperation() As Criteria.FilterOperation
+            Get
+                Return _fo
+            End Get
+            Set(ByVal value As Criteria.FilterOperation)
+                _fo = value
+            End Set
+        End Property
+
         Public ReadOnly Property Relation() As Relation
             Get
                 PrepareRel()
@@ -400,7 +410,7 @@ Namespace Query
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
-                            selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
+                            selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         _js.Add(jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
@@ -434,7 +444,7 @@ l1:
                     'End If
 
                     addf = New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
+                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(selectOS, schema) Then
@@ -450,7 +460,7 @@ l1:
                     End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
+                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
 
                     If _from Is Nothing Then _from = New FromClauseDef(selectOS)
                 End If
