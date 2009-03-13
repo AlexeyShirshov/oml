@@ -658,6 +658,7 @@ l1:
         Private _mgr As OrmManager
         Private _saver As ObjectListSaver
         Private _restore As OnErrorEnum
+        Private _cm As ICreateManager
         Protected _created As Boolean
 
         Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
@@ -685,6 +686,7 @@ l1:
 
         Public Sub New(ByVal getMgr As ICreateManager)
             MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
+            _cm = getMgr
         End Sub
 
         Protected ReadOnly Property NewObjectManager() As INewObjectsStore
@@ -696,6 +698,12 @@ l1:
         Public ReadOnly Property IsCommit() As Boolean
             Get
                 Return _saver.IsCommit
+            End Get
+        End Property
+
+        Public ReadOnly Property CreateManager() As ICreateManager
+            Get
+                Return _cm
             End Get
         End Property
 
