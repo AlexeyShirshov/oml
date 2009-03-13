@@ -82,7 +82,10 @@ Namespace Criteria
             End If
         End Function
 
-        'Protected MustOverride Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+        Protected Function CreateCustom(ByVal format As String, ByVal values() As FieldReference, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As CustomPredicate
+            Return New CustomPredicate(format, values, con, oper)
+        End Function
+
         Protected Function CreateField(ByVal os As EntityUnion, ByVal propertyAlias As String, ByVal con As Condition.ConditionConstructor, ByVal oper As ConditionOperator) As PropertyPredicate
             Return New PropertyPredicate(os, propertyAlias, con, oper)
         End Function
@@ -223,6 +226,10 @@ Namespace Criteria
             Return CreateColumn(table, columnName, _con, ConditionOperator.Or)
         End Function
 
+        'Public Function and_custom(ByVal format As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+        '    Return CreateCustom(format, values, _con, ConditionOperator.And)
+        'End Function
+
         Public Function [and](ByVal propertyAlias As String) As PredicateBase
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
@@ -234,6 +241,10 @@ Namespace Criteria
                 Return CreateField(_os, propertyAlias, _con, ConditionOperator.And)
             End If
         End Function
+
+        'Public Function [or](ByVal format As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+        '    Return CreateCustom(format, values, _con, ConditionOperator.Or)
+        'End Function
 
         Public Function [or](ByVal propertyAlias As String) As PredicateBase
             If String.IsNullOrEmpty(propertyAlias) Then

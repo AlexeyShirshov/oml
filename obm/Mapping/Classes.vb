@@ -214,9 +214,9 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal searchString As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
                        ByVal queryFields() As String)
-            _eu = New EntityUnion(entityName)
+            _eu = eu
             _searchString = searchString
             _queryFields = queryFields
             _f = New FtsDefaultFormatter(searchString, Nothing)

@@ -134,6 +134,12 @@ Namespace Database.Storedprocs
             End Using
         End Function
 
+        Public Function GetResult(ByVal getMgr As ICreateManager) As Object
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
+                Return GetResult(mgr)
+            End Using
+        End Function
+
         Public Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As Object
             If _cache Then
                 Dim key As String = "StroredProcedure:" & GetName()
