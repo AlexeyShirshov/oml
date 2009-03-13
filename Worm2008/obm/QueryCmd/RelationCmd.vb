@@ -448,19 +448,18 @@ l1:
                     addf = New TableFilter(table, filtered_r.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
                 Else
-                    'If SelectList Is Nothing Then
-                    '    If _WithLoad(selectOS, schema) Then
-                    '        _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                    '    Else
-                    '        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                    '        Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
-                    '        se.Attributes = Field2DbRelations.PK
-                    '        _sl.Add(se)
-                    '    End If
-                    'Else
-                    '    _sl.AddRange(SelectList)
-                    'End If
-                    PrepareSelectList(isAnonym, schema, f, filterInfo)
+                    If SelectList Is Nothing Then
+                        If _WithLoad(selectOS, schema) Then
+                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                        Else
+                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                            Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
+                            se.Attributes = Field2DbRelations.PK
+                            _sl.Add(se)
+                        End If
+                    Else
+                        PrepareSelectList(isAnonym, schema, f, filterInfo)
+                    End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
