@@ -1900,6 +1900,8 @@ l1:
             Return Me
         End Function
 
+#Region " From "
+
         Public Function From(ByVal t As Type) As QueryCmd
             _from = New FromClauseDef(t)
             RenewMark()
@@ -1935,6 +1937,104 @@ l1:
             RenewMark()
             Return Me
         End Function
+
+#End Region
+
+#Region " From search "
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString, top))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, _
+               ByVal search As SearchType) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString, search))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, _
+               ByVal search As SearchType, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString, search, top))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, _
+                         ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, _
+                       ByVal search As SearchType, ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(searchType, searchString, search, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searchType As Type, ByVal searchString As String, _
+            ByVal search As SearchType, ByVal top As Integer, _
+            ByVal ParamArray queryFields() As String) As QueryCmd
+
+            Return From(New SearchFragment(searchType, searchString, search, queryFields, top))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String) As QueryCmd
+            Return From(New SearchFragment(eu, searchString))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(eu, searchString, top))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, _
+               ByVal search As SearchType) As QueryCmd
+            Return From(New SearchFragment(eu, searchString, search))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, _
+               ByVal search As SearchType, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(eu, searchString, search, top))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, _
+               ByVal search As SearchType, ByVal top As Integer, _
+               ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(eu, searchString, search, queryFields, top))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, _
+               ByVal search As SearchType, ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(eu, searchString, search, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String, _
+            ByVal ParamArray queryFields() As String) As QueryCmd
+
+            Return From(New SearchFragment(eu, searchString, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searchString As String, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(searchString, top))
+        End Function
+
+        Public Function FromSearch(ByVal searchString As String, ByVal searchType As SearchType, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(searchString, searchType, top))
+        End Function
+
+        Public Function FromSearch(ByVal searchString As String, ByVal searchType As SearchType, _
+                       ByVal top As Integer, ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(searchString, searchType, top, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searchString As String, ByVal searchType As SearchType, _
+                       ByVal queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(searchString, searchType, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searchString As String, ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(searchString, queryFields))
+        End Function
+
+#End Region
 
         Public Function Union(ByVal q As QueryCmd) As QueryCmd
             Unions = New ObjectModel.ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))( _
@@ -3321,15 +3421,21 @@ l1:
             Return q
         End Function
 
+        Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
+            Dim q As New QueryCmd(getMgr)
+            q.From(New SearchFragment(t, searchText))
+            Return q
+        End Function
+
         Public Shared Function Search(ByVal entityName As String, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
             Dim q As New QueryCmd(New CreateManager(getMgr))
             q.From(New SearchFragment(New EntityUnion(entityName), searchText))
             Return q
         End Function
 
-        Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
+        Public Shared Function Search(ByVal entityName As String, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
             Dim q As New QueryCmd(getMgr)
-            q.From(New SearchFragment(t, searchText))
+            q.From(New SearchFragment(New EntityUnion(entityName), searchText))
             Return q
         End Function
 
