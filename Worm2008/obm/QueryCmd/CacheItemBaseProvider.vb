@@ -278,7 +278,7 @@ Namespace Query
                     If rq IsNot Nothing Then
                         Dim m2m As M2MRelation = TryCast(rq.Relation, M2MRelation)
                         If m2m IsNot Nothing Then
-                            Debug.Assert(types IsNot Nothing AndAlso CType(types, IList(Of Type)).Count = 1)
+                            'Debug.Assert(types Is Nothing OrElse CType(types, IList(Of Type)).Count = 1)
                             cache.AddM2MSimpleQuery(m2m, _key, _id)
                         End If
                     End If

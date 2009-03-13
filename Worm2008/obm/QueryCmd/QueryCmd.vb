@@ -627,6 +627,124 @@ Namespace Query
             'Return fs.ToArray
         End Sub
 
+        Protected Sub PrepareSelectList(ByVal isAnonym As Boolean, ByVal schema As ObjectMappingEngine, _
+                                        ByRef f As IFilter, ByVal filterInfo As Object)
+            If isAnonym Then
+                _sl.AddRange(SelectList)
+                For Each se As SelectExpression In SelectList
+                    If _from IsNot Nothing Then Exit For
+                    CheckFrom(se)
+                Next
+            Else
+                If IsFTS AndAlso GetSelectedTypes(schema).Count > 1 Then
+                    _appendMain = True
+                End If
+
+                For Each se As SelectExpression In SelectList
+                    Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                    If os IsNot Nothing Then
+                        If Not _types.ContainsKey(os) Then
+                            Dim t As Type = os.GetRealType(schema)
+                            _types.Add(os, schema.GetEntitySchema(t))
+                        End If
+                    End If
+                    CheckFrom(se)
+                Next
+                If _types.Count > 0 Then
+
+                    For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
+                        Dim t As Type = de.Key.GetRealType(schema)
+                        Dim oschema As IEntitySchema = de.Value
+                        If Not _pdic.ContainsKey(t) Then
+                            Dim dic As IDictionary = schema.GetProperties(t, oschema)
+                            _pdic.Add(t, dic)
+
+                            Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
+                            If col.Count > 0 Then
+                                If _autoFields Then
+                                    For Each dice As DictionaryEntry In dic
+                                        Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
+                                        If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                            Dim find As Boolean
+                                            For Each fld As SelectExpression In col
+                                                If fld.PropertyAlias = pk.PropertyAlias Then
+                                                    find = True
+                                                    Exit For
+                                                End If
+                                            Next
+                                            If Not find Then
+                                                Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
+                                                se.Attributes = pk.Behavior
+                                                If Not _sl.Contains(se) Then
+                                                    _sl.Add(se)
+                                                End If
+                                            End If
+                                        End If
+                                    Next
+                                End If
+                                Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
+                                If df IsNot Nothing Then
+                                    Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
+                                    If sss IsNot Nothing Then
+                                        For Each se As SelectExpression In col
+                                            Dim found As Boolean = False
+                                            For Each ss() As String In sss
+                                                For Each pr As String In ss
+                                                    If se.PropertyAlias = pr Then
+                                                        found = True
+                                                        GoTo l2
+                                                    End If
+                                                Next
+                                            Next
+l2:
+                                            If Not found Then
+                                                _sl.Add(se)
+                                            End If
+                                        Next
+                                    Else
+                                        GoTo l1
+                                    End If
+                                Else
+l1:
+                                    _sl.AddRange(col)
+                                End If
+                            End If
+                        End If
+                    Next
+
+                    If _sl.Count = 0 Then
+                        _sl.AddRange(SelectList)
+                    Else
+                        For Each se As SelectExpression In SelectList
+                            If se.IsCustom OrElse se.Aggregate IsNot Nothing OrElse se.PropType = PropType.TableColumn Then
+                                _sl.Add(se)
+                            End If
+                        Next
+                    End If
+
+                    If AutoJoins Then
+                        Dim selOS As EntityUnion = GetSelectedOS()
+                        Dim t As Type = selOS.GetRealType(schema)
+                        Dim selSchema As IEntitySchema = schema.GetEntitySchema(t)
+                        For Each se As SelectExpression In SelectList
+                            If se.ObjectSource IsNot Nothing Then
+                                If Not HasInQuery(se.ObjectSource, _js) Then
+                                    schema.AppendJoin(selOS, se.ObjectSource, _
+                                        f, _js, filterInfo, selSchema)
+                                End If
+                            ElseIf se.Table IsNot Nothing Then
+                                Throw New NotImplementedException
+                            Else
+                                Throw New NotImplementedException
+                            End If
+                        Next
+                    End If
+                Else
+                    _sl.AddRange(SelectList)
+                End If
+            End If
+        End Sub
+
         Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, _
@@ -637,120 +755,7 @@ Namespace Query
             End If
 
             If SelectList IsNot Nothing Then
-                If isAnonym Then
-                    _sl.AddRange(SelectList)
-                    For Each se As SelectExpression In SelectList
-                        If _from IsNot Nothing Then Exit For
-                        CheckFrom(se)
-                    Next
-                Else
-                    If IsFTS AndAlso GetSelectedTypes(schema).Count > 1 Then
-                        _appendMain = True
-                    End If
-
-                    For Each se As SelectExpression In SelectList
-                        Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
-                        If os IsNot Nothing Then
-                            If Not _types.ContainsKey(os) Then
-                                Dim t As Type = os.GetRealType(schema)
-                                _types.Add(os, schema.GetEntitySchema(t))
-                            End If
-                        End If
-                        CheckFrom(se)
-                    Next
-                    If _types.Count > 0 Then
-
-                        For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
-                            Dim t As Type = de.Key.GetRealType(schema)
-                            Dim oschema As IEntitySchema = de.Value
-                            If Not _pdic.ContainsKey(t) Then
-                                Dim dic As IDictionary = schema.GetProperties(t, oschema)
-                                _pdic.Add(t, dic)
-
-                                Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
-                                If col.Count > 0 Then
-                                    If _autoFields Then
-                                        For Each dice As DictionaryEntry In dic
-                                            Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
-                                            If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                                Dim find As Boolean
-                                                For Each fld As SelectExpression In col
-                                                    If fld.PropertyAlias = pk.PropertyAlias Then
-                                                        find = True
-                                                        Exit For
-                                                    End If
-                                                Next
-                                                If Not find Then
-                                                    Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
-                                                    se.Attributes = pk.Behavior
-                                                    If Not _sl.Contains(se) Then
-                                                        _sl.Add(se)
-                                                    End If
-                                                End If
-                                            End If
-                                        Next
-                                    End If
-                                    Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
-                                    If df IsNot Nothing Then
-                                        Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
-                                        If sss IsNot Nothing Then
-                                            For Each se As SelectExpression In col
-                                                Dim found As Boolean = False
-                                                For Each ss() As String In sss
-                                                    For Each pr As String In ss
-                                                        If se.PropertyAlias = pr Then
-                                                            found = True
-                                                            GoTo l2
-                                                        End If
-                                                    Next
-                                                Next
-l2:
-                                                If Not found Then
-                                                    _sl.Add(se)
-                                                End If
-                                            Next
-                                        Else
-                                            GoTo l1
-                                        End If
-                                    Else
-l1:
-                                        _sl.AddRange(col)
-                                    End If
-                                End If
-                            End If
-                        Next
-
-                        If _sl.Count = 0 Then
-                            _sl.AddRange(SelectList)
-                        Else
-                            For Each se As SelectExpression In SelectList
-                                If se.IsCustom OrElse se.Aggregate IsNot Nothing OrElse se.PropType = PropType.TableColumn Then
-                                    _sl.Add(se)
-                                End If
-                            Next
-                        End If
-
-                        If AutoJoins Then
-                            Dim selOS As EntityUnion = GetSelectedOS()
-                            Dim t As Type = selOS.GetRealType(schema)
-                            Dim selSchema As IEntitySchema = schema.GetEntitySchema(t)
-                            For Each se As SelectExpression In SelectList
-                                If se.ObjectSource IsNot Nothing Then
-                                    If Not HasInQuery(se.ObjectSource, _js) Then
-                                        schema.AppendJoin(selOS, se.ObjectSource, _
-                                            f, _js, filterInfo, selSchema)
-                                    End If
-                                ElseIf se.Table IsNot Nothing Then
-                                    Throw New NotImplementedException
-                                Else
-                                    Throw New NotImplementedException
-                                End If
-                            Next
-                        End If
-                    Else
-                        _sl.AddRange(SelectList)
-                    End If
-                End If
+                PrepareSelectList(isAnonym, schema, f, filterInfo)
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
@@ -1405,16 +1410,14 @@ l1:
         End Function
 
         Protected Function _WithLoad(ByVal os As EntityUnion, ByVal mpe As ObjectMappingEngine) As Boolean
-            'If _from IsNot Nothing Then
-            '    Return _from.ObjectSource.Equals(os)
-            'Else
-            For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
-                If tp.First.Equals(os) Then
-                    Return _WithLoad(tp, mpe)
-                End If
-            Next
-            'End If
-            'Throw New InvalidOperationException
+            If SelectTypes IsNot Nothing Then
+                For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                    If tp.First.Equals(os) Then
+                        Return _WithLoad(tp, mpe)
+                    End If
+                Next
+            End If
+
             Return False
         End Function
 

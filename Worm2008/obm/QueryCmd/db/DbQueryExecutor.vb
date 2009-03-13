@@ -957,6 +957,14 @@ l1:
                                 Throw New ExecutorException(String.Format("M2M relation between {0} and {1} not found", t, t2))
                             End If
 
+                            Dim rcmd As RelationCmd = TryCast(query, RelationCmd)
+                            If rcmd IsNot Nothing Then
+                                If t12t2.Equals(rcmd.RelationDesc) Then
+                                    predi.and(Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, mpe.GetPrimaryKeys(t2)(0).PropertyAlias)))
+                                    Return
+                                End If
+                            End If
+
                             Dim t22t1 As Entities.Meta.M2MRelationDesc = mpe.GetM2MRelation(t2, oschema2, t, join.M2MKey)
 
                             Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).PropertyAlias
@@ -968,14 +976,14 @@ l1:
                             If pk IsNot Nothing Then
                                 jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
                             Else
-                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(t2, t2_pk)
+                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
                             End If
 
                             If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
-                                jl.[and](tbl, t22t1.Column).eq(t, t1_pk)
+                                jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
                                 needAppend = False
                             Else
-                                cond = Ctor.column(tbl, t22t1.Column).eq(t, t1_pk).Filter
+                                cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
                             End If
 
                             Dim js() As QueryJoin = jl

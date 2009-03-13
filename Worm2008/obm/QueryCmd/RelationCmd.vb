@@ -377,9 +377,9 @@ Namespace Query
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
-                    If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
-                        Throw New NotSupportedException("Cannot select individual column in m2m query")
-                    End If
+                    'If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
+                    '    Throw New NotSupportedException("Cannot select individual column in m2m query")
+                    'End If
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
@@ -410,7 +410,7 @@ Namespace Query
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
-                            selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
+                            selectOS, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         _js.Add(jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
@@ -418,8 +418,10 @@ Namespace Query
                         End If
                         If _WithLoad(selectOS, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        Else
+                        ElseIf SelectTypes IsNot Nothing Then
                             GoTo l1
+                        Else
+                            PrepareSelectList(isAnonym, schema, f, filterInfo)
                         End If
                     Else
                         _from = New FromClauseDef(table)
@@ -446,18 +448,19 @@ l1:
                     addf = New TableFilter(table, filtered_r.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
                 Else
-                    If SelectList Is Nothing Then
-                        If _WithLoad(selectOS, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        Else
-                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                            Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
-                            se.Attributes = Field2DbRelations.PK
-                            _sl.Add(se)
-                        End If
-                    Else
-                        _sl.AddRange(SelectList)
-                    End If
+                    'If SelectList Is Nothing Then
+                    '    If _WithLoad(selectOS, schema) Then
+                    '        _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                    '    Else
+                    '        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                    '        Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
+                    '        se.Attributes = Field2DbRelations.PK
+                    '        _sl.Add(se)
+                    '    End If
+                    'Else
+                    '    _sl.AddRange(SelectList)
+                    'End If
+                    PrepareSelectList(isAnonym, schema, f, filterInfo)
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
                         New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
