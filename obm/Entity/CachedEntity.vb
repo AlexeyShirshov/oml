@@ -76,23 +76,14 @@ Namespace Entities
 
         Public Class RelatedObject
             Private _dst As CachedEntity
-            Private _props() As Pair(Of String)
+            Private _srcProps() As String
+            Private _dstProps() As String
 
-            Public Sub New(ByVal src As CachedEntity, ByVal dst As CachedEntity, ByVal properties() As String)
+            Public Sub New(ByVal src As CachedEntity, ByVal properties() As String, _
+                           ByVal dst As CachedEntity, ByVal dstProps() As String)
                 _dst = dst
-
-                Dim l As New List(Of Pair(Of String))
-                For Each p As String In properties
-                    l.Add(New Pair(Of String)(p, p))
-                Next
-                _props = l.ToArray
-
-                AddHandler src.Saved, AddressOf Added
-            End Sub
-
-            Public Sub New(ByVal src As CachedEntity, ByVal dst As CachedEntity, ByVal properties() As Pair(Of String))
-                _dst = dst
-                _props = properties
+                _srcProps = properties
+                _dstProps = dstProps
                 AddHandler src.Saved, AddressOf Added
             End Sub
 
@@ -103,23 +94,16 @@ Namespace Entities
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IEntitySchema = schema.GetEntitySchema(dt)
                     Dim pk As Boolean, pk_old As PKDesc() = _dst.GetPKValues
-                    For Each p As Pair(Of String) In _props
-                        'If p = "ID" Then
-                        '    Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
-                        '    If nm IsNot Nothing Then
-                        '        nm.RemoveNew(_dst)
-                        '    End If
-                        '    _dst.SetPK(source.GetPKValues)
-                        '    If nm IsNot Nothing Then
-                        '        mgr.NewObjectManager.AddNew(_dst)
-                        '    End If
-                        'Else
-                        Dim dc As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(dt, p.Second, oschema)
+                    For i As Integer = 0 To _srcProps.Length - 1
+                        Dim srcProp As String = _srcProps(i)
+                        Dim dstProp As String = _dstProps(i)
+
+                        Dim dc As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(dt, dstProp, oschema)
                         'Dim sc As New EntityPropertyAttribute(p.First)
-                        Dim o As Object = schema.GetPropertyValue(source, p.First, oschema)
+                        Dim o As Object = schema.GetPropertyValue(source, srcProp, oschema)
                         'Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(dt, oschema, c)
                         '_dst.SetValue(pi, c, oschema, o)
-                        schema.SetPropertyValue(_dst, p.Second, o, oschema)
+                        schema.SetPropertyValue(_dst, dstProp, o, oschema)
                         If (schema.GetAttributes(oschema, dc) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             pk = True
                         End If
