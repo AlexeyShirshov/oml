@@ -801,8 +801,7 @@ l1:
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
             Dim o As T = _mgr.CreateEntity(Of T)(pk)
-            'Dim o As New T
-            'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
+            o.SetCreateManager(_cm)
             NewObjectManager.AddNew(o)
             '_objs.Add(o)
             '_saver.Add(o)
@@ -815,8 +814,7 @@ l1:
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
             Dim o As T = _mgr.CreateKeyEntity(Of T)(id)
-            'Dim o As New T
-            'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
+            o.SetCreateManager(_cm)
             NewObjectManager.AddNew(o)
             '_objs.Add(o)
             '_saver.Add(o)

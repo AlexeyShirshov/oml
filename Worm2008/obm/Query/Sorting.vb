@@ -445,14 +445,14 @@ Namespace Sorting
         Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As _IEntity
 
         'Private _q As Generic.List(Of Sort)
-        Private _mgr As OrmManager
+        'Private _mgr As OrmManager
         Private _s As Generic.Stack(Of Sort)
         Private _t As Type
         Private _getobj As GetObjectDelegate
 
         Public Sub New(ByVal t As Type, ByVal q As Generic.Stack(Of Sort))
             _s = q
-            _mgr = OrmManager.CurrentManager
+            '_mgr = OrmManager.CurrentManager
             _t = t
         End Sub
 
@@ -460,19 +460,19 @@ Namespace Sorting
             _t = t
             _s = New Generic.Stack(Of Sort)
             _s.Push(s)
-            _mgr = OrmManager.CurrentManager
+            '_mgr = OrmManager.CurrentManager
         End Sub
 
         Public Sub New(ByVal s As Sort)
             _t = GetType(T)
             _s = New Generic.Stack(Of Sort)
             _s.Push(s)
-            _mgr = OrmManager.CurrentManager
+            '_mgr = OrmManager.CurrentManager
         End Sub
 
         Public Sub New(ByVal q As Generic.Stack(Of Sort))
             _s = q
-            _mgr = OrmManager.CurrentManager
+            '_mgr = OrmManager.CurrentManager
             _t = GetType(T)
         End Sub
 
@@ -485,18 +485,18 @@ Namespace Sorting
             '_q = New Generic.List(Of Sort)
             _s = New Generic.Stack(Of Sort)
             _s.Push(New Sort(GetType(T), propertyAlias, st, False))
-            _mgr = OrmManager.CurrentManager
+            '_mgr = OrmManager.CurrentManager
             _t = GetType(T)
         End Sub
 
         Public Overridable Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
-            Dim tos As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(_t)
+            Dim tos As IEntitySchema = x.MappingEngine.GetEntitySchema(_t)
             For Each s As Sort In _s
                 'If s.IsAny Then
                 '    Throw New NotSupportedException("Any sorting is not supported")
                 'End If
-                Dim ss As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(s.ObjectSource.GetRealType(_mgr.MappingEngine))
+                Dim ss As IEntitySchema = x.MappingEngine.GetEntitySchema(s.ObjectSource.GetRealType(x.MappingEngine))
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
                 Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
@@ -511,8 +511,8 @@ Namespace Sorting
                         End If
                     Else
                         Dim pr As Pair(Of _IEntity, IOrmSorting) = TryCast(xo, Pair(Of _IEntity, IOrmSorting))
-                        xo = _mgr.MappingEngine.GetPropertyValue(pr.First, s.SortBy, ss)
-                        yo = _mgr.MappingEngine.GetPropertyValue(pr2.First, s.SortBy, ss)
+                        xo = x.MappingEngine.GetPropertyValue(pr.First, s.SortBy, ss)
+                        yo = x.MappingEngine.GetPropertyValue(pr2.First, s.SortBy, ss)
                     End If
                 End If
                 Dim k As Integer = 1
@@ -534,7 +534,7 @@ Namespace Sorting
                         Dim xc As IComparable = TryCast(xo, IComparable)
                         Dim yc As IComparable = TryCast(yo, IComparable)
                         If xc Is Nothing OrElse yc Is Nothing Then
-                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString(_mgr.MappingEngine, _mgr.GetContextInfo) & " is not supported IComparable")
+                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString(x.MappingEngine, Nothing) & " is not supported IComparable")
                         End If
                         p = xc.CompareTo(yc) * k
                         If p <> 0 Then
@@ -548,7 +548,7 @@ Namespace Sorting
 
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByVal oschema As IEntitySchema) As Object
             Dim xo As _IEntity = x
-            Dim schema As ObjectMappingEngine = _mgr.MappingEngine
+            Dim schema As ObjectMappingEngine = x.MappingEngine
             Dim st As Type = s.ObjectSource.GetRealType(schema)
             If st IsNot Nothing AndAlso _t IsNot st Then
                 If _getobj IsNot Nothing Then

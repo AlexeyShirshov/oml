@@ -655,6 +655,9 @@ Public Class ObjectMappingEngine
             Return CType(o, System.Xml.XmlDocument).OuterXml
         End If
 
+        If GetType(System.Xml.XmlDocumentFragment) Is ot Then
+            Return CType(o, System.Xml.XmlDocumentFragment).OuterXml
+        End If
         Return v
     End Function
 
