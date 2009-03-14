@@ -49,7 +49,8 @@ namespace Worm.CodeGen.Core.Descriptors
         {
         }
 
-        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(null,name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false, false)
+        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) 
+            : this(null,name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false, false)
         {
         }
 

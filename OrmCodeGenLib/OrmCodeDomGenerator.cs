@@ -2964,7 +2964,7 @@ namespace Worm.CodeGen.Core
                     var propertyNameField = new CodeMemberField
                                                 {
                         Type = new CodeTypeReference(typeof(string)),
-                        Name = propertyDesc.PropertyName,
+                        Name = propertyDesc.PropertyAlias,
                         InitExpression = new CodePrimitiveExpression(propertyDesc.PropertyAlias),
                         Attributes = (MemberAttributes.Public | MemberAttributes.Const)
                     };
@@ -2984,7 +2984,7 @@ namespace Worm.CodeGen.Core
                 {
                     var propertyAliasProperty = new CodeMemberProperty
                                                     {
-                                                        Name = propertyDesc.PropertyName,
+                                                        Name = propertyDesc.PropertyAlias,
                                                         Type =
                                                             new CodeTypeReference(typeof (ObjectProperty)),
                                                         HasGet = true,
@@ -2996,7 +2996,7 @@ namespace Worm.CodeGen.Core
 
                     var instancedPropertyAliasProperty = new CodeMemberProperty
                     {
-                        Name = propertyDesc.PropertyName,
+                        Name = propertyDesc.PropertyAlias,
                         Type =
                             new CodeTypeReference(typeof(ObjectProperty)),
                         HasGet = true,
@@ -3009,7 +3009,7 @@ namespace Worm.CodeGen.Core
                 if(fieldsClass != null)
                 {
                     Type type = typeof(ObjectProperty);
-                    var propConst = new CodeMemberField(type, OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyName))
+                    var propConst = new CodeMemberField(type, OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyAlias))
                                         {
                                             InitExpression = new CodeObjectCreateExpression(type, Settings.UseTypeInProps ? OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(entity) : OrmCodeGenHelper.GetEntityNameReferenceExpression(entity), OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc)),
                                             Attributes = (MemberAttributes.Private | MemberAttributes.Static |MemberAttributes.Final)
@@ -3022,7 +3022,7 @@ namespace Worm.CodeGen.Core
                                        Attributes = (MemberAttributes.Public | MemberAttributes.Static | MemberAttributes.Final),
                                        HasGet = true,
                                        HasSet = false,
-                                       Name = propertyDesc.PropertyName,
+                                       Name = propertyDesc.PropertyAlias,
                                        Type = new CodeTypeReference(type)
                                    };
                     if (!string.IsNullOrEmpty(propertyDesc.Description))

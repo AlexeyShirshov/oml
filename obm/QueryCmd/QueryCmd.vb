@@ -3507,27 +3507,29 @@ l1:
             'Return Where(f).Single(Of T)()
 
             Dim o As IKeyEntity = Nothing
-            If GetType(T) IsNot tp Then
-                'o = mgr.LoadType(id, tp, ensureLoaded, False)
-                If ensureLoaded Then
-                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+            Using New SetManagerHelper(mgr, GetMgr)
+                If GetType(T) IsNot tp Then
+                    'o = mgr.LoadType(id, tp, ensureLoaded, False)
+                    If ensureLoaded Then
+                        o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                    Else
+                        o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                    End If
                 Else
-                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                    'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
+                    If ensureLoaded Then
+                        o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                    Else
+                        o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                    End If
                 End If
-            Else
-                'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
-                If ensureLoaded Then
-                    o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
-                Else
-                    o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
-                End If
-            End If
+            End Using
 
-            If o IsNot Nothing Then
-                If _getMgr IsNot Nothing Then
-                    o.SetCreateManager(_getMgr)
-                End If
-            End If
+            'If o IsNot Nothing Then
+            '    If _getMgr IsNot Nothing Then
+            '        o.SetCreateManager(_getMgr)
+            '    End If
+            'End If
 
             Return CType(o, T)
         End Function

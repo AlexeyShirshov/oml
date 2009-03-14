@@ -2489,16 +2489,23 @@ l1:
                         Dim tp As String = "nvarchar(1)"
                         If p.Value IsNot Nothing AndAlso p.Value IsNot DBNull.Value Then
                             t = p.Value.GetType
-                            val = p.Value.ToString
-                            If TypeOf p.Value Is String Then
-                                val = "'" & val & "'"
-                            End If
-                            tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
-                            If p.DbType = System.Data.DbType.String Then
-                                If p.Size = 0 Then
-                                    tp &= "(1)"
-                                Else
-                                    tp &= "(" & p.Size.ToString & ")"
+                            If TypeOf p.Value Is System.Xml.XmlDocument _
+                                OrElse TypeOf p.Value Is System.Xml.XmlDocumentFragment Then
+                                Dim x As System.Xml.XmlNode = CType(p.Value, System.Xml.XmlNode)
+                                val = "'" & x.InnerXml & "'"
+                                tp = "xml"
+                            Else
+                                val = Convert.ToString(p.Value, Globalization.CultureInfo.InvariantCulture)
+                                If TypeOf p.Value Is String Then
+                                    val = "'" & val & "'"
+                                End If
+                                tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
+                                If p.DbType = System.Data.DbType.String Then
+                                    If p.Size = 0 Then
+                                        tp &= "(1)"
+                                    Else
+                                        tp &= "(" & p.Size.ToString & ")"
+                                    End If
                                 End If
                             End If
                         End If

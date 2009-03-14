@@ -12,7 +12,7 @@ namespace Worm.CodeGen.Core
         {
             string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity, true) + ".Properties";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className),
-                                             propertyDesc.PropertyName);
+                                             propertyDesc.PropertyAlias);
         }
 
         public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription)
