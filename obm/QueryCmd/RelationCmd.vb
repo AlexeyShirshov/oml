@@ -21,24 +21,24 @@ Namespace Query
 
         Public Sub New(ByVal rel As Relation)
             _rel = rel
-            [Select](rel.Relation.Rel)
+            [From](rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _desc = desc
-            [Select](desc.Rel)
+            [From](desc.Rel)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc)
             _desc = desc
-            [Select](desc.Rel)
+            [From](desc.Rel)
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _rel = rel
-            [Select](rel.Relation.Rel)
+            [From](rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type)
@@ -48,7 +48,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion)
@@ -58,7 +58,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion, ByVal key As String)
@@ -68,25 +68,25 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As IKeyEntity)
             'MyBase.New(obj, desc.Key)
             _rel = New Relation(obj, desc)
-            [Select](desc.Rel)
+            [From](desc.Rel)
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = rel
-            [Select](rel.Relation.Rel)
+            [From](rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _desc = desc
-            [Select](desc.Rel)
+            [From](desc.Rel)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
@@ -96,7 +96,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
@@ -106,7 +106,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
@@ -116,13 +116,13 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [Select](_rel.Relation.Rel)
+            [From](_rel.Relation.Rel)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = New Relation(obj, desc)
-            [Select](desc.Rel)
+            [From](desc.Rel)
         End Sub
 #End Region
 
@@ -418,25 +418,27 @@ Namespace Query
                         End If
                         If _WithLoad(selectOS, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        ElseIf SelectTypes IsNot Nothing Then
-                            GoTo l1
                         Else
-                            PrepareSelectList(isAnonym, schema, f, filterInfo)
+                            GoTo l1
                         End If
                     Else
                         _from = New FromClauseDef(table)
                         'Dim os As IOrmObjectSchemaBase = schema.GetEntitySchema(selectedType)
                         'os.GetFieldColumnMap()("ID")._columnName
 l1:
-                        Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                        Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
-                        se.Attributes = Field2DbRelations.PK
-                        _sl.Add(se)
-
-                        If SelectTypes(0).First.Equals(selectOS) Then
+                        If SelectList IsNot Nothing Then
+                            PrepareSelectList(isAnonym, schema, f, filterInfo)
                         Else
-                            Throw New NotImplementedException
+                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                            Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
+                            se.Attributes = Field2DbRelations.PK
+                            _sl.Add(se)
                         End If
+
+                        'If SelectTypes(0).First.Equals(selectOS) Then
+                        'Else
+                        '    Throw New NotImplementedException
+                        'End If
                     End If
 
                     'If SelectTypes.Count > 1 Then
