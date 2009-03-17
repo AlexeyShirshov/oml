@@ -11,6 +11,7 @@ Namespace Cache
         Protected Friend _expires As Date
         Protected _execTime As TimeSpan
         Protected _fetchTime As TimeSpan
+        Protected _sort As Sort
 
         Private _col As ICollection
 
@@ -138,6 +139,19 @@ Namespace Cache
                 Return _fetchTime
             End Get
         End Property
+
+        Public Property Sort() As Sort
+            Get
+                Return _sort
+            End Get
+            Friend Set(ByVal value As Sort)
+                If value IsNot Nothing Then
+                    _sort = CType(value.Clone, Sorting.Sort)
+                Else
+                    _sort = Nothing
+                End If
+            End Set
+        End Property
     End Class
 
     <Serializable()> _
@@ -145,7 +159,6 @@ Namespace Cache
         Inherits CachedItemBase
 
         Protected _obj As Object
-        Protected _sort As Sort
         'Protected _st As SortType
         'Protected _obj As Object
         'Protected _mark As Object
@@ -349,19 +362,6 @@ Namespace Cache
         Shared Operator <>(ByVal o1 As UpdatableCachedItem, ByVal o2 As UpdatableCachedItem) As Boolean
             Return Not (o1 = o2)
         End Operator
-
-        Public Property Sort() As Sort
-            Get
-                Return _sort
-            End Get
-            Friend Set(ByVal value As Sort)
-                If value IsNot Nothing Then
-                    _sort = CType(value.Clone, Sorting.Sort)
-                Else
-                    _sort = Nothing
-                End If
-            End Set
-        End Property
 
         'Protected Overrides Sub Finalize()
         '    If _obj IsNot Nothing Then _cache.RegisterRemovalCacheItem(Me)

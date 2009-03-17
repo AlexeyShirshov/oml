@@ -3217,9 +3217,9 @@ l1:
             End If
 
             Dim types As ICollection(Of Type) = Nothing
-            Dim rt As Boolean = GetSelectedTypes(mpe, types)
+            Dim singleType As Boolean = GetSelectedTypes(mpe, types)
 
-            If rt AndAlso Not dp.IsEmpty Then
+            If singleType AndAlso Not dp.IsEmpty Then
                 dp.AddBoth(types)
             End If
 
@@ -3227,7 +3227,7 @@ l1:
                 For Each f As IFilter In _filter.Filter.GetAllFilters
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                     If Cache.IsCalculated(fdp) Then
-                        If rt Then
+                        If singleType Then
                             dp.AddBoth(types)
                         End If
                         dp.Merge(fdp)
@@ -3241,7 +3241,7 @@ l1:
                 For Each s As Sort In New Sort.Iterator(_order)
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, s)
                     If Cache.IsCalculated(fdp) Then
-                        If rt Then
+                        If singleType Then
                             dp.AddBoth(types)
                         End If
                         dp.Merge(fdp)

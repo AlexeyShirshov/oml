@@ -76,12 +76,13 @@ Namespace Query
 
         Public Sub CreateDepends(ByVal ce As CachedItemBase) Implements OrmManager.ICacheItemProvoderBase.CreateDepends
             Dim uce As UpdatableCachedItem = TryCast(ce, UpdatableCachedItem)
-            If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
+            'If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
+            If _q.propSort IsNot Nothing Then
                 Dim srt As Sort = _q.propSort
                 If srt.Query IsNot Nothing Then
-                    uce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
+                    ce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
                 Else
-                    uce.Sort = srt
+                    ce.Sort = srt
                 End If
             End If
 
@@ -142,8 +143,8 @@ Namespace Query
 
                     Worm.Cache.Add2Cache(cache, dp, _key, _id)
 
-                    Dim types As ICollection(Of Type) = Nothing
-                    Dim rightType As Boolean = q.GetSelectedTypes(MappingEngine, types)
+                    Dim selectTypes As ICollection(Of Type) = Nothing
+                    Dim hasSelectTypes As Boolean = q.GetSelectedTypes(MappingEngine, selectTypes)
 
                     'If _f IsNot Nothing AndAlso _f.Length > i Then
                     'Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
@@ -167,8 +168,8 @@ Namespace Query
                         'If _f IsNot Nothing AndAlso _f.Length > i Then
                         Dim fl As IFilter = _q._f
                         Dim added As Boolean = False
-                        If rightType Then
-                            added = cache.validate_AddCalculatedType(types, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
+                        If hasSelectTypes Then
+                            added = cache.validate_AddCalculatedType(selectTypes, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
                             If uce IsNot Nothing Then
                                 If _q.Filter IsNot Nothing Then
                                     uce.Filter = _q.Filter.Filter
@@ -181,9 +182,10 @@ Namespace Query
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
-                                    If rightType Then
-                                        cache.validate_AddDeleteType(types, _key, _id)
-                                        cache.validate_UpdateType(types, _key, _id)
+                                    If hasSelectTypes AndAlso Not added Then
+                                        cache.validate_AddDeleteType(selectTypes, _key, _id)
+                                        cache.validate_UpdateType(selectTypes, _key, _id)
+                                        added = True
                                         'notPreciseDependsAD = True
                                         'notPreciseDependsU = True
                                     End If
@@ -204,12 +206,25 @@ Namespace Query
                                 End If
                             Next
                         End If
+
+                        If Not added Then
+                            If (_q.FromClause.ObjectSource IsNot Nothing AndAlso Not selectTypes.Contains(_q.FromClause.ObjectSource.GetRealType(MappingEngine))) Then
+                                cache.validate_AddDeleteType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
+                                cache.validate_UpdateType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
+                            Else
+                                Dim rcmd As RelationCmd = TryCast(_q, RelationCmd)
+                                If rcmd IsNot Nothing Then
+                                    cache.validate_AddDeleteType(New Type() {rcmd.RelationDesc.Rel.GetRealType(MappingEngine)}, _key, _id)
+                                    cache.validate_UpdateType(New Type() {rcmd.RelationDesc.Rel.GetRealType(MappingEngine)}, _key, _id)
+                                End If
+                            End If
+                        End If
                         'ElseIf rightType Then
                         '    cache.validate_AddDeleteType(types, _key, _id)
                         'End If
                     Else
-                        If rightType Then
-                            cache.validate_AddDeleteType(types, _key, _id)
+                        If hasSelectTypes Then
+                            cache.validate_AddDeleteType(selectTypes, _key, _id)
                             'notPreciseDependsAD = True
                         End If
 
@@ -220,8 +235,8 @@ Namespace Query
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
-                                    If rightType Then
-                                        cache.validate_UpdateType(types, _key, _id)
+                                    If hasSelectTypes Then
+                                        cache.validate_UpdateType(selectTypes, _key, _id)
                                         'notPreciseDependsU = True
                                     End If
                                 Else
@@ -247,16 +262,16 @@ Namespace Query
                             End If
 
                             If t Is Nothing Then
-                                If rightType Then
-                                    cache.validate_UpdateType(types, _key, _id)
+                                If hasSelectTypes Then
+                                    cache.validate_UpdateType(selectTypes, _key, _id)
                                     'notPreciseDependsU = True
                                 End If
                             Else
                                 Dim p As New Pair(Of String, Type)(s.SortBy, t)
                                 cache.validate_AddDependentSortField(p, _key, _id)
                             End If
-                        ElseIf rightType Then
-                            cache.validate_UpdateType(types, _key, _id)
+                        ElseIf hasSelectTypes Then
+                            cache.validate_UpdateType(selectTypes, _key, _id)
                             'notPreciseDependsU = True
                         End If
                     Next
@@ -266,8 +281,8 @@ Namespace Query
                             If Not String.IsNullOrEmpty(g.PropertyAlias) Then
                                 Dim p As New Pair(Of String, Type)(g.PropertyAlias, g.ObjectSource.GetRealType(MappingEngine))
                                 cache.validate_AddDependentGroupField(p, _key, _id)
-                            ElseIf rightType Then
-                                cache.validate_UpdateType(types, _key, _id)
+                            ElseIf hasSelectTypes Then
+                                cache.validate_UpdateType(selectTypes, _key, _id)
                                 'notPreciseDependsU = True
                             End If
                         Next

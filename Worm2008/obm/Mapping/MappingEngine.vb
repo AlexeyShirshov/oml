@@ -496,7 +496,7 @@ Public Class ObjectMappingEngine
         Dim r As M2MRelationDesc = GetM2MRelation(maintype, subtype, True)
 
         If r Is Nothing Then
-            Throw New ArgumentException("Relation is not exists")
+            Throw New ArgumentException(String.Format("Relation between {0} and {1} is not exists", maintype, subtype))
         Else
             Return r.ConnectedType IsNot Nothing
         End If
@@ -535,7 +535,7 @@ Public Class ObjectMappingEngine
         Dim r As M2MRelationDesc = GetM2MRelation(maintype, subtype, True)
 
         If r Is Nothing Then
-            Throw New ArgumentException("Relation is not exists")
+            Throw New ArgumentException(String.Format("Relation between {0} and {1} is not exists", maintype, subtype))
         Else
             Return r.ConnectedType
         End If
