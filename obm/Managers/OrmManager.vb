@@ -2254,7 +2254,7 @@ l1:
 
     Protected Friend Sub M2MDelete(ByVal mainobj As _IKeyEntity, ByVal t As Type, ByVal direct As String)
         Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct).First
-        For Each id As Integer In m.Entry.Current
+        For Each id As Object In m.Entry.Current
             'm.Entry.Delete(id)
             M2MDelete(mainobj, CType(GetKeyEntityFromCacheOrCreate(id, t), _IKeyEntity), direct)
         Next
@@ -3188,16 +3188,32 @@ l1:
 
                     If sa = SaveAction.Delete Then
                         If orm IsNot Nothing Then
+                            Dim toDel As New List(Of M2MRelation)
                             For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
                                 Dim acs As AcceptState2 = Nothing
                                 If r.ConnectedType Is Nothing Then
                                     If r.DeleteCascade Then
                                         M2MDelete(orm, r.Rel.GetRealType(MappingEngine), r.Key)
+                                        Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
+                                        If cmd IsNot Nothing Then
+                                            cmd.RemoveAll(Me)
+                                            toDel.Add(CType(cmd.Relation, M2MRelation))
+                                        End If
                                     End If
                                     acs = M2MSave(orm, r.Rel.GetRealType(MappingEngine), r.Key)
                                     processedType.Add(r.Rel.GetRealType(MappingEngine))
                                 End If
                                 If acs IsNot Nothing Then CType(orm, _IKeyEntity).AddAccept(acs)
+                            Next
+
+                            For Each elb As M2MRelation In toDel
+                                Dim el As M2MRelation = elb.PrepareSave(Me)
+                                If el IsNot Nothing Then
+                                    M2MSave(orm, el)
+                                    'elb.Saved = True
+                                    elb._savedIds.AddRange(el.Added)
+                                    hasNew = hasNew OrElse elb.HasNew
+                                End If
                             Next
 
                             Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)

@@ -701,7 +701,7 @@ Namespace Web
             UpdateLastActivity()
         End Sub
 
-        Protected Overridable Sub UpdateLastActivity()
+        Public Overridable Sub UpdateLastActivity()
             Using mgr As OrmManager = UserMapper.CreateManager
                 Dim u As IKeyEntity = Nothing
                 If _treatUsernameAsEmail Then

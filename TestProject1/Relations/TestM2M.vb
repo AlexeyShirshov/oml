@@ -205,7 +205,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    e.Relations.Delete(l(0))
+                    e.Relations.Remove(l(0))
                     s.AcceptModifications()
                 End Using
 

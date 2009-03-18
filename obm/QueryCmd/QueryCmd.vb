@@ -2505,6 +2505,9 @@ l1:
                 Dim c As New QueryCmd.svct(Me)
                 Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
                     If FromClause Is Nothing Then
+                        If SelectTypes Is Nothing Then
+                            Throw New QueryCmdException("Neither FromClause nor SelectTypes not specified", Me)
+                        End If
                         From(SelectTypes(0).First)
                     End If
                     Return [Select](FCtor.count).SingleSimple(Of Integer)(mgr)
@@ -3525,11 +3528,9 @@ l1:
                 End If
             End Using
 
-            'If o IsNot Nothing Then
-            '    If _getMgr IsNot Nothing Then
-            '        o.SetCreateManager(_getMgr)
-            '    End If
-            'End If
+            If o IsNot Nothing AndAlso o.CreateManager Is Nothing ANDalso _getMgr IsNot Nothing Then
+                o.SetCreateManager(_getMgr)
+            End If
 
             Return CType(o, T)
         End Function
