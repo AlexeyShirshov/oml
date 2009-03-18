@@ -1353,7 +1353,7 @@ Namespace Entities
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
                 Return Equals(CType(obj, KeyEntity))
             Else
-                Return Identifier.Equals(obj)
+                Return False 'Identifier.Equals(obj)
             End If
         End Function
 
@@ -1733,10 +1733,19 @@ Namespace Entities
 
         Public Function CreateRelCmd(ByVal desc As RelationDesc) As Worm.Query.QueryCmd
             Dim q As Worm.Query.RelationCmd = Nothing
+            Dim mr As M2MRelationDesc = TryCast(desc, M2MRelationDesc)
             If CreateManager IsNot Nothing Then
-                q = New Worm.Query.RelationCmd(New Relation(Me, desc), CreateManager)
+                If mr IsNot Nothing Then
+                    q = New Worm.Query.RelationCmd(New M2MRelation(Me, mr), CreateManager)
+                Else
+                    q = New Worm.Query.RelationCmd(New Relation(Me, desc), CreateManager)
+                End If
             Else
-                q = Worm.Query.RelationCmd.Create(New Relation(Me, desc))
+                If mr IsNot Nothing Then
+                    q = Worm.Query.RelationCmd.Create(New M2MRelation(Me, mr))
+                Else
+                    q = Worm.Query.RelationCmd.Create(New Relation(Me, desc))
+                End If
             End If
             AddRel(q._rel)
             Return q
@@ -1838,11 +1847,11 @@ Namespace Entities
         '    End Using
         'End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IRelations.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IRelations.Remove
             _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Delete
+        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Remove
             Dim el As M2MRelation = GetM2M(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then

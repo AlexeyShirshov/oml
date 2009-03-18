@@ -1244,6 +1244,12 @@ Namespace Database.Storedprocs
             Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(mgr)
         End Function
 
+        Public Shared Shadows Function Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
+                Return Exec(mgr, name, paramNames, params)
+            End Using
+        End Function
+
         Public Shared Shadows Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then

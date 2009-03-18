@@ -696,6 +696,20 @@ l1:
             Relation.Delete(o)
         End Sub
 
+        Public Sub RemoveAll()
+            PrepareRel()
+            For Each o As IKeyEntity In ToList()
+                Remove(o)
+            Next
+        End Sub
+
+        Public Sub RemoveAll(ByVal mgr As OrmManager)
+            PrepareRel()
+            For Each o As IKeyEntity In ToList(mgr)
+                Remove(o)
+            Next
+        End Sub
+
         Public Sub Merge(ByVal col As IList(Of IKeyEntity), ByVal removeNotInList As Boolean)
             Relation.Merge(Me, col, removeNotInList)
         End Sub

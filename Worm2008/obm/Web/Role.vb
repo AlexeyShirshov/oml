@@ -10,7 +10,7 @@ Namespace Web
     Public MustInherit Class RoleBase
         Inherits RoleProvider
 
-        Protected _rolenameField As String
+        Private _rolenameField As String
 
         Public Overrides Property ApplicationName() As String
             Get
@@ -31,15 +31,11 @@ Namespace Web
             MyBase.Initialize(name, config)
         End Sub
 
-        'Protected ReadOnly Property ProfileProvider() As ProfileBase
-        '    Get
-        '        Dim p As Profile.ProfileProvider = Profile.ProfileManager.Provider
-        '        If p Is Nothing Then
-        '            Throw New InvalidOperationException("Profile provider must be set")
-        '        End If
-        '        Return CType(p, ProfileBase)
-        '    End Get
-        'End Property
+        Public ReadOnly Property RoleNameField() As String
+            Get
+                Return _rolenameField
+            End Get
+        End Property
 
         Protected Overridable ReadOnly Property UserMapper() As IUserMapping
             Get
@@ -190,7 +186,7 @@ Namespace Web
                         For Each role As String In roleNames
                             Dim r As IKeyEntity = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
-                                CType(u, IRelations).Delete(r)
+                                CType(u, IRelations).Remove(r)
                             End If
                         Next
                     End If

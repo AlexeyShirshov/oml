@@ -174,8 +174,8 @@ Namespace Entities
 
         Sub Add(ByVal o As IKeyEntity)
         Sub Add(ByVal o As IKeyEntity, ByVal key As String)
-        Sub Delete(ByVal o As IKeyEntity)
-        Sub Delete(ByVal o As IKeyEntity, ByVal key As String)
+        Sub Remove(ByVal o As IKeyEntity)
+        Sub Remove(ByVal o As IKeyEntity, ByVal key As String)
 
         Sub Cancel(ByVal t As Type)
         Sub Cancel(ByVal t As Type, ByVal key As String)
