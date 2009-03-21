@@ -98,9 +98,13 @@ Namespace Entities
         Private _column As String
         'Private _custom As String
         Private _values() As FieldReference
-        Private _attr As Field2DbRelations
+
+        'Private _fr As FieldReference
+
         Private _q As Worm.Query.QueryCmd
         Private _agr As AggregateBase
+
+        Private _attr As Field2DbRelations
         Private _falias As String
         Private _dst As EntityUnion
 

@@ -385,6 +385,10 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
+    Public Function GetM2MRelation(ByVal oschema As IEntitySchema, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
+        Return GetM2MRel(GetM2MRelations(oschema), subtype, key)
+    End Function
+
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
         'Dim mr() As M2MRelation = GetM2MRelations(maintype)

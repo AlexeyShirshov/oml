@@ -71,12 +71,12 @@ Public Class MyProfile
     '    Return Now
     'End Function
 
-    Protected Overrides Function GetUserByName(ByVal mgr As OrmManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
+    Protected Overrides Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
         Dim t As Type = GetUserType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New Ctor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(New Ctor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -84,13 +84,15 @@ Public Class MyProfile
                 Throw New ArgumentException("User with a name " & name & " is not found")
             Else
                 If createIfNotExist Then
-                    Dim u As MyUser = mgr.CreateKeyEntity(Of MyUser)(-100)
-                    u.LastActivity = GetNow()
-                    u.IsAnonymous = True
-                    u.UserName = name
-                    u.Email = name
-                    u.SaveChanges(True)
-                    Return u
+                    Using mt As New ModificationsTracker(CreateManager)
+                        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
+                        u.LastActivity = GetNow()
+                        u.IsAnonymous = True
+                        u.UserName = name
+                        u.Email = name
+                        mt.AcceptModifications()
+                        Return u
+                    End Using
                 Else
                     Return Nothing
                 End If
@@ -111,8 +113,8 @@ Public Class MyProfile
         Return ".TESTPROJECTANONYMCOOKIE"
     End Function
 
-    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
-        Dim u As MyUser = mgr.CreateKeyEntity(Of MyUser)(-100)
+    Protected Overrides Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
+        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
         u.UserName = name
         Return u
     End Function

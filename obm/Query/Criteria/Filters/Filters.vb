@@ -157,9 +157,9 @@ Namespace Criteria.Core
             '    _oschema = oschema
             'End If
 
-            Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
+            'Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
-            If pv Is Nothing OrElse pv.ShouldUse Then
+            If Value.ShouldUse Then
                 'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
                 'If almgr IsNot Nothing Then
@@ -313,12 +313,12 @@ Namespace Criteria.Core
 
         'Private _templ As TableFilterTemplate
 
-        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
             MyBase.New(value, New TableFilterTemplate(table, column, operation))
             '_templ = New TableFilterTemplate(table, column, operation)
         End Sub
 
-        Public Sub New(ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+        Public Sub New(ByVal column As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
             MyBase.New(value, New TableFilterTemplate(New SourceFragment(TempTable), column, operation))
             '_templ = New TableFilterTemplate(table, column, operation)
         End Sub
@@ -347,11 +347,11 @@ Namespace Criteria.Core
         'End Function
 
         Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-            Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
+            'Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
-            If pf Is Nothing OrElse pf.ShouldUse Then
+            If Value.ShouldUse Then
                 If Template.Table.Name = TempTable Then
-                    Return Template.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False)
+                    Return Template.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
                 Else
                     'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
@@ -371,7 +371,7 @@ Namespace Criteria.Core
                         End Try
                     End If
 
-                    Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False)
+                    Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
                 End If
             Else
                 Return String.Empty
@@ -547,15 +547,15 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("schema")
             End If
 
-            Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
+            'Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
-            If pf Is Nothing OrElse pf.ShouldUse Then
+            If Value.ShouldUse Then
                 Dim s As String = CType(Template, TemplateCls).Format
                 If CType(Template, TemplateCls).Values IsNot Nothing Then
                     s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, CType(Template, TemplateCls).Values).ToArray)
                 End If
 
-                Return s & stmt.Oper2String(Template.Operation) & GetParam(schema, stmt, pname, False)
+                Return s & stmt.Oper2String(Template.Operation) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
             Else
                 Return String.Empty
             End If
@@ -850,6 +850,71 @@ Namespace Criteria.Core
 
         Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
             _agg.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            MyBase.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+        End Sub
+    End Class
+
+    Public Class QueryFilter
+        Inherits FilterBase
+
+        Private _cmd As QueryCmd
+        Private _fo As FilterOperation
+
+        Public Sub New(ByVal cmd As QueryCmd, ByVal fo As FilterOperation, ByVal val As IFilterValue)
+            MyBase.New(val)
+            _cmd = cmd
+            _fo = fo
+        End Sub
+
+        Protected Overrides Function _Clone() As Object 'Implements System.ICloneable.Clone
+            Return New QueryFilter(_cmd, _fo, Value)
+        End Function
+
+        'Public Overloads Function Clone() As IFilter Implements IFilter.Clone
+        '    Return New AggFilter(_agg, _fo)
+        'End Function
+
+        'Public Overloads Function Equals(ByVal f As IFilter) As Boolean Implements IFilter.Equals
+        '    Dim fl As AggFilter = TryCast(f, AggFilter)
+        '    If fl Is Nothing Then
+        '        Return False
+        '    End If
+        '    Return _agg.Equals(fl._agg) AndAlso _fo = fl._fo
+        'End Function
+
+        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) 'Implements IFilter.GetAllFilters
+            Return New IFilter() {Me}
+        End Function
+
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
+
+            Return "(" & stmt.MakeQueryStatement(schema, filterInfo, _cmd, pname, almgr) & ")" & stmt.Oper2String(_fo) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
+        End Function
+
+        'Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
+        '    If Equals(replacement) Then
+        '        Return replacer
+        '    End If
+        '    Return Nothing
+        'End Function
+
+        'Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
+
+        Protected Overrides Function _ToString() As String 'Implements Values.IQueryElement._ToString
+            Return _cmd._ToString & TemplateBase.OperToStringInternal(_fo)
+        End Function
+
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String 'Implements Values.IQueryElement.GetStaticString
+            Return _cmd.GetStaticString(mpe, contextFilter) & TemplateBase.OperToStringInternal(_fo)
+        End Function
+
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
+            _cmd.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             MyBase.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
     End Class

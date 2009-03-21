@@ -8,7 +8,80 @@ Namespace Entities
     <DefaultProperty("Item")> _
     Public Class AnonymousEntity
         Inherits Entity
-        Implements IOptimizedValues
+        Implements IOptimizedValues, ICustomTypeDescriptor
+
+        '<TypeConverter(GetType(AnonymousEntity.AnonymTypeConverter))> _
+        'Public Class AnonymTypeConverter
+        '    Inherits TypeConverter
+
+        'End Class
+        Protected Class PropDesc
+            Inherits PropertyDescriptor
+
+            Private _pi As Reflection.PropertyInfo
+            Private _name As String
+            Private _t As Type
+
+            Public Sub New(ByVal pi As Reflection.PropertyInfo)
+                MyBase.New(pi.Name, Nothing)
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal t As Type)
+                MyBase.New(name, Nothing)
+                _name = name
+                _t = t
+            End Sub
+
+            Public Overrides Function CanResetValue(ByVal component As Object) As Boolean
+                Return False
+            End Function
+
+            Public Overrides ReadOnly Property ComponentType() As System.Type
+                Get
+                    Return GetType(AnonymousEntity)
+                End Get
+            End Property
+
+            Public Overrides Function GetValue(ByVal component As Object) As Object
+                If _pi Is Nothing Then
+                    Return CType(component, AnonymousEntity)(_name)
+                Else
+                    Return _pi.GetValue(component, Nothing)
+                End If
+            End Function
+
+            Public Overrides ReadOnly Property IsReadOnly() As Boolean
+                Get
+                    Return False
+                End Get
+            End Property
+
+            Public Overrides ReadOnly Property PropertyType() As System.Type
+                Get
+                    If _pi Is Nothing Then
+                        Return _t
+                    Else
+                        Return _pi.PropertyType
+                    End If
+                End Get
+            End Property
+
+            Public Overrides Sub ResetValue(ByVal component As Object)
+
+            End Sub
+
+            Public Overrides Sub SetValue(ByVal component As Object, ByVal value As Object)
+                If _pi Is Nothing Then
+                    CType(component, AnonymousEntity)(_name) = value
+                Else
+                    _pi.SetValue(component, value, Nothing)
+                End If
+            End Sub
+
+            Public Overrides Function ShouldSerializeValue(ByVal component As Object) As Boolean
+                Return False
+            End Function
+        End Class
 
         Private _props As New Dictionary(Of String, Object)
 
@@ -22,11 +95,83 @@ Namespace Entities
             _props(propertyAlias) = value
         End Sub
 
-        Default Public ReadOnly Property Item(ByVal field As String) As Object
+        Default Public Property Item(ByVal field As String) As Object
             Get
                 Return GetValue(field, Nothing)
             End Get
+            Set(ByVal value As Object)
+                SetValue(field, Nothing, value)
+            End Set
         End Property
+
+#Region " ICustomTypeDescriptor "
+        Public Function GetAttributes() As System.ComponentModel.AttributeCollection Implements System.ComponentModel.ICustomTypeDescriptor.GetAttributes
+            Return New AttributeCollection(Nothing)
+        End Function
+
+        Public Function GetClassName() As String Implements System.ComponentModel.ICustomTypeDescriptor.GetClassName
+            Return Nothing
+        End Function
+
+        Public Function GetComponentName() As String Implements System.ComponentModel.ICustomTypeDescriptor.GetComponentName
+            Return Nothing
+        End Function
+
+        Public Function GetConverter() As System.ComponentModel.TypeConverter Implements System.ComponentModel.ICustomTypeDescriptor.GetConverter
+            Return Nothing
+        End Function
+
+        Public Function GetDefaultEvent() As System.ComponentModel.EventDescriptor Implements System.ComponentModel.ICustomTypeDescriptor.GetDefaultEvent
+            Return Nothing
+        End Function
+
+        Public Function GetDefaultProperty() As System.ComponentModel.PropertyDescriptor Implements System.ComponentModel.ICustomTypeDescriptor.GetDefaultProperty
+            Return New PropDesc(Me.GetType.GetProperty("Item"))
+        End Function
+
+        Public Function GetEditor(ByVal editorBaseType As System.Type) As Object Implements System.ComponentModel.ICustomTypeDescriptor.GetEditor
+            Return Nothing
+        End Function
+
+        Public Function GetEvents() As System.ComponentModel.EventDescriptorCollection Implements System.ComponentModel.ICustomTypeDescriptor.GetEvents
+            Return New EventDescriptorCollection(Nothing)
+        End Function
+
+        Public Function GetEvents(ByVal attributes() As System.Attribute) As System.ComponentModel.EventDescriptorCollection Implements System.ComponentModel.ICustomTypeDescriptor.GetEvents
+            Return New EventDescriptorCollection(Nothing)
+        End Function
+
+        Public Function GetProperties() As System.ComponentModel.PropertyDescriptorCollection Implements System.ComponentModel.ICustomTypeDescriptor.GetProperties
+            Return GetProperties(Nothing)
+        End Function
+
+        Private _pdc As PropertyDescriptorCollection
+
+        Public Function GetProperties(ByVal attributes() As System.Attribute) As System.ComponentModel.PropertyDescriptorCollection Implements System.ComponentModel.ICustomTypeDescriptor.GetProperties
+            If _pdc Is Nothing Then
+                Dim props(_props.Count - 1) As PropertyDescriptor
+                Dim i As Integer = 0
+                For Each kv As KeyValuePair(Of String, Object) In _props
+                    Dim t As Type = Nothing
+                    Dim v As Object = kv.Value
+                    If v IsNot Nothing Then
+                        t = v.GetType
+                    End If
+                    props(i) = New PropDesc(kv.Key, t)
+                    i += 1
+                Next
+                _pdc = New PropertyDescriptorCollection(props)
+            End If
+
+            Return _pdc
+        End Function
+
+        Public Function GetPropertyOwner(ByVal pd As System.ComponentModel.PropertyDescriptor) As Object Implements System.ComponentModel.ICustomTypeDescriptor.GetPropertyOwner
+            Return Me
+        End Function
+
+#End Region
+
     End Class
 
     <Serializable()> _

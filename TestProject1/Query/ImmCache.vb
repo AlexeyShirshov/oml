@@ -54,7 +54,7 @@ Imports Worm.Criteria
             mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
-                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.custom("name"))
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
@@ -169,7 +169,7 @@ Imports Worm.Criteria
             Dim q As New QueryCmd()
             q.Select(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
-            q.Sort(SCtor.custom("id"))
+            q.OrderBy(SCtor.custom("id"))
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
@@ -365,7 +365,7 @@ Imports Worm.Criteria
             mgr.Cache.NewObjectManager = tm
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
-                Ctor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(SCtor.prop(GetType(Entity4), "Title"))
+                Ctor.prop(GetType(Entity4), "ID").greater_than(5)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
             Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "Title").eq("djkg"))

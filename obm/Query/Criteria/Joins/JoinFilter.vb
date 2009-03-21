@@ -568,7 +568,7 @@ Namespace Criteria.Joins
             End With
         End Sub
 
-        Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IParamFilterValue) As IFilter
+        Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IFilterValue) As IFilter
             For Each _fl As IFilter In source.GetAllFilters()
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 If fl IsNot Nothing Then
@@ -598,7 +598,7 @@ Namespace Criteria.Joins
         End Function
 
         Private Shared Function SetJF(ByVal fr As FieldReference, _
-                               ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
+                               ByVal value As IFilterValue, ByVal oper As FilterOperation) As IFilter
             If fr.Property.ObjectSource IsNot Nothing Then
                 Return New EntityFilter(fr.Property, value, oper)
             Else

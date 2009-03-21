@@ -84,7 +84,7 @@ Namespace Criteria
             Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
         End Function
 
-        Public Function eq(ByVal value As IParamFilterValue) As PredicateLink
+        Public Function eq(ByVal value As IFilterValue) As PredicateLink
             If value Is Nothing OrElse value Is DBNull.Value Then
                 Return is_null()
             Else
@@ -97,6 +97,14 @@ Namespace Criteria
                 Return is_null()
             Else
                 Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.Equal))
+            End If
+        End Function
+
+        Public Function eq(ByVal cmd As QueryCmd) As PredicateLink
+            If cmd Is Nothing Then
+                Return is_null()
+            Else
+                Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.Equal))
             End If
         End Function
 
@@ -148,12 +156,32 @@ Namespace Criteria
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
+        Public Function greater_than_eq(ByVal format As String, ByVal ParamArray params() As FieldReference) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.GreaterEqualThan))
+        End Function
+
+        Public Function less_than_eq(ByVal format As String, ByVal ParamArray params() As FieldReference) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.LessEqualThan))
+        End Function
+
+        Public Function greater_than_eq(ByVal format As String) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format), FilterOperation.GreaterEqualThan))
+        End Function
+
+        Public Function less_than_eq(ByVal format As String) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format), FilterOperation.LessEqualThan))
+        End Function
+
         Public Function greater_than(ByVal value As Object) As PredicateLink
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterThan))
         End Function
 
         Public Function less_than(ByVal value As Object) As PredicateLink
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessThan))
+        End Function
+
+        Public Function less_than(ByVal value As IFilterValue) As PredicateLink
+            Return GetLink(CreateFilter(value, FilterOperation.LessThan))
         End Function
 
         Public Function [like](ByVal value As String) As PredicateLink
@@ -191,7 +219,7 @@ Namespace Criteria
             Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
         End Function
 
-        Public Function Op(ByVal oper As FilterOperation, ByVal value As IParamFilterValue) As PredicateLink
+        Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As PredicateLink
             Return GetLink(CreateFilter(value, oper))
         End Function
 
@@ -408,9 +436,9 @@ Namespace Criteria
 
         Protected Overrides Function CreateFilter(ByVal v As Values.IFilterValue, ByVal oper As FilterOperation) As Core.IFilter
             If Table Is Nothing Then
-                Return New TableFilter(Column, CType(v, IParamFilterValue), oper)
+                Return New TableFilter(Column, v, oper)
             Else
-                Return New TableFilter(Table, Column, CType(v, IParamFilterValue), oper)
+                Return New TableFilter(Table, Column, v, oper)
             End If
         End Function
 
@@ -621,4 +649,37 @@ Namespace Criteria
         End Function
     End Class
 
+    Public Class QueryPredicate
+        Inherits PredicateBase
+
+        Private _q As QueryCmd
+
+        Public Sub New(ByVal q As QueryCmd)
+            _q = q
+        End Sub
+
+        Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+            MyBase.New(con, ct)
+        End Sub
+
+        Protected Overrides Function CreateFilter(ByVal v As Values.IFilterValue, ByVal oper As FilterOperation) As Core.IFilter
+            Return New QueryFilter(_q, oper, v)
+        End Function
+
+        Protected Overloads Overrides Function CreateJoinFilter(ByVal t As Entities.Meta.SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overloads Overrides Function CreateJoinFilter(ByVal op As Query.ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overrides Function GetLink(ByVal fl As Core.IFilter) As PredicateLink
+            If ConditionCtor Is Nothing Then
+                ConditionCtor = New Condition.ConditionConstructor
+            End If
+            ConditionCtor.AddFilter(fl, ConditionOper)
+            Return New PredicateLink(CType(ConditionCtor, Condition.ConditionConstructor))
+        End Function
+    End Class
 End Namespace

@@ -77,8 +77,8 @@ Namespace Query
         Public Sub CreateDepends(ByVal ce As CachedItemBase) Implements OrmManager.ICacheItemProvoderBase.CreateDepends
             Dim uce As UpdatableCachedItem = TryCast(ce, UpdatableCachedItem)
             'If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
-            If _q.propSort IsNot Nothing Then
-                Dim srt As Sort = _q.propSort
+            If _q.Sort IsNot Nothing Then
+                Dim srt As Sort = _q.Sort
                 If srt.Query IsNot Nothing Then
                     ce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
                 Else
@@ -254,7 +254,7 @@ Namespace Query
                         End If
                     End If
 
-                    For Each s As Sort In New Sort.Iterator(q.propSort)
+                    For Each s As Sort In New Sort.Iterator(q.Sort)
                         If Not String.IsNullOrEmpty(s.SortBy) Then
                             Dim t As Type = Nothing
                             If s.ObjectSource IsNot Nothing Then
@@ -416,7 +416,7 @@ Namespace Query
 
         Public ReadOnly Property Sort() As Sort Implements OrmManager.ICacheItemProvoderBase.Sort
             Get
-                Return _q.propSort
+                Return _q.Sort
             End Get
         End Property
 

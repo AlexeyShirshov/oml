@@ -53,6 +53,7 @@ namespace Worm.CodeGen.CodeGenerator
                 Console.WriteLine("  -fnP\t- file name prefix (null by default)");
                 Console.WriteLine("  -fnS\t- file name suffix (null by default)");
                 Console.WriteLine("  -propsT\t- use type instead of entity name in props (false by default)");
+                Console.WriteLine("  -rm\t- remove old m2m methods (false by default)");
                 return;
             }
 
@@ -146,6 +147,11 @@ namespace Worm.CodeGen.CodeGenerator
             if (cmdLine["propsT"] != null)
             {
                 settings.UseTypeInProps = true;
+            }
+
+            if (cmdLine["rm"] != null)
+            {
+                settings.RemoveOldM2M = true;
             }
 
             if(!System.IO.File.Exists(inputFilename))

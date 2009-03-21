@@ -373,7 +373,7 @@ Namespace Misc
 
             Dim pp As PredicateLink = Nothing
 
-            cmd.Select(tt).Sort(sort)
+            cmd.Select(tt).OrderBy(sort)
 
             If strong Then
                 pp = Ctor.prop(tt, firstPropertyAlias).eq(Name)
@@ -389,7 +389,7 @@ Namespace Misc
                 End If
             End If
 
-            Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.propJoins).ToObjectList(Of T)()
+            Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)()
         End Function
 
         Protected Overridable Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
@@ -411,7 +411,7 @@ Namespace Misc
                 cmd.Where(Ctor.prop(tt, propertyAlias).like(Name & "%").and(_cmd.Filter))
             End If
 
-            Return cmd.Join(_cmd.propJoins).ToObjectList(Of T)()
+            Return cmd.Join(_cmd.Joins).ToObjectList(Of T)()
         End Function
 
         Public Overloads ReadOnly Property Parent() As DicIndexT(Of T)

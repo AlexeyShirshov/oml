@@ -1863,7 +1863,7 @@ l1:
                     '    props = MappingEngine.GetProperties(original_type, oschema)
                     'End If
 
-                    If selectList Is Nothing Then
+                    If selectList Is Nothing OrElse selectList.Count = 0 Then
                         'selectList = New List(Of EntityPropertyAttribute)
                         'For Each m As MapField2Column In fields_idx
                         '    Dim clm As New EntityPropertyAttribute(m._propertyAlias, m._newattributes)
@@ -1876,15 +1876,23 @@ l1:
                         ''    Dim clm As New EntityPropertyAttribute(dr.GetName(i))
                         ''    selectList.Add(clm)
                         ''Next
-                        selectList = New List(Of SelectExpression)
-                        For Each m As MapField2Column In fields_idx
-                            Dim se As New SelectExpression(original_type, m._propertyAlias)
-                            se.Column = If(Not String.IsNullOrEmpty(m._columnName), m._columnName, m._propertyAlias)
-                            se.Attributes = m._newattributes
-                            selectList.Add(se)
-                        Next
-                        CType(selectList, List(Of SelectExpression)).Sort(Function(c1 As SelectExpression, c2 As SelectExpression) _
-                            dr.GetOrdinal(c1.Column).CompareTo(dr.GetOrdinal(c2.Column)))
+                        If fields_idx.Count > 0 Then
+                            selectList = New List(Of SelectExpression)
+                            For Each m As MapField2Column In fields_idx
+                                Dim se As New SelectExpression(original_type, m._propertyAlias)
+                                se.Column = If(Not String.IsNullOrEmpty(m._columnName), m._columnName, m._propertyAlias)
+                                se.Attributes = m._newattributes
+                                selectList.Add(se)
+                            Next
+                            CType(selectList, List(Of SelectExpression)).Sort(Function(c1 As SelectExpression, c2 As SelectExpression) _
+                                dr.GetOrdinal(c1.Column).CompareTo(dr.GetOrdinal(c2.Column)))
+                        Else
+                            For i As Integer = 0 To dr.FieldCount - 1
+                                Dim se As New SelectExpression(original_type, dr.GetName(i))
+                                se.Column = dr.GetName(i)
+                                selectList.Add(se)
+                            Next
+                        End If
                     End If
 
                     Dim rownum As Integer = 0

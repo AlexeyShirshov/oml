@@ -87,7 +87,7 @@ Imports Worm.Criteria.Joins
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(t1).Where(Ctor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).Sort(SCtor.prop(t1, "DT"))
+        q.Select(t1).Where(Ctor.prop(t1, "EnumStr").eq(Enum1.sec)).Top(1).OrderBy(SCtor.prop(t1, "DT"))
 
         Assert.AreEqual(2, q.Single(Of Table1).ID)
     End Sub

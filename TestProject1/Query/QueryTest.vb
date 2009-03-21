@@ -15,6 +15,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
 Imports System.Runtime.Serialization.Formatters.Binary
+Imports System.ComponentModel
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -126,14 +127,14 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)). _
                 Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")). _
-                Sort(SCtor.prop(GetType(Entity4), "ID"))
+                OrderBy(SCtor.prop(GetType(Entity4), "ID"))
 
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(3, r(0).ID)
 
-            q.propSort = SCtor.prop(GetType(Entity4), "ID").desc
+            q.Sort = SCtor.prop(GetType(Entity4), "ID").desc
             r = q.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(12, r(0).ID)
@@ -144,7 +145,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             q.Filter = Ctor.prop(GetType(Entity4), "Title").like("b%")
-            q.propSort = SCtor.prop(GetType(Entity4), "ID")
+            q.Sort = SCtor.prop(GetType(Entity4), "ID")
             q.Select(GetType(Entity4))
             Assert.IsNotNull(q)
 
@@ -165,10 +166,10 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Dim q As New QueryCmd()
             q.Select(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
-            q.propJoins = New QueryJoin() {New QueryJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.Joins = New QueryJoin() {New QueryJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
             q.Select(New SelectExpression() {New SelectExpression(t_entity4, "ID"), New SelectExpression(t_entity4, "Title")})
 
-            q.Sort(SCtor.prop(t_entity4, "Title").desc)
+            q.OrderBy(SCtor.prop(t_entity4, "Title").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -190,15 +191,15 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Dim t_entity5 As Type = GetType(Entity5)
             Dim q As New QueryCmd()
             q.Select(t_entity4)
-            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID")
+            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID")
 
             Assert.AreEqual(12, q.ToAnonymList(mgr).Count)
 
-            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
+            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
 
             Assert.AreEqual(3, q.ToAnonymList(mgr).Count)
 
-            q.propJoins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").left_join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
+            q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID").left_join(t_entity5).[on](t_entity, "ID").eq(t_entity5, "ID")
 
             Assert.AreEqual(12, q.ToAnonymList(mgr).Count)
         End Using
@@ -228,7 +229,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Dim t_entity5 As Type = GetType(Entity5)
 
             Dim q As New QueryCmd()
-            q.propJoins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
+            q.Joins = New QueryJoin() {New QueryJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
             q = q.Where(Ctor.prop(t_entity4, "Title").[like]("%b")). _
                 Select(FCtor.prop(t_entity, "ID").prop(t_entity4, "Title"))
 
@@ -298,7 +299,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Assert.AreEqual(3, r.Count)
             Dim m As Guid = q.Mark
 
-            q.propTop = New Top(2)
+            q.TopParam = New Top(2)
             Assert.AreNotEqual(m, q.Mark)
 
             r = q.ToList(Of Entity4)(mgr)
@@ -413,7 +414,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Assert.IsNotNull(e)
 
             Dim q2 As New RelationCmd(e, GetType(Entity4))
-            q2.propSort = SCtor.prop(GetType(Entity4), "Title")
+            q2.Sort = SCtor.prop(GetType(Entity4), "Title")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
@@ -435,7 +436,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
             q.Select(FCtor.column(t, "code", "Code").count("cnt")). _
                 GroupBy(FCtor.column(t, "code")). _
-                Sort(SCtor.custom("cnt desc"))
+                OrderBy(SCtor.custom("cnt desc"))
 
             'Assert.IsNull(q.SelectedType)
             Assert.IsNull(q.CreateType)
@@ -450,6 +451,39 @@ Imports System.Runtime.Serialization.Formatters.Binary
             Assert.AreEqual(5, l(0)("Code"))
             Assert.AreEqual(2, l(0)("cnt"))
 
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestTypeless2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
+            Dim t As SourceFragment = New SourceFragment("dbo", "guid_table")
+            Dim q As New QueryCmd()
+            q.From(t)
+            'q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
+            '    New Aggregate(AggregateFunction.Count, "cnt") _
+            '})
+
+            'q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
+            'Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
+
+            'q.Select(FCtor.column(t, "code", "Code").count("cnt")). _
+            '    GroupBy(FCtor.column(t, "code")). _
+            '    Sort(SCtor.custom("cnt desc"))
+
+            'Assert.IsNull(q.SelectedType)
+            Assert.IsNull(q.CreateType)
+
+            Dim l As IList(Of Worm.Entities.AnonymousEntity) = q.ToObjectList(Of Worm.Entities.AnonymousEntity)(mgr)
+
+            'Assert.IsNull(q.SelectedType)
+            Assert.IsNull(q.CreateType)
+
+            Assert.AreEqual(6, l.Count)
+
+            Assert.IsNotNull(l(0)("pk"))
+            Assert.IsNotNull(l(0)("code"))
+
+            Assert.AreEqual(l(0)("pk"), TypeDescriptor.GetProperties(l(0)).Find("pk", True).GetValue(l(0)))
         End Using
     End Sub
 
@@ -510,7 +544,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
     End Sub
 
     <TestMethod()> Public Sub TestAutoMgr()
-        Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Sort(SCtor.prop(GetType(Entity4), "Title"))
+        Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
         Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)( _
             Function() TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -568,7 +602,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             'q.From(t). _
             q.Select(New SelectExpression() {New SelectExpression(t, "id", "pk"), New SelectExpression(t, "name", "Title")}). _
             Where(Ctor.column(t, "id").greater_than(5)). _
-            Sort(SCtor.column(t, "name"))
+            OrderBy(SCtor.column(t, "name"))
 
             Dim l As IList(Of Worm.Entities.AnonymousEntity) = q.ToObjectList(Of Worm.Entities.AnonymousEntity)(mgr)
 
@@ -924,7 +958,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID")). _
-            Sort(SCtor.prop(GetType(cls), "Code")).From(t)
+            OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 
@@ -944,7 +978,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Sort(SCtor.prop(GetType(cls2), "Code")).From(t)
+        q.OrderBy(SCtor.prop(GetType(cls2), "Code")).From(t)
 
         Dim l As IList(Of cls2) = q.ToPODList(Of cls2)()
 
@@ -964,7 +998,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Sort(SCtor.prop(GetType(cls3), "Code")).From(t)
+        q.OrderBy(SCtor.prop(GetType(cls3), "Code")).From(t)
 
         Dim l As IList(Of cls3) = q.ToPODList(Of cls3)()
 
@@ -985,7 +1019,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
-            Sort(SCtor.prop(GetType(cls), "Code")).From(t)
+            OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 
@@ -1006,7 +1040,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
-            Sort(SCtor.prop(GetType(cls), "Code"))
+            OrderBy(SCtor.prop(GetType(cls), "Code"))
 
         Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 
@@ -1072,7 +1106,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Table1), True).Paging(New P).Sort(SCtor.prop(GetType(Table1), "ID").desc)
+        q.Select(GetType(Table1), True).Paging(New P).OrderBy(SCtor.prop(GetType(Table1), "ID").desc)
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
@@ -1398,7 +1432,7 @@ Imports System.Runtime.Serialization.Formatters.Binary
 
         Dim r As ReadOnlyObjectList(Of AnonymousEntity) = q _
             .Select(FCtor.prop(GetType(Entity2), "ID").custom("a", "1")) _
-            .Sort(SCtor.custom("a")) _
+            .OrderBy(SCtor.custom("a")) _
             .ToAnonymList
 
         For Each e As AnonymousEntity In r

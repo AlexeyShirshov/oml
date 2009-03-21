@@ -1016,7 +1016,8 @@ namespace Worm.CodeGen.Core
 
 			        #region m2m relation methods
 
-					CreateM2MMethodsSet(entity, entityClass);
+                    if (!Settings.RemoveOldM2M)
+					    CreateM2MMethodsSet(entity, entityClass);
 
 			        #endregion
 
