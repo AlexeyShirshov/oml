@@ -21,17 +21,13 @@ Namespace Criteria.Values
         Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+        ReadOnly Property ShouldUse() As Boolean
     End Interface
 
     Public Delegate Function PrepareValueDelegate(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
 
-    Public Interface IParamFilterValue
-        Inherits IFilterValue
-        ReadOnly Property ShouldUse() As Boolean
-    End Interface
-
     Public Interface IEvaluableValue
-        Inherits IParamFilterValue
+        Inherits IFilterValue
 
         Enum EvalResult
             Found

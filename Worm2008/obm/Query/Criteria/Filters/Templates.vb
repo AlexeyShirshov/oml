@@ -219,15 +219,15 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Protected Function CreateEntityFilter(ByVal t As Type, ByVal propertyAlias As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
+        Protected Function CreateEntityFilter(ByVal t As Type, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
             Return New EntityFilter(t, propertyAlias, value, operation)
         End Function
 
-        Protected Function CreateEntityFilter(ByVal entityName As String, ByVal propertyAlias As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
+        Protected Function CreateEntityFilter(ByVal entityName As String, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
             Return New EntityFilter(entityName, propertyAlias, value, operation)
         End Function
 
-        Protected Function CreateEntityFilter(ByVal oa As EntityAlias, ByVal propertyAlias As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
+        Protected Function CreateEntityFilter(ByVal oa As EntityAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
             Return New EntityFilter(oa, propertyAlias, value, operation)
         End Function
 

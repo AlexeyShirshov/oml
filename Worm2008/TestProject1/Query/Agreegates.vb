@@ -126,7 +126,7 @@ Imports Worm.Misc
             })
 
             Dim q As New QueryCmd()
-            q.propSort = SCtor.query(inner).desc
+            q.Sort = SCtor.query(inner).desc
             q.Select(GetType(Entity4))
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -159,7 +159,7 @@ Imports Worm.Misc
             Dim r2 As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
-            q.propJoins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.Joins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
             Assert.IsNotNull(q.SelectList)
             Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
@@ -174,14 +174,14 @@ Imports Worm.Misc
 
             Assert.AreEqual(11, l.Count)
 
-            q.propSort = SCtor.custom("cnt").desc
+            q.Sort = SCtor.custom("cnt").desc
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.propSort = New Worm.Sorting.Sort(q.SelectList(0).Aggregate, SortType.Desc)
+            q.Sort = New Worm.Sorting.Sort(q.SelectList(0).Aggregate, SortType.Desc)
             'q.propSort = sCTOR.
             l = q.ToSimpleList(Of Integer)(mgr)
 
@@ -212,7 +212,7 @@ Imports Worm.Misc
                 o, _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
             })
-            q.From(t).GroupBy(New Grouping() {o}).Sort(SCtor.custom("Count").desc)
+            q.From(t).GroupBy(New Grouping() {o}).OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -235,7 +235,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
-                .Sort(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -258,7 +258,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
-                .Sort(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -288,7 +288,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
-                .Sort(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -363,7 +363,7 @@ Imports Worm.Misc
 
             Dim q As New QueryCmd()
             q.Select(typeE4)
-            q.propSort = New Worm.Sorting.Sort( _
+            q.Sort = New Worm.Sorting.Sort( _
                 New QueryCmd().From(table). _
                     Select(FCtor.count). _
                     Where(Ctor.column(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)

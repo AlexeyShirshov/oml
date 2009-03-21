@@ -74,13 +74,9 @@ Namespace Query
             Return prop(New EntityUnion([alias]), propertyAlias)
         End Function
 
-        'Public Shared Function Field(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
-        '    Return Field(entityName, propertyAlias)
-        'End Function
-
-        'Public Shared Function Field(ByVal objectField As ObjectProperty) As CriteriaField
-        '    Return Field(objectField.ObjectSource, objectField.Field)
-        'End Function
+        Public Shared Function query(ByVal cmd As QueryCmd) As QueryPredicate
+            Return New QueryPredicate(cmd)
+        End Function
 
         Public Shared Function prop(ByVal t As Type, ByVal propertyAlias As String) As PropertyPredicate
             If t Is Nothing Then

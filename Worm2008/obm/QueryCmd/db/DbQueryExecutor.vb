@@ -596,7 +596,10 @@ Namespace Query.Database
                     colsa_.Append(",")
                 End If
             Next
-            cols.Length -= 2
+            If cols.Length > 0 Then
+                cols.Length -= 2
+                b = True
+            End If
             If colsa.Length = 0 Then
                 For Each p As SelectExpression In selList
                     Dim cols_ As New StringBuilder
@@ -610,7 +613,6 @@ Namespace Query.Database
                 colsa.Length -= 1
             End If
             sb.Append(cols.ToString)
-            b = True
 
             If Not b Then
                 If os IsNot Nothing Then
@@ -624,7 +626,7 @@ Namespace Query.Database
                     Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
                 End If
                 sb.Append(",row_number() over (")
-                If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
+                If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
                     sb.Append(RowNumberOrder)
                     'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
                 Else
@@ -1027,8 +1029,8 @@ l1:
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
             ByVal pmgr As ICreateParam)
 
-            If query.propHaving IsNot Nothing Then
-                sb.Append(" having ").Append(query.propHaving.Filter.MakeQueryStmt(mpe, s, Nothing, almgr, pmgr))
+            If query.HavingFilter IsNot Nothing Then
+                sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, s, Nothing, almgr, pmgr))
             End If
         End Sub
 
@@ -1066,8 +1068,8 @@ l1:
         Protected Shared Sub FormOrderBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
-            If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.propSort, sb, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.Table, query.GetSchemaForSelectType(mpe), False)
+            If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
+                s.CreateSelectExpressionFormater().Format(query.Sort, sb, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.Table, query.GetSchemaForSelectType(mpe), False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
@@ -1189,12 +1191,12 @@ l1:
 
             sb.Append("select ")
 
-            If query.propDistinct Then
+            If query.IsDistinct Then
                 sb.Append("distinct ")
             End If
 
-            If query.propTop IsNot Nothing Then
-                sb.Append(s.TopStatement(query.propTop.Count, query.propTop.Percent, query.propTop.Ties)).Append(" ")
+            If query.TopParam IsNot Nothing Then
+                sb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
             End If
 
             FormSelectList(mpe, query, sb, s, os, selType, almgr, filterInfo, params, query._sl, defaultTbl)

@@ -77,7 +77,7 @@ Imports Worm.Cache
 
         Dim t As Table1 = q1.GetByID(Of Table1)(1)
 
-        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.Top(1).Sort(SCtor.prop(GetType(Table2), "Money").desc).ToList(Of Table2)()
+        Dim r As ReadOnlyEntityList(Of Table2) = t.Table2s.Top(1).OrderBy(SCtor.prop(GetType(Table2), "Money").desc).ToList(Of Table2)()
 
         Assert.AreEqual(1, r.Count)
 

@@ -158,9 +158,69 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function sum(ByVal column As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New LiteralValue(column)))))
+            Return f
+        End Function
+
+        Public Shared Function sum(ByVal column As String, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New LiteralValue(column)))))
+            Return f
+        End Function
+
+        Public Shared Function sum(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(op)))))
+            Return f
+        End Function
+
+        Public Shared Function sum(ByVal op As ObjectProperty) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(op)))))
+            Return f
+        End Function
+
         Public Shared Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New FieldValue(exp)))))
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+            Return f
+        End Function
+
+        Public Shared Function max(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, op, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function max(ByVal tbl As SourceFragment, ByVal column As String, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, tbl, column, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function min(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+            Return f
+        End Function
+
+        Public Shared Function min(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, op, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function min(ByVal tbl As SourceFragment, ByVal column As String, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, tbl, column, [alias])))
+            Return f
+        End Function
+
+        Public Shared Function avg(ByVal op As ObjectProperty) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Average, op)))
             Return f
         End Function
 
@@ -180,6 +240,10 @@ Namespace Query
                 End If
                 Return _l
             End Function
+
+            Public Shared Widening Operator CType(ByVal f As Int) As SelectExpression
+                Return f.GetAllProperties(0)
+            End Operator
 
             Public Shared Widening Operator CType(ByVal f As Int) As SelectExpression()
                 Return f.GetAllProperties.ToArray
@@ -302,8 +366,48 @@ Namespace Query
                 Return Me
             End Function
 
+            Public Function sum(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(op)))))
+                Return Me
+            End Function
+
+            Public Function sum(ByVal op As ObjectProperty) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(op)))))
+                Return Me
+            End Function
+
             Public Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
-                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New FieldValue(exp)))))
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+                Return Me
+            End Function
+
+            Public Function max(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, op, [alias])))
+                Return Me
+            End Function
+
+            Public Function max(ByVal tbl As SourceFragment, ByVal column As String, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, tbl, column, [alias])))
+                Return Me
+            End Function
+
+            Public Function min(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+                Return Me
+            End Function
+
+            Public Function min(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, op, [alias])))
+                Return Me
+            End Function
+
+            Public Function min(ByVal tbl As SourceFragment, ByVal column As String, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Min, tbl, column, [alias])))
+                Return Me
+            End Function
+
+            Public Function avg(ByVal op As ObjectProperty) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Average, op)))
                 Return Me
             End Function
 

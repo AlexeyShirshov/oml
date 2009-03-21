@@ -9,6 +9,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Query
 
 #Const TraceSetState = False
+#Const OLDM2M = True
 
 Namespace Entities
 
@@ -1228,11 +1229,14 @@ Namespace Entities
 #End Region
 
 #Region " Public properties "
+
+#If OLDM2M Then
         Public ReadOnly Property M2M() As M2MClass
             Get
                 Return New M2MClass(Me)
             End Get
         End Property
+#End If
 
         Public MustOverride Property Identifier() As Object Implements IKeyEntity.Identifier
 

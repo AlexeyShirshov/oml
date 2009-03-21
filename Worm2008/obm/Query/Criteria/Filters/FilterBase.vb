@@ -69,12 +69,13 @@ Namespace Criteria.Core
         'End Sub
 
         Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, _
-            ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean) As String
+            ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean, _
+            ByVal almgr As IPrepareTable, ByVal filterContext As Object) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return Value.GetParam(schema, stmt, pmgr, Nothing, Nothing, Nothing, inSelect)
+            Return Value.GetParam(schema, stmt, pmgr, almgr, Nothing, filterContext, inSelect)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals

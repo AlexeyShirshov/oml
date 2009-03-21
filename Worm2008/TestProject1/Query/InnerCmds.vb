@@ -4,6 +4,7 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
 Imports Worm
+Imports Worm.Entities
 
 <TestClass()> Public Class InnerCmds
 
@@ -275,5 +276,29 @@ Imports Worm
             Assert.IsNotNull(e("ID"))
             Assert.IsNotNull(e("Title"))
         Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSubqueryWhere()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)) _
+            .Select(FCtor.count) _
+            .Where(Ctor.custom("left({0},1)", New FieldReference(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Entity5)) _
+            .Where(Ctor.query(inner).greater_than(2))
+
+        Dim r As ReadOnlyEntityList(Of Entity5) = q.ToList(Of Entity5)()
+
+        Assert.AreEqual(1, r.Count)
+
+        Assert.AreEqual(2, r(0).ID)
     End Sub
 End Class

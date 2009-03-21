@@ -800,8 +800,8 @@ l1:
                                 se.PropertyAlias = m._propertyAlias
                                 _sl.Add(se)
                             Next
-                        Else
-                            Throw New NotSupportedException
+                            'Else
+                            'Throw New NotSupportedException
                         End If
                     ElseIf _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
                         If SelectTypes.Count > 1 Then
@@ -864,8 +864,8 @@ l1:
             _pdic = New Dictionary(Of Type, IDictionary)
             _js = New List(Of QueryJoin)
 
-            If propJoins IsNot Nothing Then
-                _js.AddRange(propJoins)
+            If Joins IsNot Nothing Then
+                _js.AddRange(Joins)
             End If
 
             Dim f As IFilter = Nothing
@@ -899,7 +899,7 @@ l1:
                 If AutoJoins Then
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
-                    If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
+                    If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain) Then
                         _js.AddRange(joins)
                     End If
                     _appendMain = _appendMain OrElse appendMain
@@ -915,7 +915,7 @@ l1:
                 If se.Aggregate IsNot Nothing Then
                     Dim a As Aggregate = TryCast(se.Aggregate, [Aggregate])
                     If a IsNot Nothing Then
-                        Dim ep As FieldValue = TryCast(a.Expression.Value, FieldValue)
+                        Dim ep As SelectExpressionValue = TryCast(a.Expression.Value, SelectExpressionValue)
                         If ep IsNot Nothing Then
                             If ep.Expression.ObjectSource IsNot Nothing Then
                                 _from = New FromClauseDef(ep.Expression.ObjectSource)
@@ -1446,8 +1446,8 @@ l1:
                     Return True
                 End If
 
-                If propJoins IsNot Nothing Then
-                    For Each j As QueryJoin In propJoins
+                If Joins IsNot Nothing Then
+                    For Each j As QueryJoin In Joins
                         If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.IsQuery AndAlso j.ObjectSource.ObjectAlias.Query.IsFTS Then
                             Return True
                         End If
@@ -1675,7 +1675,7 @@ l1:
             End Set
         End Property
 
-        Public Property propJoins() As QueryJoin()
+        Public Property Joins() As QueryJoin()
             Get
                 Return _joins
             End Get
@@ -1745,7 +1745,7 @@ l1:
             End Set
         End Property
 
-        Public Property propSort() As Sort
+        Public Property Sort() As Sort
             Get
                 Return _order
             End Get
@@ -1756,7 +1756,7 @@ l1:
             End Set
         End Property
 
-        Public Property propTop() As Top
+        Public Property TopParam() As Top
             Get
                 Return _top
             End Get
@@ -1766,7 +1766,7 @@ l1:
             End Set
         End Property
 
-        Public Property propDistinct() As Boolean
+        Public Property IsDistinct() As Boolean
             Get
                 Return _distinct
             End Get
@@ -1786,7 +1786,7 @@ l1:
             End Set
         End Property
 
-        Public Property propHaving() As IGetFilter
+        Public Property HavingFilter() As IGetFilter
             Get
                 Return _having
             End Get
@@ -1835,33 +1835,33 @@ l1:
 
         Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
             Dim l As New List(Of QueryJoin)
-            If Me.propJoins IsNot Nothing Then
-                l.AddRange(Me.propJoins)
+            If Me.Joins IsNot Nothing Then
+                l.AddRange(Me.Joins)
             End If
             If joins IsNot Nothing Then
                 l.AddRange(joins)
             End If
-            Me.propJoins = l.ToArray
+            Me.Joins = l.ToArray
             Return Me
         End Function
 
         Public Function Join(ByVal joins() As QueryJoin) As QueryCmd
-            Me.propJoins = joins
+            Me.Joins = joins
             Return Me
         End Function
 
         Public Function Distinct(ByVal value As Boolean) As QueryCmd
-            propDistinct = value
+            IsDistinct = value
             Return Me
         End Function
 
         Public Function Top(ByVal value As Integer) As QueryCmd
-            propTop = New Query.Top(value)
+            TopParam = New Query.Top(value)
             Return Me
         End Function
 
-        Public Function Sort(ByVal value As Sort) As QueryCmd
-            propSort = value
+        Public Function OrderBy(ByVal value As Sort) As QueryCmd
+            Sort = value
             Return Me
         End Function
 
@@ -1880,16 +1880,16 @@ l1:
         End Function
 
         Public Function HavingAdd(ByVal filter As IGetFilter) As QueryCmd
-            If Me.propHaving Is Nothing Then
-                Me.propHaving = filter
+            If Me.HavingFilter Is Nothing Then
+                Me.HavingFilter = filter
             Else
-                Me.propHaving = Ctor.Filter(filter).and(Me.propHaving)
+                Me.HavingFilter = Ctor.Filter(filter).and(Me.HavingFilter)
             End If
             Return Me
         End Function
 
         Public Function Having(ByVal filter As IGetFilter) As QueryCmd
-            Me.propHaving = filter
+            Me.HavingFilter = filter
             Return Me
         End Function
 
@@ -2513,7 +2513,7 @@ l1:
                     Return [Select](FCtor.count).SingleSimple(Of Integer)(mgr)
                 End Using
             Finally
-                propSort = s
+                Sort = s
                 _clientPage = p
                 _pager = pp
                 _rn = rf
@@ -3528,7 +3528,7 @@ l1:
                 End If
             End Using
 
-            If o IsNot Nothing AndAlso o.CreateManager Is Nothing ANDalso _getMgr IsNot Nothing Then
+            If o IsNot Nothing AndAlso o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                 o.SetCreateManager(_getMgr)
             End If
 
@@ -3662,7 +3662,7 @@ l1:
                 Try
                     [Select](FCtor.Exp(s).count("Count")) _
                         .GroupBy(FCtor.Exp(s)) _
-                        .Sort(SCtor.custom("Count").desc)
+                        .OrderBy(SCtor.custom("Count").desc)
 
                     Return BuildDictionary(Of T)(mgr, level)
                 Finally
@@ -3711,7 +3711,7 @@ l1:
                             ) _
                         ) _
                         .Select(FCtor.custom("Pref").sum("cnt", "Count")) _
-                        .GroupBy(FCtor.custom("Pref")).Sort(SCtor.custom("Pref").desc)
+                        .GroupBy(FCtor.custom("Pref")).OrderBy(SCtor.custom("Pref").desc)
 
                         Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
                     Finally

@@ -106,23 +106,31 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty)
-            MyClass.New(agFunc, New UnaryExp(New FieldValue(op)))
+            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(op)))
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty, ByVal [alias] As String)
+            MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(op)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New FieldValue(t, propertyAlias)))
+            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, propertyAlias)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal entityName As String, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New FieldValue(entityName, propertyAlias)))
+            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(entityName, propertyAlias)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As EntityUnion, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New FieldValue(os, propertyAlias)))
+            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(os, propertyAlias)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String)
-            MyClass.New(agFunc, New UnaryExp(New FieldValue(t, column)))
+            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, column)))
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String, ByVal [alias] As String)
+            MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(t, column)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)

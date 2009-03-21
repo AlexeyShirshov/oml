@@ -14,7 +14,7 @@ namespace Worm.CodeGen.Core
         private string _classNamePrefix = string.Empty;
         private string _classNameSuffix = string.Empty;
         private bool _useTypeInProps;
-        //private bool _partial = false;
+        private bool _removeOldm2m;
         //private OrmObjectGeneratorBehaviour _behaviour = OrmObjectGeneratorBehaviour.Objects;
         private LanguageSpecificHacks _languageSpecificHacks; 
 
@@ -33,6 +33,12 @@ namespace Worm.CodeGen.Core
             {
                 _useTypeInProps = value;
             }
+        }
+
+        public bool RemoveOldM2M
+        {
+            get { return _removeOldm2m; }
+            set { _removeOldm2m = value; }
         }
 
 		[Obsolete("Don't even think about entity's class and entity's schema def class declaration in separate files.", true)]

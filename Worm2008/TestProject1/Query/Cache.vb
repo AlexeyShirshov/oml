@@ -288,14 +288,14 @@ Imports System.Collections.ObjectModel
 
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
-        q.Select(t).Top(2).Sort(SCtor.prop(t, "DT"))
+        q.Select(t).Top(2).OrderBy(SCtor.prop(t, "DT"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(2, r(1).ID)
 
-        q.Sort(SCtor.prop(t, "Title"))
+        q.OrderBy(SCtor.prop(t, "Title"))
 
         r = q.ToList(Of Table1)()
 
@@ -311,7 +311,7 @@ Imports System.Collections.ObjectModel
         c.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
 
         Dim q As QueryCmd = New QueryCmd(New CreateManager(Function() _
-            TestManager.CreateManager(c, New ObjectMappingEngine("1")))).Sort(SCtor.prop(t, "ID"))
+            TestManager.CreateManager(c, New ObjectMappingEngine("1")))).OrderBy(SCtor.prop(t, "ID"))
         q.Select(t)
 
         q.ToList(Of Entity4)()
@@ -320,11 +320,11 @@ Imports System.Collections.ObjectModel
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        q.Sort(SCtor.prop(t, "Title"))
+        q.OrderBy(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
-        q.Sort(SCtor.prop(t, "ID"))
+        q.OrderBy(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
@@ -336,11 +336,11 @@ Imports System.Collections.ObjectModel
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        q.Sort(SCtor.prop(t, "Title"))
+        q.OrderBy(SCtor.prop(t, "Title"))
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
-        q.Sort(SCtor.prop(t, "ID"))
+        q.OrderBy(SCtor.prop(t, "ID"))
         q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
     End Sub
@@ -402,7 +402,7 @@ Imports System.Collections.ObjectModel
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
-                Ctor.prop(GetType(Entity4), "ID").greater_than(5)).Sort(SCtor.prop(GetType(Entity4), "Title"))
+                Ctor.prop(GetType(Entity4), "ID").greater_than(5)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
             Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "Title").eq("djkg"))
@@ -439,7 +439,7 @@ Imports System.Collections.ObjectModel
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
-                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).Sort(SCtor.custom("name"))
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)

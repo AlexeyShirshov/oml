@@ -21,19 +21,21 @@ Public Class MyRoles
     '    Return CType(mgr.Find(Of MyRole)(f, Nothing, WithLoad), System.Collections.IList)
     'End Function
 
-    Protected Overrides Function GetRoleByName(ByVal mgr As Worm.OrmManager, ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
+    Protected Overrides Function GetRoleByName(ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
         Dim t As Type = GetRoleType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _rolenameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
-        Dim col As IList = FindRoles(mgr, CType(New Ctor(t).prop(RoleNameField).eq(name), PredicateLink))
+        Dim col As IList = FindRoles(CType(New Ctor(t).prop(RoleNameField).eq(name), PredicateLink))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate role name " & name)
         ElseIf col.Count = 0 Then
             If createIfNotExist Then
-                Dim r As MyRole = mgr.CreateKeyEntity(Of MyRole)(-100)
-                r.RoleName = name
-                r.SaveChanges(True)
-                Return r
+                Using mt As New ModificationsTracker(UserMapper.CreateManager)
+                    Dim r As MyRole = mt.CreateNewObject(Of MyRole)()
+                    r.RoleName = name
+                    mt.AcceptModifications()
+                    Return r
+                End Using
             Else
                 Return Nothing
             End If

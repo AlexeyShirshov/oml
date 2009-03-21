@@ -83,6 +83,12 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
@@ -116,10 +122,16 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
-    Public Class FieldValue
+    Public Class SelectExpressionValue
         Implements IFilterValue
 
         Private _p As SelectExpression
@@ -176,53 +188,58 @@ Namespace Criteria.Values
                 d = stmt.Selector
             End If
 
-            If _p.IsCustom Then
-                Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
-                Dim sb As New StringBuilder
-                f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
-                Return sb.ToString
-            ElseIf _p.Table Is Nothing Then
+            Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
+            Dim sb As New StringBuilder
+            f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
+            Return sb.ToString
 
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
+            'If _p.IsCustom Then
+            '    Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
+            '    Dim sb As New StringBuilder
+            '    f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
+            '    Return sb.ToString
+            'ElseIf _p.Table Is Nothing Then
 
-                Dim map As MapField2Column = Nothing
-                Try
-                    map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
-                Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString(schema, filterInfo) & schema.Delimiter & _p.PropertyAlias, ex))
-                End Try
+            '    Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
 
-                Dim [alias] As String = String.Empty
+            '    Dim map As MapField2Column = Nothing
+            '    Try
+            '        map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
+            '    Catch ex As KeyNotFoundException
+            '        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString(schema, filterInfo) & schema.Delimiter & _p.PropertyAlias, ex))
+            '    End Try
 
-                If almgr IsNot Nothing Then
-                    'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
-                        [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & d
-                    Else
-                        [alias] = map._tableName.UniqueName(_p.ObjectSource) & d
-                    End If
-                    'Try
-                    '    [alias] = tableAliases(map._tableName) & schema.Selector
-                    'Catch ex As KeyNotFoundException
-                    '    Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
-                    'End Try
-                End If
+            '    Dim [alias] As String = String.Empty
 
-                Return [alias] & map._columnName
-            Else
-                Dim [alias] As String = String.Empty
+            '    If almgr IsNot Nothing Then
+            '        'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+            '        If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
+            '            [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & d
+            '        Else
+            '            [alias] = map._tableName.UniqueName(_p.ObjectSource) & d
+            '        End If
+            '        'Try
+            '        '    [alias] = tableAliases(map._tableName) & schema.Selector
+            '        'Catch ex As KeyNotFoundException
+            '        '    Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+            '        'End Try
+            '    End If
 
-                If almgr IsNot Nothing Then
-                    'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    Try
-                        [alias] = almgr.GetAlias(_p.Table, Nothing) & d
-                    Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
-                    End Try
-                End If
+            '    Return [alias] & map._columnName
+            'Else
+            '    Dim [alias] As String = String.Empty
 
-                Return [alias] & _p.Column
-            End If
+            '    If almgr IsNot Nothing Then
+            '        'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+            '        Try
+            '            [alias] = almgr.GetAlias(_p.Table, Nothing) & d
+            '        Catch ex As KeyNotFoundException
+            '            Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
+            '        End Try
+            '    End If
+
+            '    Return [alias] & _p.Column
+            'End If
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
@@ -232,6 +249,12 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             _p.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
@@ -456,7 +479,7 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IParamFilterValue.ShouldUse
+        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
             Get
                 Return True
             End Get
@@ -469,11 +492,12 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
+
     End Class
 
     <Serializable()> _
     Public Class LiteralValue
-        Implements IParamFilterValue
+        Implements IFilterValue
 
         Private _pname As String
 
@@ -483,7 +507,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IParamFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
             Return _pname
         End Function
 
@@ -491,7 +515,7 @@ Namespace Criteria.Values
             Return _pname
         End Function
 
-        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IParamFilterValue.ShouldUse
+        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
             Get
                 Return True
             End Get
@@ -950,6 +974,12 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
@@ -1026,6 +1056,12 @@ Namespace Criteria.Values
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 End Namespace
 

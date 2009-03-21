@@ -51,6 +51,16 @@ Namespace Query
             [From](_rel.Relation.Rel)
         End Sub
 
+        Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
+            MyBase.New(getMgr)
+            If _desc Is Nothing Then
+                _rel = New Relation(obj, New RelationDesc(New EntityUnion(t), Nothing))
+            Else
+                _rel = New Relation(obj, _desc)
+            End If
+            [From](_rel.Relation.Rel)
+        End Sub
+
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion)
             'MyBase.New(obj)
             If _desc Is Nothing Then
@@ -359,7 +369,7 @@ Namespace Query
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                 Dim appendMain_ As Boolean
-                If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain_) Then
+                If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain_) Then
                     _js.AddRange(joins)
                 End If
                 AppendMain = AppendMain OrElse appendMain_
@@ -377,12 +387,10 @@ Namespace Query
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
-                    'If SelectList IsNot Nothing AndAlso SelectList.Count > 0 Then
-                    '    Throw New NotSupportedException("Cannot select individual column in m2m query")
-                    'End If
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
-                    Dim filtered_r As M2MRelationDesc = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
+                    Dim filtered_r As M2MRelationDesc = schema.GetM2MRelation(oschema, filteredType, _m2mKey)
 
                     If filtered_r Is Nothing Then
                         Dim en As String = schema.GetEntityNameByType(filteredType)
@@ -404,9 +412,9 @@ Namespace Query
                         Throw New ArgumentException("Invalid relation", filteredType.ToString)
                     End If
 
-                    'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
+                    Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
 
-                    If AppendMain OrElse _WithLoad(selectOS, schema) OrElse IsFTS Then
+                    If AppendMain OrElse _WithLoad(selectOS, schema) OrElse IsFTS OrElse mt IsNot Nothing Then
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
@@ -670,12 +678,12 @@ l1:
                             RowNumberFilter = oldr
                         End Try
                     Else
-                        Dim t As Top = propTop
+                        Dim t As Top = TopParam
                         Try
                             Dim i As IList = WithLoad(True).Top(start + length).ToList(mgr)
                             CType(i, ILoadableList).LoadObjects(start, i.Count - start)
                         Finally
-                            propTop = t
+                            TopParam = t
                         End Try
                     End If
                 End Using

@@ -34,6 +34,10 @@ Public Class Expressions
             _v = value
         End Sub
 
+        Public Sub New(ByVal selExp As SelectExpression)
+            _v = New SelectExpressionValue(selExp)
+        End Sub
+
         Public Sub New(ByVal [alias] As String, ByVal value As IFilterValue)
             _v = value
             _alias = [alias]
@@ -159,35 +163,35 @@ Public Class Expressions
             Dim rightValue As IFilterValue = rf._v
             If lf.GetType Is GetType(UnaryExp) Then 'AndAlso leftValue.GetType IsNot GetType(RefValue)
                 If rf.GetType Is GetType(UnaryExp) Then 'AndAlso rightValue.GetType IsNot GetType(RefValue)
-                    If leftValue.GetType Is GetType(FieldValue) Then
-                        If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
-                            Dim lv As FieldValue = CType(leftValue, FieldValue)
+                    If leftValue.GetType Is GetType(SelectExpressionValue) Then
+                        If GetType(IFilterValue).IsAssignableFrom(rightValue.GetType) Then
+                            Dim lv As SelectExpressionValue = CType(leftValue, SelectExpressionValue)
                             If lv.Expression.Table IsNot Nothing Then
-                                Return New ColumnPredicate(lv.Expression.Table, lv.Expression.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return New ColumnPredicate(lv.Expression.Table, lv.Expression.Column).Op(fo, CType(rightValue, IFilterValue)).Filter
                             Else
-                                Return New PropertyPredicate(lv.Expression.ObjectProperty).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(lv.Expression.ObjectProperty).Op(fo, CType(rightValue, IFilterValue)).Filter
                             End If
                         Else
                             GoTo l1
                         End If
                     ElseIf leftValue.GetType Is GetType(CustomValue) Then
                         Dim lv As CustomValue = CType(leftValue, CustomValue)
-                        If GetType(IParamFilterValue).IsAssignableFrom(rightValue.GetType) Then
-                            Return New CustomFilter(lv.Format, CType(rightValue, IParamFilterValue), fo, lv.Values)
+                        If GetType(IFilterValue).IsAssignableFrom(rightValue.GetType) Then
+                            Return New CustomFilter(lv.Format, CType(rightValue, IFilterValue), fo, lv.Values)
                         Else
                             GoTo l1
                         End If
-                    ElseIf GetType(IParamFilterValue).IsAssignableFrom(leftValue.GetType) Then
-                        If rightValue.GetType Is GetType(FieldValue) Then
-                            Dim rv As FieldValue = CType(rightValue, FieldValue)
+                    ElseIf GetType(IFilterValue).IsAssignableFrom(leftValue.GetType) Then
+                        If rightValue.GetType Is GetType(SelectExpressionValue) Then
+                            Dim rv As SelectExpressionValue = CType(rightValue, SelectExpressionValue)
                             If rv.Expression.Table IsNot Nothing Then
-                                Return New ColumnPredicate(rv.Expression.Table, rv.Expression.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return New ColumnPredicate(rv.Expression.Table, rv.Expression.Column).Op(Invert(fo), CType(leftValue, IFilterValue)).Filter
                             Else
-                                Return New PropertyPredicate(rv.Expression.ObjectProperty).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return New PropertyPredicate(rv.Expression.ObjectProperty).Op(Invert(fo), CType(leftValue, IFilterValue)).Filter
                             End If
                         ElseIf rightValue.GetType Is GetType(CustomValue) Then
                             Dim rv As CustomValue = CType(rightValue, CustomValue)
-                            Return New CustomFilter(rv.Format, CType(leftValue, IParamFilterValue), Invert(fo), rv.Values)
+                            Return New CustomFilter(rv.Format, CType(leftValue, IFilterValue), Invert(fo), rv.Values)
                         Else
                             GoTo l1
                         End If
