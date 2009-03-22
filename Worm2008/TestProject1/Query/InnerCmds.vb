@@ -301,4 +301,26 @@ Imports Worm.Entities
 
         Assert.AreEqual(2, r(0).ID)
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestSubqueryWhere2()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)) _
+            .Select(FCtor.count) _
+            .Where(Ctor.custom("left({0},1)", New FieldReference(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(GetType(Entity5)) _
+            .Where(Ctor.prop(GetType(Entity5), "ID").greater_than(inner))
+
+        Dim r As ReadOnlyEntityList(Of Entity5) = q.ToList(Of Entity5)()
+
+        Assert.AreEqual(2, r.Count)
+    End Sub
 End Class

@@ -4,6 +4,7 @@ Imports System.Collections.Generic
 Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports Worm.Query
 
 Namespace Database.Storedprocs
     <Flags()> _
@@ -40,6 +41,8 @@ Namespace Database.Storedprocs
         Private _expireDate As Date
         Private _cacheHit As Boolean
         Protected Shared _fromWeakList As New Dictionary(Of Type, Reflection.MethodInfo)
+        Protected _clientPage As Paging
+        Protected _pager As IPager
 
         Public Enum ValidateResult
             DontReset
@@ -55,6 +58,24 @@ Namespace Database.Storedprocs
             _cache = True
             _expireDate = Now.Add(timeout)
         End Sub
+
+        Public Property Pager() As IPager
+            Get
+                Return _pager
+            End Get
+            Set(ByVal value As IPager)
+                _pager = value
+            End Set
+        End Property
+
+        Public Property ClientPaging() As Paging
+            Get
+                Return _clientPage
+            End Get
+            Set(ByVal value As Paging)
+                _clientPage = value
+            End Set
+        End Property
 
         Public ReadOnly Property Name() As String
             Get
@@ -127,7 +148,17 @@ Namespace Database.Storedprocs
                 Dim b As OrmReadOnlyDBManager.ConnAction = mgr.TestConn(cmd)
                 'Dim err As Boolean = True
                 Try
-                    Return Execute(mgr, cmd)
+                    If _pager IsNot Nothing Then
+                        Using New OrmManager.PagerSwitcher(mgr, _pager)
+                            Return Execute(mgr, cmd)
+                        End Using
+                    ElseIf Not _clientPage.IsEmpty Then
+                        Using New OrmManager.PagerSwitcher(mgr, _clientPage.Start, _clientPage.Length)
+                            Return Execute(mgr, cmd)
+                        End Using
+                    Else
+                        Return Execute(mgr, cmd)
+                    End If
                 Finally
                     mgr.CloseConn(b)
                 End Try
@@ -136,7 +167,9 @@ Namespace Database.Storedprocs
 
         Public Function GetResult(ByVal getMgr As ICreateManager) As Object
             Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
-                Return GetResult(mgr)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return GetResult(mgr)
+                End Using
             End Using
         End Function
 
@@ -754,7 +787,16 @@ Namespace Database.Storedprocs
             _donthit = True
             'Dim ce As New CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
-            mgr.LoadMultipleObjects(Of T)(cmd, rr, GetColumns)
+            Dim cols As List(Of SelectExpression) = GetColumns()
+            If cols Is Nothing OrElse cols.Count = 0 Then
+                cols = New List(Of SelectExpression)
+                Dim pk As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
+                Dim se As New SelectExpression(GetType(T), pk(0).PropertyAlias)
+                se.Column = pk(0).Column
+                se.Attributes = pk(0).Behavior
+                cols.Add(se)
+            End If
+            mgr.LoadMultipleObjects(Of T)(cmd, rr, cols)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
@@ -777,7 +819,9 @@ Namespace Database.Storedprocs
 
         Public Shadows Function GetResult(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Return GetResult(CType(mgr, OrmReadOnlyDBManager))
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return GetResult(CType(mgr, OrmReadOnlyDBManager))
+                End Using
             End Using
         End Function
 
@@ -1173,6 +1217,14 @@ Namespace Database.Storedprocs
             CType(result, TypeWrap(Of T)).Value = CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T)
         End Sub
 
+        Public Shadows Function GetResult(ByVal getMgr As ICreateManager) As T
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return GetResult(mgr)
+                End Using
+            End Using
+        End Function
+
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As T
             Return CType(MyBase.GetResult(mgr), TypeWrap(Of T)).Value
         End Function
@@ -1246,7 +1298,9 @@ Namespace Database.Storedprocs
 
         Public Shared Shadows Function Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
             Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
-                Return Exec(mgr, name, paramNames, params)
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return Exec(mgr, name, paramNames, params)
+                End Using
             End Using
         End Function
 

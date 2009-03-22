@@ -185,69 +185,6 @@ Namespace Query
             End Sub
         End Class
 
-        Protected Class SetManagerHelper
-            Implements IDisposable
-
-            Private _m As CreateManagerDelegate
-            Private _gm As ICreateManager
-            Private _mgr As OrmManager
-
-            Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate)
-                _m = getMgr
-                _mgr = mgr
-                Subscribe()
-            End Sub
-
-            Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager)
-                _gm = getMgr
-                _mgr = mgr
-                Subscribe()
-            End Sub
-
-            Protected Sub Subscribe()
-                AddHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
-                AddHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
-            End Sub
-
-            Public Sub ObjectRestored(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
-                ObjectCreated(mgr, o)
-            End Sub
-
-            Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
-                'AddHandler o.ManagerRequired, AddressOf GetManager
-                If _m Is Nothing Then
-                    CType(o, _IEntity).SetCreateManager(_gm)
-                Else
-                    CType(o, _IEntity).SetCreateManager(New CreateManager(_m))
-                End If
-            End Sub
-
-#Region " IDisposable Support "
-            Private disposedValue As Boolean = False        ' To detect redundant calls
-
-            ' IDisposable
-            Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-                If Not Me.disposedValue Then
-                    If disposing Then
-                        ' TODO: free other state (managed objects).
-                    End If
-
-                    RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
-                    RemoveHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
-                End If
-                Me.disposedValue = True
-            End Sub
-
-            ' This code added by Visual Basic to correctly implement the disposable pattern.
-            Public Sub Dispose() Implements IDisposable.Dispose
-                ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-                Dispose(True)
-                GC.SuppressFinalize(Me)
-            End Sub
-#End Region
-
-        End Class
-
         'Private Class occc
         '    Private _cm As ICreateManager
         '    Public Sub New(ByVal cm As ICreateManager)
@@ -280,7 +217,7 @@ Namespace Query
         'Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
         'Protected Friend _load As Boolean
         Protected _top As Top
-        Protected _page As Nullable(Of Integer)
+        'Protected _page As Nullable(Of Integer)
         Protected _distinct As Boolean
         Protected _dontcache As Boolean
         Private _liveTime As TimeSpan
@@ -2716,7 +2653,9 @@ l1:
             End If
             Return l(0)
         End Function
+#End Region
 
+#Region " SingleOrDefault "
         Public Function [SingleOrDefault](Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
             Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(mgr)
             If l.Count > 1 Then
@@ -2746,7 +2685,9 @@ l1:
             End If
             Return Nothing
         End Function
+#End Region
 
+#Region " SingleDyn "
         Public Function [SingleDyn](Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
             Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
             If l.Count <> 1 Then
@@ -2771,6 +2712,10 @@ l1:
             Return l(0)
         End Function
 
+#End Region
+
+#Region " SingleOrDefaultDyn "
+
         Public Function [SingleOrDefaultDyn](Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
             Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
             If l.Count > 1 Then
@@ -2781,7 +2726,7 @@ l1:
             Return Nothing
         End Function
 
-        Public Function SingleOrDefaultSyn(Of T As _ICachedEntity)(ByVal getMgr As ICreateManager) As T
+        Public Function SingleOrDefaultDyn(Of T As _ICachedEntity)(ByVal getMgr As ICreateManager) As T
             Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(getMgr)
             If l.Count > 1 Then
                 Throw New InvalidOperationException("Number of items is " & l.Count)
@@ -3137,7 +3082,7 @@ l1:
                 ._mark = ._mark
                 '._m2mObject = _m2mObject
                 ._order = _order
-                ._page = _page
+                '._page = _page
                 ._statementMark = _statementMark
                 '._selectSrc = _selectSrc
                 ._from = _from
