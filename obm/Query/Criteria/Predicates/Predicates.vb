@@ -180,6 +180,26 @@ Namespace Criteria
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessThan))
         End Function
 
+        Public Function greater_than(ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.GreaterThan))
+        End Function
+
+        Public Function less_than(ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.LessThan))
+        End Function
+
+        Public Function greater_than_eq(ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.GreaterEqualThan))
+        End Function
+
+        Public Function less_than_eq(ByVal cmd As QueryCmd) As PredicateLink
+            Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.LessEqualThan))
+        End Function
+
+        Public Function greater_than(ByVal value As IFilterValue) As PredicateLink
+            Return GetLink(CreateFilter(value, FilterOperation.GreaterThan))
+        End Function
+
         Public Function less_than(ByVal value As IFilterValue) As PredicateLink
             Return GetLink(CreateFilter(value, FilterOperation.LessThan))
         End Function
@@ -216,6 +236,10 @@ Namespace Criteria
         End Function
 
         Public Function between(ByVal left As Object, ByVal right As Object) As PredicateLink
+            Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
+        End Function
+
+        Public Function between(ByVal left As IFilterValue, ByVal right As IFilterValue) As PredicateLink
             Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
         End Function
 

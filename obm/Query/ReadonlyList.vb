@@ -255,7 +255,7 @@ End Class
 <Serializable()> _
 Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
-    Implements IListEdit
+    Implements IListEdit, ComponentModel.ITypedList
 
     Protected _l As List(Of T)
 
@@ -355,4 +355,15 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End If
     End Function
 
+    Public Function GetItemProperties(ByVal listAccessors() As System.ComponentModel.PropertyDescriptor) As System.ComponentModel.PropertyDescriptorCollection Implements System.ComponentModel.ITypedList.GetItemProperties
+        If GetType(Entities.AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso Count > 0 Then
+            Return CType(Me(0), ComponentModel.ICustomTypeDescriptor).GetProperties
+        Else
+            Return Nothing
+        End If
+    End Function
+
+    Public Function GetListName(ByVal listAccessors() As System.ComponentModel.PropertyDescriptor) As String Implements System.ComponentModel.ITypedList.GetListName
+        Return Nothing
+    End Function
 End Class

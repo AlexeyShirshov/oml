@@ -722,6 +722,11 @@ l1:
             Relation.Merge(Me, col, removeNotInList)
         End Sub
 
+        Public Function Contains(ByVal o As IKeyEntity) As Boolean
+            Dim cmd As QueryCmd = CType(Clone(), QueryCmd)
+            Return cmd.WhereAdd(Ctor.prop(_desc.Rel, MappingEngine.GetPrimaryKeys(_desc.Rel.GetRealType(MappingEngine))(0).PropertyAlias).eq(o)).SingleOrDefaultDyn(Of IKeyEntity)() IsNot Nothing
+        End Function
+
         Friend Sub SetCache(ByVal l As IEnumerable)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")

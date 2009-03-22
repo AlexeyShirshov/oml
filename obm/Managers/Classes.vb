@@ -147,6 +147,69 @@ Class ManagerWrapper
 
 End Class
 
+Public Class SetManagerHelper
+    Implements IDisposable
+
+    Private _m As CreateManagerDelegate
+    Private _gm As ICreateManager
+    Private _mgr As OrmManager
+
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate)
+        _m = getMgr
+        _mgr = mgr
+        Subscribe()
+    End Sub
+
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager)
+        _gm = getMgr
+        _mgr = mgr
+        Subscribe()
+    End Sub
+
+    Protected Sub Subscribe()
+        AddHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
+        AddHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
+    End Sub
+
+    Public Sub ObjectRestored(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
+        ObjectCreated(mgr, o)
+    End Sub
+
+    Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
+        'AddHandler o.ManagerRequired, AddressOf GetManager
+        If _m Is Nothing Then
+            CType(o, _IEntity).SetCreateManager(_gm)
+        Else
+            CType(o, _IEntity).SetCreateManager(New CreateManager(_m))
+        End If
+    End Sub
+
+#Region " IDisposable Support "
+    Private disposedValue As Boolean = False        ' To detect redundant calls
+
+    ' IDisposable
+    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+        If Not Me.disposedValue Then
+            If disposing Then
+                ' TODO: free other state (managed objects).
+            End If
+
+            RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
+            RemoveHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
+        End If
+        Me.disposedValue = True
+    End Sub
+
+    ' This code added by Visual Basic to correctly implement the disposable pattern.
+    Public Sub Dispose() Implements IDisposable.Dispose
+        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+        Dispose(True)
+        GC.SuppressFinalize(Me)
+    End Sub
+#End Region
+
+End Class
+
 Public Delegate Function CreateManagerDelegate() As OrmManager
 
 Public Class CreateManager

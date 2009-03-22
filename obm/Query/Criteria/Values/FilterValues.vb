@@ -485,11 +485,11 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             Return "scalarval"
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
 
@@ -741,11 +741,20 @@ Namespace Criteria.Values
     Public Class BetweenValue
         Inherits ScalarValue
 
-        Private _l As String
-        Private _r As String
-
         Public Sub New(ByVal left As Object, ByVal right As Object)
-            MyBase.New(New Pair(Of Object)(left, right))
+            MyBase.New(New Pair(Of IFilterValue)(New ScalarValue(left), New ScalarValue(right)))
+
+            If left Is Nothing Then
+                Throw New ArgumentNullException("left")
+            End If
+
+            If right Is Nothing Then
+                Throw New ArgumentNullException("right")
+            End If
+        End Sub
+
+        Public Sub New(ByVal left As IFilterValue, ByVal right As IFilterValue)
+            MyBase.New(New Pair(Of IFilterValue)(left, right))
 
             If left Is Nothing Then
                 Throw New ArgumentNullException("left")
@@ -757,7 +766,7 @@ Namespace Criteria.Values
         End Sub
 
         Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
-            Dim r As IEvaluableValue.EvalResult
+            Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Unknown
 
             Dim val As Object = GetValue(v, template, r)
             If r <> IEvaluableValue.EvalResult.Unknown Then
@@ -767,12 +776,18 @@ Namespace Criteria.Values
             End If
 
             If template.Operation = FilterOperation.Between Then
-                Dim int_v As Pair(Of Object) = Value
-                Dim i As Integer = CType(v, IComparable).CompareTo(int_v.First)
-                If i >= 0 Then
-                    i = CType(v, IComparable).CompareTo(int_v.Second)
-                    If i <= 0 Then
-                        r = IEvaluableValue.EvalResult.Found
+                Dim int_v As Pair(Of IFilterValue) = Value
+
+                Dim fe As IEvaluableValue = TryCast(int_v.First, IEvaluableValue)
+                Dim se As IEvaluableValue = TryCast(int_v.Second, IEvaluableValue)
+
+                If fe IsNot Nothing AndAlso se IsNot Nothing Then
+                    Dim i As Integer = CType(v, IComparable).CompareTo(fe.Value)
+                    If i >= 0 Then
+                        i = CType(v, IComparable).CompareTo(se.Value)
+                        If i <= 0 Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
                     End If
                 End If
             Else
@@ -790,25 +805,38 @@ Namespace Criteria.Values
                 Throw New ArgumentNullException("paramMgr")
             End If
 
-            Dim left As Object = Value.First, right As Object = Value.Second
-            If prepare IsNot Nothing Then
-                left = prepare(schema, left)
-                right = prepare(schema, right)
-            End If
+            Dim left As IFilterValue = Value.First, right As IFilterValue = Value.Second
+            'If prepare IsNot Nothing Then
+            '    left = prepare(schema, left)
+            '    right = prepare(schema, right)
+            'End If
 
-            _l = paramMgr.AddParam(_l, left)
-            _r = paramMgr.AddParam(_r, right)
+            '_l = paramMgr.AddParam(_l, left)
+            '_r = paramMgr.AddParam(_r, right)
 
-            Return _l & " and " & _r
+            'Return _l & " and " & _r
+
+            Return left.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect) & _
+                " and " & _
+                right.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect)
         End Function
 
         Public Overrides Function _ToString() As String
-            Return Value.First.ToString & "__$__" & Value.Second.ToString
+            Return Value.First._ToString & "__$__" & Value.Second._ToString
         End Function
 
-        Public Shadows ReadOnly Property Value() As Pair(Of Object)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Return Value.First.GetStaticString(mpe, contextFilter) & "between" & Value.Second.GetStaticString(mpe, contextFilter)
+        End Function
+
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
+            Value.First.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            Value.Second.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+        End Sub
+
+        Public Shadows ReadOnly Property Value() As Pair(Of IFilterValue)
             Get
-                Return CType(MyBase.Value, Pair(Of Object))
+                Return CType(MyBase.Value, Pair(Of IFilterValue))
             End Get
         End Property
     End Class

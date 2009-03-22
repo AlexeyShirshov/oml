@@ -277,6 +277,63 @@ Imports Worm.Criteria
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestJoinUpdate()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
+
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
+            q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
+            q.AutoJoins = True
+            Assert.IsNotNull(q)
+
+            Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    Dim t1 As Table2 = New QueryCmd().Where(Ctor.prop(GetType(Table2), "Money").eq(1)).Single(Of Table2)(mgr)
+                    t1.Money = 2
+
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(0, q.ToList(Of Table1)(mgr).Count)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestJoinUpdate2()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
+
+            Dim q As New QueryCmd()
+            q.Select(GetType(Table1))
+            q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
+            q.AutoJoins = True
+            Assert.IsNotNull(q)
+
+            Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    Dim t1 As Table2 = New QueryCmd().Where(Ctor.prop(GetType(Table2), "Money").eq(1)).Single(Of Table2)(mgr)
+                    t1.DT = Now
+
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))

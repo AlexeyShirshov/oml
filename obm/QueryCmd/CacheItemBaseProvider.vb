@@ -295,6 +295,10 @@ Namespace Query
                         If m2m IsNot Nothing Then
                             'Debug.Assert(types Is Nothing OrElse CType(types, IList(Of Type)).Count = 1)
                             cache.AddM2MSimpleQuery(m2m, _key, _id)
+                            If m2m.Relation.ConnectedType IsNot Nothing Then
+                                cache.validate_AddDeleteType(New Type() {m2m.Relation.ConnectedType}, _key, _id)
+                                cache.validate_UpdateType(New Type() {m2m.Relation.ConnectedType}, _key, _id)
+                            End If
                         End If
                     End If
 

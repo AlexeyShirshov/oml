@@ -660,6 +660,7 @@ l1:
         Private _restore As OnErrorEnum
         Private _cm As ICreateManager
         Protected _created As Boolean
+        Private _ss As OrmManager.SchemaSwitcher
 
         Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
         Public Event BeginRestore(ByVal count As Integer)
@@ -687,6 +688,14 @@ l1:
         Public Sub New(ByVal getMgr As ICreateManager)
             MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
             _cm = getMgr
+        End Sub
+
+        Public Sub New(ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine)
+            MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
+            _cm = getMgr
+            If Not _mgr.MappingEngine.Equals(schema) Then
+                _ss = New OrmManager.SchemaSwitcher(schema, _mgr)
+            End If
         End Sub
 
         Protected ReadOnly Property NewObjectManager() As INewObjectsStore
@@ -899,6 +908,10 @@ l1:
                     If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
 
                     RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
+                End If
+
+                If _ss IsNot Nothing Then
+                    _ss.Dispose()
                 End If
 
                 If _disposeMgr AndAlso _mgr IsNot Nothing Then
