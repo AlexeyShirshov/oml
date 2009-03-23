@@ -556,10 +556,10 @@ Namespace Sorting
                 Else
                     xo = schema.GetJoinObj(oschema, xo, st)
                 End If
-                Dim os As IEntitySchema = schema.GetEntitySchema(_t)
+                Dim os As IEntitySchema = schema.GetEntitySchema(st)
                 Dim ss As IOrmSorting = TryCast(os, IOrmSorting)
                 If ss IsNot Nothing Then
-                    Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
+                    Return New Pair(Of _IEntity, IOrmSorting)(xo, ss)
                 Else
                     Return schema.GetPropertyValue(xo, s.SortBy, oschema) 'xo.GetValueOptimized(Nothing, s.SortBy, Nothing)
                 End If

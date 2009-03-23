@@ -413,18 +413,20 @@ Namespace Query
                     End If
 
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-
-                    If AppendMain OrElse _WithLoad(selectOS, schema) OrElse IsFTS OrElse mt IsNot Nothing Then
+                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(selectOS, schema) OrElse IsFTS
+                    If prd OrElse mt IsNot Nothing Then
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
+                        Dim so As EntityUnion = selectOS
+                        'selectOS = New EntityUnion(New EntityAlias(selectType))
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             selectOS, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
-                        _js.Add(jn)
+                        _js.Insert(0, jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
                             _from = New FromClauseDef(selectOS)
                         End If
-                        If _WithLoad(selectOS, schema) Then
+                        If _WithLoad(so, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
                         Else
                             GoTo l1

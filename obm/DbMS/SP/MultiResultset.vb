@@ -63,10 +63,10 @@ Namespace Database.Storedprocs
                 If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                     _count = mgr.ListConverter.GetCount(_o)
                     Dim mi As Reflection.MethodInfo = Nothing
-                    If Not _fromWeakList.TryGetValue(tt, mi) Then
+                    If Not _fromWeakListNP.TryGetValue(tt, mi) Then
                         Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManager)})
                         mi = tmi.MakeGenericMethod(New Type() {tt})
-                        _fromWeakList(tt) = mi
+                        _fromWeakListNP(tt) = mi
                     End If
                     Return CType(mi.Invoke(mgr.ListConverter, New Object() {_o, mgr}), Global.Worm.ReadOnlyObjectList(Of T))
                 Else

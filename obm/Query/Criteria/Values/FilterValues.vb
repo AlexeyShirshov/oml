@@ -1036,28 +1036,28 @@ Namespace Criteria.Values
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
 
-            Dim c As New Query.QueryCmd.svct(_q)
-            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                'If _q.SelectedType Is Nothing Then
-                '    If String.IsNullOrEmpty(_q.SelectedEntityName) Then
-                '        _q.SelectedType = _q.CreateType
-                '    Else
-                '        _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
-                '    End If
-                'End If
+            'Dim c As New Query.QueryCmd.svct(_q)
+            'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+            'If _q.SelectedType Is Nothing Then
+            '    If String.IsNullOrEmpty(_q.SelectedEntityName) Then
+            '        _q.SelectedType = _q.CreateType
+            '    Else
+            '        _q.SelectedType = schema.GetTypeByEntityName(_q.SelectedEntityName)
+            '    End If
+            'End If
 
-                'If GetType(Entities.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
-                '    _q.SelectedType = Nothing
-                'End If
+            'If GetType(Entities.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
+            '    _q.SelectedType = Nothing
+            'End If
 
-                'If _q.CreateType Is Nothing AndAlso _q.SelectedType IsNot Nothing Then
-                '    _q.Into(_q.SelectedType)
-                'End If
+            'If _q.CreateType Is Nothing AndAlso _q.SelectedType IsNot Nothing Then
+            '    _q.Into(_q.SelectedType)
+            'End If
 
-                QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
+            'QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
 
-                sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, almgr))
-            End Using
+            sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, almgr))
+            'End Using
 
             sb.Append(")")
 
