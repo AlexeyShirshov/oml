@@ -59,15 +59,15 @@ Namespace Entities
             End Get
         End Property
 
-#If DEBUG Then
+#If TRACELOADING Then
         Public _lstack As String
         Public _estack As String
 #End If
         Protected Sub BeginLoading() Implements _IEntity.BeginLoading
-#If DEBUG Then
+#If TRACELOADING Then
             _lstack = Environment.StackTrace
 #End If
-#If DEBUG Then
+#If TRACELOADING Then
             _estack = String.Empty
 #End If
             _loading = True
@@ -243,10 +243,8 @@ Namespace Entities
 
         Protected Sub EndLoading() Implements _IEntity.EndLoading
             _loading = False
-#If DEBUG Then
+#If TRACELOADING Then
             _lstack = String.Empty
-#End If
-#If DEBUG Then
             _estack = Environment.StackTrace
 #End If
         End Sub
@@ -474,11 +472,11 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
+        Friend Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
             Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
         End Function
 
-        Public Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
+        Protected Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
             _cm = createManager
         End Sub
 

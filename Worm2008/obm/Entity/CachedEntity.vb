@@ -349,6 +349,10 @@ Namespace Entities
             Public Function GetChangedObjectGraphWithSelf() As List(Of CachedEntity)
                 Return _o.GetChangedObjectGraphWithSelf
             End Function
+
+            Public Sub SetCreateManager(ByVal createManager As ICreateManager)
+                _o.SetCreateManager(createManager)
+            End Sub
         End Class
 
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
@@ -481,8 +485,13 @@ Namespace Entities
         End Property
 
         Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+            Dim c As EntityPropertyAttribute = Nothing
 
-            Dim c As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(Me.GetType, propertyAlias)
+            If schema Is Nothing Then
+                c = ObjectMappingEngine.GetColumnByMappedPropertyAlias(Me.GetType, propertyAlias, Nothing)
+            Else
+                c = schema.GetColumnByPropertyAlias(Me.GetType, propertyAlias)
+            End If
 
             Return SetLoaded(c, loaded, check, schema)
         End Function
@@ -534,7 +543,7 @@ Namespace Entities
             If Not CanEdit Then Throw New ObjectStateException(ObjName & "Object is not editable")
         End Sub
 
-        Public Overridable Sub RemoveOriginalCopy(ByVal cache As CacheBase) Implements ICachedEntity.RemoveOriginalCopy
+        Protected Overridable Sub RemoveOriginalCopy(ByVal cache As CacheBase) Implements ICachedEntity.RemoveOriginalCopy
             _copy = Nothing
         End Sub
 
@@ -1373,7 +1382,7 @@ l1:
             End Using
         End Function
 
-        Public Sub UpdateCache(ByVal mc As OrmManager, ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
+        Protected Sub UpdateCache(ByVal mc As OrmManager, ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
             Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
             If c IsNot Nothing Then
                 c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, CType(oldObj, _ICachedEntity))}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)

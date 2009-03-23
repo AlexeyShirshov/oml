@@ -2158,7 +2158,7 @@ l1:
                 If pk_count < selectList.Count Then
 
                     lock = obj.GetSyncRoot
-#If DEBUG Then
+#If TRACELOADING Then
                     If existing AndAlso obj.IsLoading Then
                         Throw New OrmManagerException(obj.ObjName & "is already loading" & CType(obj, Entity)._lstack)
                     End If
@@ -2189,7 +2189,7 @@ l1:
                             Continue For
                         End If
 
-#If DEBUG Then
+#If TRACELOADING Then
                         If Not obj.IsLoading Then
                             Throw New OrmManagerException("object is not in loading: [STACK]" & CType(obj, Entity)._lstack & "[/STACK][ESTACK]" & CType(obj, Entity)._estack & "[/ESTACK]")
                         End If

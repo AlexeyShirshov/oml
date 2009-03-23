@@ -159,9 +159,14 @@ Namespace Entities.Meta
 
         'End Function
 
-        'Public Overridable Function Load(Of T As IKeyEntity)(ByVal getMgr As CreateManagerDelegate, ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As IList(Of _IKeyEntity)
-
-        'End Function
+        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As IKeyEntity)(ByVal objs As IList(Of T), _
+                                    ByVal pager As IPager, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+            If pager Is Nothing Then
+                Return Load(Of T, ReturnType)(objs, loadWithObjects)
+            Else
+                Return Load(Of T, ReturnType)(objs, pager.GetCurrentPageOffset, Math.Min(objs.Count - pager.GetCurrentPageOffset, pager.GetPageSize), loadWithObjects)
+            End If
+        End Function
 
         Class cls
             Private _ids As List(Of Object)
@@ -327,6 +332,13 @@ Namespace Entities.Meta
             MyBase.New(New EntityUnion(entityName), Nothing, key)
         End Sub
 
+        Public Sub New(ByVal eu As EntityUnion)
+            MyBase.New(eu, Nothing, Nothing)
+        End Sub
+
+        Public Sub New(ByVal eu As EntityUnion, ByVal key As String)
+            MyBase.New(eu, Nothing, key)
+        End Sub
 #Region " Type ctors "
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
