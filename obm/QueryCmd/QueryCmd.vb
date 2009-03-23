@@ -747,7 +747,15 @@ l1:
                             AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU)
                         End If
                     Else
-                        For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
+                        Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectTypes
+                        If selTypes Is Nothing Then
+                            If _from IsNot Nothing Then
+                                selTypes = New ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(_from.ObjectSource, Nothing)})
+                            Else
+                                Throw New QueryCmdException("Neither SelectTypes nor FromClause not set", Me)
+                            End If
+                        End If
+                        For Each tp As Pair(Of EntityUnion, Boolean?) In selTypes
                             AddTypeFields(schema, _sl, tp)
                             'If tp.Second Then
                             '    Throw New NotImplementedException
@@ -774,7 +782,7 @@ l1:
                                 _pdic.Add(t, dic)
                             End If
                         Next
-                    End If
+                        End If
                 End If
 
                 If AutoJoins Then
@@ -3669,6 +3677,39 @@ l1:
             End If
         End Function
 
+        Public Function ContainsDyn(Of T As _ICachedEntity)(ByVal o As T) As Boolean
+            Dim tt As Type = Nothing
+            If SelectTypes IsNot Nothing AndAlso SelectTypes.Count = 1 Then
+                Dim eu As EntityUnion = SelectTypes(0).First
+                tt = eu.GetRealType(MappingEngine)
+                Dim oldf As IGetFilter = Filter
+                Try
+                    WhereAdd(Ctor.prop(eu, MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    Return SingleOrDefaultDyn(Of T)() IsNot Nothing
+                Finally
+                    _filter = oldf
+                End Try
+            Else
+                Throw New QueryCmdException("QueryCmd doesn't select entity", Me)
+            End If
+        End Function
+
+        Public Function Contains(Of T As {New, _ICachedEntity})(ByVal o As T) As Boolean
+            Dim tt As Type = Nothing
+            If SelectTypes IsNot Nothing AndAlso SelectTypes.Count = 1 Then
+                Dim eu As EntityUnion = SelectTypes(0).First
+                tt = eu.GetRealType(MappingEngine)
+                Dim oldf As IGetFilter = Filter
+                Try
+                    WhereAdd(Ctor.prop(eu, MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    Return SingleOrDefault(Of T)() IsNot Nothing
+                Finally
+                    _filter = oldf
+                End Try
+            Else
+                Throw New QueryCmdException("QueryCmd doesn't select entity", Me)
+            End If
+        End Function
     End Class
 
     '    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

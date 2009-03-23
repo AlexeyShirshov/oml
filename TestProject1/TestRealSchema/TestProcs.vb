@@ -7,6 +7,7 @@ Imports Worm.Database
 Imports Worm.Entities
 Imports Worm.Database.Storedprocs
 Imports Worm.Entities.Meta
+Imports Worm.Query
 
 <TestClass()> _
 Public Class TestProcs
@@ -150,9 +151,21 @@ Public Class TestProcs
     End Sub
 
     <TestMethod()> _
+    Public Sub TestP2OrmPaging()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
+            Dim p As New P2OrmProc(2)
+            p.ClientPaging = New Paging(0, 0)
+            Dim c As Worm.ReadOnlyObjectList(Of Table1) = p.GetResult(mgr)
+
+            Assert.AreEqual(0, c.Count)
+        End Using
+
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestP2OrmSimple()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim c As Worm.ReadOnlyObjectList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
+            Dim c As Worm.ReadOnlyObjectList(Of Table1) = Worm.Database.Storedprocs.QueryEntityStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
                 New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, New Integer() {0}, "i", 2)
 
             Assert.AreEqual(1, c.Count)
@@ -171,7 +184,7 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim p As New MultiR
 
-            Dim l As List(Of MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
+            Dim l As List(Of MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
 
             Assert.IsNotNull(l)
             Assert.AreEqual(2, l.Count)
@@ -298,7 +311,7 @@ Public Class P2Proc
 End Class
 
 Public Class P2OrmProc
-    Inherits QueryOrmStoredProcBase(Of Table1)
+    Inherits QueryEntityStoredProcBase(Of Table1)
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -420,10 +433,10 @@ Public Class P4Proc
 End Class
 
 Public Class MultiR
-    Inherits MultiResultsetQueryOrmStoredProcBase
+    Inherits MultiResultsetQueryEntityStoredProcBase
 
     Class r
-        Inherits MultiResultsetQueryOrmStoredProcBase.OrmDescriptor(Of Table1)
+        Inherits MultiResultsetQueryEntityStoredProcBase.OrmDescriptor(Of Table1)
 
         Protected Overrides Function GetColumns() As List(Of SelectExpression)
             Dim l As New List(Of SelectExpression)
@@ -440,11 +453,11 @@ Public Class MultiR
     End Class
 
     Public Class r2
-        Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+        Implements MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor
 
         Private _sum As Integer
 
-        Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
+        Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor.ProcessReader
             _sum = dr.GetInt32(0)
         End Sub
 
@@ -454,11 +467,11 @@ Public Class MultiR
             End Get
         End Property
 
-        Public Sub EndProcess(ByVal mgr As Worm.OrmManager) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
+        Public Sub EndProcess(ByVal mgr As Worm.OrmManager) Implements MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor.EndProcess
 
         End Sub
 
-        Public Sub BeginProcess(ByVal mgr As Worm.OrmManager) Implements Worm.Database.Storedprocs.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.BeginProcess
+        Public Sub BeginProcess(ByVal mgr As Worm.OrmManager) Implements Worm.Database.Storedprocs.MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor.BeginProcess
 
         End Sub
     End Class
@@ -467,7 +480,7 @@ Public Class MultiR
 
     End Sub
 
-    Protected Overrides Function createDescriptor(ByVal resultsetIdx As Integer) As MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+    Protected Overrides Function createDescriptor(ByVal resultsetIdx As Integer) As MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor
         Select Case resultsetIdx
             Case 0
                 Return New r
@@ -513,7 +526,7 @@ Public Class ScalarProc
 End Class
 
 Public Class PartialLoadProc
-    Inherits QueryOrmStoredProcBase(Of Table1)
+    Inherits QueryEntityStoredProcBase(Of Table1)
 
     Private _params As List(Of Pair(Of String, Object))
 

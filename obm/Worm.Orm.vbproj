@@ -112,6 +112,7 @@
     <None Include="Diagrams\Managers.cd" />
     <None Include="Diagrams\Schema.cd" />
     <None Include="Diagrams\schema_ext.cd" />
+    <None Include="Diagrams\StoredProcs.cd" />
     <None Include="My Project\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
@@ -140,6 +141,11 @@
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />
     <Compile Include="Collections\SyncGenericDictionary.vb" />
+    <Compile Include="DbMS\SP\MultiResultset.vb" />
+    <Compile Include="DbMS\SP\NonQuery.vb" />
+    <Compile Include="DbMS\SP\QueryEntity.vb" />
+    <Compile Include="DbMS\SP\QuerySP.vb" />
+    <Compile Include="DbMS\SP\SPBase.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="QueryCmd\QueryExecutor.vb" />
     <Compile Include="QueryCmd\RelationCmd.vb" />
@@ -224,7 +230,7 @@
     <Compile Include="other.vb" />
     <Compile Include="SearchConfiguration.vb" />
     <Compile Include="StmtGenerators\db\SQL2005Schema.vb" />
-    <Compile Include="Managers\db\storedprocs.vb" />
+    <Compile Include="DbMS\SP\ScalarSP.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />
     <Compile Include="Web\Membership.vb" />
