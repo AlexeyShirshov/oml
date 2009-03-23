@@ -963,7 +963,7 @@ l1:
                             If rcmd IsNot Nothing Then
                                 If t12t2.Equals(rcmd.RelationDesc) Then
                                     predi.and(Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, mpe.GetPrimaryKeys(t2)(0).PropertyAlias)))
-                                    Return
+                                    Continue For
                                 End If
                             End If
 

@@ -1298,6 +1298,18 @@ Public Class ObjectMappingEngine
         Next
         Return Nothing
     End Function
+
+    Public Shared Function GetColumnByMappedPropertyAlias(ByVal main As Type, ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As EntityPropertyAttribute
+        If main Is Nothing Then Throw New ArgumentNullException("main")
+
+        For Each de As DictionaryEntry In GetMappedProperties(main, oschema)
+            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+            If c.PropertyAlias = propertyAlias Then
+                Return c
+            End If
+        Next
+        Return Nothing
+    End Function
 #End Region
 
 #Region " Unions "
