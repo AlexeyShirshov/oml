@@ -95,15 +95,15 @@ Namespace Database.Storedprocs
                 _count = CType(wl, IList).Count
             End If
             mgr.RaiseOnDataAvailable(_count, _exec, _fecth, Not _donthit)
-Dim start As Integer = 0
-Dim length As Integer = Integer.MaxValue
- If _pager IsNot Nothing Then
-                        start = _pager.GetCurrentPageOffset
-length =_pager.GetPageSize
-                    ElseIf Not _clientPage.IsEmpty Then
-                        start = _clientPage.Start
-length = _clientPage.Length
-                    end if
+            Dim start As Integer = 0
+            Dim length As Integer = Integer.MaxValue
+            If _pager IsNot Nothing Then
+                start = _pager.GetCurrentPageOffset
+                length = _pager.GetPageSize
+            ElseIf Not _clientPage.IsEmpty Then
+                start = _clientPage.Start
+                length = _clientPage.Length
+            End If
             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                 Dim mi As Reflection.MethodInfo = Nothing
                 If Not _fromWeakList.TryGetValue(tt, mi) Then

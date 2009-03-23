@@ -1746,7 +1746,7 @@ l1:
             Dim c As New EntityPropertyAttribute(propertyAlias, String.Empty)
             Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
             Dim idx As Integer = arr.BinarySearch(c)
-            If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias)
+            If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias & " in type " & Me.GetType.ToString)
             Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), MappingEngine)
         End Function
 

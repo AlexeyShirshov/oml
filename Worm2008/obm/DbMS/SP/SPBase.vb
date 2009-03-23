@@ -41,6 +41,7 @@ Namespace Database.Storedprocs
         Private _expireDate As Date
         Private _cacheHit As Boolean
         Protected Shared _fromWeakList As New Dictionary(Of Type, Reflection.MethodInfo)
+        Protected Shared _fromWeakListNP As New Dictionary(Of Type, Reflection.MethodInfo)
         Protected _clientPage As Paging
         Protected _pager As IPager
 
