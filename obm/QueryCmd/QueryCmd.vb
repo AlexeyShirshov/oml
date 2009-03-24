@@ -3460,21 +3460,29 @@ l1:
 
             Dim o As IKeyEntity = Nothing
             Using New SetManagerHelper(mgr, CreateManager)
-                If GetType(T) IsNot tp Then
-                    'o = mgr.LoadType(id, tp, ensureLoaded, False)
-                    If ensureLoaded Then
-                        o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                    Else
-                        o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                    End If
-                Else
-                    'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
-                    If ensureLoaded Then
-                        o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
-                    Else
-                        o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
-                    End If
+                Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
+                If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
+                    mgr.SetSchema(MappingEngine)
                 End If
+                Try
+                    If GetType(T) IsNot tp Then
+                        'o = mgr.LoadType(id, tp, ensureLoaded, False)
+                        If ensureLoaded Then
+                            o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                        Else
+                            o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                        End If
+                    Else
+                        'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
+                        If ensureLoaded Then
+                            o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                        Else
+                            o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                        End If
+                    End If
+                Finally
+                    mgr.SetSchema(oldSch)
+                End Try
             End Using
 
             If o IsNot Nothing AndAlso o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
