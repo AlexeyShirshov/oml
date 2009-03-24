@@ -435,7 +435,7 @@ Namespace Misc
         End Function
 
         Public Overloads Function FindElements(ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
-            Dim icm As ICreateManager = _cmd.GetMgr
+            Dim icm As ICreateManager = _cmd.CreateManager
             If icm Is Nothing Then
                 Throw New ArgumentException("OrmManager required")
             End If
@@ -444,7 +444,7 @@ Namespace Misc
         End Function
 
         Public Overloads Function FindElements() As ReadOnlyObjectList(Of T)
-            Dim icm As ICreateManager = _cmd.GetMgr
+            Dim icm As ICreateManager = _cmd.CreateManager
             If icm Is Nothing Then
                 Throw New ArgumentException("OrmManager required")
             End If
@@ -453,7 +453,7 @@ Namespace Misc
         End Function
 
         Public Function FindElementsLoadOnlyNames() As ReadOnlyObjectList(Of T)
-            Dim icm As ICreateManager = _cmd.GetMgr
+            Dim icm As ICreateManager = _cmd.CreateManager
             If icm Is Nothing Then
                 Throw New ArgumentException("OrmManager required")
             End If

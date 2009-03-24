@@ -1159,7 +1159,7 @@ Imports System.ComponentModel
             TestManagerRS.CreateManagerShared(schema, cache))
 
         Dim t As Table1 = Nothing
-        Using mgr As OrmManager = q.GetMgr.CreateManager
+        Using mgr As OrmManager = q.CreateManager.CreateManager
             t = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
 
             Assert.IsFalse(t.InternalProperties.IsLoaded)
