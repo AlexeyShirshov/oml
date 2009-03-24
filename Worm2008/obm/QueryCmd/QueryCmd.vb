@@ -358,23 +358,15 @@ Namespace Query
             End Set
         End Property
 
-        'Protected Friend Property Obj() As IKeyEntity
-        '    Get
-        '        Return _m2mObject
-        '    End Get
-        '    Set(ByVal value As IKeyEntity)
-        '        _m2mObject = value
-        '        RenewMark()
-        '    End Set
-        'End Property
+        Protected ReadOnly Property GetMappingEngine() As ObjectMappingEngine
+            Get
+                Using mgr As OrmManager = CreateManager.CreateManager
+                    Return mgr.MappingEngine
+                End Using
+            End Get
+        End Property
 
-        'Protected Friend ReadOnly Property M2MKey() As String
-        '    Get
-        '        Return _m2mKey
-        '    End Get
-        'End Property
-
-        Public ReadOnly Property GetMgr() As ICreateManager
+        Public ReadOnly Property CreateManager() As ICreateManager
             Get
                 Return _getMgr
             End Get
@@ -782,7 +774,7 @@ l1:
                                 _pdic.Add(t, dic)
                             End If
                         Next
-                        End If
+                    End If
                 End If
 
                 If AutoJoins Then
@@ -810,7 +802,11 @@ l1:
             _js = New List(Of QueryJoin)
 
             If Joins IsNot Nothing Then
-                _js.AddRange(Joins)
+                '_js.AddRange(Joins)
+                For Each j As QueryJoin In Joins
+                    _js.Add(j)
+                    j.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                Next
             End If
 
             Dim f As IFilter = Nothing
@@ -2590,7 +2586,7 @@ l1:
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
-                Using New SetManagerHelper(mgr, GetMgr)
+                Using New SetManagerHelper(mgr, CreateManager)
                     Return ToPODList(Of T)(mgr)
                 End Using
             End Using
@@ -3026,7 +3022,7 @@ l1:
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
-            Using mgr As OrmManager = GetMgr.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager
                 GetExecutor(mgr).ClearCache(mgr, Me)
             End Using
         End Sub
@@ -3036,7 +3032,7 @@ l1:
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Using mgr As OrmManager = GetMgr.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager
                 GetExecutor(mgr).RenewCache(mgr, Me, v)
             End Using
         End Sub
@@ -3047,7 +3043,7 @@ l1:
                     Throw New InvalidOperationException("OrmManager required")
                 End If
 
-                Using mgr As OrmManager = GetMgr.CreateManager
+                Using mgr As OrmManager = CreateManager.CreateManager
                     Return GetExecutor(mgr).IsInCache(mgr, Me)
                 End Using
             End Get
@@ -3463,7 +3459,7 @@ l1:
             'Return Where(f).Single(Of T)()
 
             Dim o As IKeyEntity = Nothing
-            Using New SetManagerHelper(mgr, GetMgr)
+            Using New SetManagerHelper(mgr, CreateManager)
                 If GetType(T) IsNot tp Then
                     'o = mgr.LoadType(id, tp, ensureLoaded, False)
                     If ensureLoaded Then
@@ -3681,10 +3677,10 @@ l1:
             Dim tt As Type = Nothing
             If SelectTypes IsNot Nothing AndAlso SelectTypes.Count = 1 Then
                 Dim eu As EntityUnion = SelectTypes(0).First
-                tt = eu.GetRealType(MappingEngine)
+                tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAdd(Ctor.prop(eu, MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    WhereAdd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
                     Return SingleOrDefaultDyn(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf
@@ -3698,10 +3694,10 @@ l1:
             Dim tt As Type = Nothing
             If SelectTypes IsNot Nothing AndAlso SelectTypes.Count = 1 Then
                 Dim eu As EntityUnion = SelectTypes(0).First
-                tt = eu.GetRealType(MappingEngine)
+                tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAdd(Ctor.prop(eu, MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    WhereAdd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
                     Return SingleOrDefault(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf

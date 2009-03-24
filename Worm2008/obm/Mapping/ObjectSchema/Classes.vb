@@ -252,7 +252,7 @@ Namespace Entities.Meta
             Dim rtt As Type = Nothing
             Dim mpe As ObjectMappingEngine = Nothing
             Dim oschema As IEntitySchema = Nothing
-            Using mgr As OrmManager = rcmd.GetMgr.CreateManager
+            Using mgr As OrmManager = rcmd.CreateManager.CreateManager
                 mpe = mgr.MappingEngine
                 rtt = op.ObjectSource.GetRealType(mpe)
                 oschema = mpe.GetEntitySchema(rtt)

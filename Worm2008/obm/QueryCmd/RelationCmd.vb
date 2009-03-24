@@ -729,7 +729,7 @@ l1:
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Using mgr As OrmManager = GetMgr.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager
                 CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
             End Using
         End Sub
