@@ -679,8 +679,17 @@ l1:
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, _
             ByVal isAnonym As Boolean)
 
-            If _from IsNot Nothing AndAlso _from.AnyQuery IsNot Nothing Then
-                Prepare(_from.AnyQuery, executor, schema, filterInfo, stmt)
+            If _from IsNot Nothing Then
+                Dim anq As QueryCmd = _from.AnyQuery
+                If anq IsNot Nothing Then
+                    Dim oldAuto As Boolean = anq._autoFields
+                    Try
+                        anq._autoFields = False
+                        Prepare(anq, executor, schema, filterInfo, stmt)
+                    Finally
+                        anq._autoFields = oldAuto
+                    End Try
+                End If
             End If
 
             If SelectList IsNot Nothing Then
@@ -957,7 +966,7 @@ l1:
                 If Not q.GetStaticKey(key, cb_, mpe, fi) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
-                        root.RaiseCacheDictionaryRequired(ca)
+                        q.RaiseCacheDictionaryRequired(ca)
                         If ca.GetDictionary Is Nothing Then
                             If cb = Cache.CacheListBehavior.CacheOrThrowException Then
                                 Throw New QueryCmdException("Cannot cache query", root)
@@ -1173,7 +1182,7 @@ l1:
             Dim i As Integer = 0
             For Each q As QueryCmd In New MetaDataQueryIterator(root)
                 If i > 0 Then
-                    id.Append("$inner:")
+                    id.Append("$nextq:")
                 End If
                 'Dim f As IFilter = Nothing
                 'If fs.Length > i Then

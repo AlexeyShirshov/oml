@@ -128,10 +128,14 @@ Namespace Database.Storedprocs
             'Return r
         End Function
 
-        Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
-            Dim l As New List(Of Pair(Of Type, Dependency))
-            l.Add(New Pair(Of Type, Dependency)(GetType(T), Dependency.All))
-            Return l
+        'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+        '    Dim l As New List(Of Pair(Of Type, Dependency))
+        '    l.Add(New Pair(Of Type, Dependency)(GetType(T), Dependency.All))
+        '    Return l
+        'End Function
+
+        Protected Overrides Function ProvideStaticValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Type()
+            Return New Type() {GetType(T)}
         End Function
 
         Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
