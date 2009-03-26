@@ -182,6 +182,12 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function sum(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+            Return f
+        End Function
+
         Public Shared Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
@@ -373,6 +379,11 @@ Namespace Query
 
             Public Function sum(ByVal op As ObjectProperty) As Int
                 GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(op)))))
+                Return Me
+            End Function
+
+            Public Function sum(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
                 Return Me
             End Function
 

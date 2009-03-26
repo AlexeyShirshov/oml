@@ -444,9 +444,9 @@ Namespace Cache
         Protected Friend Sub LogLoadTime(ByVal obj As IEntity, ByVal time As TimeSpan)
             Dim t As Type = obj.GetType
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("q89rbvadfk" & t.ToString,"d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug("q89rbvadfkqerog" ,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("q89rbvadfk" & t.ToString)
+            Using SyncHelper.AcquireDynamicLock("q89rbvadfkqerog")
 #End If
 
                 Dim p As Pair(Of Integer, TimeSpan) = Nothing

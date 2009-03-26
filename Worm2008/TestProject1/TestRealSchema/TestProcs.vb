@@ -209,6 +209,7 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim p As New ScalarProc(10)
             Assert.AreEqual(20, p.GetResult(mgr))
+            p.ResetCache(mgr.Cache)
             Assert.AreEqual(100, p.GetResult(90, mgr))
             Assert.AreEqual(20, ScalarProc.Exec(mgr, "dbo.ScalarProc", "i", 10))
             Assert.AreEqual(30, ScalarProc.Exec(mgr, "dbo.ScalarProc", "i", 20))
@@ -234,10 +235,14 @@ End Class
 Public Class P1Proc
     Inherits QueryStoredProcBase
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
-        Dim l As New List(Of Pair(Of Type, Dependency))
-        l.Add(New Pair(Of Type, Dependency)(GetType(Tables1to3), Dependency.All))
-        Return l
+    'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+    '    Dim l As New List(Of Pair(Of Type, Dependency))
+    '    l.Add(New Pair(Of Type, Dependency)(GetType(Tables1to3), Dependency.All))
+    '    Return l
+    'End Function
+
+    Protected Overrides Function ProvideStaticValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Type()
+        Return New Type() {GetType(Tables1to3)}
     End Function
 
     Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
@@ -278,10 +283,10 @@ Public Class P2Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
-        Dim l As New List(Of Pair(Of Type, Dependency))
-        Return l
-    End Function
+    'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+    '    Dim l As New List(Of Pair(Of Type, Dependency))
+    '    Return l
+    'End Function
 
     Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
         Return _params
@@ -355,11 +360,15 @@ Public Class P3Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
-        Dim l As New List(Of Pair(Of Type, Dependency))
-        l.Add(New Pair(Of Type, Dependency)(GetType(Table1), Dependency.All))
-        l.Add(New Pair(Of Type, Dependency)(GetType(Table2), Dependency.All))
-        Return l
+    'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+    '    Dim l As New List(Of Pair(Of Type, Dependency))
+    '    l.Add(New Pair(Of Type, Dependency)(GetType(Table1), Dependency.All))
+    '    l.Add(New Pair(Of Type, Dependency)(GetType(Table2), Dependency.All))
+    '    Return l
+    'End Function
+
+    Protected Overrides Function ProvideStaticValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Type()
+        Return New Type() {GetType(Table1), GetType(Table2)}
     End Function
 
     Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
@@ -400,16 +409,27 @@ Public Class P4Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Public Overrides Function ValidateOnUpdate(ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String)) As Storedprocs.StoredProcBase.ValidateResult
+    Public Shared Function ValidateOnUpdate(ByVal params As IList(Of Object), ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String)) As Boolean
         Dim t1 As Table1 = TryCast(obj, Table1)
-        If t1 IsNot Nothing AndAlso t1.ID = CInt(_params(0).Second) Then
-            Return ValidateResult.ResetCache
+        If t1 IsNot Nothing AndAlso t1.ID = CInt(params(0)) Then
+            Return True
         End If
-        Return MyBase.ValidateOnUpdate(obj, fields)
+        Return False
     End Function
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
-        Return New List(Of Pair(Of Type, Dependency))
+    'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+    '    Return New List(Of Pair(Of Type, Dependency))
+    'End Function
+
+    Protected Overrides Function ProvideStaticValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Type()
+        OnUpdateStaticMethodName = DontNeedResetCacheOnUpdate
+        OnInsertDeleteStaticMethodName = DontNeedResetCacheOnInsertDelete
+        Return New Type() {GetType(Table1)}
+    End Function
+
+    Protected Overrides Function ProvideDynamicValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Collections.Generic.IList(Of Object)
+        OnUpdateStaticMethodName = "ValidateOnUpdate"
+        Return New Object() {_params(0).Second}
     End Function
 
     Protected Overrides Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
