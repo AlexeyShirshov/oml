@@ -33,6 +33,7 @@ Namespace Criteria.Values
 
     <Serializable()> _
     Public Class CustomValue
+        Inherits TemplateBase
         Implements IFilterValue
 
         Private _f As String
@@ -42,46 +43,107 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Private _v() As FieldReference
-        Public ReadOnly Property Values() As FieldReference()
+        Private _v() As IFilterValue
+        Public ReadOnly Property Values() As IFilterValue()
             Get
                 Return _v
             End Get
         End Property
 
-        Public Sub New(ByVal format As String, ByVal ParamArray values() As FieldReference)
+        Private _filter As Boolean
+
+        Public Sub New(ByVal format As String)
+            _f = format
+            _filter = True
+        End Sub
+
+        Public Sub New(ByVal format As String, ByVal ParamArray values() As IFilterValue)
+            _f = format
+            _v = values
+            _filter = True
+        End Sub
+
+        Public Sub New(ByVal format As String, ByVal ParamArray values() As SelectExpression)
+            _f = format
+            _v = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
+            _filter = True
+        End Sub
+
+        Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values() As IFilterValue)
+            MyBase.New(oper)
             _f = format
             _v = values
         End Sub
 
-        Public Function _ToString() As String Implements IFilterValue._ToString
-            Dim l As New List(Of String)
-            For Each v As FieldReference In _v
-                'Dim t As SourceFragment = TryCast(v.First, SourceFragment)
-                'If t IsNot Nothing Then
-                '    l.Add(t.RawName & "$" & v.Second)
-                'Else
-                '    l.Add(t.ToString & "$" & v.Second)
-                'End If
-                l.Add(v.ToString)
-            Next
-            Return String.Format(_f, l.ToArray)
+        Public Overrides Function _ToString() As String Implements IQueryElement._ToString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IFilterValue In _v
+                    l.Add(v._ToString)
+                Next
+                If _filter Then
+                    Return String.Format(_f, l.ToArray)
+                Else
+                    Return String.Format(_f, l.ToArray) & OperationString
+                End If
+            Else
+                If _filter Then
+                    Return _f & OperationString
+                Else
+                    Return _f
+                End If
+            End If
         End Function
+
+        Protected ReadOnly Property OperationString() As String
+            Get
+                Return TemplateBase.OperToStringInternal(Operation)
+            End Get
+        End Property
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
-            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
+            'Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
-            Return String.Format(_f, values.ToArray)
+            'Return String.Format(_f, values.ToArray)
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IFilterValue In _v
+                    l.Add(v.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect))
+                Next
+                Return String.Format(_f, l.ToArray)
+            Else
+                Return _f
+            End If
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return "custval"
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IFilterValue In _v
+                    l.Add(v.GetStaticString(mpe, contextFilter))
+                Next
+                If _filter Then
+                    Return String.Format(_f, l.ToArray)
+                Else
+                    Return String.Format(_f, l.ToArray) & OperationString
+                End If
+            Else
+                If _filter Then
+                    Return _f
+                Else
+                    Return _f & OperationString
+                End If
+            End If
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            'do nothing
+            If _v IsNot Nothing Then
+                For Each v As IFilterValue In _v
+                    v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                Next
+            End If
         End Sub
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
@@ -89,6 +151,19 @@ Namespace Criteria.Values
                 Return True
             End Get
         End Property
+
+        Public Overrides Function Equals(ByVal f As Object) As Boolean
+            Return Equals(TryCast(f, CustomValue))
+        End Function
+
+        Public Overloads Function Equals(ByVal f As CustomValue) As Boolean
+            If f IsNot Nothing Then
+                Return _ToString.Equals(f._ToString)
+            Else
+                Return False
+            End If
+        End Function
+
     End Class
 
     <Serializable()> _

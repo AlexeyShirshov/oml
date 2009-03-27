@@ -801,6 +801,8 @@ l1:
             _f = f
         End Sub
 
+        Friend _prepared As Boolean
+
         Public Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
@@ -858,6 +860,8 @@ l1:
             End If
 
             _Prepare(executor, schema, filterInfo, stmt, f, selectOS, isAnonym)
+
+            _prepared = True
         End Sub
 
         Private Sub CheckFrom(ByVal se As SelectExpression)
@@ -3595,11 +3599,20 @@ l1:
                 Throw New InvalidOperationException("Group is not custom")
             End If
 
-            If _group(0).Values(0).Property.ObjectSource Is Nothing Then
+            Dim n As String = Nothing
+            Dim se As SelectExpressionValue = TryCast(_group(0).Values(0), SelectExpressionValue)
+            If se Is Nothing Then
+                'Dim ev As EntityValue = TryCast(_group(0).Values(0), EntityValue)
+                'If ev Is Nothing Then
                 Throw New InvalidOperationException("Group is not object property reference")
+                'End If
+                'n = ev
+            Else
+                If se.Expression.PropType <> PropType.ObjectProperty Then
+                    Throw New InvalidOperationException("Group is not object property reference")
+                End If
+                n = se.Expression.ObjectProperty.Field
             End If
-
-            Dim n As String = _group(0).Values(0).Property.Field
 
             Return BuildDic(Of T)(mgr, n, Nothing, level)
         End Function
@@ -3623,7 +3636,7 @@ l1:
                     _from = New FromClauseDef(tt)
                 End If
 
-                Dim s As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, propertyAlias)).GetAllProperties(0)
+                Dim s As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias))
 
                 Try
                     [Select](FCtor.Exp(s).count("Count")) _
@@ -3648,8 +3661,8 @@ l1:
                     tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
                 End If
 
-                Dim s1 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, firstPropertyAlias)).GetAllProperties(0)
-                Dim s2 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), New FieldReference(tt, secondPropertyAlias)).GetAllProperties(0)
+                Dim s1 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, firstPropertyAlias))
+                Dim s2 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, secondPropertyAlias))
 
                 Dim c As New QueryCmd.svct(Me)
                 Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)

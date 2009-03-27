@@ -14,9 +14,7 @@ Namespace Entities
         Private _all As Boolean
 
         Public Sub New(ByVal p As SelectExpression)
-            MyBase.New(p.Computed, p.Values, p.Column)
-            Table = p.Table
-            ObjectProperty = p.ObjectProperty
+            p.CopyTo(Me)
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal field As String)
@@ -31,9 +29,9 @@ Namespace Entities
             MyBase.new(t, column, fieldAlias)
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal [alias] As String, ByVal ParamArray values() As FieldReference)
-            MyBase.New(computed, values, [alias])
-        End Sub
+        'Public Sub New(ByVal computed As String, ByVal [alias] As String, ByVal ParamArray values() As IFilterValue)
+        '    MyBase.New(computed, values, [alias])
+        'End Sub
 
         Public Property SumValues() As SummaryValues
             Get

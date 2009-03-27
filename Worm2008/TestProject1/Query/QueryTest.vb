@@ -1223,7 +1223,7 @@ Imports System.ComponentModel
         Dim t As New SourceFragment("dbo", "table1")
 
         q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)). _
-            custom("ID", GetType(Table2), "case when {0} = 2 then 1 else {0} end", New FieldReference(t, "enum")))
+            custom("ID", GetType(Table2), "case when {0} = 2 then 1 else {0} end", FCtor.column(t, "enum")))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 

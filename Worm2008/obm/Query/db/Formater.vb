@@ -179,11 +179,13 @@ Namespace Database
                         End If
                     Case Entities.PropType.CustomValue
                         If inSelect Then
-                            Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
+                            'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
+                            Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect)
                             sb.Append(sss)
                             If cols IsNot Nothing Then cols.Append(sss)
                         Else
-                            sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
+                            'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
+                            sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect))
                         End If
                         If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
                             sb.Append(" ").Append(se.FieldAlias)

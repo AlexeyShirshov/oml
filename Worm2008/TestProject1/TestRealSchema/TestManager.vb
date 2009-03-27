@@ -1154,7 +1154,7 @@ Public Class TestManagerRS
     Public Sub TestCustomFilter()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
-                Ctor.custom("power({0},2)", New FieldReference(GetType(Table1), "Code")).greater_than(1000), _
+                Ctor.custom("power({0},2)", FCtor.prop(GetType(Table1), "Code")).greater_than(1000), _
                 SCtor.prop(GetType(Table1), "Code"), False)
 
             Assert.AreEqual(2, c.Count)
@@ -1163,7 +1163,7 @@ Public Class TestManagerRS
             Assert.AreEqual(2, GetList(c)(1).Identifier)
 
             c = mgr.Find(Of Table1)(CType(Ctor.prop(GetType(Table1), "Enum").eq(2), PredicateLink). _
-                [and]("power({0},2)", New FieldReference(GetType(Table1), "Code")).greater_than(1000), Nothing, True)
+                [and]("power({0},2)", FCtor.prop(GetType(Table1), "Code")).greater_than(1000), Nothing, True)
 
             Assert.AreEqual(1, c.Count)
         End Using

@@ -463,12 +463,12 @@ Namespace Linq
                                     Else
                                         pr = ev.Expression
                                     End If
-                                    If pr.Table Is Nothing Then
-                                        p = New FieldReference(pr.ObjectProperty)
-                                    Else
-                                        p = New FieldReference(pr.Table, pr.Column)
-                                    End If
-                                    _exp = New UnaryExp(New CustomValue(_gen.GetYear, p))
+                                    'If pr.Table Is Nothing Then
+                                    '    p = New FieldReference(pr.ObjectProperty)
+                                    'Else
+                                    '    p = New FieldReference(pr.Table, pr.Column)
+                                    'End If
+                                    _exp = New UnaryExp(New CustomValue(_gen.GetYear, pr))
                                 Case Else
                                     Throw New NotImplementedException(String.Format( _
                                         "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))

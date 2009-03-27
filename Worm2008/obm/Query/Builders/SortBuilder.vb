@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities
 Imports Worm.Sorting
 Imports Worm.Entities.Meta
+Imports Worm.Criteria.Values
 
 Namespace Query
     Public Class SCtor
@@ -44,8 +45,12 @@ Namespace Query
         '    Return SortLink.CreateCustom(sortExpression, Nothing, Nothing)
         'End Function
 
-        Public Shared Function custom(ByVal sortExpression As String, ByVal ParamArray values() As FieldReference) As SortLink
+        Public Shared Function custom(ByVal sortExpression As String, ByVal ParamArray values() As IFilterValue) As SortLink
             Return SortLink.CreateCustom(sortExpression, Nothing, values)
+        End Function
+
+        Public Shared Function custom(ByVal sortExpression As String, ByVal values() As SelectExpression) As SortLink
+            Return SortLink.CreateCustom(sortExpression, Nothing, Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se)))
         End Function
 
         Public Shared Function External(ByVal tag As String) As SortLink
@@ -88,18 +93,19 @@ Namespace Query
         Private _prev As SortLink
         Private _order As SortType
         Private _os As EntityUnion
-        Private _custom As String
-        Private _values() As FieldReference
+        'Private _custom As String
+        'Private _values() As FieldReference
         Private _del As ExternalSortDelegate
         Private _table As SourceFragment
         Private _cmd As QueryCmd
+        Private _custom As CustomValue
 
         Protected Sub New()
 
         End Sub
 
         Protected Friend Shared Function CreateCustom(ByVal sortExpression As String, _
-           ByVal prev As SortLink, ByVal values() As FieldReference) As SortLink
+           ByVal prev As SortLink, ByVal values() As IFilterValue) As SortLink
             Dim s As New SortLink(prev, sortExpression, values)
             's._custom = sortExpression
             's._values = values
@@ -186,10 +192,9 @@ Namespace Query
 #End Region
 
         Protected Friend Sub New(ByVal prev As SortLink, ByVal sortExpression As String, _
-                                 ByVal values() As FieldReference)
+                                 ByVal values() As IFilterValue)
             _prev = prev
-            _custom = sortExpression
-            _values = values
+            _custom = New CustomValue(sortExpression, values)
         End Sub
 
         Protected Friend Sub New(ByVal cmd As QueryCmd)
@@ -203,21 +208,20 @@ Namespace Query
 
         Protected Friend Sub New(ByVal se As SelectExpression)
             _cmd = se.Query
-            _custom = se.Computed
+            _custom = se.custom
             _f = se.Column
             _os = se.ObjectSource
             _table = se.Table
-            _values = se.Values
         End Sub
 
         Protected Friend Sub New(ByVal se As SelectExpression, ByVal prev As SortLink)
             _prev = prev
             _cmd = se.Query
-            _custom = se.Computed
+            _custom = se.Custom
             _f = se.Column
             _os = se.ObjectSource
             _table = se.Table
-            _values = se.Values
+            '_values = se.Values
         End Sub
 
         Public Function Sort(ByVal so As SortLink) As SortLink
@@ -269,8 +273,12 @@ Namespace Query
             Return New SortLink(t, propertyAlias, Me)
         End Function
 
-        Public Function custom(ByVal sortexpression As String, ByVal ParamArray values() As FieldReference) As SortLink
+        Public Function custom(ByVal sortexpression As String, ByVal ParamArray values() As IFilterValue) As SortLink
             Return CreateCustom(sortexpression, Me, values)
+        End Function
+
+        Public Function custom(ByVal sortexpression As String, ByVal values() As SelectExpression) As SortLink
+            Return CreateCustom(sortexpression, Me, Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se)))
         End Function
 
         Public ReadOnly Property asc() As SortLink
@@ -326,10 +334,10 @@ Namespace Query
         End Operator
 
         Private Shared Function xxx(ByVal so As SortLink) As Sort
-            If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) OrElse so._cmd IsNot Nothing Then
+            If Not String.IsNullOrEmpty(so._f) OrElse so._custom IsNot Nothing OrElse so._cmd IsNot Nothing Then
                 If so._prev Is Nothing Then
                     If so.IsCustom Then
-                        Dim s As New Sort(so._custom, so._values)
+                        Dim s As New Sort(so._custom)
                         s._order = so._order
                         Return s
                     Else
@@ -343,7 +351,7 @@ Namespace Query
                     End If
                 Else
                     If so.IsCustom Then
-                        Dim s As New Sort(so._prev, so._custom, so._values)
+                        Dim s As New Sort(so._prev, so._custom)
                         s._order = so._order
                         Return s
                     Else
@@ -363,7 +371,7 @@ Namespace Query
 
         Public ReadOnly Property IsCustom() As Boolean
             Get
-                Return Not String.IsNullOrEmpty(_custom)
+                Return _custom IsNot Nothing
             End Get
         End Property
 

@@ -1701,7 +1701,8 @@ l1:
                         '    End If
                         'Next
                         If ns.Values IsNot Nothing Then
-                            sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
+                            'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
+                            sb2.Append(ns.Custom.GetParam(mpe, Me, Nothing, almgr, Nothing, Nothing, False))
                         Else
                             sb2.Append(ns.CustomSortExpression)
                         End If

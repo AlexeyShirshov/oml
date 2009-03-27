@@ -279,7 +279,7 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.custom("{0} asc", New FieldReference(GetType(Table1), "EnumStr")), False), IList(Of Table1))
+                    SCtor.custom("{0} asc", FCtor.prop(GetType(Table1), "EnumStr")), False), IList(Of Table1))
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
@@ -287,8 +287,8 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.custom("{0}", New FieldReference(GetType(Table1), "EnumStr")). _
-                    custom("{0} desc", New FieldReference(GetType(Table1), "Enum")), False), IList(Of Table1))
+                    SCtor.custom("{0}", FCtor.prop(GetType(Table1), "EnumStr")). _
+                    custom("{0} desc", FCtor.prop(GetType(Table1), "Enum")), False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)
