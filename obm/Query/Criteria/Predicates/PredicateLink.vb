@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports Worm.Query
 Imports System.Collections.Generic
+Imports Worm.Criteria.Values
 
 Namespace Criteria
 
@@ -289,11 +290,15 @@ Namespace Criteria
             Return Me
         End Function
 
-        Public Function [and](ByVal custom As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+        Public Function [and](ByVal custom As String, ByVal values() As SelectExpression) As PredicateBase
             Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
         End Function
 
-        Public Function [or](ByVal custom As String, ByVal ParamArray values() As FieldReference) As PredicateBase
+        Public Function [and](ByVal custom As String, ByVal ParamArray values() As IFilterValue) As PredicateBase
+            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
+        End Function
+
+        Public Function [or](ByVal custom As String, ByVal ParamArray values() As IFilterValue) As PredicateBase
             Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
         End Function
 

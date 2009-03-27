@@ -77,7 +77,7 @@ Imports Worm.Misc
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
 
-            Dim cust As SelectExpression = FCtor.custom("isnull({0},1)", New FieldReference(GetType(Entity4), "ID")).GetAllProperties(0)
+            Dim cust As SelectExpression = FCtor.custom("isnull({0},1)", FCtor.prop(GetType(Entity4), "ID"))
 
             q.Select(FCtor.max(cust, "s")).From(GetType(Entity4))
 
@@ -207,7 +207,8 @@ Imports Worm.Misc
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            Dim o As New Grouping("left({0},1)", "Pref", New FieldReference(t, "Title"))
+            'Dim o As New Grouping("left({0},1)", "Pref", FCtor.prop(t, "Title"))
+            Dim o As Grouping = FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 o, _
                 New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
@@ -232,9 +233,9 @@ Imports Worm.Misc
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
+            q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
-                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
@@ -255,9 +256,9 @@ Imports Worm.Misc
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
+            q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
-                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
@@ -285,9 +286,9 @@ Imports Worm.Misc
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title")).count("Count")) _
+            q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
-                .GroupBy(FCtor.custom("Pref", "left({0},1)", New FieldReference(t, "Title"))) _
+                .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.custom("Count").desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)

@@ -46,7 +46,7 @@ Namespace Criteria.Core
 
         Public Overloads Function Equals(ByVal f As FilterBase) As Boolean
             If f IsNot Nothing Then
-                Return _ToString.Equals(f.ToString)
+                Return _ToString.Equals(f._ToString)
             Else
                 Return False
             End If

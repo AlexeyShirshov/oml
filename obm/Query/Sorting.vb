@@ -3,6 +3,7 @@ Imports Worm.Sorting
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports Worm.Query
+Imports Worm.Criteria.Values
 
 Namespace Sorting
     Public Enum SortType
@@ -184,14 +185,14 @@ Namespace Sorting
 
 #Region " Typeless ctors "
 
-        Public Sub New(ByVal sortExpression As String, ByVal values() As FieldReference)
+        Public Sub New(ByVal sortExpression As String, ByVal values() As IFilterValue)
             '    '_t = t
             MyBase.New(sortExpression, values)
             '    _custom = sortExpression
             '    _values = values
         End Sub
 
-        Public Sub New(ByVal prev As Sort, ByVal sortExpression As String, ByVal values() As FieldReference)
+        Public Sub New(ByVal prev As Sort, ByVal sortExpression As String, ByVal values() As IFilterValue)
             MyBase.New(sortExpression, values)
             _prev = prev
             '_t = t
@@ -237,6 +238,15 @@ Namespace Sorting
         End Sub
 
         Protected Sub New()
+        End Sub
+
+        Protected Friend Sub New(ByVal prev As SortLink, ByVal custom As CustomValue)
+            MyBase.New(custom)
+            _prev = prev
+        End Sub
+
+        Protected Friend Sub New(ByVal custom As CustomValue)
+            MyBase.New(custom)
         End Sub
 
         'Protected Sub RaiseOnChange()
@@ -432,7 +442,7 @@ Namespace Sorting
                 Dim s As New Sort(_prev, ObjectSource, PropertyAlias, _order, _ext, _del)
                 s.Computed = Computed
                 s.Table = Table
-                s.Values = Values
+                s.Custom = Custom
                 s.Column = Column
                 Return s
             End If

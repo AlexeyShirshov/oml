@@ -22,6 +22,7 @@ Namespace Cache
         Private _filters As IDictionary
         Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _lock As New Object
+        Private _lock2 As New Object
         Private _list_converter As IListObjectConverter
         Private _modifiedobjects As IDictionary
         Private _externalObjects As IDictionary
@@ -261,6 +262,16 @@ Namespace Cache
                 Return New CSScopeMgr_Debug(_lock, "d:\temp\")
 #Else
                 Return New CSScopeMgr(_lock)
+#End If
+            End Get
+        End Property
+
+        Friend ReadOnly Property SyncRoot2() As IDisposable
+            Get
+#If DebugLocks Then
+                Return New CSScopeMgr_Debug(_lock2, "d:\temp\")
+#Else
+                Return New CSScopeMgr(_lock2)
 #End If
             End Get
         End Property

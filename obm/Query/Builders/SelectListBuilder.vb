@@ -106,44 +106,58 @@ Namespace Query
 
         Public Shared Function custom(ByVal expression As String) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(expression, CType(Nothing, FieldReference())))
+            f.GetAllProperties.Add(New SelectExpression(expression, CType(Nothing, IFilterValue())))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal [alias] As String, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal [alias] As String, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, [alias]))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal attr As Field2DbRelations, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal attr As Field2DbRelations, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, intoProp, attr))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, intoProp))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal intoProp As ObjectProperty, ByVal expression As String, ByVal params() As SelectExpression) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(expression, Array.ConvertAll(params, Function(se As SelectExpression) New SelectExpressionValue(se)), intoProp))
+            Return f
+        End Function
+
+        Public Shared Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, propertyAlias, intoType))
             Return f
         End Function
 
-        Public Shared Function custom(ByVal propertyAlias As String, ByVal intoEntityName As String, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+        Public Shared Function custom(ByVal propertyAlias As String, ByVal intoEntityName As String, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(expression, params, propertyAlias, intoEntityName))
             Return f
+        End Function
+
+        Public Shared Function custom(ByVal expression As String, ByVal params() As SelectExpression) As Int
+            Return custom(expression, Array.ConvertAll(params, Function(se As SelectExpression) New SelectExpressionValue(se)))
+        End Function
+
+        Public Shared Function custom(ByVal [alias] As String, ByVal expression As String, ByVal params() As SelectExpression) As Int
+            Return custom([alias], expression, Array.ConvertAll(params, Function(se As SelectExpression) New SelectExpressionValue(se)))
         End Function
 
         Public Shared Function count() As Int
@@ -247,6 +261,10 @@ Namespace Query
                 Return _l
             End Function
 
+            Public Shared Widening Operator CType(ByVal f As Int) As Grouping
+                Return CType(f, Grouping())(0)
+            End Operator
+
             Public Shared Widening Operator CType(ByVal f As Int) As SelectExpression
                 Return f.GetAllProperties(0)
             End Operator
@@ -328,27 +346,37 @@ Namespace Query
             End Function
 
             Public Function custom(ByVal expression As String) As Int
-                GetAllProperties.Add(New SelectExpression(expression, CType(Nothing, FieldReference())))
+                GetAllProperties.Add(New SelectExpression(expression, CType(Nothing, IFilterValue())))
                 Return Me
             End Function
 
-            Public Function custom(ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Public Function custom(ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
                 GetAllProperties.Add(New SelectExpression(expression, params))
                 Return Me
             End Function
 
-            Public Function custom(ByVal [alias] As String, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Public Function custom(ByVal [alias] As String, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
                 GetAllProperties.Add(New SelectExpression(expression, params, [alias]))
                 Return Me
             End Function
 
-            Public Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Public Function custom(ByVal [alias] As String, ByVal expression As String, ByVal params() As SelectExpression) As Int
+                GetAllProperties.Add(New SelectExpression(expression, Array.ConvertAll(params, Function(se As SelectExpression) New SelectExpressionValue(se)), [alias]))
+                Return Me
+            End Function
+
+            Public Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
                 GetAllProperties.Add(New SelectExpression(expression, params, propertyAlias, intoType))
                 Return Me
             End Function
 
-            Public Function custom(ByVal propertyAlias As String, ByVal intoEntityName As String, ByVal expression As String, ByVal ParamArray params() As FieldReference) As Int
+            Public Function custom(ByVal propertyAlias As String, ByVal intoEntityName As String, ByVal expression As String, ByVal ParamArray params() As IFilterValue) As Int
                 GetAllProperties.Add(New SelectExpression(expression, params, propertyAlias, intoEntityName))
+                Return Me
+            End Function
+
+            Public Function custom(ByVal propertyAlias As String, ByVal intoType As Type, ByVal expression As String, ByVal params() As SelectExpression) As Int
+                GetAllProperties.Add(New SelectExpression(expression, Array.ConvertAll(params, Function(se As SelectExpression) New SelectExpressionValue(se)), propertyAlias, intoType))
                 Return Me
             End Function
 

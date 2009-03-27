@@ -429,7 +429,7 @@ l1:
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
 #Else
-            Using New CSScopeMgr(_mgr.Cache)
+            Using _mgr.Cache.SyncRoot2
 #End If
                 _mgr.BeginTransaction()
                 Try

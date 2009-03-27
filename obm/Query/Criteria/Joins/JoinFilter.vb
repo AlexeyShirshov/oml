@@ -120,7 +120,7 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal op As ObjectProperty, ByVal cf As CustomFilter.TemplateCls, ByVal operation As FilterOperation)
+        Public Sub New(ByVal op As ObjectProperty, ByVal cf As CustomValue, ByVal operation As FilterOperation)
             Dim f As FieldReference = Nothing
             If op.ObjectSource IsNot Nothing Then
                 f = New FieldReference(op)
@@ -459,7 +459,7 @@ Namespace Criteria.Joins
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
                 os = _eu
             ElseIf _l.CustomTemplate IsNot Nothing Then
-                [alias] = _l.CustomTemplate.MakeStmt(schema, stmt, almgr)
+                [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
             Else
                 Throw New InvalidOperationException
             End If
@@ -495,7 +495,7 @@ Namespace Criteria.Joins
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
                 os2 = _eu
             ElseIf _r.CustomTemplate IsNot Nothing Then
-                [alias2] = _r.CustomTemplate.MakeStmt(schema, stmt, almgr)
+                [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
             Else
                 Throw New InvalidOperationException
             End If

@@ -156,11 +156,11 @@ Namespace Criteria
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
-        Public Function greater_than_eq(ByVal format As String, ByVal ParamArray params() As FieldReference) As PredicateLink
+        Public Function greater_than_eq(ByVal format As String, ByVal ParamArray params() As IFilterValue) As PredicateLink
             Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.GreaterEqualThan))
         End Function
 
-        Public Function less_than_eq(ByVal format As String, ByVal ParamArray params() As FieldReference) As PredicateLink
+        Public Function less_than_eq(ByVal format As String, ByVal ParamArray params() As IFilterValue) As PredicateLink
             Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.LessEqualThan))
         End Function
 
@@ -489,19 +489,32 @@ Namespace Criteria
         Inherits PredicateBase
 
         Private _format As String
-        Private _values() As FieldReference
+        Private _values() As IFilterValue
 
-        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As FieldReference)
+        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As IFilterValue)
             MyBase.New(Nothing, Nothing)
             _format = format
             _values = values
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal values() As FieldReference, _
+        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As SelectExpression)
+            MyBase.New(Nothing, Nothing)
+            _format = format
+            _values = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
+        End Sub
+
+        Protected Friend Sub New(ByVal format As String, ByVal values() As IFilterValue, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             _format = format
             _values = values
+        End Sub
+
+        Protected Friend Sub New(ByVal format As String, ByVal values() As SelectExpression, _
+            ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+            MyBase.New(con, ct)
+            _format = format
+            _values = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
         End Sub
 
         'Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
@@ -541,7 +554,7 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(op, New CustomFilter.TemplateCls(fo, _format, _values), fo)
+            Dim j As New JoinFilter(op, New CustomValue(fo, _format, _values), fo)
             Return j
         End Function
 

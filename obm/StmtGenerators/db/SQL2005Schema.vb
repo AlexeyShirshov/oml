@@ -55,9 +55,13 @@ Namespace Database
                 clm.Append(s.First).Append(" ").Append(s.Second).Append(",")
             Next
             clm.Length -= 1
-            clm.Append(")")
-            sb.Append(DeclareVariable(tblName, clm.ToString))
-            Return tblName
+            If clm.Length > 5 Then
+                clm.Append(")")
+                sb.Append(DeclareVariable(tblName, clm.ToString))
+                Return tblName
+            Else
+                Return Nothing
+            End If
         End Function
 
         Protected Overrides Function InsertOutput(ByVal table As String, _
@@ -74,21 +78,25 @@ Namespace Database
                 sb.Append("inserted.").Append(clm).Append(",")
             Next
             sb.Length -= 1
-            sb.Append(" INTO ").Append(table).Append("(")
-            For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
-                sb.Append(pp.Second.First).Append(",")
+            If sb.Length > 7 Then
+                sb.Append(" INTO ").Append(table).Append("(")
+                For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
+                    sb.Append(pp.Second.First).Append(",")
 
-                Dim propertyAlias As String = pp.First
-                Dim idx As Integer = notSyncInsertPK.FindIndex(Function(p As Pair(Of String)) p.First = propertyAlias)
-                If idx >= 0 Then
-                    notSyncInsertPK(idx) = New Pair(Of String)(propertyAlias, pp.Second.First)
-                Else
-                    notSyncInsertPK.Add(New Pair(Of String)(propertyAlias, pp.Second.First))
-                End If
-            Next
-            sb.Length -= 1
-            sb.Append(")")
-            Return sb.ToString
+                    Dim propertyAlias As String = pp.First
+                    Dim idx As Integer = notSyncInsertPK.FindIndex(Function(p As Pair(Of String)) p.First = propertyAlias)
+                    If idx >= 0 Then
+                        notSyncInsertPK(idx) = New Pair(Of String)(propertyAlias, pp.Second.First)
+                    Else
+                        notSyncInsertPK.Add(New Pair(Of String)(propertyAlias, pp.Second.First))
+                    End If
+                Next
+                sb.Length -= 1
+                sb.Append(")")
+                Return sb.ToString
+            Else
+                Return String.Empty
+            End If
         End Function
 
         '    Protected Overrides Function FormInsert(ByVal inserted_tables As System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.IList(Of OrmFilter)), ByVal ins_cmd As System.Text.StringBuilder, ByVal type As System.Type, ByVal sel_columns As System.Collections.Generic.List(Of ColumnAttribute), ByVal unions() As String, ByVal params As ICreateParam) As System.Collections.Generic.ICollection(Of System.Data.Common.DbParameter)

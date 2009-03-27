@@ -918,13 +918,13 @@ l1:
 
                         Dim al As EntityAlias = join.ObjectSource.ObjectAlias
                         Dim q As QueryCmd = al.Query
-                        Dim c As New Query.QueryCmd.svct(q)
-                        Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                            QueryCmd.Prepare(q, Nothing, mpe, filterInfo, s)
-                            sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
-                            'Dim almgr2 As AliasMgr = AliasMgr.Create
-                            'FormSingleQuery(mpe, sb, q, s, AliasMgr.Create, filterInfo, params)
-                        End Using
+                        'Dim c As New Query.QueryCmd.svct(q)
+                        'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                        '    QueryCmd.Prepare(q, Nothing, mpe, filterInfo, s)
+                        sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
+                        'Dim almgr2 As AliasMgr = AliasMgr.Create
+                        'FormSingleQuery(mpe, sb, q, s, AliasMgr.Create, filterInfo, params)
+                        'End Using
 
                         Dim tbl As SourceFragment = al.Tbl
                         If tbl Is Nothing Then
@@ -1111,6 +1111,10 @@ l1:
 
         Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal almgr As IPrepareTable) As String
+
+            If Not query._prepared Then
+                Throw New QueryCmdException("Query not prepared", query)
+            End If
 
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema

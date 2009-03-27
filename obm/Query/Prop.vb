@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports Worm.Query
+Imports Worm.Criteria.Values
 
 Namespace Entities
 
@@ -16,7 +17,7 @@ Namespace Entities
     Public Class FieldReference
         Private _op As ObjectProperty
         Private _tf As Pair(Of SourceFragment, String)
-        Private _c As Criteria.Core.CustomFilter.TemplateCls
+        Private _c As Criteria.Values.CustomValue
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             _op = New ObjectProperty(t, propertyAlias)
@@ -42,11 +43,11 @@ Namespace Entities
             _tf = New Pair(Of SourceFragment, String)(table, column)
         End Sub
 
-        Public Sub New(ByVal customFilter As Criteria.Core.CustomFilter.TemplateCls)
+        Public Sub New(ByVal customFilter As Criteria.Values.CustomValue)
             _c = customFilter
         End Sub
 
-        Public ReadOnly Property CustomTemplate() As Criteria.Core.CustomFilter.TemplateCls
+        Public ReadOnly Property CustomTemplate() As Criteria.Values.CustomValue
             Get
                 Return _c
             End Get
@@ -68,7 +69,7 @@ Namespace Entities
             If _tf IsNot Nothing Then
                 Return _tf.First.RawName & "$" & _tf.Second
             ElseIf _c IsNot Nothing Then
-                Return _c.ToString
+                Return _c._ToString
             Else
                 Return _op.ObjectSource._ToString & "$" & _op.Field
             End If
@@ -97,9 +98,10 @@ Namespace Entities
         Private _table As SourceFragment
         Private _column As String
         'Private _custom As String
-        Private _values() As FieldReference
+        'Private _values() As FieldReference
 
         'Private _fr As FieldReference
+        Private _custom As CustomValue
 
         Private _q As Worm.Query.QueryCmd
         Private _agr As AggregateBase
@@ -270,45 +272,44 @@ Namespace Entities
             _dst = New EntityUnion(intoEntityName)
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal fieldAlias As String)
-            _column = computed
-            _values = values
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue, ByVal fieldAlias As String)
+            _custom = New CustomValue(format, values)
             _falias = fieldAlias
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal propertyAlias As String, ByVal intoType As Type)
-            _column = computed
-            _values = values
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue, ByVal propertyAlias As String, ByVal intoType As Type)
+            _custom = New CustomValue(format, values)
             _falias = propertyAlias
             _dst = New EntityUnion(intoType)
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, ByVal propertyAlias As String, ByVal intoEntityName As String)
-            _column = computed
-            _values = values
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue, ByVal propertyAlias As String, ByVal intoEntityName As String)
+            _custom = New CustomValue(format, values)
             _falias = propertyAlias
             _dst = New EntityUnion(intoEntityName)
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, _
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue, _
             ByVal prop As ObjectProperty)
-            _column = computed
-            _values = values
+            _custom = New CustomValue(format, values)
             _falias = prop.Field
             _dst = prop.ObjectSource
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference, _
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue, _
             ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations)
-            _column = computed
-            _values = values
+            _custom = New CustomValue(format, values)
             _falias = prop.Field
             _dst = prop.ObjectSource
             _attr = attr
         End Sub
 
-        Public Sub New(ByVal computed As String, ByVal values() As FieldReference)
-            MyClass.New(computed, values, CStr(Nothing))
+        Public Sub New(ByVal custom As CustomValue)
+            _custom = custom
+        End Sub
+
+        Public Sub New(ByVal format As String, ByVal values() As IFilterValue)
+            MyClass.New(format, values, If(values Is Nothing, format, Nothing))
         End Sub
 
         Public Sub New(ByVal q As QueryCmd)
@@ -332,9 +333,22 @@ Namespace Entities
         End Sub
 #End Region
 
-        'Public Sub New(ByVal propertyAlias As String)
-        '    _op = New ObjectProperty(CStr(Nothing), propertyAlias)
-        'End Sub
+        Public Sub CopyTo(ByVal s As SelectExpression)
+            With s
+                ._agr = _agr
+                ._attr = _attr
+                ._c = _c
+                ._column = _column
+                ._custom = _custom
+                ._dst = _dst
+                ._falias = _falias
+                ._op = _op
+                ._pi = _pi
+                ._q = _q
+                ._realAtt = _realAtt
+                ._table = _table
+            End With
+        End Sub
 
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
@@ -369,7 +383,7 @@ Namespace Entities
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
                     Return Entities.PropType.TableColumn
                 Else
-                    If _values IsNot Nothing Then
+                    If _custom IsNot Nothing Then
                         Return Entities.PropType.CustomValue
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return Entities.PropType.TableColumn
@@ -489,16 +503,25 @@ Namespace Entities
 
         Public ReadOnly Property IsCustom() As Boolean
             Get
-                Return _values IsNot Nothing
+                Return _custom IsNot Nothing
             End Get
         End Property
 
-        Public Property Values() As FieldReference()
+        Public ReadOnly Property Values() As IFilterValue()
             Get
-                Return _values
+                Return _custom.Values
             End Get
-            Protected Set(ByVal value As FieldReference())
-                _values = value
+            'Protected Set(ByVal value As IFilterValue())
+            '    _custom = value
+            'End Set
+        End Property
+
+        Public Property Custom() As CustomValue
+            Get
+                Return _custom
+            End Get
+            Protected Set(ByVal value As CustomValue)
+                _custom = value
             End Set
         End Property
 
@@ -513,8 +536,8 @@ Namespace Entities
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
                 Else
-                    If _values IsNot Nothing Then
-                        Return _column
+                    If _custom IsNot Nothing Then
+                        Return _custom._ToString
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then
@@ -530,9 +553,9 @@ Namespace Entities
             End If
         End Function
 
-        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable) As String()
-            Return ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _values).ToArray
-        End Function
+        'Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable) As String()
+        '    Return ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _values).ToArray
+        'End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return _Equals(TryCast(obj, SelectExpression))
@@ -543,8 +566,8 @@ Namespace Entities
                 Return False
             Else
                 Dim b As Boolean
-                If _values IsNot Nothing Then
-                    b = _column = s._column
+                If _custom IsNot Nothing Then
+                    b = _custom.Equals(s._custom)
                 ElseIf _op.ObjectSource IsNot Nothing Then
                     b = _op.Field = s._op.Field AndAlso _op.ObjectSource.Equals(s._op.ObjectSource)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
@@ -576,8 +599,8 @@ Namespace Entities
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
                 Else
-                    If _values IsNot Nothing Then
-                        Return _column
+                    If _custom IsNot Nothing Then
+                        Return _custom.GetStaticString(mpe, contextFilter)
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then

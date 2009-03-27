@@ -417,69 +417,69 @@ Namespace Criteria.Core
     Public Class CustomFilter
         Inherits Worm.Criteria.Core.TemplatedFilterBase
 
-        Public Class TemplateCls
-            Inherits TemplateBase
+        'Public Class TemplateCls
+        '    Inherits TemplateBase
 
-            Private _format As String
-            Private _values() As FieldReference
-            Private _sstr As String
+        '    Private _format As String
+        '    Private _values() As FieldReference
+        '    Private _sstr As String
 
-            Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values() As FieldReference)
-                MyBase.New(oper)
-                _format = format
-                _values = values
-            End Sub
+        '    Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values() As FieldReference)
+        '        MyBase.New(oper)
+        '        _format = format
+        '        _values = values
+        '    End Sub
 
-            Public Overrides Function _ToString() As String
-                Return _format & OperationString
-            End Function
+        '    Public Overrides Function _ToString() As String
+        '        Return _format & OperationString
+        '    End Function
 
-            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-                If String.IsNullOrEmpty(_sstr) Then
-                    If _values IsNot Nothing Then
-                        Dim values As New List(Of String)
-                        For Each p As FieldReference In _values
-                            'If p.First Is Nothing Then
-                            '    values.Add(p.Second)
-                            'Else
-                            '    values.Add(p.First.ToString & "^" & p.Second)
-                            'End If
-                            values.Add(p.ToString)
-                        Next
-                        _sstr = String.Format(_format, values.ToArray) & OperationString
-                    Else
-                        _sstr = _format & OperationString
-                    End If
-                End If
-                Return _sstr
-            End Function
+        '    Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        '        If String.IsNullOrEmpty(_sstr) Then
+        '            If _values IsNot Nothing Then
+        '                Dim values As New List(Of String)
+        '                For Each p As FieldReference In _values
+        '                    'If p.First Is Nothing Then
+        '                    '    values.Add(p.Second)
+        '                    'Else
+        '                    '    values.Add(p.First.ToString & "^" & p.Second)
+        '                    'End If
+        '                    values.Add(p.ToString)
+        '                Next
+        '                _sstr = String.Format(_format, values.ToArray) & OperationString
+        '            Else
+        '                _sstr = _format & OperationString
+        '            End If
+        '        End If
+        '        Return _sstr
+        '    End Function
 
-            Protected ReadOnly Property OperationString() As String
-                Get
-                    Return TemplateBase.OperToStringInternal(Operation)
-                End Get
-            End Property
+        '    Protected ReadOnly Property OperationString() As String
+        '        Get
+        '            Return TemplateBase.OperToStringInternal(Operation)
+        '        End Get
+        '    End Property
 
-            Public ReadOnly Property Format() As String
-                Get
-                    Return _format
-                End Get
-            End Property
+        '    Public ReadOnly Property Format() As String
+        '        Get
+        '            Return _format
+        '        End Get
+        '    End Property
 
-            Public ReadOnly Property Values() As FieldReference()
-                Get
-                    Return _values
-                End Get
-            End Property
+        '    Public ReadOnly Property Values() As FieldReference()
+        '        Get
+        '            Return _values
+        '        End Get
+        '    End Property
 
-            Public Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable) As String
-                Dim s As String = _format
-                If _values IsNot Nothing Then
-                    s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _values).ToArray)
-                End If
-                Return s
-            End Function
-        End Class
+        '    Public Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable) As String
+        '        Dim s As String = _format
+        '        If _values IsNot Nothing Then
+        '            s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _values).ToArray)
+        '        End If
+        '        Return s
+        '    End Function
+        'End Class
 
         'Private _t As Type
         'Private _tbl As SourceFragment
@@ -494,8 +494,8 @@ Namespace Criteria.Core
         Private _str As String
 
         Public Sub New(ByVal format As String, ByVal value As IFilterValue, _
-                       ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As FieldReference)
-            MyBase.New(value, New TemplateCls(oper, format, values))
+                       ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As IFilterValue)
+            MyBase.New(value, New CustomValue(oper, format, values))
             '_t = table
             '_field = field
             '_format = format
@@ -504,12 +504,12 @@ Namespace Criteria.Core
         End Sub
 
         Public Sub New(ByVal format As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal value As IFilterValue)
-            MyBase.New(value, New TemplateCls(oper, format, Nothing))
+            MyBase.New(value, New CustomValue(oper, format, Nothing))
             '_format = format
             '_oper = oper
         End Sub
 
-        Protected Sub New(ByVal t As TemplateCls, ByVal value As IFilterValue)
+        Protected Sub New(ByVal t As CustomValue, ByVal value As IFilterValue)
             MyBase.New(value, t)
         End Sub
 
@@ -540,7 +540,8 @@ Namespace Criteria.Core
             Return New CustomFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             If schema Is Nothing Then
@@ -550,12 +551,12 @@ Namespace Criteria.Core
             'Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
             If Value.ShouldUse Then
-                Dim s As String = CType(Template, TemplateCls).Format
-                If CType(Template, TemplateCls).Values IsNot Nothing Then
-                    s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, CType(Template, TemplateCls).Values).ToArray)
-                End If
+                'Dim s As String = CType(Template, TemplateCls).Format
+                'If CType(Template, TemplateCls).Values IsNot Nothing Then
+                '    s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, CType(Template, TemplateCls).Values).ToArray)
+                'End If
 
-                Return s & stmt.Oper2String(Template.Operation) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
+                Return CType(Template, CustomValue).GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False) & stmt.Oper2String(Template.Operation) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
             Else
                 Return String.Empty
             End If
@@ -593,7 +594,7 @@ Namespace Criteria.Core
         'End Function
 
         Protected Overrides Function _Clone() As Object
-            Dim c As New CustomFilter(CType(Template, TemplateCls), Value)
+            Dim c As New CustomFilter(CType(Template, CustomValue), Value)
             Return c
         End Function
 

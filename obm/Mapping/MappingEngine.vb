@@ -2020,26 +2020,27 @@ Public Class ObjectMappingEngine
         'End If
     End Sub
 
-    Protected Friend Function GetSelectColumns(ByVal mpe As ObjectMappingEngine, ByVal props As IEnumerable(Of SelectExpression)) As String
-        Dim sb As New StringBuilder
-        For Each pr As SelectExpression In props
-            If pr.PropType = PropType.TableColumn Then
-                sb.Append(pr.Table.UniqueName(Nothing)).Append(Delimiter).Append(pr.Column).Append(", ")
-            ElseIf pr.PropType = PropType.CustomValue Then
-                sb.Append(String.Format(pr.Computed, ObjectMappingEngine.ExtractValues(mpe, Nothing, Nothing, pr.Values).ToArray))
-                If Not String.IsNullOrEmpty(pr.Column) Then
-                    sb.Append(" ").Append(pr.Column)
-                End If
-                sb.Append(", ")
-            Else
-                sb.Append(GetColumnNameByPropertyAlias(mpe.GetEntitySchema(pr.ObjectSource.GetRealType(mpe)), pr.PropertyAlias, True, pr.ObjectSource)).Append(", ")
-            End If
-        Next
+    'Protected Friend Function GetSelectColumns(ByVal mpe As ObjectMappingEngine, ByVal props As IEnumerable(Of SelectExpression)) As String
+    '    Dim sb As New StringBuilder
+    '    For Each pr As SelectExpression In props
+    '        If pr.PropType = PropType.TableColumn Then
+    '            sb.Append(pr.Table.UniqueName(Nothing)).Append(Delimiter).Append(pr.Column).Append(", ")
+    '        ElseIf pr.PropType = PropType.CustomValue Then
+    '            'sb.Append(String.Format(pr.Computed, ObjectMappingEngine.ExtractValues(mpe, Nothing, Nothing, pr.Values).ToArray))
+    '            sb.Append(pr.Custom.GetParam(mpe, stmt, param, almgr, Nothing, filterinfo, True))
+    '            If Not String.IsNullOrEmpty(pr.Column) Then
+    '                sb.Append(" ").Append(pr.Column)
+    '            End If
+    '            sb.Append(", ")
+    '        Else
+    '            sb.Append(GetColumnNameByPropertyAlias(mpe.GetEntitySchema(pr.ObjectSource.GetRealType(mpe)), pr.PropertyAlias, True, pr.ObjectSource)).Append(", ")
+    '        End If
+    '    Next
 
-        sb.Length -= 2
+    '    sb.Length -= 2
 
-        Return sb.ToString
-    End Function
+    '    Return sb.ToString
+    'End Function
 
     Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal mpe As ObjectMappingEngine, _
         ByVal arr As Generic.ICollection(Of EntityPropertyAttribute), ByVal schema As IEntitySchema, ByVal os As EntityUnion) As String
