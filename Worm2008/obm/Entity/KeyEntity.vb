@@ -1755,23 +1755,23 @@ Namespace Entities
             Return q
         End Function
 
-        Protected Function GetCmd(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+        Public Function GetCmd(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
             Return CType(CreateRelCmd(New EntityUnion(t)).Select(t), RelationCmd)
         End Function
 
-        Protected Function GetCmd(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+        Public Function GetCmd(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
             Return CType(CreateRelCmd(New EntityUnion(t), key).Select(t), RelationCmd)
         End Function
 
-        Protected Function GetCmd(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+        Public Function GetCmd(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
             Return CType(CreateRelCmd(New EntityUnion(entityName)).Select(entityName), RelationCmd)
         End Function
 
-        Protected Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+        Public Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
             Return CType(CreateRelCmd(New EntityUnion(entityName), key).Select(entityName), RelationCmd)
         End Function
 
-        Protected Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
+        Public Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
             Return CType(CreateRelCmd(desc).Select(desc.Rel), RelationCmd)
         End Function
 
@@ -1982,39 +1982,40 @@ Namespace Entities
             Return _GetAll()
         End Function
 
-        Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t)).From(New SearchFragment(t, text))
-            Return CType(q, RelationCmd)
-        End Function
+        'Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t)).From(New SearchFragment(t, text))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
-        Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text))
-            Return CType(q, RelationCmd)
-        End Function
+        'Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
-        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, top))
-            Return CType(q, RelationCmd)
-        End Function
+        'Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, top))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, top))
-            Return CType(q, RelationCmd)
-        End Function
+        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, top))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields, top))
-            Return CType(q, RelationCmd)
-        End Function
+        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields, top))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields))
-            Return CType(q, RelationCmd)
-        End Function
-        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-            Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type))
-            Return CType(q, RelationCmd)
-        End Function
+        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields))
+        '    Return CType(q, RelationCmd)
+        'End Function
+
+        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
+        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type))
+        '    Return CType(q, RelationCmd)
+        'End Function
 
         'Public Function Search(ByVal text As String) As Worm.Query.RelationCmd Implements IRelations.Search
         '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t)).From(New SearchFragment(text))
