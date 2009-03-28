@@ -7,6 +7,7 @@ Imports Worm
 Imports Worm.Query
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
+Imports Worm.Entities.Meta
 
 <TestClass()> Public Class fts
 
@@ -131,17 +132,25 @@ Imports Worm.Criteria.Joins
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2M()
+        Dim s As New ObjectMappingEngine("1")
 
         Dim q As New QueryCmd(New CreateManager(Function() _
-            TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
+            TestManagerRS.CreateManagerSharedFullText(s)))
 
         q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
+        'Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
+        'Assert.AreEqual(0, r.Count)
+
+        'r = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
+
+        'Dim rd As M2MRelationDesc = s.GetM2MRelation(GetType(Table3), GetType(Table1), String.Empty)
+
+        Dim r As ReadOnlyEntityList(Of Table1) = t.GetCmd(GetType(Table1)).FromSearch(GetType(Table1), "second").ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
 
-        r = t.Relations.Search("second", GetType(Table1)).ToList(Of Table1)()
+        r = t.GetCmd(GetType(Table1)).FromSearch(GetType(Table1), "second").ToList(Of Table1)()
         Assert.AreEqual(0, r.Count)
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
@@ -154,7 +163,10 @@ Imports Worm.Criteria.Joins
         q.Where(Ctor.prop(GetType(Table3), "ID").eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("first", GetType(Table1)).ToEntityList(Of Table1)()
+        'Dim r As ReadOnlyEntityList(Of Table1) = t.Relations.Search("first", GetType(Table1)).ToEntityList(Of Table1)()
+
+        Dim r As ReadOnlyEntityList(Of Table1) = t.GetCmd(GetType(Table1)).FromSearch(GetType(Table1), "first").ToList(Of Table1)()
+
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(1, r.Count)

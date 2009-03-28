@@ -157,13 +157,13 @@ Namespace Entities
         Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd
         Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd
 
-        Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
+        'Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
         'Function Search(ByVal text As String) As Worm.Query.RelationCmd
         'Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd
         'Function Search(ByVal text As String, ByVal type As SearchType, ByVal key As String) As Worm.Query.RelationCmd
