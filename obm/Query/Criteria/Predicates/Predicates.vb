@@ -116,6 +116,10 @@ Namespace Criteria
             End If
         End Function
 
+        Public Function not_eq(ByVal op As ObjectProperty) As PredicateLink
+            Return GetLink(CreateJoinFilter(op, FilterOperation.NotEqual))
+        End Function
+
         Public Function eq(ByVal value As IKeyEntity) As PredicateLink
             If value Is Nothing Then
                 Return is_null()
