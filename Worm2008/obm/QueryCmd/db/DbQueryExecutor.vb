@@ -299,8 +299,8 @@ Namespace Query.Database
             Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
             Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
-            If query.CommandTimout.HasValue Then
-                dbm.CommandTimeout = query.CommandTimout
+            If query.CommandTimeout.HasValue Then
+                dbm.CommandTimeout = query.CommandTimeout
             End If
 
             Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, gp, d, d2)

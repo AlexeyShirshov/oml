@@ -312,7 +312,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property CommandTimout() As Nullable(Of Integer)
+        Public Property CommandTimeout() As Nullable(Of Integer)
             Get
                 Return _timeout
             End Get
