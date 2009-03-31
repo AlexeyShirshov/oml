@@ -1934,6 +1934,41 @@ l1:
             Return From(New SearchFragment(searchType, searchString, search, queryFields, top))
         End Function
 
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, top))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, _
+               ByVal search As SearchType) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, search))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, _
+               ByVal search As SearchType, ByVal top As Integer) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, search, top))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, _
+                         ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, _
+                       ByVal search As SearchType, ByVal ParamArray queryFields() As String) As QueryCmd
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, search, queryFields))
+        End Function
+
+        Public Function FromSearch(ByVal searcheu As String, ByVal searchString As String, _
+            ByVal search As SearchType, ByVal top As Integer, _
+            ByVal ParamArray queryFields() As String) As QueryCmd
+
+            Return From(New SearchFragment(New EntityUnion(searcheu), searchString, search, queryFields, top))
+        End Function
+
         Public Function FromSearch(ByVal eu As EntityUnion, ByVal searchString As String) As QueryCmd
             Return From(New SearchFragment(eu, searchString))
         End Function

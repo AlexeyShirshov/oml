@@ -558,11 +558,12 @@ Namespace Linq
         Inherits FilterVisitorBase
 
         Private _sort As New List(Of UnaryExp)
-        Public ReadOnly Property Sort() As SortLink
+        Public ReadOnly Property Sort() As Sort
             Get
-                Dim so As SortLink = GetSO(_sort(0))
+                Dim so As Sort = GetSO(_sort(0))
                 For i As Integer = 1 To _sort.Count - 1
-                    so = so.Sort(GetSO(_sort(i)))
+                    Dim nso As Sort = GetSO(_sort(i))
+                    nso.Previous = so
                 Next
                 Return so
             End Get
@@ -571,7 +572,7 @@ Namespace Linq
             'End Set
         End Property
 
-        Protected Function GetSO(ByVal exp As UnaryExp) As SortLink
+        Protected Function GetSO(ByVal exp As UnaryExp) As SCtor.SortLink
             Dim e As SelectExpressionValue = TryCast(exp.Value, SelectExpressionValue)
             If e IsNot Nothing Then
                 Return Worm.Query.SCtor.prop(e.Expression.ObjectProperty)
@@ -744,7 +745,7 @@ Namespace Linq
         Inherits MyExpressionVisitor
 
         Private _q As Query.QueryCmd
-        Private _so As SortLink
+        Private _so As Sort
         Private _new As NewExpression
         'Private _mem As MemberExpression
         Private _t As Type
@@ -1058,18 +1059,22 @@ Namespace Linq
                     Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort
-                    _so.Order(False)
+                    _so.Order = SortType.Desc
                 Case "ThenBy"
                     Me.Visit(m.Arguments(0))
                     Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
-                    _so = sv.Sort.Sort(_so)
+                    Dim s As Sort = sv.Sort
+                    s.Previous = _so
+                    _so = s
                 Case "ThenByDescending"
                     Me.Visit(m.Arguments(0))
                     Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
-                    _so = sv.Sort.Sort(_so)
-                    _so.Order(False)
+                    Dim s As Sort = sv.Sort
+                    s.Previous = _so
+                    _so = s
+                    _so.Order = SortType.Desc
                 Case "Select"
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
