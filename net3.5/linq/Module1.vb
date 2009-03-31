@@ -22,7 +22,12 @@
 
         q = From t In ctx.Table1s.ToList
 
+        foo(New With {.fdf = 1})
     End Sub
+
+    Function foo(Of Res)(ByVal f As Res) As Expressions.Expression(Of Func(Of Res))
+        Return Function() f
+    End Function
 
     Sub Main2()
         Dim ctx As New WormTestDataContext

@@ -390,7 +390,12 @@ Namespace Query
                     Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
-                    Dim filtered_r As M2MRelationDesc = schema.GetM2MRelation(oschema, filteredType, _m2mKey)
+                    Dim filtered_r As M2MRelationDesc = Nothing
+                    If filteredType Is selectedType Then
+                        filtered_r = schema.GetM2MRelation(oschema, filteredType, M2MRelationDesc.GetRevKey(_m2mKey))
+                    Else
+                        filtered_r = schema.GetM2MRelation(oschema, filteredType, _m2mKey)
+                    End If
 
                     If filtered_r Is Nothing Then
                         Dim en As String = schema.GetEntityNameByType(filteredType)
@@ -422,6 +427,7 @@ Namespace Query
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             selectOS, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
+                        jn.ObjectSource = selected_r.Rel
                         _js.Insert(0, jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
                             _from = New FromClauseDef(selectOS)
@@ -442,6 +448,11 @@ l1:
                             Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                             Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                             se.Attributes = Field2DbRelations.PK
+                            If SelectTypes IsNot Nothing Then
+                                se.ObjectSource = SelectTypes(0).First
+                            Else
+                                se.ObjectSource = selectOS
+                            End If
                             _sl.Add(se)
                         End If
 
@@ -458,7 +469,7 @@ l1:
                     'End If
 
                     addf = New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
+                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo).SetUnion(selected_r.Rel)
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(selectOS, schema) Then
@@ -547,17 +558,20 @@ l1:
                 End If
 
                 If String.IsNullOrEmpty(field) Then
-                    Dim revKey As String = _m2mKey
-                    If selectedType Is filteredType Then
-                        revKey = M2MRelationDesc.GetRevKey(_m2mKey)
-                    End If
-                    selRel = schema.GetM2MRelation(filteredType, selectedType, revKey)
+                    'Dim revKey As String = _m2mKey
+                    'If selectedType Is filteredType Then
+                    '    revKey = M2MRelationDesc.GetRevKey(_m2mKey)
+                    'End If
+                    selRel = schema.GetM2MRelation(filteredType, selectedType, _m2mKey)
 
                     If selRel Is Nothing Then
                         Throw New QueryCmdException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name), Me)
                     Else
                         If _rel.Relation Is Nothing OrElse _rel.Relation.Rel Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
                             needReplace = selRel
+                            If _rel.Relation IsNot Nothing Then
+                                needReplace.Rel = _rel.Relation.Rel
+                            End If
                         ElseIf _rel.Relation.Rel.GetRealType(schema) IsNot selectedType Then
                             Throw New QueryCmdException(String.Format("Relation type is {0}, selected type is {1}", _rel.Relation.Rel.GetRealType(schema), selectedType), Me)
                         End If

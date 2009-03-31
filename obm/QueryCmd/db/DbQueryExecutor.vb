@@ -967,7 +967,12 @@ l1:
                                 End If
                             End If
 
-                            Dim t22t1 As Entities.Meta.M2MRelationDesc = mpe.GetM2MRelation(t2, oschema2, t, join.M2MKey)
+                            Dim t22t1 As Entities.Meta.M2MRelationDesc = Nothing
+                            If t2 Is t Then
+                                t22t1 = mpe.GetM2MRelation(t2, oschema2, t, M2MRelationDesc.GetRevKey(join.M2MKey))
+                            Else
+                                t22t1 = mpe.GetM2MRelation(t2, oschema2, t, join.M2MKey)
+                            End If
 
                             Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).PropertyAlias
                             Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).PropertyAlias
@@ -975,22 +980,36 @@ l1:
                             'Dim jl As JoinLink = JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk)
                             Dim tbl As SourceFragment = CType(t22t1.Table.Clone, SourceFragment)
                             Dim jl As JoinLink = Nothing
-                            If pk IsNot Nothing Then
-                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
-                            Else
-                                jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
-                            End If
 
-                            If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
-                                jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
-                                needAppend = False
+                            Dim prevJ As QueryJoin = GetJoin(j, join.M2MObjectSource)
+
+                            If prevJ Is Nothing Then
+                                If pk IsNot Nothing Then
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
+                                Else
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
+                                End If
+
+                                'If join.M2MObjectSource.Equals(
+                                If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
+                                    jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
+                                    needAppend = False
+                                Else
+                                    cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
+                                End If
                             Else
-                                cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
+                                If prevJ.Table IsNot Nothing Then
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.Table, t22t1.Column)
+                                Else
+                                    Throw New NotImplementedException
+                                End If
+                                needAppend = False
                             End If
 
                             Dim js() As QueryJoin = jl
-
+                            js(0).ObjectSource = join.ObjectSource
                             sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
+                            almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
                         End If
 
                         If needAppend Then
@@ -1019,11 +1038,20 @@ l1:
                         'tbl = s.GetTables(t)(0)
                     Else
                         sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, filterInfo, almgr, params, Nothing))
-                        almgr.Replace(mpe, s, join.Table, Nothing, sb)
+                        almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
                     End If
                 End If
             Next
         End Sub
+
+        Protected Shared Function GetJoin(ByVal js As IEnumerable(Of QueryJoin), ByVal os As EntityUnion) As QueryJoin
+            For Each j As QueryJoin In js
+                If os.Equals(j.ObjectSource) Then
+                    Return j
+                End If
+            Next
+            Return Nothing
+        End Function
 
         Protected Shared Sub FormHaving(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _

@@ -111,7 +111,12 @@ Namespace Criteria.Joins
             End If
 
             For Each f As IFilter In Condition.GetAllFilters
-                f.SetUnion(os_)
+                If ObjectSource IsNot Nothing Then
+                    f.SetUnion(ObjectSource)
+                End If
+                If os IsNot Nothing Then
+                    f.SetUnion(os)
+                End If
             Next
 
             Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname)

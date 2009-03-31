@@ -93,7 +93,7 @@ Namespace Entities
         Implements Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
         'Private _field As String
-        'Private _osrc As ObjectSource
+        Private _osrc As EntityUnion
         Private _op As ObjectProperty
         Private _table As SourceFragment
         Private _column As String
@@ -445,10 +445,17 @@ Namespace Entities
             End Set
         End Property
 
-        Public ReadOnly Property ObjectSource() As EntityUnion
+        Public Property ObjectSource() As EntityUnion
             Get
-                Return _op.ObjectSource
+                If _osrc IsNot Nothing Then
+                    Return _osrc
+                Else
+                    Return _op.ObjectSource
+                End If
             End Get
+            Set(ByVal value As EntityUnion)
+                _osrc = value
+            End Set
         End Property
 
         Public Property ObjectProperty() As ObjectProperty
