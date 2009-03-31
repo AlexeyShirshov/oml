@@ -92,7 +92,11 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     '    End If
     'End Function
 
-    Public Function Distinct() As ReadOnlyList(Of T)
+    Public Overrides Function Distinct() As ReadOnlyEntityList(Of T)
+        Return DistinctEntity()
+    End Function
+
+    Public Function DistinctEntity() As ReadOnlyList(Of T)
         Dim l As New Dictionary(Of T, T)
         For Each o As T In Me
             If Not l.ContainsKey(o) Then
@@ -169,6 +173,16 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     Public Sub New(ByVal t As Type, ByVal list As ReadOnlyEntityList(Of T))
         MyBase.New(list)
     End Sub
+
+    Public Overridable Function Distinct() As ReadOnlyEntityList(Of T)
+        Dim l As New Dictionary(Of T, T)
+        For Each o As T In Me
+            If Not l.ContainsKey(o) Then
+                l.Add(o, o)
+            End If
+        Next
+        Return New ReadOnlyEntityList(Of T)(l.Keys)
+    End Function
 
     Public Overridable Function LoadObjects() As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
