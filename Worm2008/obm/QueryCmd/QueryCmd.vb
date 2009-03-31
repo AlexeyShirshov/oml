@@ -3025,6 +3025,92 @@ l1:
 
 #End Region
 
+#Region " Firsts "
+
+#Region " First "
+        Public Function First(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(mgr)
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function First(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(getMgr)
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function First(Of T As {New, _ICachedEntity})() As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)()
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+#End Region
+
+#Region " FirstOrDefault "
+        Public Function FirstOrDefault(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(mgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function FirstOrDefault(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(getMgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function FirstOrDefault(Of T As {New, _ICachedEntity})() As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)()
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+#End Region
+
+#End Region
+
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
             If SelectList Is Nothing Then
