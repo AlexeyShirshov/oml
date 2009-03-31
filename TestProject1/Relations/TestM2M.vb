@@ -246,4 +246,48 @@ Imports Worm.Entities.Meta
 
         Assert.AreEqual(1, mq.First(Of Table1).ID)
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestM2MMany2()
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1)
+
+        Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(GetType(Table1), M2MRelationDesc.DirKey))
+
+        Assert.AreEqual(1, mq.Count)
+        Assert.AreEqual(2, mq.First(Of Table1).ID)
+
+        Dim a2 As New EntityAlias(GetType(Table1))
+
+        mq.Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, GetType(Table1)))
+
+        Assert.AreEqual(1, mq.Count)
+        Assert.AreEqual(2, mq.First(Of Table1).ID)
+
+        mq.Select(a2)
+
+        Assert.AreEqual(1, mq.First(Of Table1).ID)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestM2MMany3()
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1)
+
+        Dim a1 As New EntityAlias(GetType(Table1))
+        Dim a2 As New EntityAlias(GetType(Table1))
+
+        Dim t2 As Table1 = q _
+            .From(GetType(Table1)) _
+            .Select(a2) _
+            .Join(JCtor _
+                  .join(a1).onM2M(GetType(Table1)) _
+                  .join(a2).onM2M(a1)) _
+            .Where(Ctor.prop(GetType(Table1), "ID").eq(t)) _
+            .First(Of Table1)()
+    End Sub
 End Class

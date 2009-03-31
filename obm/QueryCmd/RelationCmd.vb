@@ -445,15 +445,16 @@ l1:
                         If SelectList IsNot Nothing Then
                             PrepareSelectList(isAnonym, schema, f, filterInfo)
                         Else
-                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                            Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
-                            se.Attributes = Field2DbRelations.PK
                             If SelectTypes IsNot Nothing Then
-                                se.ObjectSource = SelectTypes(0).First
+                                'se.ObjectSource = SelectTypes(0).First
+                                AddTypeFields(schema, _sl, SelectTypes(0))
                             Else
+                                Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                                Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
+                                se.Attributes = Field2DbRelations.PK
                                 se.ObjectSource = selectOS
+                                _sl.Add(se)
                             End If
-                            _sl.Add(se)
                         End If
 
                         'If SelectTypes(0).First.Equals(selectOS) Then
