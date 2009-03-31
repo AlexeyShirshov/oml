@@ -237,13 +237,22 @@ Namespace Sorting
             _prev = prev
         End Sub
 
-        Protected Sub New()
-        End Sub
-
-        Protected Friend Sub New(ByVal prev As SortLink, ByVal custom As CustomValue)
-            MyBase.New(custom)
+        Protected Friend Sub New(ByVal prev As Sort, ByVal q As Query.QueryCmd)
+            MyBase.New(q)
             _prev = prev
         End Sub
+
+        Protected Friend Sub New(ByVal prev As Sort)
+            _prev = prev
+        End Sub
+
+        Protected Friend Sub New()
+        End Sub
+
+        'Protected Friend Sub New(ByVal prev As SortLink, ByVal custom As CustomValue)
+        '    MyBase.New(custom)
+        '    _prev = prev
+        'End Sub
 
         Protected Friend Sub New(ByVal custom As CustomValue)
             MyBase.New(custom)
@@ -307,7 +316,7 @@ Namespace Sorting
             Get
                 Return _order
             End Get
-            Protected Set(ByVal value As SortType)
+            Set(ByVal value As SortType)
                 _order = value
                 RaiseOnChange()
             End Set
@@ -406,10 +415,13 @@ Namespace Sorting
         '    Return ToString.GetHashCode
         'End Function
 
-        Protected ReadOnly Property Previous() As Sort
+        Public Property Previous() As Sort
             Get
                 Return _prev
             End Get
+            Set(ByVal value As Sort)
+                _prev = value
+            End Set
         End Property
 
         Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, _
