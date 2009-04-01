@@ -724,7 +724,7 @@ l1:
 
         Protected Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
-            ByVal os As IEntitySchema, ByVal osrc As EntityUnion, _
+            ByVal os As IEntitySchema, ByVal osrc As EntityUnion, ByVal q As QueryCmd, _
             ByVal filter As IFilter, ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
             ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
 
@@ -788,13 +788,10 @@ l1:
             Dim pk As Pair(Of SourceFragment, String) = Nothing
 
             If st IsNot Nothing Then
-                Dim stt As Type = Nothing
+                Dim stt As Type = selectType, eus As EntityUnion = osrc
                 If st.Entity IsNot Nothing Then
                     stt = st.Entity.GetRealType(mpe)
-                End If
-
-                If stt Is Nothing Then
-                    stt = selectType
+                    eus = st.Entity
                 End If
 
                 If os Is Nothing Then
@@ -816,29 +813,37 @@ l1:
                     End If
                 End If
 
-                If Not appendMain.HasValue AndAlso filter IsNot Nothing Then
-                    For Each f As IFilter In filter.GetAllFilters
-                        Dim ef As EntityFilter = TryCast(f, EntityFilter)
-                        If ef IsNot Nothing Then
-                            Dim rt As Type = ef.Template.ObjectSource.GetRealType(mpe)
-                            'If ef.Template.Type IsNot Nothing Then
-                            '    If rt Is stt Then
-                            '        appendMain = True
-                            '        Exit For
-                            '    End If
-                            'Else
-                            '    Dim t As Type = s.GetTypeByEntityName(ef.Template.EntityName)
-                            '    If t Is stt Then
-                            '        appendMain = True
-                            '        Exit For
-                            '    End If
-                            'End If
-                            If rt Is stt Then
-                                appendMain = True
-                                Exit For
-                            End If
-                        End If
-                    Next
+                'If Not appendMain.HasValue AndAlso filter IsNot Nothing Then
+                If Not appendMain.HasValue Then
+                    'For Each f As IFilter In filter.GetAllFilters
+                    '    Dim ef As EntityFilter = TryCast(f, EntityFilter)
+                    '    If ef IsNot Nothing Then
+                    '        Dim rt As Type = ef.Template.ObjectSource.GetRealType(mpe)
+                    '        'If ef.Template.Type IsNot Nothing Then
+                    '        '    If rt Is stt Then
+                    '        '        appendMain = True
+                    '        '        Exit For
+                    '        '    End If
+                    '        'Else
+                    '        '    Dim t As Type = s.GetTypeByEntityName(ef.Template.EntityName)
+                    '        '    If t Is stt Then
+                    '        '        appendMain = True
+                    '        '        Exit For
+                    '        '    End If
+                    '        'End If
+                    '        If rt Is stt Then
+                    '            appendMain = True
+                    '            Exit For
+                    '        End If
+                    '    End If
+                    'Next
+                    If q._ftypes.ContainsKey(eus) Then
+                        appendMain = True
+                    ElseIf q._stypes.ContainsKey(eus) Then
+                        appendMain = True
+                    ElseIf q._types.ContainsKey(eus) Then
+                        appendMain = True
+                    End If
                 End If
 
                 If appendMain Then
@@ -857,7 +862,7 @@ l1:
 
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
-                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, Nothing, Nothing, False, _
+                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, Nothing, False, _
                         Function() " on " & jf.MakeQueryStmt(mpe, s, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
@@ -1035,7 +1040,7 @@ l1:
                             End If
 
                             Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
-                            FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, filter, f, query.AppendMain, _
+                            FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
                                            Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, filterInfo, almgr, params), predi)
                         End If
                         'tbl = s.GetTables(t)(0)
@@ -1246,7 +1251,7 @@ l1:
                                         params, query.FromClause.QueryEU, sb, almgr)
             Else
                 newPK = FormTypeTables( _
-                    mpe, filterInfo, params, almgr, sb, s, os, query.GetSelectedOS, query._f, _
+                    mpe, filterInfo, params, almgr, sb, s, os, query.GetSelectedOS, query, query._f, _
                     query.FromClause, query.AppendMain, Nothing, p)
             End If
 
