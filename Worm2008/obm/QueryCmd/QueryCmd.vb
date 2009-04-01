@@ -266,6 +266,8 @@ Namespace Query
         Friend _f As IFilter
         '<NonSerialized()> _
         Friend _js As List(Of QueryJoin)
+        Friend _ftypes As Dictionary(Of EntityUnion, Object)
+        Friend _stypes As Dictionary(Of EntityUnion, Object)
 #End Region
 
         Friend Shared ReadOnly InnerTbl As New SourceFragment
@@ -811,6 +813,8 @@ l1:
             _types = New Dictionary(Of EntityUnion, IEntitySchema)
             _pdic = New Dictionary(Of Type, IDictionary)
             _js = New List(Of QueryJoin)
+            _ftypes = New Dictionary(Of EntityUnion, Object)
+            _stypes = New Dictionary(Of EntityUnion, Object)
 
             If Joins IsNot Nothing Then
                 '_js.AddRange(Joins)
@@ -828,11 +832,24 @@ l1:
 
             For Each s As Sort In New Sort.Iterator(_order)
                 s.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                If s.ObjectSource IsNot Nothing Then
+                    'Dim tp As Type = s.ObjectSource.GetRealType(schema)
+                    If Not _stypes.ContainsKey(s.ObjectSource) Then
+                        _stypes.Add(s.ObjectSource, Nothing)
+                    End If
+                End If
             Next
 
             If f IsNot Nothing Then
                 For Each fl As IFilter In f.GetAllFilters
                     fl.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                    Dim ef As EntityFilter = TryCast(fl, EntityFilter)
+                    If ef IsNot Nothing Then
+                        'Dim tp As Type = ef.Template.ObjectSource.GetRealType(schema)
+                        If Not _ftypes.ContainsKey(ef.Template.ObjectSource) Then
+                            _ftypes.Add(ef.Template.ObjectSource, Nothing)
+                        End If
+                    End If
                 Next
             End If
 
