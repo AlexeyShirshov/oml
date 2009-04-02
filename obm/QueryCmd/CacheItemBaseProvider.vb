@@ -168,7 +168,8 @@ Namespace Query
                         'If _f IsNot Nothing AndAlso _f.Length > i Then
                         Dim fl As IFilter = _q._f
                         Dim added As Boolean = False
-                        If hasSelectTypes Then
+                        Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate
+                        If hasSelectTypes AndAlso evalSort Then
                             added = cache.validate_AddCalculatedType(selectTypes, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
                             If uce IsNot Nothing Then
                                 If _q.Filter IsNot Nothing Then
@@ -219,9 +220,6 @@ Namespace Query
                                 End If
                             End If
                         End If
-                        'ElseIf rightType Then
-                        '    cache.validate_AddDeleteType(types, _key, _id)
-                        'End If
                     Else
                         If hasSelectTypes Then
                             cache.validate_AddDeleteType(selectTypes, _key, _id)

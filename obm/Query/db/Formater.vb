@@ -149,12 +149,24 @@ Namespace Database
                                     cols.Append(al).Append(schema.Delimiter).Append(col)
                                 End If
                             Else
-                                If cm.TryGetValue(se.PropertyAlias, map) Then
-                                    sb.Append(almgr.GetAlias(map._tableName, se.ObjectSource)).Append(_s.Selector).Append(map._columnName)
-                                    If cols IsNot Nothing Then cols.Append(map._columnName)
+                                Dim al As String = Nothing
+                                If se.ObjectSource.IsQuery Then
+                                    Dim tbl As SourceFragment = se.ObjectSource.ObjectAlias.Tbl
+                                    If tbl Is Nothing Then
+                                        tbl = New SourceFragment
+                                        se.ObjectSource.ObjectAlias.Tbl = tbl
+                                    End If
+                                    al = almgr.GetAlias(tbl, se.ObjectSource)
                                 Else
-                                    Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", se.PropertyAlias, se.ObjectSource.ToStaticString(schema, context)))
+                                    If cm.TryGetValue(se.PropertyAlias, map) Then
+                                        al = almgr.GetAlias(map._tableName, se.ObjectSource)
+                                    Else
+                                        Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", se.PropertyAlias, se.ObjectSource.ToStaticString(schema, context)))
+                                    End If
                                 End If
+
+                                sb.Append(al).Append(_s.Selector).Append(map._columnName)
+                                If cols IsNot Nothing Then cols.Append(map._columnName)
                             End If
                         Else
                             Dim tbl As SourceFragment = Query.QueryCmd.InnerTbl

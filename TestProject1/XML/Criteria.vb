@@ -83,24 +83,28 @@ Imports Worm.Query
         Inherits ObjectSchemaBaseImplementation
 
         Private _idx As OrmObjectIndex
-        Protected _tables() As SourceFragment = {New SourceFragment("/root/objects/object")}
+        'Protected _tables() As SourceFragment = {New SourceFragment("/root/objects/object")}
 
-        Public Enum Tables
-            Main
-        End Enum
+        'Public Enum Tables
+        '    Main
+        'End Enum
+
+        Public Sub New()
+            _tbl = New SourceFragment("/root/objects/object")
+        End Sub
 
         Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "@id", GetTables()(Tables.Main)))
-                idx.Add(New MapField2Column("Title", "@name", GetTables()(Tables.Main)))
+                idx.Add(New MapField2Column("ID", "@id", Table))
+                idx.Add(New MapField2Column("Title", "@name", Table))
                 _idx = idx
             End If
             Return _idx
         End Function
 
-        Public Overrides Function GetTables() As Worm.Entities.Meta.SourceFragment()
-            Return _tables
-        End Function
+        'Public Overrides Function GetTables() As Worm.Entities.Meta.SourceFragment()
+        '    Return _tables
+        'End Function
     End Class
 End Class

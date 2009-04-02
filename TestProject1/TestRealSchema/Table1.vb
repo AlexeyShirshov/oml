@@ -193,16 +193,20 @@ End Class
 
 Public Class Table1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements ISupportAlphabet, ISchemaInit, IOrmSorting, IJoinBehavior
+    Implements ISupportAlphabet, ISchemaInit, IOrmSorting, IJoinBehavior, ISchemaWithM2M
 
     Private _idx As OrmObjectIndex
     'Private _schema As OrmSchemaBase
-    Private _tables() As SourceFragment = {New SourceFragment("dbo.Table1")}
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table1")}
     Private _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
     End Enum
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table1")
+    End Sub
 
     Public Overrides Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         If c.PropertyAlias = "EnumStr" Then
@@ -218,20 +222,20 @@ Public Class Table1Implementation
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Enum", "enum", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("EnumStr", "enum_str", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Code", "code", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("DT", "dt", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
+            idx.Add(New MapField2Column("Enum", "enum", Table))
+            idx.Add(New MapField2Column("EnumStr", "enum_str", Table))
+            idx.Add(New MapField2Column("Code", "code", Table))
+            idx.Add(New MapField2Column("DT", "dt", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
     '    Select Case CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort)
@@ -244,7 +248,7 @@ Public Class Table1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         Dim t As Type = _schema.GetTypeByEntityName("Table3")
         If t Is Nothing Then
             Throw New InvalidOperationException("Cannot get type Table3")
@@ -252,11 +256,11 @@ Public Class Table1Implementation
         End If
 
         If _rels Is Nothing Then
-            Dim t1to3 As SourceFragment = TablesImplementation._tables(0)
+            Dim t1to3 As SourceFragment = _schema.GetTables(GetType(Tables1to3))(0)
             _rels = New M2MRelationDesc() { _
                 New M2MRelationDesc(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
-                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey, GetType(Tables1to1)), _
-                New M2MRelationDesc(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, GetType(Tables1to1)) _
+                New M2MRelationDesc(_objectType, _schema.GetTables(GetType(Tables1to1))(0), "table1", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey, GetType(Tables1to1)), _
+                New M2MRelationDesc(_objectType, _schema.GetTables(GetType(Tables1to1))(0), "table1_back", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, GetType(Tables1to1)) _
             }
         End If
         Return _rels
@@ -398,7 +402,10 @@ End Class
 Public Class Table12Implementation
     Inherits Table1Implementation
 
-    Private _tables() As SourceFragment = {New table1func("table1func")}
+    'Private _tables() As SourceFragment = {New table1func("table1func")}
+    Public Sub New()
+        _tbl = New table1func("table1func")
+    End Sub
 
     'Implements IOrmTableFunction
 
@@ -409,9 +416,9 @@ Public Class Table12Implementation
     '    Return Nothing
     'End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     Public Overrides Function GetSecondDicField() As String
         Return "EnumStr"
@@ -421,11 +428,14 @@ End Class
 Public Class Table13Implementation
     Inherits Table1Implementation
 
-    Private _tables() As SourceFragment = {New table2func("table2func")}
+    'Private _tables() As SourceFragment = {New table2func("table2func")}
+    Public Sub New()
+        _tbl = New table2func("table2func")
+    End Sub
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Implements IOrmTableFunction
 

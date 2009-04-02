@@ -13,7 +13,7 @@
       <xs:documentation>Сущность</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="Tables" type="TablesRefCollection_t" minOccurs="0" maxOccurs="1">
+      <xs:element name="SourceFragments" type="SourceFragmentRefCollection_t" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>Список используемых таблиц</xs:documentation>
         </xs:annotation>
@@ -43,7 +43,7 @@
           <xs:selector xpath="NS:Property|NS:Group/NS:Property" />
           <xs:field xpath="@fieldName" />
         </xs:unique>-->
-        <xs:keyref name="propTableRef" refer="TableId">
+        <xs:keyref name="propTableRef" refer="SourceFragmentId">
           <xs:annotation>
             <xs:documentation>Ссылка на таблицы</xs:documentation>
           </xs:annotation>
@@ -145,16 +145,16 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
-  <xs:complexType name="TablesRefCollection_t">
+  <xs:complexType name="SourceFragmentRefCollection_t">
     <xs:annotation>
       <xs:documentation>Список используемых таблиц</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="Table" type="TableRef_t" minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="SourceFragment" type="SourceFragmentRef_t" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
-          <xs:documentation>Ссылка на таблицу</xs:documentation>
+          <xs:documentation>Ссылка на сурс фрагменты</xs:documentation>
         </xs:annotation>
-        <xs:keyref name="TableRefRef" refer="TableId">
+        <xs:keyref name="TableRefRef" refer="SourceFragmentId">
           <xs:selector xpath="." />
           <xs:field xpath="@ref" />
         </xs:keyref>
@@ -168,9 +168,9 @@
 		</xs:annotation>
 	</xs:attribute>
   </xs:complexType>
-  <xs:complexType name="TableRef_t">
+  <xs:complexType name="SourceFragmentRef_t">
     <xs:annotation>
-      <xs:documentation>Ссылка на таблицу</xs:documentation>
+      <xs:documentation>Ссылка на сурс фрагмент</xs:documentation>
     </xs:annotation>
     <xs:attribute name="ref" type="xs:Name" use="required">
     </xs:attribute>
@@ -314,28 +314,23 @@
       </xs:choice>
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="TableCollection_t">
-    <xs:annotation>
-      <xs:documentation>Коллекция таблиц БД</xs:documentation>
-    </xs:annotation>
-    <xs:sequence>
-      <xs:element name="Table" minOccurs="0" maxOccurs="unbounded" type="Table_t">
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
-  <xs:complexType name="Table_t">
-    <xs:annotation>
-      <xs:documentation>Таблица БД</xs:documentation>
-    </xs:annotation>
-    <xs:simpleContent>
-      <xs:annotation>
-        <xs:documentation>Имя таблицы</xs:documentation>
-      </xs:annotation>
-      <xs:extension base="xs:string">
-        <xs:attribute name="id" type="xs:Name" use="required" />
-      </xs:extension>
-    </xs:simpleContent>
-  </xs:complexType>
+	<xs:complexType name="SourceFragmentsCollection_t">
+		<xs:annotation>
+			<xs:documentation>Коллекция сурс фрагментов</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="SourceFragment" minOccurs="0" maxOccurs="unbounded" type="SourceFragment_t">
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SourceFragment_t">
+		<xs:annotation>
+			<xs:documentation>Сурс фрагмент</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="id" type="xs:string" use="required" />
+		<xs:attribute name="name" type="xs:string" use="required" />
+		<xs:attribute name="selector" type="xs:string" use="optional" />
+	</xs:complexType>
   <xs:complexType name="EntitySimpleRelationsCollection_t">
     <xs:annotation>
       <xs:documentation>One to Many relations collection</xs:documentation>
@@ -352,7 +347,7 @@
     <xs:sequence>
 	  <xs:choice minOccurs="0" maxOccurs="unbounded">
 		<xs:element name="Relation" type="EntityRelation_t">
-		  <xs:keyref name="RelationTableRef" refer="TableId">
+		  <xs:keyref name="RelationTableRef" refer="SourceFragmentId">
 			<xs:selector xpath="." />
 			<xs:field xpath="@table" />
 		  </xs:keyref>
@@ -366,7 +361,7 @@
 		  </xs:keyref>
 		</xs:element>
 		<xs:element name="SelfRelation" type="EntitySelfRelation_t">
-		  <xs:keyref name="SelftRelationTableRef" refer="TableId">
+		  <xs:keyref name="SelftRelationTableRef" refer="SourceFragmentId">
 			<xs:selector xpath="." />
 			<xs:field xpath="@table" />
 		  </xs:keyref>
@@ -693,8 +688,8 @@
       <xs:selector xpath="NS:Entities/NS:Entity | ./NS:Includes/NS:OrmObjects/NS:Entities/NS:Entity" />
       <xs:field xpath="@id" />
     </xs:key>
-    <xs:key name="TableId">
-      <xs:selector xpath="NS:Tables/NS:Table | ./NS:Includes/NS:OrmObjects/NS:Tables/NS:Table" />
+    <xs:key name="SourceFragmentId">
+      <xs:selector xpath="NS:SourceFragments/NS:SourceFragment | ./NS:Includes/NS:OrmObjects/NS:SourceFragments/NS:SourceFragment" />
       <xs:field xpath="@id" />
     </xs:key>
     <!--<xs:key name="TableName">
@@ -759,7 +754,7 @@
     </xs:annotation>
     <xs:all>
       <xs:element name="Entities" type="EntitiesCollection_t" minOccurs="0" maxOccurs="1" />
-      <xs:element name="Tables" type="TableCollection_t" minOccurs="0" maxOccurs="1" />
+			<xs:element name="SourceFragments" type="SourceFragmentsCollection_t" minOccurs="0" maxOccurs="1" />
 	  <xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
       <xs:element name="Types" type="TypesCollection_t" maxOccurs="1" minOccurs="0" />
       <xs:element name="Includes" type="IncludesCollection_t" maxOccurs="1" minOccurs="0" />

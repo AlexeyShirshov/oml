@@ -422,8 +422,6 @@ Namespace Query
                     If prd OrElse mt IsNot Nothing Then
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
-                        Dim so As EntityUnion = selectOS
-                        'selectOS = New EntityUnion(New EntityAlias(selectType))
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             selectOS, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
@@ -432,10 +430,12 @@ Namespace Query
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
                             _from = New FromClauseDef(selectOS)
                         End If
-                        If _WithLoad(so, schema) Then
+                        If _WithLoad(selectOS, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        Else
+                        ElseIf SelectTypes IsNot Nothing Then
                             GoTo l1
+                        Else
+                            PrepareSelectList(isAnonym, schema, f, filterInfo)
                         End If
                     Else
                         _from = New FromClauseDef(table)
@@ -445,7 +445,7 @@ l1:
                         If SelectList IsNot Nothing Then
                             PrepareSelectList(isAnonym, schema, f, filterInfo)
                         Else
-                            If SelectTypes IsNot Nothing Then
+                            If SelectTypes IsNot Nothing AndAlso Not SelectTypes(0).First.Equals(selectOS) Then
                                 'se.ObjectSource = SelectTypes(0).First
                                 AddTypeFields(schema, _sl, SelectTypes(0))
                                 'Dim selt As EntityUnion = SelectTypes(0).First
@@ -453,7 +453,7 @@ l1:
                                 Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                                 Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                                 se.Attributes = Field2DbRelations.PK
-                                se.ObjectSource = selectOS
+                                'se.ObjectSource = selectOS
                                 _sl.Add(se)
                             End If
                         End If
@@ -471,7 +471,7 @@ l1:
                     'End If
 
                     addf = New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo).SetUnion(selected_r.Rel)
+                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo) '.SetUnion(selected_r.Rel)
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(selectOS, schema) Then

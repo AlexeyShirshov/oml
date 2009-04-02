@@ -267,6 +267,16 @@ Namespace Sorting
         '        Return _empty
         '    End Get
         'End Property
+        Public ReadOnly Property CanEvaluate() As Boolean
+            Get
+                For Each s As Sort In New Iterator(Me)
+                    If s.IsCustom OrElse s.Query IsNot Nothing Then
+                        Return False
+                    End If
+                Next
+                Return True
+            End Get
+        End Property
 
         Public Property CustomSortExpression() As String
             Get

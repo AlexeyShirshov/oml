@@ -91,7 +91,7 @@ namespace Worm.CodeGen.Core
 
             FillImports();
 
-            FillTables();
+        	FillSourceFragments();
 
             FindEntities();
 
@@ -392,7 +392,7 @@ namespace Worm.CodeGen.Core
             {
                 string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute, defferedLoadGroup;
                 string[] attributes;
-                TableDescription table;
+                SourceFragmentDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
                 bool disabled = false, enablePropertyChanged = false;
                 ObsoleteType obsolete;
@@ -429,14 +429,14 @@ namespace Worm.CodeGen.Core
                 else
                     fieldAccessLevel = AccessLevel.Private;
 
-                table = entity.GetTable(tableId);
+                table = entity.GetSourceFragments(tableId);
 
                 if (!String.IsNullOrEmpty(propertyDisabled))
                     disabled = XmlConvert.ToBoolean(propertyDisabled);
 
                 if (table == null)
                     throw new OrmXmlParserException(
-                        string.Format("Table '{0}' for property '{1}' of entity '{2}' not found.", tableId, name,
+                        string.Format("SourceFragment '{0}' for property '{1}' of entity '{2}' not found.", tableId, name,
                                       entity.Identifier));
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
@@ -507,7 +507,7 @@ namespace Worm.CodeGen.Core
 				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, true);
 				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, true);
 
-				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
+				SourceFragmentDescription relationTable = _ormObjectsDef.GetSourceFragment(relationTableId);
 
 				EntityDescription underlyingEntity;
 				if (string.IsNullOrEmpty(underlyingEntityId))
@@ -588,7 +588,7 @@ namespace Worm.CodeGen.Core
 				TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, true);
 				TypeDescription reverseAccessedEntityType = _ormObjectsDef.GetType(reverseAccessedEntityTypeId, true);
 
-				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
+				var relationTable = _ormObjectsDef.GetSourceFragment(relationTableId);
 
 				EntityDescription underlyingEntity;
 				if (string.IsNullOrEmpty(underlyingEntityId))
@@ -618,24 +618,22 @@ namespace Worm.CodeGen.Core
 			#endregion
         }
 
-        internal protected void FillTables()
-        {
-            XmlNodeList tableNodes;
-            tableNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:Tables/{0}:Table", OrmObjectsDef.NS_PREFIX), _nsMgr);
+		internal protected void FillSourceFragments()
+		{
+			var sourceFragmentNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            foreach (XmlNode tableNode in tableNodes)
-            {
-                string id;
-                string name;
+			foreach (XmlNode tableNode in sourceFragmentNodes)
+			{
+				XmlElement tableElement = (XmlElement)tableNode;
+				string id = tableElement.GetAttribute("id");
+				string name = tableElement.GetAttribute("name");
+				string selector = tableElement.GetAttribute("selector");
 
-                XmlElement tableElement = (XmlElement) tableNode;
-                id = tableElement.GetAttribute("id");
-                name = tableNode.InnerText;
-                _ormObjectsDef.Tables.Add(new TableDescription(id, name));
-            }
-        }
+				_ormObjectsDef.SourceFragments.Add(new SourceFragmentDescription(id, name, selector));
+			}
+		}
 
-        internal protected void FillEntityTables(EntityDescription entity)
+    	internal protected void FillEntityTables(EntityDescription entity)
         {
             XmlNodeList tableNodes;
             XmlNode entityNode;
@@ -643,11 +641,11 @@ namespace Worm.CodeGen.Core
             if (entity == null)
                 throw new ArgumentNullException("entity");
 
-            entity.Tables.Clear();
+            entity.SourceFragments.Clear();
 
             entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
 
-            tableNodes = entityNode.SelectNodes(string.Format("{0}:Tables/{0}:Table", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            tableNodes = entityNode.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode tableNode in tableNodes)
             {
@@ -655,12 +653,12 @@ namespace Worm.CodeGen.Core
                 XmlElement tableElement = (XmlElement) tableNode;
                 tableId = tableElement.GetAttribute("ref");
 
-                TableDescription table = entity.OrmObjectsDef.GetTable(tableId);
+                SourceFragmentDescription table = entity.OrmObjectsDef.GetSourceFragment(tableId);
 
-                entity.Tables.Add(table);
+                entity.SourceFragments.Add(table);
             }
 
-			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:Tables", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", OrmObjectsDef.NS_PREFIX), _nsMgr);
         	string inheritsTablesValue = ((XmlElement) tablesNode).GetAttribute("inheritsBase");
         	entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
         }

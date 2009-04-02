@@ -618,6 +618,9 @@ Namespace Query.Database
                     fields = oschema.GetFieldColumnMap
                 Else
                     fields = GetFieldsIdx(_q)
+                    If Not GetType(AnonymousEntity).IsAssignableFrom(_q._createType.GetRealType(_mgr.MappingEngine)) Then
+                        oschema = dbm.MappingEngine.GetObjectSchema(_q._createType.GetRealType(_mgr.MappingEngine), False)
+                    End If
                 End If
 
                 'Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)

@@ -47,7 +47,7 @@ namespace Worm.CodeGen.Core
 
             FillImports();           
 
-            FillTables();
+        	FillSourceFragments();
 
             FillTypes();
 
@@ -169,7 +169,7 @@ namespace Worm.CodeGen.Core
 
                     relationElement = CreateElement("Relation");
 
-                    relationElement.SetAttribute("table", relation.Table.Identifier);
+                    relationElement.SetAttribute("table", relation.SourceFragment.Identifier);
                     if (relation.Disabled)
                     {
                         relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
@@ -208,7 +208,7 @@ namespace Worm.CodeGen.Core
 
                     relationElement = CreateElement("SelfRelation");
 
-                    relationElement.SetAttribute("table", relation.Table.Identifier);
+                    relationElement.SetAttribute("table", relation.SourceFragment.Identifier);
                     relationElement.SetAttribute("entity", relation.Entity.Identifier);
                     if (relation.Disabled)
                     {
@@ -288,10 +288,10 @@ namespace Worm.CodeGen.Core
 					entityElement.SetAttribute("cacheCheckRequired", XmlConvert.ToString(entity.CacheCheckRequired));
 				
 
-                XmlNode tablesNode = CreateElement("Tables");
-                foreach (TableDescription table in entity.Tables)
+                XmlNode tablesNode = CreateElement("SourceFragments");
+                foreach (SourceFragmentDescription table in entity.SourceFragments)
                 {
-                    XmlElement tableElement = CreateElement("Table");
+					XmlElement tableElement = CreateElement("SourceFragment");
                     tableElement.SetAttribute("ref", table.Identifier);
                     tablesNode.AppendChild(tableElement);
                 }
@@ -371,7 +371,7 @@ namespace Worm.CodeGen.Core
                 {
                     propertyElement.SetAttribute("attributes", string.Join(" ", property.Attributes));
                 }
-                propertyElement.SetAttribute("table", property.Table.Identifier);
+                propertyElement.SetAttribute("table", property.SourceFragment.Identifier);
                 propertyElement.SetAttribute("fieldName", property.FieldName);
                 propertyElement.SetAttribute("typeRef", property.PropertyType.Identifier);
                 if (!string.IsNullOrEmpty(property.Description))
@@ -437,18 +437,20 @@ namespace Worm.CodeGen.Core
             }
         }
 
-        private void FillTables()
-        {
-            XmlElement tablesNode = CreateElement("Tables");
-            _ormXmlDocumentMain.DocumentElement.AppendChild(tablesNode);
-            foreach (TableDescription table in _ormObjectsDef.Tables)
-            {
-                XmlElement tableElement = CreateElement("Table");
-                tableElement.InnerText = table.Name;
-                tableElement.SetAttribute("id", table.Identifier);
-                tablesNode.AppendChild(tableElement);
-            }
-        }
+		private void FillSourceFragments()
+		{
+			XmlElement tablesNode = CreateElement("SourceFragments");
+			_ormXmlDocumentMain.DocumentElement.AppendChild(tablesNode);
+			foreach (SourceFragmentDescription table in _ormObjectsDef.SourceFragments)
+			{
+				XmlElement tableElement = CreateElement("SourceFragment");
+				tableElement.SetAttribute("id", table.Identifier);
+				tableElement.SetAttribute("name", table.Name);
+				if(!string.IsNullOrEmpty(table.Selector))
+					tableElement.SetAttribute("selector", table.Selector);
+				tablesNode.AppendChild(tableElement);
+			}
+		}
 
         private XmlElement CreateElement(string name)
         {

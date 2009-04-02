@@ -90,6 +90,7 @@ Namespace Criteria.Joins
             End If
 
             Dim tbl As SourceFragment = _table
+            Dim os_ As EntityUnion = Nothing
             If tbl Is Nothing Then
                 'If _type IsNot Nothing Then
                 '    tbl = schema.GetTables(_type)(0)
@@ -97,11 +98,10 @@ Namespace Criteria.Joins
                 '    tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
                 'End If
                 tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
-            End If
-
-            Dim os_ As EntityUnion = ObjectSource
-            If os_ Is Nothing Then
-                os_ = os
+                os_ = ObjectSource
+                If os_ Is Nothing Then
+                    os_ = os
+                End If
             End If
 
             Dim alTable As SourceFragment = tbl

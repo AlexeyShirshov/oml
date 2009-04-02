@@ -2,9 +2,9 @@
 <OrmObjects xmlns="http://www.xmedia.ru/OrmObjectsSchema.xsd" defaultNamespace="test" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<Entities>
 		<Entity id="e1" name="E1" namespace="NS1" makeInterface="true">
-			<Tables>
-				<Table ref="tbl1"/>
-			</Tables>
+			<SourceFragments>
+				<SourceFragment ref="tbl1"/>
+			</SourceFragments>
 			<Properties>
 				<!--<Property propertyName="ID" attributes="PK" table="tblArtists" fieldName="id" typeRef="tInt32" description="Идентификатор"/>-->
 				<Property propertyName="Identifier1" attributes="PK" table="tbl1" fieldName="id" typeRef="tInt32" description="prop" propertyAlias="ID" />
@@ -12,9 +12,9 @@
 			</Properties>
 		</Entity>
 		<Entity id="e11" name="E1" namespace="NS2" baseEntity="e1">
-			<Tables>
-				<Table ref="tbl1"/>
-			</Tables>
+			<SourceFragments>
+				<SourceFragment ref="tbl1"/>
+			</SourceFragments>
 			<Properties>
 				<Property propertyName="Prop11" table="tbl1" fieldName="prop11" typeRef="tString" description="prop11"/>				
 			</Properties>
@@ -31,7 +31,7 @@
 			<ClrType name="System.Int32" />
 		</Type>
 	</Types>
-	<Tables>
-		<Table id="tbl1">tbl1</Table>
-	</Tables>
+	<SourceFragments>
+		<SourceFragment id="tbl1" name="tbl1" />
+	</SourceFragments>
 </OrmObjects>

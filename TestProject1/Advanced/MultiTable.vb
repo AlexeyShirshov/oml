@@ -38,15 +38,15 @@ Public MustInherit Class MultiTableSchemaBase
 
     Private _idx As OrmObjectIndex
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Msg", "msg", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Msg", "msg", Table))
             _idx = idx
         End If
         Return _idx
@@ -64,21 +64,27 @@ End Class
 Public Class MultiTableEn
     Inherits MultiTableSchemaBase
 
-    Private _tables() As SourceFragment = {New SourceFragment("dbo.m2")}
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.m2")
+    End Sub
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.m2")}
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 End Class
 
 Public Class MultiTableRu
     Inherits MultiTableSchemaBase
 
-    Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.m1")
+    End Sub
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 End Class
 
 <TestClass()> _

@@ -6,33 +6,33 @@
 	</Includes>
 	<Entities>
 		<Entity id="e1" name="E1">
-			<Tables>
-				<Table ref="tbl1"/>
-				<!--<Table ref="tbl2"/>-->
-				<!--<Table ref="tblS1"/>-->
-			</Tables>
+			<SourceFragments>
+				<SourceFragment ref="tbl1"/>
+				<!--<SourceFragment ref="tbl2"/>-->
+				<!--<SourceFragment ref="tblS1"/>-->
+			</SourceFragments>
 			<Properties>
 				<Property fieldName="id" propertyName="Identifier1" propertyAlias="ID" description="prop" table="tbl1" typeRef="tInt32" attributes="PrimaryKey"/>
 				<Property fieldName="title" propertyName="Title" description="prop title" table="tbl1" typeRef="tString" dbTypeName="nvarchar" dbTypeSize="50" dbTypeNullable="false"/>
 			</Properties>
 		</Entity>
     <Entity id="e2" name="E2" >
-      <Tables>
-        <Table ref="tbl2"/>
-        <!--<Table ref="tbl2"/>-->
-        <!--<Table ref="tblS1"/>-->
-      </Tables>
+      <SourceFragments>
+        <SourceFragment ref="tbl2"/>
+        <!--<SourceFragment ref="tbl2"/>-->
+        <!--<SourceFragment ref="tblS1"/>-->
+      </SourceFragments>
       <Properties>
           <Property fieldName="prop4" propertyName="prop4" table="tbl2" typeRef="tString"/>
           <Property fieldName="id" propertyName="Identifier1" propertyAlias="ID" description="prop" table="tbl2" typeRef="tInt32" attributes="PrimaryKey"/>
       </Properties>
     </Entity>
     <Entity id="e12" name="E12" >
-      <Tables>
-        <Table ref="tbl12"/>
-        <!--<Table ref="tbl2"/>-->
-        <!--<Table ref="tblS1"/>-->
-      </Tables>
+      <SourceFragments>
+        <SourceFragment ref="tbl12"/>
+        <!--<SourceFragment ref="tbl2"/>-->
+        <!--<SourceFragment ref="tblS1"/>-->
+      </SourceFragments>
       <Properties>
         <Property fieldName="id" propertyName="Identifier1" propertyAlias="ID" description="prop" table="tbl12" typeRef="tInt32" attributes="PrimaryKey"/>
         <Property fieldName="E1" propertyName="e1" table="tbl12" typeRef="tE1"/>
@@ -79,9 +79,9 @@
       <Entity ref="e2" />
     </Type>
 	</Types>
-	<Tables>
-		<Table id="tbl1">tbl1</Table>
-    <Table id="tbl2">tbl2</Table>
-    <Table id="tbl12">tbl12</Table>
-	</Tables>
+	<SourceFragments>
+		<SourceFragment id="tbl1" name="tbl1" />
+    <SourceFragment id="tbl2" name="tbl2" />
+    <SourceFragment id="tbl12" name="tbl12" />
+	</SourceFragments>
 </OrmObjects>

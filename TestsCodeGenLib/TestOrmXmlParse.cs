@@ -95,16 +95,19 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+            parser.FillSourceFragments();
 
-            OrmObjectsDef ormObjectDef;
-            ormObjectDef = parser.OrmObjectsDef;
+        	OrmObjectsDef ormObjectDef = parser.OrmObjectsDef;
 
-            Assert.AreEqual<int>(6, ormObjectDef.Tables.Count);
-            Assert.IsTrue(ormObjectDef.Tables.Exists(delegate(TableDescription match) { return match.Identifier == "tblAlbums" && match.Name == "dbo.albums"; }));
-            Assert.IsTrue(ormObjectDef.Tables.Exists(delegate(TableDescription match) { return match.Identifier == "tblArtists" && match.Name == "dbo.artists"; }));
-            Assert.IsTrue(ormObjectDef.Tables.Exists(delegate(TableDescription match) { return match.Identifier == "tblAl2Ar" && match.Name == "dbo.al2ar"; }));
-            Assert.IsTrue(ormObjectDef.Tables.Exists(delegate(TableDescription match) { return match.Identifier == "tblSiteAccess" && match.Name == "dbo.sites_access"; }));
+            Assert.AreEqual<int>(6, ormObjectDef.SourceFragments.Count);
+            Assert.IsTrue(ormObjectDef.SourceFragments.Exists(
+                          	match => match.Identifier == "tblAlbums" && match.Name == "albums"));
+            Assert.IsTrue(ormObjectDef.SourceFragments.Exists(
+                          	match => match.Identifier == "tblArtists" && match.Name == "artists"));
+			Assert.IsTrue(ormObjectDef.SourceFragments.Exists(
+			              	match => match.Identifier == "tblAl2Ar" && match.Name == "al2ar"));
+			Assert.IsTrue(ormObjectDef.SourceFragments.Exists(
+			              	match => match.Identifier == "tblSiteAccess" && match.Name == "sites_access"));
             
         }
 
@@ -171,7 +174,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+			parser.FillSourceFragments();
             parser.FindEntities();
 
 
@@ -179,27 +182,20 @@ namespace TestsCodeGenLib
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity;
-            entity = ormObjectDef.Entities.Find(delegate(EntityDescription match) { return match.Identifier == "eArtist" && match.Name == "Artist"; });
+            entity = ormObjectDef.Entities.Find(match => match.Identifier == "eArtist" && match.Name == "Artist");
 
-            Assert.AreEqual<int>(2, entity.Tables.Count);
-            Assert.IsTrue(entity.Tables.Exists(delegate(TableDescription match)
-            {
-                return match.Identifier.Equals("tblArtists")
-                && match.Name.Equals("dbo.artists");
-            }));
-            Assert.IsTrue(entity.Tables.Exists(delegate(TableDescription match)
-            {
-                return match.Identifier.Equals("tblSiteAccess")
-                && match.Name.Equals("dbo.sites_access");
-            }));
+            Assert.AreEqual<int>(2, entity.SourceFragments.Count);
+            Assert.IsTrue(entity.SourceFragments.Exists(match => match.Identifier.Equals("tblArtists")
+                                                                 && match.Name.Equals("artists")));
+            Assert.IsTrue(entity.SourceFragments.Exists(match => match.Identifier.Equals("tblSiteAccess")
+                                                                 && match.Name.Equals("sites_access")));
         }
 
         [TestMethod]
         [Description("Проверка получения свойств")]
         public void TestFillProperties()
         {
-            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
-            parser = null;
+        	Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
                 object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
@@ -207,7 +203,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+			parser.FillSourceFragments();
             parser.FindEntities();
             parser.FillImports();
             parser.FillTypes();
@@ -217,7 +213,7 @@ namespace TestsCodeGenLib
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity;
-            entity = ormObjectDef.Entities.Find(delegate(EntityDescription match) {return match.Identifier == "eArtist" && match.Name == "Artist";});
+            entity = ormObjectDef.Entities.Find(match => match.Identifier == "eArtist" && match.Name == "Artist");
 
             parser.FillProperties(entity);
 
@@ -228,8 +224,8 @@ namespace TestsCodeGenLib
             Assert.IsNotNull(prop);
             Assert.AreEqual<int>(1, prop.Attributes.Length, "Attributes is undefined");
             Assert.AreEqual<string>("PK", prop.Attributes[0], "Attributes is not correct defined");
-            Assert.IsNotNull(prop.Table, "Table is undefined");
-            Assert.AreEqual<string>("tblArtists", prop.Table.Identifier, "Table.Identifier is undefined");
+            Assert.IsNotNull(prop.SourceFragment, "Table is undefined");
+            Assert.AreEqual<string>("tblArtists", prop.SourceFragment.Identifier, "Table.Identifier is undefined");
             Assert.AreEqual<string>("id", prop.FieldName, "FieldName is undefined");
             Assert.AreEqual<string>("System.Int32", prop.PropertyType.TypeName, "PropertyTypeString is undefined");
             Assert.AreEqual<string>("Property ID Description", prop.Description, "Description is undefined");
@@ -240,8 +236,8 @@ namespace TestsCodeGenLib
             prop = entity.GetProperty("Title");
             Assert.IsNotNull(prop);
             Assert.AreEqual<int>(0, prop.Attributes.Length, "Attributes is undefined");
-            Assert.IsNotNull(prop.Table, "Table is undefined");
-            Assert.AreEqual<string>("tblArtists", prop.Table.Identifier, "Table.Identifier is undefined");
+            Assert.IsNotNull(prop.SourceFragment, "Table is undefined");
+            Assert.AreEqual<string>("tblArtists", prop.SourceFragment.Identifier, "Table.Identifier is undefined");
             Assert.AreEqual<string>("name", prop.FieldName, "FieldName is undefined");
             Assert.AreEqual<string>("System.String", prop.PropertyType.TypeName, "PropertyTypeString is undefined");
             Assert.AreEqual<string>("Property Title Description", prop.Description, "Description");
@@ -253,8 +249,8 @@ namespace TestsCodeGenLib
             Assert.IsNotNull(prop);
             Assert.AreEqual<string>("DisplayTitle", prop.Name, "Name is undefined");
             Assert.AreEqual<int>(0, prop.Attributes.Length, "Attributes is undefined");
-            Assert.IsNotNull(prop.Table, "Table is undefined");
-            Assert.AreEqual<string>("tblArtists", prop.Table.Identifier, "Table.Identifier is undefined");
+            Assert.IsNotNull(prop.SourceFragment, "Table is undefined");
+            Assert.AreEqual<string>("tblArtists", prop.SourceFragment.Identifier, "Table.Identifier is undefined");
             Assert.AreEqual<string>("display_name", prop.FieldName, "FieldName is undefined");
             Assert.AreEqual<string>("System.String", prop.PropertyType.TypeName, "PropertyTypeString is undefined");
             Assert.AreEqual<string>("Property Title Description", prop.Description, "Property Title Description");
@@ -294,7 +290,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+			parser.FillSourceFragments();
             parser.FindEntities();
             parser.FillImports();
             parser.FillTypes();
@@ -342,7 +338,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+			parser.FillSourceFragments();
             parser.FindEntities();
             parser.FillImports();
             parser.FillTypes();
@@ -387,7 +383,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
-            parser.FillTables();
+			parser.FillSourceFragments();
             parser.FillImports();
             parser.FindEntities();
             parser.FillTypes();
@@ -413,15 +409,13 @@ namespace TestsCodeGenLib
 
             Assert.IsNotNull(relation);
 
-            Assert.AreEqual<bool>(false, relation.Disabled);
+            Assert.AreEqual(false, relation.Disabled);
 
-            TableDescription relationTable;
-            relationTable = ormObjectsDef.Tables.Find(delegate(TableDescription match) { return match.Identifier == "tblAl2Ar";});
-            EntityDescription relationEntity;
-            relationEntity = ormObjectsDef.Entities.Find(delegate(EntityDescription match){ return match.Identifier == "Album2ArtistRelation";});
+        	var relationTable = ormObjectsDef.SourceFragments.Find(match => match.Identifier == "tblAl2Ar");
+            var relationEntity = ormObjectsDef.Entities.Find(match => match.Identifier == "Album2ArtistRelation");
 
-            Assert.AreEqual<TableDescription>(relationTable, relation.Table);
-            Assert.AreEqual<EntityDescription>(relationEntity, relation.UnderlyingEntity);
+            Assert.AreEqual(relationTable, relation.SourceFragment);
+            Assert.AreEqual(relationEntity, relation.UnderlyingEntity);
 
             Assert.IsNotNull(relation.Left);
             Assert.IsNotNull(relation.Right);
@@ -458,7 +452,7 @@ namespace TestsCodeGenLib
 
 			Assert.AreEqual<bool>(false, selfRelation.Disabled);
 
-			relationTable = ormObjectsDef.Tables.Find(delegate(TableDescription match) { return match.Identifier == "tbla2b"; });
+			relationTable = ormObjectsDef.SourceFragments.Find(match => match.Identifier == "tbla2b");
 
         	int idx = 0;
 			foreach (RelationDescriptionBase relationDescriptionBase in ormObjectsDef.Relations)
@@ -470,7 +464,7 @@ namespace TestsCodeGenLib
 
 			Assert.AreEqual<bool>(false, selfRelation.Disabled);
 
-			relationTable = ormObjectsDef.Tables.Find(delegate(TableDescription match) { return match.Identifier == "tbla2b"; });
+			relationTable = ormObjectsDef.SourceFragments.Find(match => match.Identifier == "tbla2b");
 			relationEntity = ormObjectsDef.Entities.Find(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation"; });
 
         }

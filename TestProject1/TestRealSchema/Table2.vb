@@ -149,26 +149,30 @@ Public Class Table2Implementation
     Inherits ObjectSchemaBaseImplementation
 
     Private _idx As OrmObjectIndex
-    Private _tables() As SourceFragment = {New SourceFragment("dbo.Table2")}
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table2")}
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table2")
+    End Sub
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Table1", "table1_id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Blob", "blob", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Money", "m", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("DT", "dt2", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Table1", "table1_id", Table))
+            idx.Add(New MapField2Column("Blob", "blob", Table))
+            idx.Add(New MapField2Column("Money", "m", Table))
+            idx.Add(New MapField2Column("DT", "dt2", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 End Class

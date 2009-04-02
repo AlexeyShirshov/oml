@@ -58,7 +58,7 @@ End Class
 
 Public Class CompositeSchema
     Inherits ObjectSchemaBaseImplementation
-    Implements IReadonlyObjectSchema
+    Implements IReadonlyObjectSchema, IMultiTableObjectSchema
 
     Private _idx As OrmObjectIndex
     Private _tables() As SourceFragment = {New SourceFragment("dbo.m1"), New SourceFragment("dbo.m2")}
@@ -79,15 +79,15 @@ Public Class CompositeSchema
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
         Return _tables
     End Function
 
-    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables.First)) AndAlso right.Equals(GetTables()(Tables.Second)) Then
             Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "id", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException
     End Function
 
     Public Function GetEditableSchema() As IEntitySchema Implements IReadonlyObjectSchema.GetEditableSchema
@@ -97,6 +97,12 @@ Public Class CompositeSchema
     Public ReadOnly Property SupportedOperation() As Worm.Entities.Meta.IReadonlyObjectSchema.Operation Implements Worm.Entities.Meta.IReadonlyObjectSchema.SupportedOperation
         Get
             Return IReadonlyObjectSchema.Operation.All
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
         End Get
     End Property
 End Class

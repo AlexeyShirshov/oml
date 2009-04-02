@@ -731,60 +731,64 @@ l1:
                         End If
                     Next
                 Else
-                    If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
-                        Dim s As IEntitySchema = GetSchemaForSelectType(schema)
-                        If s IsNot Nothing Then
-                            For Each m As MapField2Column In s.GetFieldColumnMap
-                                Dim se As New SelectExpression(m._tableName, m._columnName)
-                                se.Attributes = m._newattributes
-                                se.PropertyAlias = m._propertyAlias
-                                _sl.Add(se)
-                            Next
-                            'Else
-                            'Throw New NotSupportedException
-                        End If
-                    ElseIf _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
-                        If SelectTypes.Count > 1 Then
-                            Throw New NotSupportedException
+                    If SelectTypes IsNot Nothing Then
+                        If _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
+                            If SelectTypes.Count > 1 Then
+                                Throw New NotSupportedException
+                            Else
+                                AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU)
+                            End If
                         Else
-                            AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU)
+                            Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectTypes
+                            If selTypes Is Nothing Then
+                                If _from IsNot Nothing Then
+                                    selTypes = New ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(_from.ObjectSource, Nothing)})
+                                Else
+                                    Throw New QueryCmdException("Neither SelectTypes nor FromClause not set", Me)
+                                End If
+                            End If
+                            For Each tp As Pair(Of EntityUnion, Boolean?) In selTypes
+                                AddTypeFields(schema, _sl, tp)
+                                'If tp.Second Then
+                                '    Throw New NotImplementedException
+                                'Else
+                                '    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
+                                '    Dim se As New SelectExpression(tp.First, pk)
+                                '    se.Attributes = Field2DbRelations.PK
+                                '    cl.Add(se)
+                                'End If
+                                If Not _types.ContainsKey(tp.First) Then
+                                    Dim t As Type = tp.First.GetRealType(schema)
+                                    _types.Add(tp.First, schema.GetEntitySchema(t))
+                                End If
+                            Next
+
+                            If _from Is Nothing Then
+                                _from = New FromClauseDef(SelectTypes(0).First)
+                            End If
+
+                            For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
+                                Dim t As Type = de.Key.GetRealType(schema)
+                                If Not _pdic.ContainsKey(t) Then
+                                    Dim dic As IDictionary = schema.GetProperties(t, de.Value)
+                                    _pdic.Add(t, dic)
+                                End If
+                            Next
                         End If
                     Else
-                        Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectTypes
-                        If selTypes Is Nothing Then
-                            If _from IsNot Nothing Then
-                                selTypes = New ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(_from.ObjectSource, Nothing)})
-                            Else
-                                Throw New QueryCmdException("Neither SelectTypes nor FromClause not set", Me)
+                        If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
+                            Dim s As IEntitySchema = GetSchemaForSelectType(schema)
+                            If s IsNot Nothing Then
+                                For Each m As MapField2Column In s.GetFieldColumnMap
+                                    Dim se As New SelectExpression(m._tableName, m._columnName)
+                                    se.Attributes = m._newattributes
+                                    se.PropertyAlias = m._propertyAlias
+                                    _sl.Add(se)
+                                Next
+                                'Else
+                                '    Throw New NotSupportedException
                             End If
                         End If
-                        For Each tp As Pair(Of EntityUnion, Boolean?) In selTypes
-                            AddTypeFields(schema, _sl, tp)
-                            'If tp.Second Then
-                            '    Throw New NotImplementedException
-                            'Else
-                            '    Dim pk As String = schema.GetPrimaryKeys(tp.First.GetRealType(schema))(0).PropertyAlias
-                            '    Dim se As New SelectExpression(tp.First, pk)
-                            '    se.Attributes = Field2DbRelations.PK
-                            '    cl.Add(se)
-                            'End If
-                            If Not _types.ContainsKey(tp.First) Then
-                                Dim t As Type = tp.First.GetRealType(schema)
-                                _types.Add(tp.First, schema.GetEntitySchema(t))
-                            End If
-                        Next
-
-                        If _from Is Nothing Then
-                            _from = New FromClauseDef(SelectTypes(0).First)
-                        End If
-
-                        For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
-                            Dim t As Type = de.Key.GetRealType(schema)
-                            If Not _pdic.ContainsKey(t) Then
-                                Dim dic As IDictionary = schema.GetProperties(t, de.Value)
-                                _pdic.Add(t, dic)
-                            End If
-                        Next
                     End If
                 End If
 
@@ -3153,6 +3157,9 @@ l1:
             If _pod Is Nothing Then
                 Dim t As Type = GetSelectedType(mpe)
                 If _createType Is Nothing OrElse _createType.GetRealType(mpe).IsAssignableFrom(t) Then
+                    If t Is Nothing Then
+                        Throw New QueryCmdException("Neither Into clause not specified nor ToAnonymous used", Me)
+                    End If
                     Return mpe.GetObjectSchema(t, False)
                 Else
                     Return Nothing

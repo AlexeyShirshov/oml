@@ -12,12 +12,12 @@ namespace Worm.CodeGen.Core.Descriptors
         //private readonly EntityDescription _underlyingEntity;
         //private bool _disabled;
 
-        public RelationDescription(LinkTarget left, LinkTarget right, TableDescription table, EntityDescription underlyingEntity)
+        public RelationDescription(LinkTarget left, LinkTarget right, SourceFragmentDescription table, EntityDescription underlyingEntity)
             : this(left, right, table, underlyingEntity, false)
         {
         }
 
-        public RelationDescription(LinkTarget left, LinkTarget right, TableDescription table, EntityDescription underlyingEntity, bool disabled)
+        public RelationDescription(LinkTarget left, LinkTarget right, SourceFragmentDescription table, EntityDescription underlyingEntity, bool disabled)
             : base(table, underlyingEntity, left, right, disabled)
         {
             //_left = left;

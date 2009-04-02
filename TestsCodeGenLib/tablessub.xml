@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <OrmObjects xmlns="http://www.xmedia.ru/OrmObjectsSchema.xsd">
-	<Tables>
-		<Table id="tblS1">tblS1</Table>
-		<Table id="tblS2">tblS2</Table>
-	</Tables>
+	<SourceFragments>
+		<SourceFragment id="tblS1" name="tblS1" />
+		<SourceFragment id="tblS2" name="tblS2" />
+	</SourceFragments>
 </OrmObjects>

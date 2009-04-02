@@ -329,7 +329,7 @@ Namespace Database
                 Dim s As IEntitySchema = mgr.MappingEngine.GetEntitySchema(relation.Rel.GetRealType(mgr.MappingEngine))
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
 
-                If s IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetContextInfo) IsNot Nothing Then
+                If cs IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetContextInfo) IsNot Nothing Then
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
