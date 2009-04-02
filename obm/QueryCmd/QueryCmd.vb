@@ -757,10 +757,10 @@ l1:
                                 '    se.Attributes = Field2DbRelations.PK
                                 '    cl.Add(se)
                                 'End If
-                                If Not _types.ContainsKey(tp.First) Then
-                                    Dim t As Type = tp.First.GetRealType(schema)
-                                    _types.Add(tp.First, schema.GetEntitySchema(t))
-                                End If
+                                'If Not _types.ContainsKey(tp.First) Then
+                                '    Dim t As Type = tp.First.GetRealType(schema)
+                                '    _types.Add(tp.First, schema.GetEntitySchema(t))
+                                'End If
                             Next
 
                             If _from Is Nothing Then
@@ -889,6 +889,18 @@ l1:
             Return _ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _types.ContainsKey(eu)
         End Function
 
+        Protected Friend Function Need2MainType(ByVal eu As EntityUnion) As Boolean
+            Dim r As Boolean = _ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _from Is Nothing OrElse _from.ObjectSource Is Nothing OrElse _from.ObjectSource.Equals(eu)
+            If Not r Then
+                For Each j As QueryJoin In Joins
+                    If j.M2MObjectSource IsNot Nothing AndAlso j.ObjectSource IsNot Nothing AndAlso Join.Condition Is Nothing AndAlso eu.Equals(j.ObjectSource) Then
+                        Return False
+                    End If
+                Next
+            End If
+            Return r
+        End Function
+
         Private Sub CheckFrom(ByVal se As SelectExpression)
             If _from Is Nothing Then
                 If se.Aggregate IsNot Nothing Then
@@ -959,6 +971,7 @@ l1:
                 End If
                 cl.AddRange(l)
             Else
+                'If Need2MainType(os) Then
                 For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
                     Dim se As New SelectExpression(os, c.PropertyAlias)
                     se.Attributes = c.Behavior
@@ -968,6 +981,9 @@ l1:
                 If Not _types.ContainsKey(os) Then
                     _types.Add(os, oschema)
                 End If
+                '    Else
+
+                'End If
             End If
         End Sub
 

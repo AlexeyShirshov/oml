@@ -417,6 +417,7 @@ Namespace Query
                         Throw New ArgumentException("Invalid relation", filteredType.ToString)
                     End If
 
+                    Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                     Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(selectOS, schema) OrElse IsFTS
                     If prd OrElse mt IsNot Nothing Then
@@ -430,6 +431,8 @@ Namespace Query
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
                             _from = New FromClauseDef(selectOS)
                         End If
+                        tu = selectOS
+
                         If _WithLoad(selectOS, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
                         ElseIf SelectTypes IsNot Nothing Then
@@ -437,6 +440,7 @@ Namespace Query
                         Else
                             PrepareSelectList(isAnonym, schema, f, filterInfo)
                         End If
+
                     Else
                         _from = New FromClauseDef(table)
                         'Dim os As IOrmObjectSchemaBase = schema.GetEntitySchema(selectedType)
@@ -471,7 +475,9 @@ l1:
                     'End If
 
                     addf = New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo) '.SetUnion(selected_r.Rel)
+                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
+
+                    If tu IsNot Nothing Then addf.SetUnion(tu)
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(selectOS, schema) Then

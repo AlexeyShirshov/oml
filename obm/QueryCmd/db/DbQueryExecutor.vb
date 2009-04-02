@@ -986,25 +986,36 @@ l1:
                             Dim tbl As SourceFragment = CType(t22t1.Table.Clone, SourceFragment)
                             Dim jl As JoinLink = Nothing
                             join.TmpTable = tbl
-                            Dim prevJ As QueryJoin = GetJoin(j, join.M2MObjectSource)
+                            Dim prevJ As QueryJoin = GetJoin(j, join)
 
                             If prevJ Is Nothing Then
-                                If pk IsNot Nothing Then
-                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
-                                Else
-                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
-                                End If
+                                Dim ftbl As SourceFragment = query.FromClause.Table
 
-                                'If join.M2MObjectSource.Equals(
-                                If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
-                                    jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
-                                    needAppend = False
+                                If ftbl Is Nothing Then
+                                    'If Not join.M2MObjectSource.Equals(query.FromClause.ObjectSource) Then
+                                    '    Throw New QueryCmdException("Cannot find join for " & join.M2MObjectSource._ToString, query)
+                                    'End If
+
+                                    If pk IsNot Nothing Then
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
+                                    Else
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
+                                    End If
+
+                                    'If join.M2MObjectSource.Equals(
+                                    If almgr.ContainsKey(oschema.Table, join.ObjectSource) Then
+                                        jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
+                                        needAppend = False
+                                    End If
+                                Else
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(ftbl, t22t1.Column)
                                 End If
+                                needAppend = query.Need2Join(join.ObjectSource)
                             Else
                                 If prevJ.Table IsNot Nothing Then
                                     jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.Table, t22t1.Column)
                                 Else
-                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(join.TmpTable, t22t1.Column)
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.TmpTable, t22t1.Column)
                                 End If
                                 needAppend = query.Need2Join(join.ObjectSource)
                             End If
@@ -1055,9 +1066,9 @@ l1:
             Next
         End Sub
 
-        Protected Shared Function GetJoin(ByVal js As IEnumerable(Of QueryJoin), ByVal os As EntityUnion) As QueryJoin
+        Protected Shared Function GetJoin(ByVal js As IEnumerable(Of QueryJoin), ByVal join As QueryJoin) As QueryJoin
             For Each j As QueryJoin In js
-                If os.Equals(j.ObjectSource) Then
+                If Not join.Equals(j) AndAlso join.M2MObjectSource.Equals(j.ObjectSource) Then
                     Return j
                 End If
             Next
