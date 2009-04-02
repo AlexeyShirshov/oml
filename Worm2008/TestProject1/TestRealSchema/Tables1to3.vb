@@ -125,27 +125,31 @@ Public Class TablesImplementation
     Implements IRelation
 
     Private _idx As OrmObjectIndex
-    Public Shared _tables() As SourceFragment = {New SourceFragment("dbo.Tables1to3Relation")}
+    'Public Shared _tables() As SourceFragment = {New SourceFragment("dbo.Tables1to3Relation")}
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Tables1to3Relation")
+    End Sub
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Table1", "table1", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Table3", "table3", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
+            idx.Add(New MapField2Column("Table1", "table1", Table))
+            idx.Add(New MapField2Column("Table3", "table3", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     Public Function GetFirstType() As IRelation.RelationDesc Implements IRelation.GetFirstType
         Return New IRelation.RelationDesc("Table1", GetType(Table33))

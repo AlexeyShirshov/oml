@@ -2041,7 +2041,7 @@ l1:
                         If c Is Nothing Then
                             Dim d As IDictionary = MappingEngine.GetProperties(original_type, oschema)
                             If d IsNot Nothing AndAlso d.Count > 0 Then
-                                If selectList.Count = 1 AndAlso se.ObjectSource IsNot Nothing AndAlso se.ObjectSource.GetRealType(MappingEngine) IsNot original_type Then
+                                If selectList.Count = 1 AndAlso (se.ObjectSource Is Nothing OrElse se.ObjectSource.GetRealType(MappingEngine) IsNot original_type) Then
                                     If attr = Field2DbRelations.None Then
                                         attr = Field2DbRelations.PK
                                     End If
@@ -2063,7 +2063,10 @@ l1:
                                     End If
                                 Next
                                 If propertyMap.ContainsKey(propertyAlias) Then
-                                    attr = propertyMap(propertyAlias).GetAttributes(c)
+                                    Dim nattr As Field2DbRelations = propertyMap(propertyAlias).GetAttributes(c)
+                                    If nattr <> Field2DbRelations.None Then
+                                        attr = nattr
+                                    End If
                                 End If
                                 If attr = Field2DbRelations.None Then
                                     attr = se.Attributes

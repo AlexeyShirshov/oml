@@ -94,6 +94,7 @@
     <Compile Include="Descriptors\RelationConstantDescriptor.cs" />
     <Compile Include="Descriptors\SelfRelationDescription.cs" />
     <Compile Include="Descriptors\SelfRelationTarget.cs" />
+    <Compile Include="Descriptors\SourceFragmentDescription.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="OrmCodeDomGenerator.Delegates.cs" />
     <Compile Include="OrmCodeGenHelper.cs" />
@@ -107,7 +108,6 @@
     <Compile Include="Descriptors\LinkTarget.cs" />
     <Compile Include="Descriptors\PropertyDescription.cs" />
     <Compile Include="Descriptors\RelationDescription.cs" />
-    <Compile Include="Descriptors\TableDescription.cs" />
     <Compile Include="OrmObjectsDef.cs" />
     <Compile Include="OrmXmlGeneratorSettings.cs" />
     <Compile Include="OrmXmlGenerator.cs" />

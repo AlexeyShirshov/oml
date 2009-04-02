@@ -28,7 +28,7 @@ namespace Worm.CodeGen.Core.Descriptors
         private string _description;
         private TypeDescription _type;
         private string _fieldName;
-        private TableDescription _table;
+        private SourceFragmentDescription _table;
         private bool _fromBase;
         private AccessLevel _fieldAccessLevel;
         private AccessLevel _propertyAccessLevel;
@@ -44,17 +44,16 @@ namespace Worm.CodeGen.Core.Descriptors
         {
         }
 
-        public PropertyDescription(EntityDescription entity, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel)
+        public PropertyDescription(EntityDescription entity, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, SourceFragmentDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel)
             : this(entity,name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false, false)
         {
         }
 
-        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) 
-            : this(null,name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false, false)
+        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, SourceFragmentDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(null,name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false, false)
         {
         }
 
-        internal PropertyDescription(EntityDescription entity, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel, bool isSuppressed, bool isRefreshed)
+        internal PropertyDescription(EntityDescription entity, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, SourceFragmentDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel, bool isSuppressed, bool isRefreshed)
         {
             _name = name;
             _propertyAlias = alias;
@@ -101,7 +100,7 @@ namespace Worm.CodeGen.Core.Descriptors
             set { _fieldName = value; }
         }
                 
-        public TableDescription Table
+        public SourceFragmentDescription SourceFragment
         {
             get { return _table; }
             set { _table = value; }

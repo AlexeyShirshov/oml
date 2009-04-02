@@ -78,6 +78,70 @@ Imports Worm.Criteria
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestSortValidateOnUpdate()
+        Dim tm As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
+            mgr.Cache.NewObjectManager = tm
+
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+                Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
+
+            Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
+            Assert.AreEqual(2, l.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    'Dim f As Table1 = s.CreateNewObject(Of Table1)()
+                    'f.Code = 20
+                    'f.CreatedAt = Now
+                    l(0).EnumStr = Enum1.first
+
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestSortValidateOnInsert()
+        Dim tm As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
+            mgr.Cache.NewObjectManager = tm
+
+            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)) _
+                .Where(Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)) _
+                .OrderBy(SCtor.custom("name").desc.prop(GetType(Table1), "Enum"))
+
+            Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
+            Assert.AreEqual(2, l.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    Dim f As Table1 = s.CreateNewObject(Of Table1)()
+                    f.Code = 20
+                    f.CreatedAt = Now
+                    'f.Enum = Enum1.first
+                    f.EnumStr = Enum1.sec
+
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestFilter()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))

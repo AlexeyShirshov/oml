@@ -79,11 +79,11 @@ Namespace Entities.Meta
     '    Inherits IMultiTableWithM2MSchema
     'End Interface
 
-    Public Interface IOrmObjectSchema
-        Inherits IEntitySchemaBase
-        Inherits IMultiTableObjectSchema
-        Inherits IContextObjectSchema, ISchemaWithM2M
-    End Interface
+    'Public Interface IOrmObjectSchema
+    '    Inherits IEntitySchemaBase
+    '    Inherits IMultiTableObjectSchema
+    '    Inherits IContextObjectSchema, ISchemaWithM2M
+    'End Interface
 
     Public Interface IReadonlyObjectSchema
         <Flags()> _

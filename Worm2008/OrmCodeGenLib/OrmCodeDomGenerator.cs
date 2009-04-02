@@ -1063,11 +1063,11 @@ namespace Worm.CodeGen.Core
 
 			        #endregion метод SourceFragment[] GetTables()
 
-			        #region метод SourceFragment GetTable(...)
+			        #region метод SourceFragment GetSourceFragment(...)
 
 					CreateGetTableMethod(entity, entityClass.SchemaDef);
 
-			        #endregion метод SourceFragment GetTable(...)
+			        #endregion метод SourceFragment GetSourceFragment(...)
 
 			        #region bool ChangeValueType(EntityPropertyAttribute c, object value, ref object newvalue)
 
@@ -1077,7 +1077,7 @@ namespace Worm.CodeGen.Core
 
 			        #region QueryJoin GetJoins(SourceFragment left, SourceFragment right)
 
-			        if ((entity.Behaviour != EntityBehaviuor.PartialObjects || entity.Tables.Count == 1) &&
+			        if ((entity.Behaviour != EntityBehaviuor.PartialObjects || entity.SourceFragments.Count == 1) &&
 			            entity.BaseEntity == null)
 			        {
 			            method = new CodeMemberMethod();
@@ -1102,7 +1102,7 @@ namespace Worm.CodeGen.Core
 			                    "right"
 			                    )
 			                );
-			            if (entity.Tables.Count > 1)
+			            if (entity.SourceFragments.Count > 1)
 			            {
 			                if (entity.Behaviour != EntityBehaviuor.PartialObjects)
 			                {
@@ -1271,7 +1271,7 @@ namespace Worm.CodeGen.Core
 			                )
 			            );
 			        condTrueStatements.AddRange(
-			            entity.Properties.ConvertAll<CodeStatement>(action => new CodeExpressionStatement(
+						entity.Properties.FindAll(action => !action.Disabled).ConvertAll<CodeStatement>(action => new CodeExpressionStatement(
 			                                                                      new CodeMethodInvokeExpression(
 			                                                                          new CodeVariableReferenceExpression("idx"),
 			                                                                          "Add",
@@ -2674,7 +2674,7 @@ namespace Worm.CodeGen.Core
                         new CodeTypeReferenceExpression(OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName
                                                             (entity) +
                                                         ".TablesLink"),
-                        OrmCodeGenNameHelper.GetSafeName(action.Table.Identifier)
+                        OrmCodeGenNameHelper.GetSafeName(action.SourceFragment.Identifier)
                         )
                     ));
 			//if (action.PropertyAlias == "ID")
@@ -2704,7 +2704,7 @@ namespace Worm.CodeGen.Core
                 string fieldName = entity == relationDescription.Left.Entity ? relationDescription.Right.FieldName : relationDescription.Left.FieldName;
                 bool cascadeDelete = entity == relationDescription.Left.Entity ? relationDescription.Right.CascadeDelete : relationDescription.Left.CascadeDelete;
 
-                return new CodeExpression[] { GetM2MRelationCreationExpression(relatedEntity, relationDescription.Table, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null, relationDescription.Constants) };
+                return new CodeExpression[] { GetM2MRelationCreationExpression(relatedEntity, relationDescription.SourceFragment, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null, relationDescription.Constants) };
             }
         	throw new ArgumentException("To realize m2m relation on self use SelfRelation instead.");
         }
@@ -2714,16 +2714,16 @@ namespace Worm.CodeGen.Core
 
 			return new CodeExpression[]
 				{
-					GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity,
+					GetM2MRelationCreationExpression(entity, relationDescription.SourceFragment, relationDescription.UnderlyingEntity,
 					                                 relationDescription.Direct.FieldName, relationDescription.Direct.CascadeDelete,
 					                                 true, relationDescription.Constants),
-					GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity,
+					GetM2MRelationCreationExpression(entity, relationDescription.SourceFragment, relationDescription.UnderlyingEntity,
 					                                 relationDescription.Reverse.FieldName, relationDescription.Reverse.CascadeDelete, false, relationDescription.Constants)
 				};
 
 		}
 
-    	private static CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, TableDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct, IList<RelationConstantDescriptor> relationConstants)
+    	private static CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, SourceFragmentDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct, IList<RelationConstantDescriptor> relationConstants)
         {
 			//if (underlyingEntity != null && direct.HasValue)
 			//    throw new NotImplementedException("M2M relation on self cannot have underlying entity.");
@@ -3437,10 +3437,10 @@ namespace Worm.CodeGen.Core
 
         private void CreateGetTablesMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
         {
-			if ((entity.BaseEntity == null && entity.Tables.Count == 0) || (entity.BaseEntity != null && entity.Tables.Count == 0 && !entity.InheritsBaseTables))
+			if ((entity.BaseEntity == null && entity.SourceFragments.Count == 0) || (entity.BaseEntity != null && entity.SourceFragments.Count == 0 && !entity.InheritsBaseTables))
 				throw new OrmCodeGenException("Список таблиц сущности пуст.");
 
-			if (entity.BaseEntity != null && entity.InheritsBaseTables && entity.Tables.Count == 0)
+			if (entity.BaseEntity != null && entity.InheritsBaseTables && entity.SourceFragments.Count == 0)
 				return;
 
             CodeMemberMethod method;
@@ -3489,11 +3489,17 @@ namespace Worm.CodeGen.Core
                             ),
                         new CodeArrayCreateExpression(
                             new CodeTypeReference(typeof (SourceFragment[])),
-                            entity.CompleteEntity.Tables.ConvertAll<CodeExpression>(
-                                action => new CodeObjectCreateExpression(
-                                              new CodeTypeReference(typeof (SourceFragment)),
-                                              new CodePrimitiveExpression(action.Name)
-                                              )
+                            entity.CompleteEntity.SourceFragments.ConvertAll<CodeExpression>(
+								action =>
+									{
+										var result = new CodeObjectCreateExpression(
+											new CodeTypeReference(typeof (SourceFragment))
+											);
+										if(!string.IsNullOrEmpty(action.Selector))
+											result.Parameters.Add(new CodePrimitiveExpression(action.Selector));
+										result.Parameters.Add(new CodePrimitiveExpression(action.Name));
+										return result;
+									}
                                 ).ToArray()
                             )
                         )
@@ -3529,61 +3535,61 @@ namespace Worm.CodeGen.Core
             }
         }
 
-        private static void CreateGetTypeMainTableMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
-        {
-            CodeMemberMethod method;
-            method = new CodeMemberMethod();
-            entitySchemaDefClass.Members.Add(method);
-            method.Name = "GetTypeMainTable";
-            // тип возвращаемого значения
-            method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
-			// модификаторы доступа
-			method.Attributes = MemberAttributes.Family;
-            if (entity.BaseEntity != null)
-            {
-                method.Attributes |= MemberAttributes.Override;
-            }            
-            method.Parameters.Add(
-                new CodeParameterDeclarationExpression(
-                    new CodeTypeReference(typeof(Type)),
-                    "type"
-                    )
-                );
-            method.Statements.Add(
-                new CodeVariableDeclarationStatement(new CodeTypeReference(typeof (SourceFragment[])), "tables")
-                );
-            method.Statements.Add(
-                new CodeAssignStatement(
-                    new CodeVariableReferenceExpression("tables"),
-                    new CodeMethodInvokeExpression(
-                        //new CodeCastExpression(new CodeTypeReference(typeof(Worm.IDbSchema)), 
-                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
-                        "GetTables",
-                        new CodeArgumentReferenceExpression("type")
-                        )
-                    )
-                );
-            method.Statements.Add(
-                new CodeMethodReturnStatement(
-                    new CodeCastExpression(
-                        new CodeTypeReference(typeof(SourceFragment)),
-                        new CodeMethodInvokeExpression(
-                            new CodeVariableReferenceExpression(
-                                "tables"
-                                ),
-                            "GetValue",
-                            new CodePrimitiveExpression(0)
-                            )
-                        )
-                    )
-                );
-        }
+		//private static void CreateGetTypeMainTableMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
+		//{
+		//    CodeMemberMethod method;
+		//    method = new CodeMemberMethod();
+		//    entitySchemaDefClass.Members.Add(method);
+		//    method.Name = "GetTypeMainTable";
+		//    // тип возвращаемого значения
+		//    method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
+		//    // модификаторы доступа
+		//    method.Attributes = MemberAttributes.Family;
+		//    if (entity.BaseEntity != null)
+		//    {
+		//        method.Attributes |= MemberAttributes.Override;
+		//    }            
+		//    method.Parameters.Add(
+		//        new CodeParameterDeclarationExpression(
+		//            new CodeTypeReference(typeof(Type)),
+		//            "type"
+		//            )
+		//        );
+		//    method.Statements.Add(
+		//        new CodeVariableDeclarationStatement(new CodeTypeReference(typeof (SourceFragment[])), "tables")
+		//        );
+		//    method.Statements.Add(
+		//        new CodeAssignStatement(
+		//            new CodeVariableReferenceExpression("tables"),
+		//            new CodeMethodInvokeExpression(
+		//                //new CodeCastExpression(new CodeTypeReference(typeof(Worm.IDbSchema)), 
+		//                new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
+		//                "GetTables",
+		//                new CodeArgumentReferenceExpression("type")
+		//                )
+		//            )
+		//        );
+		//    method.Statements.Add(
+		//        new CodeMethodReturnStatement(
+		//            new CodeCastExpression(
+		//                new CodeTypeReference(typeof(SourceFragment)),
+		//                new CodeMethodInvokeExpression(
+		//                    new CodeVariableReferenceExpression(
+		//                        "tables"
+		//                        ),
+		//                    "GetValue",
+		//                    new CodePrimitiveExpression(0)
+		//                    )
+		//                )
+		//            )
+		//        );
+		//}
 
         private void CreateTablesLinkEnum(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
         {
-			if (!entity.InheritsBaseTables || entity.Tables.Count > 0)
+			if (!entity.InheritsBaseTables || entity.SourceFragments.Count > 0)
 			{
-				var fullTables = entity.CompleteEntity.Tables;
+				var fullTables = entity.CompleteEntity.SourceFragments;
 
 				CodeTypeDeclaration tablesEnum = new CodeTypeDeclaration("TablesLink");
 				tablesEnum.Attributes = MemberAttributes.Public;
@@ -3595,19 +3601,15 @@ namespace Worm.CodeGen.Core
 				tablesEnum.IsPartial = false;
 				int tableNum = 0;
 
-				tablesEnum.Members.AddRange(fullTables.ConvertAll<CodeTypeMember>(delegate(TableDescription tbl)
-				                                                                  	{
-				                                                                  		var enumMember = new CodeMemberField
-				                                                                  		                 	{
-				                                                                  		                 		InitExpression =
-				                                                                  		                 			new CodePrimitiveExpression(
-				                                                                  		                 			tableNum++),
-				                                                                  		                 		Name =
-				                                                                  		                 			OrmCodeGenNameHelper.
-				                                                                  		                 			GetSafeName(tbl.Identifier)
-				                                                                  		                 	};
-				                                                                  		return enumMember;
-				                                                                  	}).ToArray());
+				tablesEnum.Members.AddRange(fullTables.ConvertAll<CodeTypeMember>(tbl => new CodeMemberField
+				                                                                         	{
+				                                                                         		InitExpression =
+				                                                                         			new CodePrimitiveExpression(
+				                                                                         			tableNum++),
+				                                                                         		Name =
+				                                                                         			OrmCodeGenNameHelper.
+				                                                                         			GetSafeName(tbl.Identifier)
+				                                                                         	}).ToArray());
 				entitySchemaDefClass.Members.Add(tablesEnum);
 			}
         }

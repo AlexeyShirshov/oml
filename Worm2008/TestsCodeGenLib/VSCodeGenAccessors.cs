@@ -336,9 +336,9 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
         m_privateObject.Invoke("FillRelations", new System.Type[0], args);
     }
     
-    internal void FillTables() {
+    internal void FillSourceFragments() {
         object[] args = new object[0];
-        m_privateObject.Invoke("FillTables", new System.Type[0], args);
+		m_privateObject.Invoke("FillSourceFragments", new System.Type[0], args);
     }
     
     internal void FillEntityTables(global::Worm.CodeGen.Core.Descriptors.EntityDescription entity) {

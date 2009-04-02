@@ -183,40 +183,46 @@ End Class
 
 Public Class Table3Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
 
     Private _idx As OrmObjectIndex
-    Private _tables() As SourceFragment = {New SourceFragment("dbo.Table3")}
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table3")}
     Private _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table3")
+    End Sub
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Ref", "ref_id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Code", "code", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Version", "v", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("XML", "x", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Ref", "ref_id", Table))
+            idx.Add(New MapField2Column("Code", "code", Table))
+            idx.Add(New MapField2Column("Version", "v", Table))
+            idx.Add(New MapField2Column("XML", "x", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
             _rels = New M2MRelationDesc() { _
-                New M2MRelationDesc(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
+                New M2MRelationDesc(GetType(Table1), _schema.GetTables(GetType(Tables1to3))(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
             }
         End If
         Return _rels
     End Function
+
 End Class
 
 Public Class Table33

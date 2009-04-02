@@ -16,7 +16,7 @@ namespace Worm.CodeGen.Core
         #region Private Fields
 
         private readonly List<EntityDescription> _entities;
-        private readonly List<TableDescription> _tables;
+		private readonly List<SourceFragmentDescription> _sourceFragments;
         private readonly List<RelationDescriptionBase> _relations;
     	//private readonly List<SelfRelationDescription> _selfRelations;
         private readonly List<TypeDescription> _types;
@@ -37,18 +37,14 @@ namespace Worm.CodeGen.Core
             _entities = new List<EntityDescription>();
             _relations = new List<RelationDescriptionBase>();
         	//_selfRelations = new List<SelfRelationDescription>();
-            _tables = new List<TableDescription>();
+        	_sourceFragments = new List<SourceFragmentDescription>();
             _types = new List<TypeDescription>();
             _userComments = new List<string>();
             _systemComments = new List<string>();
             _includes = new IncludesCollection(this);
 
-            Assembly ass = Assembly.GetEntryAssembly();
-            if (ass == null)
-            {
-                ass = Assembly.GetCallingAssembly();
-            }
-            _appName = ass.GetName().Name;
+            Assembly ass = Assembly.GetEntryAssembly() ?? Assembly.GetCallingAssembly();
+        	_appName = ass.GetName().Name;
             _appVersion = ass.GetName().Version.ToString(4);
         	EnableReadOnlyPropertiesSetter = false;
             GenerateEntityName = true;
@@ -92,14 +88,13 @@ namespace Worm.CodeGen.Core
 	        }
 	    }
 
-		
-        public List<TableDescription> Tables
-        {
-            get
-            {
-                return _tables;
-            }
-        }
+		public List<SourceFragmentDescription> SourceFragments
+		{
+			get
+			{
+				return _sourceFragments;
+			}
+		}
 		
         public List<RelationDescriptionBase> Relations
         {
@@ -217,24 +212,23 @@ namespace Worm.CodeGen.Core
             return entity;
         }
 
-        public TableDescription GetTable(string tableId)
+        public SourceFragmentDescription GetSourceFragment(string tableId)
         {
-            return GetTable(tableId, false);
+            return GetSourceFragment(tableId, false);
         }
 
-        public TableDescription GetTable(string tableId, bool throwNotFoundException)
+        public SourceFragmentDescription GetSourceFragment(string tableId, bool throwNotFoundException)
         {
-            TableDescription table;
-            table = Tables.Find(delegate(TableDescription match) { return match.Identifier == tableId;});
+            var table = SourceFragments.Find(match => match.Identifier == tableId);
             if(table == null && Includes.Count > 0)
                 foreach (OrmObjectsDef objectsDef in Includes)
                 {
-                    table = objectsDef.GetTable(tableId, false);
+                    table = objectsDef.GetSourceFragment(tableId, false);
                     if (table != null)
                         break;
                 }
             if (table == null && throwNotFoundException)
-                throw new KeyNotFoundException(string.Format("Table with id '{0}' not found.", tableId));
+                throw new KeyNotFoundException(string.Format("SourceFragment with id '{0}' not found.", tableId));
             return table;
         }
 

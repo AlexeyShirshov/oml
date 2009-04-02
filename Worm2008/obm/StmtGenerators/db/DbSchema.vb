@@ -339,7 +339,7 @@ Namespace Database
                     If rs IsNot Nothing AndAlso (rs.SupportedOperation And IReadonlyObjectSchema.Operation.Insert) = IReadonlyObjectSchema.Operation.Insert Then
                         es = rs.GetEditableSchema
                     End If
-                    Dim js As IOrmObjectSchema = TryCast(es, IOrmObjectSchema)
+                    Dim js As IMultiTableObjectSchema = TryCast(es, IMultiTableObjectSchema)
                     Dim tbls() As SourceFragment = mpe.GetTables(es)
 
                     Dim pkt As SourceFragment = tbls(0)
@@ -811,7 +811,7 @@ l1:
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
                                 de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.PropertyAlias, New ScalarValue(original), FilterOperation.Equal))
                             Else
-                                Dim joinableSchema As IOrmObjectSchema = TryCast(oschema, IOrmObjectSchema)
+                                Dim joinableSchema As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                                 If joinableSchema IsNot Nothing Then
                                     Dim join As QueryJoin = CType(mpe.GetJoins(joinableSchema, tb, de_table.Key, filterInfo), QueryJoin)
                                     If Not QueryJoin.IsEmpty(join) Then

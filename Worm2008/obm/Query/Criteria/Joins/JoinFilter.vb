@@ -457,11 +457,11 @@ Namespace Criteria.Joins
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
-                If almgr.ContainsKey(map._tableName, _eu2) Then
-                    os = _eu2
-                Else
-                    os = _eu
-                End If
+                'If almgr.ContainsKey(map._tableName, _eu2) Then
+                '    os = _eu2
+                'Else
+                '    os = _eu
+                'End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
                 [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
             Else
@@ -497,11 +497,11 @@ Namespace Criteria.Joins
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
-                If almgr.ContainsKey(map2._tableName, _eu2) Then
-                    os2 = _eu2
-                Else
-                    os2 = _eu
-                End If
+                'If almgr.ContainsKey(map2._tableName, _eu2) Then
+                '    os2 = _eu2
+                'Else
+                '    os2 = _eu
+                'End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
                 [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
             Else

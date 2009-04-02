@@ -3,8 +3,8 @@
 	<!--<Includes>
 		<xi:include parse="xml" href="tablessub.xml" />
 	</Includes>-->
-	<Tables>
-		<Table id="tbl2">tbl2</Table>
-		<Table id="tbl3">tbl3</Table>
-	</Tables>
+	<SourceFragments>
+		<SourceFragment id="tbl2" name="tbl2" />
+		<SourceFragment id="tbl3" name="tbl3" />
+	</SourceFragments>
 </OrmObjects>

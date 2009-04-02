@@ -9,7 +9,7 @@ namespace Worm.CodeGen.Core.Descriptors
 		private readonly string _id;
 		private readonly string _name;
 		private readonly string _description;
-	    private readonly List<TableDescription> _tables;
+	    private readonly List<SourceFragmentDescription> _sourceFragments;
 		private readonly List<PropertyDescription> _properties;
 		private readonly List<PropertyDescription> _suppressedProperties;
 		private readonly OrmObjectsDef _ormObjectsDef;
@@ -33,7 +33,7 @@ namespace Worm.CodeGen.Core.Descriptors
 			_id = id;
 			_name = name;
 			_description = description;
-			_tables = new List<TableDescription>();
+			_sourceFragments = new List<SourceFragmentDescription>();
 			_properties = new List<PropertyDescription>();
 			_suppressedProperties = new List<PropertyDescription>();
 			_ormObjectsDef = ormObjectsDef;
@@ -57,9 +57,9 @@ namespace Worm.CodeGen.Core.Descriptors
 			get { return _description; }
 		}
 
-		public List<TableDescription> Tables
+		public List<SourceFragmentDescription> SourceFragments
 		{
-			get { return _tables; }
+			get { return _sourceFragments; }
 		}
 
 		public List<PropertyDescription> Properties
@@ -132,25 +132,24 @@ namespace Worm.CodeGen.Core.Descriptors
 			return result;
 		}
 
-		public TableDescription GetTable(string tableId)
+		public SourceFragmentDescription GetSourceFragments(string sourceFragmentId)
 		{
-			return GetTable(tableId, false);
+			return GetSourceFragments(sourceFragmentId, false);
 		}
 
-		public TableDescription GetTable(string tableId, bool throwNotFoundException)
+		public SourceFragmentDescription GetSourceFragments(string tableId, bool throwNotFoundException)
 		{
-			TableDescription table;
 			//System.Text.RegularExpressions.Match nameMatch = Worm.CodeGen.Core.OrmObjectsDef.GetNsNameMatch(tableId);
 			//string localTableId = tableId;
 			//if(nameMatch.Success && nameMatch.Groups["name"].Success)
 			//{
 			//    localTableId = nameMatch.Groups["name"].Value;
 			//}
-			table = Tables.Find(match => match.Identifier == tableId);
+			var table = SourceFragments.Find(match => match.Identifier == tableId);
 
 			if (table == null && throwNotFoundException)
 				throw new KeyNotFoundException(
-					string.Format("Table with id '{0}' in entity '{1}' not found.", tableId, Identifier));
+					string.Format("SourceFragment with id '{0}' in entity '{1}' not found.", tableId, Identifier));
 			return table;
 		}
 
@@ -188,7 +187,7 @@ namespace Worm.CodeGen.Core.Descriptors
 	        {
 	            string key = string.Join("$$$", new[]
 	                                                {
-	                                                    relationDescription.Table.Name,
+	                                                    relationDescription.SourceFragment.Name,
 	                                                    relationDescription.Left.ToString(),
 	                                                    relationDescription.Right.ToString(),
 	                                                });
@@ -325,9 +324,9 @@ namespace Worm.CodeGen.Core.Descriptors
 			}
 
 			//добавляем новые таблички
-			foreach (TableDescription newTable in newOne.Tables)
+			foreach (var newTable in newOne.SourceFragments)
 			{
-				resultOne.Tables.Add(newTable);
+				resultOne.SourceFragments.Add(newTable);
 			}
 			// добавляем новые проперти
 			foreach (PropertyDescription newProperty in newOne.Properties)
@@ -349,11 +348,11 @@ namespace Worm.CodeGen.Core.Descriptors
 			{
 				// добавляем старые таблички, если нужно
 				if (newOne.InheritsBaseTables)
-					foreach (TableDescription oldTable in oldOne.Tables)
+					foreach (var oldTable in oldOne.SourceFragments)
 					{
-					    TableDescription oldTable1 = oldTable;
-					    if (!resultOne.Tables.Exists(tableMatch => oldTable1.Name == tableMatch.Name))
-							resultOne.Tables.Insert(oldOne.Tables.IndexOf(oldTable), oldTable);
+					    var oldTable1 = oldTable;
+					    if (!resultOne.SourceFragments.Exists(tableMatch => oldTable1.Name == tableMatch.Name && oldTable1.Selector == tableMatch.Selector))
+							resultOne.SourceFragments.Insert(oldOne.SourceFragments.IndexOf(oldTable), oldTable);
 					}
 
 			    foreach (PropertyDescription oldProperty in oldOne.SuppressedProperties)
@@ -368,9 +367,9 @@ namespace Worm.CodeGen.Core.Descriptors
 					PropertyDescription newProperty = resultOne.GetProperty(oldProperty.Name);
 					if (newProperty == null)
 					{
-						TableDescription newTable = null; 
-						if(oldProperty.Table != null)
-							newTable = resultOne.GetTable(oldProperty.Table.Identifier);
+						SourceFragmentDescription newTable = null; 
+						if(oldProperty.SourceFragment != null)
+							newTable = resultOne.GetSourceFragments(oldProperty.SourceFragment.Identifier);
 						TypeDescription newType = oldProperty.PropertyType;
 					    PropertyDescription oldProperty1 = oldProperty;
 					    bool isSuppressed =

@@ -1431,7 +1431,7 @@ Public Class ObjectMappingEngine
                                     'End If
                                 Else
                                     Try
-                                        schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IContextObjectSchema)
+                                        schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
                                     Catch ex As Exception
                                         Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                     End Try
@@ -1480,7 +1480,7 @@ Public Class ObjectMappingEngine
                                         'End If
                                     Else
                                         Try
-                                            schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IContextObjectSchema)
+                                            schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
                                         Catch ex As Exception
                                             Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                         End Try
@@ -1536,7 +1536,7 @@ Public Class ObjectMappingEngine
                                         'End If
                                     Else
                                         Try
-                                            schema = CType(ea1.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IContextObjectSchema)
+                                            schema = CType(ea1.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
                                         Catch ex As Exception
                                             Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea1.Type.ToString), ex)
                                         End Try
@@ -1597,7 +1597,7 @@ Public Class ObjectMappingEngine
                                             'End If
                                         Else
                                             Try
-                                                schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IContextObjectSchema)
+                                                schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
                                             Catch ex As Exception
                                                 Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
                                             End Try
@@ -1718,7 +1718,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Dim schema As IOrmObjectSchema = CType(GetEntitySchema(type), IOrmObjectSchema)
+        Dim schema As IMultiTableObjectSchema = CType(GetEntitySchema(type), IMultiTableObjectSchema)
 
         Return GetJoins(schema, left, right, filterInfo)
     End Function

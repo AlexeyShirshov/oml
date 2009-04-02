@@ -318,34 +318,38 @@ End Class
 
 Public Class MyUserDef
     Inherits ObjectSchemaBaseImplementationWeb
+    Implements ISchemaWithM2M
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.users")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Private _tbls() As SourceFragment = {New SourceFragment("dbo.users")}
+    'Private _tbls() As SourceFragment = {New SourceFragment("dbo.users")}
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("LastActivity", "last_activity", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("UserName", "username", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Field", "field", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Password", "password", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Email", "email", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("IsLocked", "islocked", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("LastLockedAt", "lastlocked", GetTables()(Tables.Main)))
+        idx.Add(New MapField2Column("LastActivity", "last_activity", Table))
+        idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", Table))
+        idx.Add(New MapField2Column("UserName", "username", Table))
+        idx.Add(New MapField2Column("ID", "id", Table))
+        idx.Add(New MapField2Column("Field", "field", Table))
+        idx.Add(New MapField2Column("Password", "password", Table))
+        idx.Add(New MapField2Column("Email", "email", Table))
+        idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", Table))
+        idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", Table))
+        idx.Add(New MapField2Column("IsLocked", "islocked", Table))
+        idx.Add(New MapField2Column("LastLockedAt", "lastlocked", Table))
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tbls
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tbls
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         Return New M2MRelationDesc() { _
                 New M2MRelationDesc(GetType(MyRole), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping) _
             }
@@ -408,25 +412,29 @@ End Class
 
 Public Class MyRoleDef
     Inherits ObjectSchemaBaseImplementationWeb
+    Implements ISchemaWithM2M
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.roles")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Private _tbls() As SourceFragment = {New SourceFragment("dbo.roles")}
+    'Private _tbls() As SourceFragment = {New SourceFragment("dbo.roles")}
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Name", "roleName", GetTables()(Tables.Main)))
+        idx.Add(New MapField2Column("ID", "id", Table))
+        idx.Add(New MapField2Column("Name", "roleName", Table))
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tbls
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tbls
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         Return New M2MRelationDesc() { _
                 New M2MRelationDesc(GetType(MyUser), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping) _
             }

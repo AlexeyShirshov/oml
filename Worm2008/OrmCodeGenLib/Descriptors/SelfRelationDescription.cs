@@ -6,14 +6,14 @@ namespace Worm.CodeGen.Core.Descriptors
 {
     public abstract class RelationDescriptionBase
     {
-        private readonly TableDescription _table;
+        private readonly SourceFragmentDescription _table;
         private readonly EntityDescription _underlyingEntity;
         private readonly bool _disabled;
         private readonly SelfRelationTarget _left;
         private readonly SelfRelationTarget _right;
         private readonly List<RelationConstantDescriptor> _constants;
 
-        public TableDescription Table
+        public SourceFragmentDescription SourceFragment
         {
             get { return _table; }
         }
@@ -28,12 +28,12 @@ namespace Worm.CodeGen.Core.Descriptors
             get { return _disabled; }
         }
 
-        public RelationDescriptionBase(TableDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right)
+        public RelationDescriptionBase(SourceFragmentDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right)
             : this(table, underlyingEntity, left, right, false)
         {
         }
 
-        public RelationDescriptionBase(TableDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right, bool disabled)
+        public RelationDescriptionBase(SourceFragmentDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right, bool disabled)
         {
             _table = table;
             _underlyingEntity = underlyingEntity;
@@ -85,13 +85,13 @@ namespace Worm.CodeGen.Core.Descriptors
 	{
 		private readonly EntityDescription _entity;
 
-		public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, TableDescription table, EntityDescription underlyingEntity, bool disabled)
+		public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, SourceFragmentDescription table, EntityDescription underlyingEntity, bool disabled)
             : base(table, underlyingEntity, direct, reverse, disabled)
 		{
 			_entity = entity;
 		}
 
-        public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, TableDescription table, EntityDescription underlyingEntity)
+        public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, SourceFragmentDescription table, EntityDescription underlyingEntity)
             : this(entity, direct, reverse, table, underlyingEntity, false)
         {
         }

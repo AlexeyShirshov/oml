@@ -56,25 +56,26 @@ Public Class Entity
 End Class
 
 Public MustInherit Class ObjectSchemaBaseImplementation
-    Implements IOrmObjectSchema, ISchemaInit
+    Implements IEntitySchemaBase, ISchemaInit
 
     Protected _schema As Worm.ObjectMappingEngine
     Protected _objectType As Type
+    Protected _tbl As SourceFragment
 
-    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ChangeValueType
         newvalue = value
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetContextFilter
-        Return Nothing
-    End Function
+    'Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetContextFilter
+    '    Return Nothing
+    'End Function
 
-    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IOrmObjectSchema.GetJoins
-        Return Nothing
-    End Function
+    'Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IOrmObjectSchema.GetJoins
+    '    Return Nothing
+    'End Function
 
-    Public Overridable Function GetSuppressedFields() As String() Implements IOrmObjectSchema.GetSuppressedFields
+    Public Overridable Function GetSuppressedFields() As String() Implements IEntitySchemaBase.GetSuppressedFields
         Return New String() {}
     End Function
 
@@ -82,9 +83,9 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    Return Nothing
     'End Function
 
-    Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
+    'Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
 
-    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IOrmObjectSchema.GetFieldColumnMap
+    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.GetFieldColumnMap
 
     'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
     '    Return objs
@@ -96,47 +97,52 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    End Get
     'End Property
 
-    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements IOrmObjectSchema.GetM2MRelations
-        Return New M2MRelationDesc() {}
-    End Function
+    'Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements IOrmObjectSchema.GetM2MRelations
+    '    Return New M2MRelationDesc() {}
+    'End Function
 
     Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.GetSchema
         _schema = schema
         _objectType = t
     End Sub
 
-    Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
+    Public Overridable ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
         Get
-            Return GetTables(0)
+            Return _tbl
         End Get
     End Property
 End Class
 
 Public Class EntitySchema1v1Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent1")
+    End Sub
 
     Private _idx As OrmObjectIndex
-    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1")}
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1")}
     Protected _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
             _rels = New M2MRelationDesc() { _
                 New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, Nothing, Ctor.column(_schema.GetSharedSourceFragment("dbo", "[1to2]"), "xxx").eq("yyy")) _
@@ -144,29 +150,33 @@ Public Class EntitySchema1v1Implementation
         End If
         Return _rels
     End Function
+
 End Class
 
 Public Class EntitySchema1v2Implementation
     Inherits EntitySchema1v1Implementation
+    Implements IMultiTableObjectSchema
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
+    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1"), New SourceFragment("dbo.t1")}
+
+    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
             Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of SourceFragment)(MyBase.GetTables())
-            s.Add(New SourceFragment("dbo.t1"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
+        'If _tables.Length = 1 Then
+        '    Dim s As New List(Of SourceFragment)(MyBase.GetTables())
+        '    s.Add(New SourceFragment("dbo.t1"))
+        '    _tables = s.ToArray
+        'End If
         Return _tables
     End Function
 
@@ -179,6 +189,11 @@ Public Class EntitySchema1v2Implementation
         Return _rels
     End Function
 
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class
 
 Public Class EntitySchema1v3Implementation
@@ -265,27 +280,24 @@ End Class
 
 Public Class EntitySchema2v2Implementation
     Inherits EntitySchema1v1Implementation
+    Implements IMultiTableObjectSchema
 
     Private _coladded As Boolean = False
+    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1"), New SourceFragment("dbo.t2")}
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
             Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of SourceFragment)(MyBase.GetTables())
-            s.Add(New SourceFragment("dbo.t2"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
         Return _tables
     End Function
 
@@ -302,6 +314,12 @@ Public Class EntitySchema2v2Implementation
         End If
         Return idx
     End Function
+
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class
 
 Public Class Entity3
@@ -376,29 +394,32 @@ End Class
 
 Public Class EntitySchema4v1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmSorting2, IOrmSorting
+    Implements IOrmSorting2, IOrmSorting, ISchemaWithM2M
 
     Private _idx As OrmObjectIndex
-    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent2")}
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent2")}
     Protected _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent2")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Title", "name", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
     '    Select Case CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort)
@@ -409,7 +430,7 @@ Public Class EntitySchema4v1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
             _rels = New M2MRelationDesc() {New M2MRelationDesc(GetType(Entity), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
         End If
@@ -484,29 +505,36 @@ End Class
 
 Public Class EntitySchema4v2Implementation
     Inherits EntitySchema4v1Implementation
+    Implements IMultiTableObjectSchema, IContextObjectSchema
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
+    Protected _tables() As SourceFragment
+
+    Public Sub New()
+        _tables = New SourceFragment() {New SourceFragment("dbo.ent2"), New SourceFragment("dbo.t1")}
+    End Sub
+
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
             Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException()
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of SourceFragment)(MyBase.GetTables())
-            s.Add(New SourceFragment("dbo.t1"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
+        'If _tables.Length = 1 Then
+        '    Dim s As New List(Of SourceFragment)(MyBase.GetTables())
+        '    s.Add(New SourceFragment("dbo.t1"))
+        '    _tables = s.ToArray
+        'End If
         Return _tables
     End Function
 
-    Public Overrides Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter
+    Public Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IContextObjectSchema.GetContextFilter
         If filter_info Is Nothing Then
             Return Nothing
         End If
@@ -525,6 +553,11 @@ Public Class EntitySchema4v2Implementation
         Return _rels
     End Function
 
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class
 
 <Entity(GetType(EntitySchema5v1Implementation), "1")> _
@@ -604,31 +637,36 @@ End Class
 
 Public Class EntitySchema5v1Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
 
     Private _idx As OrmObjectIndex
-    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent3")}
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent3")}
     Protected _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent3")
+    End Sub
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New MapField2Column("Version", "version", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
+            idx.Add(New MapField2Column("Version", "version", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As SourceFragment()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
             Dim t As New SourceFragment("dbo.[3to3]")
             _rels = New M2MRelationDesc() { _
