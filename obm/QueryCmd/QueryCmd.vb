@@ -881,6 +881,10 @@ l1:
             _prepared = True
         End Sub
 
+        Protected Friend Function Need2Join(ByVal eu As EntityUnion) As Boolean
+            Return _ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _types.ContainsKey(eu)
+        End Function
+
         Private Sub CheckFrom(ByVal se As SelectExpression)
             If _from Is Nothing Then
                 If se.Aggregate IsNot Nothing Then
@@ -957,6 +961,9 @@ l1:
                     se.Column = c.Column
                     cl.Add(se)
                 Next
+                If Not _types.ContainsKey(os) Then
+                    _types.Add(os, oschema)
+                End If
             End If
         End Sub
 

@@ -57,7 +57,7 @@ Namespace Entities.Meta
         Public ReadOnly Property UniqueName(ByVal os As EntityUnion) As String
             Get
                 If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
-                    Return RawName & "^" & _uqName
+                    Return "%-$" & RawName & "^" & _uqName
                 Else
                     Return os.ObjectAlias.UniqueName & "$" & RawName & "^" & _uqName
                 End If

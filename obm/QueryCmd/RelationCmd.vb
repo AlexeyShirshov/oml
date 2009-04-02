@@ -448,6 +448,7 @@ l1:
                             If SelectTypes IsNot Nothing Then
                                 'se.ObjectSource = SelectTypes(0).First
                                 AddTypeFields(schema, _sl, SelectTypes(0))
+                                'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                                 Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)

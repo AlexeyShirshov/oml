@@ -985,7 +985,7 @@ l1:
                             'Dim jl As JoinLink = JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk)
                             Dim tbl As SourceFragment = CType(t22t1.Table.Clone, SourceFragment)
                             Dim jl As JoinLink = Nothing
-
+                            join.TmpTable = tbl
                             Dim prevJ As QueryJoin = GetJoin(j, join.M2MObjectSource)
 
                             If prevJ Is Nothing Then
@@ -999,24 +999,27 @@ l1:
                                 If almgr.ContainsKey(oschema.Table, join.M2MObjectSource) Then
                                     jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
                                     needAppend = False
-                                Else
-                                    cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
                                 End If
                             Else
                                 If prevJ.Table IsNot Nothing Then
                                     jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.Table, t22t1.Column)
                                 Else
-                                    Throw New NotImplementedException
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(join.TmpTable, t22t1.Column)
                                 End If
-                                needAppend = False
+                                needAppend = query.Need2Join(join.ObjectSource)
                             End If
 
                             Dim js() As QueryJoin = jl
                             js(0).ObjectSource = join.ObjectSource
                             sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
-                            If almgr.ContainsKey(tbl, join.ObjectSource) Then
-                                'almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
-                                sb.Replace(t22t1.Table.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
+
+                            If needAppend Then
+                                cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
+                            Else
+                                If almgr.ContainsKey(tbl, join.ObjectSource) Then
+                                    'almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
+                                    sb.Replace(t22t1.Table.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
+                                End If
                             End If
                         End If
 

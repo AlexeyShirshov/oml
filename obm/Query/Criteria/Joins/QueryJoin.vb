@@ -20,7 +20,7 @@ Namespace Criteria.Joins
         Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
         Protected _condition As Core.IFilter
-        'Protected _type As Type
+        Private _tt As SourceFragment
         'Protected _en As String
         Protected _src As EntityUnion
         Private _jos As EntityUnion
@@ -228,14 +228,14 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        'Public Property M2MJoinType() As Type
-        '    Get
-        '        Return _jos.Type
-        '    End Get
-        '    Set(ByVal value As Type)
-        '        _jos = New EntityUnion(value)
-        '    End Set
-        'End Property
+        Protected Friend Property TmpTable() As SourceFragment
+            Get
+                Return _tt
+            End Get
+            Set(ByVal value As SourceFragment)
+                _tt = value
+            End Set
+        End Property
 
         'Public Property M2MJoinEntityName() As String
         '    Get
