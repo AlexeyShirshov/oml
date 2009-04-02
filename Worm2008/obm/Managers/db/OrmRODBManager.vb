@@ -689,14 +689,18 @@ l1:
                         OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
                     SQLGenerator.AppendNativeTypeJoins(MappingEngine, selectedType, almgr, If(mt_schema2 IsNot Nothing, mt_schema2.GetTables, Nothing), sb, params, cs.Table, id_clm, appendMainTable, GetContextInfo, schema2)
-                    If withLoad AndAlso mt_schema2 IsNot Nothing Then
-                        For Each tbl As SourceFragment In mt_schema2.GetTables
-                            If almgr.ContainsKey(tbl, Nothing) Then
-                                'Dim [alias] As String = almgr.Aliases(tbl)
-                                'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
-                                almgr.Replace(MappingEngine, SQLGenerator, tbl, Nothing, sb)
-                            End If
-                        Next
+                    If withLoad Then
+                        If mt_schema2 IsNot Nothing Then
+                            For Each tbl As SourceFragment In mt_schema2.GetTables
+                                If almgr.ContainsKey(tbl, Nothing) Then
+                                    'Dim [alias] As String = almgr.Aliases(tbl)
+                                    'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
+                                    almgr.Replace(MappingEngine, SQLGenerator, tbl, Nothing, sb)
+                                End If
+                            Next
+                        Else
+                            almgr.Replace(MappingEngine, SQLGenerator, schema2.Table, Nothing, sb)
+                        End If
                     End If
                     Dim con As New Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)

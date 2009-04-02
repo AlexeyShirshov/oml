@@ -98,10 +98,11 @@ Namespace Criteria.Joins
                 '    tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
                 'End If
                 tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
-                os_ = ObjectSource
-                If os_ Is Nothing Then
-                    os_ = os
-                End If
+            End If
+
+            os_ = ObjectSource
+            If os_ Is Nothing Then
+                os_ = os
             End If
 
             Dim alTable As SourceFragment = tbl

@@ -245,10 +245,12 @@ Imports System.ComponentModel
             'Dim t3 As Type = GetType(Table3)
 
             Dim q As New QueryCmd()
-            q = q.Where(Ctor.exists( _
+            q = q _
+                .Select(t1) _
+                .Where(Ctor.exists( _
                         New QueryCmd().Select("Table3"). _
                             Join(JCtor.join(t1).onM2M("Table3")). _
-                            Where(Ctor.prop("Table3", "Code").eq(2)))).Select(t1)
+                            Where(Ctor.prop("Table3", "Code").eq(2))))
 
             Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
 
