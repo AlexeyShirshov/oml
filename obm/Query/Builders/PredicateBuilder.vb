@@ -103,7 +103,7 @@ Namespace Query
         End Function
 
         Public Shared Function prop(ByVal objField As ObjectProperty) As PropertyPredicate
-            Return prop(objField.ObjectSource, objField.Field)
+            Return prop(objField.Entity, objField.PropertyAlias)
         End Function
 
         Public Shared Function prop(ByVal entityName As String, ByVal propertyAlias As String) As PropertyPredicate

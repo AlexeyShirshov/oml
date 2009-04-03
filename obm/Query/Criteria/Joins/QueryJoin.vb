@@ -90,7 +90,6 @@ Namespace Criteria.Joins
             End If
 
             Dim tbl As SourceFragment = _table
-            Dim os_ As EntityUnion = Nothing
             If tbl Is Nothing Then
                 'If _type IsNot Nothing Then
                 '    tbl = schema.GetTables(_type)(0)
@@ -100,7 +99,7 @@ Namespace Criteria.Joins
                 tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
             End If
 
-            os_ = ObjectSource
+            Dim os_ As EntityUnion = ObjectSource
             If os_ Is Nothing Then
                 os_ = os
             End If
@@ -294,8 +293,8 @@ Namespace Criteria.Joins
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 Dim tm As Core.TemplateBase = Nothing
-                If fl.Left.Property.ObjectSource IsNot Nothing AndAlso fl.Left.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl.Left.Property.Field = propertyAlias Then
-                    If fl.Right.Property.ObjectSource IsNot Nothing Then
+                If fl.Left.Property.Entity IsNot Nothing AndAlso fl.Left.Property.Entity.GetRealType(schema) Is t AndAlso fl.Left.Property.PropertyAlias = propertyAlias Then
+                    If fl.Right.Property.Entity IsNot Nothing Then
                         f = CreateJoin(table, column, fl.Right.Property, fl._oper)
                         tm = CreateOrmFilter(fl.Right.Property, fl._oper)
                     Else
@@ -304,8 +303,8 @@ Namespace Criteria.Joins
                     End If
                 End If
                 If f Is Nothing Then
-                    If fl.Right.Property.ObjectSource IsNot Nothing AndAlso fl.Right.Property.ObjectSource.GetRealType(schema) Is t AndAlso fl.Right.Property.Field = propertyAlias Then
-                        If fl.Left.Property.ObjectSource IsNot Nothing Then
+                    If fl.Right.Property.Entity IsNot Nothing AndAlso fl.Right.Property.Entity.GetRealType(schema) Is t AndAlso fl.Right.Property.PropertyAlias = propertyAlias Then
+                        If fl.Left.Property.Entity IsNot Nothing Then
                             f = CreateJoin(table, column, fl.Left.Property, fl._oper)
                             tm = CreateOrmFilter(fl.Left.Property, fl._oper)
                         Else

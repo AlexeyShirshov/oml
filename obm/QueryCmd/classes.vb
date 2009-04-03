@@ -283,10 +283,10 @@ Namespace Query
         End Sub
 
         Protected Sub AddQuery(ByVal query As QueryCmd)
-            Dim iq As QueryCmd = Nothing
-            For Each q As QueryCmd In New InnerQueryIterator(query)
-                iq = q
-            Next
+            Dim iq As QueryCmd = query
+            'For Each q As QueryCmd In New InnerQueryIterator(query)
+            '    iq = q
+            'Next
             _l.Add(iq)
             If iq.Unions IsNot Nothing Then
                 For Each p As Pair(Of Boolean, QueryCmd) In iq.Unions

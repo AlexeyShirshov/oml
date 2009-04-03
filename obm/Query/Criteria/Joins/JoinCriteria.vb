@@ -9,50 +9,52 @@ Namespace Criteria.Joins
 
     <Serializable()> _
     Public Class JoinLink
+        Inherits JCtor.JoinLinkBase
         Implements IGetFilter
 
         Private _c As Condition.ConditionConstructor
-        Private _jc As List(Of QueryJoin)
+        'Private _jc As List(Of QueryJoin)
 
         Protected Friend Sub New(ByVal f As IFilter, ByVal jc As List(Of QueryJoin))
+            MyBase.New(jc)
             _c = New Condition.ConditionConstructor
             _c.AddFilter(f)
-            _jc = jc
+            '_jc = jc
         End Sub
 
         Protected Friend Sub New(ByVal os As EntityUnion, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(os)
         End Sub
 
         Protected Friend Sub New(ByVal os As EntityUnion, ByVal key As String, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(os, key)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(t)
         End Sub
 
         Protected Friend Sub New(ByVal entityName As String, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(entityName)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal key As String, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(t, key)
         End Sub
 
         Protected Friend Sub New(ByVal entityName As String, ByVal key As String, ByVal jc As List(Of QueryJoin))
-            _jc = jc
+            MyBase.New(jc)
             AddType(entityName, key)
         End Sub
 
         Protected Friend Sub New(ByVal c As Condition.ConditionConstructor, ByVal jc As List(Of QueryJoin))
+            MyBase.New(jc)
             _c = c
-            _jc = jc
         End Sub
 
         Public Function [and](ByVal f As IGetFilter) As JoinLink
@@ -84,7 +86,7 @@ Namespace Criteria.Joins
         '    End Get
         'End Property
 
-        Protected Friend Sub AddFilterCon()
+        Protected Overrides Sub PreAdd()
             If _c IsNot Nothing Then
                 _jc(_jc.Count - 1).Condition = _c.Condition
             End If
@@ -117,104 +119,18 @@ Namespace Criteria.Joins
             _jc(_jc.Count - 1).M2MKey = key
         End Sub
 
-        Public Function join(ByVal ea As EntityAlias) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(ea, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function join(ByVal t As Type) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function join(ByVal entityName As String) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.Join, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function left_join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function left_join(ByVal t As Type) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function left_join(ByVal entityName As String) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function right_join(ByVal eu As EntityUnion) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function right_join(ByVal t As Type) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function right_join(ByVal entityName As String) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function Join(ByVal table As SourceFragment) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function left_join(ByVal table As SourceFragment) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
-        Public Function right_join(ByVal table As SourceFragment) As JoinCondition
-            AddFilterCon()
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
-            _jc.Add(j)
-            Return New JoinCondition(_jc)
-        End Function
-
         Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin()
-            jl.AddFilterCon()
+            jl.PreAdd()
             Return jl._jc.ToArray
         End Operator
 
+        Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin
+            jl.PreAdd()
+            Return jl._jc(0)
+        End Operator
+
         Public Function ToList() As IList(Of QueryJoin)
-            AddFilterCon
+            PreAdd()
             Return _jc
         End Function
 
@@ -260,13 +176,19 @@ Namespace Criteria.Joins
         End Function
 
         Public Function eq(ByVal op As ObjectProperty) As JoinLink
-            _jf.Right = New FieldReference(op.ObjectSource, op.Field)
+            _jf.Right = New FieldReference(op.Entity, op.PropertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
 
         Public Function eq(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As JoinLink
             _jf.Right = New FieldReference(New EntityUnion([alias]), propertyAlias)
+            _jf._oper = FilterOperation.Equal
+            Return GetLink()
+        End Function
+
+        Public Function eq(ByVal eu As EntityUnion, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(eu, propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function

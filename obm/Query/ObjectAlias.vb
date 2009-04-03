@@ -1,4 +1,7 @@
-﻿Namespace Query
+﻿Imports Worm.Entities.Meta
+Imports Worm.Criteria.Values
+
+Namespace Query
 
     <Serializable()> _
     Public Class EntityAlias
@@ -93,6 +96,8 @@
 
     <Serializable()> _
     Public Class EntityUnion
+        Implements IQueryElement
+
         Private _t As Type
         Private _en As String
         Private _a As EntityAlias
@@ -141,7 +146,7 @@
             End If
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("mpe")
             End If
@@ -154,7 +159,7 @@
             End If
         End Function
 
-        Public Function _ToString() As String
+        Public Function _ToString() As String Implements IQueryElement._ToString
             If _t IsNot Nothing Then
                 Return _t.ToString
             ElseIf Not String.IsNullOrEmpty(_en) Then
@@ -236,31 +241,39 @@
         '    End If
         '    Return rt
         'End Function
+
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+            If _a IsNot Nothing AndAlso _a.Query IsNot Nothing Then
+                _a.Query.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            End If
+        End Sub
     End Class
 
     <Serializable()> _
     Public Structure ObjectProperty
-        Public ReadOnly ObjectSource As EntityUnion
-        Public ReadOnly Field As String
+        Public ReadOnly Entity As EntityUnion
+        Public ReadOnly PropertyAlias As String
+
+        Public Const PrimaryKeyReference As String = "19rfas$%*&^ldfj"
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
-            Me.ObjectSource = New EntityUnion(entityName)
-            Me.Field = propertyAlias
+            Me.Entity = New EntityUnion(entityName)
+            Me.PropertyAlias = propertyAlias
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
-            Me.ObjectSource = New EntityUnion(t)
-            Me.Field = propertyAlias
+            Me.Entity = New EntityUnion(t)
+            Me.PropertyAlias = propertyAlias
         End Sub
 
         Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
-            Me.ObjectSource = New EntityUnion([alias])
-            Me.Field = propertyAlias
+            Me.Entity = New EntityUnion([alias])
+            Me.PropertyAlias = propertyAlias
         End Sub
 
         Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
-            Me.ObjectSource = os
-            Me.Field = propertyAlias
+            Me.Entity = os
+            Me.PropertyAlias = propertyAlias
         End Sub
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -271,9 +284,24 @@
         End Function
 
         Public Overloads Function Equals(ByVal obj As ObjectProperty) As Boolean
-            Return ObjectSource.Equals(obj.ObjectSource) AndAlso Field = obj.Field
+            Return Entity.Equals(obj.Entity) AndAlso PropertyAlias = obj.PropertyAlias
         End Function
 
+        Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine) As String
+            If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
+                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe))(0).PropertyAlias
+            End If
+
+            Return PropertyAlias
+        End Function
+
+        Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema) As String
+            If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
+                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe), oschema)(0).PropertyAlias
+            End If
+
+            Return PropertyAlias
+        End Function
     End Structure
 
 End Namespace

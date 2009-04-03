@@ -185,30 +185,38 @@ Namespace Query
             End Sub
         End Class
 
-        'Private Class occc
-        '    Private _cm As ICreateManager
-        '    Public Sub New(ByVal cm As ICreateManager)
-        '        _cm = cm
-        '    End Sub
-        '    Public Sub ObjectCreated(ByVal o As ICachedEntity)
-        '        o.SetCreateManager(_cm)
-        '    End Sub
+        Public Class GetDynamicKey4FilterEventArgs
+            Inherits EventArgs
 
-        'End Class
+            Private _f As IGetFilter
+            Private _key As String
 
-        'Public Function GetDeleg() As Cache.IListObjectConverter.ObjectCreatedEventHandler
-        '    If _getMgr IsNot Nothing Then
-        '        Return AddressOf New occc(_getMgr).ObjectCreated
-        '    Else
-        '        Return Nothing
-        '    End If
-        'End Function
+            Public Sub New(ByVal f As IGetFilter)
+                _f = f
+            End Sub
+
+            Public ReadOnly Property Filter() As IGetFilter
+                Get
+                    Return _f
+                End Get
+            End Property
+
+            Public Property CustomKey() As String
+                Get
+                    Return _key
+                End Get
+                Set(ByVal value As String)
+                    _key = value
+                End Set
+            End Property
+        End Class
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
 
         Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
+        Public Event GetDynamicKey4Filter(ByVal sender As QueryCmd, ByVal args As GetDynamicKey4FilterEventArgs)
 
         Friend _sel As SelectClauseDef
         Protected _filter As IGetFilter
@@ -558,11 +566,12 @@ Namespace Query
             'Return fs.ToArray
         End Sub
 
-        Protected Sub PrepareSelectList(ByVal isAnonym As Boolean, ByVal schema As ObjectMappingEngine, _
+        Protected Sub PrepareSelectList(ByVal executor As IExecutor, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean, ByVal schema As ObjectMappingEngine, _
                                         ByRef f As IFilter, ByVal filterInfo As Object)
             If isAnonym Then
                 _sl.AddRange(SelectList)
                 For Each se As SelectExpression In SelectList
+                    se.Prepare(executor, schema, filterInfo, stmt, isAnonym)
                     If _from IsNot Nothing Then Exit For
                     CheckFrom(se)
                 Next
@@ -572,6 +581,7 @@ Namespace Query
                 End If
 
                 For Each se As SelectExpression In SelectList
+                    se.Prepare(executor, schema, filterInfo, stmt, isAnonym)
                     Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
                     If os IsNot Nothing Then
                         If Not _types.ContainsKey(os) Then
@@ -695,7 +705,7 @@ l1:
             End If
 
             If SelectList IsNot Nothing Then
-                PrepareSelectList(isAnonym, schema, f, filterInfo)
+                PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
@@ -893,7 +903,7 @@ l1:
             Dim r As Boolean = _ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _from Is Nothing OrElse _from.ObjectSource Is Nothing OrElse _from.ObjectSource.Equals(eu)
             If Not r Then
                 For Each j As QueryJoin In Joins
-                    If j.M2MObjectSource IsNot Nothing AndAlso j.ObjectSource IsNot Nothing AndAlso Join.Condition Is Nothing AndAlso eu.Equals(j.ObjectSource) Then
+                    If j.M2MObjectSource IsNot Nothing AndAlso j.ObjectSource IsNot Nothing AndAlso j.Condition Is Nothing AndAlso eu.Equals(j.ObjectSource) Then
                         Return False
                     End If
                 Next
@@ -978,12 +988,13 @@ l1:
                     se.Column = c.Column
                     cl.Add(se)
                 Next
-                If Not _types.ContainsKey(os) Then
-                    _types.Add(os, oschema)
-                End If
                 '    Else
 
                 'End If
+            End If
+
+            If Not _types.ContainsKey(os) Then
+                _types.Add(os, oschema)
             End If
         End Sub
 
@@ -1050,6 +1061,11 @@ l1:
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, _
             ByVal cb As Cache.CacheListBehavior, _
             ByVal mpe As ObjectMappingEngine, ByVal fi As Object) As Boolean
+
+            If Not _prepared Then
+                Throw New QueryCmdException("Command not prepared", Me)
+            End If
+
             Dim sb2 As New StringBuilder
 
             Dim f As IFilter = _f
@@ -1129,7 +1145,7 @@ l1:
                     'End If
                     sb.Append(_from.ObjectSource.ToStaticString(mpe, fi))
                 Else
-                    Throw New NotSupportedException
+                    sb.Append(_from.Query.ToStaticString(mpe, fi))
                 End If
             Else
                 Throw New NotSupportedException
@@ -1190,6 +1206,10 @@ l1:
                 Next
             End If
 
+            If _having IsNot Nothing Then
+                sb.Append(_having.Filter.GetStaticString(mpe, fi)).Append("$")
+            End If
+
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing OrElse cb <> Cache.CacheListBehavior.CacheAll Then
                     For Each n As Sort In New Sort.Iterator(_order)
@@ -1244,11 +1264,25 @@ l1:
         End Function
 
         Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder)
+            If Not _prepared Then
+                Throw New QueryCmdException("Command not prepared", Me)
+            End If
+
             Dim f As IFilter = _f
             Dim j As List(Of QueryJoin) = _js
 
             If f IsNot Nothing Then
-                sb.Append(f._ToString).Append("$")
+                Dim args As New GetDynamicKey4FilterEventArgs(f)
+                RaiseEvent GetDynamicKey4Filter(Me, args)
+                If Not String.IsNullOrEmpty(args.CustomKey) Then
+                    sb.Append(args.CustomKey).Append("$")
+                Else
+                    sb.Append(f._ToString).Append("$")
+                End If
+            End If
+
+            If _having IsNot Nothing Then
+                sb.Append(_having.Filter._ToString).Append("$")
             End If
 
             If j IsNot Nothing Then
@@ -1263,15 +1297,17 @@ l1:
                 sb.Append(_top.GetDynamicKey).Append("$")
             End If
 
-            'Dim cnt As Integer = 0
-            'Dim n As Sort = _order
-            'Do While n IsNot Nothing
-            '    cnt += 1
-            '    n = n.Previous
-            'Loop
-            'If cnt > 0 Then
-            '    sb.Append("sort=").Append(cnt).Append("$")
-            'End If
+            If _from IsNot Nothing Then
+                If _from.ObjectSource IsNot Nothing Then
+                    sb.Append(_from.ObjectSource._ToString())
+                ElseIf _from.Query IsNot Nothing Then
+                    sb.Append(_from.Query._ToString())
+                End If
+            Else
+                Throw New NotSupportedException
+            End If
+
+            sb.Append("$")
 
             If _rn IsNot Nothing Then
                 sb.Append(_rn.ToString)
@@ -1373,7 +1409,7 @@ l1:
                 Next
             ElseIf SelectList IsNot Nothing Then
                 For Each s As SelectExpression In SelectList
-                    If s.ObjectProperty.ObjectSource Is Nothing Then
+                    If s.ObjectProperty.Entity Is Nothing Then
                         '_dic.Clear()
                         'ts.Clear()
                         'Exit For
@@ -3779,7 +3815,7 @@ l1:
                 If se.Expression.PropType <> PropType.ObjectProperty Then
                     Throw New InvalidOperationException("Group is not object property reference")
                 End If
-                n = se.Expression.ObjectProperty.Field
+                n = se.Expression.ObjectProperty.PropertyAlias
             End If
 
             Return BuildDic(Of T)(mgr, n, Nothing, level)

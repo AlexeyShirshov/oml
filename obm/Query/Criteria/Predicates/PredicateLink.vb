@@ -133,7 +133,7 @@ Namespace Criteria
         End Function
 
         Public Function [and](ByVal objField As ObjectProperty) As PropertyPredicate
-            Return [and](objField.ObjectSource, objField.Field)
+            Return [and](objField.Entity, objField.PropertyAlias)
         End Function
 
         Public Function [and](ByVal entityName As String, ByVal propertyAlias As String) As PropertyPredicate
@@ -185,7 +185,7 @@ Namespace Criteria
         End Function
 
         Public Function [or](ByVal objField As ObjectProperty) As PropertyPredicate
-            Return [or](objField.ObjectSource, objField.Field)
+            Return [or](objField.Entity, objField.PropertyAlias)
         End Function
 
         Public Function [or](ByVal entityName As String, ByVal propertyAlias As String) As PropertyPredicate
