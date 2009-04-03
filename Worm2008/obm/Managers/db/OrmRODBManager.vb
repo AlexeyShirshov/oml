@@ -2510,7 +2510,7 @@ l1:
                                 val = "'" & x.InnerXml & "'"
                                 tp = "xml"
                             Else
-                                val = Convert.ToString(p.Value, Globalization.CultureInfo.InvariantCulture)
+                                val = Convert.ToString(p.Value, System.Globalization.CultureInfo.InvariantCulture)
                                 If TypeOf p.Value Is String Then
                                     val = "'" & val & "'"
                                 End If

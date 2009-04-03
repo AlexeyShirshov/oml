@@ -66,7 +66,7 @@ Namespace Query
         End Function
 
         Public Shared Function prop(ByVal oprop As ObjectProperty) As SortLink
-            Return New SortLink(oprop.ObjectSource, oprop.Field)
+            Return New SortLink(oprop.Entity, oprop.PropertyAlias)
         End Function
 
         Public Shared Function External(ByVal tag As String, ByVal externalSort As ExternalSortDelegate) As SortLink

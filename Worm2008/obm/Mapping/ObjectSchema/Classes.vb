@@ -254,7 +254,7 @@ Namespace Entities.Meta
             Dim oschema As IEntitySchema = Nothing
             Using mgr As OrmManager = rcmd.CreateManager.CreateManager
                 mpe = mgr.MappingEngine
-                rtt = op.ObjectSource.GetRealType(mpe)
+                rtt = op.Entity.GetRealType(mpe)
                 oschema = mpe.GetEntitySchema(rtt)
             End Using
 
@@ -269,7 +269,7 @@ Namespace Entities.Meta
             Dim r As ReadOnlyList(Of ReturnType) = CType(rcmd.ToList, ReadOnlyList(Of ReturnType))
 
             For Each o As ReturnType In r
-                Dim v As IKeyEntity = CType(mpe.GetPropertyValue(o, op.Field, oschema), IKeyEntity)
+                Dim v As IKeyEntity = CType(mpe.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                 Dim ll As IList = Nothing
                 If Not lookups.TryGetValue(v, ll) Then
                     ll = New ReadOnlyList(Of ReturnType)

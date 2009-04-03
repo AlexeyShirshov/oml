@@ -294,6 +294,32 @@ Imports Worm.Entities.Meta
     End Sub
 
     <TestMethod()> _
+    Public Sub TestM2MManyRel()
+
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        Dim t As Table1 = q.GetByID(Of Table1)(1)
+
+        Dim a1 As New EntityAlias(GetType(Table1))
+        Dim a2 As New EntityAlias(GetType(Table1))
+
+        'Dim r As New M2MRelationDesc(New EntityUnion(GetType(Table1)), M2MRelationDesc.RevKey)
+        Dim r2 As New M2MRelationDesc(New EntityUnion(a1), M2MRelationDesc.RevKey)
+        Dim r3 As New M2MRelationDesc(New EntityUnion(a2), M2MRelationDesc.RevKey)
+
+        Dim t2 As Table1 = q _
+            .From(GetType(Table1)) _
+            .Select(a2) _
+            .Join(JCtor _
+                  .join_relation(r2).with(GetType(Table1)) _
+                  .join_relation(r3).with(a1)) _
+            .Where(Ctor.prop(GetType(Table1), "ID").eq(t)) _
+            .First(Of Table1)()
+
+        Assert.AreEqual(1, t2.ID)
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestM2MManyExists()
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -318,4 +344,27 @@ Imports Worm.Entities.Meta
         Assert.AreEqual(2, t2.ID)
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestM2MManyEx()
+        Dim a1 As New EntityAlias(GetType(Table1))
+        Dim a2 As New EntityAlias(GetType(Table1))
+
+        Dim a3 As New EntityAlias(GetType(Table1))
+        Dim a4 As New EntityAlias(GetType(Table1))
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q1.From(a1).Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, a1)).Select(a1)
+
+        Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q2.From(a3).Join(JCtor.join(a4).onM2M(a3)).Select(a3)
+
+        Dim q3 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+        q3.From(q1).Union(q2)
+
+        Dim q4 As QueryCmd = CType(q3.Clone, QueryCmd)
+        Dim q5 As QueryCmd = CType(q3.Clone, QueryCmd)
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q3.ToList(Of Table1)()
+
+    End Sub
 End Class

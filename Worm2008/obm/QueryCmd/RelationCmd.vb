@@ -438,7 +438,7 @@ Namespace Query
                         ElseIf SelectTypes IsNot Nothing Then
                             GoTo l1
                         Else
-                            PrepareSelectList(isAnonym, schema, f, filterInfo)
+                            PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
                         End If
 
                     Else
@@ -447,7 +447,7 @@ Namespace Query
                         'os.GetFieldColumnMap()("ID")._columnName
 l1:
                         If SelectList IsNot Nothing Then
-                            PrepareSelectList(isAnonym, schema, f, filterInfo)
+                            PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
                         Else
                             If SelectTypes IsNot Nothing AndAlso Not SelectTypes(0).First.Equals(selectOS) Then
                                 'se.ObjectSource = SelectTypes(0).First
@@ -489,7 +489,7 @@ l1:
                             _sl.Add(se)
                         End If
                     Else
-                        PrepareSelectList(isAnonym, schema, f, filterInfo)
+                        PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
                     End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _

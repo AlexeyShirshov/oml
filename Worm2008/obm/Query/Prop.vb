@@ -15,6 +15,8 @@ Namespace Entities
 
     <Serializable()> _
     Public Class FieldReference
+        Implements IQueryElement
+
         Private _op As ObjectProperty
         Private _tf As Pair(Of SourceFragment, String)
         Private _c As Criteria.Values.CustomValue
@@ -71,7 +73,7 @@ Namespace Entities
             ElseIf _c IsNot Nothing Then
                 Return _c._ToString
             Else
-                Return _op.ObjectSource._ToString & "$" & _op.Field
+                Return _op.Entity._ToString & "$" & _op.PropertyAlias
             End If
         End Function
 
@@ -86,6 +88,34 @@ Namespace Entities
 
             Return Object.Equals(_tf, obj._tf) OrElse Object.Equals(_op, obj._op) OrElse Object.Equals(_c, obj._c)
         End Function
+
+        Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
+            If _tf IsNot Nothing Then
+                Return _tf.First.RawName & "$" & _tf.Second
+            ElseIf _c IsNot Nothing Then
+                Return _c._ToString
+            Else
+                Return _op.Entity._ToString & "$" & _op.PropertyAlias
+            End If
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            If _tf IsNot Nothing Then
+                Return _tf.First.RawName & "$" & _tf.Second
+            ElseIf _c IsNot Nothing Then
+                Return _c.GetStaticString(mpe, contextFilter)
+            Else
+                Return _op.Entity.ToStaticString(mpe, contextFilter) & "$" & _op.PropertyAlias
+            End If
+        End Function
+
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+            If _c IsNot Nothing Then
+                'Return _c.(mpe, contextFilter)
+            Else
+                _op.Entity.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            End If
+        End Sub
     End Class
 
     <Serializable()> _
@@ -292,15 +322,15 @@ Namespace Entities
         Public Sub New(ByVal format As String, ByVal values() As IFilterValue, _
             ByVal prop As ObjectProperty)
             _custom = New CustomValue(format, values)
-            _falias = prop.Field
-            _dst = prop.ObjectSource
+            _falias = prop.PropertyAlias
+            _dst = prop.Entity
         End Sub
 
         Public Sub New(ByVal format As String, ByVal values() As IFilterValue, _
             ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations)
             _custom = New CustomValue(format, values)
-            _falias = prop.Field
-            _dst = prop.ObjectSource
+            _falias = prop.PropertyAlias
+            _dst = prop.Entity
             _attr = attr
         End Sub
 
@@ -378,7 +408,7 @@ Namespace Entities
 
         Public ReadOnly Property PropType() As PropType
             Get
-                If _op.ObjectSource IsNot Nothing Then
+                If _op.Entity IsNot Nothing Then
                     Return Entities.PropType.ObjectProperty
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
                     Return Entities.PropType.TableColumn
@@ -391,7 +421,7 @@ Namespace Entities
                         Return Entities.PropType.Subquery
                     ElseIf _agr IsNot Nothing Then
                         Return Entities.PropType.Aggregate
-                    ElseIf Not String.IsNullOrEmpty(_op.Field) Then
+                    ElseIf Not String.IsNullOrEmpty(_op.PropertyAlias) Then
                         Return Entities.PropType.ObjectProperty
                     Else
                         Throw New NotSupportedException
@@ -427,10 +457,10 @@ Namespace Entities
 
         Public Property PropertyAlias() As String
             Get
-                Return _op.Field
+                Return _op.PropertyAlias
             End Get
             Protected Friend Set(ByVal value As String)
-                _op = New ObjectProperty(_op.ObjectSource, value)
+                _op = New ObjectProperty(_op.Entity, value)
                 RaiseOnChange()
             End Set
         End Property
@@ -450,7 +480,7 @@ Namespace Entities
                 If _osrc IsNot Nothing Then
                     Return _osrc
                 Else
-                    Return _op.ObjectSource
+                    Return _op.Entity
                 End If
             End Get
             Set(ByVal value As EntityUnion)
@@ -537,8 +567,8 @@ Namespace Entities
         End Function
 
         Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-            If _op.ObjectSource IsNot Nothing Then
-                Return _op.ObjectSource._ToString & "$" & _op.Field
+            If _op.Entity IsNot Nothing Then
+                Return _op.Entity._ToString & "$" & _op.PropertyAlias
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -552,7 +582,7 @@ Namespace Entities
                     ElseIf _agr IsNot Nothing Then
                         Return _agr._ToString
                     Else
-                        Return _op.Field
+                        Return _op.PropertyAlias
                         'Throw New NotSupportedException
                         'Return _field
                     End If
@@ -575,8 +605,8 @@ Namespace Entities
                 Dim b As Boolean
                 If _custom IsNot Nothing Then
                     b = _custom.Equals(s._custom)
-                ElseIf _op.ObjectSource IsNot Nothing Then
-                    b = _op.Field = s._op.Field AndAlso _op.ObjectSource.Equals(s._op.ObjectSource)
+                ElseIf _op.Entity IsNot Nothing Then
+                    b = _op.PropertyAlias = s._op.PropertyAlias AndAlso _op.Entity.Equals(s._op.Entity)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
                     b = _column = s._column AndAlso _table Is s._table
                 ElseIf _q IsNot Nothing Then
@@ -600,8 +630,8 @@ Namespace Entities
         End Function
 
         Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            If _op.ObjectSource IsNot Nothing Then
-                Return _op.ObjectSource.ToStaticString(mpe, contextFilter) & "$" & _op.Field
+            If _op.Entity IsNot Nothing Then
+                Return _op.Entity.ToStaticString(mpe, contextFilter) & "$" & _op.PropertyAlias
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column

@@ -410,7 +410,7 @@ Namespace Criteria
                 ConditionCtor = New Condition.ConditionConstructor
             End If
             ConditionCtor.AddFilter(fl, ConditionOper)
-            Return New PredicateLink(_op.ObjectSource, CType(ConditionCtor, Condition.ConditionConstructor))
+            Return New PredicateLink(_op.Entity, CType(ConditionCtor, Condition.ConditionConstructor))
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter

@@ -129,7 +129,7 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim os As EntityUnion = _op.ObjectSource
+            Dim os As EntityUnion = _op.Entity
             Dim lt As Type = os.AnyType
             If lt Is Nothing Then
                 If Not String.IsNullOrEmpty(os.AnyEntityName) Then
@@ -160,7 +160,7 @@ Namespace Criteria.Core
 
         Public ReadOnly Property ObjectSource() As EntityUnion
             Get
-                Return _op.ObjectSource
+                Return _op.Entity
             End Get
         End Property
 
@@ -178,7 +178,7 @@ Namespace Criteria.Core
 
         Public ReadOnly Property PropertyAlias() As String
             Get
-                Return _op.Field
+                Return _op.PropertyAlias
             End Get
         End Property
 

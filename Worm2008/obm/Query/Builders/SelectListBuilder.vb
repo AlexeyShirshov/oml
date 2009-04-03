@@ -299,12 +299,12 @@ Namespace Query
             End Function
 
             Public Function prop(ByVal op As ObjectProperty) As Int
-                GetAllProperties.Add(New SelectExpression(op.ObjectSource, op.Field))
+                GetAllProperties.Add(New SelectExpression(op.Entity, op.PropertyAlias))
                 Return Me
             End Function
 
             Public Function prop(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
-                GetAllProperties.Add(New SelectExpression(op.ObjectSource, op.Field, [alias]))
+                GetAllProperties.Add(New SelectExpression(op.Entity, op.PropertyAlias, [alias]))
                 Return Me
             End Function
 
