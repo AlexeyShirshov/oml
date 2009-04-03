@@ -896,7 +896,7 @@ l1:
         End Sub
 
         Protected Friend Function Need2Join(ByVal eu As EntityUnion) As Boolean
-            Return _ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _types.ContainsKey(eu)
+            Return True '_ftypes.ContainsKey(eu) OrElse _stypes.ContainsKey(eu) OrElse _types.ContainsKey(eu)
         End Function
 
         Protected Friend Function Need2MainType(ByVal eu As EntityUnion) As Boolean

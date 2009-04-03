@@ -444,12 +444,12 @@ Namespace Criteria.Joins
                 ElseIf _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     map = oschema.GetFieldColumnMap(f)
-                    If almgr.ContainsKey(map._tableName, _l.Property.Entity) Then
-                        os = _l.Property.Entity
-                    ElseIf almgr.ContainsKey(map._tableName, _eu2) Then
-                        os = _eu2
-                    Else
+                    If _eu IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu) Then
                         os = _eu
+                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu2) Then
+                        os = _eu2
+                    Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
+                        os = _l.Property.Entity
                     End If
                 Else
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
@@ -460,10 +460,10 @@ Namespace Criteria.Joins
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
-                If almgr.ContainsKey(map._tableName, _eu2) Then
-                    os = _eu2
-                ElseIf almgr.ContainsKey(map._tableName, _eu) Then
+                If almgr.ContainsKey(map._tableName, _eu) Then
                     os = _eu
+                ElseIf almgr.ContainsKey(map._tableName, _eu2) Then
+                    os = _eu2
                 End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
                 [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
@@ -487,12 +487,12 @@ Namespace Criteria.Joins
                 ElseIf _r.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     map2 = oschema.GetFieldColumnMap(f)
-                    If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
-                        os2 = _r.Property.Entity
-                    ElseIf almgr.ContainsKey(map2._tableName, _eu2) Then
-                        os2 = _eu2
-                    Else
+                    If _eu IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu) Then
                         os2 = _eu
+                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu2) Then
+                        os2 = _eu2
+                    Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
+                        os2 = _r.Property.Entity
                     End If
                 Else
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
@@ -503,10 +503,10 @@ Namespace Criteria.Joins
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
-                If almgr.ContainsKey(map2._tableName, _eu2) Then
-                    os2 = _eu2
-                ElseIf almgr.ContainsKey(map2._tableName, _eu) Then
+                If almgr.ContainsKey(map2._tableName, _eu) Then
                     os2 = _eu
+                ElseIf almgr.ContainsKey(map2._tableName, _eu2) Then
+                    os2 = _eu2
                 End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
                 [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)

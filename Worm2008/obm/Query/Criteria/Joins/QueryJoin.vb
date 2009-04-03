@@ -111,11 +111,11 @@ Namespace Criteria.Joins
             End If
 
             For Each f As IFilter In Condition.GetAllFilters
-                If ObjectSource IsNot Nothing Then
-                    f.SetUnion(ObjectSource)
-                End If
                 If os IsNot Nothing Then
                     f.SetUnion(os)
+                End If
+                If ObjectSource IsNot Nothing Then
+                    f.SetUnion(ObjectSource)
                 End If
             Next
 

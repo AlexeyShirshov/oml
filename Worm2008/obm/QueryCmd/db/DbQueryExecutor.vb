@@ -1024,19 +1024,19 @@ l1:
                                 needAppend = query.Need2Join(join.ObjectSource)
                             End If
 
-                                Dim js() As QueryJoin = jl
-                                js(0).ObjectSource = join.ObjectSource
-                                sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
+                            Dim js() As QueryJoin = jl
+                            js(0).ObjectSource = join.ObjectSource
+                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
 
-                                If needAppend Then
-                                    cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
-                                Else
-                                    If almgr.ContainsKey(tbl, join.ObjectSource) Then
-                                        'almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
-                                        sb.Replace(t22t1.Table.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
-                                    End If
+                            If needAppend Then
+                                cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
+                            Else
+                                If almgr.ContainsKey(tbl, join.ObjectSource) Then
+                                    'almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
+                                    sb.Replace(t22t1.Table.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
                                 End If
                             End If
+                        End If
 
                         If needAppend Then
                             'Dim tables() As SourceFragment
@@ -1062,10 +1062,10 @@ l1:
                                            Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, filterInfo, almgr, params), predi)
                         End If
                         'tbl = s.GetTables(t)(0)
-                        Else
-                            sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, filterInfo, almgr, params, Nothing))
-                            almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
-                        End If
+                    Else
+                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, filterInfo, almgr, params, Nothing))
+                        almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
+                    End If
                 End If
             Next
         End Sub
