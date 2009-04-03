@@ -64,6 +64,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.InheritsBaseTables && m_entityClass.Entity.SourceFragments.Count == 0)
 				return;
 
+			CreateGetTableMethod();
+
 			var field = new CodeMemberField(new CodeTypeReference(typeof(SourceFragment[])), "_tables");
 			field.Attributes = MemberAttributes.Private;
 			Members.Add(field);
@@ -75,7 +77,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			method.ReturnType = new CodeTypeReference(typeof(SourceFragment[]));
 			// модификаторы доступа
 			method.Attributes = MemberAttributes.Public;
-			if (m_entityClass.Entity.BaseEntity != null)
+			if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.CompleteEntity.SourceFragments.Count > 1)
 			{
 				method.Attributes |= MemberAttributes.Override;
 			}
@@ -137,69 +139,6 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 						)
 					)
 				);
-
-			method = new CodeMemberMethod();
-			Members.Add(method);
-			method.Name = "GetTable";
-			// тип возвращаемого значения
-			method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
-			// модификаторы доступа
-			method.Attributes = MemberAttributes.Family;
-			if (m_entityClass.Entity.BaseEntity != null)
-				method.Attributes |= MemberAttributes.New;
-
-			// параметры
-			method.Parameters.Add(
-				new CodeParameterDeclarationExpression(
-					new CodeTypeReference(
-						OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName(m_entityClass.Entity) + ".TablesLink"), "tbl"
-					)
-				);
-			//	return (SourceFragment)this.GetTables().GetValue((int)tbl)
-
-			//	SourceFragment[] tables = this.GetTables();
-			//	SourceFragment table = null;
-			//	int tblIndex = (int)tbl;
-			//	if(tables.Length > tblIndex)
-			//		table = tables[tblIndex];
-			//	return table;
-			//string[] strs;
-			method.Statements.Add(
-				new CodeVariableDeclarationStatement(
-					new CodeTypeReference(typeof(SourceFragment[])),
-					"tables",
-					new CodeMethodInvokeExpression(
-						new CodeThisReferenceExpression(),
-						"GetTables"
-						)));
-			method.Statements.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(SourceFragment)), "table", new CodePrimitiveExpression(null)));
-			method.Statements.Add(new CodeVariableDeclarationStatement(
-						new CodeTypeReference(typeof(int)),
-						"tblIndex",
-						new CodeCastExpression(
-								new CodeTypeReference(typeof(int)),
-								new CodeArgumentReferenceExpression("tbl")
-								)
-						));
-			method.Statements.Add(new CodeConditionStatement(
-						new CodeBinaryOperatorExpression(
-							new CodePropertyReferenceExpression(
-								new CodeVariableReferenceExpression("tables"),
-								"Length"
-								),
-							CodeBinaryOperatorType.GreaterThan,
-							new CodeVariableReferenceExpression("tblIndex")
-						),
-						new CodeAssignStatement(
-							new CodeVariableReferenceExpression("table"),
-							new CodeIndexerExpression(
-								new CodeVariableReferenceExpression("tables"),
-								new CodeVariableReferenceExpression("tblIndex")
-							))));
-			method.Statements.Add(
-				new CodeMethodReturnStatement(
-					new CodeVariableReferenceExpression("table")
-				));
 
 			if (m_entityClass.Entity.Behaviour != EntityBehaviuor.PartialObjects &&
 						m_entityClass.Entity.BaseEntity == null)
@@ -263,6 +202,73 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				else
 					prop.ImplementationTypes.Add(typeof(IEntitySchema));
 			}
+		}
+
+		private void CreateGetTableMethod()
+		{
+			CodeMemberMethod method;
+			method = new CodeMemberMethod();
+			Members.Add(method);
+			method.Name = "GetTable";
+			// тип возвращаемого значения
+			method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
+			// модификаторы доступа
+			method.Attributes = MemberAttributes.Family;
+			if (m_entityClass.Entity.BaseEntity != null)
+				method.Attributes |= MemberAttributes.New;
+
+			// параметры
+			method.Parameters.Add(
+				new CodeParameterDeclarationExpression(
+					new CodeTypeReference(
+						OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName(m_entityClass.Entity) + ".TablesLink"), "tbl"
+					)
+				);
+			//	return (SourceFragment)this.GetTables().GetValue((int)tbl)
+
+			//	SourceFragment[] tables = this.GetTables();
+			//	SourceFragment table = null;
+			//	int tblIndex = (int)tbl;
+			//	if(tables.Length > tblIndex)
+			//		table = tables[tblIndex];
+			//	return table;
+			//string[] strs;
+			method.Statements.Add(
+				new CodeVariableDeclarationStatement(
+					new CodeTypeReference(typeof(SourceFragment[])),
+					"tables",
+					new CodeMethodInvokeExpression(
+						new CodeThisReferenceExpression(),
+						"GetTables"
+						)));
+			method.Statements.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(SourceFragment)), "table", new CodePrimitiveExpression(null)));
+			method.Statements.Add(new CodeVariableDeclarationStatement(
+			                      	new CodeTypeReference(typeof(int)),
+			                      	"tblIndex",
+			                      	new CodeCastExpression(
+			                      		new CodeTypeReference(typeof(int)),
+			                      		new CodeArgumentReferenceExpression("tbl")
+			                      		)
+			                      	));
+			method.Statements.Add(new CodeConditionStatement(
+			                      	new CodeBinaryOperatorExpression(
+			                      		new CodePropertyReferenceExpression(
+			                      			new CodeVariableReferenceExpression("tables"),
+			                      			"Length"
+			                      			),
+			                      		CodeBinaryOperatorType.GreaterThan,
+			                      		new CodeVariableReferenceExpression("tblIndex")
+			                      		),
+			                      	new CodeAssignStatement(
+			                      		new CodeVariableReferenceExpression("table"),
+			                      		new CodeIndexerExpression(
+			                      			new CodeVariableReferenceExpression("tables"),
+			                      			new CodeVariableReferenceExpression("tblIndex")
+			                      			))));
+			method.Statements.Add(
+				new CodeMethodReturnStatement(
+					new CodeVariableReferenceExpression("table")
+					));
 		}
 
 		private void CreateGetFieldColumnMap()
@@ -445,6 +451,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 															OrmCodeGenNameHelper.GetPrivateMemberName("tableLock"));
 				Members.Add(lockField);
 
+				lockField.InitExpression = new CodeObjectCreateExpression(lockField.Type);
+
 
 				var table = m_entityClass.Entity.SourceFragments[0];
 
@@ -475,7 +483,6 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				prop.ImplementationTypes.Add(typeof (IEntitySchema));
 
 			}
-
 		}
 
 		private void OnPopulateM2mMembers()
