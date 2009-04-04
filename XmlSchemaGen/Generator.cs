@@ -268,7 +268,7 @@ namespace Worm.CodeGen.XmlGenerator
 					List<PropertyDescription> col2remove = new List<PropertyDescription>();
 					foreach (PropertyDescription pd in ed.Properties)
 					{
-						string[] ss = ed.Tables[0].Name.Split('.');
+						string[] ss = ed.SourceFragments[0].Name.Split('.');
 						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
                             pd.FieldName.Trim(new char[] { '[', ']' }), false, null, null, null, false, 1);
 						if (!columns.ContainsKey(c))
@@ -417,7 +417,7 @@ namespace Worm.CodeGen.XmlGenerator
 
 				pe = new PropertyDescription(name,
 					 null, attrs, null, GetType(c, columns, odef), c.ColumnName,
-					 e.Tables[0],AccessLevel.Private, AccessLevel.Public);
+                     e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
 				e.Properties.Add(pe);
                 created = true;
 			}
@@ -487,21 +487,21 @@ namespace Worm.CodeGen.XmlGenerator
 					EntityDescription ed = td.Entity;
 					string[] ss = p.First.Split('.');
 					AppendColumns(columns, ed, ss[0], ss[1], p.Second);
-					TableDescription t = GetTable(odef, ss[0], ss[1]);
-					if (!ed.Tables.Contains(t))
-						ed.Tables.Add(t);
+                    SourceFragmentDescription t = GetTable(odef, ss[0], ss[1]);
+					if (!ed.SourceFragments.Contains(t))
+                        ed.SourceFragments.Add(t);
 				}
 			}
 		}
 
-		private static TableDescription GetTable(OrmObjectsDef odef, string schema, string table)
+        private static SourceFragmentDescription GetTable(OrmObjectsDef odef, string schema, string table)
 		{
 			string id = "tbl" + schema + table;
-			TableDescription t = odef.GetTable(id);
+            SourceFragmentDescription t = odef.GetSourceFragment(id);
 			if (t == null)
 			{
-				t = new TableDescription(id, GetTableName(schema,table));
-				odef.Tables.Add(t);
+                t = new SourceFragmentDescription(id, table, schema);
+				odef.SourceFragments.Add(t);
 			}
 			return t;
 		}
@@ -531,7 +531,7 @@ namespace Worm.CodeGen.XmlGenerator
 
 					DbParameter rt = cmd.CreateParameter();
 					rt.ParameterName = "rtbl";
-					rt.Value = ed.Tables[0].Name.Split('.')[1].Trim(new char[] { '[', ']' });
+                    rt.Value = ed.SourceFragments[0].Name.Split('.')[1].Trim(new char[] { '[', ']' });
 					cmd.Parameters.Add(rt);
 
 					DbParameter cns = cmd.CreateParameter();
@@ -710,8 +710,8 @@ namespace Worm.CodeGen.XmlGenerator
 			if (e == null)
 			{
 				e = new EntityDescription(ename, Capitalize(tableName),"", null, odef);
-				TableDescription t = GetTable(odef, schema, tableName);
-				e.Tables.Add(t);
+                SourceFragmentDescription t = GetTable(odef, schema, tableName);
+                e.SourceFragments.Add(t);
 				odef.Entities.Add(e);
                 created = true;
 			}

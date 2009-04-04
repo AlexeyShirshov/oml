@@ -166,6 +166,10 @@ Namespace Query
                 Return New SortLink(_s, _s.ObjectSource, propertyAlias)
             End Function
 
+            Public Function prop(ByVal op As ObjectProperty) As SortLink
+                Return New SortLink(_s, op.Entity, op.PropertyAlias)
+            End Function
+
             Public Function column(ByVal clm As String) As SortLink
                 Return New SortLink(_s, _s.Table, clm)
             End Function
