@@ -444,7 +444,9 @@ Namespace Criteria.Joins
                 ElseIf _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     map = oschema.GetFieldColumnMap(f)
-                    If _eu IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu) Then
+                    If _l.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _l.Property.Entity) Then
+                        os = _l.Property.Entity
+                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu) Then
                         os = _eu
                     ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu2) Then
                         os = _eu2
@@ -456,8 +458,8 @@ Namespace Criteria.Joins
                     map = oschema.GetFieldColumnMap(f)
                     os = If(_eu IsNot Nothing, _eu, _l.Property.Entity)
                 End If
-                'ElseIf _d1 IsNot Nothing Then
-                '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
+                    'ElseIf _d1 IsNot Nothing Then
+                    '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
                 If almgr.ContainsKey(map._tableName, _eu) Then
@@ -487,7 +489,9 @@ Namespace Criteria.Joins
                 ElseIf _r.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     map2 = oschema.GetFieldColumnMap(f)
-                    If _eu IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu) Then
+                    If _r.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _r.Property.Entity) Then
+                        os2 = _r.Property.Entity
+                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu) Then
                         os2 = _eu
                     ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu2) Then
                         os2 = _eu2

@@ -229,8 +229,9 @@ Imports Worm.Entities.Meta
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
         Dim a As New EntityAlias(GetType(Table1))
+        Dim eu As New EntityUnion(a)
 
-        Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(New EntityUnion(a), M2MRelationDesc.DirKey))
+        Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(eu, M2MRelationDesc.DirKey)).Select(eu)
 
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
