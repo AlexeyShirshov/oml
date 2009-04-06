@@ -17,11 +17,14 @@ namespace test
 {
 	using System;
 	using System.Collections.Generic;
-	using Worm.Orm;
+	using Worm.Entities;
+    using Worm.Entities.Meta;
+    using Worm.Cache;
+    using Worm;
 	
 	
-	[Worm.Orm.EntityAttribute(typeof(test.Albums.AlbumsSchemaDef), "1", EntityName="Albums")]
-	public class Albums : Worm.Orm.OrmBase
+	[EntityAttribute(typeof(test.Albums.AlbumsSchemaDef), "1", EntityName="Albums")]
+	public class Albums : KeyEntity
 	{
 		
 		#region Private Fields
@@ -37,14 +40,14 @@ namespace test
 		{
 		}
 		
-		public Albums(int id, Worm.Orm.OrmCacheBase cache, Worm.Orm.OrmSchemaBase schema) : 
-				base(id, cache, schema)
+		public Albums(int id, CacheBase cache, ObjectMappingEngine schema)				
 		{
+            base.Init(id, cache, schema);
 		}
 		#endregion
 		
 		#region Description Properties
-		[Worm.Orm.ColumnAttribute("ID", Worm.Orm.Field2DbRelations.PK)]
+        [EntityProperty(Field2DbRelations.PK, PropertyAlias = "ID")]
 		public virtual int Id
 		{
 			get
@@ -83,7 +86,7 @@ namespace test
 			}
 		}
 		
-		[Worm.Orm.ColumnAttribute("Name", Worm.Orm.Field2DbRelations.None)]
+		[EntityProperty(PropertyAlias="Name")]
 		public virtual string Name
 		{
 			get
@@ -122,7 +125,7 @@ namespace test
 			}
 		}
 		
-		[Worm.Orm.ColumnAttribute("Release", Worm.Orm.Field2DbRelations.None)]
+		[EntityProperty(PropertyAlias="Release")]
 		public virtual System.Nullable<System.DateTime> Release
 		{
 			get
@@ -173,163 +176,75 @@ namespace test
 			to._release = from._release;
 		}
 		#endregion
-		
-		protected override void CopyBody(Worm.Orm.OrmBase from, Worm.Orm.OrmBase to)
+
+        public override object Identifier
+        {
+            get
+            {
+                return _id;
+            }
+            set
+            {
+                _id = (int)value;
+            }
+        }
+        protected override void CopyProperties(Worm.Entities._IEntity from, Worm.Entities._IEntity to, Worm.OrmManager mgr, Worm.Entities.Meta.IEntitySchema oschema)
 		{
 			test.Albums.CopyAlbums(((test.Albums)(from)), ((test.Albums)(to)));
 		}
 		
-		public override System.Collections.Generic.IComparer<T> CreateSortComparer<T>(string sort, Worm.Orm.SortType sortType)
-		
+        public virtual void SetValueOptimized(string propertyAlias, Worm.Entities.Meta.IEntitySchema schema, object value)
 		{
-			throw new System.NotImplementedException("The method or operation is not implemented.");
-		}
-		
-		public override System.Collections.IComparer CreateSortComparer(string sort, Worm.Orm.SortType sortType)
-		{
-			throw new System.NotImplementedException("The method or operation is not implemented.");
-		}
-		
-		public override void SetValue(System.Reflection.PropertyInfo pi, Worm.Orm.ColumnAttribute c, object value)
-		{
-			if ((c.FieldName == "ID"))
+			if ((propertyAlias == "ID"))
 			{
 				this._id = ((int)(value));
 				return;
 			}
-			if ((c.FieldName == "Name"))
+            if ((propertyAlias == "Name"))
 			{
 				this._name = ((string)(value));
 				return;
 			}
-			if ((c.FieldName == "Release"))
+            if ((propertyAlias == "Release"))
 			{
 				this._release = ((System.Nullable<System.DateTime>)(value));
 				return;
 			}
-			base.SetValue(pi, c, value);
-		}
-		
-		protected override Worm.Orm.OrmBase GetNew()
-		{
-			return new test.Albums(this.Identifier, this.OrmCache, this.OrmSchema);
 		}
 		
 		#region Nested Types
-		public class AlbumsSchemaDef : Worm.Orm.IOrmObjectSchema, Worm.Orm.IOrmSchemaInit
+        public class AlbumsSchemaDef : IEntitySchema, ISchemaInit
 		{
 			
 			#region Private Fields
-			private Worm.Orm.OrmObjectIndex _idx;
+			private OrmObjectIndex _idx;
 			
-			private Worm.Orm.OrmTable[] _tables;
+			private SourceFragment _table = new SourceFragment("dbo","Albums");
 			
 			private object _forTablesLock = new object();
 			
-			private Worm.Orm.M2MRelation[] _m2mRelations;
+			private M2MRelation[] _m2mRelations;
 			
 			private object _forM2MRelationsLock = new object();
 			
 			private object _forIdxLock = new object();
 			
-			protected Worm.Orm.OrmSchemaBase _schema;
+			protected ObjectMappingEngine _schema;
 			
 			protected System.Type _entityType;
 			#endregion
 			
-			protected virtual Worm.Orm.OrmTable GetTypeMainTable(System.Type type)
-			{
-				Worm.Orm.OrmTable[] tables;
-				tables = ((Worm.Orm.IDbSchema)(this._schema)).GetTables(type);
-				return ((Worm.Orm.OrmTable)(tables.GetValue(0)));
-			}
-			
 			#region Base type related members
-			public virtual Worm.Orm.OrmTable[] GetTables()
+
+            public virtual SourceFragment Table
 			{
-				if ((this._tables == null))
-				{
-					object lockCachedExpression_2bf61b2353be42399ed18a80b086b170 = this._forTablesLock;
-					System.Threading.Monitor.Enter(lockCachedExpression_2bf61b2353be42399ed18a80b086b170);
-					try
-					{
-						if ((this._tables == null))
-						{
-							this._tables = new Worm.Orm.OrmTable[] {
-									new Worm.Orm.OrmTable("[dbo].[Albums]")};
-						}
-					}
-					finally
-					{
-						System.Threading.Monitor.Exit(lockCachedExpression_2bf61b2353be42399ed18a80b086b170);
-					}
-				}
-				return this._tables;
+                get
+                {
+                    return _table;
+                }
 			}
 			
-			protected virtual Worm.Orm.OrmTable GetTable(test.Albums.AlbumsSchemaDef.TablesLink tbl)
-			{
-				return ((Worm.Orm.OrmTable)(this.GetTables().GetValue(((int)(tbl)))));
-			}
-			
-			public virtual bool ChangeValueType(Worm.Orm.ColumnAttribute c, object value, ref object newvalue)
-			{
-				newvalue = value;
-				return false;
-			}
-			
-			public virtual System.Collections.IList ExternalSort(string sort, Worm.Orm.SortType sortType, System.Collections.IList objs)
-			{
-				return objs;
-			}
-			
-			public virtual Worm.Orm.OrmJoin GetJoins(Worm.Orm.OrmTable left, Worm.Orm.OrmTable right)
-			{
-				return default(Worm.Orm.OrmJoin);
-			}
-			
-			public virtual Worm.Orm.ColumnAttribute[] GetSuppressedColumns()
-			{
-				return new Worm.Orm.ColumnAttribute[0];
-			}
-			
-			public virtual Worm.Orm.IOrmFilter GetFilter(object filter_info)
-			{
-				return null;
-			}
-			
-			public virtual string MapSort2FieldName(string sort)
-			{
-				return null;
-			}
-			
-			public virtual bool get_IsExternalSort(string sort)
-			{
-				return false;
-			}
-			
-			public virtual Worm.Orm.M2MRelation[] GetM2MRelations()
-			{
-				if ((this._m2mRelations == null))
-				{
-					object lockCachedExpression_27c210f251c64375bfd9e7bf64341126 = this._forM2MRelationsLock;
-					System.Threading.Monitor.Enter(lockCachedExpression_27c210f251c64375bfd9e7bf64341126);
-					try
-					{
-						if ((this._m2mRelations == null))
-						{
-							this._m2mRelations = new Worm.Orm.M2MRelation[0];
-						}
-					}
-					finally
-					{
-						System.Threading.Monitor.Exit(lockCachedExpression_27c210f251c64375bfd9e7bf64341126);
-					}
-				}
-				return this._m2mRelations;
-			}
-			
-			public virtual Worm.Orm.Collections.IndexedCollection<string, Worm.Orm.MapField2Column> GetFieldColumnMap()
+			public virtual Worm.Collections.IndexedCollection<string, MapField2Column> GetFieldColumnMap()
 			{
 				if ((this._idx == null))
 				{
@@ -339,10 +254,10 @@ namespace test
 					{
 						if ((this._idx == null))
 						{
-							Worm.Orm.OrmObjectIndex idx = new Worm.Orm.OrmObjectIndex();
-							idx.Add(new Worm.Orm.MapField2Column("ID", "id", this.GetTable(test.Albums.AlbumsSchemaDef.TablesLink.tbldboAlbums)));
-							idx.Add(new Worm.Orm.MapField2Column("Name", "name", this.GetTable(test.Albums.AlbumsSchemaDef.TablesLink.tbldboAlbums)));
-							idx.Add(new Worm.Orm.MapField2Column("Release", "release_dt", this.GetTable(test.Albums.AlbumsSchemaDef.TablesLink.tbldboAlbums)));
+							OrmObjectIndex idx = new OrmObjectIndex();
+							idx.Add(new MapField2Column("ID", "id", Table));
+                            idx.Add(new MapField2Column("Name", "name", Table));
+                            idx.Add(new MapField2Column("Release", "release_dt", Table));
 							this._idx = idx;
 						}
 					}
@@ -355,7 +270,7 @@ namespace test
 			}
 			#endregion
 			
-			public virtual void GetSchema(Worm.Orm.OrmSchemaBase schema, System.Type t)
+			public virtual void GetSchema(ObjectMappingEngine schema, System.Type t)
 			{
 				this._schema = schema;
 				this._entityType = t;
