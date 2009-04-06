@@ -967,7 +967,8 @@ l1:
                             Dim rcmd As RelationCmd = TryCast(query, RelationCmd)
                             If rcmd IsNot Nothing Then
                                 If t12t2.Equals(rcmd.RelationDesc) Then
-                                    predi.and(Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, mpe.GetPrimaryKeys(t2)(0).PropertyAlias)))
+                                    Dim flt As IGetFilter = Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, mpe.GetPrimaryKeys(t2)(0).PropertyAlias))
+                                    predi.and(flt.Filter.SetUnion(rcmd.RelationDesc.Rel))
                                     Continue For
                                 End If
                             End If

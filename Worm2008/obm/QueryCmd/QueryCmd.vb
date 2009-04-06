@@ -9,6 +9,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Values
 Imports Worm.Misc
 Imports System.Collections.ObjectModel
+Imports Worm.Cache
 
 Namespace Query
 
@@ -429,88 +430,21 @@ Namespace Query
             _getMgr = getMgr
         End Sub
 
-        'Public Sub New(ByVal table As SourceFragment)
-        '    _from = New FromClause(table)
-        'End Sub
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(mpe, connectionString))
+        End Sub
 
-        'Public Sub New(ByVal selectType As Type)
-        '    _selectSrc = New ObjectSource(selectType)
-        'End Sub
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String)
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQLGenerator, connectionString))
+        End Sub
 
-        'Public Sub New(ByVal entityName As String)
-        '    _selectSrc = New ObjectSource(entityName)
-        'End Sub
+        Public Sub New(ByVal cache As CacheBase, ByVal connectionString As String)
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQLGenerator, connectionString))
+        End Sub
 
-        'Public Sub New(ByVal obj As IKeyEntity)
-        '    _m2mObject = obj
-        'End Sub
-
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String)
-        '    _m2mObject = obj
-        '    _m2mKey = key
-        'End Sub
-
-        'Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
-        '    _from = New FromClause(table)
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal table As SourceFragment, ByVal getMgr As CreateManagerDelegate)
-        '    _from = New FromClause(table)
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
-
-        'Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
-        '    _selectSrc = New ObjectSource(selectType)
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal selectType As Type, ByVal getMgr As CreateManagerDelegate)
-        '    _selectSrc = New ObjectSource(selectType)
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
-
-        'Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
-        '    _selectSrc = New ObjectSource(entityName)
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal entityName As String, ByVal getMgr As CreateManagerDelegate)
-        '    _selectSrc = New ObjectSource(entityName)
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
-
-        'Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As CreateManagerDelegate)
-        '    _selectSrc = New ObjectSource([alias])
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
-
-        'Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As ICreateManager)
-        '    _selectSrc = New ObjectSource([alias])
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As ICreateManager)
-        '    _m2mObject = obj
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal getMgr As CreateManagerDelegate)
-        '    _m2mObject = obj
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
-
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As ICreateManager)
-        '    _m2mObject = obj
-        '    _m2mKey = key
-        '    _getMgr = getMgr
-        'End Sub
-
-        'Public Sub New(ByVal obj As IKeyEntity, ByVal key As String, ByVal getMgr As CreateManagerDelegate)
-        '    _m2mObject = obj
-        '    _m2mKey = key
-        '    _getMgr = New CreateManager(getMgr)
-        'End Sub
+        Public Sub New(ByVal connectionString As String)
+            MyClass.New(New ReadonlyCache, connectionString)
+        End Sub
 #End Region
 
         Protected Friend Sub RenewMark()

@@ -395,6 +395,7 @@ Namespace Database
         Friend _batchSaver As ObjectListSaver
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
         Private _timeout As Nullable(Of Integer)
+        Private Shared _mpe As ObjectMappingEngine
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4clm As Reflection.MethodInfo = Nothing
@@ -406,9 +407,21 @@ Namespace Database
             _connStr = connectionString
         End Sub
 
-        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
             MyBase.New(mpe)
             StmtGenerator = generator
+            _connStr = connectionString
+        End Sub
+
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
+            MyBase.New(mpe)
+            StmtGenerator = New SQLGenerator
+            _connStr = connectionString
+        End Sub
+
+        Public Sub New(ByVal connectionString As String)
+            MyBase.New(DefaultMappingEngine)
+            StmtGenerator = New SQLGenerator
             _connStr = connectionString
         End Sub
 
@@ -450,6 +463,15 @@ l1:
         Public ReadOnly Property SQLGenerator() As SQLGenerator
             Get
                 Return CType(StmtGenerator, Database.SQLGenerator)
+            End Get
+        End Property
+
+        Public Shared ReadOnly Property DefaultMappingEngine() As ObjectMappingEngine
+            Get
+                If _mpe Is Nothing Then
+                    _mpe = New ObjectMappingEngine("1")
+                End If
+                Return _mpe
             End Get
         End Property
 

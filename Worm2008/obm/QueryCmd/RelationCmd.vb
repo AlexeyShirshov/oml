@@ -417,6 +417,7 @@ Namespace Query
                         Throw New ArgumentException("Invalid relation", filteredType.ToString)
                     End If
 
+                    Dim ideu As EntityUnion = selectOS
                     Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                     Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(selectOS, schema) OrElse IsFTS
@@ -443,8 +444,7 @@ Namespace Query
 
                     Else
                         _from = New FromClauseDef(table)
-                        'Dim os As IOrmObjectSchemaBase = schema.GetEntitySchema(selectedType)
-                        'os.GetFieldColumnMap()("ID")._columnName
+                        ideu = Nothing
 l1:
                         If SelectList IsNot Nothing Then
                             PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
@@ -457,7 +457,7 @@ l1:
                                 Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
                                 Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                                 se.Attributes = Field2DbRelations.PK
-                                'se.ObjectSource = selectOS
+                                se.ObjectSource = ideu
                                 _sl.Add(se)
                             End If
                         End If
