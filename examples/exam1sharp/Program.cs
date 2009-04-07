@@ -5,6 +5,8 @@ using System.Text;
 using Worm.Database;
 using Worm.Cache;
 using Worm;
+using Worm.Query;
+using Worm.Entities.Meta;
 
 namespace exam1sharp
 {
@@ -20,7 +22,7 @@ namespace exam1sharp
 			return new OrmDBManager(new OrmCache(), new ObjectMappingEngine("1"), new SQLGenerator(), new Properties.Settings().connectionString);
 		}
 
-		static void Main(string[] args)
+		static void Main2(string[] args)
 		{
 			using (OrmDBManager mgr = GetDBManager())
 			{
@@ -47,5 +49,27 @@ namespace exam1sharp
 				}
 			}
 		}
+
+        static void Main3(string[] args)
+        {
+            var query = new QueryCmd(exam1sharp.Properties.Settings.Default.connString);
+
+            foreach (Store s in query
+                .From(new SourceFragment("Sales", "Store"))
+                .ToPODList<Store>())
+            {
+                Console.WriteLine("Store id: {0}, name: {1}", s.CustomerID, s.Name);
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            var query = new QueryCmd(exam1sharp.Properties.Settings.Default.connString);
+
+            foreach (Store2 s in query.ToPODList<Store2>())
+            {
+                Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Name);
+            }
+        }
 	}
 }
