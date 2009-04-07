@@ -490,15 +490,14 @@ namespace Worm.CodeGen.XmlGenerator
 					var t = GetSourceFragment(odef, ss[0], ss[1]);
 					if (!ed.SourceFragments.Contains(t))
 						ed.SourceFragments.Add(t);
-                    SourceFragmentDescription t = GetTable(odef, ss[0], ss[1]);
-					if (!ed.SourceFragments.Contains(t))
-                        ed.SourceFragments.Add(t);
+                    //SourceFragmentDescription t = GetSourceFragment(odef, ss[0], ss[1]);
+                    //if (!ed.SourceFragments.Contains(t))
+                    //    ed.SourceFragments.Add(t);
 				}
 			}
 		}
 
 		private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table)
-        private static SourceFragmentDescription GetTable(OrmObjectsDef odef, string schema, string table)
 		{
 			string id = "tbl" + schema + table;
 			var t = odef.GetSourceFragment(id);

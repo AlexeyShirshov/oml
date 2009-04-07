@@ -20,7 +20,7 @@ Namespace Criteria.Values
         Inherits IQueryElement
         Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
         ReadOnly Property ShouldUse() As Boolean
     End Interface
 

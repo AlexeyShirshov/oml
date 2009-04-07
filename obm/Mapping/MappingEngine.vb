@@ -114,7 +114,7 @@ Public Class ObjectMappingEngine
 #Region " reflection "
 
     Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
-        Return GetProperties(t, GetObjectSchema(t, False))
+        Return GetProperties(t, GetEntitySchema(t, False))
     End Function
 
     'Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchema) As IDictionary
@@ -276,7 +276,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
-        Dim schema As IEntitySchema = GetObjectSchema(t, False)
+        Dim schema As IEntitySchema = GetEntitySchema(t, False)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
@@ -1699,14 +1699,14 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetEntitySchema(ByVal t As Type) As IEntitySchema
-        Return GetObjectSchema(t, True)
+        Return GetEntitySchema(t, True)
     End Function
 
     Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
-        Return GetObjectSchema(GetTypeByEntityName(entityName), True)
+        Return GetEntitySchema(GetTypeByEntityName(entityName), True)
     End Function
 
-    Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IEntitySchema
+    Public Function GetEntitySchema(ByVal t As Type, ByVal check As Boolean) As IEntitySchema
         If t Is Nothing Then
             If check Then
                 Throw New ArgumentNullException("t")

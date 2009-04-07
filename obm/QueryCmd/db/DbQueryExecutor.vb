@@ -589,8 +589,8 @@ Namespace Query.Database
                 If (p.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     colsa_ = colsa
                 End If
-                s.CreateSelectExpressionFormater().Format(p, cols, colsa_, mpe, almgr, params, _
-                    filterInfo, Nothing, defaultTable, os, True)
+                s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
+                    filterInfo, Nothing, defaultTable, True)
                 cols.Append(", ")
                 If colsa_ IsNot Nothing Then
                     colsa_.Append(",")
@@ -603,8 +603,8 @@ Namespace Query.Database
             If colsa.Length = 0 Then
                 For Each p As SelectExpression In selList
                     Dim cols_ As New StringBuilder
-                    s.CreateSelectExpressionFormater().Format(p, cols_, colsa, mpe, almgr, params, _
-                        filterInfo, Nothing, defaultTable, os, True)
+                    s.CreateSelectExpressionFormater().Format(p, cols_, query, colsa, mpe, almgr, params, _
+                        filterInfo, Nothing, defaultTable, True)
                     colsa.Append(",")
                     Exit For
                 Next
@@ -615,9 +615,9 @@ Namespace Query.Database
             sb.Append(cols.ToString)
 
             If Not b Then
-                If os IsNot Nothing Then
-                    Throw New NotSupportedException("Select columns must be specified")
-                End If
+                'If os IsNot Nothing Then
+                '    Throw New NotSupportedException("Select columns must be specified")
+                'End If
                 sb.Append("*")
             End If
 
@@ -648,8 +648,8 @@ Namespace Query.Database
 
             For Each p As SelectExpression In selList
                 If Not String.IsNullOrEmpty(p._tempMark) Then
-                    s.CreateSelectExpressionFormater().Format(p, sb, Nothing, mpe, almgr, params, _
-                        filterInfo, Nothing, tbl, os, True)
+                    s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
+                        filterInfo, Nothing, tbl, True)
                 End If
             Next
         End Sub
@@ -895,12 +895,7 @@ l1:
             ByVal pk As Pair(Of SourceFragment, String), ByVal filter As IFilter, _
             ByVal predi As Criteria.PredicateLink)
 
-            Dim pkname As String = Nothing
             Dim selectedType As Type = query.GetSelectedType(mpe)
-            If selectedType IsNot Nothing Then
-                'Dim selSchema As IObjectSchemaBase = mpe.GetObjectSchema(selectType)
-                pkname = mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
-            End If
 
             For i As Integer = 0 To j.Count - 1
                 Dim join As QueryJoin = CType(j(i), QueryJoin)
@@ -915,6 +910,10 @@ l1:
                     'almgr.AddTable(tbl, CType(Nothing, ParamMgr))
 
                     If pk IsNot Nothing AndAlso join.Condition IsNot Nothing Then
+                        Dim pkname As String = Nothing
+                        If selectedType IsNot Nothing Then
+                            pkname = mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
+                        End If
                         join.InjectJoinFilter(mpe, selectedType, pkname, pk.First, pk.Second)
                     End If
 
@@ -948,7 +947,10 @@ l1:
                         '    t = s.GetTypeByEntityName(join.EntityName)
                         'End If
 
-                        Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
+                        Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+                        If oschema Is Nothing Then
+                            oschema = query.GetEntitySchema(t)
+                        End If
 
                         Dim needAppend As Boolean = True
                         Dim cond As IFilter = join.Condition
@@ -1102,7 +1104,7 @@ l1:
 
         Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
-            ByVal defTbl As SourceFragment, ByVal defOS As IEntitySchema)
+            ByVal defTbl As SourceFragment)
             If query.Group IsNot Nothing Then
                 sb.Append(" group by ")
                 For Each g As SelectExpression In query.Group
@@ -1123,8 +1125,8 @@ l1:
                     '        End If
                     '    End If
                     'End If
-                    s.CreateSelectExpressionFormater().Format(g, sb, Nothing, mpe, almgr, Nothing, _
-                        Nothing, query.SelectList, defTbl, defOS, False)
+                    s.CreateSelectExpressionFormater().Format(g, sb, query, Nothing, mpe, almgr, Nothing, _
+                        Nothing, query.SelectList, defTbl, False)
                     sb.Append(",")
                 Next
                 sb.Length -= 1
@@ -1135,7 +1137,7 @@ l1:
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
             If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.Sort, sb, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.Table, query.GetSchemaForSelectType(mpe), False)
+                s.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.Table, False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
@@ -1241,6 +1243,49 @@ l1:
             End If
         End Sub
 
+        Public Shared Function FormWhere(ByVal mpe As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
+            ByVal query As QueryCmd) As Boolean
+
+            Dim os As EntityUnion = query.GetSelectedOS
+
+            Dim con As New Criteria.Conditions.Condition.ConditionConstructor
+            con.AddFilter(filter)
+
+            'If t IsNot Nothing Then
+            '    Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+            '    con.AddFilter(schema.GetFilter(filter_info))
+            'End If
+
+            If schema IsNot Nothing AndAlso (os Is Nothing OrElse Not os.IsQuery) Then
+                Dim cs As IContextObjectSchema = TryCast(schema, IContextObjectSchema)
+                If cs IsNot Nothing Then
+                    Dim f As IFilter = cs.GetContextFilter(filter_info)
+                    If f IsNot Nothing Then
+                        If os IsNot Nothing Then
+                            f.SetUnion(os)
+                        End If
+                        con.AddFilter(f)
+                    End If
+                End If
+            End If
+
+            If Not con.IsEmpty Then
+                'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
+                Dim f As IFilter = TryCast(con.Condition, IFilter)
+                'If f IsNot Nothing Then
+                Dim s As String = f.MakeQueryStmt(mpe, stmt, query, filter_info, almgr, pmgr)
+                If Not String.IsNullOrEmpty(s) Then
+                    sb.Append(" where ").Append(s)
+                End If
+                'Else
+                '    sb.Append(" where ").Append(bf.MakeQueryStmt(Me, pmgr))
+                'End If
+                Return True
+            End If
+            Return False
+        End Function
+
         Public Shared Sub FormSingleQuery(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, _
             ByVal query As QueryCmd, ByVal s As SQLGenerator, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
@@ -1249,7 +1294,10 @@ l1:
             Dim selType As Type = query.GetSelectedType(mpe)
 
             If selType IsNot Nothing Then
-                os = mpe.GetEntitySchema(selType)
+                os = mpe.GetEntitySchema(selType, False)
+                If os Is Nothing Then
+                    os = query.GetEntitySchema(selType)
+                End If
             End If
 
             Dim defaultTbl As SourceFragment = Nothing
@@ -1289,9 +1337,9 @@ l1:
 
             ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
 
-            s.AppendWhere(mpe, os, p.and(query._f).Filter, almgr, sb, filterInfo, params, query.GetSelectedOS)
+            FormWhere(mpe, s, os, p.and(query._f).Filter, almgr, sb, filterInfo, params, query)
 
-            FormGroupBy(mpe, query, almgr, sb, s, defaultTbl, os)
+            FormGroupBy(mpe, query, almgr, sb, s, defaultTbl)
 
             FormHaving(mpe, query, almgr, sb, s, params)
         End Sub

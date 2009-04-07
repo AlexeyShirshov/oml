@@ -102,7 +102,7 @@ Imports Worm
         End Property
 
         Private _id As Integer
-        Public Property Id() As Integer
+        Public Property ID() As Integer
             Get
                 Return _id
             End Get

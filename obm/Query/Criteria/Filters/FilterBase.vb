@@ -1,5 +1,6 @@
 ﻿Imports Worm.Criteria.Values
 Imports Worm.Entities.Meta
+Imports Worm.Query
 
 Namespace Criteria.Core
 
@@ -70,12 +71,12 @@ Namespace Criteria.Core
 
         Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, _
             ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean, _
-            ByVal almgr As IPrepareTable, ByVal filterContext As Object) As String
+            ByVal almgr As IPrepareTable, ByVal filterContext As Object, ByVal executor As IExecutionContext) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return Value.GetParam(schema, stmt, pmgr, almgr, Nothing, filterContext, inSelect)
+            Return Value.GetParam(schema, stmt, pmgr, almgr, Nothing, filterContext, inSelect, executor)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals

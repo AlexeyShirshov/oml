@@ -4,14 +4,15 @@ Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Core
 Imports Worm.Sorting
 Imports System.Collections.ObjectModel
+Imports Worm.Query
 
 Namespace Entities
 
     Public Interface ISelectExpressionFormater
-        Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, _
+        Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal executor As IExecutionContext, ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, _
                    ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                    ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-                   ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema, ByVal inSelect As Boolean)
+                   ByVal defaultTable As SourceFragment, ByVal inSelect As Boolean)
 
     End Interface
 
@@ -46,10 +47,10 @@ Namespace Database
             _s = s
         End Sub
 
-        Public Sub Format(ByVal se As Entities.SelectExpression, ByVal sb As System.Text.StringBuilder, _
+        Public Sub Format(ByVal se As Entities.SelectExpression, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
                           ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                           ByVal context As Object, ByVal selList As ReadOnlyCollection(Of Entities.SelectExpression), _
-                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal defaultObjectSchema As IEntitySchema, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
+                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
                 Select Case se.PropType
@@ -57,7 +58,7 @@ Namespace Database
                         'Dim a As Boolean = se.Aggregate.AddAlias
                         'se.Aggregate.AddAlias = False
                         sb.Append(" order by ")
-                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, False))
+                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, False, executor))
                         If s.Order = SortType.Desc Then
                             sb.Append(" desc")
                         End If
@@ -127,7 +128,7 @@ Namespace Database
                                     'Next
                                     If ns.Values IsNot Nothing Then
                                         'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
-                                        sb2.Append(ns.Custom.GetParam(schema, _s, Nothing, almgr, Nothing, Nothing, False))
+                                        sb2.Append(ns.Custom.GetParam(schema, _s, Nothing, almgr, Nothing, Nothing, False, executor))
                                     Else
                                         sb2.Append(ns.CustomSortExpression)
                                     End If
@@ -141,13 +142,13 @@ Namespace Database
                                     End If
 
                                     If st IsNot Nothing Then
-                                        Dim oschema As IEntitySchema = CType(schema.GetObjectSchema(st, False), IEntitySchema)
+                                        Dim oschema As IEntitySchema = CType(schema.GetEntitySchema(st, False), IEntitySchema)
 
-                                        'If schema Is Nothing Then
-                                        '    schema = defaultObjectSchema
-                                        'End If
+                                        If oschema Is Nothing Then
+                                            oschema = executor.GetEntitySchema(st)
+                                        End If
 
-                                        If schema Is Nothing Then
+                                        If oschema Is Nothing Then
                                             Throw New SQLGeneratorException(String.Format("Object schema for field {0} of type {1} is not defined", ns.SortBy, st))
                                         End If
 
@@ -156,9 +157,9 @@ Namespace Database
 
                                         If cm.TryGetValue(ns.SortBy, map) Then
                                             Dim t As SourceFragment = map.Table
-                                            'If t Is Nothing Then
-                                            '    t = defaultTable
-                                            'End If
+                                            If t Is Nothing Then
+                                                t = defaultTable
+                                            End If
                                             If t Is Nothing Then
                                                 Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
                                             End If
@@ -212,7 +213,7 @@ l1:
             Else
                 Select Case se.PropType
                     Case Entities.PropType.Aggregate
-                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, inSelect))
+                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, inSelect, executor))
                     Case Entities.PropType.TableColumn
                         Dim t As SourceFragment = se.Table
                         If t Is Nothing Then
@@ -306,12 +307,12 @@ l1:
                     Case Entities.PropType.CustomValue
                         If inSelect Then
                             'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
-                            Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect)
+                            Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor)
                             sb.Append(sss)
                             If cols IsNot Nothing Then cols.Append(sss)
                         Else
                             'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
-                            sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect))
+                            sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor))
                         End If
                         If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
                             sb.Append(" ").Append(se.FieldAlias)
