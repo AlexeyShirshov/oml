@@ -733,7 +733,7 @@ l1:
                     SQLGenerator.AppendWhere(MappingEngine, ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                        SQLGenerator.AppendOrder(MappingEngine, sort, almgr, sb, True, Nothing, Nothing, Nothing)
+                        SQLGenerator.AppendOrder(MappingEngine, sort, almgr, sb, True, Nothing)
                     End If
 
                     params.AppendParams(.Parameters)
@@ -1906,7 +1906,7 @@ l1:
                             selectList = New List(Of SelectExpression)
                             For Each m As MapField2Column In fields_idx
                                 Dim se As New SelectExpression(original_type, m._propertyAlias)
-                                se.Column = If(Not String.IsNullOrEmpty(m._columnName), m._columnName, m._propertyAlias)
+                                se.Column = If(Not String.IsNullOrEmpty(m.Column), m.Column, m._propertyAlias)
                                 se.Attributes = m._newattributes
                                 selectList.Add(se)
                             Next
@@ -2959,7 +2959,7 @@ l1:
                     Next
                     sb.Length -= 1
                     Dim f As New cc.EntityFilter(op, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params), params.Params.Count))
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
                 End If
             End If
 
@@ -2973,7 +2973,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As IFilter = TryCast(bf, Worm.cc.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2996,7 +2996,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New cc.EntityFilter(op, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -3009,7 +3009,7 @@ l1:
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New cc.EntityFilter(op, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -3048,7 +3048,7 @@ l1:
                     Next
                     sb.Length -= 1
                     Dim f As New cc.TableFilter(table, column, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params), params.Params.Count))
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
                 End If
             End If
 
@@ -3062,7 +3062,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -3085,7 +3085,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -3098,7 +3098,7 @@ l1:
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, GetContextInfo, almgr, params))
+                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))

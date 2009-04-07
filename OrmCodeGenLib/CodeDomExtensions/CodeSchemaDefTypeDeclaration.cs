@@ -58,13 +58,17 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 		private void OnPopulateMultitableMembers()
 		{
-			if (m_entityClass.Entity.CompleteEntity.SourceFragments.Count < 2)
+			//if (m_entityClass.Entity.CompleteEntity.SourceFragments.Count < 2)
+			//    return;
+
+			//if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.InheritsBaseTables && m_entityClass.Entity.SourceFragments.Count == 0)
+			//    return;
+
+			if (!m_entityClass.Entity.IsMultitable)
 				return;
 
-			if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.InheritsBaseTables && m_entityClass.Entity.SourceFragments.Count == 0)
-				return;
-
-			CreateGetTableMethod();
+			//if(m_entityClass.Entity.BaseEntity == null || (m_entityClass.Entity.BaseEntity != null && !m_entityClass.Entity.BaseEntity.IsMultitable))
+				CreateGetTableMethod();
 
 			var field = new CodeMemberField(new CodeTypeReference(typeof(SourceFragment[])), "_tables");
 			field.Attributes = MemberAttributes.Private;
@@ -77,9 +81,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			method.ReturnType = new CodeTypeReference(typeof(SourceFragment[]));
 			// модификаторы доступа
 			method.Attributes = MemberAttributes.Public;
-			if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.CompleteEntity.SourceFragments.Count > 1)
+            if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.IsMultitable)
 			{
-				method.Attributes |= MemberAttributes.Override;
+			    method.Attributes |= MemberAttributes.Override;                
 			}
 			else
 				// реализует метод интерфейса
@@ -180,7 +184,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				
 			}
 
-			if (m_entityClass.Entity.BaseEntity == null || m_entityClass.Entity.BaseEntity.CompleteEntity.SourceFragments.Count == 1)
+			if (m_entityClass.Entity.BaseEntity == null || !m_entityClass.Entity.BaseEntity.IsMultitable)
 			{
 				CodeMemberProperty prop = new CodeMemberProperty();
 				Members.Add(prop);
@@ -213,9 +217,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			// тип возвращаемого значения
 			method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
 			// модификаторы доступа
-			method.Attributes = MemberAttributes.Family;
-			if (m_entityClass.Entity.BaseEntity != null)
-				method.Attributes |= MemberAttributes.New;
+			method.Attributes = MemberAttributes.Family | MemberAttributes.Final;
+			//if (m_entityClass.Entity.BaseEntity != null && m_entityClass.Entity.BaseEntity.IsMultitable)
+			//    method.Attributes |= MemberAttributes.New;
 
 			// параметры
 			method.Parameters.Add(
@@ -376,7 +380,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			expression.Parameters.Add(new CodePrimitiveExpression(action.FieldName));
 			//(SourceFragment)this.GetTables().GetValue((int)(XMedia.Framework.Media.Objects.ArtistBase.ArtistBaseSchemaDef.TablesLink.tblArtists)))
 
-			if (m_entityClass.Entity.CompleteEntity.SourceFragments.Count > 1)
+			if (m_entityClass.Entity.IsMultitable)
 			{
 				expression.Parameters.Add(new CodeMethodInvokeExpression(
 				                          	new CodeThisReferenceExpression(),

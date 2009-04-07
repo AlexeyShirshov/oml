@@ -28,11 +28,11 @@
       </Properties>
     </Entity>
     <Entity id="e3" name="E3" baseEntity="e2" >
-      <SourceFragments>
-        <SourceFragment ref="tbl2"/>
+      <SourceFragments />
+        <!--<SourceFragment ref="tbl2"/>-->
         <!--<SourceFragment ref="tbl2"/>-->
         <!--<SourceFragment ref="tblS1"/>-->
-      </SourceFragments>
+      <!--</SourceFragments>-->
       <Properties>
         <Property fieldName="prop5" propertyName="prop5" table="tbl2" typeRef="tString"/>
       </Properties>

@@ -786,17 +786,17 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestSimpleObjects2()
         Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
-            Dim s1 As SimpleObj2 = mgr.Find(Of SimpleObj2)(2)
+            Dim s1 As SimpleObj = mgr.Find(Of SimpleObj)(2)
 
             Assert.AreEqual("second", s1.Title)
 
             mgr.BeginTransaction()
             Try
-                s1 = New SimpleObj2
+                s1 = New SimpleObj
                 s1.Title = "555"
                 s1.SaveChanges(True)
             Finally
-                Assert.IsTrue(s1.ID > 0)
+                Assert.IsTrue(CInt(s1.Identifier) > 0)
                 Assert.AreEqual("555", s1.Title)
                 mgr.Rollback()
             End Try

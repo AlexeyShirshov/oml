@@ -79,7 +79,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Me, filter_info, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Me, Nothing, filter_info, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False

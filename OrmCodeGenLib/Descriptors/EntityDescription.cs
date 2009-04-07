@@ -500,5 +500,22 @@ namespace Worm.CodeGen.Core.Descriptors
 			//}
 			//return res.ToArray();
 		}
+
+
+		public bool IsMultitable
+		{
+			get
+			{
+				bool multitable = false;
+
+				var entity = this;
+				do
+				{
+					multitable |= entity.CompleteEntity.SourceFragments.Count > 1;
+					entity = entity.BaseEntity;
+				} while (!multitable && entity != null);
+				return multitable;
+			}
+		}
 	}
 }

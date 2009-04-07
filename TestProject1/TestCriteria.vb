@@ -29,10 +29,10 @@ Imports Worm.Query
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim f2 As IEntityFilter = CType(cr2.Filter, IEntityFilter)
-        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -53,7 +53,7 @@ Imports Worm.Query
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -75,7 +75,7 @@ Imports Worm.Query
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -96,7 +96,7 @@ Imports Worm.Query
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -117,7 +117,7 @@ Imports Worm.Query
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 

@@ -667,7 +667,7 @@ Namespace Query.Database
 
             Dim searchTable As SourceFragment = os.Table
             If st.QueryFields IsNot Nothing AndAlso st.QueryFields.Length = 1 Then
-                searchTable = os.GetFieldColumnMap(st.QueryFields(0))._tableName
+                searchTable = os.GetFieldColumnMap(st.QueryFields(0)).Table
             End If
 
             Dim table As String = st.GetSearchTableName
@@ -700,9 +700,9 @@ l1:
                 sb.Append("(")
                 For Each f As String In ifields
                     Dim m As MapField2Column = os.GetFieldColumnMap(f)
-                    sb.Append(m._columnName).Append(",")
+                    sb.Append(m.Column).Append(",")
                     If tf IsNot Nothing AndAlso Not replaced Then
-                        sb.Replace("{290ghern}", tf.GetRealTable(m._columnName))
+                        sb.Replace("{290ghern}", tf.GetRealTable(m.Column))
                         replaced = True
                     End If
                 Next
@@ -863,7 +863,7 @@ l1:
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
                     FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, Nothing, False, _
-                        Function() " on " & jf.MakeQueryStmt(mpe, s, filterInfo, almgr, params), predi)
+                        Function() " on " & jf.MakeQueryStmt(mpe, s, q, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
                 End If
@@ -879,7 +879,7 @@ l1:
                         If Not almgr.ContainsKey(tables(j), osrc) Then
                             almgr.AddTable(tables(j), osrc, params)
                         End If
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, filterInfo, almgr, params, osrc_))
+                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, q, filterInfo, almgr, params, osrc_))
                         almgr.Replace(mpe, s, join.Table, osrc, sb)
                     End If
                 Next
@@ -940,7 +940,7 @@ l1:
                         Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
 
                         sb.Append(") as ").Append(als).Append(" on ")
-                        sb.Append(join.Condition.MakeQueryStmt(mpe, s, filterInfo, almgr, params))
+                        sb.Append(join.Condition.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
                         almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
                     ElseIf join.Table Is Nothing Then
                         Dim t As Type = join.ObjectSource.GetRealType(mpe)
@@ -1027,7 +1027,7 @@ l1:
 
                             Dim js() As QueryJoin = jl
                             js(0).ObjectSource = join.ObjectSource
-                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, filterInfo, almgr, params, join.M2MObjectSource))
+                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, query, filterInfo, almgr, params, join.M2MObjectSource))
 
                             If needAppend Then
                                 cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
@@ -1040,31 +1040,42 @@ l1:
                         End If
 
                         If needAppend Then
-                            'Dim tables() As SourceFragment
-                            'Dim mts As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-                            'If mts Is Nothing Then
-                            '    tables = New SourceFragment() {oschema.Table}
-                            'Else
-                            '    tables = mts.GetTables()
-                            'End If
+                            Dim mts As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
+                            If mts Is Nothing OrElse join.JoinType = JoinType.Join Then
+                                sb.Append(join.JoinTypeString())
 
-                            sb.Append(join.JoinTypeString())
-
-                            Dim cs As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
-                            If cs IsNot Nothing Then
-                                Dim ctxF As IFilter = cs.GetContextFilter(filterInfo)
-                                If ctxF IsNot Nothing Then
-                                    predi.and(ctxF.SetUnion(join.ObjectSource))
+                                Dim cs As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
+                                If cs IsNot Nothing Then
+                                    Dim ctxF As IFilter = cs.GetContextFilter(filterInfo)
+                                    If ctxF IsNot Nothing Then
+                                        predi.and(ctxF.SetUnion(join.ObjectSource))
+                                    End If
                                 End If
-                            End If
 
-                            Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
-                            FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
-                                           Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, filterInfo, almgr, params), predi)
+                                Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
+                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
+                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, query, filterInfo, almgr, params), predi)
+                            Else
+                                Throw New NotImplementedException
+                                'sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
+
+                                ''Dim al As EntityAlias = join.ObjectSource.ObjectAlias
+                                ''Dim q As QueryCmd = al.Query
+                                ''sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
+
+                                'Dim tbl As New SourceFragment
+                                'join.TmpTable = tbl
+
+                                'Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
+
+                                'sb.Append(") as ").Append(als).Append(" on ")
+                                'sb.Append(join.Condition.MakeQueryStmt(mpe, s, filterInfo, almgr, params))
+                                'almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
+                            End If
                         End If
-                        'tbl = s.GetTables(t)(0)
+
                     Else
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, filterInfo, almgr, params, Nothing))
+                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, query, filterInfo, almgr, params, Nothing))
                         almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
                     End If
                 End If
@@ -1085,7 +1096,7 @@ l1:
             ByVal pmgr As ICreateParam)
 
             If query.HavingFilter IsNot Nothing Then
-                sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, s, Nothing, almgr, pmgr))
+                sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, s, query, Nothing, almgr, pmgr))
             End If
         End Sub
 
@@ -1204,7 +1215,7 @@ l1:
                 'Next
                 'sb.Length -= 1
                 sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
-                sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, s, filterInfo, almgr, params))
+                sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
             End If
 
             Return sb.ToString

@@ -13,7 +13,8 @@ Namespace Criteria.Core
         Inherits IGetFilter, ICloneable, IQueryElement
         'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-                               ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            ByVal executor As Query.IExecutionContext, _
+            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter

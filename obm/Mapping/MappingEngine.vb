@@ -152,7 +152,7 @@ Public Class ObjectMappingEngine
                     If propertyMap.ContainsKey(propertyAlias) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
                         column = New EntityPropertyAttribute(mc._newattributes)
-                        column.Column = mc._columnName
+                        column.Column = mc.Column
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
@@ -189,7 +189,7 @@ Public Class ObjectMappingEngine
                     If propertyMap.ContainsKey(propertyAlias) AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
                         column = New EntityPropertyAttribute(mc._newattributes)
-                        column.Column = mc._columnName
+                        column.Column = mc.Column
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
@@ -276,7 +276,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
-        Dim schema As IEntitySchema = GetEntitySchema(t)
+        Dim schema As IEntitySchema = GetObjectSchema(t, False)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
@@ -311,7 +311,7 @@ Public Class ObjectMappingEngine
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
         For Each p As MapField2Column In coll
-            If p._columnName = columnName Then
+            If p.Column = columnName Then
                 Return p._propertyAlias
             End If
         Next
@@ -690,7 +690,7 @@ Public Class ObjectMappingEngine
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
         Try
-            Return coll(field)._tableName
+            Return coll(field).Table
         Catch ex As Exception
             Throw New ObjectMappingException("Unknown field name: " & field, ex)
         End Try
@@ -1258,7 +1258,7 @@ Public Class ObjectMappingEngine
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(propertyAlias, p) Then
             Dim c As String = Nothing
-            c = p._columnName
+            c = p.Column
             Return c
         End If
 
@@ -1388,6 +1388,36 @@ Public Class ObjectMappingEngine
 
 #End Region
 
+    Public Shared Function GetTable(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As SourceFragment
+        Dim tbl As SourceFragment = Nothing
+        Dim entities() As EntityAttribute = CType(t.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
+        For Each ea As EntityAttribute In entities
+            If ea.Version = mpe.Version AndAlso Not String.IsNullOrEmpty(ea.TableName) Then
+                tbl = New SourceFragment(ea.TableSchema, ea.TableName)
+                Exit For
+            End If
+        Next
+        Dim entities2() As EntityAttribute = Nothing
+        If tbl Is Nothing Then
+            entities2 = CType(t.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
+            For Each ea As EntityAttribute In entities2
+                If ea.Version = mpe.Version AndAlso Not String.IsNullOrEmpty(ea.TableName) Then
+                    tbl = New SourceFragment(ea.TableSchema, ea.TableName)
+                    Exit For
+                End If
+            Next
+        End If
+
+        If tbl Is Nothing Then
+            If entities.Length = 1 AndAlso Not String.IsNullOrEmpty(entities(0).TableName) Then
+                tbl = New SourceFragment(entities(0).TableSchema, entities(0).TableName)
+            ElseIf entities2 IsNot Nothing AndAlso entities2.Length = 1 AndAlso Not String.IsNullOrEmpty(entities2(0).TableName) Then
+                tbl = New SourceFragment(entities2(0).TableSchema, entities2(0).TableName)
+            End If
+        End If
+        Return tbl
+    End Function
+
     Protected Function CreateObjectSchema(ByRef names As IDictionary) As IDictionary
         Dim t As Type = GetType(_IEntity)
         Dim idic As New Specialized.HybridDictionary
@@ -1424,7 +1454,7 @@ Public Class ObjectMappingEngine
                                         l.Add(c)
                                     Next
 
-                                    schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
+                                    schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l, ea.PrimaryKey)
 
                                     'If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                     '    Throw New ObjectMappingException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -1473,7 +1503,7 @@ Public Class ObjectMappingEngine
                                             l.Add(c)
                                         Next
 
-                                        schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
+                                        schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l, ea.PrimaryKey)
 
                                         'If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                         '    Throw New ObjectMappingException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -1529,7 +1559,7 @@ Public Class ObjectMappingEngine
                                             l.Add(c)
                                         Next
 
-                                        schema = New SimpleObjectSchema(tp, ea1.TableName, l, ea1.PrimaryKey)
+                                        schema = New SimpleObjectSchema(tp, ea1.TableName, ea1.TableSchema, l, ea1.PrimaryKey)
 
                                         'If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                         '    Throw New ObjectMappingException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -1590,7 +1620,7 @@ Public Class ObjectMappingEngine
                                                 l.Add(c)
                                             Next
 
-                                            schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
+                                            schema = New SimpleObjectSchema(tp, ea2.TableName, ea2.TableSchema, l, ea2.PrimaryKey)
 
                                             'If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                             '    Throw New ObjectMappingException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -1670,11 +1700,11 @@ Public Class ObjectMappingEngine
 
     Public Function GetEntitySchema(ByVal t As Type) As IEntitySchema
         Return GetObjectSchema(t, True)
-	End Function
+    End Function
 
-	Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
-		Return GetObjectSchema(GetTypeByEntityName(entityName), True)
-	End Function
+    Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
+        Return GetObjectSchema(GetTypeByEntityName(entityName), True)
+    End Function
 
     Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IEntitySchema
         If t Is Nothing Then
@@ -1910,8 +1940,8 @@ Public Class ObjectMappingEngine
         Dim map As MapField2Column = Nothing
         'Dim fld As String = p.Second
         If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
-            fld = map._columnName
-            tbl = map._tableName
+            fld = map.Column
+            tbl = map.Table
         Else
             tbl = oschema.Table
         End If
@@ -1945,10 +1975,10 @@ Public Class ObjectMappingEngine
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(propertyAlias, p) Then
             Dim c As String = Nothing
-            If add_alias AndAlso ShouldPrefix(p._columnName) Then
-                c = p._tableName.UniqueName(os) & Delimiter & p._columnName
+            If add_alias AndAlso ShouldPrefix(p.Column) Then
+                c = p.Table.UniqueName(os) & Delimiter & p.Column
             Else
-                c = p._columnName
+                c = p.Column
             End If
             'If columnAliases IsNot Nothing Then
             '    columnAliases.Add(p._columnName)

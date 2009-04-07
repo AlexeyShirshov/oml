@@ -648,7 +648,7 @@ l1:
                                 cn = CType(cn.[and](pk_table, mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)).eq(New LiteralValue(pk.Second)), PredicateLink)
                             Next
                             'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
-                            ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Me, Nothing, almgr, Nothing))
+                            ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Me, Nothing, Nothing, almgr, Nothing))
                         End If
                     End If
                 End If
@@ -901,7 +901,7 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, filterInfo, mpe, amgr, params)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
@@ -909,9 +909,9 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilter = TryCast(fl, EntityFilter)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, filterInfo, mpe, amgr, params))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Me, filterInfo, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Me, Nothing, filterInfo, amgr, params))
                             End If
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
@@ -957,7 +957,7 @@ l1:
                                 cn.AddFilter(New dc.TableFilter(esch.Table, clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             Dim f As IFilter = cn.Condition
-                            sel_sb.Append(f.MakeQueryStmt(mpe, Me, filterInfo, amgr, params))
+                            sel_sb.Append(f.MakeQueryStmt(mpe, Me, Nothing, filterInfo, amgr, params))
 
                             upd_cmd.Append(sel_sb)
                             select_columns = sel_columns
@@ -976,7 +976,7 @@ l1:
 
             If sel_columns.Count > 0 Then
                 For Each c As EntityPropertyAttribute In sel_columns
-                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.PropertyAlias)._tableName) Then
+                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.PropertyAlias).Table) Then
                         Return False
                     End If
                 Next
@@ -1089,11 +1089,11 @@ l1:
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Me, filterInfo, Nothing, params))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Me, Nothing, filterInfo, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
                     del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table))
-                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Me, filterInfo, Nothing, params))
+                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Me, Nothing, filterInfo, Nothing, params))
                     del_cmd.Append(EndLine)
 
                     del_cmd.Length -= EndLine.Length
@@ -1115,7 +1115,7 @@ l1:
 
             Dim del_cmd As New StringBuilder
             del_cmd.Append("delete from ").Append(GetTableName(mpe.GetTables(t)(0)))
-            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Me, Nothing, Nothing, params))
+            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Me, Nothing, Nothing, Nothing, params))
 
             Return del_cmd.ToString
         End Function
@@ -1165,7 +1165,7 @@ l1:
 
                         If Not QueryJoin.IsEmpty(join) Then
                             'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, filterInfo, almgr, params, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, params, Nothing))
                         End If
                     Next
                 End If
@@ -1240,7 +1240,7 @@ l1:
                 Dim join As New QueryJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl, CType(Nothing, EntityUnion))
-                selectcmd.Append(join.MakeSQLStmt(mpe, Me, filterInfo, almgr, params, Nothing))
+                selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, params, Nothing))
 
                 If appendSecondTable Then
                     Dim schema2 As IEntitySchema = mpe.GetEntitySchema(relation.Rel.GetRealType(mpe))
@@ -1475,7 +1475,7 @@ l1:
                             '    End If
                             'Next
 
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1495,14 +1495,14 @@ l1:
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(mpe, Me, filterInfo, almgr, pname, Nothing))
+                selectcmd.Append(j.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
                 If sch IsNot Nothing Then
                     For i As Integer = 1 To tables.Length - 1
                         Dim join As QueryJoin = CType(mpe.GetJoins(sch, pk_table, tables(i), filterInfo), QueryJoin)
 
                         If Not QueryJoin.IsEmpty(join) Then
                             almgr.AddTable(tables(i), Nothing, pname)
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1604,7 +1604,7 @@ l1:
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1652,7 +1652,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, Me, filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Me, Nothing, filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -1664,10 +1664,14 @@ l1:
             Return False
         End Function
 
+        'Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
+        '    ByVal sb As StringBuilder, ByVal appendOrder As Boolean, _
+        '    ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
+        '    ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema)
         Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
             ByVal sb As StringBuilder, ByVal appendOrder As Boolean, _
-            ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-            ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema)
+            ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression))
+
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
                 If appendOrder Then
                     sb.Append(" order by ")
@@ -1718,9 +1722,9 @@ l1:
                         If st IsNot Nothing Then
                             Dim schema As IEntitySchema = CType(mpe.GetObjectSchema(st, False), IEntitySchema)
 
-                            If schema Is Nothing Then
-                                schema = defaultObjectSchema
-                            End If
+                            'If schema Is Nothing Then
+                            '    schema = defaultObjectSchema
+                            'End If
 
                             If schema Is Nothing Then
                                 Throw New SQLGeneratorException(String.Format("Object schema for field {0} of type {1} is not defined", ns.SortBy, st))
@@ -1730,15 +1734,15 @@ l1:
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
                             If cm.TryGetValue(ns.SortBy, map) Then
-                                Dim t As SourceFragment = map._tableName
-                                If t Is Nothing Then
-                                    t = defaultTable
-                                End If
+                                Dim t As SourceFragment = map.Table
+                                'If t Is Nothing Then
+                                '    t = defaultTable
+                                'End If
                                 If t Is Nothing Then
                                     Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
                                 End If
 
-                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map._columnName)
+                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map.Column)
                                 If ns.Order = SortType.Desc Then
                                     sb2.Append(" desc")
                                 End If
@@ -1754,20 +1758,20 @@ l1:
                                     If p.PropertyAlias = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
                                         If p.Table Is Nothing AndAlso tbl Is Nothing Then
                                             clm = p.Column
-                                            tbl = defaultTable
+                                            'tbl = defaultTable
                                             Exit For
-                                        ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
-                                            clm = p.Column
-                                            tbl = defaultTable
-                                            Exit For
+                                            'ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
+                                            '    clm = p.Column
+                                            '    tbl = defaultTable
+                                            '    Exit For
                                         ElseIf tbl IsNot Nothing AndAlso p.Table.RawName = tbl.RawName Then
                                             clm = p.Column
                                             Exit For
                                         End If
                                     End If
                                 Next
-                            ElseIf tbl Is Nothing Then
-                                tbl = defaultTable
+                                'ElseIf tbl Is Nothing Then
+                                '    tbl = defaultTable
                             End If
 
                             sb2.Append(almgr.GetAlias(tbl, Nothing)).Append(Selector).Append(clm)
@@ -2011,8 +2015,8 @@ l1:
                     Else
                         Throw New InvalidOperationException("Type " & field.Second.ToString & " is not select type or search type")
                     End If
-                    columns.Append(m._tableName.UniqueName(Nothing)).Append(mpe.Delimiter)
-                    columns.Append(m._columnName).Append(",")
+                    columns.Append(m.Table.UniqueName(Nothing)).Append(mpe.Delimiter)
+                    columns.Append(m.Column).Append(",")
                 Next
                 '    For Each field As Pair(Of String, Type) In fields
                 '        If field.Second Is searchType Then
@@ -2063,7 +2067,7 @@ l1:
                 sb.Append("(")
                 For Each f As String In queryFields
                     Dim m As MapField2Column = searchSchema.GetFieldColumnMap(f)
-                    sb.Append(m._columnName).Append(",")
+                    sb.Append(m.Column).Append(",")
                 Next
                 sb.Length -= 1
                 sb.Append(")")
@@ -2112,7 +2116,7 @@ l1:
                     End If
                     almgr.AddTable(tbl, CType(Nothing, EntityUnion))
                     almgr.Replace(mpe, Me, tbl, Nothing, columns)
-                    sb.Append(join.MakeSQLStmt(mpe, Me, filter_info, almgr, params, Nothing))
+                    sb.Append(join.MakeSQLStmt(mpe, Me, Nothing, filter_info, almgr, params, Nothing))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
@@ -2125,7 +2129,7 @@ l1:
             'sb.Append(" order by rank ").Append(sort_type.ToString)
             If sort IsNot Nothing Then
                 'sb.Append(",")
-                AppendOrder(mpe, sort, almgr, sb, True, Nothing, Nothing, Nothing)
+                AppendOrder(mpe, sort, almgr, sb, True, Nothing)
             Else
                 sb.Append(" order by rank ").Append(sort_type.ToString)
             End If
@@ -2294,7 +2298,7 @@ l1:
 
                     If Not QueryJoin.IsEmpty(join) Then
                         'almgr.AddTable(join.Table, Nothing, params)
-                        sb.Append(join.MakeSQLStmt(mpe, Me, filter_info, almgr, params, Nothing))
+                        sb.Append(join.MakeSQLStmt(mpe, Me, Nothing, filter_info, almgr, params, Nothing))
                     End If
                 Next
             End If

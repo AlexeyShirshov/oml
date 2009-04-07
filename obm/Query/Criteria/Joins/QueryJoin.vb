@@ -74,7 +74,7 @@ Namespace Criteria.Joins
             Return j Is Nothing
         End Function
 
-        Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal schema As StmtGenerator, _
+        Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal schema As StmtGenerator, ByVal executor As IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, _
             ByVal os As EntityUnion) As String
             'If IsEmpty Then
@@ -119,7 +119,7 @@ Namespace Criteria.Joins
                 End If
             Next
 
-            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, filterInfo, almgr, pname)
+            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, schema, executor, filterInfo, almgr, pname)
         End Function
 
         Public Function JoinTypeString() As String
