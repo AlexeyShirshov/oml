@@ -431,7 +431,11 @@ Namespace Criteria.Joins
             Dim map As MapField2Column = Nothing
             Dim os As EntityUnion = Nothing
             If _l.Property.Entity IsNot Nothing Then
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(_l.Property.Entity.GetRealType(schema))
+                Dim lt As Type = _l.Property.Entity.GetRealType(schema)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(lt, False)
+                If oschema Is Nothing Then
+                    oschema = executor.GetEntitySchema(lt)
+                End If
                 If _l.Property.Entity IsNot Nothing AndAlso _l.Property.Entity.IsQuery Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
@@ -468,7 +472,7 @@ Namespace Criteria.Joins
                     os = _eu2
                 End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
-                [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
+                [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -476,7 +480,11 @@ Namespace Criteria.Joins
             Dim map2 As MapField2Column = Nothing
             Dim os2 As EntityUnion = Nothing
             If _r.Property.Entity IsNot Nothing Then
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(_r.Property.Entity.GetRealType(schema))
+                Dim rt As Type = _r.Property.Entity.GetRealType(schema)
+                Dim oschema As IEntitySchema = schema.GetEntitySchema(rt, False)
+                If oschema Is Nothing Then
+                    oschema = executor.GetEntitySchema(rt)
+                End If
                 If _r.Property.Entity IsNot Nothing AndAlso _r.Property.Entity.IsQuery Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
@@ -513,7 +521,7 @@ Namespace Criteria.Joins
                     os2 = _eu2
                 End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
-                [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
+                [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If

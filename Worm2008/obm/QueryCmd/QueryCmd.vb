@@ -2663,8 +2663,13 @@ l1:
             Dim hasPK As Boolean
             Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
 
-            _pod = Hashtable.Synchronized(New Hashtable)
-            _pod.Add(rt, selSchema)
+            If _pod Is Nothing Then
+                _pod = Hashtable.Synchronized(New Hashtable)
+            End If
+
+            If Not _pod.Contains(rt) Then
+                _pod.Add(rt, selSchema)
+            End If
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
@@ -3162,7 +3167,7 @@ l1:
                     If t Is Nothing Then
                         Throw New QueryCmdException("Neither Into clause not specified nor ToAnonymous used", Me)
                     End If
-                    Return mpe.GetObjectSchema(t, False)
+                    Return mpe.GetEntitySchema(t, False)
                 Else
                     Return Nothing
                 End If
@@ -3902,6 +3907,14 @@ l1:
                 End Try
             Else
                 Throw New QueryCmdException("QueryCmd doesn't select entity", Me)
+            End If
+        End Function
+
+        Public Function GetEntitySchema(ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
+            If _pod IsNot Nothing Then
+                Return CType(_pod(t), IEntitySchema)
+            Else
+                Return Nothing
             End If
         End Function
     End Class

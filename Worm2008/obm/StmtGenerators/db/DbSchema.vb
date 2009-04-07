@@ -1706,7 +1706,7 @@ l1:
                         'Next
                         If ns.Values IsNot Nothing Then
                             'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
-                            sb2.Append(ns.Custom.GetParam(mpe, Me, Nothing, almgr, Nothing, Nothing, False))
+                            sb2.Append(ns.Custom.GetParam(mpe, Me, Nothing, almgr, Nothing, Nothing, False, Nothing))
                         Else
                             sb2.Append(ns.CustomSortExpression)
                         End If
@@ -1720,7 +1720,7 @@ l1:
                         End If
 
                         If st IsNot Nothing Then
-                            Dim schema As IEntitySchema = CType(mpe.GetObjectSchema(st, False), IEntitySchema)
+                            Dim schema As IEntitySchema = CType(mpe.GetEntitySchema(st, False), IEntitySchema)
 
                             'If schema Is Nothing Then
                             '    schema = defaultObjectSchema

@@ -5,6 +5,7 @@ Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Public Class Expressions
     Public Enum ExpOperation
@@ -97,8 +98,8 @@ Public Class Expressions
 
         Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
             ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Return FormatOper() & FormatParam(s, stmt, pmgr, almgr, filterInfo, inSelect)
+            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Return FormatOper() & FormatParam(s, stmt, pmgr, almgr, filterInfo, inSelect, executor)
         End Function
 
         Protected Function FormatOper() As String
@@ -124,8 +125,8 @@ Public Class Expressions
 
         Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, _
             ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Dim strCmd As String = _v.GetParam(s, stmt, pmgr, almgr, Nothing, filterInfo, inSelect)
+            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Dim strCmd As String = _v.GetParam(s, stmt, pmgr, almgr, Nothing, filterInfo, inSelect, executor)
             If inSelect AndAlso Not String.IsNullOrEmpty(_alias) Then
                 strCmd &= " " & _alias
             End If
@@ -246,8 +247,8 @@ l1:
 
         Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
             ByVal pmgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
-            Return "(" & _left.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect) & FormatOper() & _right.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect) & ")"
+            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Return "(" & _left.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect, executor) & FormatOper() & _right.MakeStmt(s, stmt, pmgr, almgr, filterInfo, inSelect, executor) & ")"
         End Function
 
         Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String

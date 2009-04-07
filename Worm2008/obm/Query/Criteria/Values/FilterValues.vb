@@ -103,14 +103,14 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             'Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
             'Return String.Format(_f, values.ToArray)
             If _v IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IFilterValue In _v
-                    l.Add(v.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect))
+                    l.Add(v.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor))
                 Next
                 Return String.Format(_f, l.ToArray)
             Else
@@ -186,7 +186,7 @@ Namespace Criteria.Values
             Return _alias
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return [Alias]
         End Function
 
@@ -247,7 +247,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
             'If almgr IsNot Nothing Then
@@ -265,7 +265,7 @@ Namespace Criteria.Values
 
             Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
             Dim sb As New StringBuilder
-            f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
+            f.Format(_p, sb, executor, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, inSelect)
             Return sb.ToString
 
             'If _p.IsCustom Then
@@ -359,7 +359,7 @@ Namespace Criteria.Values
 
         Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IEvaluableValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IEvaluableValue.GetParam
 
             Dim v As Object = _v
             If prepare IsNot Nothing Then
@@ -582,7 +582,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return _pname
         End Function
 
@@ -770,7 +770,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
             Dim sb As New StringBuilder
             Dim idx As Integer
@@ -874,7 +874,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
             If paramMgr Is Nothing Then
                 Throw New ArgumentNullException("paramMgr")
@@ -891,9 +891,9 @@ Namespace Criteria.Values
 
             'Return _l & " and " & _r
 
-            Return left.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect) & _
+            Return left.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor) & _
                 " and " & _
-                right.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect)
+                right.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
         End Function
 
         Public Overrides Function _ToString() As String
@@ -1001,7 +1001,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                       ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                      ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+                      ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -1106,7 +1106,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")

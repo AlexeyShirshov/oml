@@ -121,7 +121,7 @@ Namespace Query.Database
                 'If t Is Nothing Then
                 '    t = SelectedType
                 'End If
-                oschema = dbm.MappingEngine.GetObjectSchema(t, False)
+                oschema = dbm.MappingEngine.GetEntitySchema(t, False)
 
                 'dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.MappingEngine, _q, _sl(0)), oschema, fields)
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
@@ -366,7 +366,7 @@ Namespace Query.Database
                 Dim t As Type = _q.GetSelectedType(MappingEngine)
                 Dim sortex As IOrmSorting2 = Nothing
                 If t IsNot Nothing Then
-                    sortex = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
+                    sortex = TryCast(_mgr.MappingEngine.GetEntitySchema(t, False), IOrmSorting2)
                 End If
 
                 Dim s As Date = Nothing
@@ -619,7 +619,7 @@ Namespace Query.Database
                 Else
                     fields = GetFieldsIdx(_q)
                     If Not GetType(AnonymousEntity).IsAssignableFrom(_q._createType.GetRealType(_mgr.MappingEngine)) Then
-                        oschema = dbm.MappingEngine.GetObjectSchema(_q._createType.GetRealType(_mgr.MappingEngine), False)
+                        oschema = dbm.MappingEngine.GetEntitySchema(_q._createType.GetRealType(_mgr.MappingEngine), False)
                     End If
                 End If
 
