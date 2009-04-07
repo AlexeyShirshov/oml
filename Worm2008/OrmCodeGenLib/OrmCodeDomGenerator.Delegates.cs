@@ -9,7 +9,7 @@ namespace Worm.CodeGen.Core
     {
         public static class Delegates
         {
-            public delegate void UpdateSetValueMethodDelegate(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod);
+            public delegate void UpdateSetValueMethodDelegate(PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod);
             public delegate CodeStatement[] CodePatternUsingStatementsDelegate(CodeExpression usingExpression, params CodeStatement[] statements);
             public delegate CodeExpression CodePatternIsExpressionDelegate(CodeTypeReference typeReference, CodeExpression expression);
             public delegate CodeExpression CodePatternAsExpressionDelegate(CodeTypeReference typeReference, CodeExpression expression);
@@ -143,7 +143,7 @@ namespace Worm.CodeGen.Core
             /// </summary>
             public static class UpdateSetValueMethodDelegates
             {
-                public static void DefaultUpdateSetValueMethod(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
+                public static void DefaultUpdateSetValueMethod(PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
                 {
                     //Type fieldRealType;
                     //fieldRealType = Type.GetType(field.Type.BaseType, false);
@@ -154,6 +154,8 @@ namespace Worm.CodeGen.Core
                             "Equals",
                             new CodeVariableReferenceExpression("fieldName"))
                         );
+
+                	var fieldName = OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyName);
 
                     //setValueStatement.TrueStatements.Add(
                     //    new CodeVariableDeclarationStatement(typeof(IConvertible), "vConv",
@@ -183,8 +185,8 @@ namespace Worm.CodeGen.Core
 									{
 										new CodeAssignStatement(
 											new CodeFieldReferenceExpression(
-												new CodeThisReferenceExpression(), field.Name),
-											new CodeCastExpression(field.Type,
+												new CodeThisReferenceExpression(), fieldName),
+											new CodeCastExpression(propertyDesc.PropertyType,
 											                       new CodeArgumentReferenceExpression(
 											                       	"value")))
 									},
@@ -193,7 +195,7 @@ namespace Worm.CodeGen.Core
 										//System.Threading.Thread.CurrentThread.CurrentCulture
 										new CodeAssignStatement(
 											new CodeFieldReferenceExpression(
-												new CodeThisReferenceExpression(), field.Name),
+												new CodeThisReferenceExpression(), fieldName),
 											new CodeMethodInvokeExpression(
 											new CodeVariableReferenceExpression("iconvVal"),
 											GetIConvertableMethodName(propertyDesc.PropertyType.ClrType.GetGenericArguments()[0]),
@@ -216,17 +218,17 @@ namespace Worm.CodeGen.Core
                         //old: simple cast
                         setValueStatement.TrueStatements.Add(new CodeAssignStatement(
                                                  new CodeFieldReferenceExpression(
-                                                     new CodeThisReferenceExpression(), field.Name),
-                                                 new CodeCastExpression(field.Type,
-                                                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(new CodeTypeReference(typeof(Convert))), "ChangeType", 
-                                                                        new CodeArgumentReferenceExpression("value"), new CodeTypeOfExpression(field.Type)))));
+                                                     new CodeThisReferenceExpression(), fieldName),
+                                                 new CodeCastExpression(propertyDesc.PropertyType,
+                                                     new CodeMethodInvokeExpression(new CodeTypeReferenceExpression(new CodeTypeReference(typeof(Convert))), "ChangeType",
+																		new CodeArgumentReferenceExpression("value"), new CodeTypeOfExpression(propertyDesc.PropertyType)))));
                     }
                     else
                     {
                         setValueStatement.TrueStatements.Add(new CodeAssignStatement(
                                                  new CodeFieldReferenceExpression(
-                                                     new CodeThisReferenceExpression(), field.Name),
-                                                 new CodeCastExpression(field.Type, new CodeArgumentReferenceExpression("value"))));
+                                                     new CodeThisReferenceExpression(), fieldName),
+                                                 new CodeCastExpression(propertyDesc.PropertyType, new CodeArgumentReferenceExpression("value"))));
                     }
                     setValueStatement.TrueStatements.Add(new CodeMethodReturnStatement());
                     setvalueMethod.Statements.Add(setValueStatement);
@@ -237,8 +239,9 @@ namespace Worm.CodeGen.Core
                     return "To" + type.Name;
                 }
 
-                public static void EnumPervUpdateSetValueMethod(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
+                public static void EnumPervUpdateSetValueMethod(PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
                 {
+                	var fieldName = OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.PropertyName);
                     if (propertyDesc.PropertyType.IsEnum)
                     {
                         var setValueStatement = new CodeConditionStatement(
@@ -261,7 +264,7 @@ namespace Worm.CodeGen.Core
                                 {
                                     new CodeAssignStatement(
                                                          new CodeFieldReferenceExpression(
-                                                             new CodeThisReferenceExpression(), field.Name),
+                                                             new CodeThisReferenceExpression(), fieldName),
                                                          new CodePrimitiveExpression(null))
                                 },
                                     new CodeStatement[]
@@ -271,7 +274,7 @@ namespace Worm.CodeGen.Core
                                         "t",
                                         new CodeArrayIndexerExpression(
                                                                 new CodeMethodInvokeExpression(
-                                                                    new CodeTypeOfExpression(field.Type),
+                                                                    new CodeTypeOfExpression(propertyDesc.PropertyType),
                                                                     "GetGenericArguments"
                                                                 ),
                                                                 new CodePrimitiveExpression(0)
@@ -279,9 +282,9 @@ namespace Worm.CodeGen.Core
                                     ),
                                     new CodeAssignStatement(
                                                          new CodeFieldReferenceExpression(
-                                                             new CodeThisReferenceExpression(), field.Name),
+                                                             new CodeThisReferenceExpression(), fieldName),
                                                          new CodeCastExpression(
-                                                         field.Type,
+                                                         propertyDesc.PropertyType,
                                                          new CodeMethodInvokeExpression(
                                                             new CodeTypeReferenceExpression(typeof(Enum)),
                                                             "ToObject",
@@ -301,14 +304,14 @@ namespace Worm.CodeGen.Core
                         {
                             setValueStatement.TrueStatements.Add(new CodeAssignStatement(
                                                                  new CodeFieldReferenceExpression(
-                                                                     new CodeThisReferenceExpression(), field.Name),
+                                                                     new CodeThisReferenceExpression(), fieldName),
                                                                  new CodeCastExpression(
-                                                                 field.Type,
+																 propertyDesc.PropertyType,
                                                                  new CodeMethodInvokeExpression(
                                                                     new CodeTypeReferenceExpression(typeof(Enum)),
                                                                     "ToObject",
                                 // typeof(Nullable<int>).GetGenericArguments()[0]
-                                                                    new CodeTypeOfExpression(field.Type),
+																	new CodeTypeOfExpression(propertyDesc.PropertyType),
                                                                     new CodeArgumentReferenceExpression(
                                                                                             "value")
                                             ))));
@@ -318,7 +321,7 @@ namespace Worm.CodeGen.Core
                     }
                     else
                     {
-                        DefaultUpdateSetValueMethod(field, propertyDesc, setvalueMethod);
+                        DefaultUpdateSetValueMethod(propertyDesc, setvalueMethod);
                     }
                 }
             }

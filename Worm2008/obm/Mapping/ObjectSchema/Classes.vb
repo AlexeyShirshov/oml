@@ -36,23 +36,23 @@ Namespace Entities.Meta
 
     Public Class MapField2Column
         Public ReadOnly _propertyAlias As String
-        Public ReadOnly _columnName As String
-        Public ReadOnly _tableName As SourceFragment
+        Public ReadOnly Column As String
         Public ReadOnly DBType As DBType
         Public ReadOnly _newattributes As Field2DbRelations
+        Private _tbl As SourceFragment
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment)
             _propertyAlias = propertyAlias
-            _columnName = columnName
-            _tableName = tableName
+            Column = columnName
+            Table = tableName
             _newattributes = Field2DbRelations.None
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
             _propertyAlias = propertyAlias
-            _columnName = columnName
-            _tableName = tableName
+            Column = columnName
+            Table = tableName
             _newattributes = newAttributes
         End Sub
 
@@ -93,6 +93,15 @@ Namespace Entities.Meta
                 Return _newattributes
             End If
         End Function
+
+        Public Property Table() As SourceFragment
+            Get
+                Return _tbl
+            End Get
+            Protected Friend Set(ByVal value As SourceFragment)
+                _tbl = value
+            End Set
+        End Property
     End Class
 
     Public Class RelationDesc

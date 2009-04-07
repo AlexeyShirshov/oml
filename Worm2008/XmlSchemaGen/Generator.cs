@@ -376,7 +376,7 @@ namespace Worm.CodeGen.XmlGenerator
                         if (targets[0].Entity.Name == targets[1].Entity.Name)
                         {
                             LinkTarget t = targets[0];
-                            SelfRelationDescription newRel = new SelfRelationDescription(t.Entity, targets[0], targets[1], GetTable(odef, p.First, p.Second), ued);
+                            SelfRelationDescription newRel = new SelfRelationDescription(t.Entity, targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second), ued);
                             if (odef.GetSimilarRelation(newRel) == null)
                             {
                                 odef.Relations.Add(newRel);
@@ -384,7 +384,7 @@ namespace Worm.CodeGen.XmlGenerator
                         }
                         else
                         {
-                            RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetTable(odef, p.First, p.Second), ued);
+                            RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second), ued);
                             if (odef.GetSimilarRelation(newRel) == null)
                             {
                                 odef.Relations.Add(newRel);
@@ -487,6 +487,9 @@ namespace Worm.CodeGen.XmlGenerator
 					EntityDescription ed = td.Entity;
 					string[] ss = p.First.Split('.');
 					AppendColumns(columns, ed, ss[0], ss[1], p.Second);
+					var t = GetSourceFragment(odef, ss[0], ss[1]);
+					if (!ed.SourceFragments.Contains(t))
+						ed.SourceFragments.Add(t);
                     SourceFragmentDescription t = GetTable(odef, ss[0], ss[1]);
 					if (!ed.SourceFragments.Contains(t))
                         ed.SourceFragments.Add(t);
@@ -494,10 +497,11 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
+		private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table)
         private static SourceFragmentDescription GetTable(OrmObjectsDef odef, string schema, string table)
 		{
 			string id = "tbl" + schema + table;
-            SourceFragmentDescription t = odef.GetSourceFragment(id);
+			var t = odef.GetSourceFragment(id);
 			if (t == null)
 			{
                 t = new SourceFragmentDescription(id, table, schema);
@@ -531,7 +535,7 @@ namespace Worm.CodeGen.XmlGenerator
 
 					DbParameter rt = cmd.CreateParameter();
 					rt.ParameterName = "rtbl";
-                    rt.Value = ed.SourceFragments[0].Name.Split('.')[1].Trim(new char[] { '[', ']' });
+					rt.Value = ed.SourceFragments[0].Name.Split('.')[1].Trim(new char[] { '[', ']' });
 					cmd.Parameters.Add(rt);
 
 					DbParameter cns = cmd.CreateParameter();
@@ -710,8 +714,8 @@ namespace Worm.CodeGen.XmlGenerator
 			if (e == null)
 			{
 				e = new EntityDescription(ename, Capitalize(tableName),"", null, odef);
-                SourceFragmentDescription t = GetTable(odef, schema, tableName);
-                e.SourceFragments.Add(t);
+				var t = GetSourceFragment(odef, schema, tableName);
+				e.SourceFragments.Add(t);
 				odef.Entities.Add(e);
                 created = true;
 			}

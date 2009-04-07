@@ -427,11 +427,13 @@ Namespace Collections
                         Return _coll.Item(index)
                     Else
                         Using enumerator1 As IEnumerator(Of TItem) = GetEnumerator()
+                            Dim i As Integer = 0
                             Do While enumerator1.MoveNext
                                 Dim c As TItem = enumerator1.Current
-                                If c.Equals(Item) Then
+                                If i = index Then
                                     Return c
                                 End If
+                                i += 1
                             Loop
                         End Using
                     End If

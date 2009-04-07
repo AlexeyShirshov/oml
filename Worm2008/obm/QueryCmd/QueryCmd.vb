@@ -15,7 +15,7 @@ Namespace Query
 
     '<Serializable()> _
     Public Class QueryCmd
-        Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
+        Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement, IExecutionContext
 
 #Region " Classes "
 
@@ -258,7 +258,7 @@ Namespace Query
         Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
-        Private _pod As Pair(Of Type, IEntitySchema)
+        Private _pod As IDictionary
         Friend _createType As EntityUnion
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
@@ -536,7 +536,7 @@ Namespace Query
 
                             Dim col As ICollection(Of SelectExpression) = GetSelectList(de.Key)
                             If col.Count > 0 Then
-                                If _autoFields Then
+                                If _autoFields AndAlso (_types.Count > 1 OrElse _createType Is Nothing OrElse t Is _createType.GetRealType(schema)) Then
                                     For Each dice As DictionaryEntry In dic
                                         Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
                                         If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -720,11 +720,11 @@ l1:
                             Next
                         End If
                     Else
+                        Dim s As IEntitySchema = GetSchemaForSelectType(schema)
                         If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
-                            Dim s As IEntitySchema = GetSchemaForSelectType(schema)
                             If s IsNot Nothing Then
                                 For Each m As MapField2Column In s.GetFieldColumnMap
-                                    Dim se As New SelectExpression(m._tableName, m._columnName)
+                                    Dim se As New SelectExpression(m.Table, m.Column)
                                     se.Attributes = m._newattributes
                                     se.PropertyAlias = m._propertyAlias
                                     _sl.Add(se)
@@ -732,6 +732,8 @@ l1:
                                 'Else
                                 '    Throw New NotSupportedException
                             End If
+                        ElseIf _from Is Nothing AndAlso s IsNot Nothing Then
+                            _from = New FromClauseDef(s.Table)
                         End If
                     End If
                 End If
@@ -1055,9 +1057,9 @@ l1:
                 Next
             End If
 
-            If _pod IsNot Nothing Then
-                sb2.Append(_pod.First.ToString).Append("$")
-            End If
+            'If _pod IsNot Nothing Then
+            '    sb2.Append(_pod.First.ToString).Append("$")
+            'End If
 
             If _from IsNot Nothing Then
                 If _from.Table IsNot Nothing Then
@@ -2216,7 +2218,7 @@ l1:
 
         Public Function ToMatrix() As ReadonlyMatrix
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
             Return ToMatrix(_getMgr)
         End Function
@@ -2263,7 +2265,7 @@ l1:
 
         Public Function ToList() As IList
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToList(_getMgr)
@@ -2283,7 +2285,7 @@ l1:
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)() As ReadOnlyEntityList(Of ReturnType)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToList(Of CreateType, ReturnType)(_getMgr)
@@ -2303,7 +2305,7 @@ l1:
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})() As ReadOnlyEntityList(Of CreateReturnType)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToList(Of CreateReturnType)(_getMgr)
@@ -2330,7 +2332,7 @@ l1:
 
         Public Function ToAnonymList() As ReadOnlyObjectList(Of AnonymousEntity)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToAnonymList(_getMgr)
@@ -2371,7 +2373,7 @@ l1:
 
         Public Function ToEntityList(Of T As _ICachedEntity)() As ReadOnlyEntityList(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToEntityList(Of T)(_getMgr)
@@ -2404,7 +2406,7 @@ l1:
 
         Public Function ToOrmListDyn(Of T As _IKeyEntity)() As ReadOnlyList(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToOrmListDyn(Of T)(_getMgr)
@@ -2460,7 +2462,7 @@ l1:
 
         Public Function ToSimpleList(Of T)() As IList(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToSimpleList(Of T)(_getMgr)
@@ -2488,7 +2490,7 @@ l1:
 
         'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)() As IList(Of T)
         '    If _getMgr Is Nothing Then
-        '        Throw New InvalidOperationException("OrmManager required")
+        '        Throw New QueryCmdException("OrmManager required", me)
         '    End If
 
         '    Return ToSimpleList(Of CreateType, T)(_getMgr)
@@ -2533,7 +2535,7 @@ l1:
 
         Public Function Count() As Integer
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return Count(_getMgr)
@@ -2567,7 +2569,7 @@ l1:
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)() As IDictionary(Of TKey, IList(Of TValue))
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToDictionary(Of TKey, TValue)(_getMgr)
@@ -2602,7 +2604,7 @@ l1:
 
         Public Function ToSimpleDictionary(Of TKey, TValue)() As IDictionary(Of TKey, IList(Of TValue))
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToSimpleDictionary(Of TKey, TValue)(_getMgr)
@@ -2618,7 +2620,7 @@ l1:
 
         Public Function ToObjectList(Of T As _IEntity)() As ReadOnlyObjectList(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return ToObjectList(Of T)(_getMgr)
@@ -2644,7 +2646,7 @@ l1:
 
         Public Function ToPODList(Of T As {New, Class})() As IList(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
@@ -2659,14 +2661,15 @@ l1:
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
-            _pod = New Pair(Of Type, IEntitySchema)(rt, GetSchema(mpe, rt, hasPK))
+            Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
+
+            _pod = Hashtable.Synchronized(New Hashtable)
+            _pod.Add(rt, selSchema)
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
 
-            'Dim c As New QueryCmd.svct(Me)
-            'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-            'Into(rt)
+            'Using New ObjectMappingEngine.CustomTypes(mpe, GetCustomTypes)
             If hasPK Then
                 l = ToObjectList(Of AnonymousCachedEntity)(mgr)
             Else
@@ -2674,7 +2677,7 @@ l1:
             End If
             'End Using
 
-            Dim props As IDictionary = mpe.GetProperties(rt, _pod.Second)
+            Dim props As IDictionary = mpe.GetProperties(rt, selSchema)
             For Each e As _IEntity In l
                 Dim ro As New T
                 For Each kv As DictionaryEntry In props
@@ -3128,14 +3131,27 @@ l1:
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
             If SelectList Is Nothing Then
+                Dim tbl As SourceFragment = ObjectMappingEngine.GetTable(mpe, t)
+
                 Dim selList As New OrmObjectIndex
                 For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
                     Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                    selList.Add(New MapField2Column(c.PropertyAlias, c.Column, Nothing))
+                    selList.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl))
                 Next
                 Return New SimpleObjectSchema(selList)
             Else
-                Return New SimpleObjectSchema(SelectExpression.GetMapping(SelectList))
+                Dim cols As Collections.IndexedCollection(Of String, MapField2Column) = SelectExpression.GetMapping(SelectList)
+                Dim tbl As SourceFragment = Nothing, hasTable As Boolean = False
+                For Each c As MapField2Column In cols
+                    If c.Table Is Nothing Then
+                        If Not hasTable Then
+                            tbl = ObjectMappingEngine.GetTable(mpe, t)
+                            hasTable = True
+                        End If
+                        c.Table = tbl
+                    End If
+                Next
+                Return New SimpleObjectSchema(cols)
             End If
         End Function
 
@@ -3151,7 +3167,10 @@ l1:
                     Return Nothing
                 End If
             Else
-                Return _pod.Second
+                For Each de As DictionaryEntry In _pod
+                    Return CType(de.Value, IEntitySchema)
+                Next
+                Throw New QueryCmdException("impossible", Me)
             End If
         End Function
 
@@ -3171,7 +3190,7 @@ l1:
 
         Public Sub ClearCache()
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
             Using mgr As OrmManager = CreateManager.CreateManager
                 GetExecutor(mgr).ClearCache(mgr, Me)
@@ -3180,7 +3199,7 @@ l1:
 
         Public Sub RenewCache(ByVal v As Boolean)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Using mgr As OrmManager = CreateManager.CreateManager
@@ -3191,7 +3210,7 @@ l1:
         Public ReadOnly Property IsInCache() As Boolean
             Get
                 If _getMgr Is Nothing Then
-                    Throw New InvalidOperationException("OrmManager required")
+                    Throw New QueryCmdException("OrmManager required", Me)
                 End If
 
                 Using mgr As OrmManager = CreateManager.CreateManager
@@ -3202,7 +3221,7 @@ l1:
 
         Public Sub ResetObjects()
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             ResetObjects(_getMgr)
@@ -3668,7 +3687,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal level As Integer) As DicIndexT(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return BuildDictionary(Of T)(_getMgr, level)
@@ -3684,7 +3703,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return BuildDictionary(Of T)(_getMgr, propertyAlias, level)
@@ -3692,7 +3711,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
+                Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Return BuildDictionary(Of T)(_getMgr, propertyAlias, secondPropertyAlias, level)
@@ -3768,13 +3787,24 @@ l1:
                     srt = _order
                 End If
 
+                Dim so As EntityUnion = GetSelectedOS()
+
                 If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                     tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
                 ElseIf _from Is Nothing Then
-                    _from = New FromClauseDef(tt)
+                    If so IsNot Nothing Then
+                        _from = New FromClauseDef(GetSelectedOS)
+                    Else
+                        _from = New FromClauseDef(tt)
+                    End If
                 End If
 
-                Dim s As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias))
+                Dim s As SelectExpression = Nothing
+                If so IsNot Nothing Then
+                    s = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(so, propertyAlias))
+                Else
+                    s = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias))
+                End If
 
                 Try
                     [Select](FCtor.Exp(s).count("Count")) _

@@ -92,8 +92,122 @@ Namespace Database
                             sb.Append(" desc")
                         End If
                     Case Else
-                        _s.AppendOrder(schema, s, almgr, sb, True, selList, defaultTable, defaultObjectSchema)
-                        'Throw New NotSupportedException(se.PropType.ToString)
+                        '_s.AppendOrder(schema, s, almgr, sb, True, selList, defaultTable, defaultObjectSchema)
+                        If s IsNot Nothing AndAlso Not s.IsExternal Then 'AndAlso Not sort.IsAny
+                            'If appendOrder Then
+                            sb.Append(" order by ")
+                            'End If
+                            Dim pos As Integer = sb.Length
+                            For Each ns As Sort In New Sort.Iterator(s)
+                                If ns.IsExternal Then
+                                    Throw New ObjectMappingException("External sort must be alone")
+                                End If
+
+                                'If ns.IsAny Then
+                                '    Throw New DBSchemaException("Any sort must be alone")
+                                'End If
+
+                                'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
+                                'If s Is Nothing Then
+
+                                'End If
+                                'Dim sort_field As String = schema.MapSort2FieldName(sort)
+                                'If String.IsNullOrEmpty(sort_field) Then
+                                '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
+                                'End If
+
+                                Dim sb2 As New StringBuilder
+                                If ns.IsCustom Then
+                                    'Dim s As String = ns.CustomSortExpression
+                                    'For Each map In cm
+                                    '    Dim pos2 As Integer = s.IndexOf("{" & map._fieldName & "}", StringComparison.InvariantCultureIgnoreCase)
+                                    '    If pos2 <> -1 Then
+                                    '        s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
+                                    '    End If
+                                    'Next
+                                    If ns.Values IsNot Nothing Then
+                                        'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
+                                        sb2.Append(ns.Custom.GetParam(schema, _s, Nothing, almgr, Nothing, Nothing, False))
+                                    Else
+                                        sb2.Append(ns.CustomSortExpression)
+                                    End If
+                                    If ns.Order = SortType.Desc Then
+                                        sb2.Append(" desc")
+                                    End If
+                                Else
+                                    Dim st As Type = Nothing
+                                    If ns.ObjectSource IsNot Nothing Then
+                                        st = ns.ObjectSource.GetRealType(schema)
+                                    End If
+
+                                    If st IsNot Nothing Then
+                                        Dim oschema As IEntitySchema = CType(schema.GetObjectSchema(st, False), IEntitySchema)
+
+                                        'If schema Is Nothing Then
+                                        '    schema = defaultObjectSchema
+                                        'End If
+
+                                        If schema Is Nothing Then
+                                            Throw New SQLGeneratorException(String.Format("Object schema for field {0} of type {1} is not defined", ns.SortBy, st))
+                                        End If
+
+                                        Dim map As MapField2Column = Nothing
+                                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
+
+                                        If cm.TryGetValue(ns.SortBy, map) Then
+                                            Dim t As SourceFragment = map.Table
+                                            'If t Is Nothing Then
+                                            '    t = defaultTable
+                                            'End If
+                                            If t Is Nothing Then
+                                                Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
+                                            End If
+
+                                            sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(_s.Selector).Append(map.Column)
+                                            If ns.Order = SortType.Desc Then
+                                                sb2.Append(" desc")
+                                            End If
+                                        Else
+                                            Throw New SQLGeneratorException(String.Format("Field {0} of type {1} is not defined", ns.SortBy, st))
+                                        End If
+                                    Else
+l1:
+                                        Dim clm As String = ns.SortBy
+                                        Dim tbl As SourceFragment = ns.Table
+                                        If selList IsNot Nothing Then
+                                            For Each p As Entities.SelectExpression In selList
+                                                If p.PropertyAlias = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
+                                                    If p.Table Is Nothing AndAlso tbl Is Nothing Then
+                                                        clm = p.Column
+                                                        'tbl = defaultTable
+                                                        Exit For
+                                                        'ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
+                                                        '    clm = p.Column
+                                                        '    tbl = defaultTable
+                                                        '    Exit For
+                                                    ElseIf tbl IsNot Nothing AndAlso p.Table.RawName = tbl.RawName Then
+                                                        clm = p.Column
+                                                        Exit For
+                                                    End If
+                                                End If
+                                            Next
+                                            'ElseIf tbl Is Nothing Then
+                                            '    tbl = defaultTable
+                                        End If
+
+                                        sb2.Append(almgr.GetAlias(tbl, Nothing)).Append(_s.Selector).Append(clm)
+                                        If ns.Order = SortType.Desc Then
+                                            sb2.Append(" desc")
+                                        End If
+                                    End If
+
+                                End If
+                                sb2.Append(",")
+                                sb.Insert(pos, sb2.ToString)
+
+                            Next
+                            sb.Length -= 1
+                        End If
                 End Select
             Else
                 Select Case se.PropType
@@ -141,7 +255,7 @@ Namespace Database
                                     End If
                                     al = tbl.UniqueName(se.ObjectSource)
                                 Else
-                                    al = map._tableName.UniqueName(se.ObjectSource)
+                                    al = map.Table.UniqueName(se.ObjectSource)
                                 End If
                                 Dim col As String = schema.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
                                 sb.Append(al).Append(schema.Delimiter).Append(col)
@@ -159,14 +273,14 @@ Namespace Database
                                     al = almgr.GetAlias(tbl, se.ObjectSource)
                                 Else
                                     If cm.TryGetValue(se.PropertyAlias, map) Then
-                                        al = almgr.GetAlias(map._tableName, se.ObjectSource)
+                                        al = almgr.GetAlias(map.Table, se.ObjectSource)
                                     Else
                                         Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", se.PropertyAlias, se.ObjectSource.ToStaticString(schema, context)))
                                     End If
                                 End If
 
-                                sb.Append(al).Append(_s.Selector).Append(map._columnName)
-                                If cols IsNot Nothing Then cols.Append(map._columnName)
+                                sb.Append(al).Append(_s.Selector).Append(map.Column)
+                                If cols IsNot Nothing Then cols.Append(map.Column)
                             End If
                         Else
                             Dim tbl As SourceFragment = Query.QueryCmd.InnerTbl

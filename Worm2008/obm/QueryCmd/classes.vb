@@ -79,6 +79,10 @@ Namespace Query
         Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
     End Interface
 
+    Public Interface IExecutionContext
+
+    End Interface
+
     <Serializable()> _
     Public Class Top
         Private _perc As Boolean

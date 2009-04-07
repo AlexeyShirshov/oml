@@ -152,7 +152,7 @@ Namespace Criteria.Core
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
         Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, _
-            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+             ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
             'If _oschema Is Nothing Then
             '    _oschema = oschema
             'End If
@@ -181,14 +181,14 @@ Namespace Criteria.Core
 
                 If almgr IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    Dim tbl As SourceFragment = map._tableName
+                    Dim tbl As SourceFragment = map.Table
                     If Template.ObjectSource.IsQuery Then
                         tbl = Template.ObjectSource.ObjectAlias.Tbl
                     End If
                     Try
                         [alias] = almgr.GetAlias(tbl, Template.ObjectSource) & stmt.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
+                        Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
                     End Try
                 End If
 
@@ -197,7 +197,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, filterInfo, pname, almgr, False, oschema)
+                Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, filterInfo, pname, almgr, False, oschema)
             Else
                 Return String.Empty
             End If
@@ -240,7 +240,7 @@ Namespace Criteria.Core
                 End If
             End If
 
-            Return New Pair(Of String)(map._columnName, prname)
+            Return New Pair(Of String)(map.Column, prname)
         End Function
 
         Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
@@ -282,7 +282,7 @@ Namespace Criteria.Core
             Return New EntityFilter(val, CType(Template, OrmFilterTemplate))
         End Function
 
-        Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+        Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -291,17 +291,9 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("stmt")
             End If
 
-            Dim oschema As IEntitySchema = Nothing
-            If oschema Is Nothing Then
-                'If Template.Type Is Nothing AndAlso Not String.IsNullOrEmpty(Template.EntityName) Then
-                '    _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.EntityName))
-                'Else
-                '    _oschema = schema.GetObjectSchema(Template.Type)
-                'End If
-                oschema = schema.GetEntitySchema(Template.ObjectSource.GetRealType(schema))
-            End If
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(Template.ObjectSource.GetRealType(schema))
 
-            Return MakeQueryStmt(oschema, stmt, filterInfo, schema, almgr, pname)
+            Return MakeQueryStmt(oschema, stmt, executor, filterInfo, schema, almgr, pname)
         End Function
     End Class
 
@@ -346,7 +338,7 @@ Namespace Criteria.Core
         '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, Nothing)
         'End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
             If Value.ShouldUse Then
@@ -363,15 +355,15 @@ Namespace Criteria.Core
                     Dim [alias] As String = String.Empty
 
                     If almgr IsNot Nothing Then
-                        Debug.Assert(almgr.ContainsKey(map._tableName, _eu), "There is not alias for table " & map._tableName.RawName)
+                        Debug.Assert(almgr.ContainsKey(map.Table, _eu), "There is not alias for table " & map.Table.RawName)
                         Try
-                            [alias] = almgr.GetAlias(map._tableName, _eu) & stmt.Selector
+                            [alias] = almgr.GetAlias(map.Table, _eu) & stmt.Selector
                         Catch ex As KeyNotFoundException
-                            Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
+                            Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
                         End Try
                     End If
 
-                    Return [alias] & map._columnName & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
+                    Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo)
                 End If
             Else
                 Return String.Empty
@@ -540,7 +532,7 @@ Namespace Criteria.Core
             Return New CustomFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
@@ -644,7 +636,7 @@ Namespace Criteria.Core
             Return New ExpressionFilter(Left, Right, Operation)
         End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
             Return Left.MakeStmt(schema, stmt, pname, almgr, filterInfo, False) & stmt.Oper2String(Operation) & Right.MakeStmt(schema, stmt, pname, almgr, filterInfo, False)
         End Function
 
@@ -754,7 +746,7 @@ Namespace Criteria.Core
             Return New NonTemplateUnaryFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
             'Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
             'If id IsNot Nothing Then
@@ -822,7 +814,7 @@ Namespace Criteria.Core
             Return New IFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
 
             Return _agg.MakeStmt(schema, stmt, pname, almgr, filterInfo, False) & stmt.Oper2String(_fo) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)
@@ -887,7 +879,7 @@ Namespace Criteria.Core
             Return New IFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
 
             Return "(" & stmt.MakeQueryStatement(schema, filterInfo, _cmd, pname, almgr) & ")" & stmt.Oper2String(_fo) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False)

@@ -126,7 +126,7 @@ namespace TestsCodeGenLib
         }
 
         [TestMethod]
-        [ExpectedException(typeof(OrmCodeGenException))]
+        //[ExpectedException(typeof(OrmCodeGenException))]
         public void TestCSCodeM2MCheck2()
         {
             using (Stream stream = Resources.GetXmlDocumentStream("m2mCheck2"))

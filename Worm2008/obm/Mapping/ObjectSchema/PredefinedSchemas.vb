@@ -13,9 +13,10 @@ Namespace Entities.Meta
 
         Friend Sub New(ByVal cols As Collections.IndexedCollection(Of String, MapField2Column))
             _cols = cols
+            _table = _cols(0).Table
         End Sub
 
-        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of EntityPropertyAttribute), ByVal pk As String)
+        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal schema As String, ByVal cols As ICollection(Of EntityPropertyAttribute), ByVal pk As String)
             'If String.IsNullOrEmpty(pk) Then
             '    Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
             'End If
@@ -30,7 +31,7 @@ Namespace Entities.Meta
             If String.IsNullOrEmpty(table) Then
                 Throw New ArgumentNullException("table")
             Else
-                _table = New SourceFragment(table)
+                _table = New SourceFragment(schema, table)
             End If
 
             For Each c As EntityPropertyAttribute In cols

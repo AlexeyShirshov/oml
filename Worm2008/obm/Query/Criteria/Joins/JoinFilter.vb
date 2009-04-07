@@ -422,7 +422,7 @@ Namespace Criteria.Joins
         '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
         'End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
             Dim [alias] As String = String.Empty
@@ -436,7 +436,7 @@ Namespace Criteria.Joins
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
                         map = oschema.GetFieldColumnMap(f)
-                        map = New MapField2Column(Nothing, map._columnName, _l.Property.Entity.ObjectAlias.Tbl)
+                        map = New MapField2Column(Nothing, map.Column, _l.Property.Entity.ObjectAlias.Tbl)
                     Else
                         map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
                     End If
@@ -444,11 +444,11 @@ Namespace Criteria.Joins
                 ElseIf _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     map = oschema.GetFieldColumnMap(f)
-                    If _l.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _l.Property.Entity) Then
+                    If _l.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _l.Property.Entity) Then
                         os = _l.Property.Entity
-                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu) Then
+                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _eu) Then
                         os = _eu
-                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _eu2) Then
+                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _eu2) Then
                         os = _eu2
                     Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
                         os = _l.Property.Entity
@@ -458,13 +458,13 @@ Namespace Criteria.Joins
                     map = oschema.GetFieldColumnMap(f)
                     os = If(_eu IsNot Nothing, _eu, _l.Property.Entity)
                 End If
-                    'ElseIf _d1 IsNot Nothing Then
-                    '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
+                'ElseIf _d1 IsNot Nothing Then
+                '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
                 map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
-                If almgr.ContainsKey(map._tableName, _eu) Then
+                If almgr.ContainsKey(map.Table, _eu) Then
                     os = _eu
-                ElseIf almgr.ContainsKey(map._tableName, _eu2) Then
+                ElseIf almgr.ContainsKey(map.Table, _eu2) Then
                     os = _eu2
                 End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
@@ -481,7 +481,7 @@ Namespace Criteria.Joins
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
                         map2 = oschema.GetFieldColumnMap(f)
-                        map2 = New MapField2Column(Nothing, map2._columnName, _r.Property.Entity.ObjectAlias.Tbl)
+                        map2 = New MapField2Column(Nothing, map2.Column, _r.Property.Entity.ObjectAlias.Tbl)
                     Else
                         map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
                     End If
@@ -489,11 +489,11 @@ Namespace Criteria.Joins
                 ElseIf _r.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     map2 = oschema.GetFieldColumnMap(f)
-                    If _r.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map._tableName, _r.Property.Entity) Then
+                    If _r.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _r.Property.Entity) Then
                         os2 = _r.Property.Entity
-                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu) Then
+                    ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map2.Table, _eu) Then
                         os2 = _eu
-                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map2._tableName, _eu2) Then
+                    ElseIf _eu2 IsNot Nothing AndAlso almgr.ContainsKey(map2.Table, _eu2) Then
                         os2 = _eu2
                     Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
                         os2 = _r.Property.Entity
@@ -507,9 +507,9 @@ Namespace Criteria.Joins
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then
                 map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
-                If almgr.ContainsKey(map2._tableName, _eu) Then
+                If almgr.ContainsKey(map2.Table, _eu) Then
                     os2 = _eu
-                ElseIf almgr.ContainsKey(map2._tableName, _eu2) Then
+                ElseIf almgr.ContainsKey(map2.Table, _eu2) Then
                     os2 = _eu2
                 End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
@@ -519,32 +519,32 @@ Namespace Criteria.Joins
             End If
 
             If String.IsNullOrEmpty([alias]) AndAlso almgr IsNot Nothing Then
-                Debug.Assert(almgr.ContainsKey(map._tableName, os), "There is not alias for table " & map._tableName.RawName)
+                Debug.Assert(almgr.ContainsKey(map.Table, os), "There is not alias for table " & map.Table.RawName)
                 Try
-                    [alias] = almgr.GetAlias(map._tableName, os) & stmt.Selector
+                    [alias] = almgr.GetAlias(map.Table, os) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
+                    Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
                 End Try
             End If
 
 
             If String.IsNullOrEmpty(alias2) AndAlso almgr IsNot Nothing Then
-                Debug.Assert(almgr.ContainsKey(map2._tableName, os2), "There is not alias for table " & map2._tableName.RawName)
+                Debug.Assert(almgr.ContainsKey(map2.Table, os2), "There is not alias for table " & map2.Table.RawName)
                 Try
-                    alias2 = almgr.GetAlias(map2._tableName, os2) & stmt.Selector
+                    alias2 = almgr.GetAlias(map2.Table, os2) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & map2._tableName.RawName, ex)
+                    Throw New ObjectMappingException("There is not alias for table " & map2.Table.RawName, ex)
                 End Try
             End If
 
             Dim lp As String = [alias]
             If map IsNot Nothing Then
-                lp &= map._columnName
+                lp &= map.Column
             End If
 
             Dim rp As String = alias2
             If map2 IsNot Nothing Then
-                rp &= map2._columnName
+                rp &= map2.Column
             End If
 
             Return lp & stmt.Oper2String(_oper) & rp
