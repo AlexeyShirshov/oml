@@ -80,7 +80,7 @@ Namespace Query
     End Interface
 
     Public Interface IExecutionContext
-        Function GetEntitySchema(ByVal t As Type) As IEntitySchema
+        Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
     End Interface
 
     <Serializable()> _

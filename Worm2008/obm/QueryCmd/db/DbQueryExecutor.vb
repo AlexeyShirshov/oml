@@ -947,10 +947,11 @@ l1:
                         '    t = s.GetTypeByEntityName(join.EntityName)
                         'End If
 
-                        Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
-                        If oschema Is Nothing Then
-                            oschema = query.GetEntitySchema(t)
-                        End If
+                        'Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+                        'If oschema Is Nothing Then
+                        '    oschema = query.GetEntitySchema(t)
+                        'End If
+                        Dim oschema As IEntitySchema = query.GetEntitySchema(mpe, t)
 
                         Dim needAppend As Boolean = True
                         Dim cond As IFilter = join.Condition
@@ -1058,21 +1059,21 @@ l1:
                                 FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
                                                Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, query, filterInfo, almgr, params), predi)
                             Else
-                                Throw New NotImplementedException
-                                'sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
+                                'Throw New NotImplementedException
+                                sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
 
-                                ''Dim al As EntityAlias = join.ObjectSource.ObjectAlias
-                                ''Dim q As QueryCmd = al.Query
-                                ''sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
-
-                                'Dim tbl As New SourceFragment
+                                Dim q As QueryCmd = New QueryCmd().Select(join.ObjectSource, True)
+                                q.Prepare(Nothing, mpe, filterInfo, s, False)
+                                Dim tbl As New SourceFragment
                                 'join.TmpTable = tbl
 
-                                'Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
+                                Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
 
-                                'sb.Append(") as ").Append(als).Append(" on ")
-                                'sb.Append(join.Condition.MakeQueryStmt(mpe, s, filterInfo, almgr, params))
-                                'almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
+                                sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
+
+                                sb.Append(") as ").Append(als).Append(" on ")
+                                sb.Append(join.Condition.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
+                                almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
                             End If
                         End If
 
@@ -1294,10 +1295,11 @@ l1:
             Dim selType As Type = query.GetSelectedType(mpe)
 
             If selType IsNot Nothing Then
-                os = mpe.GetEntitySchema(selType, False)
-                If os Is Nothing Then
-                    os = query.GetEntitySchema(selType)
-                End If
+                'os = mpe.GetEntitySchema(selType, False)
+                'If os Is Nothing Then
+                '    os = query.GetEntitySchema(selType)
+                'End If
+                os = query.GetEntitySchema(mpe, selType)
             End If
 
             Dim defaultTbl As SourceFragment = Nothing

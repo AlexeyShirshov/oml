@@ -677,6 +677,17 @@ Namespace Collections
                 Throw New IndexedCollectionException("Invalid state. Boths not nulls.")
             End If
         End Sub
+
+        Public Sub CopyTo(ByVal col As IndexedCollection(Of TItemKey, TItem))
+            For Each i As TItem In Me
+                Dim cln As ICloneable = TryCast(i, ICloneable)
+                Dim ci As TItem = i
+                If cln IsNot Nothing Then
+                    ci = CType(cln.Clone, TItem)
+                End If
+                col.Add(ci)
+            Next
+        End Sub
     End Class
 
 End Namespace
