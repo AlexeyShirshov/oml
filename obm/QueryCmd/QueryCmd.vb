@@ -730,10 +730,9 @@ l1:
                             Next
                             'Else
                             '    Throw New NotSupportedException
+                        ElseIf _from Is Nothing AndAlso s IsNot Nothing Then
+                            _from = New FromClauseDef(s.Table)
                         End If
-                        'ElseIf _from Is Nothing AndAlso s IsNot Nothing Then
-                        '    _from = New FromClauseDef(s.Table)
-                        'End If
                         'If GetType(AnonymousEntity).IsAssignableFrom(_createType) Then
                         '    Throw New QueryCmdException("Neither SelectTypes nor SelectList specified", Me)
                         'End If
