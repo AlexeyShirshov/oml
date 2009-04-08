@@ -898,10 +898,11 @@ l1:
             If os Is Nothing Then
                 os = tp.First
             End If
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
-            If oschema Is Nothing Then
-                oschema = GetEntitySchema(t)
-            End If
+            'Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
+            'If oschema Is Nothing Then
+            '    oschema = GetEntitySchema(t)
+            'End If
+            Dim oschema As IEntitySchema = GetEntitySchema(schema, t)
 
             If oschema Is Nothing Then
                 Throw New QueryCmdException(String.Format("Cannot find schema for type {0}", t), Me)
@@ -3926,12 +3927,18 @@ l1:
             End If
         End Function
 
-        Public Function GetEntitySchema(ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
-            If _pod IsNot Nothing Then
-                Return CType(_pod(t), IEntitySchema)
-            Else
-                Return Nothing
+        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
+            Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+
+            If oschema Is Nothing AndAlso _pod IsNot Nothing Then
+                oschema = CType(_pod(t), IEntitySchema)
             End If
+
+            If oschema Is Nothing Then
+                Throw New QueryCmdException(String.Format("Object schema for type {0} is not defined", t), Me)
+            End If
+
+            Return oschema
         End Function
     End Class
 

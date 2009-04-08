@@ -142,10 +142,16 @@ Namespace Database
                                     End If
 
                                     If st IsNot Nothing Then
-                                        Dim oschema As IEntitySchema = CType(schema.GetEntitySchema(st, False), IEntitySchema)
+                                        'Dim oschema As IEntitySchema = CType(schema.GetEntitySchema(st, False), IEntitySchema)
 
-                                        If oschema Is Nothing Then
-                                            oschema = executor.GetEntitySchema(st)
+                                        'If oschema Is Nothing Then
+                                        '    oschema = executor.GetEntitySchema(st)
+                                        'End If
+                                        Dim oschema As IEntitySchema
+                                        If executor Is Nothing Then
+                                            oschema = schema.GetEntitySchema(st)
+                                        Else
+                                            oschema = executor.GetEntitySchema(schema, st)
                                         End If
 
                                         If oschema Is Nothing Then
@@ -243,10 +249,17 @@ l1:
                     Case Entities.PropType.ObjectProperty
                         Dim t As Type = se.ObjectSource.GetRealType(schema)
                         If t IsNot Nothing Then
-                            Dim oschema As IEntitySchema = schema.GetEntitySchema(se.ObjectSource.GetRealType(schema), False)
-                            If oschema Is Nothing Then
-                                oschema = executor.GetEntitySchema(t)
+                            'Dim oschema As IEntitySchema = schema.GetEntitySchema(se.ObjectSource.GetRealType(schema), False)
+                            'If oschema Is Nothing Then
+                            '    oschema = executor.GetEntitySchema(t)
+                            'End If
+                            Dim oschema As IEntitySchema
+                            If executor Is Nothing Then
+                                oschema = schema.GetEntitySchema(t)
+                            Else
+                                oschema = executor.GetEntitySchema(schema, t)
                             End If
+
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
                             Dim map As MapField2Column = cm(se.PropertyAlias)
                             If inSelect Then
@@ -302,41 +315,41 @@ l1:
                             End If
                         End If
 
-                        If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
-                            sb.Append(" ").Append(se.FieldAlias)
-                            'columnAliases.RemoveAt(columnAliases.Count - 1)
-                            'columnAliases.Add(se.FieldAlias)
-                        End If
+                            If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
+                                sb.Append(" ").Append(se.FieldAlias)
+                                'columnAliases.RemoveAt(columnAliases.Count - 1)
+                                'columnAliases.Add(se.FieldAlias)
+                            End If
                     Case Entities.PropType.CustomValue
-                        If inSelect Then
-                            'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
-                            Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor)
-                            sb.Append(sss)
-                            If cols IsNot Nothing Then cols.Append(sss)
-                        Else
-                            'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
-                            sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor))
-                        End If
-                        If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
-                            sb.Append(" ").Append(se.FieldAlias)
-                        End If
-                    Case Entities.PropType.Subquery
-                        If Not String.IsNullOrEmpty(se._tempMark) Then
-                            Dim _q As Query.QueryCmd = se.Query
-                            Dim c As New Query.QueryCmd.svct(_q)
-                            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                                Query.QueryCmd.Prepare(se.Query, Nothing, schema, context, _s)
-                                sb.Replace(se._tempMark, Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, almgr))
-                            End Using
-                        Else
-                            se._tempMark = Guid.NewGuid.ToString
-                            sb.Append("(").Append(se._tempMark).Append(")")
+                            If inSelect Then
+                                'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
+                                Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor)
+                                sb.Append(sss)
+                                If cols IsNot Nothing Then cols.Append(sss)
+                            Else
+                                'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
+                                sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor))
+                            End If
                             If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
                                 sb.Append(" ").Append(se.FieldAlias)
                             End If
-                        End If
+                    Case Entities.PropType.Subquery
+                            If Not String.IsNullOrEmpty(se._tempMark) Then
+                                Dim _q As Query.QueryCmd = se.Query
+                                Dim c As New Query.QueryCmd.svct(_q)
+                                Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                                    Query.QueryCmd.Prepare(se.Query, Nothing, schema, context, _s)
+                                    sb.Replace(se._tempMark, Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, almgr))
+                                End Using
+                            Else
+                                se._tempMark = Guid.NewGuid.ToString
+                                sb.Append("(").Append(se._tempMark).Append(")")
+                                If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
+                                    sb.Append(" ").Append(se.FieldAlias)
+                                End If
+                            End If
                     Case Else
-                        Throw New NotImplementedException(se.PropType.ToString)
+                            Throw New NotImplementedException(se.PropType.ToString)
                 End Select
             End If
 

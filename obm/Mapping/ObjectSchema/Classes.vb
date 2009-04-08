@@ -35,6 +35,8 @@ Namespace Entities.Meta
     End Structure
 
     Public Class MapField2Column
+        Implements ICloneable
+
         Public ReadOnly _propertyAlias As String
         Public ReadOnly Column As String
         Public ReadOnly DBType As DBType
@@ -102,6 +104,10 @@ Namespace Entities.Meta
                 _tbl = value
             End Set
         End Property
+
+        Public Function Clone() As Object Implements System.ICloneable.Clone
+            Return New MapField2Column(Me._propertyAlias, Column, Table, Me._newattributes, Me.DBType)
+        End Function
     End Class
 
     Public Class RelationDesc

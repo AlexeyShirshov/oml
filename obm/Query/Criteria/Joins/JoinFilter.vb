@@ -432,11 +432,18 @@ Namespace Criteria.Joins
             Dim os As EntityUnion = Nothing
             If _l.Property.Entity IsNot Nothing Then
                 Dim lt As Type = _l.Property.Entity.GetRealType(schema)
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(lt, False)
-                If oschema Is Nothing Then
-                    oschema = executor.GetEntitySchema(lt)
+                'Dim oschema As IEntitySchema = schema.GetEntitySchema(lt, False)
+                'If oschema Is Nothing Then
+                '    oschema = executor.GetEntitySchema(lt)
+                'End If
+                Dim oschema As IEntitySchema = Nothing
+                If executor Is Nothing Then
+                    oschema = schema.GetEntitySchema(lt)
+                Else
+                    oschema = executor.GetEntitySchema(schema, lt)
                 End If
-                If _l.Property.Entity IsNot Nothing AndAlso _l.Property.Entity.IsQuery Then
+
+                If _l.Property.Entity.IsQuery Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
                         map = oschema.GetFieldColumnMap(f)
@@ -445,7 +452,7 @@ Namespace Criteria.Joins
                         map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
                     End If
                     os = _l.Property.Entity
-                ElseIf _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
+                Else 'If _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     map = oschema.GetFieldColumnMap(f)
                     If _l.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _l.Property.Entity) Then
@@ -457,10 +464,10 @@ Namespace Criteria.Joins
                     Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
                         os = _l.Property.Entity
                     End If
-                Else
-                    Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
-                    map = oschema.GetFieldColumnMap(f)
-                    os = If(_eu IsNot Nothing, _eu, _l.Property.Entity)
+                    'Else
+                    '    Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
+                    '    map = oschema.GetFieldColumnMap(f)
+                    '    os = If(_eu IsNot Nothing, _eu, _l.Property.Entity)
                 End If
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
@@ -481,11 +488,17 @@ Namespace Criteria.Joins
             Dim os2 As EntityUnion = Nothing
             If _r.Property.Entity IsNot Nothing Then
                 Dim rt As Type = _r.Property.Entity.GetRealType(schema)
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(rt, False)
-                If oschema Is Nothing Then
-                    oschema = executor.GetEntitySchema(rt)
+                'Dim oschema As IEntitySchema = schema.GetEntitySchema(rt, False)
+                'If oschema Is Nothing Then
+                '    oschema = executor.GetEntitySchema(rt)
+                'End If
+                Dim oschema As IEntitySchema = Nothing
+                If executor Is Nothing Then
+                    oschema = schema.GetEntitySchema(rt)
+                Else
+                    oschema = executor.GetEntitySchema(schema, rt)
                 End If
-                If _r.Property.Entity IsNot Nothing AndAlso _r.Property.Entity.IsQuery Then
+                If _r.Property.Entity.IsQuery Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     If oschema.GetFieldColumnMap.ContainsKey(f) Then
                         map2 = oschema.GetFieldColumnMap(f)
@@ -494,7 +507,7 @@ Namespace Criteria.Joins
                         map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
                     End If
                     os2 = _r.Property.Entity
-                ElseIf _r.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
+                Else 'If _r.Property.Entity IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     map2 = oschema.GetFieldColumnMap(f)
                     If _r.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _r.Property.Entity) Then
@@ -506,10 +519,10 @@ Namespace Criteria.Joins
                     Else 'If almgr.ContainsKey(map2._tableName, _r.Property.Entity) Then
                         os2 = _r.Property.Entity
                     End If
-                Else
-                    Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
-                    map2 = oschema.GetFieldColumnMap(f)
-                    os2 = If(_eu IsNot Nothing, _eu, _r.Property.Entity)
+                    'Else
+                    '    Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
+                    '    map2 = oschema.GetFieldColumnMap(f)
+                    '    os2 = If(_eu IsNot Nothing, _eu, _r.Property.Entity)
                 End If
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)

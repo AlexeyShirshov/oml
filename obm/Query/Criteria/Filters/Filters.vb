@@ -292,9 +292,15 @@ Namespace Criteria.Core
             End If
 
             Dim t As Type = Template.ObjectSource.GetRealType(schema)
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
-            If oschema Is Nothing Then
-                oschema = executor.GetEntitySchema(t)
+            'Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
+            'If oschema Is Nothing Then
+            '    oschema = executor.GetEntitySchema(t)
+            'End If
+            Dim oschema As IEntitySchema = Nothing
+            If executor Is Nothing Then
+                oschema = schema.GetEntitySchema(t)
+            Else
+                oschema = executor.GetEntitySchema(schema, t)
             End If
 
             Return MakeQueryStmt(oschema, stmt, executor, filterInfo, schema, almgr, pname)
