@@ -56,7 +56,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(true, "ID");
+					syncHelper = this.Read("ID");
 					return this._id;
 				}
 				finally
@@ -73,7 +73,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(false, "ID");
+                    syncHelper = this.Write("ID");
 					this._id = value;
 				}
 				finally
@@ -95,7 +95,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(true, "Name");
+                    syncHelper = this.Read("Name");
 					return this._name;
 				}
 				finally
@@ -112,7 +112,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(false, "Name");
+                    syncHelper = this.Write("Name");
 					this._name = value;
 				}
 				finally
@@ -134,7 +134,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(true, "Release");
+                    syncHelper = this.Read("Release");
 					return this._release;
 				}
 				finally
@@ -151,7 +151,7 @@ namespace test
 				syncHelper = null;
 				try
 				{
-					syncHelper = this.SyncHelper(false, "Release");
+					syncHelper = this.Write("Release");
 					this._release = value;
 				}
 				finally
@@ -222,8 +222,6 @@ namespace test
 			private SourceFragment _table = new SourceFragment("dbo","Albums");
 			
 			private object _forTablesLock = new object();
-			
-			private M2MRelation[] _m2mRelations;
 			
 			private object _forM2MRelationsLock = new object();
 			

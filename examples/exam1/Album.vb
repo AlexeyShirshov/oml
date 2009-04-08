@@ -4,19 +4,20 @@ Imports Worm
 Imports Worm.Cache
 
 Namespace test
-    <Entity("dbo.Albums", "id", "1")> _
+    <Entity("dbo", "Albums", "1")> _
     Public Class Album
-        Inherits OrmBaseT(Of Album)
+        Inherits KeyEntity
 
         Private _name As String
         Private _release As System.Nullable(Of Date)
+        Private _id As Integer
 
         Public Sub New()
 
         End Sub
 
         Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
-            MyBase.New(id, cache, schema)
+            Init(id, cache, schema)
         End Sub
 
         <EntityProperty()> _
@@ -46,5 +47,16 @@ Namespace test
                 End Using
             End Set
         End Property
+
+        <EntityProperty("id", Field2DbRelations.PrimaryKey)> _
+        Public Overrides Property Identifier() As Object
+            Get
+                Return _id
+            End Get
+            Set(ByVal value As Object)
+                _id = CInt(value)
+            End Set
+        End Property
+
     End Class
 End Namespace

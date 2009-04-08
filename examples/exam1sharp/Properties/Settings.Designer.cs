@@ -35,7 +35,7 @@ namespace exam1sharp.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Server=.\\sqlexpress;InitialCatalog=AdventureWorks\";Integrated security=true;")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Server=.\\sqlexpress;Initial Catalog=AdventureWorks;Integrated security=true;")]
         public string connString {
             get {
                 return ((string)(this["connString"]));

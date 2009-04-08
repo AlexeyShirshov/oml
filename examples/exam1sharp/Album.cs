@@ -6,17 +6,18 @@ using Worm;
 
 namespace test
 {
-	[Entity("dbo.albums", "id", "1")]
-	class Album : OrmBaseT<Album>
+    [Entity("dbo", "albums", "1")]
+	class Album : KeyEntity
 	{
 		private string _name;
 		private DateTime? _release;
+        private int _id;
 
 		public Album() {}
 
 		public Album(int id, CacheBase cache, ObjectMappingEngine schema)
-			: base(id, cache, schema)
 		{
+            Init(id, cache, schema);
 		}
 
         [EntityProperty]
@@ -32,5 +33,12 @@ namespace test
 			get { using (Read("Release")) { return _release; } }
 			set { using (Write("Release")) { _release = value; } }
 		}
-	}
+
+        [EntityProperty("id", Field2DbRelations.PrimaryKey)]
+        public override object Identifier
+        {
+            get { return _id; }
+            set { _id = (int)value; }
+        }
+    }
 }

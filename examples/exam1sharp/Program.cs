@@ -62,13 +62,25 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main4(string[] args)
         {
             var query = new QueryCmd(exam1sharp.Properties.Settings.Default.connString);
 
-            foreach (Store2 s in query.ToPODList<Store2>())
+            foreach (Store2 s in query
+                .From(new SourceFragment("Sales", "Store"))
+                .ToPODList<Store2>())
             {
                 Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Name);
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            foreach (Store3 s in Store3.Query
+                .Where(Ctor.prop(typeof(Store3), "Name").like("A%"))
+                .ToList())
+            {
+                Console.WriteLine("Store id: {0}, name: {1}, timestamp: {2}", s.ID, s.Name, s.Timestamp);
             }
         }
 	}
