@@ -72,12 +72,12 @@ Public Class Table4
     <EntityPropertyAttribute(PropertyAlias:="Col")> _
     Public Property Col() As Nullable(Of Boolean)
         Get
-            Using SyncHelper(True, "Col")
+            Using Read("Col")
                 Return _col
             End Using
         End Get
         Set(ByVal value As Nullable(Of Boolean))
-            Using SyncHelper(False, "Col")
+            Using Write("Col")
                 _col = value
             End Using
         End Set
@@ -86,12 +86,12 @@ Public Class Table4
     <EntityPropertyAttribute(PropertyAlias:="GUID", behavior:=Field2DbRelations.InsertDefault Or Field2DbRelations.SyncInsert)> _
     Public Property GUID() As Guid
         Get
-            Using SyncHelper(True, "GUID")
+            Using Read("GUID")
                 Return _g
             End Using
         End Get
         Set(ByVal value As Guid)
-            Using SyncHelper(False, "GUID")
+            Using Write("GUID")
                 _g = value
             End Using
         End Set

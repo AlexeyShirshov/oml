@@ -664,6 +664,12 @@ Namespace Entities
             AcceptChanges(True, IsGoodState(ObjectState))
         End Sub
 
+        Public ReadOnly Property IsPropertiesLazyLoad() As Boolean
+            Get
+                Return GetType(IPropertyLazyLoad).IsAssignableFrom(Me.GetType)
+            End Get
+        End Property
+
         Public Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity Implements ICachedEntity.AcceptChanges
             Dim mo As _ICachedEntity = Nothing
             Using SyncHelper(False)
@@ -677,7 +683,7 @@ Namespace Entities
 
                     AcceptRelationalChanges(updateCache, mc)
 
-                    If (ObjectState <> Entities.ObjectState.None OrElse Not WrappedProperties) Then
+                    If (ObjectState <> Entities.ObjectState.None OrElse Not IsPropertiesLazyLoad) Then
                         mo = RemoveVersionData(mc.Cache, mc.MappingEngine, mc.GetContextInfo, setState)
                         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
@@ -1214,17 +1220,11 @@ l1:
             Return l.ToArray
         End Function
 
-        Protected Overridable ReadOnly Property WrappedProperties() As Boolean
-            Get
-                Return True
-            End Get
-        End Property
-
         Protected ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy
             Get
                 Using SyncHelper(False)
                     If _copy Is Nothing Then
-                        If (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) AndAlso ObjectState <> Entities.ObjectState.Created AndAlso ObjectState <> Entities.ObjectState.Deleted Then
+                        If (ObjectState = Entities.ObjectState.Modified OrElse Not IsPropertiesLazyLoad) AndAlso ObjectState <> Entities.ObjectState.Created AndAlso ObjectState <> Entities.ObjectState.Deleted Then
                             Using gm As IGetManager = GetMgr()
                                 _copy = CType(gm.Manager.GetObjectFromStorage(Me), CachedEntity)
                             End Using
@@ -1304,7 +1304,7 @@ l1:
         '    CreateCopyForSaveNewEntry(Nothing)
         'End Sub
 
-        Protected Overrides Sub _PrepareUpdate(ByVal mgr As OrmManager)
+        Protected Overrides Sub PrepareUpdate(ByVal mgr As OrmManager)
             If Not IsLoaded Then
                 If ObjectState = Entities.ObjectState.None Then
                     Throw New InvalidOperationException(String.Format("Object {0} is not loaded while the state is None", ObjName))
@@ -1582,7 +1582,7 @@ l1:
 #End If
                 mc.DeleteObject(Me)
                 _upd.Deleted = True
-            ElseIf (ObjectState = Entities.ObjectState.Modified OrElse Not WrappedProperties) Then
+            ElseIf (ObjectState = Entities.ObjectState.Modified OrElse Not IsPropertiesLazyLoad) Then
 #If TraceSetState Then
                 Dim mo As ObjectModification = mc.Cache.ShadowCopy(Me)
                 If mo Is Nothing OrElse mo.Reason = ObjectModification.ReasonEnum.Delete Then
@@ -1882,4 +1882,20 @@ l1:
         End Function
     End Class
 
+    Public MustInherit Class CachedLazyLoad
+        Inherits CachedEntity
+        Implements IPropertyLazyLoad
+
+        Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
+            Return _Read(propertyAlias)
+        End Function
+
+        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
+            Return _Read(propertyAlias, checkEntity)
+        End Function
+
+        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
+            Return _Write(propertyAlias)
+        End Function
+    End Class
 End Namespace

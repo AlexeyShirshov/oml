@@ -114,12 +114,12 @@ Public Class Table3
     <EntityPropertyAttribute(PropertyAlias:="Ref", behavior:=Field2DbRelations.Factory)> _
     Public Property RefObject() As IKeyEntity
         Get
-            Using SyncHelper(True, "Ref")
+            Using Read("Ref")
                 Return _obj
             End Using
         End Get
         Set(ByVal value As IKeyEntity)
-            Using SyncHelper(False, "Ref")
+            Using Write("Ref")
                 _obj = value
             End Using
         End Set
@@ -128,12 +128,12 @@ Public Class Table3
     <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Byte
         Get
-            Using SyncHelper(True, "Code")
+            Using Read("Code")
                 Return _code
             End Using
         End Get
         Set(ByVal value As Byte)
-            Using SyncHelper(False, "Code")
+            Using Write("Code")
                 _code = value
                 If _trigger Then
                     _trigger = False
@@ -146,12 +146,12 @@ Public Class Table3
     <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Public Property Version() As Byte()
         Get
-            Using SyncHelper(True, "Version")
+            Using Read("Version")
                 Return _v
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Version")
+            Using Write("Version")
                 _v = value
             End Using
         End Set
@@ -160,12 +160,12 @@ Public Class Table3
     <EntityPropertyAttribute(PropertyAlias:="XML")> _
     Public Property Xml() As System.Xml.XmlDocument
         Get
-            Using SyncHelper(True, "XML")
+            Using Read("XML")
                 Return _x
             End Using
         End Get
         Set(ByVal value As System.Xml.XmlDocument)
-            Using SyncHelper(False, "XML")
+            Using Write("XML")
                 _x = value
                 If value IsNot Nothing Then
                     AddHandler _x.NodeChanging, AddressOf NodeChanged
@@ -177,7 +177,7 @@ Public Class Table3
     End Property
 
     Protected Sub NodeChanged(ByVal sender As Object, ByVal e As System.Xml.XmlNodeChangedEventArgs)
-        PrepareUpdate()
+        StartUpdate()
     End Sub
 End Class
 

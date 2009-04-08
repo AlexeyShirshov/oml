@@ -243,7 +243,10 @@ l1:
                     Case Entities.PropType.ObjectProperty
                         Dim t As Type = se.ObjectSource.GetRealType(schema)
                         If t IsNot Nothing Then
-                            Dim oschema As IEntitySchema = schema.GetEntitySchema(se.ObjectSource.GetRealType(schema))
+                            Dim oschema As IEntitySchema = schema.GetEntitySchema(se.ObjectSource.GetRealType(schema), False)
+                            If oschema Is Nothing Then
+                                oschema = executor.GetEntitySchema(t)
+                            End If
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
                             Dim map As MapField2Column = cm(se.PropertyAlias)
                             If inSelect Then

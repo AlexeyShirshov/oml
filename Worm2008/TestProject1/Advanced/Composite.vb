@@ -22,12 +22,12 @@ Public Class Composite
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Message() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _m
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _m = value
             End Using
         End Set
@@ -36,12 +36,12 @@ Public Class Composite
     <EntityPropertyAttribute(PropertyAlias:="Title2", Behavior:=Field2DbRelations.ReadOnly)> _
     Public Property Message2() As String
         Get
-            Using SyncHelper(True, "Title2")
+            Using Read("Title2")
                 Return _m2
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title2")
+            Using Write("Title2")
                 _m2 = value
             End Using
         End Set

@@ -178,12 +178,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="LastActivity")> _
     Public Property LastActivity() As Date
         Get
-            Using SyncHelper(True, "LastActivity")
+            Using Read("LastActivity")
                 Return _lastActivity
             End Using
         End Get
         Set(ByVal value As Date)
-            Using SyncHelper(False, "LastActivity")
+            Using Write("LastActivity")
                 _lastActivity = value
             End Using
         End Set
@@ -192,12 +192,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="IsAnonymous")> _
     Public Property IsAnonymous() As Boolean
         Get
-            Using SyncHelper(True, "IsAnonymous")
+            Using Read("IsAnonymous")
                 Return _isAnonymous
             End Using
         End Get
         Set(ByVal value As Boolean)
-            Using SyncHelper(False, "IsAnonymous")
+            Using Write("IsAnonymous")
                 _isAnonymous = value
             End Using
         End Set
@@ -206,12 +206,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="UserName")> _
     Public Property UserName() As String
         Get
-            Using SyncHelper(True, "UserName")
+            Using Read("UserName")
                 Return _username
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "UserName")
+            Using Write("UserName")
                 _username = value
             End Using
         End Set
@@ -220,12 +220,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="Field")> _
     Public Property Field() As String
         Get
-            Using SyncHelper(True, "Field")
+            Using Read("Field")
                 Return _field
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Field")
+            Using Write("Field")
                 _field = value
             End Using
         End Set
@@ -234,12 +234,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="Password")> _
     Public Property Password() As Byte()
         Get
-            Using SyncHelper(True, "Password")
+            Using Read("Password")
                 Return _psw
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Password")
+            Using Write("Password")
                 _psw = value
             End Using
         End Set
@@ -248,12 +248,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="Email")> _
     Public Property Email() As String
         Get
-            Using SyncHelper(True, "Email")
+            Using Read("Email")
                 Return _email
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Email")
+            Using Write("Email")
                 _email = value
             End Using
         End Set
@@ -262,12 +262,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtCount")> _
     Public Property FailedPswAttemtCount() As Integer
         Get
-            Using SyncHelper(True, "FailedPasswordAttemtCount")
+            Using Read("FailedPasswordAttemtCount")
                 Return _failcnt
             End Using
         End Get
         Set(ByVal value As Integer)
-            Using SyncHelper(False, "FailedPasswordAttemtCount")
+            Using Write("FailedPasswordAttemtCount")
                 _failcnt = value
             End Using
         End Set
@@ -276,12 +276,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtStart")> _
     Public Property FailedPswAttemtDate() As Nullable(Of Date)
         Get
-            Using SyncHelper(True, "FailedPasswordAttemtStart")
+            Using Read("FailedPasswordAttemtStart")
                 Return _faildt
             End Using
         End Get
         Set(ByVal value As Nullable(Of Date))
-            Using SyncHelper(False, "FailedPasswordAttemtStart")
+            Using Write("FailedPasswordAttemtStart")
                 _faildt = value
             End Using
         End Set
@@ -290,12 +290,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="IsLocked")> _
     Public Property IsLocked() As Boolean
         Get
-            Using SyncHelper(True, "IsLocked")
+            Using Read("IsLocked")
                 Return _islocked
             End Using
         End Get
         Set(ByVal value As Boolean)
-            Using SyncHelper(False, "IsLocked")
+            Using Write("IsLocked")
                 _islocked = value
             End Using
         End Set
@@ -304,12 +304,12 @@ Public Class MyUser
     <EntityPropertyAttribute(PropertyAlias:="LastLockedAt")> _
     Public Property LastLockedAt() As Nullable(Of Date)
         Get
-            Using SyncHelper(True, "LastLockedAt")
+            Using Read("LastLockedAt")
                 Return _lastlocked
             End Using
         End Get
         Set(ByVal value As Nullable(Of Date))
-            Using SyncHelper(False, "LastLockedAt")
+            Using Write("LastLockedAt")
                 _lastlocked = value
             End Using
         End Set
@@ -397,12 +397,12 @@ Public Class MyRole
     <EntityPropertyAttribute(PropertyAlias:="Name")> _
     Public Property RoleName() As String
         Get
-            Using SyncHelper(True, "Name")
+            Using Read("Name")
                 Return _role
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Name")
+            Using Write("Name")
                 _role = value
             End Using
         End Set

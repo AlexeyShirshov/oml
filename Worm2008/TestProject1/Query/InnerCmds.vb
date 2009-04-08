@@ -49,6 +49,7 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
         inner.Select(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _

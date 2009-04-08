@@ -78,12 +78,12 @@ Public Class Tables1to3
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
@@ -92,12 +92,12 @@ Public Class Tables1to3
     <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Table1() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _table1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _table1 = value
             End Using
         End Set
@@ -106,12 +106,12 @@ Public Class Tables1to3
     <EntityPropertyAttribute(PropertyAlias:="Table3")> _
     Public Property Table3() As Table33
         Get
-            Using SyncHelper(True, "Table3")
+            Using Read("Table3")
                 Return _table3
             End Using
         End Get
         Set(ByVal value As Table33)
-            Using SyncHelper(False, "Table3")
+            Using Write("Table3")
                 _table3 = value
             End Using
         End Set

@@ -78,12 +78,12 @@ Public Class Tables1to1
     <EntityPropertyAttribute(PropertyAlias:="K")> _
     Public Property K() As String
         Get
-            Using SyncHelper(True, "K")
+            Using Read("K")
                 Return _k
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "K")
+            Using Write("K")
                 _k = value
             End Using
         End Set
@@ -92,12 +92,12 @@ Public Class Tables1to1
     <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Table1() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _table1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _table1 = value
             End Using
         End Set
@@ -106,12 +106,12 @@ Public Class Tables1to1
     <EntityPropertyAttribute(PropertyAlias:="Table1Back")> _
     Public Property Table1Back() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _table1back
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _table1back = value
             End Using
         End Set
