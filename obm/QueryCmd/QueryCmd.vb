@@ -721,20 +721,22 @@ l1:
                         End If
                     Else
                         Dim s As IEntitySchema = GetSchemaForSelectType(schema)
-                        If _from IsNot Nothing AndAlso _from.Table IsNot Nothing Then
-                            If s IsNot Nothing Then
-                                For Each m As MapField2Column In s.GetFieldColumnMap
-                                    Dim se As New SelectExpression(m.Table, m.Column)
-                                    se.Attributes = m._newattributes
-                                    se.PropertyAlias = m._propertyAlias
-                                    _sl.Add(se)
-                                Next
-                                'Else
-                                '    Throw New NotSupportedException
-                            End If
-                        ElseIf _from Is Nothing AndAlso s IsNot Nothing Then
-                            _from = New FromClauseDef(s.Table)
+                        If _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso s IsNot Nothing Then
+                            For Each m As MapField2Column In s.GetFieldColumnMap
+                                Dim se As New SelectExpression(m.Table, m.Column)
+                                se.Attributes = m._newattributes
+                                se.PropertyAlias = m._propertyAlias
+                                _sl.Add(se)
+                            Next
+                            'Else
+                            '    Throw New NotSupportedException
                         End If
+                        'ElseIf _from Is Nothing AndAlso s IsNot Nothing Then
+                        '    _from = New FromClauseDef(s.Table)
+                        'End If
+                        'If GetType(AnonymousEntity).IsAssignableFrom(_createType) Then
+                        '    Throw New QueryCmdException("Neither SelectTypes nor SelectList specified", Me)
+                        'End If
                     End If
                 End If
 
@@ -897,7 +899,15 @@ l1:
             If os Is Nothing Then
                 os = tp.First
             End If
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
+            If oschema Is Nothing Then
+                oschema = GetEntitySchema(t)
+            End If
+
+            If oschema Is Nothing Then
+                Throw New QueryCmdException(String.Format("Cannot find schema for type {0}", t), Me)
+            End If
+
             If Not GetType(ICachedEntity).IsAssignableFrom(t) OrElse _WithLoad(tp, schema) Then
                 Dim l As New List(Of SelectExpression)(schema.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                 Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
@@ -1392,7 +1402,7 @@ l1:
         End Function
 
         Protected Function _WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
-            Return tp.Second.HasValue AndAlso tp.Second.Value
+            Return (tp.Second.HasValue AndAlso tp.Second.Value) OrElse Not GetType(IPropertyLazyLoad).IsAssignableFrom(tp.First.GetRealType(mpe))
         End Function
 
 #Region " Properties "
@@ -2246,11 +2256,17 @@ l1:
         'End Function
 
         Public Function ToList(ByVal mgr As OrmManager) As IList
-            Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
             Dim st As Type = GetSelectedType(mgr.MappingEngine)
-            'If st Is Nothing AndAlso Not String.IsNullOrEmpty(SelectedEntityName) Then
-            '    st = mgr.MappingEngine.GetTypeByEntityName(SelectedEntityName)
-            'End If
+            Dim t As MethodInfo = Nothing
+            If GetType(AnonymousEntity).IsAssignableFrom(st) Then
+                Return ToAnonymList(mgr)
+            ElseIf GetType(_ICachedEntity).IsAssignableFrom(st) Then
+                t = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
+            ElseIf GetType(_IEntity).IsAssignableFrom(st) Then
+                t = Me.GetType.GetMethod("ToObjectList", New Type() {GetType(OrmManager)})
+            Else
+                t = Me.GetType.GetMethod("ToPODList", New Type() {GetType(OrmManager)})
+            End If
             t = t.MakeGenericMethod(New Type() {st})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
         End Function
@@ -2692,7 +2708,8 @@ l1:
                     If v Is DBNull.Value Then
                         v = Nothing
                     End If
-                    pi.SetValue(ro, v, Nothing)
+                    'pi.SetValue(ro, v, Nothing)
+                    ObjectMappingEngine.SetValue(pi.PropertyType, mpe, v, ro, pi, col.PropertyAlias)
                 Next
                 r.Add(ro)
             Next

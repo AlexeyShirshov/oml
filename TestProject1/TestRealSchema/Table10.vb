@@ -70,12 +70,12 @@ Public Class Table10
     <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Tbl() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _tbl1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _tbl1 = value
             End Using
         End Set

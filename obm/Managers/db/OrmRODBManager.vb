@@ -2358,110 +2358,29 @@ l1:
                         '    '    obj.SetValue(pi, c, o)
                         '    '    obj.SetLoaded(c, True)
                         '    'End If
-                    ElseIf GetType(IKeyEntity).IsAssignableFrom(propType) Then
-                        Dim type_created As Type = propType
-                        Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-                        If Not String.IsNullOrEmpty(en) Then
-                            Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
-                            If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
-                                type_created = cr
-                            End If
-                            If type_created Is Nothing Then
-                                Throw New OrmManagerException("Cannot find type for entity " & en)
-                            End If
-                        End If
-                        Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
-                        If o IsNot Nothing Then
-                            If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
-                            RaiseObjectLoaded(o)
-                        End If
-                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                    ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
-                        Dim o As New System.Xml.XmlDocument
-                        o.LoadXml(CStr(value))
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
-                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                    ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
-                        Dim svalue As String = CStr(value).Trim
-                        If svalue = String.Empty Then
-                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, 0, oschema)
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                        Else
-                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, [Enum].Parse(propType, svalue, True), oschema)
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                        End If
-                    ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
-                        Dim t As Type = propType.GetGenericArguments()(0)
-                        Dim v As Object = Nothing
-                        If t.IsPrimitive Then
-                            v = Convert.ChangeType(value, t)
-                        ElseIf t.IsEnum Then
-                            If TypeOf (value) Is String Then
-                                Dim svalue As String = CStr(value).Trim
-                                If svalue = String.Empty Then
-                                    v = [Enum].ToObject(t, 0)
-                                Else
-                                    v = [Enum].Parse(t, svalue, True)
-                                End If
-                            Else
-                                v = [Enum].ToObject(t, value)
-                            End If
-                        ElseIf t Is value.GetType Then
-                            v = value
-                        Else
-                            Try
-                                v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                                    Nothing, Nothing, New Object() {value})
-                            Catch ex As MissingMethodException
-                                'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
-                                'v = Convert.ChangeType(value, t)
-                            End Try
-                        End If
-                        Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                            Nothing, Nothing, New Object() {v})
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v2, oschema)
-                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                     Else
-                        Try
-                            If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-                                Dim v As Object = Convert.ChangeType(value, propType)
-                                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                            ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                Dim dt As DateTime = CDate(value)
-                                Dim l As Long = dt.ToBinary
-                                Using ms As New IO.MemoryStream
-                                    Dim sw As New IO.StreamWriter(ms)
-                                    sw.Write(l)
-                                    sw.Flush()
-                                    'pi.SetValue(obj, ms.ToArray, Nothing)
-                                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                End Using
-                                'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
-                                '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
-                                '        Nothing, New Object() {value}))
-                                '    obj.SetLoaded(c, True)
-                            Else
-                                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        If GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                            Dim type_created As Type = propType
+                            Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                            If Not String.IsNullOrEmpty(en) Then
+                                Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                                If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                                    type_created = cr
+                                End If
+                                If type_created Is Nothing Then
+                                    Throw New OrmManagerException("Cannot find type for entity " & en)
+                                End If
                             End If
-                            'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                            '    Dim dt As DateTime = CDate(value)
-                            '    Dim l As Long = dt.ToBinary
-                            '    Using ms As New IO.MemoryStream
-                            '        Dim sw As New IO.StreamWriter(ms)
-                            '        sw.Write(l)
-                            '        sw.Flush()
-                            '        obj.SetValue(pi, c, ms.ToArray)
-                            '        obj.SetLoaded(c, True)
-                            '    End Using
-                        Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                            Dim v As Object = Convert.ChangeType(value, propType)
-                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
+                            Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
+                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                            If o IsNot Nothing Then
+                                If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
+                                RaiseObjectLoaded(o)
+                            End If
                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                        End Try
+                        Else
+                            ObjectMappingEngine.SetValue(propType, MappingEngine, value, obj, pi, propertyAlias, ce, c, oschema)
+                        End If
                     End If
                 ElseIf dr.IsDBNull(i) Then
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, Nothing, oschema)

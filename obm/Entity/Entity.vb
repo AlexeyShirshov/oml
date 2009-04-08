@@ -81,6 +81,8 @@ Namespace Entities
 #End If
         End Function
 
+#Region " Synchronization "
+
         Protected Sub RaisePropertyChanged(ByVal propertyAlias As String, ByVal oldValue As Object)
             Dim value As Object = GetValue(propertyAlias)
             If Not Object.Equals(value, oldValue) Then
@@ -91,7 +93,10 @@ Namespace Entities
         Protected Overridable Sub PrepareRead(ByVal propertyAlias As String, ByRef d As IDisposable)
         End Sub
 
-        Protected Sub PrepareUpdate()
+        Protected Overridable Sub PrepareUpdate(ByVal mgr As OrmManager)
+        End Sub
+
+        Protected Sub StartUpdate()
             If Not _loading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
                 If _state = Entities.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & ": Altering clone is not allowed")
@@ -106,18 +111,14 @@ Namespace Entities
                         Return
                     End If
 
-                    _PrepareUpdate(mc.Manager)
+                    PrepareUpdate(mc.Manager)
                 End Using
                 'ElseIf ObjectState = Orm.ObjectState.Created Then
                 '    _PrepareLoadingUpdate()
             End If
         End Sub
 
-        Protected Overridable Sub _PrepareUpdate(ByVal mgr As OrmManager)
-
-        End Sub
-
-        Protected Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
             If checkEntity Then
                 Using mc As IGetManager = GetMgr()
                     If mc IsNot Nothing Then
@@ -138,7 +139,7 @@ Namespace Entities
             Return SyncHelper(reader, propertyAlias)
         End Function
 
-        Protected Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable Implements _IEntity.SyncHelper
+        Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
             Dim err As Boolean = True
             Dim d As IDisposable = New BlankSyncHelper(Nothing)
             Try
@@ -146,7 +147,7 @@ Namespace Entities
                     PrepareRead(propertyAlias, d)
                 Else
                     d = SyncHelper(True)
-                    PrepareUpdate()
+                    StartUpdate()
                     If Not _dontRaisePropertyChange AndAlso Not _loading Then
                         d = New ChangedEventHelper(Me, propertyAlias, d)
                     End If
@@ -161,17 +162,19 @@ Namespace Entities
             Return d
         End Function
 
-        Protected Function Read(ByVal propertyAlias As String) As IDisposable
+        Friend Function _Read(ByVal propertyAlias As String) As IDisposable
             Return SyncHelper(True, propertyAlias)
         End Function
 
-        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        Friend Function _Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
             Return SyncHelper(True, propertyAlias, checkEntity)
         End Function
 
-        Protected Function Write(ByVal propertyAlias As String) As IDisposable
+        Friend Function _Write(ByVal propertyAlias As String) As IDisposable
             Return SyncHelper(False, propertyAlias)
         End Function
+
+#End Region
 
         Protected Function GetCurrent() As OrmManager
             Dim mgr As OrmManager = OrmManager.CurrentManager
@@ -605,4 +608,20 @@ Namespace Entities
 #End Region
     End Class
 
+    Public Class EntityLazyLoad
+        Inherits Entity
+        Implements IPropertyLazyLoad
+
+        Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
+            Return _Read(propertyAlias)
+        End Function
+
+        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
+            Return _Read(propertyAlias, checkEntity)
+        End Function
+
+        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
+            Return _Write(propertyAlias)
+        End Function
+    End Class
 End Namespace

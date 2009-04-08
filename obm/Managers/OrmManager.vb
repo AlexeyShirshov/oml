@@ -3166,7 +3166,7 @@ l1:
             End If
 
             Dim t As Type = obj.GetType
-            Dim orm As KeyEntity = TryCast(obj, KeyEntity)
+            Dim orm As _IKeyEntity = TryCast(obj, _IKeyEntity)
             'Using obj.GetSyncRoot
             Using GetSyncForSave(t, obj)
                 Dim old_id As Object = Nothing
@@ -3253,25 +3253,23 @@ l1:
                                 End If
                             Next
 
-                            If orm._relations.Count > 0 Then
-                                For Each rl As Relation In orm._relations
-                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
-                                    If elb IsNot Nothing Then
-                                        Dim el As M2MRelation = elb.PrepareSave(Me)
-                                        If el IsNot Nothing Then
-                                            M2MSave(orm, el)
-                                            'elb.Saved = True
-                                            elb._savedIds.AddRange(el.Added)
-                                            hasNew = hasNew OrElse elb.HasNew
-                                        End If
+                            For Each rl As Relation In orm.GetAllRelation
+                                Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                If elb IsNot Nothing Then
+                                    Dim el As M2MRelation = elb.PrepareSave(Me)
+                                    If el IsNot Nothing Then
+                                        M2MSave(orm, el)
+                                        'elb.Saved = True
+                                        elb._savedIds.AddRange(el.Added)
+                                        hasNew = hasNew OrElse elb.HasNew
                                     End If
-                                Next
-                            End If
+                                End If
+                            Next
                         End If
                     ElseIf sa = SaveAction.Update Then
                         If orm IsNot Nothing Then
-                            If orm._needAccept IsNot Nothing Then
-                                For Each acp As AcceptState2 In orm._needAccept
+                            If orm.GetM2M IsNot Nothing Then
+                                For Each acp As AcceptState2 In orm.GetM2M
                                     'Dim el As EditableList = acp.el.PrepareNewSave(Me)
                                     Dim el As M2MRelation = acp.el.PrepareSave(Me)
                                     If el IsNot Nothing Then
@@ -3295,20 +3293,18 @@ l1:
                                 End If
                             Next
 
-                            If orm._relations.Count > 0 Then
-                                For Each rl As Relation In orm._relations
-                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
-                                    If elb IsNot Nothing Then
-                                        Dim el As M2MRelation = elb.PrepareSave(Me)
-                                        If el IsNot Nothing Then
-                                            M2MSave(orm, el)
-                                            'elb.Saved = True
-                                            elb._savedIds.AddRange(el.Added)
-                                            hasNew = hasNew OrElse elb.HasNew
-                                        End If
+                            For Each rl As Relation In orm.GetAllRelation
+                                Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                If elb IsNot Nothing Then
+                                    Dim el As M2MRelation = elb.PrepareSave(Me)
+                                    If el IsNot Nothing Then
+                                        M2MSave(orm, el)
+                                        'elb.Saved = True
+                                        elb._savedIds.AddRange(el.Added)
+                                        hasNew = hasNew OrElse elb.HasNew
                                     End If
-                                Next
-                            End If
+                                End If
+                            Next
                         End If
                     End If
 

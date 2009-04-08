@@ -235,12 +235,12 @@ Public Class Entity2
     <EntityPropertyAttribute(PropertyAlias:="Str")> _
     Public Property Str() As String
         Get
-            Using SyncHelper(True, "Str")
+            Using Read("Str")
                 Return _s
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Str")
+            Using Write("Str")
                 _s = value
             End Using
         End Set
@@ -379,12 +379,12 @@ Public Class Entity4
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
@@ -608,12 +608,12 @@ Public Class Entity5
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
@@ -622,12 +622,12 @@ Public Class Entity5
     <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Protected Property Version() As Byte()
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _mark
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _mark = value
             End Using
         End Set

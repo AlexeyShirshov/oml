@@ -83,7 +83,7 @@ Imports Worm.Criteria
 
     <Entity("1", Tablename:="dbo.guid_table")> _
     Public Class RawObj
-        Inherits KeyEntity
+        Inherits KeyEntityBase
 
         Private _id As Guid
 
@@ -109,11 +109,6 @@ Imports Worm.Criteria
             End Set
         End Property
 
-        Protected Overrides ReadOnly Property WrappedProperties() As Boolean
-            Get
-                Return False
-            End Get
-        End Property
     End Class
 
     <TestMethod()> _

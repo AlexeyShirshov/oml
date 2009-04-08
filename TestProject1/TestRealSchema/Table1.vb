@@ -117,12 +117,12 @@ Public Class Table1
     <EntityProperty(PropertyAlias:="Title")> _
     Public Overridable Property Name() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
@@ -131,12 +131,12 @@ Public Class Table1
     <EntityPropertyAttribute(PropertyAlias:="Enum")> _
     Public Property [Enum]() As Nullable(Of Enum1)
         Get
-            Using SyncHelper(True, "Enum")
+            Using Read("Enum")
                 Return _e
             End Using
         End Get
         Set(ByVal value As Nullable(Of Enum1))
-            Using SyncHelper(False, "Enum")
+            Using Write("Enum")
                 _e = value
             End Using
         End Set
@@ -145,12 +145,12 @@ Public Class Table1
     <EntityPropertyAttribute(PropertyAlias:="EnumStr")> _
     Public Property EnumStr() As Nullable(Of Enum1)
         Get
-            Using SyncHelper(True, "EnumStr")
+            Using Read("EnumStr")
                 Return _e2
             End Using
         End Get
         Set(ByVal value As Nullable(Of Enum1))
-            Using SyncHelper(False, "EnumStr")
+            Using Write("EnumStr")
                 _e2 = value
             End Using
         End Set
@@ -159,12 +159,12 @@ Public Class Table1
     <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Nullable(Of Integer)
         Get
-            Using SyncHelper(True, "Code")
+            Using Read("Code")
                 Return _code
             End Using
         End Get
         Set(ByVal value As Nullable(Of Integer))
-            Using SyncHelper(False, "Code")
+            Using Write("Code")
                 _code = value
             End Using
         End Set
@@ -173,12 +173,12 @@ Public Class Table1
     <EntityPropertyAttribute(PropertyAlias:="DT")> _
     Public Property CreatedAt() As Date
         Get
-            Using SyncHelper(True, "DT")
+            Using Read("DT")
                 Return _dt
             End Using
         End Get
         Set(ByVal value As Date)
-            Using SyncHelper(False, "DT")
+            Using Write("DT")
                 _dt = value
             End Using
         End Set

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Worm.Entities.Entity">
-    <Position X="3.25" Y="1.5" Width="2" />
+    <Position X="2.75" Y="0.5" Width="2" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
       <Compartment Name="Methods" Collapsed="true" />
@@ -13,20 +13,15 @@
         </TypeIdentifier>
         <Lollipop Position="0.2" />
       </Class>
-      <Class Name="Worm.Entities.Entity.PropertyChangedEventArgs" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Entity\Entity.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>gACAAQJiLaAJAkQIAghEKQBggQAEAzAAEABCwBGBABI=</HashCode>
+      <HashCode>wACAAQJyLaAJAFQIAghEKQBAgQAEAzAAEABCwBGBAhI=</HashCode>
       <FileName>Entity\Entity.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Entities.CachedEntity">
-    <Position X="6.25" Y="1.5" Width="2.25" />
+    <Position X="5.75" Y="0.5" Width="2.25" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
       <Compartment Name="Methods" Collapsed="true" />
@@ -44,75 +39,92 @@
       </Class>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>sOFAsIIAKkS4AEwc1iPIEGNOjAVHAqUQQFGClOEBCAg=</HashCode>
+      <HashCode>sOFAsYoAKgS4AEwc1ivIEGNOjAVHAqUQQHGClOABCAg=</HashCode>
       <FileName>Entity\CachedEntity.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Entities.AnonymousEntity">
-    <Position X="3.5" Y="5.5" Width="1.5" />
+    <Position X="3" Y="4.75" Width="1.5" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
       <Compartment Name="Methods" Collapsed="true" />
-    </Compartments>
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAIAAAQgAAAAAAAAAEAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>Entity\Anonym.vb</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="Worm.Entities.OrmBaseT(Of T)">
-    <Position X="9.5" Y="4.5" Width="1.5" />
-    <Compartments>
-      <Compartment Name="Methods" Collapsed="true" />
-      <Compartment Name="Fields" Collapsed="true" />
-    </Compartments>
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAIQQIggQAAABAAAAAAAAAAgAAAAACQAAAAAA=</HashCode>
-      <FileName>Entity\KeyEntity.vb</FileName>
-    </TypeIdentifier>
-    <Lollipop Position="0.2" />
-  </Class>
-  <Class Name="Worm.Entities.KeyEntity">
-    <Position X="9.5" Y="1.25" Width="1.5" />
-    <Compartments>
-      <Compartment Name="Methods" Collapsed="true" />
-      <Compartment Name="Fields" Collapsed="true" />
     </Compartments>
     <NestedTypes>
-      <Class Name="Worm.Entities.KeyEntity.M2MClass" Collapsed="true">
+      <Class Name="Worm.Entities.AnonymousEntity.PropDesc" Collapsed="true">
         <TypeIdentifier>
-          <NewMemberFileName>Entity\KeyEntity.vb</NewMemberFileName>
+          <NewMemberFileName>Entity\Anonym.vb</NewMemberFileName>
         </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Entities.KeyEntity.ChangedEventHelper" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Entity\KeyEntity.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
       </Class>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>iACAI0gAAACBAAAEgCACACCEAAAAQqBQggAiRiAjBEg=</HashCode>
+      <HashCode>AAAACAAAKAAAQgAgBAAAAAAEABAEIAAAAERAAAAACAA=</HashCode>
+      <FileName>Entity\Anonym.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Entities.CachedLazyLoad">
+    <Position X="6" Y="6.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <InheritanceLine Type="Worm.Entities.CachedEntity" ManuallyRouted="true" FixedFromPoint="true">
+      <Path>
+        <Point X="6.75" Y="5.758" />
+        <Point X="6.75" Y="5.962" />
+        <Point X="6.75" Y="5.962" />
+        <Point X="6.75" Y="6.25" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Entity\CachedEntity.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Left" Position="0.243" />
+  </Class>
+  <Class Name="Worm.Entities.KeyEntityBase">
+    <Position X="9.25" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="Worm.Entities.KeyEntityBase.M2MClass" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Entity\KeyEntity.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>iCAAIUgAAASABAAEgCICACCEAAgEQqBQgAAiRiADBEg=</HashCode>
       <FileName>Entity\KeyEntity.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Interface Name="Worm.Entities._ICachedEntity" Collapsed="true">
-    <Position X="0.5" Y="4.5" Width="1.5" />
+  <Class Name="Worm.Entities.KeyEntity" Collapsed="true">
+    <Position X="9.25" Y="3.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAFAgIAAAAAAAAAAQAAAACAEAAAAAAEAABECEEEACAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Entity\KeyEntity.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Orientation="Left" Position="0.246" />
+  </Class>
+  <Interface Name="Worm.Entities._ICachedEntity" Collapsed="true">
+    <Position X="0.5" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAFAgIAAAAAAAAAAQAAAACAEAAAAAAEAABECEEAACAA=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
     </TypeIdentifier>
   </Interface>
   <Interface Name="Worm.Entities._IEntity" Collapsed="true">
     <Position X="0.5" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAgAIAAAAQAAgAACABAAQAAACAAAABCQAAAAAI=</HashCode>
+      <HashCode>AAAAAAAgAAAAAAQAAgAACABAAQAEACAAAABCQAEAAAI=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Entities.IOrmBase" Collapsed="true">
-    <Position X="0.5" Y="5.75" Width="1.5" />
+  <Interface Name="Worm.Entities.IKeyEntity" Collapsed="true">
+    <Position X="0.5" Y="5.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACQgAABAA=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
@@ -121,26 +133,26 @@
   <Interface Name="Worm.Entities.IEntity" Collapsed="true">
     <Position X="0.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAQAABSAAAAAIAABAAAAEAAAAAAAAEAAAAACAAEA=</HashCode>
+      <HashCode>AAAAAQAABSAAAAAIAABAAAAAgAAAAAAAEAAAAACAAAA=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
     </TypeIdentifier>
   </Interface>
   <Interface Name="Worm.Entities.ICachedEntity" Collapsed="true">
     <Position X="0.5" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>gAAAgAAACgSAAEQAACAIEEBACAEAAAAQQAEAAAAAAAg=</HashCode>
+      <HashCode>gAAAgAAACgSAAEQAACAIEEBACAEAAAAQQCEAAAAAAAA=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Entities._IOrmBase" Collapsed="true">
+  <Interface Name="Worm.Entities._IKeyEntity" Collapsed="true">
     <Position X="0.5" Y="7" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAg=</HashCode>
       <FileName>Entity\Abstract.vb</FileName>
     </TypeIdentifier>
   </Interface>
-  <Enum Name="Worm.Entities.ObjectState" Collapsed="true">
-    <Position X="4.75" Y="0.5" Width="1.5" />
+  <Enum Name="Worm.Entities.ObjectState">
+    <Position X="9.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAgAAAAAAAAAABAAEAAAACAAAAQAAAAAAAEAABA=</HashCode>
       <FileName>Entity\KeyEntity.vb</FileName>

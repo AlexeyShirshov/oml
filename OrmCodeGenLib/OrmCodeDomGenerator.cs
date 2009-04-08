@@ -327,7 +327,7 @@ namespace Worm.CodeGen.Core
 			            CodeTypeReference entityType;
 			            if (_ormObjectsDefinition.EntityBaseType == null)
 			            {
-                            entityType = new CodeTypeReference(entity.HasSinglePk ? typeof(KeyEntity) : entity.HasPk ? typeof (CachedEntity) : typeof(Entity));
+                            entityType = new CodeTypeReference(entity.HasSinglePk ? typeof(KeyEntity) : entity.HasPk ? typeof (CachedLazyLoad) : typeof(EntityLazyLoad));
 			            }
 			            else
 			            {

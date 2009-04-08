@@ -90,12 +90,12 @@ Public Class Table2
     <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Tbl() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _tbl1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _tbl1 = value
             End Using
         End Set
@@ -104,12 +104,12 @@ Public Class Table2
     <EntityPropertyAttribute(PropertyAlias:="Blob")> _
     Public Property Blob() As Byte()
         Get
-            Using SyncHelper(True, "Blob")
+            Using Read("Blob")
                 Return _blob
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Blob")
+            Using Write("Blob")
                 _blob = value
             End Using
         End Set
@@ -118,12 +118,12 @@ Public Class Table2
     <EntityPropertyAttribute(PropertyAlias:="Money")> _
     Public Property Money() As Decimal
         Get
-            Using SyncHelper(True, "Money")
+            Using Read("Money")
                 Return _m
             End Using
         End Get
         Set(ByVal value As Decimal)
-            Using SyncHelper(False, "Money")
+            Using Write("Money")
                 _m = value
             End Using
         End Set
@@ -132,12 +132,12 @@ Public Class Table2
     <EntityPropertyAttribute(PropertyAlias:="DT")> _
     Public Property DT() As Nullable(Of Date)
         Get
-            Using SyncHelper(True, "DT")
+            Using Read("DT")
                 Return _dt
             End Using
         End Get
         Set(ByVal value As Nullable(Of Date))
-            Using SyncHelper(False, "DT")
+            Using Write("DT")
                 _dt = value
             End Using
         End Set

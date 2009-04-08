@@ -49,7 +49,7 @@ End Class
 
 <Entity("1", Tablename:="dbo.complex_pk")> _
 Public Class ComplexPK
-    Inherits CachedEntity
+    Inherits CachedLazyLoad
 
     Private _code As String
     <EntityPropertyAttribute(Field2DbRelations.PK, column:="code")> Public Property Code() As String
@@ -100,7 +100,7 @@ End Class
 
 <Entity("1", Tablename:="dbo.guid_table")> _
 Public Class NonCache
-    Inherits Worm.Entities.Entity
+    Inherits Worm.Entities.EntityLazyLoad
 
     Private _code As Integer
     Private _id As Guid

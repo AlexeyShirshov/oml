@@ -2,7 +2,10 @@
 Imports Worm.Cache
 Imports Worm.Query
 
+#Const OLDM2M = True
+
 Namespace Entities
+
     Public Class ObjectSavedArgs
         Inherits EventArgs
 
@@ -63,7 +66,7 @@ Namespace Entities
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
-        Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
+        'Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
         Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
         Sub SetObjectState(ByVal o As ObjectState)
         Sub SetCreateManager(ByVal createManager As ICreateManager)
@@ -84,6 +87,12 @@ Namespace Entities
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
         Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
+    End Interface
+
+    Public Interface IPropertyLazyLoad
+        Function Read(ByVal propertyAlias As String) As IDisposable
+        Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        Function Write(ByVal propertyAlias As String) As IDisposable
     End Interface
 
     Public Interface _ICachedEntity
@@ -210,11 +219,15 @@ Namespace Entities
 
     Public Interface _IKeyEntity
         Inherits IKeyEntity
+
+#If OLDM2M Then
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As M2MCache) As AcceptState2
-        'Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
-        'Function GetAllEditable() As Generic.IList(Of EditableListBase)
+        Function GetM2M() As Generic.IList(Of AcceptState2)
+#End If
+
         Sub RejectM2MIntermidiate()
+
     End Interface
 
     Public Interface IOrmEditable(Of T As {KeyEntity})
@@ -222,7 +235,7 @@ Namespace Entities
     End Interface
 
     <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
-        Public Class AcceptState2
+    Public Class AcceptState2
         'Public ReadOnly el As EditableList
         'Public ReadOnly sort As Sort
         'Public added As Generic.List(Of Integer)
