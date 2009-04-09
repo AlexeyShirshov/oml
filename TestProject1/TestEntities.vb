@@ -19,7 +19,7 @@ End Interface
 <Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
-Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "joins")> _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")> _
 Public Class Entity
     Inherits OrmBaseT(Of Entity)
     Implements IEnt
@@ -53,6 +53,22 @@ Public Class Entity
     'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
 
     'End Sub
+
+    Private _char As String
+    <EntityProperty(PropertyAlias:="Char")> _
+    Public Property [Char]() As String
+        Get
+            Using Read("Char")
+                Return _char
+            End Using
+        End Get
+        Set(ByVal value As String)
+            Using Write("Char")
+                _char = value
+            End Using
+        End Set
+    End Property
+
 End Class
 
 Public MustInherit Class ObjectSchemaBaseImplementation
@@ -194,6 +210,21 @@ Public Class EntitySchema1v2Implementation
             Return GetTables(0)
         End Get
     End Property
+
+End Class
+
+Public Class EntitySchema1v4Implementation
+    Inherits EntitySchema1v2Implementation
+
+    Private _idx As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+        If _idx Is Nothing Then
+            _idx = MyBase.GetFieldColumnMap()
+            _idx.Add(New MapField2Column("Char", "s", GetTables()(Tables2.Second)))
+        End If
+        Return _idx
+    End Function
+
 End Class
 
 Public Class EntitySchema1v3Implementation

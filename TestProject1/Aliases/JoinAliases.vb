@@ -73,4 +73,19 @@ Imports Worm.Criteria.Joins
         Assert.AreEqual(12, q.SingleSimple(Of Integer))
     End Sub
 
+    <TestMethod()> Public Sub TestOuterJoinWhere()
+        Dim t1 As New EntityAlias(GetType(Entity))
+        Dim t2 As New EntityAlias(GetType(Entity4))
+
+        Dim q As New QueryCmd(Function() TestManager.CreateManager(New ObjectMappingEngine("joins")))
+        q.From(t2).Join(JCtor.join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)
+
+        Assert.AreEqual(3, q.SingleSimple(Of Integer))
+
+        q.Join(JCtor.left_join(t1).[on](t1, "ID").eq(t2, "ID")) _
+            .Select(FCtor.count) _
+            .Where(Ctor.prop(t1, "Char").eq("h"))
+
+        Assert.AreEqual(1, q.SingleSimple(Of Integer))
+    End Sub
 End Class

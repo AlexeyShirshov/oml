@@ -148,10 +148,13 @@ Namespace Database
                                         '    oschema = executor.GetEntitySchema(st)
                                         'End If
                                         Dim oschema As IEntitySchema
+                                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column)
                                         If executor Is Nothing Then
                                             oschema = schema.GetEntitySchema(st)
+                                            cm = oschema.GetFieldColumnMap
                                         Else
-                                            oschema = executor.GetEntitySchema(schema, st)
+                                            oschema = executor.GetEntitySchema2(schema, st)
+                                            cm = executor.GetFieldColumnMap(oschema, st)
                                         End If
 
                                         If oschema Is Nothing Then
@@ -159,7 +162,6 @@ Namespace Database
                                         End If
 
                                         Dim map As MapField2Column = Nothing
-                                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
 
                                         If cm.TryGetValue(ns.SortBy, map) Then
                                             Dim t As SourceFragment = map.Table
@@ -254,13 +256,15 @@ l1:
                             '    oschema = executor.GetEntitySchema(t)
                             'End If
                             Dim oschema As IEntitySchema
+                            Dim cm As Collections.IndexedCollection(Of String, MapField2Column)
                             If executor Is Nothing Then
                                 oschema = schema.GetEntitySchema(t)
+                                cm = oschema.GetFieldColumnMap
                             Else
-                                oschema = executor.GetEntitySchema(schema, t)
+                                oschema = executor.GetEntitySchema2(schema, t)
+                                cm = executor.GetFieldColumnMap(oschema, t)
                             End If
 
-                            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap()
                             Dim map As MapField2Column = cm(se.PropertyAlias)
                             If inSelect Then
                                 Dim al As String = Nothing
