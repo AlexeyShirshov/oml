@@ -79,7 +79,7 @@ namespace exam1sharp
         }
     }
 
-    [Entity("Sales", "Person", "1")]
+    [Entity("Sales", "SalesPerson", "1")]
     public class SalesPerson
     {
         [EntityProperty("SalesPersonID", Field2DbRelations.PK)]
