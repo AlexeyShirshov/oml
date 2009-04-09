@@ -49,4 +49,42 @@ namespace exam1sharp
             }
         }
     }
+
+    [Entity("Sales", "Store", "1")]
+    public class Store4
+    {
+        [EntityProperty("CustomerID", Field2DbRelations.PK)]
+        public int ID { get; set; }
+
+        public string Name { get; set; }
+
+        public DateTime ModifiedDate { get; set; }
+
+        public XmlDocument Demographics { get; set; }
+
+        [EntityProperty("rowguid", Field2DbRelations.RowVersion)]
+        public Guid Timestamp { get; protected set; }
+
+        [EntityProperty("SalesPersonID")]
+        public SalesPerson SalesPerson { get; set; }
+
+        public static QueryCmd Query
+        {
+            get
+            {
+                return new QueryCmd(exam1sharp.Properties.Settings.Default.connString)
+                    .From(typeof(Store4))
+                    .Select(typeof(Store4));
+            }
+        }
+    }
+
+    [Entity("Sales", "Person", "1")]
+    public class SalesPerson
+    {
+        [EntityProperty("SalesPersonID", Field2DbRelations.PK)]
+        public int ID { get; set; }
+
+        public decimal SalesQuota { get; set; }
+    }
 }

@@ -74,13 +74,23 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main5(string[] args)
         {
             foreach (Store3 s in Store3.Query
                 .Where(Ctor.prop(typeof(Store3), "Name").like("A%"))
                 .ToList())
             {
                 Console.WriteLine("Store id: {0}, name: {1}, timestamp: {2}", s.ID, s.Name, s.Timestamp);
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            foreach (Store4 s in Store4.Query
+                .Where(Ctor.prop(typeof(Store4), "Name").like("A%"))
+                .ToList())
+            {
+                Console.WriteLine("Store id: {0}, name: {1}, sales person quota: {2}", s.ID, s.Name, s.SalesPerson.SalesQuota);
             }
         }
 	}

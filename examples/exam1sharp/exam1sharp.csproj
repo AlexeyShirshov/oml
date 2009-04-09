@@ -54,14 +54,14 @@
   <ItemGroup>
     <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CoreFramework.dll</HintPath>
+      <HintPath>..\..\Worm2.0\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Worm.Orm, Version=2.2.3278.33003, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Worm.Orm, Version=2.3.3385.40015, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\obm\bin\Debug\Worm.Orm.dll</HintPath>
+      <HintPath>..\..\Worm2.0\obm\bin\Debug\Worm.Orm.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
