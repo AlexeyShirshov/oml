@@ -605,8 +605,9 @@ l1:
                         For Each se As SelectExpression In SelectList
                             If se.ObjectSource IsNot Nothing Then
                                 If Not HasInQuery(se.ObjectSource, _js) Then
-                                    schema.AppendJoin(selOS, se.ObjectSource, _
-                                        f, _js, filterInfo, selSchema)
+                                    schema.AppendJoin(selOS, t, selSchema, _
+                                        se.ObjectSource, se.ObjectSource.GetRealType(schema), schema.GetEntitySchema(se.ObjectSource.GetRealType(schema)), _
+                                        f, _js, filterInfo)
                                 End If
                             ElseIf se.Table IsNot Nothing Then
                                 Throw New NotImplementedException
@@ -677,6 +678,7 @@ l1:
                     Next
                 Else
                     If SelectTypes IsNot Nothing Then
+l1:
                         If _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
                             If SelectTypes.Count > 1 Then
                                 Throw New NotSupportedException
@@ -709,13 +711,35 @@ l1:
                             Next
 
                             If _from Is Nothing Then
-                                _from = New FromClauseDef(SelectTypes(0).First)
+                                _from = New FromClauseDef(selTypes(0).First)
                             End If
 
                             For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
                                 Dim t As Type = de.Key.GetRealType(schema)
                                 If Not _pdic.ContainsKey(t) Then
                                     Dim dic As IDictionary = schema.GetProperties(t, de.Value)
+                                    Dim hasCmplx As Boolean = False
+                                    For Each pi As Reflection.PropertyInfo In dic.Values
+                                        Dim pit As Type = pi.PropertyType
+                                        If ObjectMappingEngine.IsEntityType(pit) _
+                                            AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
+                                            Dim eu As New EntityUnion(pit)
+                                            If Not HasInQuery(eu, _js) Then
+                                                Dim hasPK As Boolean
+                                                Dim s As IEntitySchema = GetSchema(schema, pit, hasPK)
+                                                AddPOD(pit, s)
+                                                schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, filterInfo)
+                                                hasCmplx = True
+                                                SelectAdd(eu, True)
+                                            End If
+                                        End If
+                                    Next
+                                    If hasCmplx Then
+                                        _sl = New List(Of SelectExpression)
+                                        _types = New Dictionary(Of EntityUnion, IEntitySchema)
+                                        _pdic = New Dictionary(Of Type, IDictionary)
+                                        GoTo l1
+                                    End If
                                     _pdic.Add(t, dic)
                                 End If
                             Next
@@ -741,12 +765,13 @@ l1:
                 End If
 
                 If AutoJoins Then
-                    Dim selOS As EntityUnion = GetSelectedOS()
-                    Dim t As Type = selOS.GetRealType(schema)
-                    Dim selSchema As IEntitySchema = schema.GetEntitySchema(t)
+                    Dim t As Type = selectOS.GetRealType(schema)
+                    Dim selSchema As IEntitySchema = _types(selectOS) 'schema.GetEntitySchema(t)
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectTypes
                         If Not HasInQuery(tp.First, _js) Then
-                            schema.AppendJoin(selOS, tp.First, f, _js, filterInfo, selSchema)
+                            schema.AppendJoin(selectOS, t, selSchema, _
+                                tp.First, tp.First.GetRealType(schema), schema.GetEntitySchema(tp.First.GetRealType(schema)), _
+                                f, _js, filterInfo)
                         End If
                     Next
                 End If
@@ -2141,6 +2166,16 @@ l1:
             Return Me
         End Function
 
+        Public Function [SelectAdd](ByVal eu As EntityUnion, ByVal withLoad As Boolean?) As QueryCmd
+            Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
+            If SelectTypes IsNot Nothing Then
+                l.AddRange(SelectTypes)
+            End If
+            l.Add(New Pair(Of EntityUnion, Boolean?)(eu, withLoad))
+            SelectTypes = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
+            Return Me
+        End Function
+
         Public Function [SelectAdd](ByVal t As Type, ByVal withLoad As Boolean) As QueryCmd
             Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
             If SelectTypes IsNot Nothing Then
@@ -2673,13 +2708,7 @@ l1:
             End Using
         End Function
 
-        Public Function ToPODList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
-            Dim rt As Type = GetType(T)
-            Dim mpe As ObjectMappingEngine = mgr.MappingEngine
-
-            Dim hasPK As Boolean
-            Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
-
+        Private Sub AddPOD(ByVal rt As Type, ByVal selSchema As IEntitySchema)
             If _pod Is Nothing Then
                 _pod = Hashtable.Synchronized(New Hashtable)
             End If
@@ -2687,6 +2716,16 @@ l1:
             If Not _pod.Contains(rt) Then
                 _pod.Add(rt, selSchema)
             End If
+        End Sub
+
+        Public Function ToPODList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
+            Dim rt As Type = GetType(T)
+            Dim mpe As ObjectMappingEngine = mgr.MappingEngine
+
+            Dim hasPK As Boolean
+            Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
+
+            AddPOD(rt, selSchema)
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
@@ -2710,7 +2749,7 @@ l1:
                         v = Nothing
                     End If
                     'pi.SetValue(ro, v, Nothing)
-                    ObjectMappingEngine.SetValue(pi.PropertyType, mpe, v, ro, pi, col.PropertyAlias)
+                    ObjectMappingEngine.SetValue(pi.PropertyType, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
                 Next
                 r.Add(ro)
             Next

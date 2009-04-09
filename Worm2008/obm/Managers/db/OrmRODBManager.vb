@@ -2359,28 +2359,28 @@ l1:
                         '    '    obj.SetLoaded(c, True)
                         '    'End If
                     Else
-                        If GetType(IKeyEntity).IsAssignableFrom(propType) Then
-                            Dim type_created As Type = propType
-                            Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-                            If Not String.IsNullOrEmpty(en) Then
-                                Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
-                                If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
-                                    type_created = cr
-                                End If
-                                If type_created Is Nothing Then
-                                    Throw New OrmManagerException("Cannot find type for entity " & en)
-                                End If
-                            End If
-                            Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
-                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
-                            If o IsNot Nothing Then
-                                If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
-                                RaiseObjectLoaded(o)
-                            End If
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                        Else
-                            ObjectMappingEngine.SetValue(propType, MappingEngine, value, obj, pi, propertyAlias, ce, c, oschema)
-                        End If
+                        'If GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                        '    Dim type_created As Type = propType
+                        '    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                        '    If Not String.IsNullOrEmpty(en) Then
+                        '        Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                        '        If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                        '            type_created = cr
+                        '        End If
+                        '        If type_created Is Nothing Then
+                        '            Throw New OrmManagerException("Cannot find type for entity " & en)
+                        '        End If
+                        '    End If
+                        '    Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
+                        '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                        '    If o IsNot Nothing Then
+                        '        If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
+                        '        RaiseObjectLoaded(o)
+                        '    End If
+                        '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        'Else
+                        ObjectMappingEngine.SetValue(propType, MappingEngine, Cache, value, obj, pi, propertyAlias, ce, c, oschema, AddressOf RaiseObjectLoaded, GetContextInfo)
+                        'End If
                     End If
                 ElseIf dr.IsDBNull(i) Then
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, Nothing, oschema)

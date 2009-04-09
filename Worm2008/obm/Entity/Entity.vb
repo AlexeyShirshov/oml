@@ -577,8 +577,10 @@ Namespace Entities
         Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _ICachedEntity
             If GetType(IKeyEntity).IsAssignableFrom(type) Then
                 Return CreateKeyEntity(pk(0).Value, type, cache, schema)
-            Else
+            Else 'If GetType(ICachedEntity).IsAssignableFrom(type) Then
                 Return CreateEntity(pk, type, cache, schema)
+                'Else
+                '    Return CreateEntity(type, cache, schema)
             End If
         End Function
 
@@ -594,7 +596,7 @@ Namespace Entities
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IEntity
+        Public Shared Function CreateEntity(ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _IEntity
             Dim o As _IEntity = CType(Activator.CreateInstance(t), _IEntity)
             o.Init(cache, schema)
             Return o
