@@ -80,7 +80,9 @@ Namespace Query
     End Interface
 
     Public Interface IExecutionContext
-        Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
+        Function GetEntitySchema2(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
+        Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal newMap As OrmObjectIndex)
+        Function GetFieldColumnMap(ByVal oschema As IEntitySchema, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
     <Serializable()> _

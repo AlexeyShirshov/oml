@@ -901,7 +901,7 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params, rt)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
@@ -909,7 +909,7 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilter = TryCast(fl, EntityFilter)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params, rt))
                             Else
                                 upd_cmd.Append(fl.MakeQueryStmt(mpe, Me, Nothing, filterInfo, amgr, params))
                             End If

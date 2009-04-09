@@ -152,7 +152,9 @@ Namespace Criteria.Core
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
         Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, _
-             ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+             ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, _
+             ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, _
+             ByVal pname As Entities.Meta.ICreateParam, ByVal t As Type) As String
             'If _oschema Is Nothing Then
             '    _oschema = oschema
             'End If
@@ -172,7 +174,11 @@ Namespace Criteria.Core
 
                 Dim map As MapField2Column = Nothing
                 Try
-                    map = oschema.GetFieldColumnMap()(Template.PropertyAlias)
+                    If executor Is Nothing Then
+                        map = oschema.GetFieldColumnMap(Template.PropertyAlias)
+                    Else
+                        map = executor.GetFieldColumnMap(oschema, t)(Template.PropertyAlias)
+                    End If
                 Catch ex As KeyNotFoundException
                     Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.ObjectSource.ToStaticString(schema, filterInfo) & "." & Template.PropertyAlias, ex))
                 End Try
@@ -300,10 +306,10 @@ Namespace Criteria.Core
             If executor Is Nothing Then
                 oschema = schema.GetEntitySchema(t)
             Else
-                oschema = executor.GetEntitySchema(schema, t)
+                oschema = executor.GetEntitySchema2(schema, t)
             End If
 
-            Return MakeQueryStmt(oschema, stmt, executor, filterInfo, schema, almgr, pname)
+            Return MakeQueryStmt(oschema, stmt, executor, filterInfo, schema, almgr, pname, t)
         End Function
     End Class
 

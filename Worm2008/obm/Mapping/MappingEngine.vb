@@ -1461,11 +1461,11 @@ Public Class ObjectMappingEngine
                 OrElse assembly.ManifestModule.Name = "System.Transactions.dll" OrElse assembly.ManifestModule.Name = "System.EnterpriseServices.dll" Then
             Else
                 Dim types() As Type = Nothing
-                Try
-                    types = assembly.GetTypes
-                Catch ex As Reflection.ReflectionTypeLoadException
-                    Debug.WriteLine("Worm error during loading types: " & ex.ToString)
-                End Try
+                'Try
+                types = assembly.GetTypes
+                'Catch ex As Reflection.ReflectionTypeLoadException
+                '    Debug.WriteLine("Worm error during loading types: " & ex.ToString)
+                'End Try
 
                 If types Is Nothing Then Continue For
 

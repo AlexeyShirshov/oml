@@ -125,7 +125,7 @@ Namespace Entities
                         Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
                         Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
                         Dim o As ICachedEntity = TryCast(mpe.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
-                        If o IsNot Nothing AndAlso Not mc.Manager.IsInCachePrecise(o) Then
+                        If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
                             Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
                             If ov IsNot Nothing Then
                                 ov.SetValueOptimized(propertyAlias, schema, mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType))

@@ -263,6 +263,7 @@ Namespace Query
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
         Friend _optimizeIn As IFilter
+        Private _newMaps As IDictionary
 
 #Region " Cache "
         '<NonSerialized()> _
@@ -3927,7 +3928,7 @@ l1:
             End If
         End Function
 
-        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
+        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema2
             Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
 
             If oschema Is Nothing AndAlso _pod IsNot Nothing Then
@@ -3939,6 +3940,20 @@ l1:
             End If
 
             Return oschema
+        End Function
+
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements IExecutionContext.ReplaceSchema
+            If _newMaps Is Nothing Then
+                _newMaps = Hashtable.Synchronized(New Hashtable)
+            End If
+            _newMaps(t) = newMap
+        End Sub
+
+        Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, MapField2Column) Implements IExecutionContext.GetFieldColumnMap
+            If _newMaps IsNot Nothing AndAlso _newMaps.Contains(t) Then
+                Return CType(_newMaps(t), Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column))
+            End If
+            Return oschema.GetFieldColumnMap
         End Function
     End Class
 

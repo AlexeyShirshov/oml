@@ -1068,7 +1068,7 @@ l1:
                                 'join.TmpTable = tbl
 
                                 Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
-
+                                query.ReplaceSchema(mpe, t, CreateNewMap(oschema, tbl))
                                 sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
 
                                 sb.Append(") as ").Append(als).Append(" on ")
@@ -1084,6 +1084,15 @@ l1:
                 End If
             Next
         End Sub
+
+        Private Shared Function CreateNewMap(ByVal oschema As IEntitySchema, ByVal tbl As SourceFragment) As OrmObjectIndex
+            Dim newcol As New OrmObjectIndex
+            oschema.GetFieldColumnMap.CopyTo(newcol)
+            For Each m As MapField2Column In newcol
+                m.Table = tbl
+            Next
+            Return newcol
+        End Function
 
         Protected Shared Function GetJoin(ByVal js As IEnumerable(Of QueryJoin), ByVal join As QueryJoin) As QueryJoin
             For Each j As QueryJoin In js
