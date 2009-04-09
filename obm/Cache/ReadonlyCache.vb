@@ -675,16 +675,18 @@ Namespace Cache
             If a Is Nothing AndAlso NewObjectManager IsNot Nothing Then
                 a = NewObjectManager.GetNew(type, obj.GetPKValues)
                 If a IsNot Nothing Then Return a
-                oc = ShadowCopy(obj, mgr)
-                If oc IsNot Nothing Then
-                    Dim oldpk() As PKDesc = oc.OlPK
-                    If oldpk IsNot Nothing Then
-                        a = NewObjectManager.GetNew(type, oldpk)
-                        If a IsNot Nothing Then Return a
+                If mgr IsNot Nothing Then
+                    oc = ShadowCopy(obj, mgr)
+                    If oc IsNot Nothing Then
+                        Dim oldpk() As PKDesc = oc.OlPK
+                        If oldpk IsNot Nothing Then
+                            a = NewObjectManager.GetNew(type, oldpk)
+                            If a IsNot Nothing Then Return a
+                        End If
                     End If
                 End If
             End If
-            If a Is Nothing Then
+            If a Is Nothing AndAlso mgr IsNot Nothing Then
                 If oc Is Nothing Then oc = ShadowCopy(obj, mgr)
                 If oc IsNot Nothing Then
                     a = CType(oc.Obj, _ICachedEntity)

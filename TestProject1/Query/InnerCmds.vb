@@ -324,4 +324,23 @@ Imports Worm.Entities
 
         Assert.AreEqual(2, r.Count)
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestProj()
+        Dim inner As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        inner.From(GetType(Entity4)) _
+            .Select(FCtor.prop(GetType(Entity4), "Title").prop(GetType(Entity4), "ID"))
+
+        Dim al As New EntityAlias(inner)
+
+        Dim q As New QueryCmd(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1")))
+
+        q.Select(FCtor.prop(al, "ID")) _
+            .Where(Ctor.prop(al, "Title").eq("45t4"))
+
+        Assert.AreEqual(9, q.SingleSimple(Of Integer))
+    End Sub
 End Class
