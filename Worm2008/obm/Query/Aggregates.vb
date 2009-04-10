@@ -44,7 +44,7 @@ Namespace Query
             MyClass.New(agFunc, String.Empty)
         End Sub
 
-        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, _
+        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
@@ -147,9 +147,9 @@ Namespace Query
             _oper = operation
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
             Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.MakeStmt(schema, stmt, pmgr, almgr, filterInfo, inSelect, executor))
+            s = String.Format(s, _oper.MakeStmt(schema, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor))
             If Not String.IsNullOrEmpty([Alias]) AndAlso inSelect Then
                 s = s & " " & [Alias]
             End If
@@ -233,7 +233,7 @@ Namespace Query
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
             Throw New NotImplementedException
         End Function
 

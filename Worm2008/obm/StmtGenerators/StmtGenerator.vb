@@ -43,12 +43,12 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Function Oper2String(ByVal oper As Worm.Criteria.FilterOperation) As String
 
-    Public MustOverride Sub FormStmt(ByVal dbschema As ObjectMappingEngine, _
+    Public MustOverride Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                                    ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
                                    ByVal sb As StringBuilder, ByVal _t As Type, ByVal _tbl As SourceFragment, _
                                    ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
 
-    Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+    Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal filterInfo As Object, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
 

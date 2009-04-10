@@ -422,7 +422,7 @@ Namespace Criteria.Joins
         '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
         'End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
             Dim [alias] As String = String.Empty
@@ -487,7 +487,7 @@ Namespace Criteria.Joins
                     os = _eu2
                 End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
-                [alias] = _l.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+                [alias] = _l.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -550,7 +550,7 @@ Namespace Criteria.Joins
                     os2 = _eu2
                 End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
-                [alias2] = _r.CustomTemplate.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+                [alias2] = _r.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If

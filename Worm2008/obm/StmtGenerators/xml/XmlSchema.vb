@@ -79,7 +79,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Me, Nothing, filter_info, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Nothing, Me, Nothing, filter_info, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False
@@ -165,11 +165,11 @@ Namespace Xml
             End Select
         End Function
 
-        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As System.Text.StringBuilder, ByVal _t As System.Type, ByVal _tbl As Entities.Meta.SourceFragment, ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
+        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal filterInfo As Object, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As System.Text.StringBuilder, ByVal _t As System.Type, ByVal _tbl As Entities.Meta.SourceFragment, ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Worm.Query.QueryCmd.FromClauseDef, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
             Throw New NotImplementedException
         End Function
 

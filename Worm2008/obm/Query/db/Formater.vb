@@ -12,7 +12,7 @@ Namespace Entities
         Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal executor As IExecutionContext, ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, _
                    ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                    ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-                   ByVal defaultTable As SourceFragment, ByVal inSelect As Boolean)
+                   ByVal defaultTable As QueryCmd.FromClauseDef, ByVal inSelect As Boolean)
 
     End Interface
 
@@ -50,7 +50,7 @@ Namespace Database
         Public Sub Format(ByVal se As Entities.SelectExpression, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
                           ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                           ByVal context As Object, ByVal selList As ReadOnlyCollection(Of Entities.SelectExpression), _
-                          ByVal defaultTable As Entities.Meta.SourceFragment, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
+                          ByVal defaultTable As QueryCmd.FromClauseDef, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
                 Select Case se.PropType
@@ -58,7 +58,7 @@ Namespace Database
                         'Dim a As Boolean = se.Aggregate.AddAlias
                         'se.Aggregate.AddAlias = False
                         sb.Append(" order by ")
-                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, False, executor))
+                        sb.Append(se.Aggregate.MakeStmt(schema, defaultTable, _s, pmgr, almgr, context, False, executor))
                         If s.Order = SortType.Desc Then
                             sb.Append(" desc")
                         End If
@@ -128,7 +128,7 @@ Namespace Database
                                     'Next
                                     If ns.Values IsNot Nothing Then
                                         'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
-                                        sb2.Append(ns.Custom.GetParam(schema, _s, Nothing, almgr, Nothing, Nothing, False, executor))
+                                        sb2.Append(ns.Custom.GetParam(schema, defaultTable, _s, Nothing, almgr, Nothing, Nothing, False, executor))
                                     Else
                                         sb2.Append(ns.CustomSortExpression)
                                     End If
@@ -166,7 +166,7 @@ Namespace Database
                                         If cm.TryGetValue(ns.SortBy, map) Then
                                             Dim t As SourceFragment = map.Table
                                             If t Is Nothing Then
-                                                t = defaultTable
+                                                t = defaultTable.Table
                                             End If
                                             If t Is Nothing Then
                                                 Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
@@ -182,29 +182,28 @@ Namespace Database
                                     Else
 l1:
                                         Dim clm As String = ns.SortBy
-                                        Dim tbl As SourceFragment = ns.Table
                                         If selList IsNot Nothing Then
                                             For Each p As Entities.SelectExpression In selList
-                                                If p.PropertyAlias = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
-                                                    If p.Table Is Nothing AndAlso tbl Is Nothing Then
-                                                        clm = p.Column
-                                                        'tbl = defaultTable
-                                                        Exit For
-                                                        'ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
-                                                        '    clm = p.Column
-                                                        '    tbl = defaultTable
-                                                        '    Exit For
-                                                    ElseIf tbl IsNot Nothing AndAlso p.Table.RawName = tbl.RawName Then
-                                                        clm = p.Column
-                                                        Exit For
-                                                    End If
+                                                If p.PropertyAlias = clm Then
+                                                    clm = If(String.IsNullOrEmpty(p.ColumnAlias), p.Column, p.ColumnAlias)
+                                                    Exit For
                                                 End If
                                             Next
-                                            'ElseIf tbl Is Nothing Then
-                                            '    tbl = defaultTable
+                                        End If
+                                        If String.IsNullOrEmpty(clm) Then
+                                            clm = defaultTable.AnyQuery.FindColumn(schema, ns.PropertyAlias)
                                         End If
 
-                                        sb2.Append(almgr.GetAlias(tbl, Nothing)).Append(_s.Selector).Append(clm)
+                                        Dim tbl As SourceFragment = ns.Table
+                                        If tbl Is Nothing Then
+                                            tbl = defaultTable.QueryEU.ObjectAlias.Tbl
+                                            If tbl Is Nothing Then
+                                                tbl = New SourceFragment
+                                                defaultTable.QueryEU.ObjectAlias.Tbl = tbl
+                                            End If
+                                        End If
+
+                                        sb2.Append(almgr.GetAlias(tbl, defaultTable.QueryEU)).Append(_s.Selector).Append(clm)
                                         If ns.Order = SortType.Desc Then
                                             sb2.Append(" desc")
                                         End If
@@ -221,11 +220,14 @@ l1:
             Else
                 Select Case se.PropType
                     Case Entities.PropType.Aggregate
-                        sb.Append(se.Aggregate.MakeStmt(schema, _s, pmgr, almgr, context, inSelect, executor))
+                        sb.Append(se.Aggregate.MakeStmt(schema, defaultTable, _s, pmgr, almgr, context, inSelect, executor))
+                        If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
+                            sb.Append(" ").Append(se.ColumnAlias)
+                        End If
                     Case Entities.PropType.TableColumn
                         Dim t As SourceFragment = se.Table
                         If t Is Nothing Then
-                            t = defaultTable
+                            t = defaultTable.Table
                         End If
                         If t Is Nothing Then
                             Throw New Entities.SelectFormaterException("Table is not specified for column " & se.Column)
@@ -249,8 +251,11 @@ l1:
                             cols.Append(se.Column)
                         End If
                     Case Entities.PropType.ObjectProperty
-                        Dim t As Type = se.ObjectSource.GetRealType(schema)
-                        If t IsNot Nothing Then
+                        If se.ObjectSource IsNot Nothing Then
+                            Dim t As Type = se.ObjectSource.GetRealType(schema)
+                            If t Is Nothing Then
+                                GoTo l2
+                            End If
                             'Dim oschema As IEntitySchema = schema.GetEntitySchema(se.ObjectSource.GetRealType(schema), False)
                             'If oschema Is Nothing Then
                             '    oschema = executor.GetEntitySchema(t)
@@ -304,56 +309,74 @@ l1:
                                 If cols IsNot Nothing Then cols.Append(map.Column)
                             End If
                         Else
-                            Dim tbl As SourceFragment = Query.QueryCmd.InnerTbl
-                            sb.Append(tbl.UniqueName(se.ObjectSource)).Append(schema.Delimiter)
+l2:
+                            Dim eu As EntityUnion = defaultTable.QueryEU
+                            Dim tbl As SourceFragment = eu.ObjectAlias.Tbl
+                            If tbl Is Nothing Then
+                                tbl = New SourceFragment
+                                eu.ObjectAlias.Tbl = tbl
+                            End If
+                            If inSelect Then
+                                sb.Append(tbl.UniqueName(eu)).Append(schema.Delimiter)
+                            Else
+                                sb.Append(almgr.GetAlias(tbl, eu)).Append(_s.Selector)
+                            End If
                             If String.IsNullOrEmpty(se.Column) Then
-                                Dim c As String = se.ObjectSource.ObjectAlias.Query.FindColumn(schema, se.PropertyAlias)
-                                If String.IsNullOrEmpty(c) Then
-                                    Throw New Query.QueryCmdException(String.Format("Cannot find column {0} in inner query", se.PropertyAlias), se.ObjectSource.ObjectAlias.Query)
+                                Dim q As QueryCmd = Nothing
+                                If se.ObjectSource IsNot Nothing Then
+                                    q = se.ObjectSource.ObjectAlias.Query
+                                Else
+                                    q = defaultTable.AnyQuery
                                 End If
-                                sb.Append(If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias))
-                                If cols IsNot Nothing Then cols.Append(If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias))
+                                Dim c As String = q.FindColumn(schema, se.PropertyAlias)
+                                If String.IsNullOrEmpty(c) Then
+                                    Throw New Query.QueryCmdException(String.Format("Cannot find column {0} in inner query", se.PropertyAlias), q)
+                                End If
+                                'sb.Append(If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias))
+                                'If cols IsNot Nothing Then cols.Append(If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias))
+                                sb.Append(c)
+                                If cols IsNot Nothing Then cols.Append(c)
                             Else
                                 sb.Append(se.Column)
                                 If cols IsNot Nothing Then cols.Append(se.Column)
                             End If
                         End If
 
-                            If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
-                                sb.Append(" ").Append(se.FieldAlias)
-                                'columnAliases.RemoveAt(columnAliases.Count - 1)
-                                'columnAliases.Add(se.FieldAlias)
-                            End If
+                        If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
+                            sb.Append(" ").Append(se.ColumnAlias)
+                            'columnAliases.RemoveAt(columnAliases.Count - 1)
+                            'columnAliases.Add(se.FieldAlias)
+                        End If
                     Case Entities.PropType.CustomValue
-                            If inSelect Then
-                                'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
-                                Dim sss As String = se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor)
-                                sb.Append(sss)
-                                If cols IsNot Nothing Then cols.Append(sss)
-                            Else
-                                'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
-                                sb.Append(se.Custom.GetParam(schema, _s, pmgr, almgr, Nothing, context, inSelect, executor))
-                            End If
-                            If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
-                                sb.Append(" ").Append(se.FieldAlias)
-                            End If
+                        If inSelect Then
+                            'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
+                            Dim sss As String = se.Custom.GetParam(schema, defaultTable, _s, pmgr, almgr, Nothing, context, inSelect, executor)
+                            sb.Append(sss)
+                            If cols IsNot Nothing Then cols.Append(sss)
+                        Else
+                            'sb.Append(String.Format(se.Column, se.GetCustomExpressionValues(schema, _s, almgr)))
+                            sb.Append(se.Custom.GetParam(schema, defaultTable, _s, pmgr, almgr, Nothing, context, inSelect, executor))
+                        End If
+                        If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
+                            sb.Append(" ").Append(se.ColumnAlias)
+                        End If
                     Case Entities.PropType.Subquery
-                            If Not String.IsNullOrEmpty(se._tempMark) Then
-                                Dim _q As Query.QueryCmd = se.Query
-                                Dim c As New Query.QueryCmd.svct(_q)
-                                Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                                    Query.QueryCmd.Prepare(se.Query, Nothing, schema, context, _s)
-                                    sb.Replace(se._tempMark, Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, almgr))
-                                End Using
-                            Else
-                                se._tempMark = Guid.NewGuid.ToString
-                                sb.Append("(").Append(se._tempMark).Append(")")
-                                If Not String.IsNullOrEmpty(se.FieldAlias) AndAlso inSelect Then
-                                    sb.Append(" ").Append(se.FieldAlias)
-                                End If
+                        If Not String.IsNullOrEmpty(se._tempMark) Then
+                            Dim _q As Query.QueryCmd = se.Query
+                            'Dim c As New Query.QueryCmd.svct(_q)
+                            'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                            '    Query.QueryCmd.Prepare(se.Query, Nothing, schema, context, _s)
+                            sb.Replace(se._tempMark, Query.Database.DbQueryExecutor.MakeQueryStatement(schema, context, _s, _q, pmgr, almgr))
+                            'End Using
+                        Else
+                            se._tempMark = Guid.NewGuid.ToString
+                            sb.Append("(").Append(se._tempMark).Append(")")
+                            If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
+                                sb.Append(" ").Append(se.ColumnAlias)
                             End If
+                        End If
                     Case Else
-                            Throw New NotImplementedException(se.PropType.ToString)
+                        Throw New NotImplementedException(se.PropType.ToString)
                 End Select
             End If
 

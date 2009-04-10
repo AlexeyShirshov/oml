@@ -170,11 +170,11 @@ Namespace Criteria.Conditions
         'End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
             If _right Is Nothing Then
-                Return _left.MakeQueryStmt(schema, stmt, executor, filterInfo, almgr, pname)
+                Return _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
             End If
-            Return "(" & _left.MakeQueryStmt(schema, stmt, executor, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, stmt, executor, filterInfo, almgr, pname) & ")"
+            Return "(" & _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname) & ")"
         End Function
 
         Protected Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition

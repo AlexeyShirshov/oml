@@ -101,7 +101,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             'Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
@@ -110,7 +110,7 @@ Namespace Criteria.Values
             If _v IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IFilterValue In _v
-                    l.Add(v.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor))
+                    l.Add(v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor))
                 Next
                 Return String.Format(_f, l.ToArray)
             Else
@@ -186,7 +186,7 @@ Namespace Criteria.Values
             Return _alias
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return [Alias]
         End Function
 
@@ -210,6 +210,10 @@ Namespace Criteria.Values
         Implements IFilterValue
 
         Private _p As SelectExpression
+
+        Public Sub New(ByVal propertyAlias As String)
+            _p = New SelectExpression(CType(Nothing, EntityUnion), propertyAlias)
+        End Sub
 
         Public Sub New(ByVal p As SelectExpression)
             _p = p
@@ -245,7 +249,7 @@ Namespace Criteria.Values
             Return _p._ToString
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
@@ -265,7 +269,7 @@ Namespace Criteria.Values
 
             Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
             Dim sb As New StringBuilder
-            f.Format(_p, sb, executor, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, inSelect)
+            f.Format(_p, sb, executor, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, fromClause, inSelect)
             Return sb.ToString
 
             'If _p.IsCustom Then
@@ -357,7 +361,7 @@ Namespace Criteria.Values
             _case = caseSensitive
         End Sub
 
-        Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IEvaluableValue.GetParam
 
@@ -580,7 +584,7 @@ Namespace Criteria.Values
             _pname = literal
         End Sub
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return _pname
@@ -768,7 +772,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
@@ -872,7 +876,7 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
@@ -891,9 +895,9 @@ Namespace Criteria.Values
 
             'Return _l & " and " & _r
 
-            Return left.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor) & _
+            Return left.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor) & _
                 " and " & _
-                right.GetParam(schema, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
+                right.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
         End Function
 
         Public Overrides Function _ToString() As String
@@ -999,7 +1003,7 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                       ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
                       ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
@@ -1010,7 +1014,7 @@ Namespace Criteria.Values
             '    _stmtGen = TryCast(schema, SQLGenerator)
             'End If
 
-            stmt.FormStmt(schema, filterInfo, paramMgr, almgr, sb, _t, _tbl, _joins, _field, _f)
+            stmt.FormStmt(schema, fromClause, filterInfo, paramMgr, almgr, sb, _t, _tbl, _joins, _field, _f)
 
             sb.Append(")")
 
@@ -1104,7 +1108,7 @@ Namespace Criteria.Values
             Return _q._ToString()
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
@@ -1131,7 +1135,7 @@ Namespace Criteria.Values
 
             'QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
 
-            sb.Append(stmt.MakeQueryStatement(schema, filterInfo, _q, paramMgr, almgr))
+            sb.Append(stmt.MakeQueryStatement(schema, fromClause, filterInfo, _q, paramMgr, almgr))
             'End Using
 
             sb.Append(")")

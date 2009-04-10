@@ -216,7 +216,7 @@ Namespace Entities
                 If _schema IsNot Nothing Then
                     Return _schema
                 Else
-                    Dim mgr As OrmManager = OrmManager.CurrentManager
+                    Dim mgr As OrmManager = GetCurrent()
                     If mgr IsNot Nothing Then
                         Return mgr.MappingEngine
                     Else

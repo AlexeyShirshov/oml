@@ -12,7 +12,7 @@ Namespace Criteria.Core
     Public Interface IFilter
         Inherits IGetFilter, ICloneable, IQueryElement
         'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-        Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As ICollection(Of IFilter)
