@@ -90,7 +90,8 @@ namespace exam1sharp
                 .Where(Ctor.prop(typeof(Store4), "Name").like("A%"))
                 .ToList())
             {
-                Console.WriteLine("Store id: {0}, name: {1}, sales person quota: {2}", s.ID, s.Name, s.SalesPerson.SalesQuota);
+                Console.WriteLine("Store id: {0}, name: {1}, sales person quota: {2}", 
+                    s.ID, s.Name, s.SalesPerson.SalesQuota);
             }
         }
 	}
