@@ -1262,8 +1262,8 @@ Public Class TestManagerRS
     <TestMethod()> Public Sub TestRawCommand()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim l As New List(Of Table1)
-            Using cmd As New System.Data.SqlClient.SqlCommand("select id,code from table1 where id = 1")
-                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).custom("Code", "code").GetAllProperties
+            Using cmd As New System.Data.SqlClient.SqlCommand("select id, code from table1 where id = 1")
+                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).column(Nothing, "code", "Code").GetAllProperties
 
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
                     Nothing, SelectExpression.GetMapping(s))

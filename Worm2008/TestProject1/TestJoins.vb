@@ -26,7 +26,7 @@ Imports Worm.Criteria.Joins
 
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQLGenerator
-        j.MakeSQLStmt(schema, gen, Nothing, Nothing, Nothing, Nothing, Nothing)
+        j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -36,7 +36,7 @@ Imports Worm.Criteria.Joins
 
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQLGenerator
-        j.MakeSQLStmt(schema, gen, Nothing, Nothing, Nothing, Nothing, Nothing)
+        j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -48,7 +48,7 @@ Imports Worm.Criteria.Joins
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t, Nothing)
         Dim gen As New SQLGenerator
-        j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, Nothing, Nothing)
+        j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
@@ -61,7 +61,7 @@ Imports Worm.Criteria.Joins
         almgr.AddTable(t, Nothing)
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
-        j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing)
+        j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -76,7 +76,7 @@ Imports Worm.Criteria.Joins
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual(" join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(1, pmgr.Params.Count)
 
@@ -96,11 +96,11 @@ Imports Worm.Criteria.Joins
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual(" join table1 t1 on t2.id = 1", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" join table1 t1 on t2.id = 1", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(0, pmgr.Params.Count)
 
-        Assert.AreEqual(" join table1 t1 on t2.id = 1", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, Nothing, Nothing))
+        Assert.AreEqual(" join table1 t1 on t2.id = 1", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing, Nothing))
     End Sub
 
     <TestMethod()> _
@@ -118,7 +118,7 @@ Imports Worm.Criteria.Joins
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual(" join table1 t1 on t2.ID = @p1", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" join table1 t1 on t2.ID = @p1", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(1, pmgr.Params.Count)
 
@@ -148,7 +148,7 @@ Imports Worm.Criteria.Joins
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual(" join table1 t2 on (t2.id = t1.id and t2.s = @p1)", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" join table1 t2 on (t2.id = t1.id and t2.s = @p1)", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(1, pmgr.Params.Count)
 
@@ -157,7 +157,7 @@ Imports Worm.Criteria.Joins
         Dim f2 As New TableFilter(tbl, "id", New ScalarValue(10), Worm.Criteria.FilterOperation.Equal)
         j.ReplaceFilter(f, f2)
 
-        Assert.AreEqual(" join table1 t2 on (t2.id = @p2 and t2.s = @p1)", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" join table1 t2 on (t2.id = @p2 and t2.s = @p1)", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(2, pmgr.Params.Count)
 
@@ -178,7 +178,7 @@ Imports Worm.Criteria.Joins
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual(" full join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" full join table1 t1 on t2.id = @p1", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         Assert.AreEqual(1, pmgr.Params.Count)
 
@@ -186,15 +186,15 @@ Imports Worm.Criteria.Joins
 
         j = New QueryJoin(tbl, Worm.Criteria.Joins.JoinType.LeftOuterJoin, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Assert.AreEqual(" left join table1 t1 on t2.id = @p2", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" left join table1 t1 on t2.id = @p2", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         j = New QueryJoin(tbl, Worm.Criteria.Joins.JoinType.RightOuterJoin, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Assert.AreEqual(" right join table1 t1 on t2.id = @p3", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" right join table1 t1 on t2.id = @p3", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
 
         j = New QueryJoin(tbl, Worm.Criteria.Joins.JoinType.CrossJoin, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Assert.AreEqual(" cross join table1 t1 on t2.id = @p4", j.MakeSQLStmt(schema, gen, Nothing, Nothing, almgr, pmgr, Nothing))
+        Assert.AreEqual(" cross join table1 t1 on t2.id = @p4", j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing))
     End Sub
 End Class
 
@@ -232,7 +232,7 @@ End Class
 
         Assert.AreEqual(1, c.GetAllFilters.Count)
 
-        c.MakeQueryStmt(Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
+        c.MakeQueryStmt(Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -242,7 +242,7 @@ End Class
 
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQLGenerator
-        c.MakeQueryStmt(schema, gen, Nothing, Nothing, Nothing, Nothing)
+        c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -254,7 +254,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         Dim gen As New SQLGenerator
-        c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, Nothing)
+        c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -267,7 +267,7 @@ End Class
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
-        Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -289,7 +289,7 @@ End Class
         almgr.AddTable(tbl, Nothing)
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -307,7 +307,7 @@ End Class
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim f3 As New TableFilter(tbl, "id", New ScalarValue(10), Worm.Criteria.FilterOperation.NotEqual)
 
@@ -315,23 +315,23 @@ End Class
 
         Assert.AreNotEqual(c, c2)
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c3 As New Condition(c, f3, ConditionOperator.And)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c4 As IFilter = CType(c3.ReplaceFilter(f2, f3), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c5 As IFilter = CType(c3.ReplaceFilter(f3, c4), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c6 As IFilter = CType(c5.ReplaceFilter(f3, Nothing), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -348,22 +348,22 @@ End Class
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim tf As IFilter = c.RemoveFilter(f)
-        Assert.AreEqual("(1 = 0 or t2.id > @p2)", tf.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(1 = 0 or t2.id > @p2)", tf.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim f3 As New TableFilter(tbl, "id", New ScalarValue(10), Worm.Criteria.FilterOperation.NotEqual)
 
         Dim c3 As New Condition(New Condition(f, f2, ConditionOperator.Or), f3, ConditionOperator.And)
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         tf = c3.RemoveFilter(f3)
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and 1 = 1)", tf.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and 1 = 1)", tf.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         c3 = New Condition(New Condition(f, f2, ConditionOperator.Or), f3, ConditionOperator.And)
         tf = c3.RemoveFilter(f2)
-        Assert.AreEqual("((t1.id = @p1 or 1 = 0) and t2.id <> @p3)", tf.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or 1 = 0) and t2.id <> @p3)", tf.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -393,7 +393,7 @@ End Class
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
 End Class
@@ -422,7 +422,7 @@ End Class
     Public Sub TestMakeSQLStmt()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
 
-        f.MakeQueryStmt(CType(Nothing, Worm.ObjectMappingEngine), Nothing, Nothing, Nothing, Nothing, Nothing)
+        f.MakeQueryStmt(CType(Nothing, Worm.ObjectMappingEngine), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -435,7 +435,7 @@ End Class
         Assert.AreEqual(IEvaluableValue.EvalResult.Found, f.Eval(schema, e, Nothing))
         Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, f.Eval(schema, New Entity(2, Nothing, schema), Nothing))
 
-        f.MakeQueryStmt(schema, Nothing, Nothing, Nothing, Nothing, Nothing)
+        f.MakeQueryStmt(schema, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -447,7 +447,7 @@ End Class
         Dim gen As New SQLGenerator
         Dim pmgr As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         Assert.AreEqual(1, pmgr.Params.Count)
 
         Dim p As Pair(Of String) = f.MakeSingleQueryStmt(schema, gen, almgr, pmgr)
