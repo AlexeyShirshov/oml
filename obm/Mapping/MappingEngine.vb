@@ -2254,32 +2254,34 @@ Public Class ObjectMappingEngine
         Return New QueryJoin(t, joinType, jf)
     End Function
 
-    Public Shared Sub SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
+    Public Shared Function SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
                             ByVal value As Object, ByVal obj As Object, ByVal pi As Reflection.PropertyInfo, _
-                            ByVal propertyAlias As String, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object)
-        SetValue(propType, MappingEngine, cache, value, obj, pi, propertyAlias, Nothing, Nothing, Nothing, objectLoaded, contextInfo)
-    End Sub
+                            ByVal propertyAlias As String, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object) As Object
+        Return SetValue(propType, MappingEngine, cache, value, obj, pi, propertyAlias, Nothing, Nothing, Nothing, objectLoaded, contextInfo)
+    End Function
 
     Public Delegate Sub ObjectLoadedDelegate(ByVal obj As IEntity)
 
-    Public Shared Sub SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
+    Public Shared Function SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
                         ByVal value As Object, ByVal obj As Object, ByVal pi As Reflection.PropertyInfo, _
                         ByVal propertyAlias As String, ByVal ce As _ICachedEntity, ByVal c As EntityPropertyAttribute, _
-                        ByVal oschema As IEntitySchema, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object)
+                        ByVal oschema As IEntitySchema, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object) As Object
         If GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
             Dim o As New System.Xml.XmlDocument
             o.LoadXml(CStr(value))
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+            Return o
         ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
             Dim svalue As String = CStr(value).Trim
             If svalue = String.Empty Then
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, 0, oschema)
-                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                value = 0
             Else
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, [Enum].Parse(propType, svalue, True), oschema)
-                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                value = [Enum].Parse(propType, svalue, True)
             End If
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+            Return value
         ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
             Dim t As Type = propType.GetGenericArguments()(0)
             Dim v As Object = Nothing
@@ -2311,6 +2313,7 @@ Public Class ObjectMappingEngine
                 Nothing, Nothing, New Object() {v})
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v2, oschema)
             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+            Return v2
         ElseIf ObjectMappingEngine.IsEntityType(propType) Then
             If GetType(_IEntity).IsAssignableFrom(propType) Then
                 Dim type_created As Type = propType
@@ -2351,7 +2354,7 @@ Public Class ObjectMappingEngine
                     If objectLoaded IsNot Nothing Then objectLoaded(o)
                 End If
                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-
+                Return o
             Else
                 Dim o As Object = Activator.CreateInstance(propType)
                 Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(propType)
@@ -2361,6 +2364,7 @@ Public Class ObjectMappingEngine
                     MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
                 End If
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                Return o
             End If
         Else
             Try
@@ -2368,6 +2372,7 @@ Public Class ObjectMappingEngine
                     Dim v As Object = Convert.ChangeType(value, propType)
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    Return v
                 ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                     Dim dt As DateTime = CDate(value)
                     Dim l As Long = dt.ToBinary
@@ -2375,10 +2380,10 @@ Public Class ObjectMappingEngine
                         Dim sw As New IO.StreamWriter(ms)
                         sw.Write(l)
                         sw.Flush()
-                        'pi.SetValue(obj, ms.ToArray, Nothing)
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, ms.ToArray, oschema)
-                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                        value = ms.ToArray
                     End Using
+                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                 Else
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
@@ -2397,9 +2402,11 @@ Public Class ObjectMappingEngine
                 Dim v As Object = Convert.ChangeType(value, propType)
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                Return v
             End Try
         End If
-    End Sub
+        Return value
+    End Function
 
     Public Shared Function IsEntityType(ByVal t As Type) As Boolean
         If t.IsPrimitive OrElse t.IsValueType OrElse t.IsAbstract OrElse Not t.IsClass Then
