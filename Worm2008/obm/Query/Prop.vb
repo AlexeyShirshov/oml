@@ -660,7 +660,7 @@ Namespace Entities
         Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If PropType = Entities.PropType.Subquery Then
                 _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-            ElseIf PropType = Entities.PropType.ObjectProperty AndAlso ObjectSource.IsQuery Then
+            ElseIf PropType = Entities.PropType.ObjectProperty AndAlso ObjectSource IsNot Nothing AndAlso ObjectSource.IsQuery Then
                 ObjectSource.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub

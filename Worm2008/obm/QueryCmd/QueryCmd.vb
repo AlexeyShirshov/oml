@@ -516,6 +516,18 @@ Namespace Query
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
                     CopySE(se)
+                    If _pod IsNot Nothing Then
+                        Dim t As Type = Nothing
+                        If se.Into Is Nothing Then
+                            For Each tp As Type In _pod.Keys
+                                t = tp
+                                Exit For
+                            Next
+                        Else
+                            t = se.Into.GetRealType(schema)
+                        End If
+                        se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
+                    End If
                 Next
                 For Each se As SelectExpression In SelectList
                     se.Prepare(executor, schema, filterInfo, stmt, isAnonym)
@@ -2791,15 +2803,15 @@ l1:
                 Dim pa As String = rt.Name & "-" & col.PropertyAlias
                 If ctd.GetProperties.Find(pa, False) IsNot Nothing Then
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
-                    'mpe.HasField()
                     Dim v As Object = mpe.GetPropertyValue(e, pa, Nothing)
                     If v Is DBNull.Value Then
                         v = Nothing
                     End If
                     'pi.SetValue(ro, v, Nothing)
-                    ObjectMappingEngine.SetValue(pi.PropertyType, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
-                    If v IsNot Nothing AndAlso _pod.Contains(pi.PropertyType) Then
-                        InitPOD(props, pi.PropertyType, ctd, mpe, e, v, mgr)
+                    Dim pit As Type = pi.PropertyType
+                    v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
+                    If v IsNot Nothing AndAlso _pod.Contains(pit) Then
+                        InitPOD(mpe.GetProperties(pit, CType(_pod(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
                     End If
                 End If
             Next
