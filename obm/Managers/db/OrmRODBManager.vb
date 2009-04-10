@@ -1605,7 +1605,7 @@ l1:
                 If os IsNot Nothing Then
                     t = os.GetRealType(MappingEngine)
                 End If
-                Dim propertyAlias As String = se.FieldAlias
+                Dim propertyAlias As String = se.IntoPropertyAlias
                 If String.IsNullOrEmpty(propertyAlias) Then
                     propertyAlias = se.PropertyAlias
                 End If
@@ -1758,10 +1758,7 @@ l1:
                         End If
 
                         Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-                        Dim propertyAlias As String = se.FieldAlias
-                        If String.IsNullOrEmpty(propertyAlias) Then
-                            propertyAlias = se.PropertyAlias
-                        End If
+                        Dim propertyAlias As String = se.GetIntoPropertyAlias
 
                         Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
                         Dim value As Object = dr.GetValue(i)
@@ -2059,7 +2056,7 @@ l1:
                     obj.BeginLoading()
                     For idx As Integer = 0 To selectList.Count - 1
                         Dim se As SelectExpression = selectList(idx)
-                        Dim propertyAlias As String = If(String.IsNullOrEmpty(se.FieldAlias), se.PropertyAlias, se.FieldAlias)
+                        Dim propertyAlias As String = se.GetIntoPropertyAlias
                         Dim c As EntityPropertyAttribute = se._c
                         Dim pi As Reflection.PropertyInfo = se._pi
                         Dim attr As Field2DbRelations = se._realAtt
@@ -2074,7 +2071,7 @@ l1:
                                     If se.Into Is Nothing Then
                                         Dim l As List(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(original_type, oschema)
                                         propertyAlias = l(0).PropertyAlias
-                                        se.FieldAlias = propertyAlias
+                                        se.IntoPropertyAlias = propertyAlias
                                         se.Into = New EntityUnion(original_type)
                                         f = True
                                     End If
@@ -2200,7 +2197,7 @@ l1:
 
                     For idx As Integer = 0 To selectList.Count - 1
                         Dim se As SelectExpression = selectList(idx)
-                        Dim propertyAlias As String = If(String.IsNullOrEmpty(se.PropertyAlias), se.FieldAlias, se.PropertyAlias)
+                        Dim propertyAlias As String = se.GetIntoPropertyAlias
                         Dim c As EntityPropertyAttribute = se._c
                         Dim pi As Reflection.PropertyInfo = se._pi
                         Dim att As Field2DbRelations = se._realAtt
@@ -2878,7 +2875,7 @@ l1:
                     Next
                     sb.Length -= 1
                     Dim f As New cc.EntityFilter(op, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
                 End If
             End If
 
@@ -2892,7 +2889,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As IFilter = TryCast(bf, Worm.cc.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2915,7 +2912,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New cc.EntityFilter(op, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2928,7 +2925,7 @@ l1:
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New cc.EntityFilter(op, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                        sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2967,7 +2964,7 @@ l1:
                     Next
                     sb.Length -= 1
                     Dim f As New cc.TableFilter(table, column, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
-                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params), params.Params.Count))
                 End If
             End If
 
@@ -2981,7 +2978,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -3004,7 +3001,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -3017,7 +3014,7 @@ l1:
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeQueryStmt(MappingEngine, SQLGenerator, Nothing, GetContextInfo, almgr, params))
+                        sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))

@@ -20,7 +20,7 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter._ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
         Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
 
@@ -69,14 +69,14 @@ Namespace Criteria.Core
         '    _v = v
         'End Sub
 
-        Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, _
+        Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean, _
             ByVal almgr As IPrepareTable, ByVal filterContext As Object, ByVal executor As IExecutionContext) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return Value.GetParam(schema, stmt, pmgr, almgr, Nothing, filterContext, inSelect, executor)
+            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, Nothing, filterContext, inSelect, executor)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals

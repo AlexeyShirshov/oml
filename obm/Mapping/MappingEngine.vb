@@ -761,12 +761,22 @@ Public Class ObjectMappingEngine
 #End Region
 
 #Region " Helpers "
-    Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
-        If String.IsNullOrEmpty(field) Then Return False
+    Public Function HasProperty(ByVal t As Type, ByVal propertyAlias As String) As Boolean
+        If String.IsNullOrEmpty(propertyAlias) Then Return False
 
-        Dim schema As IEntitySchema = GetEntitySchema(t)
+        Dim schema As IEntitySchema = GetEntitySchema(t, False)
 
-        Return schema.GetFieldColumnMap.ContainsKey(field)
+        If schema IsNot Nothing Then
+            Return schema.GetFieldColumnMap.ContainsKey(propertyAlias)
+        Else
+            For Each de As DictionaryEntry In GetMappedProperties(t)
+                If CType(de.Key, EntityPropertyAttribute).PropertyAlias = propertyAlias Then
+                    Return True
+                End If
+            Next
+        End If
+
+        Return False
     End Function
 
     'Protected Sub GetPKList(ByVal type As Type, ByVal ids As StringBuilder, ByVal table As String)
@@ -2318,7 +2328,7 @@ Public Class ObjectMappingEngine
                 If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
                     o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
                     o.SetObjectState(ObjectState.NotLoaded)
-                    cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
+                    o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
                 Else
                     Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
                     If pks.Count <> 1 Then
@@ -2327,7 +2337,7 @@ Public Class ObjectMappingEngine
                     If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
                         o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
                         o.SetObjectState(ObjectState.NotLoaded)
-                        cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
+                        o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
                     Else
                         o = Entity.CreateEntity(type_created, cache, MappingEngine)
                         MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)

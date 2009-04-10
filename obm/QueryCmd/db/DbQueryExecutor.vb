@@ -579,7 +579,7 @@ Namespace Query.Database
         Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal selectedType As Type, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal selList As IEnumerable(Of SelectExpression), ByVal defaultTable As SourceFragment)
+            ByVal selList As IEnumerable(Of SelectExpression))
 
             Dim b As Boolean
             Dim cols As New StringBuilder
@@ -590,7 +590,7 @@ Namespace Query.Database
                     colsa_ = colsa
                 End If
                 s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
-                    filterInfo, Nothing, defaultTable, True)
+                    filterInfo, Nothing, query.FromClause, True)
                 cols.Append(", ")
                 If colsa_ IsNot Nothing Then
                     colsa_.Append(",")
@@ -604,7 +604,7 @@ Namespace Query.Database
                 For Each p As SelectExpression In selList
                     Dim cols_ As New StringBuilder
                     s.CreateSelectExpressionFormater().Format(p, cols_, query, colsa, mpe, almgr, params, _
-                        filterInfo, Nothing, defaultTable, True)
+                        filterInfo, Nothing, query.FromClause, True)
                     colsa.Append(",")
                     Exit For
                 Next
@@ -641,15 +641,15 @@ Namespace Query.Database
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal selList As IEnumerable(Of SelectExpression))
 
-            Dim tbl As SourceFragment = Nothing
-            If query.FromClause IsNot Nothing Then
-                tbl = query.FromClause.Table
-            End If
+            'Dim tbl As SourceFragment = Nothing
+            'If query.FromClause IsNot Nothing Then
+            '    tbl = query.FromClause.Table
+            'End If
 
             For Each p As SelectExpression In selList
                 If Not String.IsNullOrEmpty(p._tempMark) Then
                     s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
-                        filterInfo, Nothing, tbl, True)
+                        filterInfo, Nothing, query.FromClause, True)
                 End If
             Next
         End Sub
@@ -863,7 +863,7 @@ l1:
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
                     FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, Nothing, False, _
-                        Function() " on " & jf.MakeQueryStmt(mpe, s, q, filterInfo, almgr, params), predi)
+                        Function() " on " & jf.MakeQueryStmt(mpe, from, s, q, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
                 End If
@@ -879,7 +879,7 @@ l1:
                         If Not almgr.ContainsKey(tables(j), osrc) Then
                             almgr.AddTable(tables(j), osrc, params)
                         End If
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, q, filterInfo, almgr, params, osrc_))
+                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_))
                         almgr.Replace(mpe, s, join.Table, osrc, sb)
                     End If
                 Next
@@ -925,7 +925,7 @@ l1:
                         'Dim c As New Query.QueryCmd.svct(q)
                         'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
                         '    QueryCmd.Prepare(q, Nothing, mpe, filterInfo, s)
-                        sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
+                        sb.Append(s.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, params, AliasMgr.Create))
                         'Dim almgr2 As AliasMgr = AliasMgr.Create
                         'FormSingleQuery(mpe, sb, q, s, AliasMgr.Create, filterInfo, params)
                         'End Using
@@ -939,7 +939,7 @@ l1:
                         Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
 
                         sb.Append(") as ").Append(als).Append(" on ")
-                        sb.Append(join.Condition.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
+                        sb.Append(join.Condition.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
                         almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
                     ElseIf join.Table Is Nothing Then
                         Dim t As Type = join.ObjectSource.GetRealType(mpe)
@@ -1030,7 +1030,7 @@ l1:
 
                             Dim js() As QueryJoin = jl
                             js(0).ObjectSource = join.ObjectSource
-                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, s, query, filterInfo, almgr, params, join.M2MObjectSource))
+                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, join.M2MObjectSource))
 
                             If needAppend Then
                                 cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
@@ -1057,7 +1057,7 @@ l1:
 
                                 Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
                                 FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
-                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, s, query, filterInfo, almgr, params), predi)
+                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params), predi)
                             Else
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
@@ -1069,16 +1069,16 @@ l1:
 
                                 Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
                                 query.ReplaceSchema(mpe, t, CreateNewMap(oschema, tbl))
-                                sb.Append(s.MakeQueryStatement(mpe, filterInfo, q, params, AliasMgr.Create))
+                                sb.Append(s.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, params, AliasMgr.Create))
 
                                 sb.Append(") as ").Append(als).Append(" on ")
-                                sb.Append(join.Condition.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
+                                sb.Append(join.Condition.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
                                 almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
                             End If
                         End If
 
                     Else
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, s, query, filterInfo, almgr, params, Nothing))
+                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing))
                         almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
                     End If
                 End If
@@ -1108,13 +1108,12 @@ l1:
             ByVal pmgr As ICreateParam)
 
             If query.HavingFilter IsNot Nothing Then
-                sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, s, query, Nothing, almgr, pmgr))
+                sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, query.FromClause, s, query, Nothing, almgr, pmgr))
             End If
         End Sub
 
         Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
-            ByVal defTbl As SourceFragment)
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
             If query.Group IsNot Nothing Then
                 sb.Append(" group by ")
                 For Each g As SelectExpression In query.Group
@@ -1136,7 +1135,7 @@ l1:
                     '    End If
                     'End If
                     s.CreateSelectExpressionFormater().Format(g, sb, query, Nothing, mpe, almgr, Nothing, _
-                        Nothing, query.SelectList, defTbl, False)
+                        Nothing, query.SelectList, query.FromClause, False)
                     sb.Append(",")
                 Next
                 sb.Length -= 1
@@ -1147,7 +1146,7 @@ l1:
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
             If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.Table, False)
+                s.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.FromClause, False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
@@ -1161,7 +1160,7 @@ l1:
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal eu As EntityUnion, ByVal sb As StringBuilder, ByVal almgr As IPrepareTable)
 
-            Dim t As SourceFragment = QueryCmd.InnerTbl
+            Dim t As SourceFragment = Nothing 'QueryCmd.InnerTbl
 
             If eu.IsQuery Then
                 If eu.ObjectAlias.Tbl IsNot Nothing Then
@@ -1227,7 +1226,7 @@ l1:
                 'Next
                 'sb.Length -= 1
                 sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
-                sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, s, query, filterInfo, almgr, params))
+                sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
             End If
 
             Return sb.ToString
@@ -1284,7 +1283,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, stmt, query, filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Nothing, stmt, query, filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -1311,12 +1310,12 @@ l1:
                 os = query.GetEntitySchema(mpe, selType)
             End If
 
-            Dim defaultTbl As SourceFragment = Nothing
-            If query.Table IsNot Nothing Then
-                defaultTbl = query.FromClause.Table
-            Else
-                defaultTbl = QueryCmd.InnerTbl
-            End If
+            'Dim defaultTbl As SourceFragment = Nothing
+            'If query.Table IsNot Nothing Then
+            '    defaultTbl = query.FromClause.Table
+            'Else
+            '    defaultTbl = QueryCmd.InnerTbl
+            'End If
 
             sb.Append("select ")
 
@@ -1328,7 +1327,7 @@ l1:
                 sb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
             End If
 
-            FormSelectList(mpe, query, sb, s, os, selType, almgr, filterInfo, params, query._sl, defaultTbl)
+            FormSelectList(mpe, query, sb, s, os, selType, almgr, filterInfo, params, query._sl)
 
             sb.Append(" from ")
 
@@ -1350,7 +1349,7 @@ l1:
 
             FormWhere(mpe, s, os, p.and(query._f).Filter, almgr, sb, filterInfo, params, query)
 
-            FormGroupBy(mpe, query, almgr, sb, s, defaultTbl)
+            FormGroupBy(mpe, query, almgr, sb, s)
 
             FormHaving(mpe, query, almgr, sb, s, params)
         End Sub

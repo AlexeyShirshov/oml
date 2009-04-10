@@ -311,7 +311,7 @@ Namespace Sorting
 
         Public ReadOnly Property SortBy() As String
             Get
-                If ObjectProperty.Entity IsNot Nothing Then
+                If Not String.IsNullOrEmpty(ObjectProperty.PropertyAlias) Then
                     Return ObjectProperty.PropertyAlias
                 Else
                     Return Column

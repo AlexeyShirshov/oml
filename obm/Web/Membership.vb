@@ -160,7 +160,7 @@ Namespace Web
                     Using u.BeginEdit()
                         Schema.SetPropertyValue(u, GetField("Password"), HashPassword(newPassword), oschema)
                         Dim lpcf As String = GetField("LastPasswordChangeDate")
-                        If Schema.HasField(u.GetType, lpcf) Then
+                        If Schema.HasProperty(u.GetType, lpcf) Then
                             Schema.SetPropertyValue(u, lpcf, UserMapper.GetNow, oschema)
                         End If
                     End Using
@@ -244,12 +244,12 @@ Namespace Web
                 End If
 
                 Dim llf As String = GetField("LastLoginDate")
-                If schema.HasField(u.GetType, llf) Then
+                If schema.HasProperty(u.GetType, llf) Then
                     schema.SetPropertyValue(u, llf, d, oschema)
                 End If
 
                 Dim crf As String = GetField("CreationDate")
-                If schema.HasField(u.GetType, crf) Then
+                If schema.HasProperty(u.GetType, crf) Then
                     schema.SetPropertyValue(u, crf, d, oschema)
                 End If
 
@@ -309,7 +309,7 @@ Namespace Web
                     Using u.BeginEdit()
                         Schema.SetPropertyValue(u, GetField("Password"), HashPassword(psw), oschema)
                         Dim lpcf As String = GetField("LastPasswordChangeDate")
-                        If Schema.HasField(u.GetType, lpcf) Then
+                        If Schema.HasProperty(u.GetType, lpcf) Then
                             Schema.SetPropertyValue(u, lpcf, UserMapper.GetNow, oschema)
                         End If
                     End Using
@@ -333,7 +333,7 @@ Namespace Web
             If u IsNot Nothing Then
                 'Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim lf As String = GetField("IsLockedOut")
-                If schema.HasField(u.GetType, lf) Then
+                If schema.HasProperty(u.GetType, lf) Then
                     Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(u.GetType)
                     Using st As New ModificationsTracker(UserMapper.CreateManager)
                         Using u.BeginEdit()
@@ -386,7 +386,7 @@ Namespace Web
             Dim lf As String = GetField("IsLockedOut")
             Dim tt As System.Type = u.GetType
             Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(tt)
-            If schema.HasField(tt, lf) AndAlso CBool(schema.GetPropertyValue(u, lf, oschema)) Then
+            If schema.HasProperty(tt, lf) AndAlso CBool(schema.GetPropertyValue(u, lf, oschema)) Then
                 Return False
             End If
 
@@ -417,10 +417,10 @@ Namespace Web
                 Try
                     Using u.BeginEdit()
                         Dim llf As String = GetField("LastLoginDate")
-                        If schema.HasField(tt, llf) Then
+                        If schema.HasProperty(tt, llf) Then
                             schema.SetPropertyValue(u, llf, UserMapper.GetNow, oschema)
                         End If
-                        If schema.HasField(tt, GetField("FailedPasswordAttemtCount")) Then
+                        If schema.HasProperty(tt, GetField("FailedPasswordAttemtCount")) Then
                             schema.SetPropertyValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
                         End If
                     End Using
@@ -567,31 +567,31 @@ Namespace Web
             Dim islockedout As Boolean = False
             Dim ut As System.Type = u.GetType
             Dim oschema As IEntitySchema = schema.GetEntitySchema(ut)
-            If schema.HasField(ut, lf) Then
+            If schema.HasProperty(ut, lf) Then
                 islockedout = CBool(schema.GetPropertyValue(u, lf, oschema))
             End If
 
             Dim crf As String = GetField("CreationDate")
             Dim created As Date = Date.MinValue
-            If schema.HasField(ut, crf) Then
+            If schema.HasProperty(ut, crf) Then
                 created = CDate(schema.GetPropertyValue(u, crf, oschema))
             End If
 
             Dim llf As String = GetField("LastLoginDate")
             Dim lastlogin As Date = Date.MinValue
-            If schema.HasField(ut, llf) Then
+            If schema.HasProperty(ut, llf) Then
                 lastlogin = CDate(schema.GetPropertyValue(u, llf, oschema))
             End If
 
             Dim lpcf As String = GetField("LastPasswordChangedDate")
             Dim lastpsw As Date = Date.MinValue
-            If schema.HasField(ut, lpcf) Then
+            If schema.HasProperty(ut, lpcf) Then
                 lastpsw = CDate(schema.GetPropertyValue(u, lpcf, oschema))
             End If
 
             Dim lld As String = GetField("LastLockoutDate")
             Dim lastlockout As Date = Date.MinValue
-            If schema.HasField(ut, lld) Then
+            If schema.HasProperty(ut, lld) Then
                 lastlockout = CDate(schema.GetPropertyValue(u, lld, oschema))
             End If
 
@@ -754,7 +754,7 @@ Namespace Web
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim ut As System.Type = u.GetType
 
-            If schema.HasField(ut, GetField("IsLockedOut")) Then
+            If schema.HasProperty(ut, GetField("IsLockedOut")) Then
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                 Dim failCnt As Integer = CInt(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtCount"), oschema))
                 Dim startFail As Date = CDate(schema.GetPropertyValue(u, GetField("FailedPasswordAttemtStart"), oschema))
@@ -776,7 +776,7 @@ l1:
                             Else
                                 Dim ldf As String = GetField("LastLockoutDate")
                                 Schema.SetPropertyValue(u, GetField("IsLockedOut"), True, oschema)
-                                If Schema.HasField(ut, ldf) Then
+                                If Schema.HasProperty(ut, ldf) Then
                                     Schema.SetPropertyValue(u, ldf, nowd, oschema)
                                 End If
                                 Schema.SetPropertyValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)

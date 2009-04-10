@@ -102,11 +102,11 @@ Namespace Criteria.Core
             Return IEvaluableValue.EvalResult.Unknown
         End Function
 
-        Protected Overloads Function GetParam(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+        Protected Overloads Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal inSelect As Boolean, ByVal oschema As IEntitySchema, ByVal executor As IExecutionContext) As String
             'If _dbFilter Then
-            Return Value.GetParam(schema, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue, filterInfo, inSelect, executor)
+            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue, filterInfo, inSelect, executor)
             'Else
             'Throw New InvalidOperationException
             'End If
@@ -151,7 +151,7 @@ Namespace Criteria.Core
 
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
-        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal stmt As StmtGenerator, _
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
              ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, _
              ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, _
              ByVal pname As Entities.Meta.ICreateParam, ByVal t As Type) As String
@@ -203,7 +203,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, filterInfo, pname, almgr, False, oschema, executor)
+                Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
             Else
                 Return String.Empty
             End If
@@ -232,7 +232,7 @@ Namespace Criteria.Core
                 pd = AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue
             End If
 
-            Dim prname As String = Value.GetParam(schema, stmt, pname, almgr, pd, Nothing, False, Nothing)
+            Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, almgr, pd, Nothing, False, Nothing)
 
             Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
             Dim rt As Type = Template.ObjectSource.GetRealType(schema)
@@ -288,7 +288,7 @@ Namespace Criteria.Core
             Return New EntityFilter(val, CType(Template, OrmFilterTemplate))
         End Function
 
-        Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
+        Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -309,7 +309,7 @@ Namespace Criteria.Core
                 oschema = executor.GetEntitySchema2(schema, t)
             End If
 
-            Return MakeQueryStmt(oschema, stmt, executor, filterInfo, schema, almgr, pname, t)
+            Return MakeQueryStmt(oschema, fromClause, stmt, executor, filterInfo, schema, almgr, pname, t)
         End Function
     End Class
 
@@ -354,12 +354,12 @@ Namespace Criteria.Core
         '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname, Nothing)
         'End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
             If Value.ShouldUse Then
                 If Template.Table.Name = TempTable Then
-                    Return Template.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo, executor)
+                    Return Template.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
                 Else
                     'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
@@ -379,7 +379,7 @@ Namespace Criteria.Core
                         End Try
                     End If
 
-                    Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, stmt, pname, False, almgr, filterInfo, executor)
+                    Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
                 End If
             Else
                 Return String.Empty
@@ -399,7 +399,7 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("pname")
             End If
 
-            Dim prname As String = Value.GetParam(schema, stmt, pname, Nothing, Nothing, Nothing, False, Nothing)
+            Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, Nothing, Nothing, Nothing, False, Nothing)
 
             Return New Pair(Of String)(Template.Column, prname)
         End Function
@@ -548,7 +548,7 @@ Namespace Criteria.Core
             Return New CustomFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
@@ -564,7 +564,7 @@ Namespace Criteria.Core
                 '    s = String.Format(s, ObjectMappingEngine.ExtractValues(schema, stmt, almgr, CType(Template, TemplateCls).Values).ToArray)
                 'End If
 
-                Return CType(Template, CustomValue).GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor) & stmt.Oper2String(Template.Operation) & GetParam(schema, stmt, pname, False, almgr, filterInfo, executor)
+                Return CType(Template, CustomValue).GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor) & stmt.Oper2String(Template.Operation) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
             Else
                 Return String.Empty
             End If
@@ -652,8 +652,8 @@ Namespace Criteria.Core
             Return New ExpressionFilter(Left, Right, Operation)
         End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
-            Return Left.MakeStmt(schema, stmt, pname, almgr, filterInfo, False, executor) & stmt.Oper2String(Operation) & Right.MakeStmt(schema, stmt, pname, almgr, filterInfo, False, executor)
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
+            Return Left.MakeStmt(schema, fromClause, stmt, pname, almgr, filterInfo, False, executor) & stmt.Oper2String(Operation) & Right.MakeStmt(schema, fromClause, stmt, pname, almgr, filterInfo, False, executor)
         End Function
 
         Public Function Clone() As IFilter Implements IFilter.Clone
@@ -762,11 +762,11 @@ Namespace Criteria.Core
             Return New NonTemplateUnaryFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
             'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
             'Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
             'If id IsNot Nothing Then
-            Return stmt.Oper2String(_oper) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+            Return stmt.Oper2String(_oper) & Value.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
             'Else
             'Return MakeQueryStmt(schema, filterInfo, almgr, pname, columns)
             'End If
@@ -830,10 +830,10 @@ Namespace Criteria.Core
             Return New IFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
 
-            Return _agg.MakeStmt(schema, stmt, pname, almgr, filterInfo, False, executor) & stmt.Oper2String(_fo) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+            Return _agg.MakeStmt(schema, fromClause, stmt, pname, almgr, filterInfo, False, executor) & stmt.Oper2String(_fo) & Value.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
         End Function
 
         'Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
@@ -895,10 +895,10 @@ Namespace Criteria.Core
             Return New IFilter() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
 
-            Return "(" & stmt.MakeQueryStatement(schema, filterInfo, _cmd, pname, almgr) & ")" & stmt.Oper2String(_fo) & Value.GetParam(schema, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+            Return "(" & stmt.MakeQueryStatement(schema, fromClause, filterInfo, _cmd, pname, almgr) & ")" & stmt.Oper2String(_fo) & Value.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
         End Function
 
         'Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter

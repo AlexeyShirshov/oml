@@ -648,7 +648,7 @@ l1:
                                 cn = CType(cn.[and](pk_table, mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)).eq(New LiteralValue(pk.Second)), PredicateLink)
                             Next
                             'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
-                            ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Me, Nothing, Nothing, almgr, Nothing))
+                            ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, Nothing))
                         End If
                     End If
                 End If
@@ -901,7 +901,7 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params, rt)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, Nothing, Me, Nothing, filterInfo, mpe, amgr, params, rt)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
@@ -909,9 +909,9 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilter = TryCast(fl, EntityFilter)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, Nothing, filterInfo, mpe, amgr, params, rt))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Nothing, Me, Nothing, filterInfo, mpe, amgr, params, rt))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Me, Nothing, filterInfo, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params))
                             End If
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
@@ -957,7 +957,7 @@ l1:
                                 cn.AddFilter(New dc.TableFilter(esch.Table, clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             Dim f As IFilter = cn.Condition
-                            sel_sb.Append(f.MakeQueryStmt(mpe, Me, Nothing, filterInfo, amgr, params))
+                            sel_sb.Append(f.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params))
 
                             upd_cmd.Append(sel_sb)
                             select_columns = sel_columns
@@ -1089,11 +1089,11 @@ l1:
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Me, Nothing, filterInfo, Nothing, params))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
                     del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table))
-                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Me, Nothing, filterInfo, Nothing, params))
+                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, Nothing, params))
                     del_cmd.Append(EndLine)
 
                     del_cmd.Length -= EndLine.Length
@@ -1115,7 +1115,7 @@ l1:
 
             Dim del_cmd As New StringBuilder
             del_cmd.Append("delete from ").Append(GetTableName(mpe.GetTables(t)(0)))
-            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Me, Nothing, Nothing, Nothing, params))
+            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, Nothing, params))
 
             Return del_cmd.ToString
         End Function
@@ -1165,7 +1165,7 @@ l1:
 
                         If Not QueryJoin.IsEmpty(join) Then
                             'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, params, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing))
                         End If
                     Next
                 End If
@@ -1240,7 +1240,7 @@ l1:
                 Dim join As New QueryJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl, CType(Nothing, EntityUnion))
-                selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, params, Nothing))
+                selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing))
 
                 If appendSecondTable Then
                     Dim schema2 As IEntitySchema = mpe.GetEntitySchema(relation.Rel.GetRealType(mpe))
@@ -1475,7 +1475,7 @@ l1:
                             '    End If
                             'Next
 
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1495,14 +1495,14 @@ l1:
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                selectcmd.Append(j.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
                 If sch IsNot Nothing Then
                     For i As Integer = 1 To tables.Length - 1
                         Dim join As QueryJoin = CType(mpe.GetJoins(sch, pk_table, tables(i), filterInfo), QueryJoin)
 
                         If Not QueryJoin.IsEmpty(join) Then
                             almgr.AddTable(tables(i), Nothing, pname)
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1604,7 +1604,7 @@ l1:
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1652,7 +1652,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, Me, Nothing, filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -1706,7 +1706,7 @@ l1:
                         'Next
                         If ns.Values IsNot Nothing Then
                             'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
-                            sb2.Append(ns.Custom.GetParam(mpe, Me, Nothing, almgr, Nothing, Nothing, False, Nothing))
+                            sb2.Append(ns.Custom.GetParam(mpe, Nothing, Me, Nothing, almgr, Nothing, Nothing, False, Nothing))
                         Else
                             sb2.Append(ns.CustomSortExpression)
                         End If
@@ -2116,7 +2116,7 @@ l1:
                     End If
                     almgr.AddTable(tbl, CType(Nothing, EntityUnion))
                     almgr.Replace(mpe, Me, tbl, Nothing, columns)
-                    sb.Append(join.MakeSQLStmt(mpe, Me, Nothing, filter_info, almgr, params, Nothing))
+                    sb.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
@@ -2298,7 +2298,7 @@ l1:
 
                     If Not QueryJoin.IsEmpty(join) Then
                         'almgr.AddTable(join.Table, Nothing, params)
-                        sb.Append(join.MakeSQLStmt(mpe, Me, Nothing, filter_info, almgr, params, Nothing))
+                        sb.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing))
                     End If
                 Next
             End If
@@ -2521,7 +2521,7 @@ l1:
             End Select
         End Function
 
-        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, _
+        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                                    ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
                                    ByVal sb As StringBuilder, ByVal _t As Type, ByVal _tbl As SourceFragment, _
                                    ByVal _joins() As Joins.QueryJoin, ByVal _field As String, ByVal _f As IFilter)
@@ -2542,7 +2542,7 @@ l1:
             AppendWhere(dbschema, _t, _f, almgr, sb, filterInfo, paramMgr)
         End Sub
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal filterInfo As Object, _
             ByVal query As Worm.Query.QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
 
