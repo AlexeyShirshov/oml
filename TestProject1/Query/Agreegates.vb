@@ -211,9 +211,9 @@ Imports Worm.Misc
             Dim o As Grouping = FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 o, _
-                New SelectExpression(New Aggregate(AggregateFunction.Count, "Count")) _
+                New SelectExpression(New Aggregate(AggregateFunction.Count), "Count") _
             })
-            q.From(t).GroupBy(New Grouping() {o}).OrderBy(SCtor.custom("Count").desc)
+            q.From(t).GroupBy(New Grouping() {o}).OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -236,7 +236,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
-                .OrderBy(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -259,7 +259,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
-                .OrderBy(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 
@@ -289,7 +289,7 @@ Imports Worm.Misc
             q.Select(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title")).count("Count")) _
                 .From(t) _
                 .GroupBy(FCtor.custom("Pref", "left({0},1)", FCtor.prop(t, "Title"))) _
-                .OrderBy(SCtor.custom("Count").desc)
+                .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
 

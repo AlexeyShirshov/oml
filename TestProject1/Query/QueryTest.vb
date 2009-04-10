@@ -438,7 +438,7 @@ Imports System.ComponentModel
 
             q.Select(FCtor.column(t, "code", "Code").count("cnt")). _
                 GroupBy(FCtor.column(t, "code")). _
-                OrderBy(SCtor.custom("cnt desc"))
+                OrderBy(SCtor.count().desc)
 
             'Assert.IsNull(q.SelectedType)
             Assert.IsNull(q.CreateType)
@@ -1229,7 +1229,7 @@ Imports System.ComponentModel
 
         Dim r As ReadOnlyObjectList(Of AnonymousEntity) = q _
             .Select(FCtor.prop(GetType(Entity2), "ID").custom("a", "1")) _
-            .OrderBy(SCtor.custom("a")) _
+            .OrderBy(SCtor.custom("1")) _
             .ToAnonymList
 
         For Each e As AnonymousEntity In r

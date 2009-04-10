@@ -282,6 +282,7 @@ Imports Worm
 
         q _
             .From(c1) _
+            .Select(c1) _
             .Join(JCtor.join(c2).on(c1, "ID").eq(c2, "ID")) _
             .Where(Ctor.prop(c1, "Code").greater_than(2)) _
             .OrderBy(SCtor.prop(c1, "Code"))
