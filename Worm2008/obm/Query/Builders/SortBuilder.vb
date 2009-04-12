@@ -93,6 +93,14 @@ Namespace Query
             Return New SortLink(FCtor.min(op))
         End Function
 
+        Public Shared Function sum(ByVal op As ObjectProperty) As SortLink
+            Return New SortLink(FCtor.sum(op))
+        End Function
+
+        Public Shared Function sum(ByVal prop As String) As SortLink
+            Return New SortLink(FCtor.sum(prop))
+        End Function
+
         Public Class SortLink
             Private _s As Sort
 
@@ -216,6 +224,14 @@ Namespace Query
 
             Public Function min(ByVal op As ObjectProperty) As SortLink
                 Return New SortLink(_s, FCtor.min(op))
+            End Function
+
+            Public Function sum(ByVal op As ObjectProperty) As SortLink
+                Return New SortLink(_s, FCtor.sum(op))
+            End Function
+
+            Public Function sum(ByVal prop As String) As SortLink
+                Return New SortLink(_s, FCtor.sum(prop))
             End Function
 
             Public ReadOnly Property asc() As SortLink

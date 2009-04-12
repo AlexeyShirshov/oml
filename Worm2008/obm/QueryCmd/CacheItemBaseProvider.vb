@@ -276,7 +276,7 @@ Namespace Query
 
                     If q.Group IsNot Nothing Then
                         For Each g As Grouping In q.Group
-                            If Not String.IsNullOrEmpty(g.PropertyAlias) Then
+                            If Not String.IsNullOrEmpty(g.PropertyAlias) AndAlso g.ObjectSource IsNot Nothing Then
                                 Dim p As New Pair(Of String, Type)(g.PropertyAlias, g.ObjectSource.GetRealType(MappingEngine))
                                 cache.validate_AddDependentGroupField(p, _key, _id)
                             ElseIf hasSelectTypes Then

@@ -551,9 +551,9 @@ Namespace Criteria.Values
                         r = IEvaluableValue.EvalResult.Unknown
                 End Select
             Catch ex As InvalidCastException
-                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", _
+                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}. Operation {5}", _
                     template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, _
-                    If(template.ObjectSource.AnyType Is Nothing, template.ObjectSource.AnyEntityName, template.ObjectSource.AnyType.ToString), ex))
+                    If(template.ObjectSource.AnyType Is Nothing, template.ObjectSource.AnyEntityName, template.ObjectSource.AnyType.ToString), template.Operation, ex))
             End Try
             Return r
         End Function
