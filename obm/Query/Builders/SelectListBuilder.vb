@@ -200,6 +200,12 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function sum(ByVal prop As String) As Int
+            Dim f As New FCtor.Int
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(prop)))))
+            Return f
+        End Function
+
         Public Shared Function sum(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
             f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(exp)))))

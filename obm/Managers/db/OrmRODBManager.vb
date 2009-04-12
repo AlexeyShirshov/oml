@@ -1228,7 +1228,7 @@ l1:
                     If obj.IsPKLoaded Then
                         k = obj.Key.ToString
                     End If
-                    Dim sync_key As String = "LoadSngObj" & k & obj.GetType.ToString
+                    Dim sync_key As String = "LoadType" & k & obj.GetType.ToString
                     'Using obj.GetSyncRoot()
                     Using SyncHelper.AcquireDynamicLock(sync_key)
                         'Dim old As Boolean = obj.IsLoaded
