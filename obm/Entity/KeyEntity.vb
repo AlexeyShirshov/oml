@@ -721,7 +721,7 @@ Namespace Entities
             Using GetSyncRoot()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
-                    If M2MRelationDesc.CompareKeys(e.Key, key) Then
+                    If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
                         If e.Relation.Type Is Nothing Then
                             If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
                                 el = e
@@ -919,76 +919,6 @@ Namespace Entities
             Return _relations
         End Function
 
-        'Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t)).From(New SearchFragment(t, text))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, top))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, top))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields, top))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type, queryFields))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(t, text, type))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t)).From(New SearchFragment(text))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text, top))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text, type, top))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text, type))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text, type, top, queryFields))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
-        'Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.Search
-        '    Dim q As Worm.Query.QueryCmd = CreateRelCmd(New EntityUnion(t), key).From(New SearchFragment(text, type, queryFields))
-        '    Return CType(q, RelationCmd)
-        'End Function
-
 #End Region
 
     End Class
@@ -1009,6 +939,14 @@ Namespace Entities
         Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
             Return _Write(propertyAlias)
         End Function
+
+        'Public Function Read() As System.IDisposable Implements IPropertyLazyLoad.Read
+
+        'End Function
+
+        'Public Function Write() As System.IDisposable Implements IPropertyLazyLoad.Write
+
+        'End Function
     End Class
 
     Public Enum ObjectState

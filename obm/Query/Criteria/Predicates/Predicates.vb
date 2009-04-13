@@ -140,9 +140,9 @@ Namespace Criteria
             Return GetLink(CreateJoinFilter(op, FilterOperation.Equal))
         End Function
 
-        'Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
-        '    Return GetLink(CreateJoinFilter(New ObjectProperty(t, propertyAlias), FilterOperation.Equal))
-        'End Function
+        Public Function eq(ByVal tbl As SourceFragment, ByVal column As String) As PredicateLink
+            Return GetLink(CreateJoinFilter(tbl, column, FilterOperation.Equal))
+        End Function
 
         Public Function not_eq(ByVal value As IKeyEntity) As PredicateLink
             If value Is Nothing Then
@@ -484,7 +484,7 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(Table, column, t, column, fo)
+            Dim j As New JoinFilter(Table, Me.Column, t, column, fo)
             Return j
         End Function
     End Class

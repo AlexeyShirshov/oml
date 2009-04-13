@@ -2,6 +2,7 @@
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Namespace Entities.Meta
     Public NotInheritable Class SimpleObjectSchema
@@ -58,7 +59,7 @@ Namespace Entities.Meta
                 '    tbl = _tables(0)
                 'End If
 
-                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table))
+                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table, c.Behavior, c.DBType, c.DBSize))
             Next
 
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
@@ -112,6 +113,55 @@ Namespace Entities.Meta
                 Return _table
             End Get
         End Property
+    End Class
+
+    Public NotInheritable Class SimpleTwotableObjectSchema
+        Implements IEntitySchema
+        Implements IMultiTableObjectSchema
+
+        Private _cols As Collections.IndexedCollection(Of String, MapField2Column) = New OrmObjectIndex
+        Private _tables(1) As SourceFragment
+        Private _pk As String
+        Private _fk As String
+
+        Friend Sub New(ByVal realTypecols As Collections.IndexedCollection(Of String, MapField2Column), _
+                       ByVal baseTypeCols As Collections.IndexedCollection(Of String, MapField2Column))
+            _tables(0) = realTypecols(0).Table
+            _tables(1) = baseTypeCols(0).Table
+
+            For Each m As MapField2Column In realTypecols
+                _cols.Add(m)
+                If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    _pk = m.Column
+                End If
+            Next
+
+            For Each m As MapField2Column In baseTypeCols
+                If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    _fk = m.Column
+                Else
+                    _cols(m._propertyAlias).Table = m.Table
+                End If
+            Next
+        End Sub
+
+        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
+            Return _cols
+        End Function
+
+        Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
+            Get
+                Return _tables(0)
+            End Get
+        End Property
+
+        Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
+            Return New QueryJoin(right, JoinType.Join, Ctor.column(left, _pk).eq(right, _fk).Filter)
+        End Function
+
+        Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
+            Return _tables
+        End Function
     End Class
 
 End Namespace
