@@ -1631,34 +1631,39 @@ l1:
                 End If
 
                 If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
-                    Dim obj As _IEntity = Nothing
-                    If p IsNot Nothing Then obj = p.First
-                    If obj Is Nothing Then
-                        obj = CType(Activator.CreateInstance(t), _IEntity)
-                        obj.SetMgrString(IdentityString)
-                        p = New Pair(Of _IEntity)(obj, Nothing)
+                    If Not dr.IsDBNull(i) Then
+                        Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
+                        Dim obj As _IEntity = Nothing
+                        If p IsNot Nothing Then obj = p.First
+                        If obj Is Nothing Then
+                            obj = CType(Activator.CreateInstance(t), _IEntity)
+                            obj.SetMgrString(IdentityString)
+                            p = New Pair(Of _IEntity)(obj, Nothing)
+                            odic.Add(os, p)
+                        End If
+
+                        Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+
+                        Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
+                        Dim value As Object = dr.GetValue(i)
+                        If fv IsNot Nothing Then
+                            value = fv.CreateValue(propertyAlias, value)
+                        End If
+
+                        obj.BeginLoading()
+                        'ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
+                        '                 False, Nothing, c)
+                        ParsePKFromDb(obj, dr, oschema, ce, i, propertyAlias, c, pi, value)
+
+                        obj.EndLoading()
+
+                        Dim cnt As Integer
+                        pkdic.TryGetValue(os, cnt)
+                        pkdic(os) = cnt + 1
+                    Else
+                        Dim p As New Pair(Of _IEntity)(Nothing, Nothing)
                         odic.Add(os, p)
                     End If
-
-                    Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-
-                    Dim fv As IDBValueConverter = TryCast(obj, IDBValueConverter)
-                    Dim value As Object = dr.GetValue(i)
-                    If fv IsNot Nothing Then
-                        value = fv.CreateValue(propertyAlias, value)
-                    End If
-
-                    obj.BeginLoading()
-                    'ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
-                    '                 False, Nothing, c)
-                    ParsePKFromDb(obj, dr, oschema, ce, i, propertyAlias, c, pi, value)
-
-                    obj.EndLoading()
-
-                    Dim cnt As Integer
-                    pkdic.TryGetValue(os, cnt)
-                    pkdic(os) = cnt + 1
                 End If
             Next
 
@@ -1800,21 +1805,22 @@ l1:
                 Dim p As Pair(Of _IEntity) = CType(de.Value, Pair(Of _IEntity))
                 Dim obj As _IEntity = p.Second
 
-                'Assert(obj.ObjectState <> ObjectState.Created, "Object cannot be created")
+                If obj IsNot Nothing Then
 
-                Dim os As EntityUnion = CType(de.Key, EntityUnion)
-                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                    Dim os As EntityUnion = CType(de.Key, EntityUnion)
+                    Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
-                If ce IsNot Nothing Then
-                    ce.CheckIsAllLoaded(MappingEngine, pkdic(os))
+                    If ce IsNot Nothing Then
+                        ce.CheckIsAllLoaded(MappingEngine, pkdic(os))
+                    End If
+
+                    RaiseObjectLoaded(obj)
+
+                    Dim dic As IDictionary = Nothing
+                    objDic.TryGetValue(os, dic)
+
+                    AfterLoadingProcess(dic, p.First, Nothing, obj)
                 End If
-
-                RaiseObjectLoaded(obj)
-
-                Dim dic As IDictionary = Nothing
-                objDic.TryGetValue(os, dic)
-
-                AfterLoadingProcess(dic, p.First, Nothing, obj)
 
                 l.Add(obj)
             Next

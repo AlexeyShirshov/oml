@@ -1073,7 +1073,11 @@ l1:
 
                                 sb.Append(") as ").Append(als).Append(" on ")
                                 sb.Append(join.Condition.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
-                                almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
+
+                                For Each sf As SourceFragment In mts.GetTables
+                                    'almgr.Replace(mpe, s, sf, join.ObjectSource, sb)
+                                    sb.Replace(sf.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
+                                Next
                             End If
                         End If
 

@@ -87,6 +87,7 @@
   <ItemGroup>
     <Compile Include="Advanced\Composite.vb" />
     <Compile Include="Advanced\GuidPK.vb" />
+    <Compile Include="Advanced\Inheritance.vb" />
     <Compile Include="Advanced\MultiTable.vb" />
     <Compile Include="Advanced\Pod.vb" />
     <Compile Include="Advanced\SimpleModel.vb" />

@@ -2329,13 +2329,49 @@ l1:
 
 #Region " ToList "
 
-        'Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
-        '    Return ToEntityList(Of T)(mgr)
-        'End Function
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager) As IList
+            Return ToBaseEntity(Of T)(mgr, False)
+        End Function
 
-        'Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of ReturnType)
-        '    Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
-        'End Function
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager, ByVal withLoad As Boolean) As IList
+            If SelectList IsNot Nothing Then
+                Throw New NotSupportedException("Multi types")
+            Else
+                Dim selOS As EntityUnion = GetSelectedOS()
+                If selOS Is Nothing Then
+                    selOS = New EntityUnion(GetType(T))
+                ElseIf SelectTypes IsNot Nothing Then
+                    If SelectTypes.Count > 1 OrElse SelectTypes(0).First IsNot selOS Then
+                        Throw New NotSupportedException("Multi types")
+                    End If
+                End If
+
+                Dim oldjs() As QueryJoin = _joins
+                Dim sel As SelectClauseDef = SelectClause
+                Try
+                    SelectClause = Nothing
+                    Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(selOS.GetRealType(mgr.MappingEngine))
+                    For Each tt As Type In types
+                        JoinAdd(JCtor.left_join(tt).on(selOS, "ID").eq(tt, "ID"))
+                        SelectAdd(tt, withLoad)
+                    Next
+                    Dim l As New List(Of T)
+                    For Each row As System.Collections.ObjectModel.ReadOnlyCollection(Of _IEntity) In ToMatrix()
+                        For i As Integer = 0 To types.Count - 1
+                            If row(i) IsNot Nothing Then
+                                l.Add(CType(row(i), T))
+                                Exit For
+                            End If
+                        Next
+                    Next
+                    Return l
+                Finally
+                    _sel = sel
+                    _joins = oldjs
+                End Try
+            End If
+
+        End Function
 
         Public Function ToList(ByVal mgr As OrmManager) As IList
             Dim st As Type = GetSelectedType(mgr.MappingEngine)
@@ -2343,7 +2379,11 @@ l1:
             If GetType(AnonymousEntity).IsAssignableFrom(st) Then
                 Return ToAnonymList(mgr)
             ElseIf GetType(_ICachedEntity).IsAssignableFrom(st) Then
-                t = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
+                If st.IsAbstract Then
+                    t = Me.GetType.GetMethod("ToBaseEntity", New Type() {GetType(OrmManager)})
+                Else
+                    t = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
+                End If
             ElseIf GetType(_IEntity).IsAssignableFrom(st) Then
                 t = Me.GetType.GetMethod("ToObjectList", New Type() {GetType(OrmManager)})
             Else

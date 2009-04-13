@@ -1,0 +1,63 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Worm.Entities.Meta;
+using Worm.Query;
+using System.Xml;
+
+namespace exam1sharp.Sales
+{
+    public class SalesBase
+    {
+        public DateTime ModifiedDate { get; set; }
+
+        [EntityProperty("rowguid", Field2DbRelations.RowVersion)]
+        public Guid Timestamp { get; protected set; }
+    }
+
+    [Entity("Sales", "Store", "1")]
+    public class Store : SalesBase
+    {
+        [EntityProperty("CustomerID", Field2DbRelations.PK)]
+        public int ID { get; set; }
+
+        public string Name { get; set; }
+
+        public XmlDocument Demographics { get; set; }
+
+        [EntityProperty("SalesPersonID")]
+        public SalesPerson SalesPerson { get; set; }
+
+        public static QueryCmd Query
+        {
+            get
+            {
+                return new QueryCmd(exam1sharp.Properties.Settings.Default.connString)
+                    .From(typeof(Store))
+                    .Select(typeof(Store));
+            }
+        }
+    }
+
+    [Entity("Sales", "SalesPerson", "1")]
+    public class SalesPerson : SalesBase
+    {
+        [EntityProperty("SalesPersonID", Field2DbRelations.PK)]
+        public int ID { get; set; }
+
+        public decimal SalesQuota { get; set; }
+
+        [EntityProperty("TerritoryID")]
+        public SalesTerritory SalesTerritory { get; set; }
+
+    }
+
+    [Entity("Sales", "SalesTerritory", "1")]
+    public class SalesTerritory : SalesBase
+    {
+        [EntityProperty("TerritoryID", Field2DbRelations.PK)]
+        public int ID { get; set; }
+
+        public string Name { get; set; }
+    }
+}

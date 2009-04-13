@@ -93,6 +93,8 @@ Namespace Entities
         Function Read(ByVal propertyAlias As String) As IDisposable
         Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
         Function Write(ByVal propertyAlias As String) As IDisposable
+        'Function Read() As IDisposable
+        'Function Write() As IDisposable
     End Interface
 
     Public Interface _ICachedEntity
