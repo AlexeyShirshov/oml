@@ -545,6 +545,8 @@ Namespace Criteria.Values
                                 If str.StartsWith(par.TrimEnd("%"c), [case]) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
+                            ElseIf par.Equals(str, [case]) Then
+                                r = IEvaluableValue.EvalResult.Found
                             End If
                         End If
                     Case Else

@@ -2328,12 +2328,27 @@ l1:
         End Function
 
 #Region " ToList "
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                Using New SetManagerHelper(mgr, getMgr)
+                    Return ToBaseEntity(Of T)(mgr, withLoad)
+                End Using
+            End Using
+        End Function
 
-        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager) As IList
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal withLoad As Boolean) As IList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New QueryCmdException("OrmManager required", Me)
+            End If
+
+            Return ToBaseEntity(Of T)(_getMgr, withLoad)
+        End Function
+
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager) As IList(Of T)
             Return ToBaseEntity(Of T)(mgr, False)
         End Function
 
-        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager, ByVal withLoad As Boolean) As IList
+        Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager, ByVal withLoad As Boolean) As IList(Of T)
             If SelectList IsNot Nothing Then
                 Throw New NotSupportedException("Multi types")
             Else
@@ -2348,6 +2363,12 @@ l1:
 
                 Dim oldjs() As QueryJoin = _joins
                 Dim sel As SelectClauseDef = SelectClause
+                Dim oldF As FromClauseDef = FromClause
+
+                If oldF Is Nothing Then
+                    From(selOS)
+                End If
+
                 Try
                     SelectClause = Nothing
                     Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(selOS.GetRealType(mgr.MappingEngine))
@@ -2368,6 +2389,9 @@ l1:
                 Finally
                     _sel = sel
                     _joins = oldjs
+                    If oldF Is Nothing Then
+                        FromClause = Nothing
+                    End If
                 End Try
             End If
 

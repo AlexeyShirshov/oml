@@ -1755,7 +1755,7 @@ l1:
                 Dim att As Field2DbRelations = se._realAtt 'MappingEngine.GetAttributes(oschema, c)
                 If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                     Dim obj As _IEntity = CType(odic(os), Pair(Of _IEntity)).Second
-                    If Not ex.Contains(obj) Then
+                    If obj IsNot Nothing AndAlso Not ex.Contains(obj) Then
                         Dim fac As List(Of Pair(Of String, Object)) = Nothing
                         If Not dfac.TryGetValue(os, fac) Then
                             fac = New List(Of Pair(Of String, Object))
