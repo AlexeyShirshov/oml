@@ -183,6 +183,26 @@ Imports Worm
     End Sub
 
     <TestMethod()> _
+   Public Sub TestEntLoad()
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManager.CreateManager(New ObjectMappingEngine("1"))))
+
+        Dim l As IList(Of Base) = q.ToBaseEntity(Of Base)(True)
+        Assert.IsFalse(q.LastExecutionResult.CacheHit)
+
+        l = q.ToBaseEntity(Of Base)(True)
+        Assert.IsTrue(q.LastExecutionResult.CacheHit)
+
+        For Each c As Base In l
+            Console.WriteLine(c.CreateDt)
+            If c.ID = 13 Then
+                Assert.IsTrue(CType(c, Ent3).Code <> 0)
+                Console.WriteLine(CType(c, Ent3).Code)
+            End If
+        Next
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestEntManual()
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1"))))

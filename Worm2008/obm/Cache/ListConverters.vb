@@ -195,7 +195,7 @@ Namespace Cache
             For Each row As ReadOnlyCollection(Of _IEntity) In m
                 For j As Integer = 0 To row.Count - 1
                     Dim e As _IEntity = row(j)
-                    If withLoad(j) AndAlso Not e.IsLoaded Then
+                    If e IsNot Nothing AndAlso withLoad(j) AndAlso Not e.IsLoaded Then
                         Dim t As Type = e.GetType
                         Dim o2l As IListEdit = Nothing
                         If Not dic.TryGetValue(t, o2l) Then
