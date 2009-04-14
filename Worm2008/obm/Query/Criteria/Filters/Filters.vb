@@ -81,7 +81,7 @@ Namespace Criteria.Core
                 If rt Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
                     Dim v As Object = schema.GetPropertyValue(obj, Template.PropertyAlias, oschema) 'schema.GetFieldValue(obj, _fieldname)
-                    r = evval.Eval(v, Template)
+                    r = evval.Eval(v, schema, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)
                     'Else

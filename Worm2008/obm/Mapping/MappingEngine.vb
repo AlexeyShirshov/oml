@@ -655,16 +655,24 @@ Public Class ObjectMappingEngine
             Return v
         End If
 
-        If GetType(KeyEntity).IsAssignableFrom(ot) Then
-            Return CType(o, KeyEntity).Identifier
-        End If
-
         If GetType(System.Xml.XmlDocument) Is ot Then
             Return CType(o, System.Xml.XmlDocument).OuterXml
         End If
 
         If GetType(System.Xml.XmlDocumentFragment) Is ot Then
             Return CType(o, System.Xml.XmlDocumentFragment).OuterXml
+        End If
+
+        If GetType(KeyEntity).IsAssignableFrom(ot) Then
+            Return CType(o, KeyEntity).Identifier
+        End If
+
+        If IsEntityType(ot, Me) Then
+            Dim pks As IList(Of EntityPropertyAttribute) = GetPrimaryKeys(ot)
+            If pks.Count <> 1 Then
+                Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", ot))
+            End If
+            Return GetPropertyValue(o, pks(0).PropertyAlias, Nothing)
         End If
         Return v
     End Function
@@ -996,7 +1004,7 @@ Public Class ObjectMappingEngine
     '    Return GetFieldValue(obj, propertyAlias, pi, schema)
     'End Function
 
-    Public Function GetPropertyValue(ByVal obj As _IEntity, ByVal propertyAlias As String, _
+    Public Function GetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, _
         ByVal schema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
@@ -1013,12 +1021,13 @@ Public Class ObjectMappingEngine
             End If
 
             If pi Is Nothing Then
-                Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
+                Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
             End If
 
             Return pi.GetValue(obj, Nothing)
         Else
-            If obj.IsPropertyLoaded(propertyAlias) Then
+            Dim e As _IEntity = TryCast(obj, _IEntity)
+            If e IsNot Nothing AndAlso e.IsPropertyLoaded(propertyAlias) Then
                 Return ov.GetValueOptimized(propertyAlias, schema)
             Else
                 Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)

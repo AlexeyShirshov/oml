@@ -2888,6 +2888,30 @@ l1:
 
 #Region " Singles "
 
+        Public Function [Single](ByVal mgr As OrmManager) As Object
+            Dim l As IList = ToList(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [Single](ByVal getMgr As ICreateManager) As Object
+            Dim l As IList = ToList(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [Single]() As Object
+            Dim l As IList = ToList()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
 #Region " Single "
         Public Function [Single](Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
             Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(mgr)

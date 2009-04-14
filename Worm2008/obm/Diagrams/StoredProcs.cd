@@ -1,21 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Worm.Database.Storedprocs.MultiResultsetQueryEntityStoredProcBase" Collapsed="true">
-    <Position X="0.75" Y="3.25" Width="3" />
+    <Position X="0.75" Y="5.5" Width="3" />
+    <NestedTypes>
+      <Interface Name="Worm.Database.Storedprocs.MultiResultsetQueryEntityStoredProcBase.IResultSetDescriptor" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\MultiResultset.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Class Name="Worm.Database.Storedprocs.MultiResultsetQueryEntityStoredProcBase.OrmDescriptor(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\MultiResultset.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
       <HashCode>AAAAACAEAAAAAABAAAAAAAAAAAAAABAAAEAAAAAAAAA=</HashCode>
       <FileName>DbMS\SP\MultiResultset.vb</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Worm.Database.Storedprocs.NonQueryStoredProcBase" Collapsed="true">
-    <Position X="5.75" Y="1.75" Width="1.5" />
+    <Position X="8.25" Y="1.25" Width="1.5" />
+    <NestedTypes>
+      <Class Name="Worm.Database.Storedprocs.NonQueryStoredProcBase.NonQueryStoredProcSimple" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\NonQuery.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <InheritanceLine Type="Worm.Database.Storedprocs.StoredProcBase" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6.25" Y="1.562" />
+        <Point X="8.25" Y="1.562" />
+      </Path>
+    </InheritanceLine>
     <TypeIdentifier>
       <HashCode>BAAAAAAAAAAAAAQAAAAAAAAAAIAAABAAAAAAAAgAAAA=</HashCode>
       <FileName>DbMS\SP\NonQuery.vb</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Worm.Database.Storedprocs.QueryEntityStoredProcBase(Of T)" Collapsed="true">
-    <Position X="8.25" Y="1.75" Width="2.25" />
+    <Position X="7.5" Y="4" Width="2.25" />
     <NestedTypes>
       <Class Name="Worm.Database.Storedprocs.QueryEntityStoredProcBase(Of T).QueryOrmStoredProcSimple(Of T2)" Collapsed="true">
         <TypeIdentifier>
@@ -24,28 +50,53 @@
       </Class>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>hQAAAAIAAAIAAAQAAAAAAAQAAMAAEBAAgMCAAAAAAAA=</HashCode>
+      <HashCode>hQAAAAIAAAAgAAQAAAAAAAQAAMAAEBAAgMCAAAAAAAA=</HashCode>
       <FileName>DbMS\SP\QueryEntity.vb</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Worm.Database.Storedprocs.QueryStoredProcBase" Collapsed="true">
-    <Position X="2.5" Y="1.75" Width="2" />
+    <Position X="2.5" Y="4" Width="2" />
+    <NestedTypes>
+      <Class Name="Worm.Database.Storedprocs.QueryStoredProcBase.QueryStoredProcSimpleList(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\QuerySP.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
       <HashCode>hQAAACAEAAAAAAQAAAAAAAAAAIAAEBAAgAAAAAAAAAA=</HashCode>
       <FileName>DbMS\SP\QuerySP.vb</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Worm.Database.Storedprocs.ScalarStoredProc(Of T)" Collapsed="true">
-    <Position X="4.25" Y="3.25" Width="1.75" />
+    <Position X="4.25" Y="5.5" Width="1.75" />
+    <NestedTypes>
+      <Class Name="Worm.Database.Storedprocs.ScalarStoredProc(Of T).ScalarProcSimple(Of T2)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\ScalarSP.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
       <HashCode>AAAAACAEAAAAAAAAAAAAAAAAAAAAABAAAEAEAAAAAAA=</HashCode>
       <FileName>DbMS\SP\ScalarSP.vb</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="Worm.Database.Storedprocs.StoredProcBase" Collapsed="true">
-    <Position X="5.75" Y="0.5" Width="1.5" />
+  <Class Name="Worm.Database.Storedprocs.StoredProcBase">
+    <Position X="4.75" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="Worm.Database.Storedprocs.StoredProcBase.svp" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DbMS\SP\SPBase.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
     <TypeIdentifier>
-      <HashCode>BQCCQCggAcIAEAUA4EAQAAQAQIAAIEAgoESEBACkBEQ=</HashCode>
+      <HashCode>BACCQAghAcQwEASAgECQAARAAYAAIAAA4ECEBASgBFA=</HashCode>
       <FileName>DbMS\SP\SPBase.vb</FileName>
     </TypeIdentifier>
   </Class>
