@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Album.cs" />
     <Compile Include="Albums.cs" />
+    <Compile Include="SalesOrder.cs" />
     <Compile Include="StoreComplete.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

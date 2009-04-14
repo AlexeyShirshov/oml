@@ -95,13 +95,28 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main7(string[] args)
         {
             foreach (exam1sharp.Sales.Store s in exam1sharp.Sales.Store.Query
                 .Where(Ctor.prop(typeof(exam1sharp.Sales.Store), "Name").like("A%"))
                 .ToList())
             {
                 Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}", s.ID, s.Name, s.SalesPerson.SalesTerritory.Name);
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            foreach (SalesOrder s in SalesOrder.Query
+                .Where(Ctor
+                    .prop(typeof(SalesOrder), "OrderDate").eq("2003-08-01")
+                    .and(typeof(SalesOrder), "LineTotal").less_than(10))
+                .ToList())
+            {
+                Console.WriteLine("Date: {0}, LineTotal: {1}, sales territory: {2}", 
+                    s.OrderDate, 
+                    s.LineTotal, 
+                    s.Territory.Name);
             }
         }
 	}
