@@ -34,7 +34,7 @@ namespace test
 			set { using (Write("Release")) { _release = value; } }
 		}
 
-        [EntityProperty("id", Field2DbRelations.PrimaryKey)]
+        [EntityProperty("id", Field2DbRelations.PrimaryKey, DBType="int")]
         public override object Identifier
         {
             get { return _id; }

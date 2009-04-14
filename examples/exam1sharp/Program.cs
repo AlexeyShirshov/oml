@@ -95,7 +95,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main7(string[] args)
         {
             foreach (exam1sharp.Sales.Store s in exam1sharp.Sales.Store.Query
                 .Where(Ctor.prop(typeof(exam1sharp.Sales.Store), "Name").like("A%"))
@@ -107,9 +107,9 @@ namespace exam1sharp
                     s.SalesPerson.SalesTerritory.Name);
             }
 
-            exam1sharp.Sales.SalesPerson p = (exam1sharp.Sales.SalesPerson)exam1sharp.Sales.SalesPerson.Query
+            exam1sharp.Sales.SalesPerson p = exam1sharp.Sales.SalesPerson.Query
                 .Where(Ctor.prop(typeof(exam1sharp.Sales.SalesPerson),"ID").eq(280))
-                .ToList()[0];
+                .Single() as exam1sharp.Sales.SalesPerson;
             
             foreach (exam1sharp.Sales.Store s in p.Stores.ToList())
             {
@@ -120,7 +120,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main8(string[] args)
+        static void Main(string[] args)
         {
             foreach (SalesOrder s in SalesOrder.Query
                 .Where(Ctor
