@@ -36,6 +36,6 @@ Namespace Criteria.Values
         End Enum
 
         ReadOnly Property Value() As Object
-        Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As EvalResult
+        Function Eval(ByVal v As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As EvalResult
     End Interface
 End Namespace

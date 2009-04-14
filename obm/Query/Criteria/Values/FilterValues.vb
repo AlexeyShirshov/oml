@@ -433,7 +433,7 @@ Namespace Criteria.Values
             Return Value
         End Function
 
-        Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             Dim r As IEvaluableValue.EvalResult
 
             Dim filterValue As Object = GetValue(evaluatedValue, template, r)
@@ -459,6 +459,21 @@ Namespace Criteria.Values
                     Case FilterOperation.Equal
                         If Equals(evaluatedValue, filterValue) Then
                             r = IEvaluableValue.EvalResult.Found
+                        ElseIf evaluatedValue IsNot Nothing Then
+                            Dim vt As Type = evaluatedValue.GetType()
+                            If GetType(IKeyEntity).IsAssignableFrom(vt) Then
+                                If Equals(CType(evaluatedValue, IKeyEntity).Identifier, filterValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            ElseIf ObjectMappingEngine.IsEntityType(vt, mpe) Then
+                                Dim pks As IList(Of EntityPropertyAttribute) = mpe.GetPrimaryKeys(vt)
+                                If pks.Count <> 1 Then
+                                    Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
+                                End If
+                                If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias, Nothing), filterValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            End If
                         End If
                     Case FilterOperation.GreaterEqualThan
                         Dim c As IComparable = CType(evaluatedValue, IComparable)
@@ -620,7 +635,7 @@ Namespace Criteria.Values
             MyBase.New("null")
         End Sub
 
-        Public Function Eval(ByVal v As Object, ByVal template As Core.OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Function Eval(ByVal v As Object, ByVal mpe As ObjectMappingEngine, ByVal template As Core.OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             If template.Operation = FilterOperation.Is Then
                 If v Is Nothing Then
                     Return IEvaluableValue.EvalResult.Found
@@ -736,7 +751,7 @@ Namespace Criteria.Values
             Return _str
         End Function
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
 
             'Dim val As Object = GetValue(v, template, r)
@@ -846,7 +861,7 @@ Namespace Criteria.Values
             End If
         End Sub
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Unknown
 
             Dim val As Object = GetValue(v, template, r)
