@@ -67,6 +67,15 @@ namespace exam1sharp.Sales
                     .Select(typeof(SalesPerson));
             }
         }
+
+        public QueryCmd Stores
+        {
+            get
+            {
+                return Store.Query
+                    .Where(Ctor.prop(typeof(Store), "SalesPerson").eq(this));
+            }
+        }
     }
 
     [Entity("Sales", "SalesTerritory", "1")]

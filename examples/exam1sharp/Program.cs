@@ -95,17 +95,32 @@ namespace exam1sharp
             }
         }
 
-        static void Main7(string[] args)
+        static void Main(string[] args)
         {
             foreach (exam1sharp.Sales.Store s in exam1sharp.Sales.Store.Query
                 .Where(Ctor.prop(typeof(exam1sharp.Sales.Store), "Name").like("A%"))
                 .ToList())
             {
-                Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}", s.ID, s.Name, s.SalesPerson.SalesTerritory.Name);
+                Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}", 
+                    s.ID, 
+                    s.Name, 
+                    s.SalesPerson.SalesTerritory.Name);
+            }
+
+            exam1sharp.Sales.SalesPerson p = (exam1sharp.Sales.SalesPerson)exam1sharp.Sales.SalesPerson.Query
+                .Where(Ctor.prop(typeof(exam1sharp.Sales.SalesPerson),"ID").eq(280))
+                .ToList()[0];
+            
+            foreach (exam1sharp.Sales.Store s in p.Stores.ToList())
+            {
+                Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}",
+                    s.ID,
+                    s.Name,
+                    s.SalesPerson.SalesTerritory.Name);
             }
         }
 
-        static void Main(string[] args)
+        static void Main8(string[] args)
         {
             foreach (SalesOrder s in SalesOrder.Query
                 .Where(Ctor
