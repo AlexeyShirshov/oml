@@ -947,6 +947,23 @@ Namespace Entities
         'Public Function Write() As System.IDisposable Implements IPropertyLazyLoad.Write
 
         'End Function
+        Public Shared Shadows Operator <>(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return False
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return Not obj2.Equals(obj1)
+            End If
+            Return Not obj1.Equals(obj2)
+        End Operator
+
+        Public Shared Shadows Operator =(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+            If obj1 Is Nothing Then
+                If obj2 Is Nothing Then Return True
+                'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
+                Return obj2.Equals(obj1)
+            End If
+            Return obj1.Equals(obj2)
+        End Operator
     End Class
 
     Public Enum ObjectState

@@ -1202,7 +1202,7 @@ Public Class ObjectMappingEngine
             r = j.GetJoinField(subType)
         End If
         If String.IsNullOrEmpty(r) Then
-            Dim c As ICollection(Of String) = GetPropertyAliasByType(mainType, subType)
+            Dim c As ICollection(Of String) = GetPropertyAliasByType(mainType, subType, oschema)
             If c.Count = 1 Then
                 For Each s As String In c
                     r = s
@@ -1250,7 +1250,7 @@ Public Class ObjectMappingEngine
         Throw New ObjectMappingException("Type " & type.Name & " doesnot contain property " & propertyAlias)
     End Function
 
-    Public Function GetPropertyAliasByType(ByVal type As Type, ByVal propertyType As Type) As ICollection(Of String)
+    Public Function GetPropertyAliasByType(ByVal type As Type, ByVal propertyType As Type, ByVal oschema As IEntitySchema) As ICollection(Of String)
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1266,7 +1266,7 @@ Public Class ObjectMappingEngine
                 l = CType(_joins(key), List(Of String))
                 If l Is Nothing Then
                     l = New List(Of String)
-                    For Each de As DictionaryEntry In GetProperties(type)
+                    For Each de As DictionaryEntry In GetProperties(type, oschema)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If pi.PropertyType Is propertyType Then
                             Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
@@ -1474,40 +1474,42 @@ Public Class ObjectMappingEngine
 
             If types Is Nothing Then Continue For
 
+            Dim t As Type = GetType(_IEntity)
+
             For Each tp As Type In types
-                InitType(tp, idic, names)
+                If t.IsAssignableFrom(tp) Then InitType(tp, Me, idic, names)
             Next
         Next
         Return idic
     End Function
 
-    Private Sub InitType(ByVal tp As Type, ByVal idic As IDictionary, ByRef names As IDictionary)
-        Dim t As Type = GetType(_IEntity)
-        If tp.IsClass AndAlso t.IsAssignableFrom(tp) Then
+    Public Shared Function InitType(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByRef names As IDictionary) As IEntitySchema
+        Dim schema As IEntitySchema = Nothing
+
+        If tp.IsClass Then
             Dim entities() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
 
             For Each ea As EntityAttribute In entities
-                If ea.Version = _version Then
-                    Dim schema As IEntitySchema = Nothing
+                If ea.Version = mpe._version Then
 
                     If ea.Type Is Nothing Then
                         If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                             Dim l As New OrmObjectIndex
                             Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
-                            For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                 l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                             Next
 
                             Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                             If bsch Is Nothing Then
-                                InitType(tp.BaseType, idic, names)
+                                InitType(tp.BaseType, mpe, idic, names)
                             End If
                             Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
                             schema = New SimpleTwotableObjectSchema(l, l2)
                         Else
                             Dim l As New List(Of EntityPropertyAttribute)
-                            For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                 l.Add(c)
                             Next
 
@@ -1524,13 +1526,13 @@ Public Class ObjectMappingEngine
 
                     Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                     If n IsNot Nothing Then
-                        n.GetSchema(Me, tp)
+                        n.GetSchema(mpe, tp)
                     End If
 
-                    If Not String.IsNullOrEmpty(ea.EntityName) Then
+                    If Not String.IsNullOrEmpty(ea.EntityName) AndAlso names IsNot Nothing Then
                         If names.Contains(ea.EntityName) Then
                             Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
-                            If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> _version Then
+                            If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> mpe._version Then
                                 names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                             End If
                         Else
@@ -1539,37 +1541,37 @@ Public Class ObjectMappingEngine
                     End If
 
                     Try
-                        idic.Add(tp, schema)
+                        If idic IsNot Nothing Then idic.Add(tp, schema)
                     Catch ex As ArgumentException
                         Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
                     End Try
                 End If
             Next
 
-            If Not idic.Contains(tp) Then
+            If schema Is Nothing Then
                 Dim entities2() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
 
                 For Each ea As EntityAttribute In entities2
-                    If ea.Version = _version Then
-                        Dim schema As IEntitySchema = Nothing
+                    If ea.Version = mpe._version Then
+                        'Dim schema As IEntitySchema = Nothing
                         If ea.Type Is Nothing Then
                             If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
-                                For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                     l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                 Next
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                 If bsch Is Nothing Then
-                                    InitType(tp.BaseType, idic, names)
+                                    InitType(tp.BaseType, mpe, idic, names)
                                 End If
                                 Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                     l.Add(c)
                                 Next
 
@@ -1586,13 +1588,13 @@ Public Class ObjectMappingEngine
 
                         Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                         If n IsNot Nothing Then
-                            n.GetSchema(Me, tp)
+                            n.GetSchema(mpe, tp)
                         End If
 
-                        If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
+                        If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
                             If names.Contains(ea.EntityName) Then
                                 Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
-                                If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> _version Then
+                                If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> mpe._version Then
                                     names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                                 End If
                             Else
@@ -1601,7 +1603,7 @@ Public Class ObjectMappingEngine
                         End If
 
                         Try
-                            idic.Add(tp, schema)
+                            If idic IsNot Nothing Then idic.Add(tp, schema)
                             Exit For
                         Catch ex As ArgumentException
                             Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
@@ -1609,36 +1611,36 @@ Public Class ObjectMappingEngine
                     End If
                 Next
 
-                If Not idic.Contains(tp) Then
+                If schema Is Nothing Then
                     'For Each ea As EntityAttribute In entities
                     Dim ea1 As EntityAttribute = Nothing
                     If entities.Length > 0 Then
-                        If _mapv IsNot Nothing Then
-                            ea1 = _mapv(_version, entities, tp)
+                        If mpe._mapv IsNot Nothing Then
+                            ea1 = mpe._mapv(mpe._version, entities, tp)
                         ElseIf entities.Length = 1 Then
                             ea1 = entities(0)
                         End If
                     End If
                     If ea1 IsNot Nothing Then
-                        Dim schema As IEntitySchema = Nothing
+                        'Dim schema As IEntitySchema = Nothing
                         If ea1.Type Is Nothing Then
                             If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea1.TableSchema, ea1.TableName)
-                                For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                     l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                 Next
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                 If bsch Is Nothing Then
-                                    InitType(tp.BaseType, idic, names)
+                                    InitType(tp.BaseType, mpe, idic, names)
                                 End If
                                 Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                     l.Add(c)
                                 Next
 
@@ -1655,16 +1657,16 @@ Public Class ObjectMappingEngine
 
                         Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                         If n IsNot Nothing Then
-                            n.GetSchema(Me, tp)
+                            n.GetSchema(mpe, tp)
                         End If
 
-                        If Not String.IsNullOrEmpty(ea1.EntityName) Then
+                        If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea1.EntityName) Then
                             If names.Contains(ea1.EntityName) Then
                                 Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea1.EntityName), Pair(Of Type, EntityAttribute))
-                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> mpe._version AndAlso mpe._mapn IsNot Nothing) Then
                                     Dim e As EntityAttribute = Nothing
-                                    If _mapn IsNot Nothing Then
-                                        e = _mapn(_version, New EntityAttribute() {ea1, tt.Second}, tp)
+                                    If mpe._mapn IsNot Nothing Then
+                                        e = mpe._mapn(mpe._version, New EntityAttribute() {ea1, tt.Second}, tp)
                                     End If
                                     If e IsNot tt.Second Then
                                         names(ea1.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea1)
@@ -1676,43 +1678,43 @@ Public Class ObjectMappingEngine
                         End If
 
                         Try
-                            idic.Add(tp, schema)
+                            If idic IsNot Nothing Then idic.Add(tp, schema)
                         Catch ex As ArgumentException
                             Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea1.Type), ex)
                         End Try
                     End If
                     'Next
 
-                    If Not idic.Contains(tp) Then
+                    If schema Is Nothing Then
                         Dim ea2 As EntityAttribute = Nothing
                         If entities2.Length > 0 Then
-                            If _mapv IsNot Nothing Then
-                                ea2 = _mapv(_version, entities2, tp)
+                            If mpe._mapv IsNot Nothing Then
+                                ea2 = mpe._mapv(mpe._version, entities2, tp)
                             ElseIf entities2.Length = 1 Then
                                 ea2 = entities2(0)
                             End If
                         End If
                         If ea2 IsNot Nothing Then
-                            Dim schema As IEntitySchema = Nothing
+                            'Dim schema As IEntitySchema = Nothing
 
                             If ea2.Type Is Nothing Then
                                 If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                     Dim l As New OrmObjectIndex
                                     Dim tbl As New SourceFragment(ea2.TableSchema, ea2.TableName)
-                                    For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                         l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                     Next
 
                                     Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                     If bsch Is Nothing Then
-                                        InitType(tp.BaseType, idic, names)
+                                        InitType(tp.BaseType, mpe, idic, names)
                                     End If
                                     Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
                                     schema = New SimpleTwotableObjectSchema(l, l2)
                                 Else
                                     Dim l As New List(Of EntityPropertyAttribute)
-                                    For Each c As EntityPropertyAttribute In GetProperties(tp, Nothing).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
                                         l.Add(c)
                                     Next
 
@@ -1729,16 +1731,16 @@ Public Class ObjectMappingEngine
 
                             Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                             If n IsNot Nothing Then
-                                n.GetSchema(Me, tp)
+                                n.GetSchema(mpe, tp)
                             End If
 
-                            If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
+                            If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
                                 If names.Contains(ea2.EntityName) Then
                                     Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
-                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> mpe._version AndAlso mpe._mapn IsNot Nothing) Then
                                         Dim e As EntityAttribute = Nothing
-                                        If _mapn IsNot Nothing Then
-                                            e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                        If mpe._mapn IsNot Nothing Then
+                                            e = mpe._mapn(mpe._version, New EntityAttribute() {ea2, tt.Second}, tp)
                                         End If
                                         If e IsNot tt.Second Then
                                             names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
@@ -1750,7 +1752,7 @@ Public Class ObjectMappingEngine
                             End If
 
                             Try
-                                idic.Add(tp, schema)
+                                If idic IsNot Nothing Then idic.Add(tp, schema)
                                 'Exit For
                             Catch ex As ArgumentException
                                 Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
@@ -1761,7 +1763,8 @@ Public Class ObjectMappingEngine
                 End If
             End If
         End If
-    End Sub
+        Return schema
+    End Function
 
 #Region " Public members "
 
@@ -2327,7 +2330,10 @@ Public Class ObjectMappingEngine
                         ByVal value As Object, ByVal obj As Object, ByVal pi As Reflection.PropertyInfo, _
                         ByVal propertyAlias As String, ByVal ce As _ICachedEntity, ByVal c As EntityPropertyAttribute, _
                         ByVal oschema As IEntitySchema, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object) As Object
-        If GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
+        If value Is Nothing Then
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, Nothing, oschema)
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+        ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
             Dim o As New System.Xml.XmlDocument
             o.LoadXml(CStr(value))
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
@@ -2375,7 +2381,7 @@ Public Class ObjectMappingEngine
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v2, oschema)
             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
             Return v2
-        ElseIf ObjectMappingEngine.IsEntityType(propType) Then
+        ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
             If GetType(_IEntity).IsAssignableFrom(propType) Then
                 Dim type_created As Type = propType
                 Dim en As String = MappingEngine.GetEntityNameByType(type_created)
@@ -2469,7 +2475,7 @@ Public Class ObjectMappingEngine
         Return value
     End Function
 
-    Public Shared Function IsEntityType(ByVal t As Type) As Boolean
+    Public Shared Function IsEntityType(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Boolean
         If t.IsPrimitive OrElse t.IsValueType OrElse t.IsAbstract OrElse Not t.IsClass Then
             Return False
         End If
@@ -2482,13 +2488,8 @@ Public Class ObjectMappingEngine
             Return False
         End If
 
-        Dim entities() As EntityAttribute = CType(t.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
-        If entities.Length > 0 Then
-            Return True
-        End If
-
-        entities = CType(t.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
-        If entities.Length > 0 Then
+        Dim es As IEntitySchema = InitType(t, mpe, Nothing, Nothing)
+        If es IsNot Nothing Then
             Return True
         End If
 

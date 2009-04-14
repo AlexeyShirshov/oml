@@ -750,7 +750,7 @@ l1:
                                     Dim hasCmplx As Boolean = False
                                     For Each pi As Reflection.PropertyInfo In dic.Values
                                         Dim pit As Type = pi.PropertyType
-                                        If ObjectMappingEngine.IsEntityType(pit) _
+                                        If ObjectMappingEngine.IsEntityType(pit, schema) _
                                             AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                                             Dim eu As New EntityUnion(pit)
                                             If Not HasInQuery(eu, _js) Then
@@ -831,6 +831,7 @@ l1:
             _js = New List(Of QueryJoin)
             _ftypes = New Dictionary(Of EntityUnion, Object)
             _stypes = New Dictionary(Of EntityUnion, Object)
+            _newMaps = Nothing
 
             If Joins IsNot Nothing Then
                 '_js.AddRange(Joins)
@@ -3316,6 +3317,8 @@ l1:
 
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
+            Dim s As IEntitySchema = ObjectMappingEngine.InitType(t, mpe, Nothing, Nothing)
+            If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then Return s
             If SelectList Is Nothing Then
                 Dim tbl As SourceFragment = Nothing
                 If _from IsNot Nothing Then
