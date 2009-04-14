@@ -1214,7 +1214,7 @@ Public Class ObjectMappingEngine
 
     Public Function GetJoinObj(ByVal oschema As IEntitySchema, _
         ByVal obj As _IEntity, ByVal subType As Type) As _IEntity
-        Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
+        Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, GetEntitySchema(obj.GetType))
         Dim r As _IEntity = Nothing
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = GetPropertyValue(obj, c, oschema)

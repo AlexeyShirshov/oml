@@ -244,7 +244,7 @@ Namespace Query
         'Private _m2mObject As IKeyEntity
         'Protected _m2mKey As String
         Protected _rn As TableFilter
-        Private _outer As QueryCmd
+        Friend _outer As QueryCmd
         Private _er As OrmManager.ExecutionResult
         'Private _selectSrc As ObjectSource
         Friend _resDic As Boolean
@@ -503,7 +503,7 @@ Namespace Query
 
         Private Sub CopySE(ByVal se As SelectExpression)
             _sl.Add(se)
-            If _outer IsNot Nothing AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
+            If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
                 se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
             End If
             'If se.ObjectSource Is Nothing AndAlso _from.AnyQuery IsNot Nothing Then
@@ -2372,9 +2372,12 @@ l1:
 
                 Try
                     SelectClause = Nothing
-                    Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(selOS.GetRealType(mgr.MappingEngine))
+                    Dim st As Type = selOS.GetRealType(mgr.MappingEngine)
+                    Dim spk As String = mgr.MappingEngine.GetPrimaryKeys(st)(0).PropertyAlias
+                    Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(st)
                     For Each tt As Type In types
-                        JoinAdd(JCtor.left_join(tt).on(selOS, "ID").eq(tt, "ID"))
+                        Dim pk As String = mgr.MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias
+                        JoinAdd(JCtor.left_join(tt).on(selOS, spk).eq(tt, pk))
                         SelectAdd(tt, withLoad)
                     Next
                     Dim l As New List(Of T)
