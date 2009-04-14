@@ -190,7 +190,7 @@ Namespace Query
 
         Public Shared Function sum(ByVal op As ObjectProperty, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(op)))))
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(op))), [alias]))
             Return f
         End Function
 
@@ -208,13 +208,13 @@ Namespace Query
 
         Public Shared Function sum(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Sum, New UnaryExp(New SelectExpressionValue(exp))), [alias]))
             Return f
         End Function
 
         Public Shared Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
             Dim f As New FCtor.Int
-            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+            f.GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, New UnaryExp(New SelectExpressionValue(exp))), [alias]))
             Return f
         End Function
 
@@ -453,7 +453,7 @@ Namespace Query
             End Function
 
             Public Function max(ByVal exp As SelectExpression, ByVal [alias] As String) As Int
-                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, [alias], New UnaryExp(New SelectExpressionValue(exp)))))
+                GetAllProperties.Add(New SelectExpression(New Aggregate(AggregateFunction.Max, New UnaryExp(New SelectExpressionValue(exp))), [alias]))
                 Return Me
             End Function
 
@@ -491,6 +491,14 @@ Namespace Query
                 GetAllProperties.Add(expression)
                 Return Me
             End Function
+
+            Public Function [alias](ByVal columnAlias As String) As Int
+                If _l IsNot Nothing AndAlso _l.Count > 0 Then
+                    _l(_l.Count - 1).ColumnAlias = columnAlias
+                End If
+                Return Me
+            End Function
+
 #End Region
 
         End Class
