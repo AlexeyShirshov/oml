@@ -532,13 +532,19 @@ End Class
             Assert.IsFalse(Nothing > e)
             Assert.IsTrue(e > Nothing)
 
-            Assert.IsTrue(e2.Equals(2))
+            'Assert.IsTrue(e2.Equals(2))
 
             e3.GetHashCode()
 
             'e2.CreateObject(Nothing, 1)
 
-            Assert.IsTrue(CType(e3, IComparable).CompareTo(1) > 0)
+            'Assert.IsTrue(CType(e3, IComparable).CompareTo(1) > 0)
         End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestEquality2()
+        Dim o As Object = 2
+        Assert.IsTrue(Equals(o, 2))
     End Sub
 End Class

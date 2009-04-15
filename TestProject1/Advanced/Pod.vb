@@ -163,7 +163,7 @@ Imports Worm
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID")). _
             OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
-        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
+        Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -183,7 +183,7 @@ Imports Worm
 
         q.OrderBy(SCtor.prop(GetType(cls2), "Code")).From(t)
 
-        Dim l As IList(Of cls2) = q.ToPODList(Of cls2)()
+        Dim l As IList(Of cls2) = q.ToPOCOList(Of cls2)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -203,7 +203,7 @@ Imports Worm
 
         q.OrderBy(SCtor.prop(GetType(cls3), "Code")).From(t)
 
-        Dim l As IList(Of cls3) = q.ToPODList(Of cls3)()
+        Dim l As IList(Of cls3) = q.ToPOCOList(Of cls3)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -224,7 +224,7 @@ Imports Worm
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
-        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
+        Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -245,7 +245,7 @@ Imports Worm
         q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls), "Code"))
 
-        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
+        Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -265,7 +265,7 @@ Imports Worm
         q.OrderBy(SCtor.prop(GetType(cls4), "Code")) _
             .Where(Ctor.prop(GetType(cls4), "Code").greater_than(2))
 
-        Dim l As IList(Of cls4) = q.ToPODList(Of cls4)()
+        Dim l As IList(Of cls4) = q.ToPOCOList(Of cls4)()
 
         Assert.AreEqual(2, l.Count)
     End Sub
@@ -287,7 +287,7 @@ Imports Worm
             .Where(Ctor.prop(c1, "Code").greater_than(2)) _
             .OrderBy(SCtor.prop(c1, "Code"))
 
-        Dim l As IList(Of cls4) = q.ToPODList(Of cls4)()
+        Dim l As IList(Of cls4) = q.ToPOCOList(Of cls4)()
 
         Assert.AreEqual(2, l.Count)
     End Sub

@@ -158,6 +158,17 @@ Namespace Query
             Private _f As FromClauseDef
             Private _sssl As ObjectModel.ReadOnlyCollection(Of SelectExpression)
 
+            Private _dontReset As Boolean
+
+            Public Property DontReset() As Boolean
+                Get
+                    Return _dontReset
+                End Get
+                Set(ByVal value As Boolean)
+                    _dontReset = value
+                End Set
+            End Property
+
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
                 If cmd.SelectClause IsNot Nothing Then
@@ -172,17 +183,19 @@ Namespace Query
             End Sub
 
             Public Sub SetCT2Nothing()
-                _cmd._createType = _oldct
-                If _types Is Nothing AndAlso _sssl Is Nothing Then
-                    _cmd._sel = Nothing
-                ElseIf _types IsNot Nothing Then
-                    _cmd._sel = New SelectClauseDef(_types)
-                ElseIf _sssl IsNot Nothing Then
-                    _cmd._sel = New SelectClauseDef(_sssl)
-                Else
-                    Throw New NotSupportedException
+                If Not _dontReset Then
+                    _cmd._createType = _oldct
+                    If _types Is Nothing AndAlso _sssl Is Nothing Then
+                        _cmd._sel = Nothing
+                    ElseIf _types IsNot Nothing Then
+                        _cmd._sel = New SelectClauseDef(_types)
+                    ElseIf _sssl IsNot Nothing Then
+                        _cmd._sel = New SelectClauseDef(_sssl)
+                    Else
+                        Throw New NotSupportedException
+                    End If
+                    _cmd._from = _f
                 End If
-                _cmd._from = _f
             End Sub
         End Class
 
@@ -211,6 +224,20 @@ Namespace Query
                 End Set
             End Property
         End Class
+
+        Public Class QueryPreparedEventArgs
+            Inherits EventArgs
+
+            Private _cancel As Boolean
+            Public Property Cancel() As Boolean
+                Get
+                    Return _cancel
+                End Get
+                Set(ByVal value As Boolean)
+                    _cancel = value
+                End Set
+            End Property
+        End Class
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
@@ -218,6 +245,7 @@ Namespace Query
         Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
         Public Event GetDynamicKey4Filter(ByVal sender As QueryCmd, ByVal args As GetDynamicKey4FilterEventArgs)
+        Public Event QueryPrepared(ByVal sender As QueryCmd, ByVal args As QueryPreparedEventArgs)
 
         Friend _sel As SelectClauseDef
         Protected _filter As IGetFilter
@@ -258,7 +286,7 @@ Namespace Query
         Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
-        Private _pod As IDictionary
+        Private _poco As IDictionary
         Friend _createType As EntityUnion
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
@@ -516,10 +544,10 @@ Namespace Query
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
                     CopySE(se)
-                    If _pod IsNot Nothing Then
+                    If _poco IsNot Nothing Then
                         Dim t As Type = Nothing
                         If se.Into Is Nothing Then
-                            For Each tp As Type In _pod.Keys
+                            For Each tp As Type In _poco.Keys
                                 t = tp
                                 Exit For
                             Next
@@ -747,27 +775,40 @@ l1:
                                 Dim t As Type = de.Key.GetRealType(schema)
                                 If Not _pdic.ContainsKey(t) Then
                                     Dim dic As IDictionary = schema.GetProperties(t, de.Value)
-                                    Dim hasCmplx As Boolean = False
-                                    For Each pi As Reflection.PropertyInfo In dic.Values
-                                        Dim pit As Type = pi.PropertyType
-                                        If ObjectMappingEngine.IsEntityType(pit, schema) _
-                                            AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                            Dim eu As New EntityUnion(pit)
-                                            If Not HasInQuery(eu, _js) Then
-                                                Dim hasPK As Boolean
-                                                Dim s As IEntitySchema = GetSchema(schema, pit, hasPK)
-                                                AddPOD(pit, s)
-                                                schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, filterInfo)
-                                                hasCmplx = True
-                                                SelectAdd(eu, True)
+                                    If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) Then
+                                        Dim hasCmplx As Boolean = False
+                                        For Each tde As DictionaryEntry In dic
+                                            Dim pi As Reflection.PropertyInfo = CType(tde.Value, PropertyInfo)
+                                            Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
+                                            Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
+                                            If selex IsNot Nothing Then
+                                                Dim pit As Type = pi.PropertyType
+                                                If ObjectMappingEngine.IsEntityType(pit, schema) _
+                                                    AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
+                                                    Dim eu As EntityUnion = selex.ObjectSource
+                                                    If eu Is Nothing Then eu = New EntityUnion(pit)
+                                                    If Not HasInQuery(eu, _js) Then
+                                                        Dim s As IEntitySchema = Nothing
+                                                        If Not GetType(IEntity).IsAssignableFrom(pit) Then
+                                                            Dim hasPK As Boolean
+                                                            s = GetSchema(schema, pit, hasPK)
+                                                            AddPOCO(pit, s)
+                                                        Else
+                                                            s = schema.GetEntitySchema(pit, False)
+                                                        End If
+                                                        schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, filterInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
+                                                        hasCmplx = True
+                                                        SelectAdd(eu, True)
+                                                    End If
+                                                End If
                                             End If
+                                        Next
+                                        If hasCmplx Then
+                                            _sl = New List(Of SelectExpression)
+                                            _types = New Dictionary(Of EntityUnion, IEntitySchema)
+                                            _pdic = New Dictionary(Of Type, IDictionary)
+                                            GoTo l1
                                         End If
-                                    Next
-                                    If hasCmplx Then
-                                        _sl = New List(Of SelectExpression)
-                                        _types = New Dictionary(Of EntityUnion, IEntitySchema)
-                                        _pdic = New Dictionary(Of Type, IDictionary)
-                                        GoTo l1
                                     End If
                                     _pdic.Add(t, dic)
                                 End If
@@ -791,8 +832,8 @@ l1:
                                 _from = New FromClauseDef(s.Table)
                             End If
                         End If
-                        If _pod IsNot Nothing Then
-                            For Each de As DictionaryEntry In _pod
+                        If _poco IsNot Nothing Then
+                            For Each de As DictionaryEntry In _poco
                                 SelectAdd(New EntityUnion(CType(de.Key, Type)), Nothing)
                                 GoTo l1
                             Next
@@ -820,6 +861,7 @@ l1:
         End Sub
 
         Friend _prepared As Boolean
+        Friend _cancel As Boolean
 
         Public Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
@@ -896,6 +938,10 @@ l1:
             _Prepare(executor, schema, filterInfo, stmt, f, selectOS, isAnonym)
 
             _prepared = True
+
+            Dim args As New QueryPreparedEventArgs
+            RaiseEvent QueryPrepared(Me, args)
+            _cancel = args.Cancel
         End Sub
 
         Protected Friend Function Need2Join(ByVal eu As EntityUnion) As Boolean
@@ -991,7 +1037,7 @@ l1:
                         Next
                     End If
                 End If
-                Dim pod As Boolean = _pod IsNot Nothing AndAlso _pod.Contains(t)
+                Dim pod As Boolean = _poco IsNot Nothing AndAlso _poco.Contains(t)
                 For Each se As SelectExpression In l
                     se.ObjectProperty = New ObjectProperty(tp.First, se.PropertyAlias)
                     If pod Then
@@ -2415,7 +2461,7 @@ l1:
             ElseIf GetType(_IEntity).IsAssignableFrom(st) Then
                 t = Me.GetType.GetMethod("ToObjectList", New Type() {GetType(OrmManager)})
             Else
-                t = Me.GetType.GetMethod("ToPODList", New Type() {GetType(OrmManager)})
+                t = Me.GetType.GetMethod("ToPOCOList", New Type() {GetType(OrmManager)})
             End If
             t = t.MakeGenericMethod(New Type() {st})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
@@ -2810,36 +2856,36 @@ l1:
             End If
         End Function
 
-        Public Function ToPODList(Of T As {New, Class})() As IList(Of T)
+        Public Function ToPOCOList(Of T As {New, Class})() As IList(Of T)
             If _getMgr Is Nothing Then
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
                 Using New SetManagerHelper(mgr, CreateManager)
-                    Return ToPODList(Of T)(mgr)
+                    Return ToPOCOList(Of T)(mgr)
                 End Using
             End Using
         End Function
 
-        Private Sub AddPOD(ByVal rt As Type, ByVal selSchema As IEntitySchema)
-            If _pod Is Nothing Then
-                _pod = Hashtable.Synchronized(New Hashtable)
+        Private Sub AddPOCO(ByVal rt As Type, ByVal selSchema As IEntitySchema)
+            If _poco Is Nothing Then
+                _poco = Hashtable.Synchronized(New Hashtable)
             End If
 
-            If Not _pod.Contains(rt) Then
-                _pod.Add(rt, selSchema)
+            If Not _poco.Contains(rt) Then
+                _poco.Add(rt, selSchema)
             End If
         End Sub
 
-        Public Function ToPODList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
+        Public Function ToPOCOList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
             Dim rt As Type = GetType(T)
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
             Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
 
-            AddPOD(rt, selSchema)
+            AddPOCO(rt, selSchema)
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
@@ -2856,14 +2902,14 @@ l1:
             For Each e As _IEntity In l
                 Dim ctd As ComponentModel.ICustomTypeDescriptor = CType(e, ComponentModel.ICustomTypeDescriptor)
                 Dim ro As New T
-                InitPOD(props, rt, ctd, mpe, e, ro, mgr)
+                InitPOCO(props, rt, ctd, mpe, e, ro, mgr)
                 r.Add(ro)
             Next
 
             Return r
         End Function
 
-        Private Sub InitPOD(ByVal props As IDictionary, ByVal rt As Type, _
+        Private Sub InitPOCO(ByVal props As IDictionary, ByVal rt As Type, _
             ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
             ByVal e As _IEntity, ByVal ro As Object, ByVal mgr As OrmManager)
             For Each kv As DictionaryEntry In props
@@ -2878,8 +2924,8 @@ l1:
                     'pi.SetValue(ro, v, Nothing)
                     Dim pit As Type = pi.PropertyType
                     v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
-                    If v IsNot Nothing AndAlso _pod.Contains(pit) Then
-                        InitPOD(mpe.GetProperties(pit, CType(_pod(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
+                    If v IsNot Nothing AndAlso _poco.Contains(pit) Then
+                        InitPOCO(mpe.GetProperties(pit, CType(_poco(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
                     End If
                 End If
             Next
@@ -3382,7 +3428,7 @@ l1:
         End Function
 
         Protected Friend Function GetSchemaForSelectType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
-            If _pod Is Nothing Then
+            If _poco Is Nothing Then
                 Dim t As Type = GetSelectedType(mpe)
                 If _createType Is Nothing OrElse _createType.GetRealType(mpe).IsAssignableFrom(t) Then
                     If t Is Nothing Then
@@ -3393,7 +3439,7 @@ l1:
                     Return Nothing
                 End If
             Else
-                For Each de As DictionaryEntry In _pod
+                For Each de As DictionaryEntry In _poco
                     Return CType(de.Value, IEntitySchema)
                 Next
                 Throw New QueryCmdException("impossible", Me)
@@ -3502,7 +3548,7 @@ l1:
                 ._schema = _schema
                 ._cacheSort = _cacheSort
                 ._timeout = _timeout
-                ._pod = _pod
+                ._poco = _poco
                 ._autoFields = _autoFields
             End With
         End Sub
@@ -4135,8 +4181,8 @@ l1:
         Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema2
             Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
 
-            If oschema Is Nothing AndAlso _pod IsNot Nothing Then
-                oschema = CType(_pod(t), IEntitySchema)
+            If oschema Is Nothing AndAlso _poco IsNot Nothing Then
+                oschema = CType(_poco(t), IEntitySchema)
             End If
 
             If oschema Is Nothing Then

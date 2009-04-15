@@ -492,7 +492,7 @@ Namespace Query
                 Return Me
             End Function
 
-            Public Function [alias](ByVal columnAlias As String) As Int
+            Public Function [as](ByVal columnAlias As String) As Int
                 If _l IsNot Nothing AndAlso _l.Count > 0 Then
                     _l(_l.Count - 1).ColumnAlias = columnAlias
                 End If
