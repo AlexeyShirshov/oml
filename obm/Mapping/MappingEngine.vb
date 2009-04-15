@@ -663,8 +663,14 @@ Public Class ObjectMappingEngine
             Return CType(o, System.Xml.XmlDocumentFragment).OuterXml
         End If
 
-        If GetType(KeyEntity).IsAssignableFrom(ot) Then
+        If GetType(IKeyEntity).IsAssignableFrom(ot) Then
             Return CType(o, KeyEntity).Identifier
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(ot) Then
+            Dim pks() As PKDesc = CType(o, ICachedEntity).GetPKValues
+            If pks.Length <> 1 Then
+                Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", ot))
+            End If
+            Return pks(0).Value
         End If
 
         If IsEntityType(ot, Me) Then
@@ -2506,6 +2512,18 @@ Public Class ObjectMappingEngine
             End Try
         End If
         Return value
+    End Function
+
+    Public Function GetPOCOEntitySchema(ByVal t As Type) As IEntitySchema
+        Dim s As IEntitySchema = ObjectMappingEngine.InitType(t, Me, Nothing, Nothing)
+        If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then Return s
+        Dim tbl As SourceFragment = ObjectMappingEngine.GetTable(Me, t)
+        Dim selList As New OrmObjectIndex
+        For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
+            Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+            selList.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl))
+        Next
+        Return New SimpleObjectSchema(selList)
     End Function
 
     Public Shared Function IsEntityType(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Boolean

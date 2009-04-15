@@ -675,7 +675,7 @@ Namespace Query.Database
             Next
         End Sub
 
-        Protected Delegate Function Func(Of T)() As T
+        Public Delegate Function Func(Of T)() As T
 
         Protected Shared Function FormatSearchTable(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, ByVal st As SearchFragment, _
             ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal params As ICreateParam, _
@@ -743,10 +743,10 @@ l1:
             Return appendMain
         End Function
 
-        Protected Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal params As ICreateParam, _
+        Public Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
             ByVal os As IEntitySchema, ByVal osrc As EntityUnion, ByVal q As QueryCmd, _
-            ByVal filter As IFilter, ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
+            ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
             ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
 
             Dim tables() As SourceFragment = Nothing
@@ -883,7 +883,7 @@ l1:
 
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
-                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, Nothing, False, _
+                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, False, _
                         Function() " on " & jf.MakeQueryStmt(mpe, from, s, q, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
@@ -909,14 +909,12 @@ l1:
             Return pk
         End Function
 
-        Protected Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
+        Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
             ByVal params As ICreateParam, ByVal selSchema As IEntitySchema, _
             ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
-            ByVal pk As Pair(Of SourceFragment, String), ByVal filter As IFilter, _
-            ByVal predi As Criteria.PredicateLink)
-
-            Dim selectedType As Type = query.GetSelectedType(mpe)
+            ByVal pk As Pair(Of SourceFragment, String), ByVal from As FromClauseDef, _
+            ByVal predi As Criteria.PredicateLink, ByVal selectedType As Type)
 
             For i As Integer = 0 To j.Count - 1
                 Dim join As QueryJoin = CType(j(i), QueryJoin)
@@ -972,7 +970,12 @@ l1:
                         'If oschema Is Nothing Then
                         '    oschema = query.GetEntitySchema(t)
                         'End If
-                        Dim oschema As IEntitySchema = query.GetEntitySchema(mpe, t)
+                        Dim oschema As IEntitySchema = Nothing
+                        If query Is Nothing Then
+                            oschema = mpe.GetEntitySchema(t)
+                        Else
+                            oschema = query.GetEntitySchema(mpe, t)
+                        End If
 
                         Dim needAppend As Boolean = True
                         Dim cond As IFilter = join.Condition
@@ -1077,8 +1080,8 @@ l1:
                                 End If
 
                                 Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
-                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, filter, f, query.AppendMain, _
-                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params), predi)
+                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, f, Nothing, _
+                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, From, s, query, filterInfo, almgr, params), predi)
                             Else
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
@@ -1364,11 +1367,11 @@ l1:
                                         params, query.FromClause.QueryEU, sb, almgr)
             Else
                 newPK = FormTypeTables( _
-                    mpe, filterInfo, params, almgr, sb, s, os, query.GetSelectedOS, query, query._f, _
+                    mpe, filterInfo, params, almgr, sb, s, os, query.GetSelectedOS, query, _
                     query.FromClause, query.AppendMain, Nothing, p)
             End If
 
-            FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, newPK, query._f, p)
+            FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, newPK, query.FromClause, p, query.GetSelectedType(mpe))
 
             ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
 

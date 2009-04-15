@@ -465,6 +465,14 @@ Namespace Criteria.Values
                                 If Equals(CType(evaluatedValue, IKeyEntity).Identifier, filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
+                            ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
+                                Dim pks() As PKDesc = CType(evaluatedValue, ICachedEntity).GetPKValues
+                                If pks.Length <> 1 Then
+                                    Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
+                                End If
+                                If Equals(pks(0).Value, filterValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
                             ElseIf ObjectMappingEngine.IsEntityType(vt, mpe) Then
                                 Dim pks As IList(Of EntityPropertyAttribute) = mpe.GetPrimaryKeys(vt)
                                 If pks.Count <> 1 Then
