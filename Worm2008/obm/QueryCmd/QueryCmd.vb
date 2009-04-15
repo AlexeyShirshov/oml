@@ -697,6 +697,8 @@ l1:
                 End If
             End If
 
+            Dim eudic As New Dictionary(Of String, EntityUnion)
+
             If SelectList IsNot Nothing Then
                 PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
             Else
@@ -785,8 +787,11 @@ l1:
                                                 Dim pit As Type = pi.PropertyType
                                                 If ObjectMappingEngine.IsEntityType(pit, schema) _
                                                     AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                                    Dim eu As EntityUnion = selex.ObjectSource
-                                                    If eu Is Nothing Then eu = New EntityUnion(pit)
+                                                    Dim eu As EntityUnion = Nothing
+                                                    If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, eu) Then
+                                                        eu = New EntityUnion(New EntityAlias(pit))
+                                                        eudic(selex.PropertyAlias & "$" & pit.ToString) = eu
+                                                    End If
                                                     If Not HasInQuery(eu, _js) Then
                                                         Dim s As IEntitySchema = Nothing
                                                         If Not GetType(IEntity).IsAssignableFrom(pit) Then

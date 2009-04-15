@@ -1108,6 +1108,147 @@ l1:
         '    End If
         '    Return o
         'End Function
+        Private Class trip
+            Public Load As Boolean
+            Public Cols As List(Of SelectExpression)
+            Public PropertyAlias As String
+            Public arr As List(Of EntityPropertyAttribute)
+            Public Schema As IEntitySchema
+            Public PI As Reflection.PropertyInfo
+
+            Private _props As New List(Of Pair(Of EntityPropertyAttribute, Reflection.PropertyInfo))
+            Public ReadOnly Property Properties() As IList(Of Pair(Of EntityPropertyAttribute, Reflection.PropertyInfo))
+                Get
+                    Return _props
+                End Get
+            End Property
+
+            Public Sub New(ByVal load As Boolean, ByVal cols As List(Of SelectExpression), _
+                           ByVal arr As List(Of EntityPropertyAttribute), ByVal oschema As IEntitySchema)
+                Me.Load = load
+                Me.Cols = cols
+                Me.arr = arr
+                Me.Schema = oschema
+            End Sub
+        End Class
+
+        Private Function GetSelList(ByVal original_type As Type, ByVal oschema As IEntitySchema, _
+                                     ByVal propertyAlias As String, ByVal selOS As EntityUnion) As trip
+            Dim arr As New List(Of EntityPropertyAttribute)(MappingEngine.GetSortedFieldList(original_type, oschema))
+            Dim load As Boolean = True
+            Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
+            If df IsNot Nothing Then
+                Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
+                If sss IsNot Nothing Then
+                    load = False
+                    If Not String.IsNullOrEmpty(propertyAlias) Then
+                        For Each ss() As String In sss
+                            Dim s As String = Array.Find(ss, Function(pr As String) pr = propertyAlias)
+                            If Not String.IsNullOrEmpty(s) Then
+                                arr = New List(Of EntityPropertyAttribute)(MappingEngine.GetPrimaryKeys(original_type, oschema))
+                                For Each pr As String In ss
+                                    arr.Add(MappingEngine.GetColumnByPropertyAlias(original_type, pr, oschema))
+                                Next
+                            End If
+                        Next
+                    Else
+                        For Each ss() As String In sss
+                            For Each pr As String In ss
+                                Dim pr2 As String = pr
+                                Dim idx As Integer = arr.FindIndex(Function(pa As EntityPropertyAttribute) pa.PropertyAlias = pr2)
+                                If idx >= 0 Then
+                                    arr.RemoveAt(idx)
+                                End If
+                            Next
+                        Next
+                    End If
+                End If
+            End If
+
+            Dim cols As List(Of SelectExpression) = arr.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
+                 New SelectExpression(selOS, col.PropertyAlias))
+
+            Return New trip(load, cols, arr, oschema)
+        End Function
+
+        Private Function FindObjectsToLoad(ByVal t As Type, ByVal oschema As IEntitySchema, _
+            ByVal selOS As EntityUnion, ByVal c As Condition.ConditionConstructor, ByVal eudic As Dictionary(Of String, EntityUnion), _
+            ByVal js As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, trip), _
+            ByVal propertyAlias As String) As trip
+
+            Dim p As trip = GetSelList(t, oschema, propertyAlias, selOS)
+            selDic.Add(selOS, p)
+
+            For Each tde As DictionaryEntry In MappingEngine.GetProperties(t, oschema)
+                Dim pi As Reflection.PropertyInfo = CType(tde.Value, Reflection.PropertyInfo)
+                Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
+                Dim selex As SelectExpression = p.Cols.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
+                If selex IsNot Nothing Then
+                    Dim pit As Type = pi.PropertyType
+                    If ObjectMappingEngine.IsEntityType(pit, MappingEngine) _
+                        AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
+                        Dim eu As EntityUnion = Nothing
+                        If Not eudic.TryGetValue(ep.PropertyAlias & "$" & pit.ToString, eu) Then
+                            eu = New EntityUnion(New EntityAlias(pit))
+                            eudic(ep.PropertyAlias & "$" & pit.ToString) = eu
+                        End If
+                        If js.Find(Function(q As QueryJoin) eu.Equals(q.ObjectSource)) Is Nothing Then
+                            Dim s As IEntitySchema = Nothing
+                            If Not GetType(IEntity).IsAssignableFrom(pit) Then
+                                s = MappingEngine.GetPOCOEntitySchema(pit)
+                            Else
+                                s = MappingEngine.GetEntitySchema(pit, False)
+                            End If
+                            Dim f As IFilter = Nothing
+                            MappingEngine.AppendJoin(selOS, t, oschema, eu, pit, s, f, js, GetContextInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
+                            c.AddFilter(f)
+                            Dim tp As trip = FindObjectsToLoad(pit, s, eu, c, eudic, js, selDic, Nothing)
+                            tp.PropertyAlias = ep.PropertyAlias
+                            tp.PI = pi
+                            p.Properties.Add(New Pair(Of EntityPropertyAttribute, Reflection.PropertyInfo)(ep, pi))
+                        End If
+                    End If
+                End If
+            Next
+
+            Return p
+        End Function
+
+        Private Function LoadObj(ByVal selDic As Dictionary(Of EntityUnion, trip), ByVal selOS As EntityUnion, _
+                            ByVal ec As OrmCache, ByVal dr As System.Data.Common.DbDataReader, _
+                            ByVal idx As Integer, ByVal o As _IEntity, ByVal eudic As Dictionary(Of String, EntityUnion)) As Integer
+
+            Dim tp As trip = selDic(selOS)
+
+            If tp.Load AndAlso ec IsNot Nothing Then
+                ec.BeginTrackDelete(o.GetType)
+            End If
+            Try
+                LoadSingleFromReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(o.GetType), tp.Cols, True, idx)
+                idx += tp.Cols.Count
+                For Each pr As Pair(Of EntityPropertyAttribute, Reflection.PropertyInfo) In tp.Properties
+                    Dim pit As Type = pr.Second.PropertyType
+                    Dim eu As EntityUnion = Nothing
+                    If Not eudic.TryGetValue(pr.First.PropertyAlias & "$" & pit.ToString, eu) Then
+                        eu = New EntityUnion(New EntityAlias(pit))
+                        eudic(pr.First.PropertyAlias & "$" & pit.ToString) = eu
+                    End If
+                    Dim ov As Object = MappingEngine.GetPropertyValue(o, pr.First.PropertyAlias, tp.Schema, pr.Second)
+                    If GetType(IEntity).IsAssignableFrom(ov.GetType) Then
+                        idx = LoadObj(selDic, eu, ec, dr, idx, CType(ov, _IEntity), eudic)
+                    Else
+                        'Dim an As New AnonymousEntity
+                        'LoadSingleObject(cmd, lt.Value.Cols, an, True, True, lt.Value.Load, False, idx)
+                        Throw New NotImplementedException
+                    End If
+                Next
+                Return idx
+            Finally
+                If tp.Load AndAlso ec IsNot Nothing Then
+                    ec.EndTrackDelete(o.GetType)
+                End If
+            End Try
+        End Function
 
         Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
             Invariant()
@@ -1118,91 +1259,99 @@ l1:
 
             Dim original_type As Type = obj.GetType
 
-            'Dim filter As New cc.EntityFilter(original_type, "ID", _
-            '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
+            Dim selOS As New EntityUnion(original_type)
+
             Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            For Each p As PKDesc In obj.GetPKValues
-                c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
+            For Each pk As PKDesc In obj.GetPKValues
+                c.AddFilter(New cc.EntityFilter(selOS, pk.PropertyAlias, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
             Next
-            Dim filter As IFilter = c.Condition
 
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
 
-            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim arr As New List(Of EntityPropertyAttribute)(MappingEngine.GetSortedFieldList(original_type, oschema))
-                Dim load As Boolean = True
-                Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
-                If df IsNot Nothing Then
-                    Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
-                    If sss IsNot Nothing Then
-                        load = False
-                        If Not String.IsNullOrEmpty(propertyAlias) Then
-                            For Each ss() As String In sss
-                                Dim s As String = Array.Find(ss, Function(pr As String) pr = propertyAlias)
-                                If Not String.IsNullOrEmpty(s) Then
-                                    arr = New List(Of EntityPropertyAttribute)(MappingEngine.GetPrimaryKeys(original_type, oschema))
-                                    For Each pr As String In ss
-                                        arr.Add(MappingEngine.GetColumnByPropertyAlias(original_type, pr, oschema))
-                                    Next
-                                End If
-                            Next
-                        Else
-                            For Each ss() As String In sss
-                                For Each pr As String In ss
-                                    Dim pr2 As String = pr
-                                    Dim idx As Integer = arr.FindIndex(Function(pa As EntityPropertyAttribute) pa.PropertyAlias = pr2)
-                                    If idx >= 0 Then
-                                        arr.RemoveAt(idx)
-                                    End If
-                                Next
-                            Next
-                        End If
-                    End If
-                End If
+            Dim eudic As New Dictionary(Of String, EntityUnion)
+            Dim js As New List(Of QueryJoin)
+            Dim selDic As New Dictionary(Of EntityUnion, trip)
 
-                Dim cols As IList(Of SelectExpression) = arr.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
-                     New SelectExpression(New EntityUnion(original_type), col.PropertyAlias))
+            FindObjectsToLoad(original_type, oschema, selOS, c, eudic, js, selDic, propertyAlias)
+
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 With cmd
                     .CommandType = System.Data.CommandType.Text
-
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
                     Dim sb As New StringBuilder
-                    sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetContextInfo))
-                    SQLGenerator.AppendWhere(MappingEngine, original_type, filter, almgr, sb, GetContextInfo, params)
 
-                    params.AppendParams(.Parameters)
-                    .CommandText = sb.ToString
+                    If selDic.Count > 1 Then
+                        sb.Append("select ")
+                        For Each lt As KeyValuePair(Of EntityUnion, trip) In selDic
+                            For Each p As SelectExpression In lt.Value.Cols
+                                StmtGenerator.CreateSelectExpressionFormater() _
+                                    .Format(p, sb, Nothing, Nothing, MappingEngine, almgr, params, _
+                                        GetContextInfo, Nothing, Nothing, True)
+                                sb.Append(", ")
+                            Next
+                        Next
+                        sb.Length -= 2
+                        sb.Append(" from ")
+
+                        Dim from As New QueryCmd.FromClauseDef(selOS)
+
+                        Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, GetContextInfo, params, almgr, _
+                            sb, SQLGenerator, oschema, selOS, Nothing, from, _
+                            True, Nothing, Nothing)
+
+                        Dim prd As New Criteria.PredicateLink
+
+                        Query.Database.DbQueryExecutor.FormJoins(MappingEngine, GetContextInfo, Nothing, params, _
+                            oschema, js, almgr, sb, SQLGenerator, Nothing, from, prd, original_type)
+
+                        c.AddFilter(prd.Filter)
+
+                        SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, GetContextInfo, params)
+
+                        params.AppendParams(.Parameters)
+                        .CommandText = sb.ToString
+
+                        Dim ec As OrmCache = TryCast(_cache, OrmCache)
+                        Dim b As ConnAction = TestConn(cmd)
+                        Try
+                            Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                                Do While dr.Read
+                                    Dim loaded As Boolean = False
+                                    If loaded Then
+                                        Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
+                                    End If
+
+                                    Dim cnt As Integer = LoadObj(selDic, selOS, ec, dr, 0, obj, eudic)
+
+                                    loaded = True
+                                Loop
+                            End Using
+                        Finally
+                            CloseConn(b)
+                        End Try
+                    Else
+                        sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, selDic(selOS).arr, Nothing, GetContextInfo))
+                        SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, GetContextInfo, params)
+
+                        params.AppendParams(.Parameters)
+                        .CommandText = sb.ToString
+
+                        Dim b As ConnAction = TestConn(cmd)
+                        Try
+                            LoadSingleObject(cmd, selDic(selOS).Cols, obj, True, True, selDic(selOS).Load, False)
+                        Finally
+                            CloseConn(b)
+                        End Try
+                    End If
                 End With
-
-                'Dim olds As ObjectState = obj.ObjectState
-                Dim b As ConnAction = TestConn(cmd)
-                Try
-                    'Dim k As String = String.Empty
-                    'If obj.IsPKLoaded Then
-                    '    k = obj.Key.ToString
-                    'End If
-                    'Dim cr As Boolean = obj.ObjectState = ObjectState.Created
-                    'Dim sync_key As String = "LoadSngObj" & k & original_type.ToString
-                    'Using obj.GetSyncRoot()
-                    'Using SyncHelper.AcquireDynamicLock(sync_key)
-                    'Using obj.GetSyncRoot()
-                    LoadSingleObject(cmd, cols, obj, True, True, load, False)
-                    'End Using
-                Finally
-                    CloseConn(b)
-                End Try
-                'If olds = obj.ObjectState OrElse obj.ObjectState = ObjectState.Created Then obj.ObjectState = ObjectState.None
-                '(olds = ObjectState.Created AndAlso obj.ObjectState = ObjectState.Modified) OrElse
-                'If olds = obj.ObjectState Then
-                '    obj.ObjectState = ObjectState.None
-                'End If
             End Using
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-           ByVal arr As IList(Of SelectExpression), ByVal obj As _ICachedEntity, _
-           ByVal fromRS As Boolean, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+           ByVal arr As IList(Of SelectExpression), ByVal obj As _IEntity, _
+           ByVal fromRS As Boolean, ByVal check_pk As Boolean, ByVal load As Boolean, _
+           ByVal modifiedloaded As Boolean)
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType)
@@ -1212,9 +1361,10 @@ l1:
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal arr As IList(Of SelectExpression), ByVal obj As _ICachedEntity, ByVal fromRS As Boolean, _
+            ByVal arr As IList(Of SelectExpression), ByVal obj As _IEntity, ByVal fromRS As Boolean, _
             ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean, _
             ByVal dic As IDictionary)
+
             Invariant()
 
             Dim ec As OrmCache = TryCast(_cache, OrmCache)
@@ -1222,109 +1372,107 @@ l1:
                 If load AndAlso ec IsNot Nothing Then
                     ec.BeginTrackDelete(obj.GetType)
                 End If
+                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
                 Dim et As New PerfCounter
                 Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
-                    Dim k As String = String.Empty
-                    If obj.IsPKLoaded Then
-                        k = obj.Key.ToString
+                    Dim loaded As Boolean = False
+                    Do While dr.Read
+                        If loaded Then
+                            Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
+                        End If
+
+                        LoadSingleFromReader(ce, obj, load, fromRS, ec, dr, dic, arr, check_pk, 0)
+
+                        loaded = True
+                    Loop
+
+                    If dr.RecordsAffected = 0 Then
+                        Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, ce)
                     End If
-                    Dim sync_key As String = "LoadType" & k & obj.GetType.ToString
-                    'Using obj.GetSyncRoot()
-                    Using SyncHelper.AcquireDynamicLock(sync_key)
-                        'Dim old As Boolean = obj.IsLoaded
-                        'If Not modifiedloaded Then obj.IsLoaded = False
-                        'obj.IsLoaded = False
-                        Dim loaded As Boolean = False
-                        Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(obj.GetType)
-                        'Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
-                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
-                        Dim lock As IDisposable = Nothing
-                        Try
-                            Do While dr.Read
-                                If loaded Then
-                                    Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
-                                End If
-                                If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(obj)) Then
 
-                                    If fromRS Then
-                                        Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0)
-                                        AfterLoadingProcess(dic, obj, lock, ro)
-                                        obj = CType(ro, _ICachedEntity)
-                                    Else
-                                        LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0)
-                                        obj.CorrectStateAfterLoading(False)
-                                    End If
-
-                                    'If lock Then
-                                    '    Dim co As _ICachedEntity = TryCast(obj, _ICachedEntity)
-                                    '    If co IsNot Nothing Then
-                                    '        _cache.UnregisterModification(co)
-
-                                    '        If lock Then
-                                    '            Threading.Monitor.Exit(dic)
-                                    '            lock = False
-                                    '        End If
-                                    '    End If
-                                    'End If
-                                    'obj = o
-                                Else
-                                    Exit Do
-                                End If
-                                loaded = True
-                            Loop
-                            If dr.RecordsAffected = 0 Then
-                                Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, obj)
-                            End If
-
-                            If Not obj.IsLoaded AndAlso loaded Then
-                                If load Then
-                                    'Throw New ApplicationException
-                                    _cache.UnregisterModification(obj, MappingEngine, GetContextInfo)
-                                    obj.SetObjectState(ObjectState.NotFoundInSource)
-                                    RemoveObjectFromCache(obj)
-                                End If
-                            ElseIf Not obj.IsLoaded AndAlso Not loaded AndAlso dr.RecordsAffected > 0 Then
-                                'insert without select
-                                obj.CreateCopyForSaveNewEntry(Me, Nothing)
-                            Else
-                                If dr.RecordsAffected <> -1 Then
-                                    'obj.CreateCopyForSaveNewEntry(Nothing)
-                                    'obj.ObjectState = ObjectState.None
-                                    'Throw New ApplicationException
-                                    'obj.BeginLoading()
-                                    'obj.Identifier = obj.Identifier
-                                    'obj.EndLoading()
-                                Else
-                                    If Not obj.IsLoaded Then
-                                        'loading non-existent object
-                                        _cache.UnregisterModification(obj, MappingEngine, GetContextInfo)
-                                        obj.SetObjectState(ObjectState.NotFoundInSource)
-                                        RemoveObjectFromCache(obj)
-                                    End If
-                                End If
-                            End If
-
-                            If fromRS Then
-                                If obj.ObjectState <> ObjectState.NotFoundInSource Then
-                                    'Add2Cache(obj)
-                                    If load Then obj.AcceptChanges(True, True)
-                                End If
-                            End If
-                        Finally
-                            If lock IsNot Nothing Then
-                                lock.Dispose()
-                            End If
-                        End Try
-                    End Using
+                    If Not obj.IsLoaded AndAlso Not loaded AndAlso dr.RecordsAffected > 0 Then
+                        'insert without select
+                        If ce IsNot Nothing Then ce.CreateCopyForSaveNewEntry(Me, Nothing)
+                    End If
                 End Using
                 _cache.LogLoadTime(obj, et.GetTime)
             Finally
                 If load AndAlso ec IsNot Nothing Then
                     ec.EndTrackDelete(obj.GetType)
                 End If
-                'CloseConn(b)
             End Try
+        End Sub
 
+        Private Sub LoadSingleFromReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal fromRS As Boolean, _
+            ByVal ec As OrmCache, ByVal dr As Data.Common.DbDataReader, ByVal dic As IDictionary, ByVal arr As IList(Of SelectExpression), _
+            ByVal check_pk As Boolean, ByVal baseIdx As Integer)
+            Dim loadLock As IDisposable = Nothing
+            If ce IsNot Nothing Then
+                Dim k As String = String.Empty
+                If ce.IsPKLoaded Then
+                    k = ce.Key.ToString
+                End If
+                Dim sync_key As String = "LoadType" & k & obj.GetType.ToString
+                loadLock = SyncHelper.AcquireDynamicLock(sync_key)
+            End If
+            Try
+                Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(obj.GetType)
+                'Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
+                Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+                Dim lock As IDisposable = Nothing
+                Try
+                    Dim loaded As Boolean
+                    If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
+                        If fromRS Then
+                            Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            AfterLoadingProcess(dic, obj, lock, ro)
+                            obj = CType(ro, _ICachedEntity)
+                            ce = TryCast(obj, _ICachedEntity)
+                        Else
+                            LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            obj.CorrectStateAfterLoading(False)
+                        End If
+                        loaded = True
+                    End If
+
+                    If Not obj.IsLoaded AndAlso loaded Then
+                        If load Then
+                            'Throw New ApplicationException
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
+                            obj.SetObjectState(ObjectState.NotFoundInSource)
+                            If ce IsNot Nothing Then RemoveObjectFromCache(ce)
+                        End If
+                    Else
+                        If dr.RecordsAffected <> -1 Then
+                            'obj.CreateCopyForSaveNewEntry(Nothing)
+                            'obj.ObjectState = ObjectState.None
+                            'Throw New ApplicationException
+                            'obj.BeginLoading()
+                            'obj.Identifier = obj.Identifier
+                            'obj.EndLoading()
+                        Else
+                            If Not obj.IsLoaded Then
+                                'loading non-existent object
+                                If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
+                                obj.SetObjectState(ObjectState.NotFoundInSource)
+                                If ce IsNot Nothing Then RemoveObjectFromCache(ce)
+                            End If
+                        End If
+                    End If
+
+                    If fromRS AndAlso ce IsNot Nothing Then
+                        If obj.ObjectState <> ObjectState.NotFoundInSource AndAlso obj.ObjectState <> ObjectState.None Then
+                            If load Then ce.AcceptChanges(True, True)
+                        End If
+                    End If
+                Finally
+                    If lock IsNot Nothing Then
+                        lock.Dispose()
+                    End If
+                End Try
+            Finally
+                If loadLock IsNot Nothing Then loadLock.Dispose()
+            End Try
         End Sub
 
         Public Function GetSimpleValues(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
@@ -2035,7 +2183,7 @@ l1:
             ByVal selectList As IList(Of SelectExpression), ByVal check_pk As Boolean, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
-            ByVal rownum As Integer) As _IEntity
+            ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As _IEntity
 
             If selectList.Count > dr.FieldCount Then
                 Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", dr.FieldCount, selectList.Count))
@@ -2060,8 +2208,8 @@ l1:
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 Using obj.GetSyncRoot
                     obj.BeginLoading()
-                    For idx As Integer = 0 To selectList.Count - 1
-                        Dim se As SelectExpression = selectList(idx)
+                    For idx As Integer = baseIdx To baseIdx + selectList.Count - 1
+                        Dim se As SelectExpression = selectList(idx - baseIdx)
                         Dim propertyAlias As String = se.GetIntoPropertyAlias
                         Dim c As EntityPropertyAttribute = se._c
                         Dim pi As Reflection.PropertyInfo = se._pi
@@ -2112,21 +2260,8 @@ l1:
                         End If
 
                         If f OrElse (Not String.IsNullOrEmpty(propertyAlias) AndAlso propertyMap.ContainsKey(propertyAlias)) Then
-                            If idx >= 0 AndAlso (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                Assert(idx < dr.FieldCount, propertyAlias)
-                                'If dr.FieldCount <= idx + displacement Then
-                                '    If _mcSwitch.TraceError Then
-                                '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                                '        Dim sb As New StringBuilder
-                                '        For Each drow As System.Data.DataRow In dt.Rows
-                                '            If sb.Length > 0 Then
-                                '                sb.Append(", ")
-                                '            End If
-                                '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                                '        Next
-                                '        WriteLine(sb.ToString)
-                                '    End If
-                                'End If
+                            If (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                'Assert(idx < dr.FieldCount, propertyAlias)
                                 pk_count += 1
                                 Dim value As Object = dr.GetValue(idx)
                                 If fv IsNot Nothing Then
@@ -2201,8 +2336,8 @@ l1:
                         Return obj
                     End If
 
-                    For idx As Integer = 0 To selectList.Count - 1
-                        Dim se As SelectExpression = selectList(idx)
+                    For idx As Integer = baseIdx To baseIdx + selectList.Count - 1
+                        Dim se As SelectExpression = selectList(idx - baseIdx)
                         Dim propertyAlias As String = se.GetIntoPropertyAlias
                         Dim c As EntityPropertyAttribute = se._c
                         Dim pi As Reflection.PropertyInfo = se._pi
