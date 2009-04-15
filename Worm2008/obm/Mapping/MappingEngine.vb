@@ -2244,33 +2244,57 @@ Public Class ObjectMappingEngine
     End Function
 #End Region
 
+    Public Enum JoinFieldType
+        Direct
+        Reverse
+        M2M
+    End Enum
+
     Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
         ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
         ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
         ByVal filterInfo As Object)
 
-        Dim schema As ObjectMappingEngine = Me
+        Dim jft As JoinFieldType
 
-        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+        Dim field As String = GetJoinFieldNameByType(selectType, type2join, selSchema)
 
         If String.IsNullOrEmpty(field) Then
 
-            field = schema.GetJoinFieldNameByType(type2join, selectType, sh)
+            field = GetJoinFieldNameByType(type2join, selectType, sh)
 
             If String.IsNullOrEmpty(field) Then
-                Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)
+                Dim m2m As M2MRelationDesc = GetM2MRelation(type2join, selectType, True)
                 If m2m IsNot Nothing Then
-                    'l.AddRange(MakeM2MJoin(m2m, joinOS))
-                    l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
+                    jft = JoinFieldType.M2M
                 Else
                     Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                 End If
             Else
-                l.Add(MakeJoin(selectOS, schema.GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, field, FilterOperation.Equal, JoinType.Join, True))
+                jft = JoinFieldType.Reverse
             End If
         Else
-            l.Add(MakeJoin(joinOS, schema.GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, field, FilterOperation.Equal, JoinType.Join, False))
+            jft = JoinFieldType.Direct
         End If
+
+        AppendJoin(selectOS, selectType, selSchema, joinOS, type2join, sh, filter, l, filterInfo, jft, field)
+    End Sub
+
+    Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
+        ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
+        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
+        ByVal filterInfo As Object, ByVal jft As JoinFieldType, ByVal propertyAlias As String)
+
+        Select Case jft
+            Case JoinFieldType.Direct
+                l.Add(MakeJoin(joinOS, GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, propertyAlias, FilterOperation.Equal, JoinType.Join, False))
+            Case JoinFieldType.Reverse
+                l.Add(MakeJoin(selectOS, GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, propertyAlias, FilterOperation.Equal, JoinType.Join, True))
+            Case JoinFieldType.M2M
+                l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
+            Case Else
+                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+        End Select
 
         Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
         If ts IsNot Nothing Then
