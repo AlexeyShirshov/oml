@@ -61,7 +61,8 @@ namespace Worm.CodeGen.XmlGenerator
             _transform = transformPropertyName;
 		}
 
-		public void MakeWork(string schemas, string namelike, string file, string merge, bool dr, string name_space, bool unify)
+		public void MakeWork(string schemas, string namelike, string file, string merge, 
+            bool dr, string name_space, bool unify, bool escape)
 		{
 			Dictionary<Column, Column> columns = new Dictionary<Column, Column>();
 			List<Pair<string>> proh = new List<Pair<string>>();
@@ -191,7 +192,8 @@ namespace Worm.CodeGen.XmlGenerator
 
             if (string.IsNullOrEmpty(name_space))
                 name_space = _db;
-			ProcessColumns(columns, file, merge, dr, name_space, proh);
+
+			ProcessColumns(columns, file, merge, dr, name_space, proh, escape);
 		}
 
 		#region Helpers
@@ -208,7 +210,7 @@ namespace Worm.CodeGen.XmlGenerator
         }
 
 		protected void ProcessColumns(Dictionary<Column, Column> columns, string file, string merge,
-			bool dropColumns, string name_space, List<Pair<string>> prohibited)
+			bool dropColumns, string name_space, List<Pair<string>> prohibited, bool escape)
 		{
 			OrmObjectsDef odef = null;
 
@@ -235,8 +237,8 @@ namespace Worm.CodeGen.XmlGenerator
                     continue;
                 
                 bool ent, col;
-                EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent);
-				PropertyDescription pd = AppendColumn(columns, c, e, out col);
+                EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent, escape);
+				PropertyDescription pd = AppendColumn(columns, c, e, out col, escape);
                 if (ent)
                 {
                     Console.WriteLine("Create class {0} ({1})", e.Name, e.Identifier);
@@ -253,9 +255,9 @@ namespace Worm.CodeGen.XmlGenerator
                 }
 			}
 
-			ProcessProhibited(columns, prohibited, odef);
+			ProcessProhibited(columns, prohibited, odef, escape);
 
-			ProcessM2M(columns, odef);
+			ProcessM2M(columns, odef, escape);
 
 			if (dropColumns)
 			{
@@ -287,7 +289,7 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
-		protected void ProcessM2M(Dictionary<Column, Column> columns, OrmObjectsDef odef)
+		protected void ProcessM2M(Dictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
 		{
 			List<Pair<string>> tables = new List<Pair<string>>();
 
@@ -364,15 +366,15 @@ namespace Worm.CodeGen.XmlGenerator
 								LinkTarget lt = new LinkTarget(
 									GetEntity(odef,
 										reader.GetString(reader.GetOrdinal("table_schema")),
-										reader.GetString(reader.GetOrdinal("table_name")),out c),
-										reader.GetString(reader.GetOrdinal("column_name")),deleteCascade);
+										reader.GetString(reader.GetOrdinal("table_name")),out c, escape),
+										reader.GetString(reader.GetOrdinal("column_name")), deleteCascade);
 								targets.Add(lt);
 							}
 						}
                         if (targets[0].Entity.Name == targets[1].Entity.Name)
                         {
                             LinkTarget t = targets[0];
-                            SelfRelationDescription newRel = new SelfRelationDescription(t.Entity, targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second), ued);
+                            SelfRelationDescription newRel = new SelfRelationDescription(t.Entity, targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second, escape), ued);
                             if (odef.GetSimilarRelation(newRel) == null)
                             {
                                 odef.Relations.Add(newRel);
@@ -380,7 +382,7 @@ namespace Worm.CodeGen.XmlGenerator
                         }
                         else
                         {
-                            RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second), ued);
+                            RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second, escape), ued);
                             if (odef.GetSimilarRelation(newRel) == null)
                             {
                                 odef.Relations.Add(newRel);
@@ -391,7 +393,8 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
-		protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c, EntityDescription e, out bool created)
+		protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c, 
+            EntityDescription e, out bool created, bool escape)
 		{
 			OrmObjectsDef odef = e.OrmObjectsDef;
             created = false;
@@ -418,18 +421,19 @@ namespace Worm.CodeGen.XmlGenerator
                 }
                 else
                 {
-                    pt = GetType(c, columns, odef);
+                    pt = GetType(c, columns, odef, escape);
                 }
 
 				pe = new PropertyDescription(name,
 					 null, attrs, null, pt, c.ColumnName,
                      e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
-				e.Properties.Add(pe);
+				
+                e.Properties.Add(pe);
                 created = true;
 
                 if (c.IsFK && pk)
                 {
-                    var pt2 = GetRelatedType(c, columns, odef);
+                    var pt2 = GetRelatedType(c, columns, odef, escape);
                     if (!pt2.Entity.IsAssignableFrom(e))
                     {
                         attrs = new string[] { "ReadOnly", "SyncInsert" };
@@ -447,7 +451,7 @@ namespace Worm.CodeGen.XmlGenerator
 					pe.Name = "ID";
 				pe.Attributes = Merge(pe.Attributes,attrs);
                 if (!pe.PropertyType.IsUserType)
-				    pe.PropertyType = GetType(c, columns, odef);
+                    pe.PropertyType = GetType(c, columns, odef, escape);
 			}
 			return pe;
 		}
@@ -496,17 +500,18 @@ namespace Worm.CodeGen.XmlGenerator
                 return columnName;
 		}
 
-		protected void ProcessProhibited(Dictionary<Column, Column> columns, List<Pair<string>> prohibited, OrmObjectsDef odef)
+		protected void ProcessProhibited(Dictionary<Column, Column> columns, 
+            List<Pair<string>> prohibited, OrmObjectsDef odef, bool escape)
 		{
 			foreach(Pair<string> p in prohibited)
 			{
-				TypeDescription td = GetRelatedType(p.Second,columns,odef);
+				TypeDescription td = GetRelatedType(p.Second,columns,odef,escape);
 				if (td.Entity != null)
 				{
 					EntityDescription ed = td.Entity;
 					string[] ss = p.First.Split('.');
-					AppendColumns(columns, ed, ss[0], ss[1], p.Second);
-					var t = GetSourceFragment(odef, ss[0], ss[1]);
+					AppendColumns(columns, ed, ss[0], ss[1], p.Second, escape);
+					var t = GetSourceFragment(odef, ss[0], ss[1], escape);
 					if (!ed.SourceFragments.Contains(t))
 						ed.SourceFragments.Add(t);
                     //SourceFragmentDescription t = GetSourceFragment(odef, ss[0], ss[1]);
@@ -516,12 +521,20 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
-		private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table)
+		private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table, bool escape)
 		{
 			string id = "tbl" + schema + table;
 			var t = odef.GetSourceFragment(id);
 			if (t == null)
 			{
+                if (escape)
+                {
+                    if (!(table.StartsWith("[") || table.EndsWith("]")))
+                        table = "[" + table + "]";
+
+                    if (!(schema.StartsWith("[") || schema.EndsWith("]")))
+                        schema = "[" + schema + "]";
+                }
                 t = new SourceFragmentDescription(id, table, schema);
 				odef.SourceFragments.Add(t);
 			}
@@ -529,7 +542,7 @@ namespace Worm.CodeGen.XmlGenerator
 		}
 
 		protected void AppendColumns(Dictionary<Column, Column> columns, EntityDescription ed, 
-			string schema, string table, string constraint)
+			string schema, string table, string constraint, bool escape)
 		{
 			using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
 			{
@@ -572,7 +585,7 @@ namespace Worm.CodeGen.XmlGenerator
 							{
 								columns.Add(c, c);
                                 bool cr;
-								PropertyDescription pd = AppendColumn(columns, c, ed, out cr);
+								PropertyDescription pd = AppendColumn(columns, c, ed, out cr, escape);
 								if (String.IsNullOrEmpty(pd.Description))
 								{
 									pd.Description = "Autogenerated from table " + schema + "." + table;
@@ -584,13 +597,13 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
-		protected TypeDescription GetType(Column c, IDictionary<Column, Column> columns, OrmObjectsDef odef)
+		protected TypeDescription GetType(Column c, IDictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
 		{
 			TypeDescription t = null;
 
 			if (c.IsFK)
 			{
-				t = GetRelatedType(c, columns, odef);
+				t = GetRelatedType(c, columns, odef, escape);
 			}
 			else
 			{
@@ -599,7 +612,7 @@ namespace Worm.CodeGen.XmlGenerator
 			return t;
 		}
 
-		protected TypeDescription GetRelatedType(Column col, IDictionary<Column, Column> columns, OrmObjectsDef odef)
+		protected TypeDescription GetRelatedType(Column col, IDictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
 		{
 			using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
 			{
@@ -631,7 +644,7 @@ namespace Worm.CodeGen.XmlGenerator
 								if (t == null)
 								{
                                     bool cr;
-                                    EntityDescription e = GetEntity(odef, c.Schema, c.Table, out cr);
+                                    EntityDescription e = GetEntity(odef, c.Schema, c.Table, out cr, escape);
 									t = new TypeDescription(id, e);
 									odef.Types.Add(t);
                                     if (cr)
@@ -653,7 +666,8 @@ namespace Worm.CodeGen.XmlGenerator
 			return null;
 		}
 
-		protected TypeDescription GetRelatedType(string constraint, IDictionary<Column, Column> columns, OrmObjectsDef odef)
+		protected TypeDescription GetRelatedType(string constraint, IDictionary<Column, Column> columns, 
+            OrmObjectsDef odef, bool escape)
 		{
 			using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
 			{
@@ -685,7 +699,7 @@ namespace Worm.CodeGen.XmlGenerator
 								if (t == null)
 								{
                                     bool cr;
-									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr));
+									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr, escape));
 									odef.Types.Add(t);
 								}
 								return t;
@@ -724,7 +738,8 @@ namespace Worm.CodeGen.XmlGenerator
 			}
 		}
 
-		private static EntityDescription GetEntity(OrmObjectsDef odef, string schema, string tableName, out bool created)
+		private static EntityDescription GetEntity(OrmObjectsDef odef, string schema, 
+            string tableName, out bool created, bool escape)
 		{
             created = false;
 			string ename = GetEntityName(schema,tableName);
@@ -732,7 +747,7 @@ namespace Worm.CodeGen.XmlGenerator
 			if (e == null)
 			{
 				e = new EntityDescription(ename, Capitalize(tableName),"", null, odef);
-				var t = GetSourceFragment(odef, schema, tableName);
+				var t = GetSourceFragment(odef, schema, tableName, escape);
 				e.SourceFragments.Add(t);
 				odef.Entities.Add(e);
                 created = true;

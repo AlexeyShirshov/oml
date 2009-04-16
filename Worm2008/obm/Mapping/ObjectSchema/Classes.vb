@@ -354,6 +354,18 @@ Namespace Entities.Meta
         Public Sub New(ByVal eu As EntityUnion, ByVal key As String)
             MyBase.New(eu, Nothing, key)
         End Sub
+
+        Public Sub New(ByVal type As Type, ByVal column As String, ByVal key As String)
+            MyBase.New(New EntityUnion(type), column, key)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal column As String, ByVal key As String)
+            MyBase.New(New EntityUnion(entityName), column, key)
+        End Sub
+
+        Public Sub New(ByVal eu As EntityUnion, ByVal column As String, ByVal key As String)
+            MyBase.New(eu, column, key)
+        End Sub
 #Region " Type ctors "
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
