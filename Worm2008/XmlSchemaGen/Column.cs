@@ -5,6 +5,29 @@ using System.Data.Common;
 
 namespace Worm.CodeGen.XmlGenerator
 {
+    public class Constraint
+    {
+        private string _constraintType;
+        private string _constraintName;
+
+        public Constraint(string constraintType, string constraintName)
+        {
+            _constraintType = constraintType;
+            _constraintName = constraintName;
+        }
+
+        public string ConstraintType
+        {
+            get { return _constraintType; }
+        }
+
+        public string ConstraintName
+        {
+            get { return _constraintName; }
+        }
+
+    }
+
 	public class Column
 	{
 		private string _schema;
@@ -13,17 +36,17 @@ namespace Worm.CodeGen.XmlGenerator
 
 		private bool _isNullable;
 		private string _type;
-		private string _constraintType;
-		private string _constraintName;
         private bool _identity;
         private int _pkCnt;
+
+        private List<Constraint> _constraints = new List<Constraint>();
 
 		protected Column()
 		{
 		}
 
 		public Column(string schema, string table, string column,
-			bool isNullable, string type, string constraintType, string constraintName, bool identity, int pkCnt)
+			bool isNullable, string type, bool identity, int pkCnt)
 		{
 			_schema = schema;
 			_table = table;
@@ -31,8 +54,6 @@ namespace Worm.CodeGen.XmlGenerator
 
 			_isNullable = isNullable;
 			_type = type;
-			_constraintType = constraintType;
-			_constraintName = constraintName;
             _identity = identity;
 
             _pkCnt = pkCnt;
@@ -93,16 +114,6 @@ namespace Worm.CodeGen.XmlGenerator
 			get { return _type; }
 		}
 
-		public string ConstraintType
-		{
-			get { return _constraintType; }
-		}
-
-		public string ConstraintName
-		{
-			get { return _constraintName; }
-		}
-
 		public string FullTableName
 		{
 			get { return _schema + "." + _table; }
@@ -111,6 +122,35 @@ namespace Worm.CodeGen.XmlGenerator
         public int PKCount
         {
             get { return _pkCnt; }
+        }
+
+        public List<Constraint> Constraints
+        {
+            get { return _constraints; }
+        }
+
+        public bool IsPK
+        {
+            get
+            {
+                return _constraints.Find((c) => c.ConstraintType == "PRIMARY KEY") != null;
+            }
+        }
+
+        public bool IsFK
+        {
+            get
+            {
+                return _constraints.Find((c) => c.ConstraintType == "FOREIGN KEY") != null;
+            }
+        }
+
+        public string FKName
+        {
+            get
+            {
+                return _constraints.Find((c) => c.ConstraintType == "FOREIGN KEY").ConstraintName;
+            }
         }
 
 		public static Column Create(DbDataReader reader)
@@ -133,12 +173,7 @@ namespace Worm.CodeGen.XmlGenerator
 
 			if (!reader.IsDBNull(ct))
 			{
-				c._constraintType = reader.GetString(ct);
-			}
-
-			if (!reader.IsDBNull(cn))
-			{
-				c._constraintName = reader.GetString(cn);
+				c.Constraints.Add(new Constraint(reader.GetString(ct),reader.GetString(cn)));
 			}
             
             c._identity = Convert.ToBoolean(reader.GetInt32(reader.GetOrdinal("identity")));

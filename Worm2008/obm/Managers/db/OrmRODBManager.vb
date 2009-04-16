@@ -1388,12 +1388,20 @@ l1:
 
                     If dr.RecordsAffected = 0 Then
                         Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, ce)
+                    ElseIf dr.RecordsAffected < 0 Then
+                        If Not obj.IsLoaded Then
+                            'loading non-existent object
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
+                            obj.SetObjectState(ObjectState.NotFoundInSource)
+                            If ce IsNot Nothing Then RemoveObjectFromCache(ce)
+                        End If
+                    Else
+                        If Not obj.IsLoaded AndAlso Not loaded Then
+                            'insert without select
+                            If ce IsNot Nothing Then ce.CreateCopyForSaveNewEntry(Me, Nothing)
+                        End If
                     End If
 
-                    If Not obj.IsLoaded AndAlso Not loaded AndAlso dr.RecordsAffected > 0 Then
-                        'insert without select
-                        If ce IsNot Nothing Then ce.CreateCopyForSaveNewEntry(Me, Nothing)
-                    End If
                 End Using
                 _cache.LogLoadTime(obj, et.GetTime)
             Finally
@@ -1441,22 +1449,6 @@ l1:
                             If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
-                        End If
-                    Else
-                        If dr.RecordsAffected <> -1 Then
-                            'obj.CreateCopyForSaveNewEntry(Nothing)
-                            'obj.ObjectState = ObjectState.None
-                            'Throw New ApplicationException
-                            'obj.BeginLoading()
-                            'obj.Identifier = obj.Identifier
-                            'obj.EndLoading()
-                        Else
-                            If Not obj.IsLoaded Then
-                                'loading non-existent object
-                                If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
-                                obj.SetObjectState(ObjectState.NotFoundInSource)
-                                If ce IsNot Nothing Then RemoveObjectFromCache(ce)
-                            End If
                         End If
                     End If
 

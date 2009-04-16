@@ -690,40 +690,42 @@ namespace Worm.CodeGen.Core
 
 					//CodeMemberMethod createobjectMethod = null;
 
-			        if (!entity.HasSinglePk)
-			        {
-                        if (entity.BaseEntity == null)
-                        {
-                            CreateGetKeyMethodCompositePK(entityClass);
-                            CreateGetPKValuesMethod(entityClass);
-                            CreateSetPKMethod(entityClass, true);
-                        }
-                        else
-                        {
-                            UpdateGetKeyMethodCompositePK(entityClass);
-                            UpdateGetPKValuesMethod(entityClass);
-                            UpdateSetPKMethod(entityClass, true);
-                        }
-
-                        OverrideEqualsMethodCompositePK(entityClass);
-			        }
-                    else if(entity.HasPk)
+                    if (entity.HasPk)
                     {
-						OverrideIdentifierProperty(entityClass);
-                        if (entity.BaseEntity == null)
+                        if (entity.HasSinglePk)
                         {
-							
-                            CreateSetPKMethod(entityClass, false);
-                        	CreateGetPKValuesMethod(entityClass);
-							
+                            OverrideIdentifierProperty(entityClass);
+                            if (entity.BaseEntity == null)
+                            {
+
+                                CreateSetPKMethod(entityClass, false);
+                                CreateGetPKValuesMethod(entityClass);
+
+                            }
+                            else
+                            {
+                                UpdateGetPKValuesMethod(entityClass);
+                                UpdateSetPKMethod(entityClass, false);
+                            }
                         }
                         else
                         {
-                            UpdateGetPKValuesMethod(entityClass);
-                            UpdateSetPKMethod(entityClass, false);
+                            if (entity.BaseEntity == null)
+                            {
+                                CreateGetKeyMethodCompositePK(entityClass);
+                                CreateGetPKValuesMethod(entityClass);
+                                CreateSetPKMethod(entityClass, true);
+                            }
+                            else
+                            {
+                                UpdateGetKeyMethodCompositePK(entityClass);
+                                UpdateGetPKValuesMethod(entityClass);
+                                UpdateSetPKMethod(entityClass, true);
+                            }
+
+                            OverrideEqualsMethodCompositePK(entityClass);
                         }
                     }
-
 			        #endregion
 
 			        #region проперти
