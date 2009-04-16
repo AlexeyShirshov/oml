@@ -231,6 +231,9 @@ namespace Worm.CodeGen.XmlGenerator
 
 			foreach (Column c in columns.Keys)
 			{
+                if (c.GetTableColumns(columns.Keys).All(clm => clm.IsPK))
+                    continue;
+                
                 bool ent, col;
                 EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent);
 				PropertyDescription pd = AppendColumn(columns, c, e, out col);
@@ -408,11 +411,31 @@ namespace Worm.CodeGen.XmlGenerator
 				if (pk && c.PKCount == 1)
 					name = "ID";
 
+                TypeDescription pt = null;
+                if (pk)
+                {
+                    pt = GetClrType(c.DbType, c.IsNullable, odef);
+                }
+                else
+                {
+                    pt = GetType(c, columns, odef);
+                }
+
 				pe = new PropertyDescription(name,
-					 null, attrs, null, GetType(c, columns, odef), c.ColumnName,
+					 null, attrs, null, pt, c.ColumnName,
                      e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
 				e.Properties.Add(pe);
                 created = true;
+
+                if (c.IsFK && pk)
+                {
+                    pt = GetRelatedType(c, columns, odef);
+                    attrs = new string[] { "ReadOnly", "SyncInsert" };
+                    pe = new PropertyDescription(pt.Entity.Name,
+                        null, attrs, null, pt, c.ColumnName,
+                        e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
+                    e.Properties.Add(pe);
+                }
 			}
 			else
 			{
