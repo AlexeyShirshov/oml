@@ -27,8 +27,6 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
     <SccProvider>SAK</SccProvider>
-    <TargetFrameworkSubset>
-    </TargetFrameworkSubset>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Worm.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -40,7 +38,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -105,12 +102,6 @@
     <AppDesigner Include="Project\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OrmCodeGenLib\Worm.CodeGen.Core.csproj">
-      <Project>{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}</Project>
-      <Name>Worm.CodeGen.Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="C:\Program Files\Microsoft Visual Studio 2008 SDK\VisualStudioIntegration\Samples\Project\CSharp\Example.SingleFileGenerator\Strings.resx">
       <Link>Strings.resx</Link>
       <SubType>Designer</SubType>
@@ -120,7 +111,12 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <ProjectReference Include="..\OrmCodeGenLib\Worm.CodeGen.Core.csproj">
+      <Project>{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}</Project>
+      <Name>Worm.CodeGen.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Worm.snk" />
   </ItemGroup>
   <PropertyGroup>

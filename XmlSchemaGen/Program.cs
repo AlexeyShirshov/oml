@@ -54,14 +54,23 @@ namespace Worm.CodeGen.XmlGenerator
 			if (!param.TryGetParam("E", out e))
 			{
 				e = "false";
+                bool showUser = true;
 				if (!param.TryGetParam("U", out user))
 				{
-					Console.WriteLine("User is not specified");
-					ShowUsage();
-					return;
+                    Console.Write("User: ");
+                    ConsoleColor c = Console.ForegroundColor;
+                    Console.ForegroundColor = Console.BackgroundColor;
+                    user = Console.ReadLine();
+                    Console.ForegroundColor = c;
+                    showUser = false;
 				}
+
 				if (!param.TryGetParam("P", out psw))
 				{
+                    if (showUser)
+                    {
+                        Console.WriteLine("User: " + user);
+                    }
 					Console.Write("Password: ");
 					ConsoleColor c = Console.ForegroundColor;
 					Console.ForegroundColor = Console.BackgroundColor;
@@ -118,9 +127,14 @@ namespace Worm.CodeGen.XmlGenerator
                 tr = "false";
             bool transform = bool.Parse(tr);
 
+            string es = null;
+            if (!param.TryGetParam("ES", out tr))
+                es = "false";
+            bool escape = bool.Parse(es);
+
             Generator g = new Generator(server, m, db, i, user, psw, transform);
 
-			g.MakeWork(schemas, namelike, file, merge, dr, namesp, unify);
+			g.MakeWork(schemas, namelike, file, merge, dr, namesp, unify, escape);
 
 			Console.WriteLine("Done!");
 			//Console.ReadKey();
@@ -143,6 +157,7 @@ namespace Worm.CodeGen.XmlGenerator
 			Console.WriteLine("  -N=value\t-  Objects namespace. Example: -N=test.");
 			Console.WriteLine("  -Y\t\t-  Unify entyties with the same PK. Example: -Y.");
             Console.WriteLine("  -T\t\t-  Transform property names. Example: -T.");
+            Console.WriteLine("  -ES\t\t-  Escape names. Example: -T.");
 		}
 	}
 }

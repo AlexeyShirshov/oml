@@ -75,7 +75,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 var entityTypeExpression = _useType ? OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(relatedEntity) : OrmCodeGenHelper.GetEntityNameReferenceExpression(relatedEntity);
 
                 var desc = new CodeObjectCreateExpression(
-                    new CodeTypeReference(typeof(M2MRelationDesc)), entityTypeExpression);
+                    new CodeTypeReference(typeof(M2MRelationDesc)),
+                    entityTypeExpression);
 
                 var staticProperty = new CodeMemberProperty
                 {
@@ -138,8 +139,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                    desc.Parameters.Add(new CodePrimitiveExpression(relation.Direct.FieldName));
                     desc.Parameters.Add(
-                            new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
+                        new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
                                                              "DirKey"));
 
                     Members.Add(staticProperty);
@@ -190,6 +192,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                    desc.Parameters.Add(new CodePrimitiveExpression(relation.Reverse.FieldName));
                     desc.Parameters.Add(
                             new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
                                                              "RevKey"));
