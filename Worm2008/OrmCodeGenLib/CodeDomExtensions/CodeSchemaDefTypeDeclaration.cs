@@ -324,16 +324,25 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			                                         						)
 			                                         			)
 			                                         	};
-			condTrueStatements.AddRange(
-				m_entityClass.Entity.Properties.FindAll(action => !action.Disabled).ConvertAll<CodeStatement>(action => new CodeExpressionStatement(
-				                                                                                                        	new CodeMethodInvokeExpression(
-				                                                                                                        		new CodeVariableReferenceExpression("idx"),
-				                                                                                                        		"Add",
-				                                                                                                        		GetMapField2ColumObjectCreationExpression(action)
-				                                                                                                        		)
-				                                                                                                        	)
-					)
-				);
+			condTrueStatements.AddRange(m_entityClass.Entity.Properties
+                .FindAll(action => !action.Disabled)
+                .ConvertAll<CodeStatement>(action => 
+                    //new CodeExpressionStatement(
+                    //    new CodeMethodInvokeExpression(
+                    //        new CodeVariableReferenceExpression("idx"),
+                    //        "Add",
+                    //        GetMapField2ColumObjectCreationExpression(action)
+                    //    )
+                    //)
+                    new CodeAssignStatement(
+                        new CodeIndexerExpression(
+                            new CodeVariableReferenceExpression("idx"),
+                            new CodePrimitiveExpression(action.PropertyAlias)
+                        ),
+                        GetMapField2ColumObjectCreationExpression(action)
+                    )
+                )
+		    );
 
 			condTrueStatements.Add(
 				new CodeAssignStatement(

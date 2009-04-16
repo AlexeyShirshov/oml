@@ -100,12 +100,12 @@ namespace Worm.CodeGen.Core.Descriptors
             }
         }
 
-		protected int GetPKCount()
+		public int GetPKCount()
 		{
 			return GetPKCount(true);
 		}
 
-		protected int GetPKCount(bool flatEntity)
+		public int GetPKCount(bool flatEntity)
 		{
 			int s = 0;
 			var properties = flatEntity ? CompleteEntity.Properties : Properties;
@@ -123,6 +123,15 @@ namespace Worm.CodeGen.Core.Descriptors
 		{
 			return GetProperty(propertyId, false);
 		}
+
+        public bool IsAssignableFrom(EntityDescription ed)
+        {
+            if (ed == this)
+                return true;
+            if (ed.BaseEntity == null)
+                return false;
+            return IsAssignableFrom(ed.BaseEntity);
+        }
 
 		public PropertyDescription GetProperty(string propertyName, bool throwNotFoundException)
 		{
