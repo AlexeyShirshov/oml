@@ -695,7 +695,7 @@ namespace Worm.CodeGen.Core
                         if (entity.HasSinglePk)
                         {
                             OverrideIdentifierProperty(entityClass);
-                            if (entity.BaseEntity == null)
+                            if (entity.BaseEntity == null || entity.GetPKCount(false) > 0)
                             {
 
                                 CreateSetPKMethod(entityClass, false);
@@ -710,7 +710,7 @@ namespace Worm.CodeGen.Core
                         }
                         else
                         {
-                            if (entity.BaseEntity == null)
+                            if (entity.BaseEntity == null || entity.GetPKCount(false) > 0)
                             {
                                 CreateGetKeyMethodCompositePK(entityClass);
                                 CreateGetPKValuesMethod(entityClass);

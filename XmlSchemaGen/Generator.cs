@@ -429,12 +429,15 @@ namespace Worm.CodeGen.XmlGenerator
 
                 if (c.IsFK && pk)
                 {
-                    pt = GetRelatedType(c, columns, odef);
-                    attrs = new string[] { "ReadOnly", "SyncInsert" };
-                    pe = new PropertyDescription(pt.Entity.Name,
-                        null, attrs, null, pt, c.ColumnName,
-                        e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
-                    e.Properties.Add(pe);
+                    var pt2 = GetRelatedType(c, columns, odef);
+                    if (!pt2.Entity.IsAssignableFrom(e))
+                    {
+                        attrs = new string[] { "ReadOnly", "SyncInsert" };
+                        pe = new PropertyDescription(pt2.Entity.Name,
+                            null, attrs, null, pt2, c.ColumnName,
+                            e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public);
+                        e.Properties.Add(pe);
+                    }
                 }
 			}
 			else
