@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
@@ -169,7 +170,9 @@ namespace Worm.CodeGen.Core.Descriptors
             FillUniqueRelations(l, relationUniques);
             if(BaseEntity != null)
             {
-                var baseEntityRealation = BaseEntity.GetRelations(withDisabled);
+                var baseEntityRealation = from r in BaseEntity.GetRelations(withDisabled)
+                                          where !l.Contains(r)
+                                          select r;
                 FillUniqueRelations(baseEntityRealation, relationUniques);
             }
             foreach (var relationUnique in relationUniques)
