@@ -7,6 +7,7 @@ using Worm.CodeGen.Core;
 using Worm.CodeGen.Core.Descriptors;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Worm.CodeGen.XmlGenerator
 {
@@ -82,19 +83,19 @@ namespace Worm.CodeGen.XmlGenerator
 	                        join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc on tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name --and tc.constraint_type is not null
                         ) cc on t.table_name = cc.table_name and t.table_schema = cc.table_schema and c.column_name = cc.column_name
 						where table_type = 'base table'
-						and (
-						((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
-						join INFORMATION_SCHEMA.constraint_column_usage cc on 
-						tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
-						where t.table_name = tc.table_name and t.table_schema = tc.table_schema
-						and tc.constraint_type = 'PRIMARY KEY'
-						) > 0) or 
-						((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
-						join INFORMATION_SCHEMA.constraint_column_usage cc on 
-						tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
-						where t.table_name = tc.table_name and t.table_schema = tc.table_schema
-						and tc.constraint_type = 'UNIQUE'
-						) > 0))
+						--and (
+						--((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
+						--join INFORMATION_SCHEMA.constraint_column_usage cc on 
+						--tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
+						--where t.table_name = tc.table_name and t.table_schema = tc.table_schema
+						--and tc.constraint_type = 'PRIMARY KEY'
+						--) > 0) or 
+						--((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
+						--join INFORMATION_SCHEMA.constraint_column_usage cc on 
+						--tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
+						--where t.table_name = tc.table_name and t.table_schema = tc.table_schema
+						--and tc.constraint_type = 'UNIQUE'
+						--) > 0))
 						--and (select count(*) from INFORMATION_SCHEMA.constraint_column_usage ccu 
 						--	where ccu.table_name = t.table_name and ccu.table_schema = t.table_schema and ccu.constraint_name = cc.constraint_name) < 2
 						--and (tc.constraint_type <> 'CHECK' or tc.constraint_type is null)
@@ -136,14 +137,7 @@ namespace Worm.CodeGen.XmlGenerator
 						while (reader.Read())
 						{
 							Column c = Column.Create(reader);
-							if (proh.Find(delegate(Pair<string> kv)
-							{
-								return kv.First == c.FullTableName;
-							}) != null)
-							{
-								//just skip
-							}
-							else
+							if (proh.Find((kv) => kv.First == c.FullTableName) == null)
 							{
 								try
 								{
@@ -152,11 +146,11 @@ namespace Worm.CodeGen.XmlGenerator
 								catch (ArgumentException ex)
 								{
 									string[] attr;
-									if (GetAttributes(c, out attr) && columns[c].ConstraintType == "FOREIGN KEY")
+									if (IsPrimaryKey(c, out attr) && columns[c].IsFK)
 									{
 										if (unify)
 										{
-											proh.Add(new Pair<string>(c.FullTableName, columns[c].ConstraintName));
+                                            proh.Add(new Pair<string>(c.FullTableName, "FOREIGN KEY"));
 											foreach (Column clm in new List<Column>(columns.Keys))
 											{
 												if (clm.FullTableName == c.FullTableName)
@@ -165,30 +159,29 @@ namespace Worm.CodeGen.XmlGenerator
 										}
 										else
 										{
-											foreach (Column clm in new List<Column>(columns.Keys))
-											{
-												if (clm.ConstraintType == "FOREIGN KEY" && 
-													clm.ColumnName == c.ColumnName &&
-													clm.FullTableName == c.FullTableName)
-													columns.Remove(clm);
-											}
-											columns.Add(c,c);
+                                            columns[c].Constraints.AddRange(c.Constraints);
 										}
 									}
-									else if (GetAttributes(columns[c], out attr) && c.ConstraintType == "FOREIGN KEY")
+									else if (IsPrimaryKey(columns[c], out attr) && c.IsFK)
 									{
 										if (unify)
 										{
-											proh.Add(new Pair<string>(c.FullTableName, c.ConstraintName));
+                                            proh.Add(new Pair<string>(c.FullTableName, "FOREIGN KEY"));
 											foreach (Column clm in new List<Column>(columns.Keys))
 											{
 												if (clm.FullTableName == c.FullTableName)
 													columns.Remove(clm);
 											}
 										}
+                                        else
+                                            columns[c].Constraints.AddRange(c.Constraints);
 									}
-									else if(c.ConstraintType != "CHECK")
-										throw new InvalidOperationException(string.Format("Column {0} already in collection. Constraint {1}.",c.ToString(),c.ConstraintType), ex);
+                                    else
+                                    {
+                                        columns[c].Constraints.AddRange(c.Constraints);
+
+                                        //throw new InvalidOperationException(string.Format("Column {0} already in collection. Constraint {1}.", c.ToString(), c.ConstraintType), ex);
+                                    }
 								}
 							}
 						}
@@ -270,7 +263,7 @@ namespace Worm.CodeGen.XmlGenerator
 					{
 						string[] ss = ed.SourceFragments[0].Name.Split('.');
 						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
-                            pd.FieldName.Trim(new char[] { '[', ']' }), false, null, null, null, false, 1);
+                            pd.FieldName.Trim(new char[] { '[', ']' }), false, null, false, 1);
 						if (!columns.ContainsKey(c))
 						{
 							col2remove.Add(pd);
@@ -410,7 +403,7 @@ namespace Worm.CodeGen.XmlGenerator
 			if (pe == null)
 			{
 				string[] attrs = null;
-				bool pk = GetAttributes(c, out attrs);
+				bool pk = IsPrimaryKey(c, out attrs);
 				string name = Trim(Capitalize(c.ColumnName));
 				if (pk && c.PKCount == 1)
 					name = "ID";
@@ -424,7 +417,7 @@ namespace Worm.CodeGen.XmlGenerator
 			else
 			{
 				string[] attrs = null;
-				if (GetAttributes(c, out attrs))
+				if (IsPrimaryKey(c, out attrs))
 					pe.Name = "ID";
 				pe.Attributes = Merge(pe.Attributes,attrs);
                 if (!pe.PropertyType.IsUserType)
@@ -569,7 +562,7 @@ namespace Worm.CodeGen.XmlGenerator
 		{
 			TypeDescription t = null;
 
-			if (c.ConstraintType == "FOREIGN KEY")
+			if (c.IsFK)
 			{
 				t = GetRelatedType(c, columns, odef);
 			}
@@ -593,7 +586,7 @@ namespace Worm.CodeGen.XmlGenerator
 						where rc.constraint_name = @cn";
 					DbParameter cn = cmd.CreateParameter();
 					cn.ParameterName = "cn";
-					cn.Value = col.ConstraintName;
+					cn.Value = col.FKName;
 					cmd.Parameters.Add(cn);
 
 					conn.Open();
@@ -604,7 +597,7 @@ namespace Worm.CodeGen.XmlGenerator
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false, 1);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, false, 1);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
@@ -658,7 +651,7 @@ namespace Worm.CodeGen.XmlGenerator
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false, 1);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, false, 1);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
@@ -731,10 +724,10 @@ namespace Worm.CodeGen.XmlGenerator
 			return s.Substring(0, 1).ToUpper() + s.Substring(1);
 		}
 
-		private static bool GetAttributes(Column c, out string[] attrs)
+		private static bool IsPrimaryKey(Column c, out string[] attrs)
 		{
 			attrs = new string[] { };
-            if (c.ConstraintType == "PRIMARY KEY")
+            if (c.IsPK)
             {
                 if (!c.IsAutoIncrement)
                     attrs = new string[] { "PK" };
