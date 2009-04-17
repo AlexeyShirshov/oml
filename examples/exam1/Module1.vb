@@ -12,7 +12,9 @@ Module Module1
     ''' <returns></returns>
     ''' <remarks>The function creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
     Function GetDBManager() As OrmDBManager
-        Return New OrmDBManager(New OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, My.Settings.connectionString)
+        Return New OrmDBManager(New OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, _
+             My.Settings.connectionString.Replace("|DataDirectory|\", _
+           IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\"))))
     End Function
 
     Sub Main()

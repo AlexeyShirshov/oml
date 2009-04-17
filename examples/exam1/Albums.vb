@@ -212,7 +212,7 @@ End Using
 						Try 
 							If (Me._idx Is Nothing) Then
 								Dim idx As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) = New Worm.Entities.Meta.OrmObjectIndex
-								idx.Add(New Worm.Entities.Meta.MapField2Column("ID", "id", Me.Table, Worm.Entities.Meta.Field2DbRelations.PK))
+                                idx.Add(New Worm.Entities.Meta.MapField2Column("ID", "id", Me.Table, Worm.Entities.Meta.Field2DbRelations.PrimaryKey))
 								idx.Add(New Worm.Entities.Meta.MapField2Column("Name", "name", Me.Table, Worm.Entities.Meta.Field2DbRelations.None))
 								idx.Add(New Worm.Entities.Meta.MapField2Column("Release_dt", "release_dt", Me.Table, Worm.Entities.Meta.Field2DbRelations.None))
 								Me._idx = idx

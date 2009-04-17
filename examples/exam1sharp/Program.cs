@@ -56,7 +56,7 @@ namespace exam1sharp
 
             foreach (Store s in query
                 .From(new SourceFragment("Sales", "Store"))
-                .ToPODList<Store>())
+                .ToPOCOList<Store>())
             {
                 Console.WriteLine("Store id: {0}, name: {1}", s.CustomerID, s.Name);
             }
@@ -68,7 +68,7 @@ namespace exam1sharp
 
             foreach (Store2 s in query
                 .From(new SourceFragment("Sales", "Store"))
-                .ToPODList<Store2>())
+                .ToPOCOList<Store2>())
             {
                 Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Name);
             }

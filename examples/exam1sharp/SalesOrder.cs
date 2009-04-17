@@ -32,16 +32,19 @@ namespace exam1sharp
 
     public class EntitySchema : IMultiTableObjectSchema
     {
+        //define tables
         private SourceFragment[] _tables = new SourceFragment[]{
                 new SourceFragment("Sales","SalesOrderHeader"),
                 new SourceFragment("Sales","SalesOrderDetail")
             };
 
+        //define join
         public Worm.Criteria.Joins.QueryJoin GetJoins(SourceFragment left, SourceFragment right)
         {
             return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
         }
 
+        //define mapping
         public Worm.Collections.IndexedCollection<string, MapField2Column> GetFieldColumnMap()
         {
             OrmObjectIndex columns = new OrmObjectIndex();

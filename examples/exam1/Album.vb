@@ -20,7 +20,7 @@ Namespace test
             Init(id, cache, schema)
         End Sub
 
-        <EntityProperty()> _
+        <EntityProperty("name")> _
         Public Overridable Property Name() As String
             Get
                 Using Read("Name")
@@ -34,7 +34,7 @@ Namespace test
             End Set
         End Property
 
-        <EntityProperty()> _
+        <EntityProperty("release_dt")> _
         Public Overridable Property Release() As Nullable(Of Date)
             Get
                 Using Read("Release")
@@ -48,7 +48,7 @@ Namespace test
             End Set
         End Property
 
-        <EntityProperty("id", Field2DbRelations.PrimaryKey)> _
+        <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
         Public Overrides Property Identifier() As Object
             Get
                 Return _id
