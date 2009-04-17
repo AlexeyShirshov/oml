@@ -616,8 +616,10 @@ Namespace Entities
                     b = _column = s._column AndAlso _table Is s._table
                 ElseIf _q IsNot Nothing Then
                     b = _q.Equals(s._q)
-                Else
+                ElseIf _agr IsNot Nothing Then
                     b = _agr.Equals(s._agr)
+                Else
+                    Throw New InvalidOperationException(String.Format("Cannot compare SelectExpression {0}", _ToString))
                 End If
                 Return b
             End If

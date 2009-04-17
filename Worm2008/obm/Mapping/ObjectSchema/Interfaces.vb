@@ -17,7 +17,7 @@ Namespace Entities.Meta
 
             Public ReadOnly Property Direction() As Boolean
                 Get
-                    Return Not (M2MRelationDesc.RevKey = Key)
+                    Return String.IsNullOrEmpty(Key) OrElse Not Key.StartsWith(M2MRelationDesc.ReversePrefix)
                 End Get
             End Property
 

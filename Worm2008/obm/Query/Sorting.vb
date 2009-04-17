@@ -461,11 +461,14 @@ Namespace Sorting
             If _key <> 0 Then
                 Return Me
             Else
-                Dim s As New Sort(_prev, ObjectSource, PropertyAlias, _order, _ext, _del)
-                s.Computed = Computed
-                s.Table = Table
-                s.Custom = Custom
-                s.Column = Column
+                Dim s As New Sort()
+                CopyTo(s)
+                With s
+                    ._order = _order
+                    ._ext = _ext
+                    ._del = _del
+                    ._prev = _prev
+                End With
                 Return s
             End If
         End Function
