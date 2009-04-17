@@ -1389,7 +1389,7 @@ l1:
                     If dr.RecordsAffected = 0 Then
                         Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, ce)
                     ElseIf dr.RecordsAffected < 0 Then
-                        If Not obj.IsLoaded Then
+                        If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object
                             If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
                             obj.SetObjectState(ObjectState.NotFoundInSource)
@@ -1412,7 +1412,7 @@ l1:
         End Sub
 
         Private Sub LoadSingleFromReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal fromRS As Boolean, _
-            ByVal ec As OrmCache, ByVal dr As Data.Common.DbDataReader, ByVal dic As IDictionary, ByVal arr As IList(Of SelectExpression), _
+            ByVal ec As OrmCache, ByVal dr As System.Data.Common.DbDataReader, ByVal dic As IDictionary, ByVal arr As IList(Of SelectExpression), _
             ByVal check_pk As Boolean, ByVal baseIdx As Integer)
             Dim loadLock As IDisposable = Nothing
             If ce IsNot Nothing Then

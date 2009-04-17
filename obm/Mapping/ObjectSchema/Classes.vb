@@ -328,8 +328,9 @@ Namespace Entities.Meta
 
         Private _const() As IFilter
 
-        Public Const RevKey As String = "xxx%rev$"
         Public Const DirKey As String = "xxx%direct$"
+        Public Const ReversePrefix As String = "$rev$"
+        Public Const RevKey As String = ReversePrefix & DirKey
 
         Public Sub New(ByVal type As Type)
             MyBase.New(New EntityUnion(type), Nothing, Nothing)
@@ -366,6 +367,7 @@ Namespace Entities.Meta
         Public Sub New(ByVal eu As EntityUnion, ByVal column As String, ByVal key As String)
             MyBase.New(eu, column, key)
         End Sub
+
 #Region " Type ctors "
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
@@ -475,7 +477,7 @@ Namespace Entities.Meta
 
         Public ReadOnly Property non_direct() As Boolean
             Get
-                Return Key = RevKey
+                Return Not String.IsNullOrEmpty(Key) AndAlso Key.StartsWith(ReversePrefix)
             End Get
         End Property
 
@@ -488,13 +490,14 @@ Namespace Entities.Meta
         End Function
 
         Public Shared Function GetRevKey(ByVal key As String) As String
-            If key = DirKey Then
-                Return RevKey
-            ElseIf key = RevKey Then
-                Return DirKey
-            Else
-                Return key
+            If Not String.IsNullOrEmpty(key) Then
+                If key.StartsWith(ReversePrefix) Then
+                    Return key.Remove(0, ReversePrefix.Length)
+                Else
+                    Return ReversePrefix & key
+                End If
             End If
+            Return key
         End Function
 
         Public Shared Function CompareKeys(ByVal key1 As String, ByVal key2 As String) As Boolean

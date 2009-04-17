@@ -529,10 +529,20 @@ Namespace Query
             'Return fs.ToArray
         End Sub
 
-        Private Sub CopySE(ByVal se As SelectExpression)
+        Private Sub CopySE(ByVal se As SelectExpression, ByVal mpe As ObjectMappingEngine)
             _sl.Add(se)
             If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
-                se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
+                If String.IsNullOrEmpty(se.IntoPropertyAlias) Then
+                    Dim t As Type = Nothing
+                    If se.ObjectProperty.Entity IsNot Nothing Then
+                        t = se.ObjectProperty.Entity.GetRealType(mpe)
+                    End If
+                    If t Is Nothing Then
+                        se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
+                    End If
+                Else
+                    se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
+                End If
             End If
             'If se.ObjectSource Is Nothing AndAlso _from.AnyQuery IsNot Nothing Then
             '    se.ObjectSource = _from.QueryEU
@@ -543,7 +553,7 @@ Namespace Query
                                         ByRef f As IFilter, ByVal filterInfo As Object)
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
-                    CopySE(se)
+                    CopySE(se, schema)
                     If _poco IsNot Nothing Then
                         Dim t As Type = Nothing
                         If se.Into Is Nothing Then
@@ -604,7 +614,7 @@ Namespace Query
                                                 Dim se As New SelectExpression(de.Key, pk.PropertyAlias)
                                                 se.Attributes = pk.Behavior
                                                 If Not _sl.Contains(se) Then
-                                                    CopySE(se)
+                                                    CopySE(se, schema)
                                                 End If
                                             End If
                                         End If
@@ -626,7 +636,7 @@ Namespace Query
                                             Next
 l2:
                                             If Not found Then
-                                                CopySE(se)
+                                                CopySE(se, schema)
                                             End If
                                         Next
                                     Else
@@ -635,7 +645,7 @@ l2:
                                 Else
 l1:
                                     For Each se As SelectExpression In col
-                                        CopySE(se)
+                                        CopySE(se, schema)
                                     Next
                                 End If
                             End If
@@ -644,12 +654,12 @@ l1:
 
                     If _sl.Count = 0 Then
                         For Each se As SelectExpression In SelectList
-                            CopySE(se)
+                            CopySE(se, schema)
                         Next
                     Else
                         For Each se As SelectExpression In SelectList
                             If se.IsCustom OrElse se.Aggregate IsNot Nothing OrElse se.PropType = PropType.TableColumn Then
-                                CopySE(se)
+                                CopySE(se, schema)
                             End If
                         Next
                     End If
@@ -674,7 +684,7 @@ l1:
                     End If
                 Else
                     For Each se As SelectExpression In SelectList
-                        CopySE(se)
+                        CopySE(se, schema)
                     Next
                 End If
             End If

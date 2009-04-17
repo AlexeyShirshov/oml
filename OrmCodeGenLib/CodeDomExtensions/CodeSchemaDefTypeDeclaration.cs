@@ -759,14 +759,15 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 					cascadeDeleteExpression,
 					mappingExpression);
 
-			string f = "DirKey";
+            string f = relationTable.Identifier;// "DirKey";
 			if (direct.HasValue && !direct.Value)
 			{
-				f = "RevKey";
+				f = M2MRelationDesc.ReversePrefix+f;
 			}
-			result.Parameters.Add(
-					new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)), f)
-				);
+            //result.Parameters.Add(
+            //        new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)), f)
+            //    );
+            result.Parameters.Add(new CodePrimitiveExpression(f));
 
 			if (underlyingEntity != null)
 			{

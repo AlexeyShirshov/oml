@@ -280,7 +280,7 @@ Namespace Entities
 
         Public ReadOnly Property Direct() As Boolean
             Get
-                Return Key <> M2MRelationDesc.RevKey
+                Return String.IsNullOrEmpty(Key) OrElse Not Key.StartsWith(M2MRelationDesc.ReversePrefix)
             End Get
         End Property
 

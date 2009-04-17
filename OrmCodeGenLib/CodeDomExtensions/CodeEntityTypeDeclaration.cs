@@ -139,10 +139,11 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
-                    desc.Parameters.Add(new CodePrimitiveExpression(relation.Direct.FieldName));
-                    desc.Parameters.Add(
-                        new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
-                                                             "DirKey"));
+                    //desc.Parameters.Add(new CodePrimitiveExpression(relation.Direct.FieldName));
+                    //desc.Parameters.Add(new CodeFieldReferenceExpression(
+                    //    new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),"DirKey")
+                    //);
+                    desc.Parameters.Add(new CodePrimitiveExpression(relation.SourceFragment.Identifier));
 
                     Members.Add(staticProperty);
 
@@ -192,14 +193,14 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
-                    desc.Parameters.Add(new CodePrimitiveExpression(relation.Reverse.FieldName));
-                    desc.Parameters.Add(
-                            new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),
-                                                             "RevKey"));
+                    //desc.Parameters.Add(new CodePrimitiveExpression(relation.Reverse.FieldName));
+                    //desc.Parameters.Add(new CodeFieldReferenceExpression(
+                    //    new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),"RevKey")
+                    //);
+                    desc.Parameters.Add(new CodePrimitiveExpression(M2MRelationDesc.ReversePrefix+relation.SourceFragment.Identifier));
 
                     Members.Add(staticProperty);
-
-
+                    
                     var memberProperty = new CodeMemberProperty
                     {
                         Name = accessorName,
