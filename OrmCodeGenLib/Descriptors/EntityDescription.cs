@@ -531,5 +531,20 @@ namespace Worm.CodeGen.Core.Descriptors
                 return multitable;
             }
         }
+
+        public List<PropertyDescription> GetPropertiesFromBase()
+        {
+            var be = BaseEntity;
+
+            List<PropertyDescription> baseProperties = new List<PropertyDescription>();
+
+            while (be != null)
+            {
+                baseProperties.AddRange(be.Properties);
+                be = be.BaseEntity;
+            }
+
+            return baseProperties;
+        }
     }
 }
