@@ -2219,20 +2219,9 @@ namespace Worm.CodeGen.Core
             if (propertyDesc.Group != null && propertyDesc.Group.Hide)
                 property.Attributes = MemberAttributes.Family;
 
-            if (entity.BaseEntity != null)
+            if (entity.GetPropertiesFromBase().Exists(k => propertyDesc.Name == k.Name))
             {
-                var be = entity.BaseEntity;
-
-                List<PropertyDescription> baseProperties = new List<PropertyDescription>();
-
-                while (be != null)
-                {
-                    baseProperties.AddRange(be.Properties);
-                    be = be.BaseEntity;
-                }
-
-                if (baseProperties.Count(k=>propertyDesc.Name == k.Name) > 0)
-                    property.Attributes |= MemberAttributes.Override;
+                property.Attributes |= MemberAttributes.Override;
             }
 
             #region property GetStatements
