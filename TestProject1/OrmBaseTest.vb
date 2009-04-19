@@ -546,5 +546,7 @@ End Class
     Public Sub TestEquality2()
         Dim o As Object = 2
         Assert.IsTrue(Equals(o, 2))
+
+        Assert.IsFalse(Equals(2, "sdf"))
     End Sub
 End Class
