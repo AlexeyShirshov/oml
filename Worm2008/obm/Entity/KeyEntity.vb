@@ -608,11 +608,13 @@ Namespace Entities
             Return Identifier.GetHashCode
         End Function
 
-        Protected Overrides Function CreateObject() As Entity
-            Using gm As IGetManager = GetMgr()
-                Return CType(gm.Manager.CreateKeyEntity(Identifier, Me.GetType), Entity)
-            End Using
-        End Function
+        Protected Overrides Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
+            If mgr Is Nothing Then
+                CType(en, KeyEntityBase).Init(Identifier, Nothing, Nothing)
+            Else
+                CType(en, KeyEntityBase).Init(Identifier, mgr.Cache, mgr.MappingEngine)
+            End If
+        End Sub
 
         Protected Overrides Sub PKLoaded(ByVal pkCount As Integer)
             If pkCount <> 1 Then

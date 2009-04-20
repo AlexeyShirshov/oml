@@ -3405,7 +3405,7 @@ l1:
 
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
-            Dim s As IEntitySchema = ObjectMappingEngine.InitType(t, mpe, Nothing, Nothing)
+            Dim s As IEntitySchema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
             If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then Return s
             If SelectList Is Nothing Then
                 Dim tbl As SourceFragment = Nothing

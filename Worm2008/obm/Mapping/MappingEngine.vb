@@ -1492,20 +1492,20 @@ Public Class ObjectMappingEngine
             Dim t As Type = GetType(_IEntity)
 
             For Each tp As Type In types
-                If t.IsAssignableFrom(tp) Then InitType(tp, Me, idic, names)
+                If t.IsAssignableFrom(tp) Then GetEntitySchema(tp, Me, idic, names)
             Next
         Next
         Return idic
     End Function
 
-    Public Shared Function InitType(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByRef names As IDictionary) As IEntitySchema
+    Public Shared Function GetEntitySchema(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByRef names As IDictionary) As IEntitySchema
         Dim schema As IEntitySchema = Nothing
 
         If tp.IsClass Then
             Dim entities() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
 
             For Each ea As EntityAttribute In entities
-                If ea.Version = mpe._version Then
+                If mpe Is Nothing OrElse ea.Version = mpe._version Then
 
                     If ea.Type Is Nothing Then
                         If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
@@ -1517,7 +1517,7 @@ Public Class ObjectMappingEngine
 
                             Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                             If bsch Is Nothing Then
-                                InitType(tp.BaseType, mpe, idic, names)
+                                GetEntitySchema(tp.BaseType, mpe, idic, names)
                             End If
                             Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
@@ -1567,7 +1567,7 @@ Public Class ObjectMappingEngine
                 Dim entities2() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
 
                 For Each ea As EntityAttribute In entities2
-                    If ea.Version = mpe._version Then
+                    If mpe Is Nothing OrElse ea.Version = mpe._version Then
                         'Dim schema As IEntitySchema = Nothing
                         If ea.Type Is Nothing Then
                             If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
@@ -1579,7 +1579,7 @@ Public Class ObjectMappingEngine
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                 If bsch Is Nothing Then
-                                    InitType(tp.BaseType, mpe, idic, names)
+                                    GetEntitySchema(tp.BaseType, mpe, idic, names)
                                 End If
                                 Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
@@ -1630,7 +1630,7 @@ Public Class ObjectMappingEngine
                     'For Each ea As EntityAttribute In entities
                     Dim ea1 As EntityAttribute = Nothing
                     If entities.Length > 0 Then
-                        If mpe._mapv IsNot Nothing Then
+                        If mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing Then
                             ea1 = mpe._mapv(mpe._version, entities, tp)
                         ElseIf entities.Length = 1 Then
                             ea1 = entities(0)
@@ -1648,7 +1648,7 @@ Public Class ObjectMappingEngine
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                 If bsch Is Nothing Then
-                                    InitType(tp.BaseType, mpe, idic, names)
+                                    GetEntitySchema(tp.BaseType, mpe, idic, names)
                                 End If
                                 Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
@@ -1703,7 +1703,7 @@ Public Class ObjectMappingEngine
                     If schema Is Nothing Then
                         Dim ea2 As EntityAttribute = Nothing
                         If entities2.Length > 0 Then
-                            If mpe._mapv IsNot Nothing Then
+                            If mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing Then
                                 ea2 = mpe._mapv(mpe._version, entities2, tp)
                             ElseIf entities2.Length = 1 Then
                                 ea2 = entities2(0)
@@ -1722,7 +1722,7 @@ Public Class ObjectMappingEngine
 
                                     Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
                                     If bsch Is Nothing Then
-                                        InitType(tp.BaseType, mpe, idic, names)
+                                        GetEntitySchema(tp.BaseType, mpe, idic, names)
                                     End If
                                     Dim l2 As Collections.IndexedCollection(Of String, MapField2Column) = bsch.GetFieldColumnMap
 
@@ -2515,7 +2515,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetPOCOEntitySchema(ByVal t As Type) As IEntitySchema
-        Dim s As IEntitySchema = ObjectMappingEngine.InitType(t, Me, Nothing, Nothing)
+        Dim s As IEntitySchema = ObjectMappingEngine.GetEntitySchema(t, Me, Nothing, Nothing)
         If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then Return s
         Dim tbl As SourceFragment = ObjectMappingEngine.GetTable(Me, t)
         Dim selList As New OrmObjectIndex
@@ -2539,7 +2539,7 @@ Public Class ObjectMappingEngine
             Return False
         End If
 
-        Dim es As IEntitySchema = InitType(t, mpe, Nothing, Nothing)
+        Dim es As IEntitySchema = GetEntitySchema(t, mpe, Nothing, Nothing)
         If es IsNot Nothing Then
             Return True
         End If

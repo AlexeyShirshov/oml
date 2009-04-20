@@ -1625,7 +1625,7 @@ l1:
     End Function
 
     Public Function CreateKeyEntity(Of T As {IKeyEntity, New})(ByVal id As Object) As T
-        Return KeyEntity.CreateOrmBase(Of T)(id, _cache, _schema)
+        Return KeyEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
     End Function
 
     Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
