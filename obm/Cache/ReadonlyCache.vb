@@ -594,7 +594,7 @@ Namespace Cache
         End Function
 
         Public Function GetKeyFromPK(Of T As {New, IKeyEntity})(ByVal id As Object) As Integer
-            Dim o As T = KeyEntity.CreateOrmBase(Of T)(id, Me, Nothing)
+            Dim o As T = KeyEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
             Return o.Key
         End Function
 

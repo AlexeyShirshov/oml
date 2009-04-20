@@ -111,6 +111,39 @@ Imports Worm.Criteria
 
     End Class
 
+    <Entity("1", Tablename:="dbo.guid_table")> _
+   Public Class RawObj2
+        Inherits CachedLazyLoad
+
+        Private _id As Guid
+
+        <EntityPropertyAttribute(Field2DbRelations.PrimaryKey, Column:="pk", DBType:="uniqueidentifier")> _
+        Public Property Identifier() As Object
+            Get
+                Return _id
+            End Get
+            Set(ByVal value As Object)
+                _id = CType(value, Guid)
+            End Set
+        End Property
+
+        Private _code As Integer
+
+        <EntityPropertyAttribute(Column:="code")> _
+        Public Property Code() As Integer
+            Get
+                Return _code
+            End Get
+            Set(ByVal value As Integer)
+                _code = value
+            End Set
+        End Property
+
+        Protected Overrides Function GetCacheKey() As Integer
+            Return _id.GetHashCode
+        End Function
+    End Class
+
     <TestMethod()> _
     Public Sub TestRawObjectUpdate()
         Dim q As New QueryCmd(Function() _
@@ -177,6 +210,36 @@ Imports Worm.Criteria
                 mgr.Rollback()
             End Try
         End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestRawObjectCreate2()
+        Dim t As New RawObj
+
+        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=0;): ", t.InternalProperties.ObjName)
+
+        t.Code = 100
+
+        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
+
+        Dim t2 As RawObj = CType(t.Clone, RawObj)
+
+        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestRawObjectCreate3()
+        Dim t As New RawObj2
+
+        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=0;): ", t.InternalProperties.ObjName)
+
+        t.Code = 100
+
+        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
+
+        Dim t2 As RawObj2 = CType(t.Clone, RawObj2)
+
+        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
     End Sub
 
     <TestMethod()> _

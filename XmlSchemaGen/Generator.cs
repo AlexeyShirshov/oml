@@ -234,7 +234,7 @@ namespace Worm.CodeGen.XmlGenerator
             foreach (Column c in columns.Keys)
             {
                 if (c.GetTableColumns(columns.Keys).Count() == 2 &&
-                    c.GetTableColumns(columns.Keys).All(clm => clm.IsPK))
+                    c.GetTableColumns(columns.Keys).All(clm => clm.IsPK && clm.IsFK))
                     continue;
 
                 bool ent, col;
@@ -817,6 +817,8 @@ namespace Worm.CodeGen.XmlGenerator
                                 {
                                     bool cr;
                                     t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr, escape));
+                                    if (cr)
+                                        throw new InvalidDataException(String.Format("Entity for column {0} was referenced but not created.", c.ToString()));
                                     odef.Types.Add(t);
                                 }
                                 return t;

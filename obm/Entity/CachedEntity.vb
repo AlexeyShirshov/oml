@@ -508,7 +508,7 @@ Namespace Entities
                 If schema IsNot Nothing Then c.SchemaVersion = schema.Version
             End If
 
-            If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.PropertyAlias)
+            If idx < 0 AndAlso check Then Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, c.PropertyAlias))
 
             If idx >= 0 Then
                 Dim old As Boolean = _members_load_state(idx, cnt, schema)
@@ -609,7 +609,7 @@ Namespace Entities
                     ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
                    (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Entities.ObjectState.Modified AndAlso OrmCache.ShadowCopy(Me, mgr) Is Nothing Then
+                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, mgr) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
                     SetObjectStateClear(Entities.ObjectState.None)
                     Load()
@@ -832,14 +832,22 @@ Namespace Entities
         End Sub
 
         Protected Overridable Sub SetPK(ByVal pk As PKDesc())
-            'Using m As IGetManager = GetMgr()
             Dim tt As Type = Me.GetType
             Dim schema As ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
+            Dim oschema As IEntitySchema = Nothing
+            If schema IsNot Nothing Then
+                oschema = schema.GetEntitySchema(tt)
+            Else
+                oschema = ObjectMappingEngine.GetEntitySchema(tt, Nothing, Nothing, Nothing)
+            End If
             BeginLoading()
             For Each p As PKDesc In pk
-                'Dim c As New EntityPropertyAttribute(p.PropertyAlias)
-                schema.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
+                If schema Is Nothing Then
+                    ObjectMappingEngine.SetPropertyValue(Me, p.PropertyAlias, _
+                        ObjectMappingEngine.GetPropertyInt(tt, oschema, p.PropertyAlias), p.Value, oschema)
+                Else
+                    schema.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
+                End If
                 SetLoaded(p.PropertyAlias, True, True, schema)
             Next
             EndLoading()
@@ -1170,24 +1178,7 @@ l1:
             End With
         End Sub
 
-
 #End Region
-
-        '#Region " IComparable "
-
-        '        Public Function CompareTo(ByVal other As CachedEntity) As Integer
-        '            If other Is Nothing Then
-        '                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
-        '                Return 1
-        '            End If
-        '            Return Key.CompareTo(other.Key)
-        '        End Function
-
-        '        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
-        '            Return CompareTo(TryCast(obj, CachedEntity))
-        '        End Function
-
-        '#End Region
 
         Private ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
             Get
@@ -1200,6 +1191,7 @@ l1:
             'Using mc As IGetManager = GetMgr()
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
             If schema Is Nothing Then
+                Dim oschema As IEntitySchema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
                 For Each kv As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
@@ -1209,7 +1201,7 @@ l1:
                 Next
             Else
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
-                For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
+                For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                     If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -1258,7 +1250,7 @@ l1:
                     'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
                     '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
                     'Dim o As OrmBase = GetNew()
-                    Dim o As ICachedEntity = CType(CreateObject(), ICachedEntity)
+                    Dim o As ICachedEntity = CType(CreateSelfInitPK(), ICachedEntity)
                     For Each c As EntityPropertyAttribute In Changes(o)
                         sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
                     Next
@@ -1294,11 +1286,13 @@ l1:
             End Get
         End Property
 
-        Protected Overrides Function CreateObject() As Entity
-            Using gm As IGetManager = GetMgr()
-                Return CType(gm.Manager.CreateEntity(GetPKValues, Me.GetType), Entity)
-            End Using
-        End Function
+        Protected Overrides Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
+            If mgr Is Nothing Then
+                CType(en, CachedEntity).Init(GetPKValues, Nothing, Nothing)
+            Else
+                CType(en, CachedEntity).Init(GetPKValues, mgr.Cache, mgr.MappingEngine)
+            End If
+        End Sub
 
         'Protected Overrides Sub _PrepareLoadingUpdate()
         '    CreateCopyForSaveNewEntry(Nothing)

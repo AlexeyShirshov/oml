@@ -53,6 +53,7 @@ Namespace Entities
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
 #End If
 
+#Region " Loading "
         Protected ReadOnly Property IsLoading() As Boolean Implements _IEntity.IsLoading
             Get
                 Return _loading
@@ -73,6 +74,58 @@ Namespace Entities
             _loading = True
         End Sub
 
+        Protected Sub EndLoading() Implements _IEntity.EndLoading
+            _loading = False
+#If TRACELOADING Then
+            _lstack = String.Empty
+            _estack = Environment.StackTrace
+#End If
+        End Sub
+
+        Protected Overridable Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean Implements IEntity.IsPropertyLoaded
+            Return True
+        End Function
+
+        Protected Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
+            Get
+                Return True
+            End Get
+        End Property
+
+        Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
+            Using SyncHelper(False)
+                If objectWasCreated Then
+                    If ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Created Then
+                        If IsLoaded Then
+                            SetObjectState(ObjectState.None)
+                        Else
+                            SetObjectState(ObjectState.NotLoaded)
+                        End If
+                        'ElseIf ObjectState = Orm.ObjectState.Created Then
+                        '    Debug.Assert(Not IsLoaded)
+                        '    SetObjectState(ObjectState.NotLoaded)
+                    ElseIf ObjectState = ObjectState.NotLoaded Then
+                        If IsLoaded Then SetObjectState(ObjectState.None)
+                    ElseIf ObjectState = Entities.ObjectState.None Then
+                        'Else
+                        '    Debug.Assert(False)
+                    End If
+                Else
+                    If ObjectState = ObjectState.NotLoaded Then
+                        If IsLoaded Then
+                            SetObjectState(ObjectState.None)
+                            'Else
+                            '    SetObjectState(ObjectState.NotFoundInSource)
+                        End If
+                    End If
+                End If
+            End Using
+        End Sub
+
+#End Region
+
+#Region " Synchronization "
+
         Protected Overridable Function SyncHelper(ByVal reader As Boolean) As IDisposable
 #If DebugLocks Then
             Return New CSScopeMgr_Debug(Me, "d:\temp\")
@@ -81,7 +134,9 @@ Namespace Entities
 #End If
         End Function
 
-#Region " Synchronization "
+        Public Function GetSyncRoot() As System.IDisposable Implements _IEntity.GetSyncRoot
+            Return SyncHelper(False)
+        End Function
 
         Protected Sub RaisePropertyChanged(ByVal propertyAlias As String, ByVal oldValue As Object)
             Dim value As Object = GetValue(propertyAlias)
@@ -176,6 +231,7 @@ Namespace Entities
 
 #End Region
 
+#Region " Manager mgmt "
         Protected Function GetCurrent() As OrmManager
             Dim mgr As OrmManager = OrmManager.CurrentManager
             If Not String.IsNullOrEmpty(_mgrStr) Then
@@ -232,25 +288,27 @@ Namespace Entities
             End Get
         End Property
 
-        Protected ReadOnly Property OrmCache() As CacheBase
+        Protected Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
+            _cm = createManager
+        End Sub
+
+        Public ReadOnly Property CreateManager() As ICreateManager Implements IEntity.CreateManager
             Get
-                Using mc As IGetManager = GetMgr()
-                    If mc IsNot Nothing Then
-                        Return mc.Manager.Cache
-                    Else
-                        Return Nothing
-                    End If
-                End Using
+                Return _cm
             End Get
         End Property
 
-        Protected Sub EndLoading() Implements _IEntity.EndLoading
-            _loading = False
-#If TRACELOADING Then
-            _lstack = String.Empty
-            _estack = Environment.StackTrace
-#End If
+        Protected Sub SetMgrString(ByVal str As String) Implements _IEntity.SetMgrString
+            _mgrStr = str
         End Sub
+
+        Protected Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _IEntity.SetSpecificSchema
+            _schema = mpe
+        End Sub
+
+#End Region
+
+#Region " State mgmt "
 
         Protected Overridable ReadOnly Property ObjName() As String Implements _IEntity.ObjName
             Get
@@ -259,74 +317,31 @@ Namespace Entities
         End Property
 
         Protected Overridable Function DumpState() As String
-            Dim sb As New StringBuilder
             Dim schema As ObjectMappingEngine = MappingEngine
+            Dim props As IDictionary = Nothing
+            Dim oschema As IEntitySchema = Nothing
             If schema Is Nothing Then
-                sb.Append("Cannot get object dump")
+                oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
+                props = ObjectMappingEngine.GetMappedProperties(Me.GetType, oschema)
             Else
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
-                Dim olr As Boolean = _readRaw
-                _readRaw = True
-                Try
-                    For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
-                        Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                        Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                        sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
-                    Next
-                Finally
-                    _readRaw = olr
-                End Try
+                oschema = schema.GetEntitySchema(Me.GetType)
+                props = schema.GetProperties(Me.GetType)
             End If
+
+            Dim sb As New StringBuilder
+            Dim olr As Boolean = _readRaw
+            _readRaw = True
+            Try
+                For Each kv As DictionaryEntry In props
+                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
+                    sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
+                Next
+            Finally
+                _readRaw = olr
+            End Try
             Return sb.ToString
         End Function
-
-        Public Function GetSyncRoot() As System.IDisposable Implements _IEntity.GetSyncRoot
-            Return SyncHelper(False)
-        End Function
-
-        Protected Function GetValue(ByVal propertyAlias As String) As Object
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            If schema Is Nothing Then
-                Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
-            Else
-                Return schema.GetPropertyValue(Me, propertyAlias)
-            End If
-        End Function
-
-        Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim pi As Reflection.PropertyInfo
-            If schema Is Nothing Then
-                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
-            Else
-                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
-            End If
-            Return pi.GetValue(Me, Nothing)
-        End Function
-
-        Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim pi As Reflection.PropertyInfo
-            If schema Is Nothing Then
-                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
-            Else
-                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
-            End If
-            pi.SetValue(Me, value, Nothing)
-        End Sub
-
-        'Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
-        '    ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IEntity.GetValueOptimized
-        '    If pi Is Nothing Then
-        '        Dim s As ObjectMappingEngine = MappingEngine
-        '        If s Is Nothing Then
-        '            Return ObjectMappingEngine.GetFieldValueSchemaless(Me, propertyAlias, oschema, pi)
-        '        Else
-        '            Return s.GetFieldValue(Me, propertyAlias, oschema, pi)
-        '        End If
-        '    End If
-        '    Return pi.GetValue(Me, Nothing)
-        'End Function
 
         Protected ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
             Get
@@ -355,36 +370,8 @@ Namespace Entities
             End Using
         End Sub
 
-        'Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
-        '    ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object) Implements IEntity.SetValueOptimized
-
-        '    If pi Is Nothing Then
-        '        pi = MappingEngine.GetProperty(Me.GetType, schema, propertyAlias)
-        '    End If
-
-        '    pi.SetValue(Me, value, Nothing)
-        'End Sub
-        Protected Overridable Overloads Sub Init()
-            'If OrmManager.CurrentManager IsNot Nothing Then
-            '    _mgrStr = OrmManager.CurrentManager.IdentityString
-            'End If
-        End Sub
-
-        Public Sub New()
-            'Dim arr As Generic.List(Of EntityPropertyAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
-            'members_load_state = New BitArray(arr.Count)
-
-            Init()
-        End Sub
-
-        Protected Overridable Overloads Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
-            If cache IsNot Nothing Then cache.RegisterCreation(Me)
-
-            _state = Entities.ObjectState.Created
-        End Sub
-
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As Entity = CreateObject()
+            Dim o As Entity = CreateSelfInitPK()
             Using SyncHelper(True)
 #If TraceSetState Then
                 o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
@@ -396,15 +383,34 @@ Namespace Entities
             Return o
         End Function
 
-        Protected Overridable Function CreateObject() As Entity
+        Protected Overridable Function CreateSelf() As Entity
+            Return CType(Activator.CreateInstance(Me.GetType), Entity)
+        End Function
+
+        Protected Overridable Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
+            If mgr Is Nothing Then
+                en.Init(Nothing, Nothing)
+            Else
+                en.Init(mgr.Cache, mgr.MappingEngine)
+            End If
+        End Sub
+
+        Protected Function CreateSelfInitPK() As Entity
+            Dim e As Entity = CreateSelf()
             Using gm As IGetManager = GetMgr()
-                Return CType(gm.Manager.CreateEntity(Me.GetType), Entity)
+                InitNewEntity(If(gm Is Nothing, Nothing, gm.Manager), e)
             End Using
+            Return e
         End Function
 
         Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
-            Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
+            Dim props As IDictionary = Nothing
+            If mgr Is Nothing Then
+                props = ObjectMappingEngine.GetMappedProperties(Me.GetType, oschema)
+            Else
+                props = mgr.MappingEngine.GetProperties(Me.GetType)
+            End If
+            For Each kv As DictionaryEntry In props
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                 ObjectMappingEngine.SetPropertyValue([to], c.PropertyAlias, pi, ObjectMappingEngine.GetPropertyValue(from, c.PropertyAlias, pi, oschema), oschema)
@@ -413,17 +419,26 @@ Namespace Entities
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IEntitySchema = mc.Manager.MappingEngine.GetEntitySchema(Me.GetType)
+                Dim oschema As IEntitySchema = Nothing
+                If mc IsNot Nothing Then
+                    oschema = mc.Manager.MappingEngine.GetEntitySchema(Me.GetType)
+                Else
+                    oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
+                End If
                 Using [to].GetSyncRoot
                     [to].BeginLoading()
-                    CopyProperties([from], [to], mc.Manager, oschema)
+                    Dim mgr As OrmManager = Nothing
+                    If mc IsNot Nothing Then
+                        mgr = mc.Manager
+                    End If
+                    CopyProperties([from], [to], mgr, oschema)
                     [to].EndLoading()
                 End Using
             End Using
         End Sub
 
         Protected Function CreateClone() As Entity Implements IEntity.CreateClone
-            Dim clone As Entity = CreateObject()
+            Dim clone As Entity = CreateSelfInitPK()
             clone.SetObjectState(Entities.ObjectState.NotLoaded)
             CopyBody(Me, clone)
             clone._old_state = ObjectState
@@ -435,67 +450,11 @@ Namespace Entities
             Return _old_state
         End Function
 
-        Protected Overridable Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean Implements IEntity.IsPropertyLoaded
-            Return True
-        End Function
-
-        Protected Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
-            Get
-                Return True
-            End Get
-        End Property
-
-        Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
-            Using SyncHelper(False)
-                If objectWasCreated Then
-                    If ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Created Then
-                        If IsLoaded Then
-                            SetObjectState(ObjectState.None)
-                        Else
-                            SetObjectState(ObjectState.NotLoaded)
-                        End If
-                        'ElseIf ObjectState = Orm.ObjectState.Created Then
-                        '    Debug.Assert(Not IsLoaded)
-                        '    SetObjectState(ObjectState.NotLoaded)
-                    ElseIf ObjectState = ObjectState.NotLoaded Then
-                        If IsLoaded Then SetObjectState(ObjectState.None)
-                    ElseIf ObjectState = Entities.ObjectState.None Then
-                        'Else
-                        '    Debug.Assert(False)
-                    End If
-                Else
-                    If ObjectState = ObjectState.NotLoaded Then
-                        If IsLoaded Then
-                            SetObjectState(ObjectState.None)
-                            'Else
-                            '    SetObjectState(ObjectState.NotFoundInSource)
-                        End If
-                    End If
-                End If
-            End Using
-        End Sub
-
         Friend Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
             Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
         End Function
 
-        Protected Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
-            _cm = createManager
-        End Sub
-
-        Public ReadOnly Property CreateManager() As ICreateManager Implements IEntity.CreateManager
-            Get
-                Return _cm
-            End Get
-        End Property
-
-        Protected Sub SetMgrString(ByVal str As String) Implements _IEntity.SetMgrString
-            _mgrStr = str
-        End Sub
-
-        Protected Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _IEntity.SetSpecificSchema
-            _schema = mpe
-        End Sub
+#End Region
 
 #Region " CreateCmd "
         Public Function CreateCmd() As QueryCmd
@@ -505,22 +464,6 @@ Namespace Entities
                 Return QueryCmd.Create()
             End If
         End Function
-
-        'Public Function CreateCmd(ByVal selectType As Type) As QueryCmd
-        '    If _cm IsNot Nothing Then
-        '        Return New QueryCmd(selectType, _cm)
-        '    Else
-        '        Return QueryCmd.Create(selectType)
-        '    End If
-        'End Function
-
-        'Public Function CreateCmdByEntityName(ByVal entityName As String) As QueryCmd
-        '    If _cm IsNot Nothing Then
-        '        Return New QueryCmd(entityName, _cm)
-        '    Else
-        '        Return QueryCmd.CreateByEntityName(entityName)
-        '    End If
-        'End Function
 
         Public Function CreateCmd(ByVal name As String) As QueryCmd
             If _cm IsNot Nothing Then
@@ -532,25 +475,6 @@ Namespace Entities
             End If
         End Function
 
-        'Public Function CreateCmd(ByVal name As String, ByVal selectType As Type) As QueryCmd
-        '    If _cm IsNot Nothing Then
-        '        Dim q As New QueryCmd(selectType, _cm)
-        '        q.Name = name
-        '        Return q
-        '    Else
-        '        Return QueryCmd.Create(name, selectType)
-        '    End If
-        'End Function
-
-        'Public Function CreateCmdByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
-        '    If _cm IsNot Nothing Then
-        '        Dim q As New QueryCmd(entityName, _cm)
-        '        q.Name = name
-        '        Return q
-        '    Else
-        '        Return QueryCmd.CreateByEntityName(name, entityName)
-        '    End If
-        'End Function
 #End Region
 
 #Region " Create methods "
@@ -560,7 +484,7 @@ Namespace Entities
             Return o
         End Function
 
-        Public Shared Function CreateOrmBase(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateKeyEntity(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
             Dim o As New T
             o.Init(id, cache, schema)
             Return o
@@ -608,6 +532,50 @@ Namespace Entities
             Return o
         End Function
 #End Region
+
+        Protected Function GetValue(ByVal propertyAlias As String) As Object
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            If schema Is Nothing Then
+                Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
+            Else
+                Return schema.GetPropertyValue(Me, propertyAlias)
+            End If
+        End Function
+
+        Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim pi As Reflection.PropertyInfo
+            If schema Is Nothing Then
+                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            Else
+                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            End If
+            Return pi.GetValue(Me, Nothing)
+        End Function
+
+        Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
+            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim pi As Reflection.PropertyInfo
+            If schema Is Nothing Then
+                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            Else
+                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            End If
+            pi.SetValue(Me, value, Nothing)
+        End Sub
+
+        Protected Overridable Overloads Sub Init()
+        End Sub
+
+        Public Sub New()
+            Init()
+        End Sub
+
+        Protected Overridable Overloads Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
+            If cache IsNot Nothing Then cache.RegisterCreation(Me)
+
+            _state = Entities.ObjectState.Created
+        End Sub
     End Class
 
     Public Class EntityLazyLoad
