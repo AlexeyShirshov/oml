@@ -122,8 +122,14 @@ namespace exam1sharp
 
         static void Main(string[] args)
         {
-            Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
-            Worm.OrmManager.ExecSource.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
+            Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add(
+                new System.Diagnostics.TextWriterTraceListener(Console.Out)
+            );
+
+            Worm.OrmManager.ExecSource.Listeners.Add(
+                new System.Diagnostics.TextWriterTraceListener(Console.Out)
+            );
+
             foreach (SalesOrder s in SalesOrder.Query
                 .Where(Ctor
                     .prop(typeof(SalesOrder), "OrderDate").eq("2003-08-01")
