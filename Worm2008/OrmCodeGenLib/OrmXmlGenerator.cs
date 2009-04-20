@@ -289,10 +289,20 @@ namespace Worm.CodeGen.Core
 				
 
                 XmlNode tablesNode = CreateElement("SourceFragments");
-                foreach (SourceFragmentDescription table in entity.SourceFragments)
+                foreach (SourceFragmentRefDescription table in entity.SourceFragments)
                 {
 					XmlElement tableElement = CreateElement("SourceFragment");
                     tableElement.SetAttribute("ref", table.Identifier);
+                    if (table.AnchorTable != null)
+                    {
+                        tableElement.SetAttribute("anchorTableRef", table.AnchorTable.Identifier);
+                        foreach (SourceFragmentRefDescription.Condition c in table.Conditions)
+                        {
+                            XmlElement join = CreateElement("join");
+                            join.SetAttribute("refColumn", c.LeftColumn);
+                            join.SetAttribute("anchorColumn", c.RightColumn);
+                        }
+                    }
                     tablesNode.AppendChild(tableElement);
                 }
 				if(!entity.InheritsBaseTables)

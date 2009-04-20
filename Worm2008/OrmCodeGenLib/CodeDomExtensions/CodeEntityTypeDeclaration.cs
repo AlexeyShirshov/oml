@@ -29,9 +29,15 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
         protected virtual void OnPopulateMembers(object sender, System.EventArgs e)
         {
-            OnPopulatePropertiesAccessors();
-            OnPupulateEntityRelations();
-            OnPupulateM2MRelations();
+            if (!m_entity.OrmObjectsDef.GenerateSchemaOnly)
+            {
+                OnPopulatePropertiesAccessors();
+                if (m_entity.HasSinglePk)
+                {
+                    OnPupulateEntityRelations();
+                    OnPupulateM2MRelations();
+                }
+            }
             OnPopulateSchema();
         }
 

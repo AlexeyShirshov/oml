@@ -41,6 +41,8 @@ namespace Worm.CodeGen.Core
             set { _removeOldm2m = value; }
         }
 
+        //public bool OnlySchema { get; set; }
+
 		[Obsolete("Don't even think about entity's class and entity's schema def class declaration in separate files.", true)]
         public bool Split
         {

@@ -797,10 +797,12 @@
 			  <xs:documentation>Enables generation of setters for properties marked readonly.</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
-      <xs:attribute name="generateEntityName" default="true" use="optional" type="xs:boolean">
-        <xs:annotation>
-          <xs:documentation>Indicates whether generates EntityName or not</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
+    <xs:attribute name="generateEntityName" default="true" use="optional" type="xs:boolean">
+      <xs:annotation>
+        <xs:documentation>Indicates whether generates EntityName or not</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="generateSchemaOnly" default="false" use="optional" type="xs:boolean"></xs:attribute>
+    <xs:attribute name="addVersionToSchemaName" default="false" use="optional" type="xs:boolean"></xs:attribute>
   </xs:complexType>
 </xs:schema>

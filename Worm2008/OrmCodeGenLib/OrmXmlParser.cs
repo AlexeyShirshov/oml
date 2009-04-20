@@ -300,10 +300,20 @@ namespace Worm.CodeGen.Core
                 Uri baseUri = new Uri(baseUriString, UriKind.RelativeOrAbsolute);
                 _ormObjectsDef.FileName = Path.GetFileName(baseUri.ToString());
             }
-        	string enableCommonPropertyChangedFireAttr =
+        	
+            string enableCommonPropertyChangedFireAttr =
         		_ormXmlDocument.DocumentElement.GetAttribute("enableCommonPropertyChangedFire");
-			if (!string.IsNullOrEmpty(enableCommonPropertyChangedFireAttr))
+			
+            if (!string.IsNullOrEmpty(enableCommonPropertyChangedFireAttr))
 				_ormObjectsDef.EnableCommonPropertyChangedFire = XmlConvert.ToBoolean(enableCommonPropertyChangedFireAttr);
+
+            string schemaOnly = _ormXmlDocument.DocumentElement.GetAttribute("generateSchemaOnly");
+            if (!string.IsNullOrEmpty(schemaOnly))
+                _ormObjectsDef.GenerateSchemaOnly = XmlConvert.ToBoolean(schemaOnly);
+
+            string addVersionToSchemaName = _ormXmlDocument.DocumentElement.GetAttribute("addVersionToSchemaName");
+            if (!string.IsNullOrEmpty(addVersionToSchemaName))
+                _ormObjectsDef.AddVersionToSchemaName = XmlConvert.ToBoolean(addVersionToSchemaName);
         }
 
         internal protected void FindEntities()
@@ -649,11 +659,24 @@ namespace Worm.CodeGen.Core
 
             foreach (XmlNode tableNode in tableNodes)
             {
-                string tableId;
                 XmlElement tableElement = (XmlElement) tableNode;
-                tableId = tableElement.GetAttribute("ref");
+                string tableId = tableElement.GetAttribute("ref");
 
-                SourceFragmentDescription table = entity.OrmObjectsDef.GetSourceFragment(tableId);
+                var table = new SourceFragmentRefDescription(entity.OrmObjectsDef.GetSourceFragment(tableId));
+
+                string anchorId = tableElement.GetAttribute("anchorTableRef");
+                if (!string.IsNullOrEmpty(anchorId))
+                {
+                    table.AnchorTable = entity.OrmObjectsDef.GetSourceFragment(anchorId);
+                    var joinNodes = tableElement.SelectNodes(string.Format("{0}:join", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                    foreach (XmlElement joinNode in joinNodes)
+                    {
+                        table.Conditions.Add(new SourceFragmentRefDescription.Condition(
+                            joinNode.GetAttribute("refColumn"),
+                            joinNode.GetAttribute("anchorColumn")
+                        ));
+                    }
+                }
 
                 entity.SourceFragments.Add(table);
             }
