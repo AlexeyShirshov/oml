@@ -39,6 +39,7 @@ namespace Worm.CodeGen.XmlGenerator
         private string _type;
         private bool _identity;
         private int _pkCnt;
+        private int? _sz;
 
         private List<Constraint> _constraints = new List<Constraint>();
 
@@ -108,6 +109,11 @@ namespace Worm.CodeGen.XmlGenerator
         public bool IsNullable
         {
             get { return _isNullable; }
+        }
+
+        public int? DbSize
+        {
+            get { return _sz; }
         }
 
         public string DbType
@@ -187,6 +193,10 @@ namespace Worm.CodeGen.XmlGenerator
             c._identity = Convert.ToBoolean(reader.GetInt32(reader.GetOrdinal("identity")));
 
             c._pkCnt = reader.GetInt32(reader.GetOrdinal("pk_cnt"));
+
+            int sc = reader.GetOrdinal("character_maximum_length");
+            if (!reader.IsDBNull(sc))
+                c._sz = reader.GetInt32(sc);
 
             return c;
         }

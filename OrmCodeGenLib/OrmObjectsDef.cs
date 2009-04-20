@@ -51,7 +51,11 @@ namespace Worm.CodeGen.Core
         }
 
         #region Properties
-		
+
+        public bool GenerateSchemaOnly { get; set; }
+
+        public bool AddVersionToSchemaName { get; set; }
+
         public List<EntityDescription> Entities
         {
             get

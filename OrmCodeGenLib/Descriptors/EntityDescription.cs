@@ -10,7 +10,7 @@ namespace Worm.CodeGen.Core.Descriptors
         private readonly string _id;
         private readonly string _name;
         private readonly string _description;
-        private readonly List<SourceFragmentDescription> _sourceFragments;
+        private readonly List<SourceFragmentRefDescription> _sourceFragments;
         private readonly List<PropertyDescription> _properties;
         private readonly List<PropertyDescription> _suppressedProperties;
         private readonly OrmObjectsDef _ormObjectsDef;
@@ -34,7 +34,7 @@ namespace Worm.CodeGen.Core.Descriptors
             _id = id;
             _name = name;
             _description = description;
-            _sourceFragments = new List<SourceFragmentDescription>();
+            _sourceFragments = new List<SourceFragmentRefDescription>();
             _properties = new List<PropertyDescription>();
             _suppressedProperties = new List<PropertyDescription>();
             _ormObjectsDef = ormObjectsDef;
@@ -58,7 +58,7 @@ namespace Worm.CodeGen.Core.Descriptors
             get { return _description; }
         }
 
-        public List<SourceFragmentDescription> SourceFragments
+        public List<SourceFragmentRefDescription> SourceFragments
         {
             get { return _sourceFragments; }
         }

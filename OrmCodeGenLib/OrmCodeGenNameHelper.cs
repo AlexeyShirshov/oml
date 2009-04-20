@@ -4,7 +4,7 @@ using Worm.CodeGen.Core.Descriptors;
 
 namespace Worm.CodeGen.Core
 {
-    internal static class OrmCodeGenNameHelper
+    public static class OrmCodeGenNameHelper
     {
 
         public static event OrmCodeDomGenerator.GetSettingsDelegate OrmCodeDomGeneratorSettingsRequied;
@@ -108,7 +108,8 @@ namespace Worm.CodeGen.Core
                 // name of the entity class name
                 GetEntityClassName(entity) + 
                 // entity
-                settings.EntitySchemaDefClassNameSuffix;
+                settings.EntitySchemaDefClassNameSuffix + 
+                (entity.OrmObjectsDef.AddVersionToSchemaName ? entity.OrmObjectsDef.SchemaVersion : String.Empty);
         }
 
         public static string GetEntitySchemaDefClassQualifiedName(EntityDescription entity)

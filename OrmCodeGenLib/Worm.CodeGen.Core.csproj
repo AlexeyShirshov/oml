@@ -98,6 +98,7 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeCsXorExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeVbXorExpression.cs" />
     <Compile Include="CodeGenHelper.cs" />
+    <Compile Include="Descriptors\SourceFragmentRefDescription.cs" />
     <Compile Include="Descriptors\EntityRelationDescription.cs" />
     <Compile Include="Descriptors\LinqSettingsDescriptor.cs" />
     <Compile Include="Descriptors\RelationConstantDescriptor.cs" />
