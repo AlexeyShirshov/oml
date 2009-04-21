@@ -120,7 +120,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main8(string[] args)
         {
             Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add(
                 new System.Diagnostics.TextWriterTraceListener(Console.Out)
@@ -141,6 +141,39 @@ namespace exam1sharp
                     s.LineTotal, 
                     s.Territory.Name);
             }
+        }
+
+        static void Main(string[] args)
+        {
+            ReadonlyCache cache = new ReadonlyCache();
+
+            var SalesOrderQuery = new QueryCmd(cache, exam1sharp.Properties.Settings.Default.connString)
+                    .From(typeof(SalesOrder))
+                    .Select(typeof(SalesOrder));
+
+            //Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add(
+            //    new System.Diagnostics.TextWriterTraceListener(Console.Out)
+            //);
+
+            DateTime start = DateTime.Now;
+            for (int i = 0; i < 100; i++)
+            {
+                foreach (SalesOrder s in new QueryCmd(cache, exam1sharp.Properties.Settings.Default.connString)
+                    .From(typeof(SalesOrder))
+                    .Select(typeof(SalesOrder))
+                    .Where(Ctor
+                        .prop(typeof(SalesOrder), "OrderDate").eq("2003-08-01")
+                        .and(typeof(SalesOrder), "LineTotal").less_than(10))
+                    .ToList())
+                {
+                    string str = String.Format("Date: {0}, LineTotal: {1}, sales territory: {2}",
+                        s.OrderDate,
+                        s.LineTotal,
+                        s.Territory.Name);
+                    //Console.WriteLine(str);
+                }
+            }
+            Console.WriteLine("Elapsed {0}", DateTime.Now - start);
         }
 	}
 }
