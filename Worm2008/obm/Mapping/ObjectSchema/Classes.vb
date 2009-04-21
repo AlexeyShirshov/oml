@@ -481,6 +481,14 @@ Namespace Entities.Meta
             End Get
         End Property
 
+Public Shared Function IsDirect(ByVal key As string) As boolean
+            If String.IsNullOrEmpty(key) orelse not key.StartsWith(ReversePrefix) Then
+return true
+else
+return false
+end if
+        End Function
+
         Public Shared Function GetKey(ByVal direct As Boolean) As String
             If direct Then
                 Return DirKey

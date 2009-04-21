@@ -659,24 +659,27 @@ namespace Worm.CodeGen.Core
             {
                 XmlElement tableElement = (XmlElement) tableNode;
                 string tableId = tableElement.GetAttribute("ref");
+                var table = entity.OrmObjectsDef.GetSourceFragment(tableId);
+                if (table == null)
+                    throw new OrmXmlParserException(String.Format("Table {0} not found.", tableId));
 
-                var table = new SourceFragmentRefDescription(entity.OrmObjectsDef.GetSourceFragment(tableId));
+                var tableRef = new SourceFragmentRefDescription(table);
 
                 string anchorId = tableElement.GetAttribute("anchorTableRef");
                 if (!string.IsNullOrEmpty(anchorId))
                 {
-                    table.AnchorTable = entity.OrmObjectsDef.GetSourceFragment(anchorId);
+                    tableRef.AnchorTable = entity.OrmObjectsDef.GetSourceFragment(anchorId);
                     var joinNodes = tableElement.SelectNodes(string.Format("{0}:join", OrmObjectsDef.NS_PREFIX), _nsMgr);
                     foreach (XmlElement joinNode in joinNodes)
                     {
-                        table.Conditions.Add(new SourceFragmentRefDescription.Condition(
+                        tableRef.Conditions.Add(new SourceFragmentRefDescription.Condition(
                             joinNode.GetAttribute("refColumn"),
                             joinNode.GetAttribute("anchorColumn")
                         ));
                     }
                 }
 
-                entity.SourceFragments.Add(table);
+                entity.SourceFragments.Add(tableRef);
             }
 
 			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", OrmObjectsDef.NS_PREFIX), _nsMgr);

@@ -1,5 +1,7 @@
 ﻿Imports Worm.Cache
 Imports System.Collections.Generic
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 Namespace Query
     Public MustInherit Class QueryExecutor
@@ -119,6 +121,12 @@ Namespace Query
         End Function
 
         Public Class cls
+            Private _mgr As OrmManager
+            Private _pk() As String
+
+            Public Sub New(ByVal mgr As OrmManager)
+                _mgr = mgr
+            End Sub
 
             Private _cancel As Boolean
             Public Property Cancel() As Boolean
@@ -131,8 +139,35 @@ Namespace Query
             End Property
 
             Public Sub prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
+                RemoveHandler sender.QueryPrepared, AddressOf prepared
                 _cancel = sender._types.Count > 1
                 args.Cancel = _cancel
+                Dim createType As Type = sender._createType.GetRealType(_mgr.MappingEngine)
+                If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
+                    Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
+                    Dim l As New List(Of String)
+                    If oschema Is Nothing Then
+                        For Each se As SelectExpression In sender._sl
+                            If (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                l.Add(se.GetIntoPropertyAlias)
+                            End If
+                        Next
+                    Else
+                        For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(createType, oschema)
+                            l.Add(pk.PropertyAlias)
+                        Next
+                    End If
+                    _pk = l.ToArray
+                    AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
+                End If
+            End Sub
+
+            Public Sub ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
+                CType(o, AnonymousCachedEntity)._pk = _pk
+            End Sub
+
+            Public Sub RemoveEvent()
+                RemoveHandler _mgr.ObjectCreated, AddressOf ObjectCreated
             End Sub
         End Class
 
@@ -147,30 +182,34 @@ Namespace Query
         End Property
 
         Public Function Exec(Of CreateType As {New, Entities._ICachedEntity}, ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
-            Dim c As New cls
-            AddHandler query.QueryPrepared, AddressOf c.prepared
-            Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
-                           Function() GetProcessorT(Of CreateType, ReturnType)(mgr, query), _
-                           Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                               m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-                           Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-                               CType(ce, Cache.UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s) _
-                           )
-            If res Is Nothing Then
-                If c.Cancel Then
-                    Prepared = True
-                    Dim r As ReadonlyMatrix = Exec(mgr, query)
-                    Dim l As New List(Of ReturnType)
-                    For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
-                        l.Add(CType(row(0), ReturnType))
-                    Next
-                    res = CType(OrmManager.CreateReadonlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
-                Else
-                    Throw New InvalidOperationException
+            Dim c As New cls(mgr)
+            Try
+                AddHandler query.QueryPrepared, AddressOf c.prepared
+                Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
+                                   Function() GetProcessorT(Of CreateType, ReturnType)(mgr, query), _
+                                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+                                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
+                                   Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+                                       CType(ce, Cache.UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s) _
+                                   )
+                If res Is Nothing Then
+                    If c.Cancel Then
+                        Prepared = True
+                        Dim r As ReadonlyMatrix = Exec(mgr, query)
+                        Dim l As New List(Of ReturnType)
+                        For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
+                            l.Add(CType(row(0), ReturnType))
+                        Next
+                        res = CType(OrmManager.CreateReadonlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                    Else
+                        Throw New InvalidOperationException
+                    End If
                 End If
-            End If
 
-            Return res
+                Return res
+            Finally
+                c.RemoveEvent()
+            End Try
         End Function
 
         Private Function _ExecEntity(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
@@ -187,8 +226,50 @@ Namespace Query
             Return _ExecEntity(Of ReturnType)(mgr, query, Function() GetProcessorAnonym(Of ReturnType)(mgr, query))
         End Function
 
-        Public Function ExecEntity(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
-            Return _ExecEntity(Of ReturnType)(mgr, query, Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+        Public Class cls2
+            Private _mgr As OrmManager
+            Private _pk() As String
+
+            Public Sub New(ByVal mgr As OrmManager)
+                _mgr = mgr
+            End Sub
+
+            Public Sub Prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
+                RemoveHandler sender.QueryPrepared, AddressOf Prepared
+                Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
+                Dim l As New List(Of String)
+                For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(sender._createType.GetRealType(_mgr.MappingEngine), oschema)
+                    l.Add(pk.PropertyAlias)
+                Next
+                _pk = l.ToArray
+                AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
+            End Sub
+
+            Public Sub ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
+                CType(o, AnonymousCachedEntity)._pk = _pk
+            End Sub
+
+            Public Sub RemoveEvent()
+                RemoveHandler _mgr.ObjectCreated, AddressOf ObjectCreated
+            End Sub
+        End Class
+
+        Public Function ExecEntity(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)( _
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
+            If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(CreateType)) Then
+                Throw New NotImplementedException
+                'Dim c As New cls2(mgr)
+                'AddHandler query.QueryPrepared, AddressOf c.Prepared
+                'Try
+                '    Return _ExecEntity(Of ReturnType)(mgr, query, _
+                '            Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+                'Finally
+                '    c.RemoveEvent()
+                'End Try
+            Else
+                Return _ExecEntity(Of ReturnType)(mgr, query, _
+                        Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+            End If
         End Function
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple

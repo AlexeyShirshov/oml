@@ -87,7 +87,7 @@ namespace Worm.CodeGen.Core
                 {
                     int idx = entity.OrmObjectsDef.ActiveEntities
                         .Count(e => e.Name == en && e.Identifier.CompareTo(entity.Identifier) > 0);
-                    en = idx + en;
+                    en = en + idx;
                 }
                 else
                     en = entity.SourceFragments[0].Selector + en;
