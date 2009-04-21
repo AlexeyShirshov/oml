@@ -223,8 +223,37 @@ Public Class ObjectMappingEngine
         Return result
     End Function
 
+    Public Function GetRefProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IList
+        If t Is Nothing Then Throw New ArgumentNullException("t")
+        Dim s As String = Nothing
+        If schema Is Nothing Then
+            s = t.ToString
+        Else
+            s = t.ToString & schema.GetType().ToString
+        End If
+        Dim key As String = "refproperties" & s
+        Dim d As IList = CType(map(key), IList)
+        If d Is Nothing Then
+            Using SyncHelper.AcquireDynamicLock(key)
+                d = CType(map(key), IList)
+                If d Is Nothing Then
+                    Dim dic As IDictionary = GetProperties(t, schema)
+                    d = New ArrayList
+                    For Each tde As DictionaryEntry In dic
+                        Dim pi As Reflection.PropertyInfo = CType(tde.Value, Reflection.PropertyInfo)
+                        Dim pit As Type = pi.PropertyType
+                        If ObjectMappingEngine.IsEntityType(pit, Me) Then
+                            d.Add(tde)
+                        End If
+                    Next
+                End If
+            End Using
+        End If
+        Return d
+    End Function
+
     Public Function GetProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        If t Is Nothing Then Throw New ArgumentNullException("original_type")
+        If t Is Nothing Then Throw New ArgumentNullException("t")
         Dim s As String = Nothing
         If schema Is Nothing Then
             s = t.ToString

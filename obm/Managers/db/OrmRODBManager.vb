@@ -2252,7 +2252,7 @@ l1:
                             f = se.ObjectSource IsNot Nothing AndAlso Not Object.Equals(se.ObjectSource, se.Into)
                         End If
 
-                        If f OrElse (Not String.IsNullOrEmpty(propertyAlias) AndAlso propertyMap.ContainsKey(propertyAlias)) Then
+                        If f OrElse (Not String.IsNullOrEmpty(propertyAlias) AndAlso (propertyMap.ContainsKey(propertyAlias))) Then
                             If (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 'Assert(idx < dr.FieldCount, propertyAlias)
                                 pk_count += 1

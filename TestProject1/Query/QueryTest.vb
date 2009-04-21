@@ -1279,4 +1279,19 @@ Imports System.ComponentModel
             Assert.IsTrue(t.Obj1.InternalProperties.IsLoaded)
         Next
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestWithoutLazyLoad4()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        For Each t As SimpleObj2 In q.Select(GetType(SimpleObj2), True).ToList(Of SimpleObj2)()
+            Assert.IsTrue(t.InternalProperties.IsLoaded)
+            Assert.AreNotEqual(0, t.Money)
+            Assert.IsNotNull(t.Obj1)
+            Assert.AreNotEqual(0, t.Obj1.Code)
+            Assert.IsNotNull(t.Obj1.Title)
+            Assert.IsTrue(t.Obj1.InternalProperties.IsLoaded)
+        Next
+    End Sub
 End Class
