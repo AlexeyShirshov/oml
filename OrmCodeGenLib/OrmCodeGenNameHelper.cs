@@ -1,6 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 using Worm.CodeGen.Core.Descriptors;
+using System.Linq;
 
 namespace Worm.CodeGen.Core
 {
@@ -78,22 +79,34 @@ namespace Worm.CodeGen.Core
         public static string GetEntityClassName(EntityDescription entity, bool qualified)
         {
             OrmCodeDomGeneratorSettings settings = GetSettings();
-
+            string en = entity.Name;
+            
+            if (entity.OrmObjectsDef.ActiveEntities.Count(e => e.Name == en && e.Identifier != entity.Identifier) > 0)
+            {
+                if (string.IsNullOrEmpty(entity.SourceFragments[0].Selector))
+                {
+                    int idx = entity.OrmObjectsDef.ActiveEntities
+                        .Count(e => e.Name == en && e.Identifier.CompareTo(entity.Identifier) > 0);
+                    en = idx + en;
+                }
+                else
+                    en = entity.SourceFragments[0].Selector + en;
+            }
+            
 			string className =
 				// prefix from settings for class name
 				settings.ClassNamePrefix +
 				// entity's class name
-				entity.Name +
+				en +
 				// suffix from settings for class name
 				settings.ClassNameSuffix;
 
 			string ns = string.Empty;
-			if (qualified && !string.IsNullOrEmpty(entity.Namespace))
+			
+            if (qualified && !string.IsNullOrEmpty(entity.Namespace))
 				ns += entity.Namespace + ".";
-			return ns + className;
-
-             
-               
+			
+            return ns + className;               
         }
 
         /// <summary>

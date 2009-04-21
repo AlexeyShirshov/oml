@@ -192,8 +192,6 @@ namespace Worm.CodeGen.Core
 
         internal protected void FillEntities()
         {
-            
-
             foreach (EntityDescription entity in _ormObjectsDef.Entities)
             {
                 XmlNode entityNode =
@@ -323,7 +321,7 @@ namespace Worm.CodeGen.Core
 
             EntityDescription entity;
 
-            _ormObjectsDef.Entities.Clear();
+            _ormObjectsDef.ClearEntities();
 
             foreach (XmlNode entityNode in entitiesList)
             {
@@ -361,7 +359,7 @@ namespace Worm.CodeGen.Core
             	entity.Disabled = disabled;
             	entity.CacheCheckRequired = cacheCheckRequired;
 
-                _ormObjectsDef.Entities.Add(entity);
+                _ormObjectsDef.AddEntity(entity);
 
                 FillEntityTables(entity);
             }

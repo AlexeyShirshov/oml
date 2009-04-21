@@ -258,11 +258,11 @@ Namespace Entities
         End Sub
 
         Public Function GetPKValues() As Meta.PKDesc() Implements ICachedEntity.GetPKValues
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
-            Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
+            'Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            'Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
             Dim l As New List(Of PKDesc)
             For Each pk As String In _pk
-                l.Add(New PKDesc(pk, schema.GetPropertyValue(Me, pk, oschema)))
+                l.Add(New PKDesc(pk, Me(pk)))
             Next
             Return l.ToArray
         End Function

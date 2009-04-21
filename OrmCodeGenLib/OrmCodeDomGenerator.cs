@@ -181,7 +181,7 @@ namespace Worm.CodeGen.Core
 
         public Dictionary<string, CodeCompileUnit> GetFullDom()
         {
-            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count);
+            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count());
             foreach (EntityDescription entity in _ormObjectsDefinition.ActiveEntities)
             {
                 foreach (var pair in GetEntityCompileUnits(entity.Identifier))
@@ -211,15 +211,21 @@ namespace Worm.CodeGen.Core
                     unit.Namespaces.Add(n);
                 }
             }
+            CodeCompileFileUnit linq = GetLinqContext();
+            if (linq != null)
+                foreach (CodeNamespace n in linq.Namespaces)
+                {
+                    unit.Namespaces.Add(n);
+                }
+
             return unit;
         }
 
-        public CodeCompileFileUnit GetLinqContext(OrmCodeDomGeneratorSettings settings)
+        public CodeCompileFileUnit GetLinqContext()
         {
             if (_ormObjectsDefinition.LinqSettings == null) return null;
 
             var ctx = new CodeLinqContextDeclaration(_ormObjectsDefinition.LinqSettings);
-
 
             ctx.Entities.AddRange(_ormObjectsDefinition.FlatEntities);
 
@@ -802,9 +808,9 @@ namespace Worm.CodeGen.Core
                         else
                             // реализует метод базового класса
                             method.ImplementationTypes.Add(typeof(IEntitySchemaBase));
-                            CodeArrayCreateExpression arrayExpression = new CodeArrayCreateExpression(
-                                new CodeTypeReference(typeof(string[]))
-                            );
+                        CodeArrayCreateExpression arrayExpression = new CodeArrayCreateExpression(
+                            new CodeTypeReference(typeof(string[]))
+                        );
 
 
                         foreach (PropertyDescription suppressedProperty in entity.SuppressedProperties)
@@ -824,9 +830,9 @@ namespace Worm.CodeGen.Core
 
                     #region сущность реализует связь
 
-                    RelationDescriptionBase relation = _ormObjectsDefinition.Relations.Find(
-                        match => match.UnderlyingEntity == entity && !match.Disabled
-                        );
+                    RelationDescriptionBase relation = _ormObjectsDefinition.ActiveRelations
+                        .Find(match => match.UnderlyingEntity == entity);
+
                     if (relation != null)
                     {
                         SelfRelationDescription sd = relation as SelfRelationDescription;
@@ -1720,72 +1726,82 @@ namespace Worm.CodeGen.Core
         }
         #endregion
 
-        private void ImplementIRelation(RelationDescription relation, EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)
+        private void ImplementIRelation(RelationDescription relation, EntityDescription entity, 
+            CodeTypeDeclaration entitySchemaDefClass)
         {
-            entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof(IRelation)));
-            #region Pair<string, Type> GetFirstType()
-            CodeMemberMethod method = new CodeMemberMethod();
-            //method.StartDirectives.Add(Regions["IRelation Members"].Start);
-            entitySchemaDefClass.Members.Add(method);
-            method.Name = "GetFirstType";
-            // тип возвращаемого значения
-            method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
-            // модификаторы доступа
-            method.Attributes = MemberAttributes.Public;
-            // реализует метод базового класса
-            method.ImplementationTypes.Add(typeof(IRelation));
-            method.Statements.Add(
-                new CodeMethodReturnStatement(
-                    new CodeObjectCreateExpression(
-                        new CodeTypeReference(typeof(IRelation.RelationDesc)),
-                        OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.Properties.Find(match => match.FieldName == relation.Left.FieldName)),
-                        new CodeMethodInvokeExpression(
-                            new CodeMethodReferenceExpression(
-                                new CodeFieldReferenceExpression(
-                                    new CodeThisReferenceExpression(),
-                                    "_schema"
+            var leftProp = entity.ActiveProperties.Find(match => match.FieldName == relation.Left.FieldName);
+            var rightProp = entity.ActiveProperties.Find(match => match.FieldName == relation.Right.FieldName);
+
+            if (leftProp != null && rightProp != null)
+            {
+                entitySchemaDefClass.BaseTypes.Add(new CodeTypeReference(typeof(IRelation)));
+
+                #region Pair<string, Type> GetFirstType()
+                CodeMemberMethod method = new CodeMemberMethod();
+                //method.StartDirectives.Add(Regions["IRelation Members"].Start);
+                entitySchemaDefClass.Members.Add(method);
+                method.Name = "GetFirstType";
+                // тип возвращаемого значения
+                method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
+                // модификаторы доступа
+                method.Attributes = MemberAttributes.Public;
+                // реализует метод базового класса
+                method.ImplementationTypes.Add(typeof(IRelation));
+
+                method.Statements.Add(
+                    new CodeMethodReturnStatement(
+                        new CodeObjectCreateExpression(
+                            new CodeTypeReference(typeof(IRelation.RelationDesc)),
+                            OrmCodeGenHelper.GetFieldNameReferenceExpression(leftProp),
+                            new CodeMethodInvokeExpression(
+                                new CodeMethodReferenceExpression(
+                                    new CodeFieldReferenceExpression(
+                                        new CodeThisReferenceExpression(),
+                                        "_schema"
+                                        ),
+                                    "GetTypeByEntityName"
                                     ),
-                                "GetTypeByEntityName"
-                                ),
-                            new CodePrimitiveExpression(relation.Right.Entity.Name)
+                                new CodePrimitiveExpression(relation.Right.Entity.Name)
+                                )
                             )
                         )
-                    )
-                );
-            #endregion Pair<string, Type> GetFirstType()
-            #region Pair<string, Type> GetSecondType()
-            method = new CodeMemberMethod();
-            //method.EndDirectives.Add(Regions["IRelation Members"].End);
-            entitySchemaDefClass.Members.Add(method);
-            method.Name = "GetSecondType";
-            // тип возвращаемого значения
-            method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
-            // модификаторы доступа
-            method.Attributes = MemberAttributes.Public;
-            // реализует метод базового класса
-            method.ImplementationTypes.Add(typeof(IRelation));
-            method.Statements.Add(
-                new CodeMethodReturnStatement(
-                    new CodeObjectCreateExpression(
-                        new CodeTypeReference(typeof(IRelation.RelationDesc)),
-                        OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(match => match.FieldName == relation.Right.FieldName)),
-                        new CodeMethodInvokeExpression(
-                            new CodeMethodReferenceExpression(
-                                new CodeFieldReferenceExpression(
-                                    new CodeThisReferenceExpression(),
-                                    "_schema"
+                    );
+                #endregion Pair<string, Type> GetFirstType()
+
+                #region Pair<string, Type> GetSecondType()
+                method = new CodeMemberMethod();
+                //method.EndDirectives.Add(Regions["IRelation Members"].End);
+                entitySchemaDefClass.Members.Add(method);
+                method.Name = "GetSecondType";
+                // тип возвращаемого значения
+                method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
+                // модификаторы доступа
+                method.Attributes = MemberAttributes.Public;
+                // реализует метод базового класса
+                method.ImplementationTypes.Add(typeof(IRelation));
+                method.Statements.Add(
+                    new CodeMethodReturnStatement(
+                        new CodeObjectCreateExpression(
+                            new CodeTypeReference(typeof(IRelation.RelationDesc)),
+                            OrmCodeGenHelper.GetFieldNameReferenceExpression(rightProp),
+                            new CodeMethodInvokeExpression(
+                                new CodeMethodReferenceExpression(
+                                    new CodeFieldReferenceExpression(
+                                        new CodeThisReferenceExpression(),
+                                        "_schema"
+                                        ),
+                                    "GetTypeByEntityName"
                                     ),
-                                "GetTypeByEntityName"
-                                ),
-                            new CodePrimitiveExpression(relation.Left.Entity.Name)
+                                new CodePrimitiveExpression(relation.Left.Entity.Name)
+                                )
+                    //new CodeTypeOfExpression(
+                    //    new CodeTypeReference(GetEntityClassQualifiedName(relation.Left.Entity, settings))
+                    //)
                             )
-                //new CodeTypeOfExpression(
-                //    new CodeTypeReference(GetEntityClassQualifiedName(relation.Left.Entity, settings))
-                //)
                         )
-                    )
-                );
-            #endregion Pair<string, Type> GetSecondType()
+                    );
+                #endregion Pair<string, Type> GetSecondType()
+            }
         }
 
         private void ImplementIRelation(SelfRelationDescription relation, EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)

@@ -2898,9 +2898,15 @@ l1:
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
-            Dim selSchema As IEntitySchema = GetSchema(mpe, rt, hasPK)
+            Dim selSchema As IEntitySchema = Nothing
+            If _poco IsNot Nothing Then
+                selSchema = CType(_poco(rt), IEntitySchema)
+            End If
 
-            AddPOCO(rt, selSchema)
+            If selSchema Is Nothing Then
+                selSchema = GetSchema(mpe, rt, hasPK)
+                AddPOCO(rt, selSchema)
+            End If
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)

@@ -446,7 +446,9 @@ Namespace Criteria.Values
                 If filterValue IsNot Nothing AndAlso evaluatedValue IsNot Nothing Then
                     Dim vt As Type = evaluatedValue.GetType()
                     Dim valt As Type = filterValue.GetType
-                    If Not vt.IsAssignableFrom(valt) AndAlso vt.IsPrimitive AndAlso valt.IsPrimitive Then
+                    If Not vt.IsAssignableFrom(valt) AndAlso ( _
+                        (vt.IsPrimitive AndAlso valt.IsPrimitive) OrElse _
+                        (vt.IsValueType AndAlso valt.IsValueType)) Then
                         filterValue = Convert.ChangeType(filterValue, evaluatedValue.GetType)
                     ElseIf vt.IsArray <> valt.IsArray Then
                         Return IEvaluableValue.EvalResult.Unknown
