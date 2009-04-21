@@ -2119,6 +2119,7 @@ l1:
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
+                RaiseObjectCreated(obj)
                 Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx, rownum)
                 AfterLoadingProcess(dic, obj, lock, ro)
 #If DEBUG Then

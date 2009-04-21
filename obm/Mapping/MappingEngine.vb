@@ -417,15 +417,15 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal mainSchema As IEntitySchema, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
-        If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
+        'If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
         Dim mr() As M2MRelationDesc = GetM2MRelations(mainSchema)
         Return GetM2MRel(mr, subtype, key)
     End Function
 
     Private Function GetM2MRel(ByVal mr() As M2MRelationDesc, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
-        If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
+        'If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
         For Each r As M2MRelationDesc In mr
-            If r.Rel.GetRealType(Me) Is subtype AndAlso String.Equals(r.Key, key) Then
+            If r.Rel.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) orelse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
                 Return r
             End If
         Next

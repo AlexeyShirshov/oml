@@ -126,7 +126,7 @@ namespace TestsCodeGenLib
                 parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
-
+            parser.FillSourceFragments();
             parser.FindEntities();
 
             OrmObjectsDef ormObjectDef;
@@ -152,6 +152,7 @@ namespace TestsCodeGenLib
                 parser.Read();
             }
 
+            parser.FillSourceFragments();
             parser.FindEntities();
             parser.FillImports();
             parser.FillTypes();

@@ -2901,6 +2901,12 @@ l1:
             Dim selSchema As IEntitySchema = Nothing
             If _poco IsNot Nothing Then
                 selSchema = CType(_poco(rt), IEntitySchema)
+                For Each m As MapField2Column In selSchema.GetFieldColumnMap
+                    If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        hasPK = True
+                        Exit For
+                    End If
+                Next
             End If
 
             If selSchema Is Nothing Then
@@ -3412,7 +3418,15 @@ l1:
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
             Dim s As IEntitySchema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
-            If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then Return s
+            If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then
+                For Each m As MapField2Column In s.GetFieldColumnMap
+                    If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        pk = True
+                        Exit For
+                    End If
+                Next
+                Return s
+            End If
             If SelectList Is Nothing Then
                 Dim tbl As SourceFragment = Nothing
                 If _from IsNot Nothing Then
@@ -3425,6 +3439,9 @@ l1:
                 For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
                     Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                     selList.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl))
+                    If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        pk = True
+                    End If
                 Next
                 Return New SimpleObjectSchema(selList)
             Else
@@ -3442,6 +3459,9 @@ l1:
                             hasTable = True
                         End If
                         c.Table = tbl
+                    End If
+                    If (c._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        pk = True
                     End If
                 Next
                 Return New SimpleObjectSchema(cols)

@@ -121,6 +121,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
+    Public Event ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
     Public Event ObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
     Public Event ObjectRestoredFromCache(ByVal sender As OrmManager, ByVal created As Boolean, ByVal o As ICachedEntity)
     Public Event BeginUpdate(ByVal sender As OrmManager, ByVal o As ICachedEntity)
@@ -304,6 +305,10 @@ Partial Public MustInherit Class OrmManager
             Return _cache
         End Get
     End Property
+
+    Protected Sub RaiseObjectCreated(ByVal obj As IEntity)
+        RaiseEvent ObjectCreated(Me, obj)
+    End Sub
 
     Protected Sub RaiseObjectLoaded(ByVal obj As IEntity)
         RaiseEvent ObjectLoaded(Me, obj)

@@ -179,7 +179,7 @@ Namespace Entities
         Inherits AnonymousEntity
         Implements _ICachedEntity
 
-        Private _pk() As String
+        Friend _pk() As String
         Private _hasPK As Boolean
 
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Added
@@ -275,11 +275,11 @@ Namespace Entities
 
         Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
             Get
-                Dim schema As Worm.ObjectMappingEngine = MappingEngine
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
+                'Dim schema As Worm.ObjectMappingEngine = MappingEngine
+                'Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
                 Dim k As Integer
                 For Each pk As String In _pk
-                    k = k Xor schema.GetPropertyValue(Me, pk, oschema).GetHashCode
+                    k = k Xor Me(pk).GetHashCode
                 Next
                 Return k
             End Get
@@ -335,7 +335,7 @@ Namespace Entities
 
         End Function
 
-        Public Overloads Sub RejectChanges1(ByVal mgr As OrmManager) Implements _ICachedEntity.RejectChanges
+        Private Overloads Sub _RejectChanges(ByVal mgr As OrmManager) Implements _ICachedEntity.RejectChanges
 
         End Sub
 
