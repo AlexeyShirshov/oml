@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Xml;
 using System.Xml.Serialization;
 using Worm.CodeGen.Core.Descriptors;
+using System.Linq;
 
 namespace Worm.CodeGen.Core
 {
@@ -56,7 +57,20 @@ namespace Worm.CodeGen.Core
 
         public bool AddVersionToSchemaName { get; set; }
 
-        public List<EntityDescription> Entities
+        public void ClearEntities()
+        {
+            _entities.Clear();
+        }
+
+        public void AddEntity(EntityDescription e)
+        {
+            if (_entities.Exists(ee => ee.Identifier == e.Identifier))
+                throw new ArgumentException(String.Format("Entity {0} already in collection", e.Identifier));
+
+            _entities.Add(e);
+        }
+
+        public IEnumerable<EntityDescription> Entities
         {
             get
             {
@@ -64,7 +78,7 @@ namespace Worm.CodeGen.Core
             }
         }
 
-		public List<EntityDescription> ActiveEntities
+        public IEnumerable<EntityDescription> ActiveEntities
 		{
 			get
 			{
@@ -78,7 +92,7 @@ namespace Worm.CodeGen.Core
 	        {
 	            IList<EntityDescription> baseFlatEntities = ((BaseSchema == null) ? new List<EntityDescription>() : BaseSchema.FlatEntities);
 	        	var entities = ActiveEntities;
-	        	int count = entities.Count + ((BaseSchema == null) ? 0 : baseFlatEntities.Count);
+	        	int count = entities.Count() + ((BaseSchema == null) ? 0 : baseFlatEntities.Count);
 	            var list = new List<EntityDescription>(count);
 	            list.AddRange(entities);
 
@@ -105,6 +119,14 @@ namespace Worm.CodeGen.Core
             get
             {
                 return _relations;
+            }
+        }
+
+        public List<RelationDescriptionBase> ActiveRelations
+        {
+            get
+            {
+                return _relations.FindAll(r=>!r.Disabled);
             }
         }
 
@@ -202,8 +224,9 @@ namespace Worm.CodeGen.Core
 
         public EntityDescription GetEntity(string entityId, bool throwNotFoundException)
         {
-            EntityDescription entity;
-            entity = ActiveEntities.Find(delegate(EntityDescription match) { return match.Identifier == entityId;});
+            EntityDescription entity = ActiveEntities
+                .SingleOrDefault(match => match.Identifier == entityId);
+            
             if(entity == null && Includes.Count != 0)
                 foreach (OrmObjectsDef objectsDef in Includes)
                 {

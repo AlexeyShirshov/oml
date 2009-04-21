@@ -6,6 +6,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Worm.CodeGen.Core;
 using Worm.CodeGen.Core.Descriptors;
 using System.IO;
+using System.Linq;
+
 namespace TestsCodeGenLib
 {
     /// <summary>
@@ -130,11 +132,11 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
-            Assert.AreEqual<int>(5, ormObjectDef.Entities.Count);
-			Assert.AreEqual<int>(4, ormObjectDef.ActiveEntities.Count);
-            Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) {return match.Identifier == "eArtist" && match.Name == "Artist";}));
-            Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) { return match.Identifier == "eAlbum" && match.Name == "Album"; }));
-            Assert.IsTrue(ormObjectDef.Entities.Exists(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation" && match.Name == "Album2ArtistRelation"; }));
+            Assert.AreEqual<int>(5, ormObjectDef.Entities.Count());
+			Assert.AreEqual<int>(4, ormObjectDef.ActiveEntities.Count());
+            Assert.IsTrue(ormObjectDef.Entities.Any(delegate(EntityDescription match) {return match.Identifier == "eArtist" && match.Name == "Artist";}));
+            Assert.IsTrue(ormObjectDef.Entities.Any(delegate(EntityDescription match) { return match.Identifier == "eAlbum" && match.Name == "Album"; }));
+            Assert.IsTrue(ormObjectDef.Entities.Any(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation" && match.Name == "Album2ArtistRelation"; }));
 
         }
 
@@ -181,8 +183,8 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
-            EntityDescription entity;
-            entity = ormObjectDef.Entities.Find(match => match.Identifier == "eArtist" && match.Name == "Artist");
+            EntityDescription entity = ormObjectDef.Entities
+                .Single(match => match.Identifier == "eArtist" && match.Name == "Artist");
 
             Assert.AreEqual<int>(2, entity.SourceFragments.Count);
             Assert.IsTrue(entity.SourceFragments.Exists(match => match.Identifier.Equals("tblArtists")
@@ -212,8 +214,8 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
-            EntityDescription entity;
-            entity = ormObjectDef.Entities.Find(match => match.Identifier == "eArtist" && match.Name == "Artist");
+            EntityDescription entity = ormObjectDef.Entities
+                .Single(match => match.Identifier == "eArtist" && match.Name == "Artist");
 
             parser.FillProperties(entity);
 
@@ -299,8 +301,8 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
-            EntityDescription entity;
-            entity = ormObjectDef.Entities.Find(match => match.Identifier == "e1");
+            EntityDescription entity = ormObjectDef.Entities
+                .Single(match => match.Identifier == "e1");
 
             parser.FillProperties(entity);
 
@@ -412,7 +414,8 @@ namespace TestsCodeGenLib
             Assert.AreEqual(false, relation.Disabled);
 
         	var relationTable = ormObjectsDef.SourceFragments.Find(match => match.Identifier == "tblAl2Ar");
-            var relationEntity = ormObjectsDef.Entities.Find(match => match.Identifier == "Album2ArtistRelation");
+            var relationEntity = ormObjectsDef.Entities
+                .Single(match => match.Identifier == "Album2ArtistRelation");
 
             Assert.AreEqual(relationTable, relation.SourceFragment);
             Assert.AreEqual(relationEntity, relation.UnderlyingEntity);
@@ -421,10 +424,12 @@ namespace TestsCodeGenLib
             Assert.IsNotNull(relation.Right);
 
             EntityDescription leftEntity;
-            leftEntity = ormObjectsDef.Entities.Find(delegate(EntityDescription match){ return match.Identifier == "eArtist";});
+            leftEntity = ormObjectsDef.Entities
+                .Single(delegate(EntityDescription match){ return match.Identifier == "eArtist";});
 
             EntityDescription rightEntity;
-            rightEntity = ormObjectsDef.Entities.Find(delegate(EntityDescription match){ return match.Identifier == "eAlbum";});
+            rightEntity = ormObjectsDef.Entities
+                .Single(delegate(EntityDescription match){ return match.Identifier == "eAlbum";});
 
             Assert.AreEqual<EntityDescription>(leftEntity, relation.Left.Entity);
             Assert.AreEqual<EntityDescription>(rightEntity, relation.Right.Entity);
@@ -465,7 +470,8 @@ namespace TestsCodeGenLib
 			Assert.AreEqual<bool>(false, selfRelation.Disabled);
 
 			relationTable = ormObjectsDef.SourceFragments.Find(match => match.Identifier == "tbla2b");
-			relationEntity = ormObjectsDef.Entities.Find(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation"; });
+			relationEntity = ormObjectsDef.Entities
+                .Single(delegate(EntityDescription match) { return match.Identifier == "Album2ArtistRelation"; });
 
         }
 

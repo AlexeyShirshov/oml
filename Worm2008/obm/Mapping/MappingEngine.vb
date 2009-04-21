@@ -2539,26 +2539,34 @@ Public Class ObjectMappingEngine
             Return False
         End If
 
-        Dim es As IEntitySchema = GetEntitySchema(t, mpe, Nothing, Nothing)
-        If es IsNot Nothing Then
-            Return True
+        If t.IsClass Then
+            Dim entities() As EntityAttribute = CType(t.GetCustomAttributes(GetType(EntityAttribute), False), EntityAttribute())
+
+            If entities.Length > 0 Then
+                Return True
+            End If
+
+            entities = CType(t.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
+            If entities.Length > 0 Then
+                Return True
+            End If
+
+            For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
+                Dim column As EntityPropertyAttribute = Nothing
+                Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+                If columns.Length > 0 Then
+                    Return True
+                End If
+            Next
+
+            For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+                Dim column As EntityPropertyAttribute = Nothing
+                Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+                If columns.Length > 0 Then
+                    Return True
+                End If
+            Next
         End If
-
-        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-            Dim column As EntityPropertyAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-            If columns.Length > 0 Then
-                Return True
-            End If
-        Next
-
-        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-            Dim column As EntityPropertyAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-            If columns.Length > 0 Then
-                Return True
-            End If
-        Next
 
         Return False
     End Function

@@ -54,6 +54,7 @@ namespace Worm.CodeGen.CodeGenerator
                 Console.WriteLine("  -fnS\t- file name suffix (null by default)");
                 Console.WriteLine("  -propsT\t- use type instead of entity name in props (false by default)");
                 Console.WriteLine("  -rm\t- remove old m2m methods (false by default)");
+                Console.WriteLine("  -of\t- generate one file (false by default)");
                 //Console.WriteLine("  -so\t- generate entity schema only (false by default)");
                 return;
             }
@@ -160,6 +161,12 @@ namespace Worm.CodeGen.CodeGenerator
             //    settings.OnlySchema = true;
             //}
 
+            bool oneFile = false;
+            if (cmdLine["of"] != null)
+            {
+                oneFile = true;
+            }
+
             if(!System.IO.File.Exists(inputFilename))
             {
                 Console.WriteLine("Error: source file not found.");
@@ -222,7 +229,34 @@ namespace Worm.CodeGen.CodeGenerator
             Console.WriteLine("  Skip entities: {0}", string.Join(" ", skipEntities));
             Console.WriteLine("  Process entities: {0}", string.Join(" ", processEntities));
 
-            
+
+            if (oneFile)
+            {
+                string privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
+                
+                CodeCompileUnit unit = gen.GetFullSingleUnit();
+
+                if (!System.IO.Directory.Exists(privateFolder))
+                    System.IO.Directory.CreateDirectory(privateFolder);
+
+                string outputFileName = System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() +
+                        System.IO.Path.GetFileNameWithoutExtension(inputFilename));
+                
+                GenerateCode(codeDomProvider, unit, outputFileName, testRun);
+
+                Console.WriteLine();
+
+                Console.WriteLine("Result:");
+
+                Console.WriteLine("\t{0} single generated.");
+            }
+            else
+                GenerateMultipleFilesOutput(outputFolder, ormObjectsDef, codeDomProvider, separateFolder, 
+                    skipEntities, processEntities, settings, testRun, gen);
+        }
+
+        private static void GenerateMultipleFilesOutput(string outputFolder, OrmObjectsDef ormObjectsDef, CodeDomProvider codeDomProvider, bool separateFolder, string[] skipEntities, string[] processEntities, OrmCodeDomGeneratorSettings settings, bool testRun, OrmCodeDomGenerator gen)
+        {
             List<string> errorList = new List<string>();
             int totalEntities = 0;
             int totalFiles = 0;
@@ -258,13 +292,14 @@ namespace Worm.CodeGen.CodeGenerator
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString() + entity.Name + System.IO.Path.DirectorySeparatorChar;
                 else
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
-                
+
                 var units = gen.GetEntityCompileUnits(entity.Identifier);
 
                 Console.Write(".");
 
                 if (!System.IO.Directory.Exists(privateFolder))
                     System.IO.Directory.CreateDirectory(privateFolder);
+
                 foreach (var unit in units)
                 {
                     Console.Write(".");
@@ -286,7 +321,7 @@ namespace Worm.CodeGen.CodeGenerator
 
             try
             {
-                var ctx = gen.GetLinqContext(settings);
+                var ctx = gen.GetLinqContext();
                 if (ctx != null)
                 {
                     GenerateCode(codeDomProvider, ctx,
@@ -310,7 +345,7 @@ namespace Worm.CodeGen.CodeGenerator
             Console.WriteLine("\t {0} entities processed", totalEntities);
             Console.WriteLine("\t {0} files generated", totalFiles);
             Console.WriteLine("\t {0} errors encountered", errorList.Count);
-            if(errorList.Count != 0)
+            if (errorList.Count != 0)
             {
                 Console.WriteLine("Errors:");
                 foreach (string s in errorList)

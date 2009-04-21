@@ -68,6 +68,11 @@ namespace Worm.CodeGen.Core.Descriptors
             get { return _properties; }
         }
 
+        public List<PropertyDescription> ActiveProperties
+        {
+            get { return _properties.FindAll(p=>!p.Disabled); }
+        }
+
         public OrmObjectsDef OrmObjectsDef
         {
             get { return _ormObjectsDef; }
@@ -394,7 +399,7 @@ namespace Worm.CodeGen.Core.Descriptors
                         {
                             TypeDescription newType1 = newType;
                             EntityDescription newEntity =
-                                resultOne.OrmObjectsDef.ActiveEntities.Find(
+                                resultOne.OrmObjectsDef.ActiveEntities.SingleOrDefault(
                                     matchEntity =>
                                     matchEntity.BaseEntity != null && matchEntity.BaseEntity.Identifier == newType1.Entity.Identifier);
                             if (newEntity != null)

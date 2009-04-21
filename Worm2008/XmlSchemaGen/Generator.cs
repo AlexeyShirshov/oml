@@ -288,17 +288,22 @@ namespace Worm.CodeGen.XmlGenerator
                 //if (e.HasSinglePk)
                 {
                     foreach (EntityDescription oe in
-                        from k in odef.Entities
-                        where k != e && e.EntityRelations.Count(er => er.Entity.Identifier == k.Identifier) == 0
+                        from k in odef.ActiveEntities
+                        where k != e && 
+                            e.EntityRelations.Count(er => !er.Disabled && er.Entity.Identifier == k.Identifier) == 0
                         select k)
                     {
-                        List<PropertyDescription> entityProps = oe.Properties
-                            .FindAll(l => (!l.PropertyType.IsEntityType ? string.Empty : l.PropertyType.Entity.Identifier) == e.Identifier);
+                        List<PropertyDescription> entityProps = oe.ActiveProperties
+                            .FindAll(l => l.PropertyType.IsEntityType && l.PropertyType.Entity.Identifier == e.Identifier);
                         int idx = 1;
                         foreach (PropertyDescription pd in entityProps)
                         {
+                            int cnt = odef.ActiveRelations.OfType<RelationDescription>().Count(r=>
+                                (r.Left.Entity.Identifier == oe.Identifier && r.Right.Entity.Identifier == e.Identifier) ||
+                                (r.Left.Entity.Identifier == e.Identifier && r.Right.Entity.Identifier == oe.Identifier));
+                            
                             string accName = null; string prop = null;
-                            if (entityProps.Count > 1)
+                            if (entityProps.Count > 1 || cnt > 0)
                             {
                                 accName = OrmCodeGenNameHelper.GetMultipleForm(oe.Name + idx.ToString());
                                 prop = pd.PropertyName;
@@ -433,6 +438,17 @@ namespace Worm.CodeGen.XmlGenerator
                                         newRel.Left.AccessorName = newRel.Entity.Name;
                                         postFix = "1";
                                     }
+
+                                    //if (odef.ActiveRelations.OfType<SelfRelationDescription>()
+                                    //    .Count(r => r.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Left.AccessorName == newRel.Left.AccessorName) > 0 ||
+                                    //    odef.ActiveRelations.OfType<RelationDescription>()
+                                    //    .Count(r => (r.Right.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Left.AccessorName == newRel.Left.AccessorName) ||
+                                    //    (r.Left.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Right.AccessorName == newRel.Left.AccessorName)) > 0)
+                                        
+                                    //    newRel.Left.AccessorName = newRel.SourceFragment.Identifier + newRel.Left.AccessorName;
                                 }
 
                                 if (string.IsNullOrEmpty(newRel.Right.AccessorName))
@@ -443,6 +459,17 @@ namespace Worm.CodeGen.XmlGenerator
                                         newRel.Right.AccessorName = newRel.Right.FieldName.Substring(0, newRel.Right.FieldName.Length - 2);
                                     else
                                         newRel.Right.AccessorName = newRel.Entity.Name+postFix;
+
+                                    //if (odef.ActiveRelations.OfType<SelfRelationDescription>()
+                                    //    .Count(r => r.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Left.AccessorName == newRel.Right.AccessorName) > 0 ||
+                                    //    odef.ActiveRelations.OfType<RelationDescription>()
+                                    //    .Count(r => (r.Right.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Left.AccessorName == newRel.Right.AccessorName) ||
+                                    //    (r.Left.Entity.Identifier == newRel.Entity.Identifier &&
+                                    //    r.Right.AccessorName == newRel.Right.AccessorName)) > 0)
+
+                                    //    newRel.Right.AccessorName = newRel.SourceFragment.Identifier + newRel.Right.AccessorName;
                                 }
                                 odef.Relations.Add(newRel);
                             }
@@ -484,6 +511,60 @@ namespace Worm.CodeGen.XmlGenerator
                         }
                     }
                 }
+            }
+
+            foreach (SelfRelationDescription rdb in odef.ActiveRelations.OfType<SelfRelationDescription>())
+            {
+                NormalizeRelationAccessors(odef, rdb, rdb.Right, rdb.Entity);
+                NormalizeRelationAccessors(odef, rdb, rdb.Left, rdb.Entity);
+            }
+
+            foreach (RelationDescription rdb in odef.ActiveRelations.OfType<RelationDescription>())
+            {
+                NormalizeRelationAccessors(odef, rdb, rdb.Right, rdb.Right.Entity);
+                NormalizeRelationAccessors(odef, rdb, rdb.Left, rdb.Left.Entity);
+            }
+        }
+
+        private static void NormalizeRelationAccessors(OrmObjectsDef odef, RelationDescriptionBase rdb,
+            SelfRelationTarget rdbRight, EntityDescription rdbEntity)
+        {
+            var q1 =
+                from r in odef.ActiveRelations.OfType<SelfRelationDescription>()
+                where r != rdb && r.Entity.Identifier == rdbEntity.Identifier &&
+                    (r.Left.AccessorName == rdbRight.AccessorName || r.Right.AccessorName == rdbRight.AccessorName)
+                select r as RelationDescriptionBase;
+
+            var q2 =
+                from r in odef.ActiveRelations.OfType<RelationDescription>()
+                where r != rdb &&
+                    (r.Right.Entity.Identifier == rdbEntity.Identifier &&
+                        r.Left.AccessorName == rdbRight.AccessorName) ||
+                    (r.Left.Entity.Identifier == rdbEntity.Identifier &&
+                        r.Right.AccessorName == rdbRight.AccessorName)
+                select r as RelationDescriptionBase;
+
+            int i = 0;
+            foreach (RelationDescriptionBase r in q1.Union(q2))
+            {
+                i++;
+                RelationDescription rd = r as RelationDescription;
+                SelfRelationDescription srd = r as SelfRelationDescription;
+
+                if (srd != null)
+                    if (srd.Left.AccessorName == rdbRight.AccessorName)
+                        srd.Left.AccessorName = srd.Left.AccessorName + i.ToString();
+                    else if (srd.Right.AccessorName == rdbRight.AccessorName)
+                        srd.Right.AccessorName = srd.Right.AccessorName + i.ToString();
+                    else
+                        if (rd.Left.AccessorName == rdbRight.AccessorName)
+                        {
+                            rd.Left.AccessorName = rd.Left.AccessorName + i.ToString();
+                        }
+                        else if (rd.Right.AccessorName == rdbRight.AccessorName)
+                        {
+                            rd.Right.AccessorName = rd.Right.AccessorName + i.ToString();
+                        }
             }
         }
 
@@ -537,7 +618,7 @@ namespace Worm.CodeGen.XmlGenerator
                     {
                         attrs = new string[] { "ReadOnly", "SyncInsert" };
                         string propName = pt2.Entity.Name;
-                        int cnt = e.Properties.Count(p => p.PropertyName == propName);
+                        int cnt = e.Properties.Count(p => !p.Disabled && p.PropertyName == propName);
                         if (cnt > 0)
                             propName = propName + cnt.ToString();
 
@@ -868,7 +949,7 @@ namespace Worm.CodeGen.XmlGenerator
                 e = new EntityDescription(ename, Capitalize(tableName), "", null, odef);
                 var t = new SourceFragmentRefDescription(GetSourceFragment(odef, schema, tableName, escape));
                 e.SourceFragments.Add(t);
-                odef.Entities.Add(e);
+                odef.AddEntity(e);
                 created = true;
             }
             return e;
