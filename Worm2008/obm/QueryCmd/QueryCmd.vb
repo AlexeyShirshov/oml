@@ -511,7 +511,11 @@ Namespace Query
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator)
 
-            Dim isanonym As Boolean = root._createType IsNot Nothing AndAlso GetType(AnonymousEntity).IsAssignableFrom(root._createType.GetRealType(schema))
+            Dim createOS As EntityUnion = root._createType
+            Dim createType As Type = createOS.GetRealType(schema)
+            Dim isanonym As Boolean = createOS IsNot Nothing _
+                AndAlso GetType(AnonymousEntity).IsAssignableFrom(createType) _
+                AndAlso Not GetType(AnonymousCachedEntity).IsAssignableFrom(createType)
 
             'Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New StmtQueryIterator(root)
@@ -564,7 +568,10 @@ Namespace Query
                         Else
                             t = se.Into.GetRealType(schema)
                         End If
+                        'If GetType(AnonymousCachedEntity).IsAssignableFrom(t) Then
+                        'Else
                         se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
+                        'End If
                     End If
                 Next
                 For Each se As SelectExpression In SelectList
@@ -786,46 +793,44 @@ l1:
                             For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
                                 Dim t As Type = de.Key.GetRealType(schema)
                                 If Not _pdic.ContainsKey(t) Then
-                                    Dim dic As IDictionary = schema.GetProperties(t, de.Value)
-                                    If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) Then
-                                        Dim hasCmplx As Boolean = False
-                                        For Each tde As DictionaryEntry In dic
-                                            Dim pi As Reflection.PropertyInfo = CType(tde.Value, PropertyInfo)
+                                    'If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) Then
+                                    Dim hasCmplx As Boolean = False
+                                    For Each tde As DictionaryEntry In schema.GetRefProperties(t, de.Value)
+                                        Dim pi As Reflection.PropertyInfo = CType(tde.Value, PropertyInfo)
+                                        Dim pit As Type = pi.PropertyType
+                                        If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                                             Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                             Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
-                                                Dim pit As Type = pi.PropertyType
-                                                If ObjectMappingEngine.IsEntityType(pit, schema) _
-                                                    AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                                    Dim eu As EntityUnion = Nothing
-                                                    If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, eu) Then
-                                                        eu = New EntityUnion(New EntityAlias(pit))
-                                                        eudic(selex.PropertyAlias & "$" & pit.ToString) = eu
+                                                Dim eu As EntityUnion = Nothing
+                                                If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, eu) Then
+                                                    eu = New EntityUnion(New EntityAlias(pit))
+                                                    eudic(selex.PropertyAlias & "$" & pit.ToString) = eu
+                                                End If
+                                                If Not HasInQuery(eu, _js) Then
+                                                    Dim s As IEntitySchema = Nothing
+                                                    If Not GetType(IEntity).IsAssignableFrom(pit) Then
+                                                        Dim hasPK As Boolean
+                                                        s = GetSchema(schema, pit, hasPK)
+                                                        AddPOCO(pit, s)
+                                                    Else
+                                                        s = schema.GetEntitySchema(pit, False)
                                                     End If
-                                                    If Not HasInQuery(eu, _js) Then
-                                                        Dim s As IEntitySchema = Nothing
-                                                        If Not GetType(IEntity).IsAssignableFrom(pit) Then
-                                                            Dim hasPK As Boolean
-                                                            s = GetSchema(schema, pit, hasPK)
-                                                            AddPOCO(pit, s)
-                                                        Else
-                                                            s = schema.GetEntitySchema(pit, False)
-                                                        End If
-                                                        schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, filterInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
-                                                        hasCmplx = True
-                                                        SelectAdd(eu, True)
-                                                    End If
+                                                    schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, filterInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
+                                                    hasCmplx = True
+                                                    SelectAdd(eu, True)
                                                 End If
                                             End If
-                                        Next
-                                        If hasCmplx Then
-                                            _sl = New List(Of SelectExpression)
-                                            _types = New Dictionary(Of EntityUnion, IEntitySchema)
-                                            _pdic = New Dictionary(Of Type, IDictionary)
-                                            GoTo l1
                                         End If
+                                    Next
+                                    If hasCmplx Then
+                                        _sl = New List(Of SelectExpression)
+                                        _types = New Dictionary(Of EntityUnion, IEntitySchema)
+                                        _pdic = New Dictionary(Of Type, IDictionary)
+                                        GoTo l1
                                     End If
-                                    _pdic.Add(t, dic)
+                                    'End If
+                                    _pdic.Add(t, schema.GetProperties(t, de.Value))
                                 End If
                             Next
                         End If
@@ -2862,7 +2867,9 @@ l1:
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
-            If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
+            If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
+                Return GetExecutor(mgr).ExecEntity(Of AnonymousCachedEntity, T)(mgr, Me)
+            ElseIf GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
                 Return GetExecutor(mgr).ExecEntity(Of AnonymousEntity, T)(mgr, Me)
             ElseIf GetType(CachedEntity).IsAssignableFrom(GetType(T)) Then
                 Return CType(ToList(mgr), Global.Worm.ReadOnlyObjectList(Of T))
@@ -2942,7 +2949,8 @@ l1:
             For Each kv As DictionaryEntry In props
                 Dim col As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                 Dim pa As String = rt.Name & "-" & col.PropertyAlias
-                If ctd.GetProperties.Find(pa, False) IsNot Nothing Then
+                If ctd.GetProperties.Find(pa, False) IsNot Nothing _
+                    OrElse ctd.GetProperties.Find(col.PropertyAlias, False) IsNot Nothing Then
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
                     Dim v As Object = mpe.GetPropertyValue(e, pa, Nothing)
                     If v Is DBNull.Value Then

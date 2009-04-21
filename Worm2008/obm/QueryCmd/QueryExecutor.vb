@@ -226,46 +226,17 @@ Namespace Query
             Return _ExecEntity(Of ReturnType)(mgr, query, Function() GetProcessorAnonym(Of ReturnType)(mgr, query))
         End Function
 
-        Public Class cls2
-            Private _mgr As OrmManager
-            Private _pk() As String
-
-            Public Sub New(ByVal mgr As OrmManager)
-                _mgr = mgr
-            End Sub
-
-            Public Sub Prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
-                RemoveHandler sender.QueryPrepared, AddressOf Prepared
-                Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
-                Dim l As New List(Of String)
-                For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(sender._createType.GetRealType(_mgr.MappingEngine), oschema)
-                    l.Add(pk.PropertyAlias)
-                Next
-                _pk = l.ToArray
-                AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
-            End Sub
-
-            Public Sub ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
-                CType(o, AnonymousCachedEntity)._pk = _pk
-            End Sub
-
-            Public Sub RemoveEvent()
-                RemoveHandler _mgr.ObjectCreated, AddressOf ObjectCreated
-            End Sub
-        End Class
-
         Public Function ExecEntity(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
             If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(CreateType)) Then
-                Throw New NotImplementedException
-                'Dim c As New cls2(mgr)
-                'AddHandler query.QueryPrepared, AddressOf c.Prepared
-                'Try
-                '    Return _ExecEntity(Of ReturnType)(mgr, query, _
-                '            Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
-                'Finally
-                '    c.RemoveEvent()
-                'End Try
+                Dim c As New cls(mgr)
+                Try
+                    AddHandler query.QueryPrepared, AddressOf c.prepared
+                    Return _ExecEntity(Of ReturnType)(mgr, query, _
+                            Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+                Finally
+                    c.RemoveEvent()
+                End Try
             Else
                 Return _ExecEntity(Of ReturnType)(mgr, query, _
                         Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
