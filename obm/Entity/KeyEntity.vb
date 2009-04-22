@@ -77,7 +77,11 @@ Namespace Entities
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, M2MRelationDesc.DirKey, withLoad)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, GetType(T), String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, GetType(T)))
+                    End If
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, criteria, sort, rel.Key, withLoad)
                 End Using
             End Function
 
@@ -89,7 +93,11 @@ Namespace Entities
 
             Public Function Find(Of T As {New, IKeyEntity})() As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, M2MRelationDesc.DirKey, False)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, GetType(T), String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, GetType(T)))
+                    End If
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, Nothing, rel.Key, False)
                 End Using
             End Function
 
@@ -101,7 +109,11 @@ Namespace Entities
 
             Public Function Find(Of T As {New, IKeyEntity})(ByVal sort As Sort) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
-                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, M2MRelationDesc.DirKey, False)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, GetType(T), String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, GetType(T)))
+                    End If
+                    Return mc.Manager.FindMany2Many2(Of T)(_o, Nothing, sort, rel.Key, False)
                 End Using
             End Function
 
@@ -155,7 +167,11 @@ Namespace Entities
 
             Public Sub Add(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MAdd(_o, obj, M2MRelationDesc.DirKey)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, obj.GetType, String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, obj.GetType))
+                    End If
+                    mc.Manager.M2MAdd(_o, obj, rel.Key)
                 End Using
             End Sub
 
@@ -167,7 +183,11 @@ Namespace Entities
 
             Public Sub Delete(ByVal t As Type)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, t, M2MRelationDesc.DirKey)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, t, String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, t))
+                    End If
+                    mc.Manager.M2MDelete(_o, t, rel.Key)
                 End Using
             End Sub
 
@@ -179,7 +199,11 @@ Namespace Entities
 
             Public Sub Delete(ByVal obj As _IKeyEntity)
                 Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, obj, M2MRelationDesc.DirKey)
+                    Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(_o.GetType, obj.GetType, String.Empty)
+                    If rel Is Nothing Then
+                        Throw New OrmObjectException(String.Format("Relation between {0} and {1} not found", _o.GetType, obj.GetType))
+                    End If
+                    mc.Manager.M2MDelete(_o, obj, rel.Key)
                 End Using
             End Sub
 

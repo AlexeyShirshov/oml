@@ -2120,6 +2120,9 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
+        If String.IsNullOrEmpty(direct) Then
+            direct = M2MRelationDesc.DirKey
+        End If
         Return _schema.GetEntityKey(GetContextInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextInfo, tt2) & "$" & GetStaticKey()
     End Function
 
@@ -3293,7 +3296,7 @@ l1:
                                     dic.Remove(o.Second.Second)
                                 Else
                                     If m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
-                                        Throw New InvalidOperationException
+                                        Throw New InvalidOperationException(String.Format("M2M with {0} key {1} has changes. Key: {2}. Id: {3}", m2me.Entry.SubType, m2me.Entry.Key, o.Second.First, o.Second.Second))
                                     End If
                                 End If
                             Next

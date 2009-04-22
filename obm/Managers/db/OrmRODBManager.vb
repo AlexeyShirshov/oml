@@ -2927,9 +2927,11 @@ l1:
                             If withLoad Then
                                 If ro.IsLoaded OrElse df IsNot Nothing Then
                                     ar.Add(ro)
+                                    ro.SetCreateManager(o.CreateManager)
                                 End If
                             Else
                                 ar.Add(ro)
+                                ro.SetCreateManager(o.CreateManager)
                             End If
                         Else
                             If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then

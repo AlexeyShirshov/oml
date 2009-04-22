@@ -94,6 +94,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 };
 
                 staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                desc.Parameters.Add(new CodePrimitiveExpression(relation.SourceFragment.Identifier));
 
                 Members.Add(staticProperty);
 
