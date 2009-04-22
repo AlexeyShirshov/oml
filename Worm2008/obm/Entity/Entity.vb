@@ -459,9 +459,13 @@ Namespace Entities
 #Region " CreateCmd "
         Public Function CreateCmd() As QueryCmd
             If _cm IsNot Nothing Then
-                Return New QueryCmd(_cm)
+                Dim q As QueryCmd = New QueryCmd(_cm)
+                q.MappingEngine = _schema
+                Return q
             Else
-                Return QueryCmd.Create()
+                Dim q As QueryCmd = QueryCmd.Create()
+                q.MappingEngine = _schema
+                Return q
             End If
         End Function
 
@@ -469,9 +473,12 @@ Namespace Entities
             If _cm IsNot Nothing Then
                 Dim q As New QueryCmd(_cm)
                 q.Name = name
+                q.MappingEngine = _schema
                 Return q
             Else
-                Return QueryCmd.Create(name)
+                Dim q As QueryCmd = QueryCmd.Create(name)
+                q.MappingEngine = _schema
+                Return q
             End If
         End Function
 

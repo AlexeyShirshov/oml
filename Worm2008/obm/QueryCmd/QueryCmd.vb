@@ -512,10 +512,12 @@ Namespace Query
             ByVal stmt As StmtGenerator)
 
             Dim createOS As EntityUnion = root._createType
-            Dim createType As Type = createOS.GetRealType(schema)
-            Dim isanonym As Boolean = createOS IsNot Nothing _
-                AndAlso GetType(AnonymousEntity).IsAssignableFrom(createType) _
-                AndAlso Not GetType(AnonymousCachedEntity).IsAssignableFrom(createType)
+            Dim isanonym As Boolean
+            If createOS IsNot Nothing Then
+                Dim createType As Type = createOS.GetRealType(schema)
+                isanonym = GetType(AnonymousEntity).IsAssignableFrom(createType) _
+                    AndAlso Not GetType(AnonymousCachedEntity).IsAssignableFrom(createType)
+            End If
 
             'Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New StmtQueryIterator(root)

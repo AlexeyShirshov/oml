@@ -369,12 +369,14 @@ Namespace Criteria.Joins
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _src IsNot Nothing AndAlso _src.AnyType Is Nothing AndAlso String.IsNullOrEmpty(_src.AnyEntityName) Then
-                Dim q As QueryCmd = _src.ObjectAlias.Query
-                q._outer = New QueryCmd
+                Dim root As QueryCmd = _src.ObjectAlias.Query
+                root._outer = New QueryCmd
                 Try
-                    q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                    For Each q As QueryCmd In New StmtQueryIterator(root)
+                        q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                    Next
                 Finally
-                    q._outer = Nothing
+                    root._outer = Nothing
                 End Try
             End If
         End Sub
