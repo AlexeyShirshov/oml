@@ -135,7 +135,7 @@ Namespace Cache
             RaiseEvent RegisterObjectRemoval(Me, obj)
             'obj.RemoveOriginalCopy(Me)
 #If TraceCreation Then
-            _removed.add(new Pair(Of date,ormbase)(Now,obj))
+            _removed.add(new Pair(Of date,_ICachedEntity)(Now,obj))
 #End If
         End Sub
 
