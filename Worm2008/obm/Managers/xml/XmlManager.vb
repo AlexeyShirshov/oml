@@ -260,7 +260,7 @@ Namespace Xml
                 obj.BeginLoading()
                 Dim pk() As PKDesc = orm.GetPKValues
                 If LoadPK(oschema, node, orm) Then
-                    obj = CType(NormalizeObject(orm, dic), T)
+                    obj = CType(NormalizeObject(orm, dic, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then
                         orm.CreateCopyForSaveNewEntry(Me, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
@@ -335,7 +335,7 @@ Namespace Xml
                 End If
             Next
             If orm IsNot Nothing Then
-                orm.CheckIsAllLoaded(MappingEngine, columns.Count)
+                orm.CheckIsAllLoaded(MappingEngine, columns.Count, columns)
             End If
         End Function
 

@@ -115,7 +115,7 @@ Class ManagerWrapper
     End Property
 
     Protected Sub OnObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
-        CType(o, _IEntity).SetSpecificSchema(sender.MappingEngine)
+        CType(o, _IEntity).MappingEngine = sender.MappingEngine
     End Sub
 
 #Region " IDisposable Support "
@@ -153,16 +153,19 @@ Public Class SetManagerHelper
     Private _m As CreateManagerDelegate
     Private _gm As ICreateManager
     Private _mgr As OrmManager
+    Private _schema As ObjectMappingEngine
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate)
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate, ByVal schema As ObjectMappingEngine)
         _m = getMgr
         _mgr = mgr
+        _schema = schema
         Subscribe()
     End Sub
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager)
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine)
         _gm = getMgr
         _mgr = mgr
+        _schema = schema
         Subscribe()
     End Sub
 
@@ -172,11 +175,14 @@ Public Class SetManagerHelper
     End Sub
 
     Public Sub ObjectRestored(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
+        Dim e As _IEntity = CType(o, _IEntity)
+        If Not Equals(e.GetSpecificSchema, _schema) Then
+            e.MappingEngine = _schema
+        End If
         ObjectCreated(mgr, o)
     End Sub
 
     Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
-        'AddHandler o.ManagerRequired, AddressOf GetManager
         If _m Is Nothing Then
             CType(o, _IEntity).SetCreateManager(_gm)
         Else

@@ -778,7 +778,8 @@ Partial Public MustInherit Class OrmManager
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As IKeyEntity
         Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
-        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), add2CacheOnCreate)
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), _
+            add2CacheOnCreate, False, MappingEngine.GetEntitySchema(type))
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
             o.SetObjectState(ObjectState.Created)
         End If
@@ -816,7 +817,8 @@ Partial Public MustInherit Class OrmManager
         'Return o
         Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
-        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary), add2CacheOnCreate)
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), IDictionary), _
+            add2CacheOnCreate, False, MappingEngine.GetEntitySchema(GetType(T)))
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
             o.SetObjectState(ObjectState.Created)
         End If
@@ -826,7 +828,7 @@ Partial Public MustInherit Class OrmManager
     Public Function GetKeyEntityFromCacheOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
         Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+        Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
     End Function
 
     Public Function GetKeyEntityFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
@@ -842,7 +844,7 @@ Partial Public MustInherit Class OrmManager
     Public Function [Get](Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
         Dim o As _ICachedEntity = CreateObject(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+        Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
     End Function
 
     '        Public Function Find(Of T As {OrmBase, New}, T1)(ByVal value As T1, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
@@ -1657,12 +1659,18 @@ l1:
         Return Entity.CreateEntity(Of T)(_cache, _schema)
     End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return NormalizeObject(obj, dic, True)
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
+        ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
+        Return NormalizeObject(obj, dic, True, fromDb, oschema)
     End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, ByVal add2Cache As Boolean) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, False, False, dic, add2Cache, Me)
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+        Return NormalizeObject(obj, dic, True, False, MappingEngine.GetEntitySchema(obj.GetType))
+    End Function
+
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
+        ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
+        Return _cache.NormalizeObject(obj, False, False, dic, add2Cache, Me, fromDb, oschema)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
@@ -1789,7 +1797,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        CacheBase.AddObjectInternal(obj, dic)
+        CacheBase.AddObjectInternal(obj, New CacheKey(obj), dic)
     End Sub
 
     Protected Friend Function EnsureInCache(ByVal obj As ICachedEntity) As ICachedEntity
@@ -3481,7 +3489,7 @@ l1:
                     Case ObjectState.Modified
                         r = ObjectModification.ReasonEnum.Edit
                 End Select
-                _cache.RegisterModification(Me, obj, r)
+                _cache.RegisterModification(Me, obj, r, MappingEngine.GetEntitySchema(obj.GetType))
             End If
         End If
     End Sub

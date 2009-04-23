@@ -193,11 +193,11 @@ Namespace Query.Database
 #End Region
 
         Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
-            CType(o, _IEntity).SetSpecificSchema(mgr.MappingEngine)
+            CType(o, _IEntity).MappingEngine = mgr.MappingEngine
         End Sub
 
         Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal o As IEntity)
-            CType(o, _IEntity).SetSpecificSchema(mgr.MappingEngine)
+            CType(o, _IEntity).MappingEngine = mgr.MappingEngine
         End Sub
 
         Protected Function ExecBase(Of ReturnType)(ByVal mgr As OrmManager, _

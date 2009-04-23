@@ -1425,19 +1425,20 @@ l1:
             End If
             Try
                 Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(obj.GetType)
-                'Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
+                Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
+                Dim cols As Generic.List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(obj.GetType, oschema)
                 Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                 Dim lock As IDisposable = Nothing
                 Try
                     Dim loaded As Boolean
                     If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
                         If fromRS Then
-                            Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, props, cols, baseIdx)
                             AfterLoadingProcess(dic, obj, lock, ro)
                             obj = CType(ro, _ICachedEntity)
                             ce = TryCast(obj, _ICachedEntity)
                         Else
-                            LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, props, cols, baseIdx)
                             obj.CorrectStateAfterLoading(False)
                         End If
                         loaded = True
@@ -1699,8 +1700,11 @@ l1:
                 End If
 
                 Dim objDic As New Dictionary(Of EntityUnion, IDictionary)
+                Dim arr As New Dictionary(Of Type, List(Of EntityPropertyAttribute))
                 For Each k As KeyValuePair(Of EntityUnion, IEntitySchema) In types
-                    objDic.Add(k.Key, GetDictionary(k.Key.GetRealType(MappingEngine), k.Value))
+                    Dim tt As Type = k.Key.GetRealType(MappingEngine)
+                    objDic.Add(k.Key, GetDictionary(tt, k.Value))
+                    arr(tt) = MappingEngine.GetSortedFieldList(tt, k.Value)
                 Next
 
                 Dim et As New PerfCounter
@@ -1709,7 +1713,7 @@ l1:
 
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadMultiFromResultSet(createType, values, selectList, dr, types, pdic, objDic, _loadedInLastFetch)
+                        LoadMultiFromResultSet(createType, values, selectList, dr, types, pdic, objDic, _loadedInLastFetch, arr)
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1732,7 +1736,8 @@ l1:
             ByVal types As IDictionary(Of EntityUnion, IEntitySchema), _
             ByVal pdic As Dictionary(Of Type, IDictionary), _
             ByVal objDic As Dictionary(Of EntityUnion, IDictionary), _
-            ByRef loaded As Integer)
+            ByRef loaded As Integer, _
+            ByVal arr As Dictionary(Of Type, List(Of EntityPropertyAttribute)))
 
             Dim odic As New Specialized.OrderedDictionary '(Of ObjectSource, _IEntity)
             Dim dfac As New Dictionary(Of EntityUnion, List(Of Pair(Of String, Object)))
@@ -1830,7 +1835,7 @@ l1:
                         Dim dic As IDictionary = Nothing
                         objDic.TryGetValue(os, dic)
                         If dic IsNot Nothing Then
-                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
+                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS, True, types(os))
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
                             odic(os) = New Pair(Of _IEntity)(obj, robj)
@@ -1951,7 +1956,7 @@ l1:
                     Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
                     If ce IsNot Nothing Then
-                        ce.CheckIsAllLoaded(MappingEngine, pkdic(os))
+                        ce.CheckIsAllLoaded(MappingEngine, pkdic(os), arr(os.GetRealType(MappingEngine)))
                     End If
 
                     RaiseObjectLoaded(obj)
@@ -2064,10 +2069,19 @@ l1:
                         End If
                     End If
 
+                    Dim props As IDictionary = MappingEngine.GetProperties(original_type, oschema)
+                    Dim arr As Generic.List(Of EntityPropertyAttribute) = Nothing
+                    If oschema Is Nothing Then
+                        If GetType(_ICachedEntity).IsAssignableFrom(GetType(T)) AndAlso Not GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) Then
+                            Throw New OrmManagerException("Schema for type " & GetType(T).ToString & " is nothing")
+                        End If
+                    Else
+                        arr = MappingEngine.GetSortedFieldList(original_type, oschema)
+                    End If
                     Dim rownum As Integer = 0
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(values, selectList, dr, dic, _loadedInLastFetch, rownum, oschema, fields_idx)
+                        LoadFromResultSet(Of T)(values, selectList, dr, props, dic, _loadedInLastFetch, rownum, oschema, fields_idx, arr)
                         rownum += 1
                     Loop
                     _fetch = ft.GetTime
@@ -2102,9 +2116,10 @@ l1:
 
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal values As IList, ByVal selectList As IList(Of SelectExpression), _
-            ByVal dr As System.Data.Common.DbDataReader, _
+            ByVal dr As System.Data.Common.DbDataReader, ByVal props As IDictionary, _
             ByVal dic As IDictionary, ByRef loaded As Integer, ByVal rownum As Integer, _
-            ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal arr As Generic.List(Of EntityPropertyAttribute))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -2120,7 +2135,7 @@ l1:
             Try
                 Dim obj As New T
                 RaiseObjectCreated(obj)
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx, rownum)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, dic, True, lock, oschema, fields_idx, rownum, props, arr)
                 AfterLoadingProcess(dic, obj, lock, ro)
 #If DEBUG Then
                 If lock IsNot Nothing Then
@@ -2176,7 +2191,7 @@ l1:
             ByVal selectList As IList(Of SelectExpression), ByVal check_pk As Boolean, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
-            ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As _IEntity
+            ByVal rownum As Integer, ByVal props As IDictionary, ByVal arr As Generic.List(Of EntityPropertyAttribute), Optional ByVal baseIdx As Integer = 0) As _IEntity
 
             If selectList.Count > dr.FieldCount Then
                 Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", dr.FieldCount, selectList.Count))
@@ -2209,8 +2224,8 @@ l1:
                         Dim attr As Field2DbRelations = se._realAtt
                         Dim f As Boolean = False
                         If c Is Nothing Then
-                            Dim d As IDictionary = MappingEngine.GetProperties(original_type, oschema)
-                            If d IsNot Nothing AndAlso d.Count > 0 Then
+                            'Dim props As IDictionary = MappingEngine.GetProperties(original_type, oschema)
+                            If props IsNot Nothing AndAlso props.Count > 0 Then
                                 If selectList.Count = 1 AndAlso (se.ObjectSource Is Nothing OrElse se.ObjectSource.GetRealType(MappingEngine) IsNot original_type) Then
                                     If attr = Field2DbRelations.None Then
                                         attr = Field2DbRelations.PK
@@ -2223,7 +2238,7 @@ l1:
                                         f = True
                                     End If
                                 End If
-                                For Each de As DictionaryEntry In d
+                                For Each de As DictionaryEntry In props
                                     c = CType(de.Key, EntityPropertyAttribute)
                                     If c.PropertyAlias = propertyAlias Then
                                         pi = CType(de.Value, Reflection.PropertyInfo)
@@ -2280,7 +2295,7 @@ l1:
                         'lock = True
 
                         If dic IsNot Nothing AndAlso (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
-                            robj = NormalizeObject(ce, dic, fromRS)
+                            robj = NormalizeObject(ce, dic, fromRS, True, oschema)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
                             ce = CType(robj, _ICachedEntity)
@@ -2386,7 +2401,7 @@ l1:
             End Try
 
             If ce IsNot Nothing Then
-                ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
+                ce.CheckIsAllLoaded(MappingEngine, selectList.Count, arr)
             End If
 
             RaiseObjectLoaded(obj)

@@ -72,8 +72,8 @@ Namespace Entities
         Sub SetCreateManager(ByVal createManager As ICreateManager)
         ReadOnly Property IsLoading() As Boolean
         Sub SetMgrString(ByVal str As String)
-        Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
-        ReadOnly Property MappingEngine() As ObjectMappingEngine
+        Function GetSpecificSchema() As ObjectMappingEngine
+        Property MappingEngine() As ObjectMappingEngine
     End Interface
 
     Public Interface IEntity
@@ -104,7 +104,7 @@ Namespace Entities
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
         Function SetLoaded(ByVal propertyMap As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean
+        Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal c As EntityPropertyAttribute) As Boolean

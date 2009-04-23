@@ -879,7 +879,10 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of EntityPropertyAttribute)
-        'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
+        'If Not GetType(_ICachedEntity).IsAssignableFrom(original_type) Then
+        '    Return Nothing
+        'End If
+
         If schema Is Nothing Then
             schema = GetEntitySchema(original_type)
         End If
@@ -2449,96 +2452,84 @@ Public Class ObjectMappingEngine
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v2, oschema)
             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
             Return v2
-        ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
-            If GetType(_IEntity).IsAssignableFrom(propType) Then
-                Dim type_created As Type = propType
-                Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-                If Not String.IsNullOrEmpty(en) Then
-                    Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
-                    If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
-                        type_created = cr
-                    End If
-                    If type_created Is Nothing Then
-                        Throw New OrmManagerException("Cannot find type for entity " & en)
-                    End If
-                End If
-                Dim o As _IEntity = Nothing
-                If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
-                    o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
-                    o.SetObjectState(ObjectState.NotLoaded)
-                    o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
-                Else
-                    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
-                    If pks.Count <> 1 Then
-                        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
-                    End If
-                    If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
-                        o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
-                        o.SetObjectState(ObjectState.NotLoaded)
-                        o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing)
-                    Else
-                        o = Entity.CreateEntity(type_created, cache, MappingEngine)
-                        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
-                    End If
-                End If
-
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
-                If o IsNot Nothing Then
-                    Dim eo As IEntity = TryCast(obj, IEntity)
-                    If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then o.SetCreateManager(eo.CreateManager)
-                    If objectLoaded IsNot Nothing Then objectLoaded(o)
-                End If
-                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                Return o
-            Else
-                Dim o As Object = Activator.CreateInstance(propType)
-                Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(propType)
-                If pks.Count <> 1 Then
-                    Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", propType))
-                Else
-                    MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
-                End If
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
-                Return o
-            End If
-        Else
+        ElseIf (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
             Try
-                If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-                    Dim v As Object = Convert.ChangeType(value, propType)
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
-                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                    Return v
-                ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                    Dim dt As DateTime = CDate(value)
-                    Dim l As Long = dt.ToBinary
-                    Using ms As New IO.MemoryStream
-                        Dim sw As New IO.StreamWriter(ms)
-                        sw.Write(l)
-                        sw.Flush()
-                        value = ms.ToArray
-                    End Using
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
-                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                Else
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
-                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                End If
-                'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                '    Dim dt As DateTime = CDate(value)
-                '    Dim l As Long = dt.ToBinary
-                '    Using ms As New IO.MemoryStream
-                '        Dim sw As New IO.StreamWriter(ms)
-                '        sw.Write(l)
-                '        sw.Flush()
-                '        obj.SetValue(pi, c, ms.ToArray)
-                '        obj.SetLoaded(c, True)
-                '    End Using
+                Dim v As Object = Convert.ChangeType(value, propType)
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
+                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                Return v
             Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                 Dim v As Object = Convert.ChangeType(value, propType)
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, v, oschema)
                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                 Return v
             End Try
+        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+            Dim dt As DateTime = CDate(value)
+            Dim l As Long = dt.ToBinary
+            Using ms As New IO.MemoryStream
+                Dim sw As New IO.StreamWriter(ms)
+                sw.Write(l)
+                sw.Flush()
+                value = ms.ToArray
+            End Using
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+        ElseIf GetType(_IEntity).IsAssignableFrom(propType) Then
+            Dim type_created As Type = propType
+            Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+            If Not String.IsNullOrEmpty(en) Then
+                Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                    type_created = cr
+                End If
+                If type_created Is Nothing Then
+                    Throw New OrmManagerException("Cannot find type for entity " & en)
+                End If
+            End If
+            Dim o As _IEntity = Nothing
+            If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
+                o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
+                o.SetObjectState(ObjectState.NotLoaded)
+                o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), _
+                                          True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+            Else
+                Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
+                If pks.Count <> 1 Then
+                    Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
+                End If
+                If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
+                    o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
+                    o.SetObjectState(ObjectState.NotLoaded)
+                    o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), _
+                                              True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+                Else
+                    o = Entity.CreateEntity(type_created, cache, MappingEngine)
+                    MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
+                End If
+            End If
+
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+            If o IsNot Nothing Then
+                Dim eo As IEntity = TryCast(obj, IEntity)
+                If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then o.SetCreateManager(eo.CreateManager)
+                If objectLoaded IsNot Nothing Then objectLoaded(o)
+            End If
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+            Return o
+        ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
+            Dim o As Object = Activator.CreateInstance(propType)
+            Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(propType)
+            If pks.Count <> 1 Then
+                Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", propType))
+            Else
+                MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
+            End If
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+            Return o
+        Else
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
         End If
         Return value
     End Function
@@ -2602,21 +2593,26 @@ Public Class ObjectMappingEngine
 
     Public Shared Function IsBadAssembly(ByVal assembly As Reflection.Assembly) As Boolean
         'assembly.GetName.GetPublicKeyToken()
-        Dim tok As Byte() = assembly.GetName.GetPublicKeyToken()
-        If IsEqualByteArray(New Byte() {&HB7, &H7A, &H5C, &H56, &H19, &H34, &HE0, &H89}, tok) Then
-            Return True
-        End If
-        If IsEqualByteArray(New Byte() {&HB0, &H3F, &H5F, &H7F, &H11, &HD5, &HA, &H3A}, tok) Then
-            Return True
-        End If
         Dim moduleName As String = assembly.ManifestModule.Name
-        Return moduleName = "mscorlib.dll" OrElse moduleName = "System.Data.dll" OrElse moduleName = "System.Data.dll" _
+        If moduleName = "mscorlib.dll" OrElse moduleName = "System.Data.dll" OrElse moduleName = "System.Data.dll" _
                         OrElse moduleName = "System.Xml.dll" OrElse moduleName = "System.dll" _
                         OrElse moduleName = "System.Configuration.dll" OrElse moduleName = "System.Web.dll" _
                         OrElse moduleName = "System.Drawing.dll" OrElse moduleName = "System.Web.Services.dll" _
                         OrElse assembly.FullName.Contains("Microsoft") OrElse moduleName = "Worm.Orm.dll" _
                         OrElse moduleName = "CoreFramework.dll" OrElse moduleName = "ASPNETHosting.dll" _
-                        OrElse moduleName = "System.Transactions.dll" OrElse moduleName = "System.EnterpriseServices.dll"
+                        OrElse moduleName = "System.Transactions.dll" OrElse moduleName = "System.EnterpriseServices.dll" Then
+            Return True
+        Else
+            Dim tok As Byte() = assembly.GetName.GetPublicKeyToken()
+            If IsEqualByteArray(New Byte() {&HB7, &H7A, &H5C, &H56, &H19, &H34, &HE0, &H89}, tok) Then
+                Return True
+            End If
+            If IsEqualByteArray(New Byte() {&HB0, &H3F, &H5F, &H7F, &H11, &HD5, &HA, &H3A}, tok) Then
+                Return True
+            End If
+        End If
+
+        Return False
     End Function
 
     Public Function GetDerivedTypes(ByVal baseType As Type) As IList(Of Type)
