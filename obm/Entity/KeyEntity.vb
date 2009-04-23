@@ -687,6 +687,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu)
             End If
+            q.MappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function
@@ -698,6 +699,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu, key)
             End If
+            q.MappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function
@@ -718,6 +720,7 @@ Namespace Entities
                     q = Worm.Query.RelationCmd.Create(New Relation(Me, desc))
                 End If
             End If
+            q.MappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function

@@ -132,7 +132,7 @@ Partial Public Class OrmManager
         End Sub
 
         Private Sub ObjectCreated(ByVal mgr As OrmManager, ByVal obj As IEntity)
-            CType(obj, _IEntity).SetSpecificSchema(mgr.MappingEngine)
+            CType(obj, _IEntity).MappingEngine = mgr.MappingEngine
         End Sub
 
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)

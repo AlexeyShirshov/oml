@@ -28,8 +28,10 @@ Namespace Database.Storedprocs
             Private _count As Integer
             Private _loaded As Integer
             Private _oschema As IEntitySchema
-            'Private _props As IDictionary
+            Private _props As IDictionary
             Private _cm As Collections.IndexedCollection(Of String, MapField2Column)
+            Private _cols As List(Of EntityPropertyAttribute)
+            Private _dic As IDictionary
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
@@ -40,15 +42,13 @@ Namespace Database.Storedprocs
                 If _l Is Nothing Then
                     _l = New List(Of T)
                     _oschema = mgr.MappingEngine.GetEntitySchema(original_type)
-                    '_props = mgr.MappingEngine.GetProperties(original_type, _oschema)
+                    _props = mgr.MappingEngine.GetProperties(original_type, _oschema)
                     _cm = _oschema.GetFieldColumnMap
+                    _cols = mgr.MappingEngine.GetSortedFieldList(original_type, _oschema)
+                    _dic = mgr.GetDictionary(original_type)
                 End If
-                'Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
-                Dim dic As IDictionary = mgr.GetDictionary(original_type)
                 Dim loaded As Integer
-                Dim cols As IList(Of SelectExpression) = GetColumns() '.ConvertAll(Of SelectExpression)(Function(col As EntityPropertyAttribute) _
-                'New SelectExpression(New ObjectSource(original_type), col.PropertyAlias))
-                mgr.LoadFromResultSet(Of T)(_l, cols, dr, dic, loaded, _l.Count, _oschema, _cm)
+                mgr.LoadFromResultSet(Of T)(_l, GetColumns, dr, _props, _dic, loaded, _l.Count, _oschema, _cm, _cols)
                 _loaded += loaded
             End Sub
 

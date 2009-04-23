@@ -2386,7 +2386,7 @@ l1:
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToMatrix(mgr)
                 End Using
             End Using
@@ -2399,7 +2399,7 @@ l1:
 #Region " ToList "
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToBaseEntity(Of T)(mgr, withLoad)
                 End Using
             End Using
@@ -2491,7 +2491,7 @@ l1:
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(mgr)
                 End Using
             End Using
@@ -2511,7 +2511,7 @@ l1:
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(Of CreateType, ReturnType)(mgr)
                 End Using
             End Using
@@ -2531,7 +2531,7 @@ l1:
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(Of CreateReturnType)(mgr)
                 End Using
             End Using
@@ -2558,7 +2558,7 @@ l1:
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToAnonymList(mgr)
                 End Using
             End Using
@@ -2579,7 +2579,7 @@ l1:
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManager = getMgr()
             Try
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToEntityList(Of T)(mgr)
                 End Using
             Finally
@@ -2591,7 +2591,7 @@ l1:
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToEntityList(Of T)(mgr)
                 End Using
             End Using
@@ -2632,7 +2632,7 @@ l1:
 
         Public Function ToOrmListDyn(Of T As {_IKeyEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToOrmListDyn(Of T)(mgr)
                 End Using
             End Using
@@ -2688,7 +2688,7 @@ l1:
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
                 End Using
             End Using
@@ -2761,7 +2761,7 @@ l1:
 
         Public Function Count(ByVal getMgr As ICreateManager) As Integer
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return Count(mgr)
                 End Using
             End Using
@@ -2811,7 +2811,7 @@ l1:
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToDictionary(Of TKey, TValue)(mgr)
                 End Using
             End Using
@@ -2846,7 +2846,7 @@ l1:
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToSimpleDictionary(Of TKey, TValue)(mgr)
                 End Using
             End Using
@@ -2862,7 +2862,7 @@ l1:
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToObjectList(Of T)(mgr)
                 End Using
             End Using
@@ -2886,7 +2886,7 @@ l1:
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
-                Using New SetManagerHelper(mgr, CreateManager)
+                Using New SetManagerHelper(mgr, CreateManager, _schema)
                     Return ToPOCOList(Of T)(mgr)
                 End Using
             End Using
@@ -3952,7 +3952,7 @@ l1:
             'Return Where(f).Single(Of T)()
 
             Dim o As IKeyEntity = Nothing
-            Using New SetManagerHelper(mgr, CreateManager)
+            Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
                     mgr.SetSchema(MappingEngine)
@@ -3978,9 +3978,15 @@ l1:
                 End Try
             End Using
 
-            If o IsNot Nothing AndAlso o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
-                o.SetCreateManager(_getMgr)
+            If o IsNot Nothing Then
+                If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
+                    o.SetCreateManager(_getMgr)
+                End If
+                If o.GetSpecificSchema Is Nothing Then
+                    o.MappingEngine = MappingEngine
+                End If
             End If
+
 
             Return CType(o, T)
         End Function
@@ -4018,7 +4024,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, level)
                 End Using
             End Using
@@ -4042,7 +4048,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, level)
                 End Using
             End Using
@@ -4051,7 +4057,7 @@ l1:
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, _
             ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, secondPropertyAlias, level)
                 End Using
             End Using

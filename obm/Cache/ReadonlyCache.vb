@@ -123,7 +123,7 @@ Namespace Cache
 
         Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity, ByVal mgr As OrmManager)
             If mgr IsNot Nothing Then
-                Dim sc As ObjectModification = ShadowCopy(obj, mgr)
+                Dim sc As ObjectModification = ShadowCopy(obj, mgr, mgr.MappingEngine.GetEntitySchema(obj.GetType))
                 If sc IsNot Nothing Then
                     Dim st As String = String.Empty
 #If DEBUG Then
@@ -133,7 +133,7 @@ Namespace Cache
                 End If
             End If
             RaiseEvent RegisterObjectRemoval(Me, obj)
-            obj.RemoveOriginalCopy(Me)
+            'obj.RemoveOriginalCopy(Me)
 #If TraceCreation Then
             _removed.add(new Pair(Of date,ormbase)(Now,obj))
 #End If
@@ -276,14 +276,14 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function ShadowCopy(ByVal obj As _ICachedEntity, ByVal s As ObjectMappingEngine) As ObjectModification
+        Public Function ShadowCopy(ByVal obj As _ICachedEntity, ByVal s As ObjectMappingEngine, ByVal oschema As IEntitySchema) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 If obj.IsPKLoaded Then
-                    Dim name As String = GetModificationKey(obj, s, Nothing)
+                    Dim name As String = GetModificationKey(obj, s, Nothing, oschema)
                     Return CType(_modifiedobjects(name), ObjectModification)
                 Else
                     Return Nothing
@@ -292,13 +292,17 @@ Namespace Cache
         End Function
 
         Public Function ShadowCopy(ByVal obj As _ICachedEntity, ByVal mgr As OrmManager) As ObjectModification
+            Return ShadowCopy(obj, mgr, mgr.MappingEngine.GetEntitySchema(obj.GetType))
+        End Function
+
+        Public Function ShadowCopy(ByVal obj As _ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 If obj.IsPKLoaded Then
-                    Dim name As String = GetModificationKey(obj, mgr.MappingEngine, mgr.GetContextInfo)
+                    Dim name As String = GetModificationKey(obj, mgr.MappingEngine, mgr.GetContextInfo, oschema)
                     Return CType(_modifiedobjects(name), ObjectModification)
                 Else
                     Return Nothing
@@ -312,31 +316,34 @@ Namespace Cache
             If Not condition Then Throw New OrmCacheException(message)
         End Sub
 
-        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal context As Object) As String
-            Return GetModificationKey(obj, obj.Key, mpe, context)
+        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal mpe As ObjectMappingEngine, _
+            ByVal context As Object, ByVal oschema As IEntitySchema) As String
+            Return GetModificationKey(obj, obj.Key, mpe, context, oschema)
         End Function
 
-        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal key As Integer, ByVal mpe As ObjectMappingEngine, ByVal context As Object) As String
+        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal key As Integer, _
+            ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal oschema As IEntitySchema) As String
             If mpe IsNot Nothing Then
                 Dim t As Type = obj.GetType
-                Return mpe.GetEntityTypeKey(context, t).ToString & ":" & key
+                Return mpe.GetEntityTypeKey(context, t, oschema).ToString & ":" & key
             Else
                 Return obj.GetType().FullName & ":" & key
             End If
         End Function
 
-        Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
-            Return RegisterModification(mgr, obj, Nothing, reason)
+        Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, _
+            ByVal reason As ObjectModification.ReasonEnum, ByVal oschema As IEntitySchema) As ObjectModification
+            Return RegisterModification(mgr, obj, Nothing, reason, oschema)
         End Function
 
         Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, _
-            ByVal pk() As PKDesc, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
+            ByVal pk() As PKDesc, ByVal reason As ObjectModification.ReasonEnum, ByVal oschema As IEntitySchema) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim key As String = GetModificationKey(obj, mgr.MappingEngine, mgr.GetContextInfo)
+                Dim key As String = GetModificationKey(obj, mgr.MappingEngine, mgr.GetContextInfo, oschema)
                 'Using SyncHelper.AcquireDynamicLock(name)
                 'Assert(mgr IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(key), "Key " & key & " already in collection")
@@ -422,7 +429,7 @@ Namespace Cache
                 End If
 
                 If _modifiedobjects.Count > 0 Then
-                    Dim key As String = GetModificationKey(obj, mpe, context)
+                    Dim key As String = GetModificationKey(obj, mpe, context, mpe.GetEntitySchema(obj.GetType))
                     _modifiedobjects.Remove(key)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
@@ -646,17 +653,18 @@ Namespace Cache
             Return NewObjectManager IsNot Nothing AndAlso NewObjectManager.GetNew(t, id) IsNot Nothing
         End Function
 
-        'Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
-        '    ByVal load As Boolean, ByVal checkOnCreate As Boolean, _
-        '    ByVal addOnCreate As Boolean) As _ICachedEntity
-
-
-        '    Return NormalizeObject(obj, load, checkOnCreate, dic, addOnCreate)
-        'End Function
-
         Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
             ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary, _
             ByVal addOnCreate As Boolean, ByVal mgr As OrmManager) As _ICachedEntity
+
+            Return NormalizeObject(obj, load, checkOnCreate, dic, addOnCreate, mgr, False, _
+                                   mgr.MappingEngine.GetEntitySchema(obj.GetType))
+        End Function
+
+        Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
+            ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary, _
+            ByVal addOnCreate As Boolean, ByVal mgr As OrmManager, ByVal fromDb As Boolean, _
+            ByVal oschema As IEntitySchema) As _ICachedEntity
 
             Assert(obj.IsPKLoaded, "Primary key is not loaded")
 
@@ -672,11 +680,11 @@ Namespace Cache
             Dim created As Boolean = False ', checked As Boolean = False
             Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
             Dim oc As ObjectModification = Nothing
-            If a Is Nothing AndAlso NewObjectManager IsNot Nothing Then
+            If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
                 a = NewObjectManager.GetNew(type, obj.GetPKValues)
                 If a IsNot Nothing Then Return a
                 If mgr IsNot Nothing Then
-                    oc = ShadowCopy(obj, mgr)
+                    oc = ShadowCopy(obj, mgr, oschema)
                     If oc IsNot Nothing Then
                         Dim oldpk() As PKDesc = oc.OlPK
                         If oldpk IsNot Nothing Then
@@ -687,10 +695,10 @@ Namespace Cache
                 End If
             End If
             If a Is Nothing AndAlso mgr IsNot Nothing Then
-                If oc Is Nothing Then oc = ShadowCopy(obj, mgr)
+                If oc Is Nothing Then oc = ShadowCopy(obj, mgr, oschema)
                 If oc IsNot Nothing Then
                     a = CType(oc.Obj, _ICachedEntity)
-                    AddObjectInternal(a, dic)
+                    AddObjectInternal(a, New CacheKey(a), dic)
                     Return a
                 End If
             End If
@@ -700,19 +708,19 @@ Namespace Cache
                 Using SyncHelper.AcquireDynamicLock(sync_key)
                     a = CType(dic(id), _ICachedEntity)
                     If a Is Nothing Then
-                        If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
-                            Throw New NotSupportedException
-                        Else
-                            a = obj
-                            If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
-                                If GetType(IKeyEntity).IsAssignableFrom(type) Then
-                                    Dim orm As IKeyEntity = CType(a, IKeyEntity)
-                                    orm.Init(orm.Identifier, Me, mgr.MappingEngine)
-                                Else
-                                    a.Init(a.GetPKValues, Me, mgr.MappingEngine)
-                                End If
+                        'If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
+                        '    Throw New NotSupportedException
+                        'Else
+                        a = obj
+                        If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
+                            If GetType(IKeyEntity).IsAssignableFrom(type) Then
+                                Dim orm As IKeyEntity = CType(a, IKeyEntity)
+                                orm.Init(orm.Identifier, Me, mgr.MappingEngine)
+                            Else
+                                a.Init(a.GetPKValues, Me, mgr.MappingEngine)
                             End If
                         End If
+                        'End If
 
                         If load Then
                             a.Load(mgr)
@@ -731,7 +739,7 @@ Namespace Cache
                         End If
                         created = True
                         If a IsNot Nothing AndAlso addOnCreate Then
-                            AddObjectInternal(a, dic)
+                            AddObjectInternal(a, id, dic)
                         End If
                     End If
                 End Using
@@ -759,7 +767,7 @@ Namespace Cache
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim obj As _ICachedEntity = NormalizeObject(o, False, False, _
-                GetOrmDictionary(filterInfo, type, schema), add2CacheOnCreate, Nothing)
+                GetOrmDictionary(filterInfo, type, schema), add2CacheOnCreate, Nothing, False, schema.GetEntitySchema(type))
 
             If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
                 o.SetObjectState(ObjectState.Created)
@@ -799,10 +807,9 @@ Namespace Cache
             Return NormalizeObject(o, False, False, GetOrmDictionary(filterInfo, type, schema), addOnCreate, Nothing)
         End Function
 
-        Protected Friend Shared Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
+        Protected Friend Shared Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal id As CacheKey, ByVal dic As IDictionary)
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
             Dim trace As Boolean = False
-            Dim id As CacheKey = New CacheKey(obj)
             SyncLock dic.SyncRoot
                 If Not dic.Contains(id) Then
                     dic.Add(id, obj)

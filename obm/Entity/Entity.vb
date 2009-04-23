@@ -183,7 +183,9 @@ Namespace Entities
                         If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
                             Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
                             If ov IsNot Nothing Then
-                                ov.SetValueOptimized(propertyAlias, schema, mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType))
+                                Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType)
+                                If eo.CreateManager IsNot Nothing Then eo.SetCreateManager(CreateManager)
+                                ov.SetValueOptimized(propertyAlias, schema, eo)
                             Else
                                 Throw New OrmObjectException("Check read requires IOptimizedValues")
                             End If
@@ -267,7 +269,7 @@ Namespace Entities
             End If
         End Function
 
-        Protected ReadOnly Property MappingEngine() As ObjectMappingEngine Implements _IEntity.MappingEngine
+        Protected Property MappingEngine() As ObjectMappingEngine Implements _IEntity.MappingEngine
             Get
                 If _schema IsNot Nothing Then
                     Return _schema
@@ -286,6 +288,9 @@ Namespace Entities
                     End If
                 End If
             End Get
+            Set(ByVal value As ObjectMappingEngine)
+                _schema = value
+            End Set
         End Property
 
         Protected Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
@@ -302,9 +307,9 @@ Namespace Entities
             _mgrStr = str
         End Sub
 
-        Protected Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _IEntity.SetSpecificSchema
-            _schema = mpe
-        End Sub
+        Protected Function GetSpecificSchema() As ObjectMappingEngine Implements _IEntity.GetSpecificSchema
+            Return _schema
+        End Function
 
 #End Region
 

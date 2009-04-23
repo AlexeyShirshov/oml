@@ -68,6 +68,8 @@ Namespace Entities
         Private _alterLock As New Object
         <NonSerialized()> _
         Private _copy As CachedEntity
+        <NonSerialized()> _
+        Private _props As IDictionary
 
         '<EditorBrowsable(EditorBrowsableState.Never)> _
         'Public Class AcceptState
@@ -375,7 +377,7 @@ Namespace Entities
             _copy = clone
             'Using mc As IGetManager = GetMgr()
             Dim c As CacheBase = mgr.Cache
-            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown)
+            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             'End Using
             If pk IsNot Nothing Then clone.SetPK(pk)
         End Sub
@@ -391,13 +393,20 @@ Namespace Entities
             _hasPK = True
         End Sub
 
-        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
+        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, _
+            ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
-                    Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(schema)
-                    For i As Integer = 0 To arr.Count - 1
-                        If Not _members_load_state(i, arr.Count, schema) Then
+                    Dim cnt As Integer = 0
+                    If arr Is Nothing Then
+                        cnt = GetProperties(schema).Count
+                    Else
+                        cnt = arr.Count
+                    End If
+
+                    For i As Integer = 0 To cnt - 1
+                        If Not _members_load_state(i, cnt, schema) Then
                             'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
                             'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                             allloaded = False
@@ -426,20 +435,24 @@ Namespace Entities
                     _loaded_members = New BitArray(cnt)
                     _sver = If(mpe Is Nothing, "w-x", mpe.Version)
                     If IsPKLoaded Then
-                        If l Is Nothing Then l = SortedColumnAttributeList(mpe)
+                        Dim getted As Boolean = False
                         Dim oschema As IEntitySchema = Nothing
-                        If mpe IsNot Nothing Then
-                            oschema = mpe.GetEntitySchema(Me.GetType)
-                        End If
-                        For i As Integer = 0 To l.Count - 1
-                            Dim c As EntityPropertyAttribute = l(i)
-                            If oschema Is Nothing Then
-                                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    _loaded_members(i) = True
+                        For i As Integer = 0 To cnt - 1
+                            If Not _loaded_members(i) Then
+                                If l Is Nothing Then l = SortedColumnAttributeList(mpe)
+                                If mpe IsNot Nothing AndAlso Not getted Then
+                                    oschema = mpe.GetEntitySchema(Me.GetType)
+                                    getted = True
                                 End If
-                            Else
-                                If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    _loaded_members(i) = True
+                                Dim c As EntityPropertyAttribute = l(i)
+                                If oschema Is Nothing Then
+                                    If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                        _loaded_members(i) = True
+                                    End If
+                                Else
+                                    If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                        _loaded_members(i) = True
+                                    End If
                                 End If
                             End If
                         Next
@@ -490,7 +503,16 @@ Namespace Entities
             If schema Is Nothing Then
                 c = ObjectMappingEngine.GetColumnByMappedPropertyAlias(Me.GetType, propertyAlias, Nothing)
             Else
-                c = schema.GetColumnByPropertyAlias(Me.GetType, propertyAlias)
+                For Each de As DictionaryEntry In GetProperties(schema)
+                    Dim ep As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+                    If ep.PropertyAlias = propertyAlias Then
+                        c = ep
+                        Exit For
+                    End If
+                Next
+                If c Is Nothing Then
+                    Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
+                End If
             End If
 
             Return SetLoaded(c, loaded, check, schema)
@@ -574,7 +596,7 @@ Namespace Entities
         End Sub
 
         Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -609,7 +631,7 @@ Namespace Entities
                     ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
                    (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, mgr) Is Nothing Then
+                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType)) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
                     SetObjectStateClear(Entities.ObjectState.None)
                     Load()
@@ -825,10 +847,10 @@ Namespace Entities
 
         Protected Sub _Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
             MyBase.Init(cache, schema)
-            If schema IsNot Nothing Then
-                'Dim arr As Generic.List(Of EntityPropertyAttribute) = schema.GetSortedFieldList(Me.GetType)
-                _loaded_members = New BitArray(schema.GetProperties(Me.GetType).Count)
-            End If
+            'If schema IsNot Nothing Then
+            '    'Dim arr As Generic.List(Of EntityPropertyAttribute) = schema.GetSortedFieldList(Me.GetType)
+            '    _loaded_members = New BitArray(GetProperties(schema).Count)
+            'End If
         End Sub
 
         Protected Overridable Sub SetPK(ByVal pk As PKDesc())
@@ -906,7 +928,7 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
+                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue, Nothing)
             End Using
         End Sub
 
@@ -1107,7 +1129,7 @@ l1:
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     Else
                         'Using mc As IGetManager = GetMgr()
-                        obj = mgr.NormalizeObject(Me, mgr.GetDictionary(Me.GetType))
+                        obj = mgr.NormalizeObject(Me, mgr.GetDictionary(Me.GetType), True, oschema)
                         'End Using
 
                         If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
@@ -1266,8 +1288,8 @@ l1:
                 'Using mc As IGetManager = GetMgr()
                 Dim schema As ObjectMappingEngine = MappingEngine
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
-                If Not Object.Equals(obj.MappingEngine, schema) Then
-                    obj.SetSpecificSchema(schema)
+                If Not Object.Equals(obj.GetSpecificSchema, GetSpecificSchema) Then
+                    obj.MappingEngine = GetSpecificSchema()
                 End If
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -1314,7 +1336,7 @@ l1:
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1354,13 +1376,13 @@ l1:
                     End If
                 End If
             End If
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit)
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             'End Using
         End Sub
 
         Protected Sub CreateClone4Delete(ByVal mgr As OrmManager)
             SetObjectState(Entities.ObjectState.Deleted)
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete)
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             Dim mgrLocal As OrmManager = GetCurrent()
             If mgrLocal IsNot Nothing Then
                 mgrLocal.RaiseBeginDelete(Me)
@@ -1395,7 +1417,7 @@ l1:
                 Using SyncHelper(True)
                     If ObjectState = Entities.ObjectState.Modified Then
                         'Using mc As IGetManager = GetMgr()
-                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
+                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
                         'If mo Is Nothing Then mo = _mo
                         If mo IsNot Nothing Then
                             If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1442,7 +1464,7 @@ l1:
                         End If
                     End If
 
-                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr)
+                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
                     If mo IsNot Nothing Then
                         If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
                             'Debug.Assert(False)
@@ -1604,7 +1626,7 @@ l1:
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr)
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, mgr.MappingEngine.GetEntitySchema(obj.GetType))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -1713,10 +1735,10 @@ l1:
                 If _attList IsNot Nothing Then
                     Return _attList.Count
                 Else
-                    Return ObjectMappingEngine.GetMappedProperties(Me.GetType, Nothing).Count
+                    Return SortedColumnAttributeList(schema).Count
                 End If
             Else
-                Return schema.GetSortedFieldList(Me.GetType).Count
+                Return GetProperties(schema).Count
             End If
         End Function
 
@@ -1743,6 +1765,13 @@ l1:
             Else
                 Return schema.GetSortedFieldList(Me.GetType)
             End If
+        End Function
+
+        Protected Function GetProperties(ByVal schema As ObjectMappingEngine) As IDictionary
+            If _props Is Nothing Then
+                _props = schema.GetProperties(Me.GetType)
+            End If
+            Return _props
         End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean

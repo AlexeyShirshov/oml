@@ -846,8 +846,10 @@ Imports System.ComponentModel
 
         Assert.IsTrue(r.Count > 0)
 
-
-        Assert.Inconclusive()
+        For Each a As AnonymousCachedEntity In r
+            Assert.IsNotNull(a("Title"))
+            Assert.IsTrue(CInt(a("Code")) > 0)
+        Next
     End Sub
 
     <TestMethod()> Public Sub TestExternalCache()

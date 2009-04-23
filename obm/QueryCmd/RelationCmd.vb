@@ -634,7 +634,7 @@ l1:
 
         Public Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, MappingEngine)
                     LoadObjects(mgr)
                 End Using
             End Using
@@ -671,7 +671,7 @@ l1:
 
         Public Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr)
+                Using New SetManagerHelper(mgr, getMgr, MappingEngine)
                     LoadObjects(mgr, start, length)
                 End Using
             End Using
