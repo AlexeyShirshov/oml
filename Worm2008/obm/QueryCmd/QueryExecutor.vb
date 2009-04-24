@@ -123,6 +123,7 @@ Namespace Query
         Public Class cls
             Private _mgr As OrmManager
             Private _pk() As String
+            Private _oschema As IEntitySchema
 
             Public Sub New(ByVal mgr As OrmManager)
                 _mgr = mgr
@@ -140,22 +141,38 @@ Namespace Query
 
             Public Sub prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
                 RemoveHandler sender.QueryPrepared, AddressOf prepared
-                _cancel = sender._types.Count > 1
+                Dim cnt As Integer = 0
+                For Each d As EntityUnion In sender._types.Keys
+                    If GetType(_IEntity).IsAssignableFrom(d.GetRealType(_mgr.MappingEngine)) Then
+                        cnt += 1
+                        If cnt > 1 Then
+                            _cancel = True
+                            Exit For
+                        End If
+                    End If
+                Next
                 args.Cancel = _cancel
                 Dim createType As Type = sender._createType.GetRealType(_mgr.MappingEngine)
                 If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
                     Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
                     Dim l As New List(Of String)
                     If oschema Is Nothing Then
+l1:
                         For Each se As SelectExpression In sender._sl
                             If (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 l.Add(se.GetIntoPropertyAlias)
                             End If
                         Next
                     Else
+                        'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
+                        _oschema = oschema
+                        'End If
                         For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(createType, oschema)
                             l.Add(pk.PropertyAlias)
                         Next
+                        If l.Count = 0 Then
+                            GoTo l1
+                        End If
                     End If
                     _pk = l.ToArray
                     AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
@@ -163,7 +180,9 @@ Namespace Query
             End Sub
 
             Public Sub ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
-                CType(o, AnonymousCachedEntity)._pk = _pk
+                Dim a As AnonymousCachedEntity = CType(o, AnonymousCachedEntity)
+                a._pk = _pk
+                a._myschema = _oschema
             End Sub
 
             Public Sub RemoveEvent()
@@ -214,12 +233,25 @@ Namespace Query
 
         Private Function _ExecEntity(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
             ByVal d As GetProcessorDelegate) As ReadOnlyObjectList(Of ReturnType)
-
-            Return _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                    m.GetFromCache2(dic, sync, id, True, p2), _
-                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-                   CType(ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
+            'If GetType(AnonymousCachedEntity).IsAssignableFrom(query.CreateType) Then
+            Dim c As New cls(mgr)
+            Try
+                AddHandler query.QueryPrepared, AddressOf c.prepared
+                Return _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
+                    Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+                        m.GetFromCache2(dic, sync, id, True, p2), _
+                    Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+                       CType(ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
+            Finally
+                c.RemoveEvent()
+            End Try
+            'Else
+            'Return _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
+            '    Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+            '        m.GetFromCache2(dic, sync, id, True, p2), _
+            '    Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+            '       CType(ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
+            'End If
         End Function
 
         Public Function ExecEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity

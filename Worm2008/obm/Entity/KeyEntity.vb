@@ -1101,7 +1101,7 @@ Namespace Entities
             Return New PKDesc() {New PKDesc(OrmBaseT.PKName, _id)}
         End Function
 
-        Protected Overrides Sub SetPK(ByVal pk() As PKDesc)
+        Protected Overrides Sub SetPK(ByVal pk() As PKDesc, ByVal schema As ObjectMappingEngine)
             _id = pk(0).Value
         End Sub
 

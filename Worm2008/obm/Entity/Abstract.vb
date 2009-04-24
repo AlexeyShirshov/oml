@@ -74,6 +74,7 @@ Namespace Entities
         Sub SetMgrString(ByVal str As String)
         Function GetSpecificSchema() As ObjectMappingEngine
         Property MappingEngine() As ObjectMappingEngine
+        Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
     End Interface
 
     Public Interface IEntity
@@ -111,10 +112,12 @@ Namespace Entities
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
+        Sub UpdateCacheAfterUpdate(ByVal c As OrmCache)
         Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
         Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
+        Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
     End Interface
 
     Public Interface ICachedEntity

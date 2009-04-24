@@ -258,4 +258,55 @@ Imports Worm.Criteria
         Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestModifyPOCO()
+        Dim t As New SourceFragment("dbo", "table1")
+        Dim c As New Cache.OrmCache
+
+        Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
+
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(mpe, c)))
+
+        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+            OrderBy(SCtor.prop(GetType(Pod.cls), "Code")).From(t)
+
+        Dim l As IList(Of Pod.cls) = q.ToPOCOList(Of Pod.cls)()
+
+        Dim ce As _ICachedEntity = c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0))
+
+        Dim o As Pod.cls = l(0)
+
+        Assert.AreEqual(ObjectState.None, ce.ObjectState)
+        Assert.IsNull(ce.OriginalCopy)
+
+        o.Code = o.Code + 100
+
+        c.SyncPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0))
+
+        Assert.AreEqual(ObjectState.Modified, ce.ObjectState)
+        Assert.IsNotNull(ce.OriginalCopy)
+
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(mpe, c)
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    mt.Add(ce)
+                    mt.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(ObjectState.None, ce.ObjectState)
+                Assert.IsNull(ce.OriginalCopy)
+
+                l = q.ToPOCOList(Of Pod.cls)()
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
+
+                Assert.AreNotSame(l(0), o)
+
+                Assert.AreEqual(l(0).Code, o.Code)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class

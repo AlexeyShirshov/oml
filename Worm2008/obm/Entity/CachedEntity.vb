@@ -379,7 +379,7 @@ Namespace Entities
             Dim c As CacheBase = mgr.Cache
             c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, mgr.MappingEngine.GetEntitySchema(Me.GetType))
             'End Using
-            If pk IsNot Nothing Then clone.SetPK(pk)
+            If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         End Sub
 
         Protected MustOverride Function GetCacheKey() As Integer
@@ -796,7 +796,7 @@ Namespace Entities
             End If
             'If unreg Then
             mo = CType(OriginalCopy, _ICachedEntity)
-            cache.UnregisterModification(Me, mpe, context)
+            cache.UnregisterModification(Me, mpe, context, GetEntitySchema(mpe))
             _copy = Nothing
             '_mo = Nothing
             'End If
@@ -853,9 +853,8 @@ Namespace Entities
             'End If
         End Sub
 
-        Protected Overridable Sub SetPK(ByVal pk As PKDesc())
+        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal schema As ObjectMappingEngine)
             Dim tt As Type = Me.GetType
-            Dim schema As ObjectMappingEngine = MappingEngine
             Dim oschema As IEntitySchema = Nothing
             If schema IsNot Nothing Then
                 oschema = schema.GetEntitySchema(tt)
@@ -878,7 +877,7 @@ Namespace Entities
 
         Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
             _Init(cache, schema)
-            SetPK(pk)
+            SetPK(pk, schema)
             PKLoaded(pk.Length)
         End Sub
 
@@ -1450,9 +1449,9 @@ l1:
                 RejectRelationChanges(mgr)
 
                 If ObjectState = ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Created Then
-                    If IsReadOnly(mgr) Then
-                        Throw New OrmObjectException(ObjName & " object in readonly state")
-                    End If
+                    'If IsReadOnly(mgr) Then
+                    '    Throw New OrmObjectException(ObjName & " object in readonly state")
+                    'End If
 
                     Dim oc As ICachedEntity = OriginalCopy()
                     If ObjectState <> Entities.ObjectState.Deleted Then
@@ -1466,6 +1465,10 @@ l1:
 
                     Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
                     If mo IsNot Nothing Then
+                        If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
+                            Throw New OrmObjectException(ObjName & " object in readonly state")
+                        End If
+
                         If ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
                             'Debug.Assert(False)
                             'Throw New OrmObjectException
@@ -1505,7 +1508,7 @@ l1:
                     End If
 
                     If newid IsNot Nothing Then
-                        SetPK(newid)
+                        SetPK(newid, mgr.MappingEngine)
                     End If
 
 #If TraceSetState Then
@@ -1529,7 +1532,7 @@ l1:
                         End If
                         ' End Using
 
-                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, mgr.GetContextInfo)
+                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, mgr.GetContextInfo, GetEntitySchema(mgr.MappingEngine))
                         _copy = Nothing
                         _loaded = False
                         '_loaded_members = New BitArray(_loaded_members.Count)
@@ -1705,7 +1708,7 @@ l1:
             End Get
         End Property
 
-        Protected Friend Sub UpdateCacheAfterUpdate(ByVal c As OrmCache)
+        Protected Friend Sub UpdateCacheAfterUpdate(ByVal c As OrmCache) Implements _ICachedEntity.UpdateCacheAfterUpdate
             If _upd.UpdatedFields IsNot Nothing Then
                 If c IsNot Nothing Then
                     Dim l As List(Of String) = New List(Of String)
@@ -1902,6 +1905,10 @@ l1:
                 l.Add(Me)
             End If
             Return l
+        End Function
+
+        Public Overridable Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
+            Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, mgr.MappingEngine.GetEntitySchema(Me.GetType))
         End Function
     End Class
 

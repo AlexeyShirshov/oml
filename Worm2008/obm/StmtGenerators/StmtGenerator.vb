@@ -18,7 +18,7 @@ Public MustInherit Class StmtGenerator
     Public MustOverride ReadOnly Property Selector() As String
     Public MustOverride ReadOnly Property FTSKey() As String
     Public MustOverride Function Comment(ByVal s As String) As String
-
+    Public MustOverride ReadOnly Property PlanHint() As String
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource) As Criteria.ICtor
     'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource, ByVal propertyAlias As String) As Criteria.CriteriaField
     'Public MustOverride Function CreateCriteria(ByVal table As SourceFragment) As Criteria.ICtor

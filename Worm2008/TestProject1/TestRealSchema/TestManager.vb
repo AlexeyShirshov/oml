@@ -1266,7 +1266,7 @@ Public Class TestManagerRS
                 Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id", "ID", Field2DbRelations.PK).column(Nothing, "code", "Code").GetAllProperties
 
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
-                    Nothing, SelectExpression.GetMapping(s))
+                    mgr.MappingEngine.GetEntitySchema(GetType(Table1)), SelectExpression.GetMapping(s))
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(1, l(0).ID)

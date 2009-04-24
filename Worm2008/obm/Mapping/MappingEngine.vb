@@ -1530,6 +1530,23 @@ Public Class ObjectMappingEngine
         Return idic
     End Function
 
+    Friend Function AddEntitySchema(ByVal tp As Type, ByVal schema As IEntitySchema) As Boolean
+        Dim idic As IDictionary = GetIdic()
+
+        SyncLock idic.SyncRoot
+            If Not idic.Contains(tp) Then
+                idic.Add(tp, schema)
+                Return True
+            End If
+        End SyncLock
+
+        Return False
+    End Function
+
+    Friend Function HasEntitySchema(ByVal tp As Type) As Boolean
+        Return GetIdic.Contains(tp)
+    End Function
+
     Public Shared Function GetEntitySchema(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByRef names As IDictionary) As IEntitySchema
         Dim schema As IEntitySchema = Nothing
 

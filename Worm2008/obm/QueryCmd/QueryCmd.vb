@@ -2907,20 +2907,24 @@ l1:
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
-            Dim selSchema As IEntitySchema = Nothing
-            If _poco IsNot Nothing Then
+            Dim selSchema As IEntitySchema = mpe.GetEntitySchema(rt, False)
+
+            If selSchema Is Nothing AndAlso _poco IsNot Nothing Then
                 selSchema = CType(_poco(rt), IEntitySchema)
+            End If
+
+            If selSchema Is Nothing Then
+                selSchema = GetSchema(mpe, rt, hasPK)
+                'If Not mpe.HasEntitySchema(rt) Then
+                AddPOCO(rt, selSchema)
+                'End If
+            Else
                 For Each m As MapField2Column In selSchema.GetFieldColumnMap
                     If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         hasPK = True
                         Exit For
                     End If
                 Next
-            End If
-
-            If selSchema Is Nothing Then
-                selSchema = GetSchema(mpe, rt, hasPK)
-                AddPOCO(rt, selSchema)
             End If
 
             Dim l As IEnumerable = Nothing
@@ -2950,20 +2954,24 @@ l1:
             ByVal e As _IEntity, ByVal ro As Object, ByVal mgr As OrmManager)
             For Each kv As DictionaryEntry In props
                 Dim col As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                Dim pa As String = rt.Name & "-" & col.PropertyAlias
-                If ctd.GetProperties.Find(pa, False) IsNot Nothing _
-                    OrElse ctd.GetProperties.Find(col.PropertyAlias, False) IsNot Nothing Then
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
-                    Dim v As Object = mpe.GetPropertyValue(e, pa, Nothing)
-                    If v Is DBNull.Value Then
-                        v = Nothing
+                Dim pa As String = col.PropertyAlias
+                If ctd.GetProperties.Find(pa, False) Is Nothing Then
+                    pa = rt.Name & "-" & pa
+                    If ctd.GetProperties.Find(pa, False) Is Nothing Then
+                        Continue For
                     End If
-                    'pi.SetValue(ro, v, Nothing)
-                    Dim pit As Type = pi.PropertyType
-                    v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
-                    If v IsNot Nothing AndAlso _poco.Contains(pit) Then
-                        InitPOCO(mpe.GetProperties(pit, CType(_poco(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
-                    End If
+                End If
+
+                Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
+                Dim v As Object = mpe.GetPropertyValue(e, pa, CType(_poco(rt), IEntitySchema))
+                If v Is DBNull.Value Then
+                    v = Nothing
+                End If
+                'pi.SetValue(ro, v, Nothing)
+                Dim pit As Type = pi.PropertyType
+                v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
+                If v IsNot Nothing AndAlso _poco.Contains(pit) Then
+                    InitPOCO(mpe.GetProperties(pit, CType(_poco(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
                 End If
             Next
         End Sub
@@ -3435,6 +3443,9 @@ l1:
                         Exit For
                     End If
                 Next
+                If pk Then
+                    mpe.AddEntitySchema(t, s)
+                End If
                 Return s
             End If
             If SelectList Is Nothing Then
@@ -3453,7 +3464,11 @@ l1:
                         pk = True
                     End If
                 Next
-                Return New SimpleObjectSchema(selList)
+                If pk Then
+                    Return New SimpleTypedEntitySchema(t, selList)
+                Else
+                    Return New SimpleObjectSchema(selList)
+                End If
             Else
                 Dim cols As Collections.IndexedCollection(Of String, MapField2Column) = SelectExpression.GetMapping(SelectList)
                 Dim tbl As SourceFragment = Nothing, hasTable As Boolean = False
@@ -3474,7 +3489,11 @@ l1:
                         pk = True
                     End If
                 Next
-                Return New SimpleObjectSchema(cols)
+                If pk Then
+                    Return New SimpleTypedEntitySchema(t, cols)
+                Else
+                    Return New SimpleObjectSchema(cols)
+                End If
             End If
         End Function
 
