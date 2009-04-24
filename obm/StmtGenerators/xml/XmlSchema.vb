@@ -194,5 +194,11 @@ Namespace Xml
         Public Overrides Function Comment(ByVal s As String) As String
             Throw New NotImplementedException
         End Function
+
+        Public Overrides ReadOnly Property PlanHint() As String
+            Get
+                Return Nothing
+            End Get
+        End Property
     End Class
 End Namespace

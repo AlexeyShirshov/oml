@@ -5,10 +5,9 @@ Imports System.Collections.Generic
 Imports Worm.Query
 
 Namespace Entities.Meta
-    Public NotInheritable Class SimpleObjectSchema
+    Friend Class SimpleObjectSchema
         Implements IEntitySchema
 
-        'Private _tables(-1) As SourceFragment
         Private _table As SourceFragment
         Private _cols As Collections.IndexedCollection(Of String, MapField2Column) = New OrmObjectIndex
 
@@ -65,48 +64,9 @@ Namespace Entities.Meta
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
         End Sub
 
-        'Private Function FindTbl(ByVal table As String) As SourceFragment
-        '    For Each t As SourceFragment In _tables
-        '        If t.TableName = table Then
-        '            Return t
-        '        End If
-        '    Next
-        '    Dim l As Integer = _tables.Length
-        '    ReDim Preserve _tables(l)
-        '    _tables(l) = New SourceFragment(table)
-        '    Return _tables(l)
-        'End Function
-
-        'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As QueryJoin Implements IOrmObjectSchema.GetJoins
-        '    Throw New NotSupportedException("Joins is not supported in simple mode")
-        'End Function
-
-        'Public Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
-        '    Return New SourceFragment() {_table}
-        'End Function
-
-        'Public Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchema.ChangeValueType
-        '    newvalue = value
-        '    Return False
-        'End Function
-
         Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
             Return _cols
         End Function
-
-        'Public Function GetFilter(ByVal filter_info As Object) As IFilter Implements IContextObjectSchema.GetContextFilter
-        '    Return Nothing
-        'End Function
-
-        'Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
-        '    'Throw New NotSupportedException("Many2many relations is not supported in simple mode")
-        '    Return New M2MRelation() {}
-        'End Function
-
-        'Public Function GetSuppressedFields() As String() Implements IEntitySchema.GetSuppressedFields
-        '    'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
-        '    Return Nothing
-        'End Function
 
         Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
             Get
@@ -164,4 +124,29 @@ Namespace Entities.Meta
         End Function
     End Class
 
+    Friend NotInheritable Class SimpleTypedEntitySchema
+        Inherits SimpleObjectSchema
+        Implements ICacheBehavior ', ITypedSchema
+
+        Private _t As Type
+
+        Friend Sub New(ByVal t As Type, ByVal cols As Collections.IndexedCollection(Of String, MapField2Column))
+            MyBase.New(cols)
+            _t = t
+        End Sub
+
+        Public Function GetEntityKey(ByVal filterInfo As Object) As String Implements ICacheBehavior.GetEntityKey
+            Return _t.ToString
+        End Function
+
+        Public Function GetEntityTypeKey(ByVal filterInfo As Object) As Object Implements ICacheBehavior.GetEntityTypeKey
+            Return _t
+        End Function
+
+        'Public ReadOnly Property EntityType() As System.Type Implements ITypedSchema.EntityType
+        '    Get
+        '        Return _t
+        '    End Get
+        'End Property
+    End Class
 End Namespace

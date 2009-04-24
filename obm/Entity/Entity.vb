@@ -545,7 +545,7 @@ Namespace Entities
         End Function
 #End Region
 
-        Protected Function GetValue(ByVal propertyAlias As String) As Object
+        Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
             Dim schema As Worm.ObjectMappingEngine = MappingEngine
             If schema Is Nothing Then
                 Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
@@ -588,6 +588,10 @@ Namespace Entities
 
             _state = Entities.ObjectState.Created
         End Sub
+
+        Protected Overridable Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As Meta.IEntitySchema Implements _IEntity.GetEntitySchema
+            Return mpe.GetEntitySchema(Me.GetType, True)
+        End Function
     End Class
 
     Public Class EntityLazyLoad

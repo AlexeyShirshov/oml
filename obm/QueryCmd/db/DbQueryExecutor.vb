@@ -1237,10 +1237,6 @@ l1:
                 sb.Replace(RowNumberOrder, r.ToString)
             End If
 
-            If Not String.IsNullOrEmpty(query.Hint) Then
-                sb.Append(" ").Append(query.Hint)
-            End If
-
             If query.RowNumberFilter IsNot Nothing Then
                 'Throw New NotImplementedException
                 Dim rs As String = sb.ToString
@@ -1255,6 +1251,10 @@ l1:
                 'sb.Length -= 1
                 sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
                 sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
+            End If
+
+            If Not String.IsNullOrEmpty(s.PlanHint) AndAlso Not String.IsNullOrEmpty(query.Hint) Then
+                sb.Append(String.Format(s.PlanHint, query.Hint))
             End If
 
             Return sb.ToString

@@ -1354,10 +1354,9 @@ l1:
            ByVal modifiedloaded As Boolean)
             Invariant()
 
-            Dim dic As IDictionary = GetDictionary(obj.GetType)
+            Dim dic As IDictionary = GetDictionary(obj.GetType, obj.GetEntitySchema(MappingEngine))
 
             LoadSingleObject(cmd, arr, obj, fromRS, check_pk, load, modifiedloaded, dic)
-
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
@@ -1391,7 +1390,7 @@ l1:
                     ElseIf dr.RecordsAffected < 0 Then
                         If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, MappingEngine.GetEntitySchema(obj.GetType))
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If
@@ -1447,7 +1446,7 @@ l1:
                     If Not obj.IsLoaded AndAlso loaded Then
                         If load Then
                             'Throw New ApplicationException
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo)
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, oschema)
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If
@@ -2477,7 +2476,7 @@ l1:
                 Else
                     MappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
                 End If
-                If ce IsNot Nothing AndAlso c IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
+                If ce IsNot Nothing AndAlso c IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
             Else
                 Dim propType As Type = pi.PropertyType
                 If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then

@@ -75,14 +75,8 @@ Namespace Entities.Meta
         Function GetM2MRelations() As M2MRelationDesc()
     End Interface
 
-    'Public Interface IRelMapObjectSchema
-    '    Inherits IMultiTableWithM2MSchema
-    'End Interface
-
-    'Public Interface IOrmObjectSchema
-    '    Inherits IEntitySchemaBase
-    '    Inherits IMultiTableObjectSchema
-    '    Inherits IContextObjectSchema, ISchemaWithM2M
+    'Public Interface ITypedSchema
+    '    ReadOnly Property EntityType() As Type
     'End Interface
 
     Public Interface IReadonlyObjectSchema

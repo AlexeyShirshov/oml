@@ -848,7 +848,7 @@ Namespace Cache
             Return True
         End Function
 
-        Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal schema As ObjectMappingEngine, _
+        Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal oschema As IEntitySchema, ByVal schema As ObjectMappingEngine, _
             ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks2)
 
@@ -857,7 +857,7 @@ Namespace Cache
             End If
 
             Dim tkey As Object = tt
-            Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
+            'Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             If c IsNot Nothing Then
                 tkey = c.GetEntityKey(mgr.GetContextInfo)
@@ -980,6 +980,7 @@ Namespace Cache
             Dim tt As Type = Nothing
             Dim addType As Type = Nothing
             Dim delType As Type = Nothing
+            Dim oschema As IEntitySchema = Nothing
 
             For Each p As Pair(Of _ICachedEntity) In objs
                 Dim obj As _ICachedEntity = p.First
@@ -987,6 +988,10 @@ Namespace Cache
                     Throw New ArgumentException("At least one element in objs is nothing")
                 End If
                 tt = obj.GetType
+
+                If oschema Is Nothing Then
+                    oschema = obj.GetEntitySchema(schema)
+                End If
 
                 If ValidateBehavior = Cache.ValidateBehavior.Immediate _
                     OrElse (addType IsNot Nothing AndAlso delType IsNot Nothing) _
@@ -999,6 +1004,7 @@ Namespace Cache
                 ElseIf obj.UpdateCtx.Deleted Then
                     delType = tt
                 End If
+
             Next
 
 #If DebugLocks Then
@@ -1017,11 +1023,11 @@ Namespace Cache
             End Using
 
             If ValidateBehavior = Cache.ValidateBehavior.Immediate Then
-                UpdateCacheImmediate(tt, schema, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2))
+                UpdateCacheImmediate(tt, oschema, schema, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2))
             End If
 
             If Not fromUpdate Then
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
+                'Dim oschema As IEntitySchema = schema.GetEntitySchema(tt)
                 Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                 Dim k As Object = tt
                 If c IsNot Nothing Then
@@ -1478,7 +1484,7 @@ l1:
 
     End Class
 
-    Public MustInherit Class WebCache
+    Public Class WebCache
         Inherits OrmCache
 
         'Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
@@ -1529,7 +1535,9 @@ l1:
             }
         End Function
 
-        Protected MustOverride Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
+        Protected Overridable Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
+            Return WebCacheDictionaryPolicy.CreateDefault
+        End Function
 
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter

@@ -1019,7 +1019,12 @@ namespace Worm.CodeGen.Core
             meth.Parameters.Add(
                 new CodeParameterDeclarationExpression(
                     new CodeTypeReference(new CodeTypeReference(typeof(PKDesc)), 1), "pks")
-                );
+            );
+
+            meth.Parameters.Add(
+                new CodeParameterDeclarationExpression(
+                    new CodeTypeReference(typeof(ObjectMappingEngine)), "mpe")
+            );
 
             meth.Statements.Add(new CodeMethodInvokeExpression(new CodeBaseReferenceExpression(), meth.Name,
                                                                new CodeArgumentReferenceExpression(
@@ -1220,7 +1225,11 @@ namespace Worm.CodeGen.Core
             meth.Parameters.Add(
                 new CodeParameterDeclarationExpression(
                     new CodeTypeReference(new CodeTypeReference(typeof(PKDesc)), 1), "pks")
-                );
+            );
+            meth.Parameters.Add(
+                new CodeParameterDeclarationExpression(
+                    new CodeTypeReference(typeof(ObjectMappingEngine)), "mpe")
+            );
 
             if (composite)
             {

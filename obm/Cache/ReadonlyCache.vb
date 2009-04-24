@@ -422,14 +422,14 @@ Namespace Cache
         End Function
 #End If
         Protected Friend Sub UnregisterModification(ByVal obj As _ICachedEntity, _
-            ByVal mpe As ObjectMappingEngine, ByVal context As Object)
+            ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal oschema As IEntitySchema)
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 If _modifiedobjects.Count > 0 Then
-                    Dim key As String = GetModificationKey(obj, mpe, context, mpe.GetEntitySchema(obj.GetType))
+                    Dim key As String = GetModificationKey(obj, mpe, context, oschema)
                     _modifiedobjects.Remove(key)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
@@ -703,8 +703,8 @@ Namespace Cache
                 End If
             End If
 
-            Dim sync_key As String = "LoadType" & id.ToString & type.ToString
             If a Is Nothing Then
+                Dim sync_key As String = "LoadType" & id.ToString & type.ToString
                 Using SyncHelper.AcquireDynamicLock(sync_key)
                     a = CType(dic(id), _ICachedEntity)
                     If a Is Nothing Then
@@ -838,6 +838,47 @@ Namespace Cache
         Public Function GetQueryDictionary(ByVal key As String) As System.Collections.IDictionary Implements IExploreQueryCache.GetDictionary
             Return CType(_filters(key), System.Collections.IDictionary)
         End Function
+
+        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal o As Object) As ICachedEntity
+            Return GetPOCO(mpe, mpe.GetEntitySchema(o.GetType, False), o)
+        End Function
+
+        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object) As _ICachedEntity
+            Dim pk As New List(Of PKDesc)
+            For Each e As EntityPropertyAttribute In mpe.GetPrimaryKeys(o.GetType, oschema)
+                Dim pkd As New PKDesc(e.PropertyAlias, mpe.GetPropertyValue(o, e.PropertyAlias, oschema))
+                pk.Add(pkd)
+            Next
+            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pk.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
+
+            c.SetObjectState(ObjectState.NotLoaded)
+
+            Dim ro As _ICachedEntity = NormalizeObject(c, False, False, _
+                GetOrmDictionary(Nothing, GetType(AnonymousCachedEntity), mpe, oschema), False, Nothing, _
+                False, oschema)
+
+            If ReferenceEquals(ro, c) Then
+                Return Nothing
+            Else
+                Return ro
+            End If
+        End Function
+
+        Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object) As ICachedEntity
+            Dim c As _ICachedEntity = GetPOCO(mpe, oschema, o)
+            SyncPOCO(c, mpe, oschema, o)
+            Return c
+        End Function
+
+        Public Sub SyncPOCO(ByVal c As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object)
+            If c IsNot Nothing Then
+                For Each de As DictionaryEntry In mpe.GetProperties(o.GetType, oschema)
+                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    Dim ea As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+                    mpe.SetPropertyValue(c, ea.PropertyAlias, mpe.GetPropertyValue(o, ea.PropertyAlias, oschema), oschema)
+                Next
+            End If
+        End Sub
     End Class
 
     Public Class ReadonlyCache

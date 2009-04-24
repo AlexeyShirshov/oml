@@ -262,7 +262,7 @@ Namespace Database
                 AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
                 If o.HasChanges Then
-                    Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o, _mgr)
+                    Dim mo As ObjectModification = o.ShadowCopy(_mgr)
                     Dim oc As ICachedEntity = o.OriginalCopy
                     If o.ObjectState = ObjectState.Deleted Then
                         _deleted.Add(o)
@@ -284,12 +284,12 @@ Namespace Database
             Return added
         End Function
 
-        Public Sub AddRange(ByVal col As ICollection(Of CachedEntity))
+        Public Sub AddRange(ByVal col As ICollection(Of _ICachedEntity))
             '_objects.AddRange(col)
             'For Each o As OrmBase In col
             '    AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
             'Next
-            For Each o As CachedEntity In col
+            For Each o As _ICachedEntity In col
                 Add(o)
             Next
         End Sub
@@ -548,7 +548,7 @@ l1:
                                     CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
                                         AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks, False, False)
                                 Next
-                                For Each o As CachedEntity In val
+                                For Each o As _ICachedEntity In val
                                     o.UpdateCacheAfterUpdate(CType(_mgr.Cache, OrmCache))
                                 Next
                             Else
@@ -557,7 +557,7 @@ l1:
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, _mgr) Is Nothing)
+                                    Debug.Assert(o.ShadowCopy(_mgr) Is Nothing)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
@@ -669,6 +669,18 @@ l1:
             MyClass.New(CType(OrmManager.CurrentManager, OrmReadOnlyDBManager))
         End Sub
 
+        Public Sub New(ByVal connString As String)
+            MyClass.New(New OrmCache, New ObjectMappingEngine("1"), connString)
+        End Sub
+
+        Public Sub New(ByVal cache As OrmCache, ByVal connString As String)
+            MyClass.New(cache, New ObjectMappingEngine("1"), connString)
+        End Sub
+
+        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal connString As String)
+            MyClass.New(New CreateManager(Function() New OrmDBManager(cache, mpe, New SQLGenerator, connString)))
+        End Sub
+
         Public Sub New(ByVal mgr As OrmReadOnlyDBManager)
             If mgr Is Nothing Then
                 Throw New ArgumentNullException("mgr")
@@ -743,7 +755,7 @@ l1:
             Return mgr.CreateBatchSaver(Of ObjectListSaver)(_created)
         End Function
 
-        Public Overridable Sub AddRange(ByVal objs As ICollection(Of CachedEntity))
+        Public Overridable Sub AddRange(ByVal objs As ICollection(Of _ICachedEntity))
             If objs Is Nothing Then
                 Throw New ArgumentNullException("objects")
             End If
@@ -757,10 +769,18 @@ l1:
         End Sub
 
         Private Sub Add(ByVal sender As OrmManager, ByVal obj As ICachedEntity)
-            Add(obj)
+            Add(CType(obj, _ICachedEntity))
         End Sub
 
-        Public Overridable Sub Add(ByVal obj As ICachedEntity)
+        Public Overridable Sub Add(ByVal obj As Object)
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("object")
+            End If
+
+            Add(_mgr.Cache.SyncPOCO(_mgr.MappingEngine, _mgr.MappingEngine.GetEntitySchema(obj.GetType), obj))
+        End Sub
+
+        Public Overridable Sub Add(ByVal obj As _ICachedEntity)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("object")
             End If
@@ -769,8 +789,7 @@ l1:
                 Throw New InvalidOperationException("Cannot add object during save")
             End If
 
-            '_objs.Add(obj)
-            _saver.Add(CType(obj, CachedEntity))
+            _saver.Add(obj)
         End Sub
 
         Private Sub Delete(ByVal sender As OrmManager, ByVal obj As ICachedEntity)
@@ -784,7 +803,7 @@ l1:
 
             'If Not _objs.Contains(obj) Then
             '    _objs.Add(obj)
-            _saver.Add(CType(obj, CachedEntity))
+            _saver.Add(CType(obj, _ICachedEntity))
             'End If
         End Sub
 
@@ -864,11 +883,11 @@ l1:
 #If DEBUG Then
                         If o.HasChanges Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                            If _mgr.Cache.ShadowCopy(o, _mgr) IsNot Nothing Then
+                            If o.ShadowCopy(_mgr) IsNot Nothing Then
                                 If _mgr.Cache.ShadowCopy(o, _mgr).Reason = ObjectModification.ReasonEnum.Delete Then
                                     Debug.Assert(_saver._deleted.Contains(o))
                                     Debug.Assert(Not _saver._updated.Contains(o))
-                                ElseIf _mgr.Cache.ShadowCopy(o, _mgr).Reason = ObjectModification.ReasonEnum.Edit Then
+                                ElseIf o.ShadowCopy(_mgr).Reason = ObjectModification.ReasonEnum.Edit Then
                                     'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
                                     Debug.Assert(Not _saver._deleted.Contains(o))
                                     Debug.Assert(_saver._updated.Contains(o))

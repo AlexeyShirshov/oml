@@ -676,21 +676,37 @@ l1:
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
-            For Each de As DictionaryEntry In mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
-                'Dim c As EntityPropertyAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(EntityPropertyAttribute), True), EntityPropertyAttribute)
-                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                If c IsNot Nothing Then
-                    Dim original As Object = pi.GetValue(originalCopy, Nothing)
+            'Dim ts As ITypedSchema = TryCast(oschema, ITypedSchema)
+            'If ts IsNot Nothing Then
+            '    rt = ts.EntityType
+            'End If
+            Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
+            If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
+                ie = col
+            End If
 
-                    'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
-                    '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
+            For Each o As Object In ie
+                Dim c As EntityPropertyAttribute = Nothing
+                Dim pi As Reflection.PropertyInfo = Nothing
+                If TypeOf (o) Is DictionaryEntry Then
+                    Dim de As DictionaryEntry = CType(o, DictionaryEntry)
+                    c = CType(de.Key, EntityPropertyAttribute)
+                    pi = CType(de.Value, Reflection.PropertyInfo)
+                Else
+                    Dim m As MapField2Column = CType(o, MapField2Column)
+                    c = New EntityPropertyAttribute(m.Column)
+                    c.PropertyAlias = m._propertyAlias
+                End If
+                Dim pa As String = c.PropertyAlias
+                If c IsNot Nothing Then
+                    Dim original As Object = ObjectMappingEngine.GetPropertyValue(originalCopy, pa, pi, TryCast(oschema, IEntitySchema))
                     Dim map As MapField2Column = Nothing
-                    If col.TryGetValue(c.PropertyAlias, map) Then
+                    If col.TryGetValue(pa, map) Then
                         Dim att As Field2DbRelations = map.GetAttributes(c)
                         If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
-                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, pi, TryCast(oschema, IEntitySchema))
+
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                              (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse CType(obj, _ICachedEntity).ForseUpdate(c) Then
 
@@ -700,7 +716,7 @@ l1:
                                     End If
                                 End If
 
-                                Dim fieldTable As SourceFragment = mpe.GetFieldTable(oschema, c.PropertyAlias)
+                                Dim fieldTable As SourceFragment = mpe.GetFieldTable(oschema, pa)
 
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
@@ -714,7 +730,7 @@ l1:
 
                                 Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
 
-                                updates.Add(New dc.EntityFilter(rt, c.PropertyAlias, New ScalarValue(current), FilterOperation.Equal))
+                                updates.Add(New dc.EntityFilter(rt, pa, New ScalarValue(current), FilterOperation.Equal))
 
                                 'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
                                 'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
@@ -773,37 +789,36 @@ l1:
 
             Dim rt As Type = obj.GetType
 
-            For Each de As DictionaryEntry In mpe.GetProperties(rt, oschema)
-                'Dim c As EntityPropertyAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(EntityPropertyAttribute), True), EntityPropertyAttribute)
-                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+            Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
+            If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
+                ie = oschema.GetFieldColumnMap
+            End If
+
+            For Each o As Object In ie
+                Dim c As EntityPropertyAttribute = Nothing
+                Dim pi As Reflection.PropertyInfo = Nothing
+                If TypeOf (o) Is DictionaryEntry Then
+                    Dim de As DictionaryEntry = CType(o, DictionaryEntry)
+                    c = CType(de.Key, EntityPropertyAttribute)
+                    pi = CType(de.Value, Reflection.PropertyInfo)
+                Else
+                    Dim m As MapField2Column = CType(o, MapField2Column)
+                    c = New EntityPropertyAttribute(m.Column)
+                    c.PropertyAlias = m._propertyAlias
+                End If
+                Dim pa As String = c.PropertyAlias
                 If c IsNot Nothing Then
                     Dim att As Field2DbRelations = mpe.GetAttributes(oschema, c)
                     If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
                      (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
-                        Dim original As Object = pi.GetValue(obj, Nothing)
-                        'Dim original As Object = pi.GetValue(obj.ModifiedObject, Nothing)
-                        'If obj.ModifiedObject.old_state = ObjectState.Created Then
-                        'original = pi.GetValue(obj, Nothing)
-                        'End If
-
-                        Dim tb As SourceFragment = mpe.GetFieldTable(oschema, c.PropertyAlias)
+                        Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, pi, TryCast(oschema, IEntitySchema))
+                      
+                        Dim tb As SourceFragment = mpe.GetFieldTable(oschema, pa)
                         If unions IsNot Nothing Then
                             Throw New NotImplementedException
                             'tb = MapUnionType2Table(rt, uniontype)
                         End If
-                        'If pk_table Is Nothing Then pk_table = tb
-                        'If Not tables_filter.Contains(tb) Then
-                        '    tables_filter.Add(tb, New StringBuilder)
-                        'End If
-                        'Dim tb_sb As StringBuilder = CType(tables_filter(tb), StringBuilder)
-                        'Dim pname As String = "pk"
-                        'If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-                        '    pname = "rv"
-                        'End If
-                        'Dim add_param As Boolean = False
-
 
                         For Each de_table As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
                             'Dim de_table As TableUpdate = updated_tables(tb)
@@ -863,7 +878,7 @@ l1:
                     End If
 
                     'Dim sb_updates As New StringBuilder
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(rt)
+                    Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
                     Dim esch As IEntitySchema = oschema
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Update) = IReadonlyObjectSchema.Operation.Update Then
@@ -2570,6 +2585,12 @@ l1:
         Public Overrides Function Comment(ByVal s As String) As String
             Return "/*" & EndLine & s & EndLine & "*/" & EndLine
         End Function
+
+        Public Overrides ReadOnly Property PlanHint() As String
+            Get
+                Return " option(use plan N'{0}')"
+            End Get
+        End Property
     End Class
 
     <Serializable()> _

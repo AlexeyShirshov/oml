@@ -238,6 +238,60 @@ Imports Worm
     <TestMethod()> Public Sub TestCachedCustomObject2()
 
         Dim t As New SourceFragment("dbo", "table1")
+        Dim c As New Cache.ReadonlyCache
+
+        Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
+
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(mpe, c)))
+
+        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+            OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
+
+        Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
+
+        Assert.AreEqual(3, l.Count)
+
+        Assert.AreEqual(2, l(0).Code)
+
+        Dim q2 As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(mpe, c)))
+
+        q2.Select(FCtor.column(t, "code", "Code").column(t, "name").column(t, "id", "ID", Field2DbRelations.PK)). _
+            OrderBy(SCtor.prop(GetType(cls2), "Code")).From(t)
+
+        Dim l2 As IList(Of cls2) = q2.ToPOCOList(Of cls2)()
+
+        Assert.AreEqual(3, l2.Count)
+
+        Assert.AreEqual(2, l2(0).Code)
+
+        Assert.AreNotSame(c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(cls)), l(0)), _
+                          c.GetPOCO(mpe, q2.GetEntitySchema(mpe, GetType(cls2)), l2(0)))
+
+        Dim q3 As New QueryCmd(New CreateManager(Function() _
+           TestManagerRS.CreateManagerShared(mpe, c)))
+
+        q3.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)) _
+            .Where(Ctor.column(t, "id").greater_than(0)) _
+            .OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
+
+        Dim l3 As IList(Of cls) = q3.ToPOCOList(Of cls)()
+
+        Assert.AreEqual(3, l3.Count)
+
+        Assert.AreEqual(2, l3(0).Code)
+
+        For i As Integer = 0 To l.Count - 1
+            Assert.AreSame(c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(cls)), l(i)), _
+                  c.GetPOCO(mpe, q3.GetEntitySchema(mpe, GetType(cls)), l3(i)))
+
+        Next
+    End Sub
+
+    <TestMethod()> Public Sub TestCachedCustomObjectWithoutFromClause()
+
+        Dim t As New SourceFragment("dbo", "table1")
 
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))

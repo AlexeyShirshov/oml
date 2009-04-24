@@ -1818,6 +1818,14 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
+        Return EnsureInCache(obj, dic)
+    End Function
+
+    Protected Friend Function EnsureInCache(ByVal obj As ICachedEntity, ByVal dic As IDictionary) As ICachedEntity
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
         Dim id As CacheKey = New CacheKey(obj)
         SyncLock dic.SyncRoot
             Dim o As ICachedEntity = CType(dic(id), ICachedEntity)
