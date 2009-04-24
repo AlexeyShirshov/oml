@@ -2892,7 +2892,7 @@ l1:
             End Using
         End Function
 
-        Private Sub AddPOCO(ByVal rt As Type, ByVal selSchema As IEntitySchema)
+        Friend Sub AddPOCO(ByVal rt As Type, ByVal selSchema As IEntitySchema)
             If _poco Is Nothing Then
                 _poco = Hashtable.Synchronized(New Hashtable)
             End If

@@ -1,5 +1,6 @@
 ﻿Imports System
 Imports System.Text
+Imports System.Collections
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Query
@@ -28,16 +29,22 @@ Imports Worm
     ' You can use the following additional attributes as you write your tests:
     '
     ' Use ClassInitialize to run code before running the first test in the class
-    ' <ClassInitialize()> Public Shared Sub MyClassInitialize(ByVal testContext As TestContext)
-    ' End Sub
+    <ClassInitialize()> Public Shared Sub MyClassInitialize(ByVal testContext As TestContext)
+        Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add( _
+               New System.Diagnostics.TextWriterTraceListener(Console.Out) _
+           )
+    End Sub
     '
     ' Use ClassCleanup to run code after all tests in a class have run
     ' <ClassCleanup()> Public Shared Sub MyClassCleanup()
     ' End Sub
     '
     ' Use TestInitialize to run code before running each test
-    ' <TestInitialize()> Public Sub MyTestInitialize()
-    ' End Sub
+    <TestInitialize()> Public Sub MyTestInitialize()
+        Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add( _
+               New System.Diagnostics.TextWriterTraceListener(Console.Out) _
+           )
+    End Sub
     '
     ' Use TestCleanup to run code after each test has run
     ' <TestCleanup()> Public Sub MyTestCleanup()
@@ -151,6 +158,31 @@ Imports Worm
     Public Class cls4
         Inherits cls2
 
+    End Class
+
+    <Entity(GetType(cls5.schema), "1")> _
+    Public Class cls5
+        Inherits cls
+
+        Public Class schema
+            Implements IEntitySchema
+
+            Private _tbl As New SourceFragment("dbo", "table1")
+
+            Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
+                Get
+                    Return _tbl
+                End Get
+            End Property
+
+            Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) Implements Worm.Entities.Meta.IPropertyMap.GetFieldColumnMap
+                Dim m As New OrmObjectIndex
+                m("ID") = New MapField2Column("ID", "id", _tbl, Field2DbRelations.PrimaryKey)
+                m("Title") = New MapField2Column("Title", "name", _tbl)
+                m("Code") = New MapField2Column("Code", "code", _tbl)
+                Return m
+            End Function
+        End Class
     End Class
 
     <TestMethod()> Public Sub TestCustomObject()
@@ -344,5 +376,15 @@ Imports Worm
         Dim l As IList(Of cls4) = q.ToPOCOList(Of cls4)()
 
         Assert.AreEqual(2, l.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestStaticSchema()
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
+
+        Dim l As IList = q.Select(GetType(cls5)).ToList
+
+        Assert.AreEqual(3, l.Count)
     End Sub
 End Class

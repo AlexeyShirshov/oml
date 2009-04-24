@@ -1530,7 +1530,7 @@ Public Class ObjectMappingEngine
         Return idic
     End Function
 
-    Friend Function AddEntitySchema(ByVal tp As Type, ByVal schema As IEntitySchema) As Boolean
+    Public Function AddEntitySchema(ByVal tp As Type, ByVal schema As IEntitySchema) As Boolean
         Dim idic As IDictionary = GetIdic()
 
         SyncLock idic.SyncRoot
@@ -1543,7 +1543,7 @@ Public Class ObjectMappingEngine
         Return False
     End Function
 
-    Friend Function HasEntitySchema(ByVal tp As Type) As Boolean
+    Public Function HasEntitySchema(ByVal tp As Type) As Boolean
         Return GetIdic.Contains(tp)
     End Function
 
