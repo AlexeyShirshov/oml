@@ -163,6 +163,8 @@ l1:
                                 l.Add(se.GetIntoPropertyAlias)
                             End If
                         Next
+                        _oschema = New SimpleObjectSchema(SelectExpression.GetMapping(sender._sl))
+                        'sender.AddPOCO(GetType(AnonymousCachedEntity), _oschema)
                     Else
                         'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
                         _oschema = oschema
