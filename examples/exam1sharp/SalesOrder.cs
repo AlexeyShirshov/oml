@@ -4,6 +4,7 @@ using System.Text;
 using exam1sharp.Sales;
 using Worm.Entities.Meta;
 using Worm.Query;
+using Worm.Cache;
 
 namespace exam1sharp
 {
@@ -16,8 +17,8 @@ namespace exam1sharp
 
         //SalesOrderHeader fields
         public DateTime OrderDate { get; set; }
-        public exam1sharp.Sales.SalesTerritory Territory { get; set; }
-        public exam1sharp.Sales.SalesPerson Person { get; set; }
+        //public exam1sharp.Sales.SalesTerritory Territory { get; set; }
+        //public exam1sharp.Sales.SalesPerson Person { get; set; }
 
         public static QueryCmd Query
         {
@@ -27,6 +28,13 @@ namespace exam1sharp
                     .From(typeof(SalesOrder))
                     .Select(typeof(SalesOrder));
             }
+        }
+
+        public static QueryCmd GetQuery(CacheBase cache)
+        {
+            return new QueryCmd(cache, exam1sharp.Properties.Settings.Default.connString)
+                .From(typeof(SalesOrder))
+                .Select(typeof(SalesOrder));
         }
     }
 

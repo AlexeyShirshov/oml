@@ -59,7 +59,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Worm.Orm, Version=2.3.3392.15694, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Worm.Orm, Version=2.3.3401.32159, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\obm\bin\Debug\Worm.Orm.dll</HintPath>
     </Reference>
