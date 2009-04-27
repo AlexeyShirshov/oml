@@ -716,7 +716,7 @@ l1:
                 End If
             End If
 
-            Dim eudic As New Dictionary(Of String, EntityUnion)
+            Dim eudic As New Dictionary(Of String, Pair(Of String, EntityUnion))
 
             If SelectList IsNot Nothing Then
                 PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
@@ -761,7 +761,7 @@ l1:
                             If SelectTypes.Count > 1 Then
                                 Throw New NotSupportedException
                             Else
-                                AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU)
+                                AddTypeFields(schema, _sl, SelectTypes(0), _from.QueryEU, Nothing)
                             End If
                         Else
                             Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectTypes
@@ -773,7 +773,13 @@ l1:
                                 End If
                             End If
                             For Each tp As Pair(Of EntityUnion, Boolean?) In selTypes
-                                AddTypeFields(schema, _sl, tp)
+                                Dim p As Pair(Of String, EntityUnion) = Nothing
+                                For Each d As KeyValuePair(Of String, Pair(Of String, EntityUnion)) In eudic
+                                    If d.Value.Second Is tp.First Then
+                                        p = d.Value
+                                    End If
+                                Next
+                                AddTypeFields(schema, _sl, tp, Nothing, If(p IsNot Nothing, p.First, Nothing))
                                 'If tp.Second Then
                                 '    Throw New NotImplementedException
                                 'Else
@@ -805,9 +811,12 @@ l1:
                                             Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
                                                 Dim eu As EntityUnion = Nothing
-                                                If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, eu) Then
+                                                Dim p As Pair(Of String, EntityUnion) = Nothing
+                                                If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
                                                     eu = New EntityUnion(New EntityAlias(pit))
-                                                    eudic(selex.PropertyAlias & "$" & pit.ToString) = eu
+                                                    eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
+                                                Else
+                                                    eu = p.Second
                                                 End If
                                                 If Not HasInQuery(eu, _js) Then
                                                     Dim s As IEntitySchema = Nothing
@@ -1027,7 +1036,7 @@ l1:
         End Function
 
         Protected Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
-                                  ByVal tp As Pair(Of EntityUnion, Boolean?), Optional ByVal os As EntityUnion = Nothing)
+                                  ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal os As EntityUnion, ByVal pref As String)
             Dim t As Type = tp.First.GetRealType(schema)
             If os Is Nothing Then
                 os = tp.First
@@ -1064,8 +1073,13 @@ l1:
                     se.ObjectProperty = New ObjectProperty(tp.First, se.PropertyAlias)
                     If pod Then
                         se.IntoPropertyAlias = t.Name & "-" & se.PropertyAlias
+                        If Not String.IsNullOrEmpty(pref) Then
+                            se.IntoPropertyAlias = "%" & pref & "-" & se.IntoPropertyAlias
+                        End If
                     End If
                     cl.Add(se)
+                    Dim m As MapField2Column = oschema.GetFieldColumnMap(se.PropertyAlias)
+                    se.Attributes = m._newattributes
                 Next
             Else
                 'If Need2MainType(os) Then
@@ -2951,12 +2965,16 @@ l1:
 
         Private Sub InitPOCO(ByVal props As IDictionary, ByVal rt As Type, _
             ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
-            ByVal e As _IEntity, ByVal ro As Object, ByVal mgr As OrmManager)
+            ByVal e As _IEntity, ByVal ro As Object, ByVal mgr As OrmManager, _
+            Optional ByVal pref As String = Nothing)
             For Each kv As DictionaryEntry In props
                 Dim col As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
                 Dim pa As String = col.PropertyAlias
                 If ctd.GetProperties.Find(pa, False) Is Nothing Then
                     pa = rt.Name & "-" & pa
+                    If Not String.IsNullOrEmpty(pref) Then
+                        pa = "%" & pref & "-" & pa
+                    End If
                     If ctd.GetProperties.Find(pa, False) Is Nothing Then
                         Continue For
                     End If
@@ -2971,7 +2989,7 @@ l1:
                 Dim pit As Type = pi.PropertyType
                 v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
                 If v IsNot Nothing AndAlso _poco.Contains(pit) Then
-                    InitPOCO(mpe.GetProperties(pit, CType(_poco(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr)
+                    InitPOCO(mpe.GetProperties(pit, CType(_poco(pit), IEntitySchema)), pit, ctd, mpe, e, v, mgr, col.PropertyAlias)
                 End If
             Next
         End Sub

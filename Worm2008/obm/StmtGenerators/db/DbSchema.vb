@@ -813,7 +813,7 @@ l1:
                      (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
                         Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, pi, TryCast(oschema, IEntitySchema))
-                      
+
                         Dim tb As SourceFragment = mpe.GetFieldTable(oschema, pa)
                         If unions IsNot Nothing Then
                             Throw New NotImplementedException
@@ -1154,9 +1154,13 @@ l1:
             If original_type IsNot Nothing Then
                 If wideLoad Then
                     Dim columns As String = mpe.GetSelectColumnList(original_type, mpe, arr, schema, Nothing)
-                    selectcmd.Append(columns)
-                    If Not String.IsNullOrEmpty(additionalColumns) Then
-                        selectcmd.Append(",").Append(additionalColumns)
+                    If Not String.IsNullOrEmpty(columns) Then
+                        selectcmd.Append(columns)
+                        If Not String.IsNullOrEmpty(additionalColumns) Then
+                            selectcmd.Append(",").Append(additionalColumns)
+                        End If
+                    Else
+
                     End If
                 Else
                     mpe.GetPKList(original_type, mpe, schema, selectcmd, Nothing)
@@ -1635,10 +1639,37 @@ l1:
                 schema = mpe.GetEntitySchema(t)
             End If
 
-            Return AppendWhere(mpe, schema, filter, almgr, sb, filter_info, pmgr)
+            Return AppendWhere(mpe, t, schema, filter, almgr, sb, filter_info, pmgr)
         End Function
 
-        Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
+        Class cls
+            Implements IExecutionContext
+
+            Private _oschema As IEntitySchema
+            Private _t As Type
+
+            Public Sub New(ByVal t As Type, ByVal oschema As IEntitySchema)
+                _oschema = oschema
+                _t = t
+            End Sub
+
+            Public Function GetEntitySchema2(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements Query.IExecutionContext.GetEntitySchema2
+                If _t Is t Then
+                    Return _oschema
+                End If
+                Return mpe.GetEntitySchema(t)
+            End Function
+
+            Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements Query.IExecutionContext.GetFieldColumnMap
+                Return oschema.GetFieldColumnMap
+            End Function
+
+            Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema
+
+            End Sub
+        End Class
+
+        Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
             Optional ByVal os As EntityUnion = Nothing) As Boolean
 
@@ -1667,7 +1698,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, New cls(t, schema), filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If

@@ -2250,6 +2250,12 @@ Public Class ObjectMappingEngine
             sb.Append(GetColumnNameByPropertyAlias(schema, c.PropertyAlias, True, os)).Append(", ")
         Next
 
+        If sb.Length = 0 Then
+            For Each m As MapField2Column In schema.GetFieldColumnMap
+                sb.Append(m.Column).Append(", ")
+            Next
+        End If
+
         sb.Length -= 2
 
         'If add_c Then
