@@ -1135,6 +1135,11 @@ l1:
         Private Function GetSelList(ByVal original_type As Type, ByVal oschema As IEntitySchema, _
                                      ByVal propertyAlias As String, ByVal selOS As EntityUnion) As trip
             Dim arr As New List(Of EntityPropertyAttribute)(MappingEngine.GetSortedFieldList(original_type, oschema))
+            If arr.Count = 0 Then
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    arr.Add(New EntityPropertyAttribute(m._propertyAlias, m._newattributes, m.Column))
+                Next
+            End If
             Dim load As Boolean = True
             Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
             If df IsNot Nothing Then
@@ -1266,7 +1271,7 @@ l1:
                 c.AddFilter(New cc.EntityFilter(selOS, pk.PropertyAlias, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
             Next
 
-            Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
+            Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
 
             Dim eudic As New Dictionary(Of String, EntityUnion)
             Dim js As New List(Of QueryJoin)
@@ -1331,8 +1336,11 @@ l1:
                             CloseConn(b)
                         End Try
                     Else
-                        sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, selDic(selOS).arr, Nothing, GetContextInfo))
-                        SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, GetContextInfo, params)
+                        'Dim stmts As String = SQLGenerator.Select(MappingEngine, original_type, almgr, params, selDic(selOS).arr, Nothing, GetContextInfo))
+                        Dim stmts As String = SQLGenerator.SelectWithJoin(MappingEngine, original_type, MappingEngine.GetTables(oschema), almgr, params, Nothing, True, Nothing, _
+                            Nothing, selDic(selOS).arr, oschema, GetContextInfo)
+                        sb.Append(stmts)
+                        SQLGenerator.AppendWhere(MappingEngine, original_type, oschema, c.Condition, almgr, sb, GetContextInfo, params)
 
                         params.AppendParams(.Parameters)
                         .CommandText = sb.ToString
@@ -1423,7 +1431,7 @@ l1:
                 loadLock = SyncHelper.AcquireDynamicLock(sync_key)
             End If
             Try
-                Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(obj.GetType)
+                Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
                 Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
                 Dim cols As Generic.List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(obj.GetType, oschema)
                 Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
@@ -2259,7 +2267,16 @@ l1:
                                 c = New EntityPropertyAttribute(propertyAlias, se.Attributes, Nothing)
                                 c.Column = se.Column
                                 se._c = c
-                                attr = se.Attributes
+                                If propertyMap.ContainsKey(propertyAlias) Then
+                                    Dim nattr As Field2DbRelations = propertyMap(propertyAlias).GetAttributes(c)
+                                    If nattr <> Field2DbRelations.None Then
+                                        attr = nattr
+                                    End If
+                                End If
+                                If attr = Field2DbRelations.None Then
+                                    attr = se.Attributes
+                                End If
+                                f = True
                             End If
                             se._realAtt = attr
                         Else

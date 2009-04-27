@@ -480,7 +480,13 @@ Namespace Entities
         End Sub
 
         Public Overloads Sub Load(ByVal propertyAlias As String) Implements ICachedEntity.Load
-            Throw New NotImplementedException
+            Using mc As IGetManager = GetMgr()
+                If mc Is Nothing Then
+                    Throw New InvalidOperationException("OrmManager required")
+                End If
+
+                Load(mc.Manager, propertyAlias)
+            End Using
         End Sub
 
         Public ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy
@@ -659,7 +665,30 @@ Namespace Entities
         End Sub
 
         Public Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Throw New NotImplementedException
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
+            'If mo Is Nothing Then mo = _mo
+            If mo IsNot Nothing Then
+                If mo.User IsNot Nothing Then
+                    'Using mc As IGetManager = GetMgr()
+                    If Not mo.User.Equals(mgr.CurrentUser) Then
+                        Throw New OrmObjectException(ObjName & "Object in readonly state")
+                    End If
+                    'End Using
+                Else
+                    If ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Modified Then
+                        Throw New OrmObjectException(ObjName & "Cannot load object while its state is deleted or modified!")
+                    End If
+                End If
+            End If
+            Dim olds As ObjectState = ObjectState
+            'Using mc As IGetManager = GetMgr()
+            mgr.LoadObject(Me, propertyAlias)
+            'End Using
+            If olds = Entities.ObjectState.Created AndAlso ObjectState = Entities.ObjectState.Modified Then
+                AcceptChanges(True, True)
+            ElseIf IsLoaded Then
+                SetObjectState(Entities.ObjectState.None)
+            End If
         End Sub
 
         Protected Overrides ReadOnly Property IsLoaded() As Boolean

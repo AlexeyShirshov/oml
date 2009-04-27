@@ -777,7 +777,14 @@ l1:
                 Throw New ArgumentNullException("object")
             End If
 
-            Add(_mgr.Cache.SyncPOCO(_mgr.MappingEngine, _mgr.MappingEngine.GetEntitySchema(obj.GetType), obj))
+            Dim t As Type = obj.GetType
+            Dim mpe As Worm.ObjectMappingEngine = _mgr.MappingEngine
+            Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+            If oschema Is Nothing Then
+                oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
+                mpe.AddEntitySchema(t, oschema)
+            End If
+            Add(CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj), _ICachedEntity))
         End Sub
 
         Public Overridable Sub Add(ByVal obj As _ICachedEntity)

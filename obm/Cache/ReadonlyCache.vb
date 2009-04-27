@@ -854,14 +854,13 @@ Namespace Cache
             c.SetObjectState(ObjectState.NotLoaded)
 
             Dim ro As _ICachedEntity = NormalizeObject(c, False, False, _
-                GetOrmDictionary(Nothing, GetType(AnonymousCachedEntity), mpe, oschema), False, Nothing, _
+                GetOrmDictionary(Nothing, GetType(AnonymousCachedEntity), mpe, oschema), True, Nothing, _
                 False, oschema)
 
             If ReferenceEquals(ro, c) Then
-                Return Nothing
-            Else
-                Return ro
+                CType(c, AnonymousCachedEntity)._myschema = oschema
             End If
+            Return ro
         End Function
 
         Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object) As ICachedEntity

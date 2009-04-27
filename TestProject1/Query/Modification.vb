@@ -309,4 +309,59 @@ Imports Worm.Criteria
             End Try
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestModifyPOCO2()
+        'Dim t As New SourceFragment("dbo", "table1")
+        'Dim c As New Cache.OrmCache
+
+        'Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
+
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
+
+        q.Select(FCtor _
+                 .prop(GetType(Pod.cls5), "Code") _
+                 .prop(GetType(Pod.cls5), "Title") _
+                 .prop(GetType(Pod.cls5), "ID")). _
+            OrderBy(SCtor.prop(GetType(Pod.cls5), "Code"))
+
+        Dim l As IList(Of Pod.cls5) = q.ToPOCOList(Of Pod.cls5)()
+
+        'Dim ce As _ICachedEntity = c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls2)), l(0))
+
+        Dim o As Pod.cls5 = l(0)
+
+        'Assert.AreEqual(ObjectState.None, ce.ObjectState)
+        'Assert.IsNull(ce.OriginalCopy)
+
+        o.Code = o.Code + 100
+
+        'c.SyncPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls2)), l(0))
+
+        'Assert.AreEqual(ObjectState.Modified, ce.ObjectState)
+        'Assert.IsNotNull(ce.OriginalCopy)
+
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"), New Cache.OrmCache)
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    mt.Add(o)
+                    mt.AcceptModifications()
+                End Using
+
+                'Assert.AreEqual(ObjectState.None, ce.ObjectState)
+                'Assert.IsNull(ce.OriginalCopy)
+
+                l = q.ToPOCOList(Of Pod.cls5)()
+                Assert.IsTrue(q.LastExecutionResult.CacheHit)
+
+                Assert.AreNotSame(l(0), o)
+
+                'Assert.AreEqual(l(0).Code, o.Code)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class
