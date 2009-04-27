@@ -17,8 +17,8 @@ namespace exam1sharp
 
         //SalesOrderHeader fields
         public DateTime OrderDate { get; set; }
-        //public exam1sharp.Sales.SalesTerritory Territory { get; set; }
-        //public exam1sharp.Sales.SalesPerson Person { get; set; }
+        public exam1sharp.Sales.SalesTerritory Territory { get; set; }
+        public exam1sharp.Sales.SalesPerson Person { get; set; }
 
         public static QueryCmd Query
         {

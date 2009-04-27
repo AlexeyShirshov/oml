@@ -138,8 +138,8 @@ namespace exam1sharp
             {
                 Console.WriteLine("Date: {0}, LineTotal: {1}, sales territory: {2}", 
                     s.OrderDate, 
-                    s.LineTotal/*, 
-                    s.Territory.Name*/);
+                    s.LineTotal, 
+                    s.Territory.Name);
             }
         }
 
@@ -168,9 +168,9 @@ namespace exam1sharp
                 {
                     string str = String.Format("Date: {0}, LineTotal: {1}, sales territory: {2}",
                         s.OrderDate,
-                        s.LineTotal/*,
-                        s.Territory.Name*/);
-                    //Console.WriteLine(str);
+                        s.LineTotal,
+                        s.Territory.Name);
+                    Console.WriteLine(str);
                 }
             }
             Console.WriteLine("Elapsed {0}", DateTime.Now - start);
