@@ -54,14 +54,14 @@
   <ItemGroup>
     <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CoreFramework.dll</HintPath>
+      <HintPath>\\alex-vista\CoreFramework\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Worm.Orm, Version=2.3.3401.32159, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
+    <Reference Include="Worm.Orm, Version=2.3.3405.17690, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\obm\bin\Debug\Worm.Orm.dll</HintPath>
+      <HintPath>..\..\Worm2.0\obm\bin\Debug\Worm.Orm.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

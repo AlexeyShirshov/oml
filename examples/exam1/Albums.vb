@@ -156,9 +156,9 @@ End Using
 			Return Me.MappingEngine.GetPropertyValue(Me, propertyAlias)
 		End Function
 		
-		Protected Overrides Sub SetPK(ByVal pks() As Worm.Entities.Meta.PKDesc)
-			Me._iD = CType(System.Convert.ChangeType(pks(0).Value, GetType(Integer)),Integer)
-		End Sub
+        Protected Overrides Sub SetPK(ByVal pks() As Worm.Entities.Meta.PKDesc, ByVal mpe As Worm.ObjectMappingEngine)
+            Me._iD = CType(System.Convert.ChangeType(pks(0).Value, GetType(Integer)), Integer)
+        End Sub
 		
 		Public Overrides Function GetPKValues() As Worm.Entities.Meta.PKDesc()
 			Return New Worm.Entities.Meta.PKDesc() {New Worm.Entities.Meta.PKDesc("ID", Me._iD)}
