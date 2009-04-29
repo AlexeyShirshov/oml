@@ -586,12 +586,12 @@ Imports System.Collections.ObjectModel
         Assert.IsFalse(c.IsInCachePrecise(t, Nothing, s))
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(t.GetType)))
+        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(GetType(Table1))))
 
         t = q.GetByID(Of Table1)(1)
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(t.GetType)))
+        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(GetType(Table1))))
 
         Assert.IsTrue(t.InternalProperties.IsLoaded)
         Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)

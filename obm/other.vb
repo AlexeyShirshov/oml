@@ -78,39 +78,6 @@ Public Module helper
     End Function
 
     ''' <summary>
-    ''' Сортирует словарь в соответствии с порядком ключей в коллекции
-    ''' </summary>
-    ''' <typeparam name="TKey">Ключ словаря</typeparam>
-    ''' <typeparam name="TValue">Значение словаря</typeparam>
-    ''' <param name="dic">Словарь</param>
-    ''' <param name="model">Упорядоченная коллекция ключей</param>
-    ''' <returns>Список пар ключ/значение из словаря, упорядоченный по коллекции <b>model</b></returns>
-    ''' <exception cref="InvalidOperationException">Если ключ из словаря не найден в коллекции <b>model</b></exception>
-    Public Function Sort(Of TKey, TValue)(ByVal dic As IDictionary(Of TKey, TValue), ByVal model() As TKey) As List(Of Pair(Of TKey, TValue))
-        Dim l As New List(Of Pair(Of TKey, TValue))
-
-        If dic IsNot Nothing Then
-            Dim arr(model.Length - 1) As TValue
-            For Each de As KeyValuePair(Of TKey, TValue) In dic
-
-                Dim idx As Integer = Array.IndexOf(model, de.Key)
-
-                If idx < 0 Then
-                    Throw New InvalidOperationException("Unknown key " + Convert.ToString(de.Key))
-                End If
-
-                arr(idx) = de.Value
-            Next
-
-            For i As Integer = 0 To dic.Count - 1
-                l.Add(New Pair(Of TKey, TValue)(model(i), arr(i)))
-            Next
-        End If
-
-        Return l
-    End Function
-
-    ''' <summary>
     ''' Сравнение массива байт
     ''' </summary>
     ''' <param name="arr1">Первый массив</param>

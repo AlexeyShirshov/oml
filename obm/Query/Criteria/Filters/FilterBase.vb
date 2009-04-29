@@ -155,7 +155,7 @@ Namespace Criteria.Core
         '    Return replacer
         'End Function
 
-        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
         Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             Return _templ.GetStaticString(mpe, contextFilter)

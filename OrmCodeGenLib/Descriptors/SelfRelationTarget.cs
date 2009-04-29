@@ -1,4 +1,5 @@
-﻿namespace Worm.CodeGen.Core.Descriptors
+﻿using System;
+namespace Worm.CodeGen.Core.Descriptors
 {
 	public class SelfRelationTarget
 	{
@@ -7,9 +8,10 @@
 		private string _accessorName;
 		private TypeDescription _accessedEntityType;
 
-		public SelfRelationTarget(string fieldName, bool cascadeDelete) : this(fieldName, cascadeDelete, null)
-		{
-		}
+        public SelfRelationTarget(string fieldName, bool cascadeDelete)
+            : this(fieldName, cascadeDelete, null)
+        {
+        }
 
 		public SelfRelationTarget(string fieldName, bool cascadeDelete, string accessorName)
         {
@@ -39,7 +41,12 @@
 		public TypeDescription AccessedEntityType
 		{
 			get { return _accessedEntityType; }
-			set { _accessedEntityType = value; }
+			set 
+            {
+                //if (value == null)
+                //    throw new ApplicationException();
+                _accessedEntityType = value; 
+            }
 		}
 
 		public override bool Equals(object obj)
@@ -79,7 +86,10 @@
 
         public override string ToString()
         {
-            return FieldName;
+            if (_accessedEntityType == null)
+                return FieldName;
+            else
+                return FieldName + "$" + _accessedEntityType.ToString();
         }
 	}
 }

@@ -143,6 +143,39 @@ Namespace Database
         '    Return CType(MyBase.GetObjectSchema(t), IOrmObjectSchema)
         'End Function
 
+        Public Class InsertedTable
+            Private _tbl As SourceFragment
+            Private _f As List(Of ITemplateFilter)
+            Private _ex As Query.IExecutionContext
+
+            Public Sub New(ByVal tbl As SourceFragment, ByVal f As List(Of ITemplateFilter))
+                _tbl = tbl
+                _f = f
+            End Sub
+
+            Public Property Executor() As Query.IExecutionContext
+                Get
+                    Return _ex
+                End Get
+                Set(ByVal value As Query.IExecutionContext)
+                    _ex = value
+                End Set
+            End Property
+
+            Public ReadOnly Property Filters() As List(Of ITemplateFilter)
+                Get
+                    Return _f
+                End Get
+            End Property
+
+            Public ReadOnly Property Table() As SourceFragment
+                Get
+                    Return _tbl
+                End Get
+            End Property
+
+        End Class
+
 #Region " engine properties "
         Public Overridable ReadOnly Property NullIsZero() As Boolean
             Get
@@ -404,10 +437,10 @@ l1:
                         inserted_tables.Add(pkt, Nothing)
                     End If
 
-                    Dim ins_tables As List(Of Pair(Of SourceFragment, List(Of ITemplateFilter))) = Sort(Of SourceFragment, List(Of ITemplateFilter))(inserted_tables, tbls)
+                    Dim ins_tables As List(Of InsertedTable) = Sort(inserted_tables, tbls)
 
                     For j As Integer = 1 To ins_tables.Count - 1
-                        Dim join_table As SourceFragment = ins_tables(j).First
+                        Dim join_table As SourceFragment = ins_tables(j).Table
                         Dim jn As QueryJoin = Nothing
                         If js IsNot Nothing Then
                             jn = CType(mpe.GetJoins(js, pkt, join_table, filterInfo), QueryJoin)
@@ -422,7 +455,7 @@ l1:
                             'For Each fl As OrmFilter In f.GetAllFilters
                             '    inserted_tables(join_table).Add(fl)
                             'Next
-                            ins_tables(j).Second.AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
+                            ins_tables(j).Filters.AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
                     dbparams = FormInsert(mpe, ins_tables, ins_cmd, real_t, es, sel_columns, unions, Nothing)
@@ -432,6 +465,37 @@ l1:
 
                 Return ins_cmd.ToString
             End Using
+        End Function
+
+        ''' <summary>
+        ''' Сортирует словарь в соответствии с порядком ключей в коллекции
+        ''' </summary>
+        ''' <param name="dic">Словарь</param>
+        ''' <param name="model">Упорядоченная коллекция ключей</param>
+        ''' <returns>Список пар ключ/значение из словаря, упорядоченный по коллекции <b>model</b></returns>
+        ''' <exception cref="InvalidOperationException">Если ключ из словаря не найден в коллекции <b>model</b></exception>
+        Private Shared Function Sort(ByVal dic As IDictionary(Of SourceFragment, List(Of ITemplateFilter)), ByVal model() As SourceFragment) As List(Of InsertedTable)
+            Dim l As New List(Of InsertedTable)
+
+            If dic IsNot Nothing Then
+                Dim arr(model.Length - 1) As List(Of ITemplateFilter)
+                For Each de As KeyValuePair(Of SourceFragment, List(Of ITemplateFilter)) In dic
+
+                    Dim idx As Integer = Array.IndexOf(model, de.Key)
+
+                    If idx < 0 Then
+                        Throw New InvalidOperationException("Unknown key " + Convert.ToString(de.Key))
+                    End If
+
+                    arr(idx) = de.Value
+                Next
+
+                For i As Integer = 0 To dic.Count - 1
+                    l.Add(New InsertedTable(model(i), arr(i)))
+                Next
+            End If
+
+            Return l
         End Function
 
         Protected Overridable Function FormatDBType(ByVal db As DBType) As String
@@ -460,7 +524,7 @@ l1:
             Return Nothing
         End Function
 
-        Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of Pair(Of SourceFragment, List(Of ITemplateFilter))), _
+        Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of InsertedTable), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema, _
             ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
@@ -512,7 +576,7 @@ l1:
                 Dim b As Boolean = False
                 'Dim os As IOrmObjectSchema = GetObjectSchema(type)
                 Dim pk_table As SourceFragment = os.Table
-                For Each item As Pair(Of SourceFragment, List(Of ITemplateFilter)) In inserted_tables
+                For Each item As InsertedTable In inserted_tables
                     If b Then
                         ins_cmd.Append(EndLine)
                         If SupportIf() Then
@@ -524,20 +588,20 @@ l1:
 
                     Dim notSyncInsertPK As New List(Of Pair(Of String))
 
-                    If item.Second Is Nothing OrElse item.Second.Count = 0 Then
-                        ins_cmd.Append("insert into ").Append(GetTableName(item.First)).Append(" ").Append(DefaultValues)
+                    If item.Filters Is Nothing OrElse item.Filters.Count = 0 Then
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table)).Append(" ").Append(DefaultValues)
                     Else
-                        ins_cmd.Append("insert into ").Append(GetTableName(item.First)).Append(" (")
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table)).Append(" (")
                         Dim values_sb As New StringBuilder
                         values_sb.Append(" values(")
-                        For Each f As ITemplateFilter In item.Second
+                        For Each f As ITemplateFilter In item.Filters
                             Dim ef As EntityFilter = TryCast(f, EntityFilter)
                             If ef IsNot Nothing Then
                                 CType(ef, IEntityFilter).PrepareValue = False
                             End If
-                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, params)
+                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, params, item.Executor)
                             If ef IsNot Nothing Then
-                                p = ef.MakeSingleQueryStmt(os, Me, mpe, Nothing, params)
+                                p = ef.MakeSingleQueryStmt(os, Me, mpe, Nothing, params, item.Executor)
                                 'If ef.Template.PropertyAlias = OrmBaseT.PKName Then
                                 Dim att As Field2DbRelations = mpe.GetAttributes(os, mpe.GetColumnByPropertyAlias(type, ef.Template.PropertyAlias, os))
                                 If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _
@@ -553,13 +617,13 @@ l1:
                         ins_cmd.Length -= 1
                         values_sb.Length -= 1
                         ins_cmd.Append(") ")
-                        If pk_table.Equals(item.First) Then
+                        If pk_table.Equals(item.Table) Then
                             ins_cmd.Append(InsertOutput(fromTable, syncInsertPK, notSyncInsertPK, TryCast(os, IChangeOutputOnInsert)))
                         End If
                         ins_cmd.Append(values_sb.ToString).Append(")")
                     End If
 
-                    If pk_table.Equals(item.First) AndAlso sel_columns IsNot Nothing Then
+                    If pk_table.Equals(item.Table) AndAlso sel_columns IsNot Nothing Then
                         ins_cmd.Append(EndLine)
                         ins_cmd.Append("select @rcount = ").Append(RowCount)
                         For Each pk As Pair(Of String) In insertedPK
@@ -670,16 +734,13 @@ l1:
 
         End Structure
 
-        Protected Sub GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
-            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), ByVal unions As String())
+        Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
+            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), ByVal unions As String()) As cls
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
-            'Dim ts As ITypedSchema = TryCast(oschema, ITypedSchema)
-            'If ts IsNot Nothing Then
-            '    rt = ts.EntityType
-            'End If
+            Dim exec As New cls(rt, TryCast(oschema, IEntitySchema))
             Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
             If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
                 ie = col
@@ -706,11 +767,49 @@ l1:
                         If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
                             Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, pi, TryCast(oschema, IEntitySchema))
-
+l1:
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                              (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse CType(obj, _ICachedEntity).ForseUpdate(c) Then
 
-                                If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(current.GetType) Then
+                                Dim originalType As Type = original.GetType
+                                Dim currentType As Type = current.GetType
+
+                                If originalType IsNot currentType Then
+                                    If ObjectMappingEngine.IsEntityType(original.GetType, mpe) Then
+                                        Dim sch As IEntitySchema = mpe.GetEntitySchema(originalType, False)
+                                        If sch Is Nothing Then
+                                            sch = mpe.GetPOCOEntitySchema(originalType)
+                                        End If
+                                        current = mpe.CreateObj(original.GetType, current, sch)
+                                        GoTo l1
+                                    ElseIf ObjectMappingEngine.IsEntityType(currentType, mpe) Then
+                                        Dim sch As IEntitySchema = mpe.GetEntitySchema(currentType, False)
+                                        If sch Is Nothing Then
+                                            sch = mpe.GetPOCOEntitySchema(currentType)
+                                        End If
+                                        original = mpe.CreateObj(currentType, original, sch)
+                                        GoTo l1
+                                    Else
+                                        Throw New InvalidOperationException(String.Format("Property {0} has different types {1} and {2}", pa, originalType, currentType))
+                                    End If
+                                ElseIf Not GetType(IEntity).IsAssignableFrom(originalType) _
+                                    AndAlso Not GetType(IEntity).IsAssignableFrom(currentType) _
+                                    AndAlso ObjectMappingEngine.IsEntityType(originalType, mpe) _
+                                    AndAlso ObjectMappingEngine.IsEntityType(currentType, mpe) Then
+                                    Dim sch As IEntitySchema = mpe.GetEntitySchema(currentType, False)
+                                    If sch Is Nothing Then
+                                        sch = mpe.GetPOCOEntitySchema(currentType)
+                                    End If
+                                    For Each ep As EntityPropertyAttribute In mpe.GetPrimaryKeys(currentType, sch)
+                                        If Not Object.Equals(mpe.GetPropertyValue(current, ep.PropertyAlias, sch), mpe.GetPropertyValue(original, ep.PropertyAlias, sch)) Then
+                                            GoTo l3
+                                        End If
+                                    Next
+                                    GoTo l2
+                                End If
+
+l3:
+                                If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(currentType) Then
                                     If CType(current, ICachedEntity).ObjectState = ObjectState.Created Then
                                         Throw New ObjectMappingException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, ICachedEntity).ObjName)
                                     End If
@@ -768,7 +867,7 @@ l1:
                             '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
                             '    i += 1
                         End If
-
+l2:
                         If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
                             'If sbselect.Length = 0 Then
                             '    sbselect.Append("if @@rowcount > 0 select ")
@@ -782,7 +881,8 @@ l1:
                     End If
                 End If
             Next
-        End Sub
+            Return exec
+        End Function
 
         Protected Sub GetUpdateConditions(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema, _
          ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
@@ -885,7 +985,7 @@ l1:
                         esch = ro.GetEditableSchema
                     End If
 
-                    GetChangedFields(mpe, obj, esch, updated_tables, sel_columns, unions)
+                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, sel_columns, unions)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -899,7 +999,14 @@ l1:
 
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As SourceFragment = esch.Table
+                        Dim pk_table As SourceFragment = Nothing
+                        For Each c As MapField2Column In oschema.GetFieldColumnMap
+                            If (c._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                pk_table = c.Table
+                                Exit For
+                            End If
+                        Next
+
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
 
@@ -916,7 +1023,7 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Nothing, Me, Nothing, filterInfo, mpe, amgr, params, rt)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, Nothing, Me, exec, filterInfo, mpe, amgr, params, rt)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
@@ -924,14 +1031,14 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilter = TryCast(fl, EntityFilter)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Nothing, Me, Nothing, filterInfo, mpe, amgr, params, rt))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Nothing, Me, exec, filterInfo, mpe, amgr, params, rt))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, amgr, params))
                             End If
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
                                 'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
-                                CorrectUpdateWithInsert(mpe, oschema, tbl, item.Value, upd_cmd, obj, params)
+                                CorrectUpdateWithInsert(mpe, oschema, tbl, item.Value, upd_cmd, obj, params, exec)
                                 'FormInsert(,upd_cmd,
                             End If
                         Next
@@ -1003,9 +1110,9 @@ l1:
         End Function
 
         Protected Overridable Sub CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
-            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam)
+            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam, ByVal exec As Query.IExecutionContext)
 
-            Dim dic As New List(Of Pair(Of SourceFragment, List(Of ITemplateFilter)))
+            Dim dic As New List(Of InsertedTable)
             Dim l As New List(Of ITemplateFilter)
             For Each f As EntityFilter In tableinfo._updates
                 l.Add(f)
@@ -1015,7 +1122,9 @@ l1:
                 l.Add(f)
             Next
 
-            dic.Add(New Pair(Of SourceFragment, List(Of ITemplateFilter))(table, l))
+            Dim ins As InsertedTable = New InsertedTable(table, l)
+            ins.Executor = exec
+            dic.Add(ins)
             upd_cmd.Append(EndLine).Append("if ").Append(RowCount).Append(" = 0 ")
             FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
         End Sub
@@ -1645,17 +1754,19 @@ l1:
         Class cls
             Implements IExecutionContext
 
-            Private _oschema As IEntitySchema
-            Private _t As Type
+            Private _dic As New Dictionary(Of Type, IEntitySchema)
+
+            Public Sub New()
+
+            End Sub
 
             Public Sub New(ByVal t As Type, ByVal oschema As IEntitySchema)
-                _oschema = oschema
-                _t = t
+                _dic.Add(t, oschema)
             End Sub
 
             Public Function GetEntitySchema2(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements Query.IExecutionContext.GetEntitySchema2
-                If _t Is t Then
-                    Return _oschema
+                If _dic.ContainsKey(t) Then
+                    Return _dic(t)
                 End If
                 Return mpe.GetEntitySchema(t)
             End Function
@@ -1667,6 +1778,12 @@ l1:
             Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema
 
             End Sub
+
+            Public ReadOnly Property Dic() As Dictionary(Of Type, IEntitySchema)
+                Get
+                    Return _dic
+                End Get
+            End Property
         End Class
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _

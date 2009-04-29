@@ -214,7 +214,8 @@ Namespace Criteria.Core
         'End Function
 
         Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IEntitySchema, _
-            ByVal stmt As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+            ByVal stmt As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, _
+            ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
             'If _oschema Is Nothing Then
             '    _oschema = oschema
             'End If
@@ -249,7 +250,8 @@ Namespace Criteria.Core
             Return New Pair(Of String)(map.Column, prname)
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -264,7 +266,7 @@ Namespace Criteria.Core
                 End If
             End If
 
-            Return MakeSingleQueryStmt(oschema, stmt, schema, almgr, pname)
+            Return MakeSingleQueryStmt(oschema, stmt, schema, almgr, pname, executor)
         End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
@@ -390,7 +392,8 @@ Namespace Criteria.Core
             Return New TableFilter() {Me}
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -606,7 +609,8 @@ Namespace Criteria.Core
             Return c
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
+            ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
             Throw New NotImplementedException
         End Function
     End Class
