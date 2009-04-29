@@ -710,6 +710,21 @@ l1:
             End If
         End Sub
 
+        Public Property TrackChanges() As Boolean
+            Get
+                Return _mgr.ContainsBeginDelete(AddressOf Delete)
+            End Get
+            Set(ByVal value As Boolean)
+                If value Then
+                    AddHandler _mgr.BeginUpdate, AddressOf Add
+                    AddHandler _mgr.BeginDelete, AddressOf Delete
+                Else
+                    RemoveHandler _mgr.BeginUpdate, AddressOf Add
+                    RemoveHandler _mgr.BeginDelete, AddressOf Delete
+                End If
+            End Set
+        End Property
+
         Protected ReadOnly Property NewObjectManager() As INewObjectsStore
             Get
                 Return _mgr.Cache.NewObjectManager

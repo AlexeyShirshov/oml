@@ -326,6 +326,22 @@ Partial Public MustInherit Class OrmManager
         RaiseEvent ObjectRestoredFromCache(Me, created, o)
     End Sub
 
+    Friend Function ContainsBeginDelete(ByVal h As BeginDeleteEventHandler) As Boolean
+        If BeginDeleteEvent Is Nothing Then
+            Return False
+        Else
+            Return Array.IndexOf(BeginDeleteEvent.GetInvocationList, h) >= 0
+        End If
+    End Function
+
+    Friend Function ContainsBeginUpdate(ByVal h As BeginUpdateEventHandler) As Boolean
+        If BeginUpdateEvent Is Nothing Then
+            Return False
+        Else
+            Return Array.IndexOf(BeginUpdateEvent.GetInvocationList, h) >= 0
+        End If
+    End Function
+
     'Public Property FindNewDelegate() As FindNew
     '    Get
     '        Return _findnew

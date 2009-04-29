@@ -450,7 +450,7 @@ End Class
         Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         Assert.AreEqual(1, pmgr.Params.Count)
 
-        Dim p As Pair(Of String) = f.MakeSingleQueryStmt(schema, gen, almgr, pmgr)
+        Dim p As Pair(Of String) = f.MakeSingleQueryStmt(schema, gen, almgr, pmgr, Nothing)
 
         Assert.AreEqual("id", p.First)
         Assert.AreEqual("@p1", p.Second)
@@ -465,7 +465,7 @@ End Class
 
         Assert.AreEqual(1, f.GetAllFilters.Count)
         Dim gen As New SQLGenerator
-        f.MakeSingleQueryStmt(Nothing, gen, Nothing, Nothing, Nothing)
+        f.MakeSingleQueryStmt(Nothing, gen, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -473,7 +473,7 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQLGenerator
-        f.MakeSingleQueryStmt(schema, gen, Nothing, Nothing)
+        f.MakeSingleQueryStmt(schema, gen, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
