@@ -41,17 +41,17 @@
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Worm2.0\CoreFramework.dll</HintPath>
+      <HintPath>..\..\Worm2008\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Xml" />
-    <Reference Include="Worm.Orm, Version=2.3.3385.40015, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Worm.Orm, Version=2.3.3406.18430, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Worm2.0\obm\bin\Debug\Worm.Orm.dll</HintPath>
+      <HintPath>..\..\Worm2008\obm\bin\Debug\Worm.Orm.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
