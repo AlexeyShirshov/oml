@@ -49,7 +49,12 @@ namespace exam1sharp
         //define join
         public Worm.Criteria.Joins.QueryJoin GetJoins(SourceFragment left, SourceFragment right)
         {
-            return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
+            if (right == _tables[0])
+                return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
+            else if (right == _tables[1])
+                return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
+            else
+                throw new NotImplementedException();
         }
 
         //define mapping
@@ -58,7 +63,7 @@ namespace exam1sharp
             OrmObjectIndex columns = new OrmObjectIndex();
             columns.Add(new MapField2Column("SalesOrderDetailID", "SalesOrderDetailID", _tables[1], Field2DbRelations.PK));
             columns.Add(new MapField2Column("OrderQty", "OrderQty", _tables[1]));
-            columns.Add(new MapField2Column("LineTotal", "LineTotal", _tables[1]));
+            columns.Add(new MapField2Column("LineTotal", "LineTotal", _tables[1], Field2DbRelations.SyncUpdate | Field2DbRelations.ReadOnly));
             columns.Add(new MapField2Column("OrderDate", "OrderDate", _tables[0]));
             columns.Add(new MapField2Column("Territory", "TerritoryID", _tables[0]));
             columns.Add(new MapField2Column("Person", "SalesPersonID", _tables[0]));

@@ -183,13 +183,36 @@ namespace exam1sharp
                 .Single() as SalesOrder;
 
             o.OrderQty += 10;
+            //o.OrderDate = new DateTime(2001, 07, 5);
 
             using(ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
             {
                 mt.Add(o);
                 mt.AcceptModifications();
             }
-        }
 
+            o.OrderDate = new DateTime(2001, 07, 1);
+
+            using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+            {
+                mt.Add(o);
+                mt.AcceptModifications();
+            }
+        }
+        
+        //static void Main(string[] args)
+        //{
+        //    var o = SalesOrder.Query
+        //        .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
+        //        .Single() as SalesOrder;
+
+        //    o.OrderDate = new DateTime(2001,07,1);
+
+        //    using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+        //    {
+        //        mt.Add(o);
+        //        mt.AcceptModifications();
+        //    }
+        //}
 	}
 }
