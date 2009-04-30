@@ -259,10 +259,18 @@ Namespace Criteria.Core
             Dim oschema As IEntitySchema = Nothing
 
             If oschema Is Nothing Then
+                Dim t As Type = Nothing
+
                 If Template.ObjectSource.AnyType IsNot Nothing Then
-                    oschema = schema.GetEntitySchema(Template.ObjectSource.AnyType)
+                    t = Template.ObjectSource.AnyType
                 Else
-                    oschema = schema.GetEntitySchema(schema.GetTypeByEntityName(Template.ObjectSource.AnyEntityName))
+                    t = schema.GetTypeByEntityName(Template.ObjectSource.AnyEntityName)
+                End If
+
+                If executor IsNot Nothing Then
+                    oschema = executor.GetEntitySchema(schema, t)
+                Else
+                    oschema = schema.GetEntitySchema(t)
                 End If
             End If
 
@@ -308,7 +316,7 @@ Namespace Criteria.Core
             If executor Is Nothing Then
                 oschema = schema.GetEntitySchema(t)
             Else
-                oschema = executor.GetEntitySchema2(schema, t)
+                oschema = executor.GetEntitySchema(schema, t)
             End If
 
             Return MakeQueryStmt(oschema, fromClause, stmt, executor, filterInfo, schema, almgr, pname, t)

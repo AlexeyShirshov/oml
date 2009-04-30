@@ -153,7 +153,7 @@ Namespace Database
                                             oschema = schema.GetEntitySchema(st)
                                             cm = oschema.GetFieldColumnMap
                                         Else
-                                            oschema = executor.GetEntitySchema2(schema, st)
+                                            oschema = executor.GetEntitySchema(schema, st)
                                             cm = executor.GetFieldColumnMap(oschema, st)
                                         End If
 
@@ -266,7 +266,7 @@ l1:
                                 oschema = schema.GetEntitySchema(t)
                                 cm = oschema.GetFieldColumnMap
                             Else
-                                oschema = executor.GetEntitySchema2(schema, t)
+                                oschema = executor.GetEntitySchema(schema, t)
                                 cm = executor.GetFieldColumnMap(oschema, t)
                             End If
 

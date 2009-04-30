@@ -183,6 +183,8 @@ Public Class EntitySchema1v2Implementation
     Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
             Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
+        ElseIf left.Equals(GetTables()(Tables2.Second)) AndAlso right.Equals(GetTables()(Tables2.Main)) Then
+            Return JCtor.join(left).on(left, "id").eq(right, "i")
         End If
         Throw New NotSupportedException
     End Function

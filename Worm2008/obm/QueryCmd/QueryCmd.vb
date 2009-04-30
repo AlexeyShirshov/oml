@@ -4272,7 +4272,7 @@ l1:
             End If
         End Function
 
-        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema2
+        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
             Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
 
             If oschema Is Nothing AndAlso _poco IsNot Nothing Then

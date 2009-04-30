@@ -440,7 +440,7 @@ Namespace Criteria.Joins
                 If executor Is Nothing Then
                     oschema = schema.GetEntitySchema(lt)
                 Else
-                    oschema = executor.GetEntitySchema2(schema, lt)
+                    oschema = executor.GetEntitySchema(schema, lt)
                 End If
 
                 If _l.Property.Entity.IsQuery Then
@@ -504,7 +504,7 @@ Namespace Criteria.Joins
                 If executor Is Nothing Then
                     oschema = schema.GetEntitySchema(rt)
                 Else
-                    oschema = executor.GetEntitySchema2(schema, rt)
+                    oschema = executor.GetEntitySchema(schema, rt)
                 End If
                 If _r.Property.Entity.IsQuery Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
