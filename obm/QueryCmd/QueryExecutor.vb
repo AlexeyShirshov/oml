@@ -152,32 +152,34 @@ Namespace Query
                     End If
                 Next
                 args.Cancel = _cancel
-                Dim createType As Type = sender._createType.GetRealType(_mgr.MappingEngine)
-                If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
-                    Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
-                    Dim l As New List(Of String)
-                    If oschema Is Nothing Then
+                If sender._createType IsNot Nothing Then
+                    Dim createType As Type = sender._createType.GetRealType(_mgr.MappingEngine)
+                    If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
+                        Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
+                        Dim l As New List(Of String)
+                        If oschema Is Nothing Then
 l1:
-                        For Each se As SelectExpression In sender._sl
-                            If (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                l.Add(se.GetIntoPropertyAlias)
+                            For Each se As SelectExpression In sender._sl
+                                If (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    l.Add(se.GetIntoPropertyAlias)
+                                End If
+                            Next
+                            _oschema = New SimpleObjectSchema(SelectExpression.GetMapping(sender._sl))
+                            'sender.AddPOCO(GetType(AnonymousCachedEntity), _oschema)
+                        Else
+                            'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
+                            _oschema = oschema
+                            'End If
+                            For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(createType, oschema)
+                                l.Add(pk.PropertyAlias)
+                            Next
+                            If l.Count = 0 Then
+                                GoTo l1
                             End If
-                        Next
-                        _oschema = New SimpleObjectSchema(SelectExpression.GetMapping(sender._sl))
-                        'sender.AddPOCO(GetType(AnonymousCachedEntity), _oschema)
-                    Else
-                        'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
-                        _oschema = oschema
-                        'End If
-                        For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(createType, oschema)
-                            l.Add(pk.PropertyAlias)
-                        Next
-                        If l.Count = 0 Then
-                            GoTo l1
                         End If
+                        _pk = l.ToArray
+                        AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
                     End If
-                    _pk = l.ToArray
-                    AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
                 End If
             End Sub
 

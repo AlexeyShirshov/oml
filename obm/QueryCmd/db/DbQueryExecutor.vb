@@ -757,14 +757,18 @@ l1:
                 osrc_ = osrc
             End If
 
+            Dim pkTable As SourceFragment = Nothing
             If from Is Nothing OrElse from.Table Is Nothing Then
                 Dim mts As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
                 If mts Is Nothing Then
                     tables = New SourceFragment() {os.Table}
+                    pkTable = os.Table
                 Else
                     tables = mts.GetTables()
+                    pkTable = mpe.GetPKTable(osrc.GetRealType(mpe), os)
                 End If
             Else
+                pkTable = from.Table
                 tables = New SourceFragment() {from.Table}
             End If
 
@@ -772,20 +776,19 @@ l1:
             '    Throw New QueryCmdException("Source table is not specified", Query)
             'End If
 
-            Dim tbl As SourceFragment = tables(0)
-            Dim tbl_real As SourceFragment = tbl
+            Dim tbl_real As SourceFragment = pkTable
             Dim [alias] As String = Nothing
-            If Not almgr.ContainsKey(tbl, osrc_) Then
+            If Not almgr.ContainsKey(pkTable, osrc_) Then
                 [alias] = almgr.AddTable(tbl_real, osrc_, params)
             Else
-                [alias] = almgr.GetAlias(tbl, osrc_)
-                tbl_real = tbl.OnTableAdd(params)
+                [alias] = almgr.GetAlias(pkTable, osrc_)
+                tbl_real = pkTable.OnTableAdd(params)
                 If tbl_real Is Nothing Then
-                    tbl_real = tbl
+                    tbl_real = pkTable
                 End If
             End If
             'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
-            almgr.Replace(mpe, s, tbl, osrc_, sb)
+            almgr.Replace(mpe, s, pkTable, osrc_, sb)
             'Dim appendMain As Boolean
 
             Dim selectType As Type = Nothing
@@ -883,7 +886,7 @@ l1:
 
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
-                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, osrc, q, Nothing, False, _
+                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, eus, q, Nothing, False, _
                         Function() " on " & jf.MakeQueryStmt(mpe, from, s, q, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
@@ -893,8 +896,10 @@ l1:
             Dim fs As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
 
             If fs IsNot Nothing Then
-                For j As Integer = 1 To tables.Length - 1
-                    Dim join As QueryJoin = CType(mpe.GetJoins(fs, tbl, tables(j), filterInfo), QueryJoin)
+                For j As Integer = 0 To tables.Length - 1
+                    If tables(j) Is pkTable Then Continue For
+
+                    Dim join As QueryJoin = CType(mpe.GetJoins(fs, pkTable, tables(j), filterInfo), QueryJoin)
 
                     If Not QueryJoin.IsEmpty(join) Then
                         If Not almgr.ContainsKey(tables(j), osrc) Then

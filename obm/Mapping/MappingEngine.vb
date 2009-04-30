@@ -730,16 +730,16 @@ Public Class ObjectMappingEngine
     'End Function
 
     <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-    Public Function GetFieldTable(ByVal schema As IPropertyMap, ByVal field As String) As SourceFragment
+    Public Function GetPropertyTable(ByVal schema As IPropertyMap, ByVal propertAlias As String) As SourceFragment
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
         End If
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
         Try
-            Return coll(field).Table
+            Return coll(propertAlias).Table
         Catch ex As Exception
-            Throw New ObjectMappingException("Unknown field name: " & field, ex)
+            Throw New ObjectMappingException("Unknown field name: " & propertAlias, ex)
         End Try
     End Function
     'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
@@ -1970,6 +1970,20 @@ Public Class ObjectMappingEngine
         End If
 
         Return GetTables(GetEntitySchema(type))
+    End Function
+
+    Public Function GetPKTable(ByVal t As Type, ByVal schema As IEntitySchema) As SourceFragment
+        For Each m As MapField2Column In schema.GetFieldColumnMap
+            If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                Return m.Table
+            End If
+        Next
+        For Each ea As EntityPropertyAttribute In GetProperties(t, schema).Keys
+            If (GetAttributes(schema, ea) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                Return GetPropertyTable(schema, ea.PropertyAlias)
+            End If
+        Next
+        Return Nothing
     End Function
 
     Public Function GetTables(ByVal schema As IEntitySchema) As SourceFragment()

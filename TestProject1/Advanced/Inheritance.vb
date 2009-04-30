@@ -468,7 +468,11 @@ End Class
             End Function
 
             Public Function GetJoins(ByVal left As Worm.Entities.Meta.SourceFragment, ByVal right As Worm.Entities.Meta.SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements Worm.Entities.Meta.IMultiTableObjectSchema.GetJoins
-                Return JCtor.join(right).on(right, "pk").eq(left, "id")
+                If right Is _tbl(1) Then
+                    Return JCtor.join(right).on(right, "pk").eq(left, "id")
+                Else
+                    Return JCtor.join(right).on(left, "pk").eq(right, "id")
+                End If
             End Function
 
             Public Function GetTables() As Worm.Entities.Meta.SourceFragment() Implements Worm.Entities.Meta.IMultiTableObjectSchema.GetTables
