@@ -56,8 +56,8 @@ Namespace My
         
         <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
          Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-         Global.System.Configuration.DefaultSettingValueAttribute("Server=.\sqlexpress;AttachDBFileName=""D:\Work\Worm\examples\database\test.mdf"";Us"& _ 
-            "er Instance=true;Integrated security=true;")>  _
+         Global.System.Configuration.DefaultSettingValueAttribute("Server=.\sqlexpress;AttachDBFileName=""|DataDirectory|\database\test.mdf"";User Ins"& _ 
+            "tance=true;Integrated security=true;")>  _
         Public ReadOnly Property connectionString() As String
             Get
                 Return CType(Me("connectionString"),String)
