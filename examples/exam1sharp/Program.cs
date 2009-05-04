@@ -183,7 +183,7 @@ namespace exam1sharp
                 .Single() as SalesOrder;
 
             o.OrderQty += 10;
-            //o.OrderDate = new DateTime(2001, 07, 5);
+            o.OrderDate = new DateTime(2001, 07, 5);
 
             using(ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
             {
