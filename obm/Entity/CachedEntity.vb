@@ -359,8 +359,9 @@ Namespace Entities
 
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Added
-        Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntityEx.Deleted
+        Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Deleted
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.Updated
+        Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements ICachedEntity.ChangesAccepted
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements ICachedEntity.OriginalCopyRemoved
 
         Protected ReadOnly Property Key() As Integer Implements ICachedEntity.Key
@@ -742,6 +743,8 @@ Namespace Entities
                         'ElseIf _valProcs AndAlso updateCache Then
                         '    mc.Cache.ValidateSPOnUpdate(Me, Nothing)
                     End If
+
+                    RaiseEvent ChangesAccepted(Me, EventArgs.Empty)
                 End Using
             End Using
 

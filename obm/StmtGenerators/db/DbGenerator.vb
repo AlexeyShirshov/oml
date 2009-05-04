@@ -1005,7 +1005,7 @@ l2:
                     '    Throw New ObjectStateException(obj.ObjName & "Object in state modified have to has an original copy")
                     'End If
 
-                    Dim sel_columns As New Generic.List(Of EntityPropertyAttribute)
+                    Dim syncUpdateProps As New Generic.List(Of EntityPropertyAttribute)
                     Dim updated_tables As New Dictionary(Of SourceFragment, TableUpdate)
                     Dim rt As Type = obj.GetType
 
@@ -1024,7 +1024,7 @@ l2:
                         esch = ro.GetEditableSchema
                     End If
 
-                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, sel_columns, unions)
+                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps, unions)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -1034,7 +1034,7 @@ l2:
 
                     GetUpdateConditions(mpe, obj, esch, updated_tables, unions, filterInfo)
 
-                    select_columns = sel_columns
+                    select_columns = syncUpdateProps
 
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
@@ -1056,16 +1056,36 @@ l2:
 
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
-
+                        Dim hasSyncUpdate As Boolean = False
+                        Dim lastTbl As SourceFragment = Nothing, lastUT As TableUpdate = Nothing
                         For Each item As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables
+                            Dim tbl As SourceFragment = item.Key
                             If upd_cmd.Length > 0 Then
                                 upd_cmd.Append(EndLine)
                                 If SupportIf() Then
-                                    upd_cmd.Append("if ").Append(LastError).Append(" = 0 ")
+                                    If HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch) OrElse Not lastTbl.Equals(pk_table) Then
+                                        hasSyncUpdate = hasSyncUpdate OrElse HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
+                                        Dim varName As String = "@" & lastTbl.Name.Replace(".", "") & "_rownum"
+                                        upd_cmd.Append(DeclareVariable(varName, "int")).Append(EndLine)
+                                        upd_cmd.Append("select ").Append(varName).Append(" = ").Append(RowCount)
+                                        upd_cmd.Append(", @lastErr = ").Append(LastError).Append(EndLine)
+
+                                        If Not lastTbl.Equals(pk_table) Then
+                                            CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, upd_cmd, _
+                                                obj, params, exec, varName)
+                                        End If
+                                    Else
+                                        upd_cmd.Append("set @lastErr = ").Append(LastError).Append(EndLine)
+                                    End If
+
+                                    upd_cmd.Append("if @lastErr = 0 ")
                                 End If
+                            Else
+                                upd_cmd.Append(DeclareVariable("@lastErr", "int")).Append(EndLine)
                             End If
 
-                            Dim tbl As SourceFragment = item.Key
+                            lastTbl = tbl
+                            lastUT = item.Value
                             Dim [alias] As String = amgr.AddTable(tbl, Nothing, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
@@ -1088,23 +1108,49 @@ l2:
                             Else
                                 upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, amgr, params))
                             End If
-                            If Not item.Key.Equals(pk_table) Then
-                                'Dim pcnt As Integer = 0
-                                'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
-                                CorrectUpdateWithInsert(mpe, oschema, tbl, item.Value, upd_cmd, obj, params, exec)
-                                'FormInsert(,upd_cmd,
-                            End If
                         Next
 
-                        If CheckColumns(sel_columns, updated_tables, esch) Then
+                        If SupportIf() Then
+                            Dim varName As String = "@" & lastTbl.Name.Replace(".", "") & "_rownum"
+                            Dim insSb As New StringBuilder
+                            If Not lastTbl.Equals(pk_table) Then
+                                CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, insSb, _
+                                     obj, params, exec, varName)
+                            End If
+
+                            Dim hasCol As Boolean = HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
+                            If hasCol OrElse insSb.Length > 0 Then
+                                hasSyncUpdate = hasSyncUpdate OrElse hasCol
+                                upd_cmd.Append(EndLine)
+                                upd_cmd.Append(DeclareVariable(varName, "int")).Append(EndLine)
+                                upd_cmd.Append("select ").Append(varName).Append(" = ").Append(RowCount)
+                                If insSb.Length > 0 Then
+                                    upd_cmd.Append(", @lastErr = ").Append(LastError)
+                                End If
+                                upd_cmd.Append(insSb.ToString)
+                            End If
+                        End If
+
+                        'Dim hasSyncUpdate As Boolean = HasUpdateColumns(syncUpdateProps, updated_tables, esch)
+
+                        If hasSyncUpdate Then
                             upd_cmd.Append(EndLine)
                             If SupportIf() Then
-                                upd_cmd.Append("if ").Append(RowCount).Append(" > 0 ")
+                                upd_cmd.Append("if ")
+                                For Each tbl As SourceFragment In syncUpdateProps _
+                                    .ConvertAll(Function(ep As EntityPropertyAttribute) esch.GetFieldColumnMap(ep.PropertyAlias).Table)
+
+                                    Dim varName As String = "@" & tbl.Name.Replace(".", "") & "_rownum"
+                                    upd_cmd.Append(varName).Append(" and ")
+
+                                Next
+                                upd_cmd.Length -= 5
+                                upd_cmd.Append(" > 0 ")
                             End If
                             Dim sel_sb As New StringBuilder
                             Dim newAlMgr As AliasMgr = AliasMgr.Create
                             sel_sb.Append(SelectWithJoin(mpe, rt, mpe.GetTables(esch), newAlMgr, params, _
-                                Nothing, True, Nothing, Nothing, sel_columns, esch, filterInfo))
+                                Nothing, True, Nothing, Nothing, syncUpdateProps, esch, filterInfo))
                             Dim cn As New Condition.ConditionConstructor
                             For Each p As PKDesc In obj.GetPKValues
                                 Dim clm As String = mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
@@ -1144,7 +1190,7 @@ l2:
                             'sel_sb.Append(f.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params))
 
                             upd_cmd.Append(sel_sb)
-                            select_columns = sel_columns
+                            select_columns = syncUpdateProps
                         End If
 
                         dbparams = params.Params
@@ -1155,7 +1201,7 @@ l2:
             End Using
         End Function
 
-        Protected Function CheckColumns(ByVal sel_columns As Generic.IList(Of EntityPropertyAttribute), _
+        Protected Function HasUpdateColumns(ByVal sel_columns As Generic.IList(Of EntityPropertyAttribute), _
             ByVal tables As IDictionary(Of SourceFragment, TableUpdate), ByVal esch As IEntitySchema) As Boolean
 
             If sel_columns.Count > 0 Then
@@ -1171,8 +1217,23 @@ l2:
             Return False
         End Function
 
-        Protected Overridable Sub CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
-            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam, ByVal exec As Query.IExecutionContext)
+        Protected Function HasUpdateColumnsForTable(ByVal sel_columns As Generic.IList(Of EntityPropertyAttribute), _
+            ByVal table As SourceFragment, ByVal esch As IEntitySchema) As Boolean
+
+            If sel_columns.Count > 0 Then
+                For Each c As EntityPropertyAttribute In sel_columns
+                    If table Is esch.GetFieldColumnMap()(c.PropertyAlias).Table Then
+                        Return True
+                    End If
+                Next
+            End If
+
+            Return False
+        End Function
+
+        Protected Overridable Function CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
+            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam, _
+            ByVal exec As Query.IExecutionContext, ByVal rowCnt As String) As Boolean
 
             Dim dic As New List(Of InsertedTable)
             Dim l As New List(Of ITemplateFilter)
@@ -1188,13 +1249,16 @@ l2:
             ins.Executor = exec
             dic.Add(ins)
             Dim oldl As Integer = upd_cmd.Length
-            upd_cmd.Append(EndLine).Append("if ").Append(RowCount).Append(" = 0 ")
+            upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and @lastErr = 0 ")
             Dim newl As Integer = upd_cmd.Length
             FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
             If newl = upd_cmd.Length Then
                 upd_cmd.Length = oldl
+                Return False
+            Else
+                Return True
             End If
-        End Sub
+        End Function
 
         Protected Sub GetDeletedConditions(ByVal mpe As ObjectMappingEngine, ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object, _
             ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema, ByVal relSchema As IMultiTableObjectSchema)

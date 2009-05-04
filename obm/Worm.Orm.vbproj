@@ -202,12 +202,12 @@
     <Compile Include="QueryCmd\db\CacheItemProviders.vb" />
     <Compile Include="QueryCmd\QueryCmd.vb" />
     <Compile Include="Entity\Relation.vb" />
-    <Compile Include="StmtGenerators\db\DbSchema.vb" />
+    <Compile Include="StmtGenerators\db\DbGenerator.vb" />
     <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
     <Compile Include="Query\Criteria\Filters\Filters.vb" />
     <Compile Include="Mapping\MappingEngine.vb" />
     <Compile Include="StmtGenerators\StmtGenerator.vb" />
-    <Compile Include="StmtGenerators\xml\XmlSchema.vb" />
+    <Compile Include="StmtGenerators\xml\XmlGenerator.vb" />
     <Compile Include="Web\HttpCacheDic.vb" />
     <Compile Include="Cache\OrmCache.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -228,7 +228,7 @@
     <Compile Include="Entity\KeyEntity.vb" />
     <Compile Include="other.vb" />
     <Compile Include="SearchConfiguration.vb" />
-    <Compile Include="StmtGenerators\db\SQL2005Schema.vb" />
+    <Compile Include="StmtGenerators\db\SQL2005Generator.vb" />
     <Compile Include="DbMS\SP\ScalarSP.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />

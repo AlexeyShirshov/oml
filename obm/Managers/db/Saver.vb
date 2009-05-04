@@ -661,6 +661,7 @@ l1:
         Private _cm As ICreateManager
         Protected _created As Boolean
         Private _ss As OrmManager.SchemaSwitcher
+        Private _syncObj As New Dictionary(Of ICachedEntity, Object)
 
         Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
         Public Event BeginRestore(ByVal count As Integer)
@@ -787,6 +788,16 @@ l1:
             Add(CType(obj, _ICachedEntity))
         End Sub
 
+        Private Sub ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+            RemoveHandler sender.ChangesAccepted, AddressOf ChangesAccepted
+            Dim o As Object = _syncObj(sender)
+            _syncObj.Remove(sender)
+            Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
+            ObjectMappingEngine.InitPOCO(_mgr.MappingEngine.GetProperties(o.GetType, oschema), _
+                o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
+                _mgr.MappingEngine, sender, o, _mgr)
+        End Sub
+
         Public Overridable Sub Add(ByVal obj As Object)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("object")
@@ -799,7 +810,10 @@ l1:
                 oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
                 mpe.AddEntitySchema(t, oschema)
             End If
-            Add(CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj), _ICachedEntity))
+            Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj), _ICachedEntity)
+            _syncObj(ro) = obj
+            AddHandler ro.ChangesAccepted, AddressOf ChangesAccepted
+            Add(ro)
         End Sub
 
         Public Overridable Sub Add(ByVal obj As _ICachedEntity)

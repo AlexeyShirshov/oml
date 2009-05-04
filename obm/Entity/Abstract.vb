@@ -137,6 +137,7 @@ Namespace Entities
         Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+        Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
         Function BeginEdit() As IDisposable
         Function BeginAlter() As IDisposable
