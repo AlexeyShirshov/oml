@@ -338,8 +338,11 @@ Imports Worm.Entities
 
             Assert.AreEqual(ObjectState.Modified, o2.InternalProperties.ObjectState)
 
-            Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
-                "if @@rowcount = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
+            Dim expected As String = "declare @lastErr int" & vbCrLf & _
+"update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
+"declare @dbot1_rownum int" & vbCrLf & _
+"select @dbot1_rownum = @@rowcount, @lastErr = @@error" & vbCrLf & _
+"if @dbot1_rownum = 0 and @lastErr = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
 
             Assert.AreEqual(expected, gen.Update(schemaV1, o2, Nothing, params, sel, upd))
 
@@ -374,13 +377,17 @@ Imports Worm.Entities
 
             Assert.AreEqual(ObjectState.Modified, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
-                "if @@rowcount > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
+            Dim expected As String = "declare @lastErr int" & vbCrLf & _
+"update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
+"declare @dboent3_rownum int" & vbCrLf & _
+"select @dboent3_rownum = @@rowcount" & vbCrLf & _
+"if @dboent3_rownum > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As List(Of EntityPropertyAttribute) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
-            Assert.AreEqual(expected, gen.Update(schemaV1, o, Nothing, params, sel, upd))
+            Dim actual As String = gen.Update(schemaV1, o, Nothing, params, sel, upd)
+            Assert.AreEqual(expected, actual, String.Compare(expected, actual).ToString)
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params

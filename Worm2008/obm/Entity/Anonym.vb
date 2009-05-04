@@ -213,6 +213,7 @@ Namespace Entities
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements ICachedEntity.OriginalCopyRemoved
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Updated
+        Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.ChangesAccepted
 
         Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
             Using SyncHelper(False)
@@ -385,6 +386,8 @@ Namespace Entities
                         'ElseIf _valProcs AndAlso updateCache Then
                         '    mc.Cache.ValidateSPOnUpdate(Me, Nothing)
                     End If
+
+                    RaiseEvent ChangesAccepted(Me, EventArgs.Empty)
                 End Using
             End Using
 

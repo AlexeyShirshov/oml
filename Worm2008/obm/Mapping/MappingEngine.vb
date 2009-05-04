@@ -2441,6 +2441,9 @@ Public Class ObjectMappingEngine
         If value Is Nothing Then
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, Nothing, oschema)
             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+        ElseIf value.GetType Is propType Then
+            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)
+            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
         ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
             Dim o As New System.Xml.XmlDocument
             o.LoadXml(CStr(value))
@@ -2709,6 +2712,43 @@ Public Class ObjectMappingEngine
         Next
         Return l
     End Function
+
+    Friend Shared Sub InitPOCO(ByVal props As IDictionary, ByVal rt As Type, ByVal oschema As IEntitySchema, _
+        ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
+        ByVal e As _IEntity, ByVal ro As Object, ByVal mgr As OrmManager, _
+        Optional ByVal pref As String = Nothing)
+        For Each kv As DictionaryEntry In props
+            Dim col As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
+            Dim pa As String = col.PropertyAlias
+            If ctd.GetProperties.Find(pa, False) Is Nothing Then
+                pa = rt.Name & "-" & pa
+                If Not String.IsNullOrEmpty(pref) Then
+                    pa = "%" & pref & "-" & pa
+                End If
+                If ctd.GetProperties.Find(pa, False) Is Nothing Then
+                    Continue For
+                End If
+            End If
+
+            Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+            Dim v As Object = mpe.GetPropertyValue(e, pa, oschema)
+            If v Is DBNull.Value Then
+                v = Nothing
+            End If
+            'pi.SetValue(ro, v, Nothing)
+            Dim pit As Type = pi.PropertyType
+            v = ObjectMappingEngine.SetValue(pit, mpe, mgr.Cache, v, ro, pi, col.PropertyAlias, Nothing, mgr.GetContextInfo)
+            If v IsNot Nothing AndAlso IsEntityType(pit, mpe) Then
+                Dim schema As IEntitySchema = mpe.GetEntitySchema(rt, False)
+                If schema Is Nothing Then
+                    schema = ObjectMappingEngine.GetEntitySchema(pit, mpe, Nothing, Nothing)
+                    mpe.AddEntitySchema(pit, schema)
+                End If
+
+                InitPOCO(mpe.GetProperties(pit, schema), pit, schema, ctd, mpe, e, v, mgr, col.PropertyAlias)
+            End If
+        Next
+    End Sub
 End Class
 
 'End Namespace
