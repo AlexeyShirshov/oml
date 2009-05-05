@@ -49,9 +49,9 @@ namespace exam1sharp
         //define join
         public Worm.Criteria.Joins.QueryJoin GetJoins(SourceFragment left, SourceFragment right)
         {
-            if (right == _tables[0])
+            if (right == _tables[0])        //join SalesOrderHeader
                 return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
-            else if (right == _tables[1])
+            else if (right == _tables[1])   //join SalesOrderDetail
                 return JCtor.join(right).on(left, "SalesOrderID").eq(right, "SalesOrderID");
             else
                 throw new NotImplementedException();

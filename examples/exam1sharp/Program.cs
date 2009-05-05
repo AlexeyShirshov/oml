@@ -176,16 +176,35 @@ namespace exam1sharp
             Console.WriteLine("Elapsed {0}", DateTime.Now - start);
         }
 
-        static void Main(string[] args)
+        static void Main10(string[] args)
         {
             var o = SalesOrder.Query
                 .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
                 .Single() as SalesOrder;
 
             o.OrderQty += 10;
+
+            Console.WriteLine("LineTotal={0}", o.LineTotal);
+
+            using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+            {
+                mt.Add(o);
+                mt.AcceptModifications();
+            }
+
+            Console.WriteLine("LineTotal={0}", o.LineTotal);
+        }
+
+        static void Main(string[] args)
+        {
+            var o = SalesOrder.Query
+                .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
+                .Single() as SalesOrder;
+
+            o.OrderQty -= 10;
             o.OrderDate = new DateTime(2001, 07, 5);
 
-            using(ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+            using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
             {
                 mt.Add(o);
                 mt.AcceptModifications();
@@ -199,20 +218,5 @@ namespace exam1sharp
                 mt.AcceptModifications();
             }
         }
-        
-        //static void Main(string[] args)
-        //{
-        //    var o = SalesOrder.Query
-        //        .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
-        //        .Single() as SalesOrder;
-
-        //    o.OrderDate = new DateTime(2001,07,1);
-
-        //    using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
-        //    {
-        //        mt.Add(o);
-        //        mt.AcceptModifications();
-        //    }
-        //}
 	}
 }
