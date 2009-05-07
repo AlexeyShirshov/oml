@@ -156,6 +156,16 @@ Public Class ObjectMappingEngine
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
+                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
+                        If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then
+                            Continue For
+                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
+                            Exit Do
+                        End If
+                        bd = bd.GetBaseDefinition
+                    Loop
+
                     column = New EntityPropertyAttribute(propertyAlias, String.Empty)
                     column.Column = propertyAlias
                 End If
@@ -183,6 +193,10 @@ Public Class ObjectMappingEngine
         Next
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+            If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then
+                Continue For
+            End If
+
             Dim column As EntityPropertyAttribute = Nothing
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
             If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
@@ -197,6 +211,16 @@ Public Class ObjectMappingEngine
                         column.PropertyAlias = mc._propertyAlias
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
+                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
+                        If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then
+                            Continue For
+                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
+                            Exit Do
+                        End If
+                        bd = bd.GetBaseDefinition
+                    Loop
+
                     column = New EntityPropertyAttribute(propertyAlias, String.Empty)
                     column.Column = propertyAlias
                 End If
@@ -1560,7 +1584,7 @@ Public Class ObjectMappingEngine
                         If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                             Dim l As New OrmObjectIndex
                             Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
-                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                 l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                             Next
 
@@ -1573,7 +1597,7 @@ Public Class ObjectMappingEngine
                             schema = New SimpleTwotableObjectSchema(l, l2)
                         Else
                             Dim l As New List(Of EntityPropertyAttribute)
-                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                 l.Add(c)
                             Next
 
@@ -1622,7 +1646,7 @@ Public Class ObjectMappingEngine
                             If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                     l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                 Next
 
@@ -1635,7 +1659,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                     l.Add(c)
                                 Next
 
@@ -1691,7 +1715,7 @@ Public Class ObjectMappingEngine
                             If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea1.TableSchema, ea1.TableName)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                     l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                 Next
 
@@ -1704,7 +1728,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                     l.Add(c)
                                 Next
 
@@ -1765,7 +1789,7 @@ Public Class ObjectMappingEngine
                                 If tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) AndAlso tp.BaseType.IsAbstract Then
                                     Dim l As New OrmObjectIndex
                                     Dim tbl As New SourceFragment(ea2.TableSchema, ea2.TableName)
-                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                         l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
                                     Next
 
@@ -1778,7 +1802,7 @@ Public Class ObjectMappingEngine
                                     schema = New SimpleTwotableObjectSchema(l, l2)
                                 Else
                                     Dim l As New List(Of EntityPropertyAttribute)
-                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, Nothing).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
                                         l.Add(c)
                                     Next
 

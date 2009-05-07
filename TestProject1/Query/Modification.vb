@@ -149,7 +149,7 @@ Imports Worm.Criteria
         Dim q As New QueryCmd(Function() _
            TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
 
-        Dim t As RawObj = q.Top(1).Select(GetType(RawObj), True).Single(Of RawObj)()
+        Dim t As RawObj = q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)()
 
         Assert.IsNotNull(t)
         Dim oldCode As Integer = t.Code
@@ -166,7 +166,7 @@ Imports Worm.Criteria
         Assert.AreEqual(ObjectState.None, t.InternalProperties.ObjectState)
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
         Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
-        Assert.AreEqual(oldCode, q.Top(1).Select(GetType(RawObj), True).Single(Of RawObj)().Code)
+        Assert.AreEqual(oldCode, q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)().Code)
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.BeginTransaction()
@@ -182,7 +182,7 @@ Imports Worm.Criteria
                 Assert.AreEqual(oldCode + 2, CType(t.InternalProperties.OriginalCopy, RawObj).Code)
 
                 Assert.AreEqual(oldCode + 2, t.Code)
-                Assert.AreEqual(oldCode + 2, q.Top(1).Select(GetType(RawObj), True).Single(Of RawObj)(mgr).Code)
+                Assert.AreEqual(oldCode + 2, q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)(mgr).Code)
             Finally
                 mgr.Rollback()
             End Try
@@ -247,7 +247,7 @@ Imports Worm.Criteria
         Dim q As New QueryCmd(Function() _
            TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
 
-        Dim t As RawObj = q.Top(1).Select(GetType(RawObj), True).Single(Of RawObj)()
+        Dim t As RawObj = q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)()
 
         Assert.IsNotNull(t)
         Assert.IsTrue(t.InternalProperties.IsPropertyLoaded("Code"))
@@ -282,7 +282,7 @@ Imports Worm.Criteria
 
         o.Code = o.Code + 100
 
-        c.SyncPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0))
+        c.SyncPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0), Nothing)
 
         Assert.AreEqual(ObjectState.Modified, ce.ObjectState)
         Assert.IsNotNull(ce.OriginalCopy)

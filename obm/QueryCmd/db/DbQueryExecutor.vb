@@ -1091,7 +1091,7 @@ l1:
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
 
-                                Dim q As QueryCmd = New QueryCmd().Select(join.ObjectSource, True)
+                                Dim q As QueryCmd = New QueryCmd().SelectEntity(join.ObjectSource, True)
                                 q.Prepare(Nothing, mpe, filterInfo, s, False)
                                 Dim tbl As New SourceFragment
                                 'join.TmpTable = tbl

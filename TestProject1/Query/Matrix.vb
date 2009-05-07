@@ -63,7 +63,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, t2)
+            SelectEntity(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
     End Sub
@@ -71,7 +71,7 @@ Imports System.Collections.ObjectModel
     <TestMethod()> Public Sub TestSelect2()
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(GetType(Table1)).Select(GetType(Table1), GetType(Table2)). _
+        q.From(GetType(Table1)).SelectEntity(GetType(Table1), GetType(Table2)). _
             Join(JCtor.join(GetType(Table2)).on(GetType(Table2), "Table1").eq(GetType(Table1), "ID"))
 
         Dim m As ReadonlyMatrix = q.ToMatrix
@@ -85,7 +85,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, True).SelectAdd(t2, True)
+            SelectEntity(t1, True).SelectAdd(t2, True)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
     End Sub
@@ -99,7 +99,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, t2)
+            SelectEntity(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
     End Sub
@@ -114,7 +114,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, t2)
+            SelectEntity(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
@@ -130,7 +130,7 @@ Imports System.Collections.ObjectModel
         m = q.ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
+        m = q.SelectEntity(t1, True).SelectAdd(t2, True).ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
@@ -152,7 +152,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            Select(t1, t2)
+            SelectEntity(t1, t2)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
@@ -168,7 +168,7 @@ Imports System.Collections.ObjectModel
         m = q.ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        m = q.Select(t1, True).SelectAdd(t2, True).ToMatrix
+        m = q.SelectEntity(t1, True).SelectAdd(t2, True).ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)

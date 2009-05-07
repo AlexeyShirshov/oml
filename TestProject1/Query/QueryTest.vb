@@ -59,7 +59,7 @@ Imports System.ComponentModel
     <TestMethod()> Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
@@ -125,7 +125,7 @@ Imports System.ComponentModel
 
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)). _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)). _
                 Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")). _
                 OrderBy(SCtor.prop(GetType(Entity4), "ID"))
 
@@ -146,7 +146,7 @@ Imports System.ComponentModel
             Dim q As New QueryCmd()
             q.Filter = Ctor.prop(GetType(Entity4), "Title").like("b%")
             q.Sort = SCtor.prop(GetType(Entity4), "ID")
-            q.Select(GetType(Entity4))
+            q.SelectEntity(GetType(Entity4))
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -164,7 +164,7 @@ Imports System.ComponentModel
             Dim t_entity4 As Type = GetType(Entity4)
             Dim t_entity5 As Type = GetType(Entity)
             Dim q As New QueryCmd()
-            q.Select(t_entity4)
+            q.SelectEntity(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New QueryJoin() {New QueryJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
             q.Select(New SelectExpression() {New SelectExpression(t_entity4, "ID"), New SelectExpression(t_entity4, "Title")})
@@ -190,7 +190,7 @@ Imports System.ComponentModel
             Dim t_entity As Type = GetType(Entity)
             Dim t_entity5 As Type = GetType(Entity5)
             Dim q As New QueryCmd()
-            q.Select(t_entity4)
+            q.SelectEntity(t_entity4)
             q.Joins = JCtor.join(t_entity).[on](t_entity4, "ID").eq(t_entity, "ID")
 
             Assert.AreEqual(12, q.ToAnonymList(mgr).Count)
@@ -246,9 +246,9 @@ Imports System.ComponentModel
 
             Dim q As New QueryCmd()
             q = q _
-                .Select(t1) _
+                .SelectEntity(t1) _
                 .Where(Ctor.exists( _
-                        New QueryCmd().Select("Table3"). _
+                        New QueryCmd().SelectEntity("Table3"). _
                             Join(JCtor.join(t1).onM2M("Table3")). _
                             Where(Ctor.prop("Table3", "Code").eq(2))))
 
@@ -292,7 +292,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity4))
+            q.SelectEntity(GetType(Entity4))
             q.Filter = Ctor.prop(GetType(Entity4), "Title").[like]("b%")
             Assert.IsNotNull(q)
 
@@ -314,7 +314,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
@@ -331,7 +331,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
@@ -348,7 +348,7 @@ Imports System.ComponentModel
                 Assert.IsFalse(o.InternalProperties.IsLoaded)
             Next
 
-            r = q2.Select(GetType(Entity4), True).ToList(Of Entity4)(mgr)
+            r = q2.SelectEntity(GetType(Entity4), True).ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
             For Each o As Entity4 In r
@@ -386,7 +386,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
@@ -407,7 +407,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
             Assert.IsNotNull(q)
 
@@ -493,7 +493,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             Dim q As New QueryCmd()
             q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             Dim l As ReadOnlyEntityList(Of Entity) = q.ToList(Of Entity)(mgr)
             Assert.AreEqual(2, l.Count)
         End Using
@@ -503,7 +503,7 @@ Imports System.ComponentModel
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             Dim q As New QueryCmd()
             q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
-            q.Select(GetType(Entity4), True)
+            q.SelectEntity(GetType(Entity4), True)
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(2, l.Count)
 
@@ -516,7 +516,7 @@ Imports System.ComponentModel
     <TestMethod()> Public Sub TestInterface()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             Dim r As IList(Of IEnt) = q.ToEntityList(Of IEnt)(mgr)
 
             Assert.IsNotNull(r)
@@ -532,7 +532,7 @@ Imports System.ComponentModel
             Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             q = New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             Dim r2 As IList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
             Assert.IsNotNull(r2)
             Assert.AreEqual(13, r2.Count)
@@ -546,7 +546,7 @@ Imports System.ComponentModel
     End Sub
 
     <TestMethod()> Public Sub TestAutoMgr()
-        Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
+        Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
         Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)( _
             Function() TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -561,7 +561,7 @@ Imports System.ComponentModel
     <TestMethod()> Public Sub TestRenew()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd()
-            q.Select(GetType(Entity4))
+            q.SelectEntity(GetType(Entity4))
             q.ToList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Assert.IsTrue(q.IsInCache(mgr))
@@ -578,7 +578,7 @@ Imports System.ComponentModel
     <TestMethod()> Public Sub TestRenew2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd()
-            q.Select(GetType(Entity4))
+            q.SelectEntity(GetType(Entity4))
 
             Assert.IsFalse(q.IsInCache(mgr))
 
@@ -622,7 +622,7 @@ Imports System.ComponentModel
 
     <TestMethod()> Public Sub TestEntity()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(NonCache)). _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(NonCache)). _
             Where(Ctor.prop(GetType(NonCache), "Code").eq(5))
 
             Dim l As ReadOnlyObjectList(Of NonCache) = q.ToObjectList(Of NonCache)(mgr)
@@ -653,13 +653,13 @@ Imports System.ComponentModel
     <TestMethod()> Public Sub TestCache()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
 
             Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
             Dim q2 As New QueryCmd()
-            q2.Select(GetType(Entity4))
+            q2.SelectEntity(GetType(Entity4))
 
             Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsFalse(q2.LastExecutionResult.CacheHit)
@@ -727,7 +727,7 @@ Imports System.ComponentModel
             Function(mark As String) If(dic.Contains(mark), CType(dic(mark), IDictionary), createdic(dic, mark))), _
             New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.ExternalCacheMark = "ldgn"
 
             q.ToList(Of Entity)(mgr)
@@ -750,7 +750,7 @@ Imports System.ComponentModel
             Dim tt2 As Type = GetType(Table2)
 
             Dim q As QueryCmd = New QueryCmd(). _
-                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
+                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).SelectEntity(tt2)
 
             Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
 
@@ -774,11 +774,11 @@ Imports System.ComponentModel
             Dim tt2 As Type = GetType(Table2)
 
             Dim q As QueryCmd = New QueryCmd(). _
-                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).Select(tt2)
+                Where(New Ctor(tt2).prop("Table1").exists(GetType(Table1))).SelectEntity(tt2)
 
             Dim cq As QueryCmd = New QueryCmd(). _
                 Where(Ctor.prop(tt2, "Table1").eq(tt1, "Enum").[and]( _
-                      Ctor.prop(tt1, "Code").eq(45))).Select(tt1)
+                      Ctor.prop(tt1, "Code").eq(45))).SelectEntity(tt1)
 
             q.Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
 
@@ -871,7 +871,7 @@ Imports System.ComponentModel
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Table1), True)
+        q.SelectEntity(GetType(Table1), True)
         q.ClientPaging = New Worm.Query.Paging(0, 1)
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
@@ -905,7 +905,7 @@ Imports System.ComponentModel
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Table1), True).Paging(New P).OrderBy(SCtor.prop(GetType(Table1), "ID").desc)
+        q.SelectEntity(GetType(Table1), True).Paging(New P).OrderBy(SCtor.prop(GetType(Table1), "ID").desc)
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
@@ -920,7 +920,7 @@ Imports System.ComponentModel
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.Select("Table3")
+        q.SelectEntity("Table3")
 
         Dim t As Type = GetType(Table3)
         q.Select(FCtor.prop(t, "Code"))
@@ -1154,7 +1154,7 @@ Imports System.ComponentModel
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Table1))
+        q.SelectEntity(GetType(Table1))
 
         Dim t As ICollection(Of Table2) = New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))) _
@@ -1193,7 +1193,7 @@ Imports System.ComponentModel
             TestManager.CreateManager(c, New ObjectMappingEngine("1.1")))
 
         Dim r As ReadOnlyList(Of Entity2) = q.Where(Ctor.prop(GetType(Entity2), "ID").greater_than(0)) _
-            .Select(GetType(Entity2), True) _
+            .SelectEntity(GetType(Entity2), True) _
             .ToOrmList(Of Entity2)()
 
         For Each e As Entity2 In r
@@ -1208,7 +1208,7 @@ Imports System.ComponentModel
 
 
         r = q.Where(Ctor.prop(GetType(Entity2), "ID").greater_than(0)) _
-            .Select(GetType(Entity2), True) _
+            .SelectEntity(GetType(Entity2), True) _
             .ToOrmList(Of Entity2)()
 
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
@@ -1287,7 +1287,7 @@ Imports System.ComponentModel
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        For Each t As SimpleObj2 In q.Select(GetType(SimpleObj2), True).ToList(Of SimpleObj2)()
+        For Each t As SimpleObj2 In q.SelectEntity(GetType(SimpleObj2), True).ToList(Of SimpleObj2)()
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.AreNotEqual(0, t.Money)
             Assert.IsNotNull(t.Obj1)

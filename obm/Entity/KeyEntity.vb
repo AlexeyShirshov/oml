@@ -726,23 +726,23 @@ Namespace Entities
         End Function
 
         Public Function GetCmd(ByVal t As System.Type) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(New EntityUnion(t)).Select(t), RelationCmd)
+            Return CType(CreateRelCmd(New EntityUnion(t)).SelectEntity(t), RelationCmd)
         End Function
 
         Public Function GetCmd(ByVal t As System.Type, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(New EntityUnion(t), key).Select(t), RelationCmd)
+            Return CType(CreateRelCmd(New EntityUnion(t), key).SelectEntity(t), RelationCmd)
         End Function
 
         Public Function GetCmd(ByVal entityName As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(New EntityUnion(entityName)).Select(entityName), RelationCmd)
+            Return CType(CreateRelCmd(New EntityUnion(entityName)).SelectEntity(entityName), RelationCmd)
         End Function
 
         Public Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(New EntityUnion(entityName), key).Select(entityName), RelationCmd)
+            Return CType(CreateRelCmd(New EntityUnion(entityName), key).SelectEntity(entityName), RelationCmd)
         End Function
 
         Public Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(desc).Select(desc.Rel), RelationCmd)
+            Return CType(CreateRelCmd(desc).SelectEntity(desc.Rel), RelationCmd)
         End Function
 
         Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M

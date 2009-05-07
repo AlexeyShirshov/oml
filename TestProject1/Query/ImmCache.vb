@@ -53,7 +53,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = tm
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Table1)).Where( _
                 Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
@@ -83,7 +83,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = tm
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Table1)).Where( _
                 Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
@@ -114,7 +114,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = tm
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)) _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Table1)) _
                 .Where(Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)) _
                 .OrderBy(SCtor.custom("name").desc.prop(GetType(Table1), "Enum"))
 
@@ -147,7 +147,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "ID").greater_than(2)
             Assert.IsNotNull(q)
 
@@ -175,7 +175,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -203,7 +203,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -231,7 +231,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             q.OrderBy(SCtor.custom("id"))
             Assert.IsNotNull(q)
@@ -261,7 +261,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -290,7 +290,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
 
@@ -318,7 +318,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -346,7 +346,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -374,7 +374,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -403,7 +403,7 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table2))
+            q.SelectEntity(GetType(Table2))
             q.Filter = Ctor.prop(GetType(Table2), "Money").greater_than(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
@@ -485,10 +485,10 @@ Imports Worm.Criteria
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = tm
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "ID").greater_than(5)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
-            Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
+            Dim q2 As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "Title").eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)

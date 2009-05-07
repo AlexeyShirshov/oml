@@ -373,7 +373,7 @@ Namespace Misc
 
             Dim pp As PredicateLink = Nothing
 
-            cmd.Select(tt).OrderBy(sort)
+            cmd.SelectEntity(tt).OrderBy(sort)
 
             If strong Then
                 pp = Ctor.prop(tt, firstPropertyAlias).eq(Name)
@@ -402,7 +402,7 @@ Namespace Misc
             If loadName Then
                 cmd.Select(FCtor.prop(tt, propertyAlias))
             Else
-                cmd.Select(tt)
+                cmd.SelectEntity(tt)
             End If
 
             If strong Then

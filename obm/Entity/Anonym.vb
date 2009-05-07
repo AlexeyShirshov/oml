@@ -312,7 +312,24 @@ Namespace Entities
         End Function
 
         Public Sub SetLoaded(ByVal value As Boolean) Implements _ICachedEntity.SetLoaded
-            Throw New NotImplementedException
+            Using SyncHelper(False)
+                Using mc As IGetManager = GetMgr()
+                    Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+                    If value AndAlso Not _loaded Then
+                        Dim cnt As Integer = _props.Count
+                        For i As Integer = 0 To cnt - 1
+                            _members_load_state(i, mpe) = True
+                        Next
+                    ElseIf Not value AndAlso _loaded Then
+                        Dim cnt As Integer = _props.Count
+                        For i As Integer = 0 To cnt - 1
+                            _members_load_state(i, mpe) = False
+                        Next
+                    End If
+                    _loaded = value
+                    Debug.Assert(_loaded = value)
+                End Using
+            End Using
         End Sub
 
         Public Function SetLoaded(ByVal fieldName As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
@@ -362,7 +379,7 @@ Namespace Entities
                             RaiseEvent Deleted(Me, EventArgs.Empty)
                         ElseIf _upd.Added Then
                             '_valProcs = False
-                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
+                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, GetEntitySchema(mc.MappingEngine))
                             Dim kw As CacheKey = New CacheKey(Me)
                             Dim o As _ICachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
@@ -445,7 +462,14 @@ Namespace Entities
         End Property
 
         Public Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As Meta.PKDesc) Implements _ICachedEntity.CreateCopyForSaveNewEntry
-            Throw New NotImplementedException
+            Debug.Assert(_copy Is Nothing)
+            Dim clone As AnonymousCachedEntity = CType(CreateClone(), AnonymousCachedEntity)
+            clone._myschema = _myschema
+            SetObjectState(Entities.ObjectState.Modified)
+            _copy = clone
+            Dim c As CacheBase = mgr.Cache
+            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, GetEntitySchema(mgr.MappingEngine))
+            If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         End Sub
 
         Public Function GetPKValues() As Meta.PKDesc() Implements ICachedEntity.GetPKValues
@@ -571,7 +595,43 @@ Namespace Entities
         End Property
 
         Public Function Delete(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.Delete
-            Throw New NotImplementedException
+            Return _Delete(mgr, CType(EnsureInCache(mgr), AnonymousCachedEntity))
+        End Function
+
+        Protected Shared Function _Delete(ByVal mgr As OrmManager, ByVal obj As AnonymousCachedEntity) As Boolean
+            Using obj.SyncHelper(False)
+                If obj.ObjectState = Entities.ObjectState.Deleted Then Return False
+
+                If obj.ObjectState = Entities.ObjectState.Clone Then
+                    Throw New OrmObjectException(obj.ObjName & "Deleting clone is not allowed")
+                End If
+                If obj.ObjectState <> Entities.ObjectState.Modified AndAlso obj.ObjectState <> Entities.ObjectState.None AndAlso obj.ObjectState <> Entities.ObjectState.NotLoaded Then
+                    Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
+                End If
+
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, obj.GetEntitySchema(mgr.MappingEngine))
+                'If mo Is Nothing Then mo = _mo
+                If mo IsNot Nothing Then
+                    'Using mc As IGetManager = obj.GetMgr()
+                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
+                        Throw New OrmObjectException(obj.ObjName & "Object has already altered by user " & mo.User.ToString)
+                    End If
+                    'End Using
+                    Debug.Assert(mo.Reason <> ObjectModification.ReasonEnum.Delete)
+                Else
+                    If obj.ObjectState = Entities.ObjectState.NotLoaded Then
+                        obj.Load(mgr)
+                        If obj.ObjectState = Entities.ObjectState.NotFoundInSource Then
+                            Return False
+                        End If
+                    End If
+
+                    Debug.Assert(obj.ObjectState <> Entities.ObjectState.Modified)
+                    obj.CreateClone4Delete(mgr)
+                End If
+            End Using
+
+            Return True
         End Function
 
         Private Overloads Sub _RejectChanges(ByVal mgr As OrmManager) Implements _ICachedEntity.RejectChanges
@@ -648,7 +708,7 @@ Namespace Entities
                         If oldkey.HasValue Then
                             'Using gmc As IGetManager = GetMgr()
                             'Dim mc As OrmManager = gmc.Manager
-                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType)
+                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType, GetEntitySchema(mgr.MappingEngine))
                             If dic Is Nothing Then
                                 Dim name As String = Me.GetType.Name
                                 Throw New OrmObjectException("Collection for " & name & " not exists")
@@ -732,7 +792,7 @@ Namespace Entities
                 End If
 
                 If ObjectState = Entities.ObjectState.NotLoaded Then
-                    Load()
+                    Load(mgr)
                     If ObjectState = Entities.ObjectState.NotFoundInSource Then
                         Throw New OrmObjectException(ObjName & "Object is not editable 'cause it is not found in source")
                     End If
@@ -777,7 +837,7 @@ Namespace Entities
 
         Protected Sub CreateClone4Delete(ByVal mgr As OrmManager)
             SetObjectState(Entities.ObjectState.Deleted)
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, mgr.MappingEngine.GetEntitySchema(Me.GetType))
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, GetEntitySchema(mgr.MappingEngine))
             Dim mgrLocal As OrmManager = GetCurrent()
             If mgrLocal IsNot Nothing Then
                 mgrLocal.RaiseBeginDelete(Me)

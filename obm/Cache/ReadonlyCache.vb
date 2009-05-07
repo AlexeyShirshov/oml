@@ -121,9 +121,12 @@ Namespace Cache
         End Function
 #End If
 
-        Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity, ByVal mgr As OrmManager)
+        Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
             If mgr IsNot Nothing Then
-                Dim sc As ObjectModification = ShadowCopy(obj, mgr, mgr.MappingEngine.GetEntitySchema(obj.GetType))
+                If oschema Is Nothing Then
+                    oschema = obj.GetEntitySchema(mgr.MappingEngine)
+                End If
+                Dim sc As ObjectModification = ShadowCopy(obj, mgr, oschema)
                 If sc IsNot Nothing Then
                     Dim st As String = String.Empty
 #If DEBUG Then
@@ -617,7 +620,7 @@ Namespace Cache
 
             Dim t As Type = obj.GetType
 
-            Dim dic As IDictionary = GetOrmDictionary(filterInfo, t, schema)
+            Dim dic As IDictionary = GetOrmDictionary(filterInfo, t, schema, obj.GetEntitySchema(schema))
 
             If dic Is Nothing Then
                 ''todo: throw an exception when all collections will be implemented
@@ -839,11 +842,16 @@ Namespace Cache
             Return CType(_filters(key), System.Collections.IDictionary)
         End Function
 
-        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal o As Object) As ICachedEntity
-            Return GetPOCO(mpe, mpe.GetEntitySchema(o.GetType, False), o)
+        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal o As Object) As _ICachedEntity
+            Return GetPOCO(mpe, mpe.GetEntitySchema(o.GetType, False), o, Nothing)
         End Function
 
         Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object) As _ICachedEntity
+            Return GetPOCO(mpe, oschema, o, Nothing)
+        End Function
+
+        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
+            ByVal o As Object, ByVal mgr As OrmManager) As _ICachedEntity
             Dim pk As New List(Of PKDesc)
             For Each e As EntityPropertyAttribute In mpe.GetPrimaryKeys(o.GetType, oschema)
                 Dim pkd As New PKDesc(e.PropertyAlias, mpe.GetPropertyValue(o, e.PropertyAlias, oschema))
@@ -859,23 +867,35 @@ Namespace Cache
 
             If ReferenceEquals(ro, c) Then
                 CType(c, AnonymousCachedEntity)._myschema = oschema
+                If mgr IsNot Nothing Then
+                    c.Load(mgr)
+                    If c.ObjectState = ObjectState.NotFoundInSource Then
+                        c.SetObjectState(ObjectState.Created)
+                    End If
+                End If
             End If
             Return ro
         End Function
 
-        Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object) As ICachedEntity
-            Dim c As _ICachedEntity = GetPOCO(mpe, oschema, o)
+        Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
+            ByVal o As Object, ByVal mgr As OrmManager) As ICachedEntity
+            Dim c As _ICachedEntity = GetPOCO(mpe, oschema, o, mgr)
             SyncPOCO(c, mpe, oschema, o)
             Return c
         End Function
 
         Public Sub SyncPOCO(ByVal c As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object)
             If c IsNot Nothing Then
+                If c.ObjectState = ObjectState.Created Then c.BeginLoading()
                 For Each de As DictionaryEntry In mpe.GetProperties(o.GetType, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                     Dim ea As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                     mpe.SetPropertyValue(c, ea.PropertyAlias, mpe.GetPropertyValue(o, ea.PropertyAlias, oschema), oschema)
                 Next
+                If c.ObjectState = ObjectState.Created Then c.EndLoading()
+                'If c.ObjectState = ObjectState.Modified Then
+                '    c.AcceptChanges(False, True)
+                'End If
             End If
         End Sub
     End Class

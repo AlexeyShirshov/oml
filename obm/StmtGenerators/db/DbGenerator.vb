@@ -373,7 +373,7 @@ Namespace Database
                     Dim prim_key As EntityPropertyAttribute = Nothing
                     'Dim prim_key_value As Object = Nothing
                     Dim real_t As Type = obj.GetType
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(real_t)
+                    Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
                     Dim unions() As String = ObjectMappingEngine.GetUnions(real_t)
                     'Dim uniontype As String = ""
                     If unions IsNot Nothing Then
@@ -391,11 +391,28 @@ Namespace Database
 
                     Dim pkTable As SourceFragment = mpe.GetPKTable(real_t, es)
 
-                    For Each de As DictionaryEntry In mpe.GetProperties(real_t, es)
-                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                        Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = es.GetFieldColumnMap
+                    Dim exec As New cls(real_t, es)
+                    Dim ie As ICollection = mpe.GetProperties(real_t, es)
+                    If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(real_t) Then
+                        ie = col
+                    End If
+
+                    For Each o As Object In ie
+                        Dim c As EntityPropertyAttribute = Nothing
+                        Dim pi As Reflection.PropertyInfo = Nothing
+                        If TypeOf (o) Is DictionaryEntry Then
+                            Dim de As DictionaryEntry = CType(o, DictionaryEntry)
+                            c = CType(de.Key, EntityPropertyAttribute)
+                            pi = CType(de.Value, Reflection.PropertyInfo)
+                        Else
+                            Dim m As MapField2Column = CType(o, MapField2Column)
+                            c = New EntityPropertyAttribute(m.Column)
+                            c.PropertyAlias = m._propertyAlias
+                        End If
                         If c IsNot Nothing Then
-                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, c.PropertyAlias, pi, TryCast(oschema, IEntitySchema))
+
                             Dim att As Field2DbRelations = mpe.GetAttributes(es, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                              (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
@@ -454,6 +471,8 @@ l1:
                     Dim ins_tables As List(Of InsertedTable) = Sort(inserted_tables, tbls)
 
                     For j As Integer = 0 To ins_tables.Count - 1
+                        ins_tables(j).Executor = exec
+
                         If ins_tables(j).Table Is pkTable Then Continue For
 
                         Dim join_table As SourceFragment = ins_tables(j).Table
@@ -556,16 +575,30 @@ l1:
                 Dim insertedPK As New List(Of Pair(Of String))
                 Dim syncInsertPK As New List(Of Pair(Of String, Pair(Of String)))
                 If sel_columns IsNot Nothing Then
-                    For Each de As DictionaryEntry In mpe.GetProperties(type, os)
-                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                        'If sel_columns.Contains(c) Then
+                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = os.GetFieldColumnMap
+                    Dim ie As ICollection = mpe.GetProperties(type, os)
+                    If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(type) Then
+                        ie = col
+                    End If
+
+                    For Each o As Object In ie
+                        Dim c As EntityPropertyAttribute = Nothing
+                        Dim pi As Reflection.PropertyInfo = Nothing
+                        If TypeOf (o) Is DictionaryEntry Then
+                            Dim de As DictionaryEntry = CType(o, DictionaryEntry)
+                            c = CType(de.Key, EntityPropertyAttribute)
+                            pi = CType(de.Value, Reflection.PropertyInfo)
+                        Else
+                            Dim m As MapField2Column = CType(o, MapField2Column)
+                            c = New EntityPropertyAttribute(m.Column)
+                            c.PropertyAlias = m._propertyAlias
+                        End If
                         Dim att As Field2DbRelations = mpe.GetAttributes(os, c)
                         If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                             Dim clm As String = mpe.GetColumnNameByPropertyAlias(os, c.PropertyAlias, False, Nothing)
                             Dim s As String = "@pk_" & clm
                             Dim dt As String = "int"
-                            If Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
+                            If pi IsNot Nothing AndAlso Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
                                 dt = GetDBType(mpe, type, os, c, pi.PropertyType)
                             End If
                             ins_cmd.Append(DeclareVariable(s, dt))
@@ -1269,15 +1302,31 @@ l2:
                 Dim table As SourceFragment = tables(j)
                 Dim o As New Condition.ConditionConstructor
                 If table.Equals(pkTable) Then
-                    For Each de As DictionaryEntry In mpe.GetProperties(type, oschema)
-                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                        Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+                    Dim ie As ICollection = mpe.GetProperties(type, oschema)
+                    If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(type) Then
+                        ie = col
+                    End If
+
+                    For Each oo As Object In ie
+                        Dim c As EntityPropertyAttribute = Nothing
+                        Dim pi As Reflection.PropertyInfo = Nothing
+                        If TypeOf (oo) Is DictionaryEntry Then
+                            Dim de As DictionaryEntry = CType(oo, DictionaryEntry)
+                            c = CType(de.Key, EntityPropertyAttribute)
+                            pi = CType(de.Value, Reflection.PropertyInfo)
+                        Else
+                            Dim m As MapField2Column = CType(oo, MapField2Column)
+                            c = New EntityPropertyAttribute(m.Column)
+                            c.PropertyAlias = m._propertyAlias
+                        End If
+
                         If c IsNot Nothing Then
                             Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 o.AddFilter(New dc.EntityFilter(type, c.PropertyAlias, New LiteralValue("@id_" & c.PropertyAlias), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
-                                Dim v As Object = pi.GetValue(obj, Nothing)
+                                Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, c.PropertyAlias, pi, oschema)
                                 o.AddFilter((New dc.EntityFilter(type, c.PropertyAlias, New ScalarValue(v), FilterOperation.Equal)))
                             End If
                         End If
@@ -1322,7 +1371,7 @@ l2:
 
                 If obj.ObjectState = ObjectState.Deleted Then
                     Dim type As Type = obj.GetType
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
+                    Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
                     Dim relSchema As IEntitySchema = oschema
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Delete) = IReadonlyObjectSchema.Operation.Delete Then
@@ -1337,6 +1386,7 @@ l2:
                         del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ").Append(params.CreateParam(p.Value)).Append(EndLine)
                     Next
 
+                    Dim exec As New cls(type, relSchema)
                     GetDeletedConditions(mpe, deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
 
                     Dim pkFilter As IFilter = deleted_tables(relSchema.Table)
@@ -1344,11 +1394,11 @@ l2:
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, Nothing, params))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
                     del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table))
-                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Nothing, Me, Nothing, filterInfo, Nothing, params))
+                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, Nothing, params))
                     del_cmd.Append(EndLine)
 
                     del_cmd.Length -= EndLine.Length

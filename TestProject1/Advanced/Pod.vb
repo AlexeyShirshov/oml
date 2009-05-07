@@ -368,7 +368,7 @@ Imports Worm
 
         q _
             .From(c1) _
-            .Select(c1) _
+            .SelectEntity(c1) _
             .Join(JCtor.join(c2).on(c1, "ID").eq(c2, "ID")) _
             .Where(Ctor.prop(c1, "Code").greater_than(2)) _
             .OrderBy(SCtor.prop(c1, "Code"))
@@ -383,7 +383,7 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        Dim l As IList = q.Select(GetType(cls5)).ToList
+        Dim l As IList = q.SelectEntity(GetType(cls5)).ToList
 
         Assert.AreEqual(3, l.Count)
     End Sub

@@ -798,6 +798,27 @@ l1:
                 _mgr.MappingEngine, sender, o, _mgr)
         End Sub
 
+        Public Overridable Sub Delete(ByVal obj As Object)
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("object")
+            End If
+
+            Dim t As Type = obj.GetType
+            Dim mpe As Worm.ObjectMappingEngine = _mgr.MappingEngine
+            Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+            If oschema Is Nothing Then
+                oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
+                mpe.AddEntitySchema(t, oschema)
+            End If
+            Dim ro As _ICachedEntity = _mgr.Cache.GetPOCO(mpe, oschema, obj, _mgr)
+            Dim acc As Boolean = ro.ObjectState <> ObjectState.Modified
+            _mgr.Cache.SyncPOCO(ro, mpe, oschema, obj)
+            'Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj, _mgr), _ICachedEntity)
+            ro.AcceptChanges(False, True)
+            ro.Delete(_mgr)
+            Add(ro)
+        End Sub
+
         Public Overridable Sub Add(ByVal obj As Object)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("object")
@@ -810,7 +831,7 @@ l1:
                 oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
                 mpe.AddEntitySchema(t, oschema)
             End If
-            Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj), _ICachedEntity)
+            Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj, _mgr), _ICachedEntity)
             _syncObj(ro) = obj
             AddHandler ro.ChangesAccepted, AddressOf ChangesAccepted
             Add(ro)

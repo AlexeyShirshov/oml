@@ -58,7 +58,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "ID").greater_than(2)
             Assert.IsNotNull(q)
 
@@ -85,7 +85,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -112,7 +112,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)
             Assert.IsNotNull(q)
 
@@ -144,7 +144,7 @@ Imports System.Collections.ObjectModel
             Assert.IsNotNull(t1)
 
             Dim q As New QueryCmd()
-            q.Select(GetType(Table2))
+            q.SelectEntity(GetType(Table2))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(t1)
 
             Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
@@ -170,7 +170,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
 
@@ -197,7 +197,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table1))
+            q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -225,7 +225,7 @@ Imports System.Collections.ObjectModel
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd()
-            q.Select(GetType(Table2))
+            q.SelectEntity(GetType(Table2))
             q.Filter = Ctor.prop(GetType(Table2), "Money").greater_than(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
@@ -255,11 +255,11 @@ Imports System.Collections.ObjectModel
             Dim cq As QueryCmd = New QueryCmd(). _
                 Where(Ctor.prop(tt2, "Table1").eq(tt1, "Enum").[and]( _
                       Ctor.prop(tt1, "Code").eq(45)))
-            cq.Select(tt1)
+            cq.SelectEntity(tt1)
 
             Dim q As QueryCmd = New QueryCmd(). _
                 Where(New NonTemplateUnaryFilter(New SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
-            q.Select(tt2)
+            q.SelectEntity(tt2)
 
             Dim r As ReadOnlyList(Of Table2) = q.ToOrmList(Of Table2)(mgr)
             Assert.AreEqual(2, r.Count)
@@ -288,7 +288,7 @@ Imports System.Collections.ObjectModel
 
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
-        q.Select(t).Top(2).OrderBy(SCtor.prop(t, "DT"))
+        q.SelectEntity(t).Top(2).OrderBy(SCtor.prop(t, "DT"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
@@ -312,7 +312,7 @@ Imports System.Collections.ObjectModel
 
         Dim q As QueryCmd = New QueryCmd(New CreateManager(Function() _
             TestManager.CreateManager(c, New ObjectMappingEngine("1")))).OrderBy(SCtor.prop(t, "ID"))
-        q.Select(t)
+        q.SelectEntity(t)
 
         q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
@@ -401,10 +401,10 @@ Imports System.Collections.ObjectModel
             mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "ID").greater_than(5)).OrderBy(SCtor.prop(GetType(Entity4), "Title"))
 
-            Dim q2 As QueryCmd = New QueryCmd().Select(GetType(Entity4)).Where( _
+            Dim q2 As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity4)).Where( _
                 Ctor.prop(GetType(Entity4), "Title").eq("djkg"))
 
             Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
@@ -438,7 +438,7 @@ Imports System.Collections.ObjectModel
             mgr.Cache.NewObjectManager = tm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Table1)).Where( _
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Table1)).Where( _
                 Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec)).OrderBy(SCtor.custom("name"))
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
