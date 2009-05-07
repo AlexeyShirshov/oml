@@ -120,4 +120,16 @@ Imports Worm.Database
             End If
         End Try
     End Sub
+
+    <TestMethod()> Public Sub TestPlainObjectAlter()
+        Dim t As New GuidPK
+        Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
+
+        Using mgr As OrmManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
+            t.Code = 10
+
+            Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
+        End Using
+
+    End Sub
 End Class

@@ -471,7 +471,7 @@ Namespace Web
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             'Dim f As New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual)
             'Dim users As IList = UserMapper.FindUsers(mgr, New Ctor(UserMapper.GetUserType).Field(OrmBaseT.PKName).NotEq(-1))
-            Dim users As IList = New Query.QueryCmd(UserMapper.CreateManager).Select(UserMapper.GetUserType).ToList()
+            Dim users As IList = New Query.QueryCmd(UserMapper.CreateManager).SelectEntity(UserMapper.GetUserType).ToList()
             totalRecords = users.Count
             Return CreateUserCollection(users, schema, pageIndex, pageSize)
             'End Using

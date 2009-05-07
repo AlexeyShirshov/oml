@@ -52,7 +52,7 @@ Namespace Web
 
         Public Function FindUsers(ByVal criteria As Criteria.PredicateLink) As System.Collections.IList Implements IUserMapping.FindUsers
             Dim cmd As New Query.QueryCmd(CreateManager)
-            cmd.Where(criteria).Select(GetUserType)
+            cmd.Where(criteria).SelectEntity(GetUserType)
             Return cmd.ToList()
         End Function
 
@@ -720,7 +720,7 @@ Namespace Web
 
         Protected Overridable Function FindUsers(ByVal criteria As Worm.Criteria.PredicateLink) As IList Implements IUserMapping.FindUsers
             Dim cmd As New Query.QueryCmd(_getm)
-            cmd.Where(criteria).Select(GetUserType)
+            cmd.Where(criteria).SelectEntity(GetUserType)
             Return (cmd.ToList())
         End Function
 

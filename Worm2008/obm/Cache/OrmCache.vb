@@ -1421,8 +1421,8 @@ l1:
             End Using
         End Sub
 
-        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity, ByVal mgr As OrmManager)
-            MyBase.RegisterRemoval(obj, mgr)
+        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
+            MyBase.RegisterRemoval(obj, mgr, oschema)
             RemoveDepends(obj)
         End Sub
         ''' <summary>

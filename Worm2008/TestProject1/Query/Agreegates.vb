@@ -127,7 +127,7 @@ Imports Worm.Misc
 
             Dim q As New QueryCmd()
             q.Sort = SCtor.query(inner).desc
-            q.Select(GetType(Entity4))
+            q.SelectEntity(GetType(Entity4))
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
 
@@ -363,7 +363,7 @@ Imports Worm.Misc
             Dim table As SourceFragment = r.Table
 
             Dim q As New QueryCmd()
-            q.Select(typeE4)
+            q.SelectEntity(typeE4)
             q.Sort = New Worm.Sorting.Sort( _
                 New QueryCmd().From(table). _
                     Select(FCtor.count). _

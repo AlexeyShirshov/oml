@@ -1398,7 +1398,7 @@ l1:
                     ElseIf dr.RecordsAffected < 0 Then
                         If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, MappingEngine.GetEntitySchema(obj.GetType))
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, obj.GetEntitySchema(MappingEngine))
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If

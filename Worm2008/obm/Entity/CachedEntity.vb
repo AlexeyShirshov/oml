@@ -719,7 +719,7 @@ Namespace Entities
                             RaiseEvent Deleted(Me, EventArgs.Empty)
                         ElseIf _upd.Added Then
                             '_valProcs = False
-                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
+                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, GetEntitySchema(mc.MappingEngine))
                             Dim kw As CacheKey = New CacheKey(Me)
                             Dim o As CachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
@@ -1329,7 +1329,7 @@ l1:
                 End If
 
                 If ObjectState = Entities.ObjectState.NotLoaded Then
-                    Load()
+                    Load(mgr)
                     If ObjectState = Entities.ObjectState.NotFoundInSource Then
                         Throw New OrmObjectException(ObjName & "Object is not editable 'cause it is not found in source")
                     End If
@@ -1338,7 +1338,7 @@ l1:
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, mgr.MappingEngine.GetEntitySchema(Me.GetType))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1632,7 +1632,7 @@ l1:
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, mgr.MappingEngine.GetEntitySchema(obj.GetType))
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, obj.GetEntitySchema(mgr.MappingEngine))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()

@@ -51,7 +51,7 @@ Imports Worm.Entities.Meta
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
             Assert.IsNotNull(q)
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToList(Of Entity)(mgr)(0)
@@ -61,7 +61,7 @@ Imports Worm.Entities.Meta
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd()
-            q2.Select(GetType(Entity4))
+            q2.SelectEntity(GetType(Entity4))
             q2.Filter = Ctor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToList(Of Entity4)(mgr)(0)
@@ -104,7 +104,7 @@ Imports Worm.Entities.Meta
     <TestMethod()> Public Sub TestM2MAddScope()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
@@ -116,7 +116,7 @@ Imports Worm.Entities.Meta
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd()
-            q2.Select(GetType(Entity4))
+            q2.SelectEntity(GetType(Entity4))
             q2.Filter = Ctor.prop(GetType(Entity4), "ID").eq(2)
 
             Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToEntityList(Of Entity4)(mgr)(0)
@@ -152,7 +152,7 @@ Imports Worm.Entities.Meta
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = t
             Dim q As New QueryCmd()
-            q.Select(GetType(Entity))
+            q.SelectEntity(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
@@ -196,7 +196,7 @@ Imports Worm.Entities.Meta
     <TestMethod()> _
     Public Sub TestM2MDelete()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim q As QueryCmd = New QueryCmd().Select(GetType(Entity)).Where(Ctor.prop(GetType(Entity), "ID").eq(1))
+            Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(Entity)).Where(Ctor.prop(GetType(Entity), "ID").eq(1))
 
             Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
@@ -231,7 +231,7 @@ Imports Worm.Entities.Meta
         Dim a As New EntityAlias(GetType(Table1))
         Dim eu As New EntityUnion(a)
 
-        Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(eu, M2MRelationDesc.DirKey)).Select(eu)
+        Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(eu, M2MRelationDesc.DirKey)).SelectEntity(eu)
 
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
@@ -243,7 +243,7 @@ Imports Worm.Entities.Meta
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
 
-        mq.Select(a2)
+        mq.SelectEntity(a2)
 
         Assert.AreEqual(1, mq.First(Of Table1).ID)
     End Sub
@@ -267,7 +267,7 @@ Imports Worm.Entities.Meta
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
 
-        mq.Select(a2)
+        mq.SelectEntity(a2)
 
         Assert.AreEqual(1, mq.First(Of Table1).ID)
     End Sub
@@ -284,7 +284,7 @@ Imports Worm.Entities.Meta
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
-            .Select(a2) _
+            .SelectEntity(a2) _
             .Join(JCtor _
                   .join(a1).onM2M(M2MRelationDesc.RevKey, GetType(Table1)) _
                   .join(a2).onM2M(M2MRelationDesc.RevKey, a1)) _
@@ -310,7 +310,7 @@ Imports Worm.Entities.Meta
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
-            .Select(a2) _
+            .SelectEntity(a2) _
             .Join(JCtor _
                   .join_relation(r2).with(GetType(Table1)) _
                   .join_relation(r3).with(a1)) _
@@ -332,13 +332,13 @@ Imports Worm.Entities.Meta
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
-            .Select(a1) _
+            .SelectEntity(a1) _
             .Join(JCtor _
                   .join(a1).onM2M(M2MRelationDesc.RevKey, GetType(Table1))) _
             .Where(Ctor.prop(GetType(Table1), "ID").eq(t) _
                    .and_exists(New QueryCmd() _
                                .From(a2) _
-                               .Select(a2) _
+                               .SelectEntity(a2) _
                                .Join(JCtor.join(a1).onM2M(a2)))) _
             .First(Of Table1)()
 
@@ -354,10 +354,10 @@ Imports Worm.Entities.Meta
         Dim a4 As New EntityAlias(GetType(Table1))
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q1.From(a1).Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, a1)).Select(a1)
+        q1.From(a1).Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, a1)).SelectEntity(a1)
 
         Dim q2 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q2.From(a3).Join(JCtor.join(a4).onM2M(a3)).Select(a3)
+        q2.From(a3).Join(JCtor.join(a4).onM2M(a3)).SelectEntity(a3)
 
         Dim q3 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q3.From(q1).Union(q2)

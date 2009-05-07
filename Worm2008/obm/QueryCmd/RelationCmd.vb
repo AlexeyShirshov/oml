@@ -436,7 +436,7 @@ Namespace Query
 
                         If _WithLoad(selectOS, schema) Then
                             _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
-                        ElseIf SelectTypes IsNot Nothing Then
+                        ElseIf SelectedEntities IsNot Nothing Then
                             GoTo l1
                         Else
                             PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
@@ -449,9 +449,9 @@ l1:
                         If SelectList IsNot Nothing Then
                             PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
                         Else
-                            If SelectTypes IsNot Nothing AndAlso Not SelectTypes(0).First.Equals(selectOS) Then
+                            If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(selectOS) Then
                                 'se.ObjectSource = SelectTypes(0).First
-                                AddTypeFields(schema, _sl, SelectTypes(0), Nothing, Nothing)
+                                AddTypeFields(schema, _sl, SelectedEntities(0), Nothing, Nothing)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
@@ -605,9 +605,9 @@ l1:
             Return _rel.Relation
         End Function
 
-        Public Overrides Property SelectTypes() As System.Collections.ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
+        Public Overrides Property SelectedEntities() As System.Collections.ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Get
-                Return MyBase.SelectTypes
+                Return MyBase.SelectedEntities
             End Get
             Set(ByVal value As System.Collections.ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
                 If value IsNot Nothing Then
@@ -615,12 +615,12 @@ l1:
                         Throw New QueryCmdException("RelationCmd cant have more than one select type", Me)
                     End If
                 End If
-                MyBase.SelectTypes = value
+                MyBase.SelectedEntities = value
             End Set
         End Property
 
         Public Function WithLoad(ByVal value As Boolean) As RelationCmd
-            [Select](SelectTypes(0).First, value)
+            SelectEntity(SelectedEntities(0).First, value)
             Return Me
         End Function
 

@@ -50,12 +50,12 @@ Imports Worm.Entities
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        inner.Select(GetType(Table1))
+        inner.SelectEntity(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).Select(GetType(Table1), True).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).SelectEntity(GetType(Table1), True).ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 
@@ -68,12 +68,12 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1))
+        inner.SelectEntity(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).Select(GetType(Table1), True).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).SelectEntity(GetType(Table1), True).ToList(Of Table1)()
 
         Assert.AreEqual(3, r.Count)
 
@@ -86,7 +86,7 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1), True)
+        inner.SelectEntity(GetType(Table1), True)
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -127,7 +127,7 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1))
+        inner.SelectEntity(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -146,7 +146,7 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.Select(GetType(Table1))
+        inner.SelectEntity(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -193,14 +193,14 @@ Imports Worm.Entities
         Dim inner As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        inner.From(GetType(Entity4)).Select(GetType(Entity4))
+        inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4))
 
         Dim al As New EntityAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Entity)) _
+        q.SelectEntity(GetType(Entity)) _
             .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
 
         Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)()
@@ -213,14 +213,14 @@ Imports Worm.Entities
         Dim inner As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        inner.From(GetType(Entity4)).Select(GetType(Entity4))
+        inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4))
 
         Dim al As New EntityAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Entity)) _
+        q.SelectEntity(GetType(Entity)) _
             .Join(JCtor.left_join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
 
         Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)()
@@ -233,7 +233,7 @@ Imports Worm.Entities
         Dim inner As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        inner.From(GetType(Entity4)).Select(GetType(Entity4), True)
+        inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4), True)
 
         Dim al As New EntityAlias(inner)
 
@@ -258,7 +258,7 @@ Imports Worm.Entities
         Dim inner As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        inner.From(GetType(Entity4)).Select(GetType(Entity4), True)
+        inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4), True)
 
         Dim al As New EntityAlias(inner)
 
@@ -293,7 +293,7 @@ Imports Worm.Entities
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Entity5)) _
+        q.SelectEntity(GetType(Entity5)) _
             .Where(Ctor.query(inner).greater_than(2))
 
         Dim r As ReadOnlyEntityList(Of Entity5) = q.ToList(Of Entity5)()
@@ -317,7 +317,7 @@ Imports Worm.Entities
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(GetType(Entity5)) _
+        q.SelectEntity(GetType(Entity5)) _
             .Where(Ctor.prop(GetType(Entity5), "ID").greater_than(inner))
 
         Dim r As ReadOnlyEntityList(Of Entity5) = q.ToList(Of Entity5)()

@@ -91,7 +91,7 @@ Namespace Web
             Dim roles As New Generic.List(Of String)
             Dim oschema As Meta.IEntitySchema = Nothing
             'Dim col As IEnumerable = FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
-            Dim col As IEnumerable = New Query.QueryCmd(UserMapper.CreateManager).Select(GetRoleType).ToList()
+            Dim col As IEnumerable = New Query.QueryCmd(UserMapper.CreateManager).SelectEntity(GetRoleType).ToList()
             For Each r As IKeyEntity In col
                 If oschema Is Nothing Then
                     oschema = r.MappingEngine.GetEntitySchema(GetRoleType)
@@ -225,7 +225,7 @@ Namespace Web
                     f = CType(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).[like](usernameToMatch), PredicateLink)
                 End If
                 Dim cmd As New Query.RelationCmd(r, UserMapper.GetUserType, UserMapper.CreateManager)
-                cmd.Where(f).Select(UserMapper.GetUserType, WithLoad)
+                cmd.Where(f).SelectEntity(UserMapper.GetUserType, WithLoad)
                 Return cmd.ToList()
                 'Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
@@ -246,7 +246,7 @@ Namespace Web
 
         Protected Overridable Function FindRoles(ByVal f As PredicateLink) As IList
             Dim cmd As New Query.QueryCmd(UserMapper.CreateManager)
-            cmd.Where(f).Select(GetRoleType)
+            cmd.Where(f).SelectEntity(GetRoleType)
             Return cmd.ToList()
         End Function
 

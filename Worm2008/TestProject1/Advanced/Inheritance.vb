@@ -231,7 +231,7 @@ Imports Worm
             .Join(JCtor _
                   .left_join(GetType(Ent2)).on(GetType(Base), "ID").eq(GetType(Ent2), "ID") _
                   .left_join(GetType(Ent3)).on(GetType(Base), "ID").eq(GetType(Ent3), "ID")) _
-            .Select(GetType(Ent2), GetType(Ent3)) _
+            .SelectEntity(GetType(Ent2), GetType(Ent3)) _
             .ToMatrix()
 
         Assert.AreEqual(14, m.Count)
@@ -259,7 +259,7 @@ Imports Worm
             .Join(JCtor _
                   .left_join(GetType(Ent2)).on(tbl, "id").eq(GetType(Ent2), "ID") _
                   .left_join(GetType(Ent3)).on(tbl, "id").eq(GetType(Ent3), "ID")) _
-            .Select(GetType(Ent2), True) _
+            .SelectEntity(GetType(Ent2), True) _
             .SelectAdd(GetType(Ent3), True) _
             .ToMatrix()
 

@@ -89,14 +89,14 @@ Namespace Linq
                 If GetType(IEnumerator).IsAssignableFrom(rt) Then
                     Dim t As Type = rt.GetGenericArguments(0)
                     If GetType(KeyEntity).IsAssignableFrom(t) Then
-                        q.Select(t)
+                        q.SelectEntity(t)
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Return CType(e, TResult)
                     Else
                         Dim lt As Type = GetType(List(Of ))
                         Dim glt As Type = lt.MakeGenericType(New Type() {t})
                         Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
-                        q.Select(ev.T)
+                        q.SelectEntity(ev.T)
                         Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Do While e.MoveNext
                             Dim o As KeyEntity = CType(e.Current, KeyEntity)
@@ -105,7 +105,7 @@ Namespace Linq
                         Return CType(l.GetEnumerator, TResult)
                     End If
                 Else
-                    q.Select(ev.T)
+                    q.SelectEntity(ev.T)
                     Dim l As IList(Of TResult) = Nothing
 
                     'Else

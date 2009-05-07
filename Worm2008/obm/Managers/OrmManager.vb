@@ -1873,7 +1873,8 @@ l1:
         Dim t As System.Type = obj.GetType
 
         Dim name As String = t.Name
-        Dim dic As IDictionary = GetDictionary(t)
+        Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
+        Dim dic As IDictionary = GetDictionary(t, oschema)
         If dic Is Nothing Then
             ''todo: throw an exception when all collections will be implemented
             'Return
@@ -1884,7 +1885,7 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            If Cache.ShadowCopy(obj, Me) IsNot Nothing Then
+            If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
                 Return False
             End If
 
@@ -1905,10 +1906,10 @@ l1:
                 End If
             End If
 
-            _cache.RegisterRemoval(obj, Me)
+            _cache.RegisterRemoval(obj, Me, oschema)
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(obj, Me) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(obj, Me, oschema) Is Nothing)
         End Using
         Return True
     End Function
@@ -3213,7 +3214,9 @@ l1:
                 Dim sa As SaveAction
                 Dim state As ObjectState = obj.ObjectState
                 If state = ObjectState.Created Then
-                    old_id = orm.Identifier
+                    If orm IsNot Nothing Then
+                        old_id = orm.Identifier
+                    End If
                     sa = SaveAction.Insert
                 End If
 
