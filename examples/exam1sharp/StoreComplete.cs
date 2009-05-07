@@ -81,7 +81,7 @@ namespace exam1sharp.Sales
     [Entity("Sales", "SalesTerritory", "1")]
     public class SalesTerritory : SalesBase
     {
-        [EntityProperty("TerritoryID", Field2DbRelations.PK)]
+        [EntityProperty("TerritoryID", Field2DbRelations.PrimaryKey)]
         public int ID { get; set; }
 
         public string Name { get; set; }

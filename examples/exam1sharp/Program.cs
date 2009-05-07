@@ -10,45 +10,45 @@ using Worm.Entities.Meta;
 
 namespace exam1sharp
 {
-	class Program
-	{
-		/// <summary>
-		/// Create database manager - the gateway to database
-		/// </summary>
-		/// <returns></returns>
-		/// <remarks>The function creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
-		static OrmDBManager GetDBManager()
-		{
-			return new OrmDBManager(new OrmCache(), new ObjectMappingEngine("1"), new SQLGenerator(), new Properties.Settings().connectionString);
-		}
+    class Program
+    {
+        /// <summary>
+        /// Create database manager - the gateway to database
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>The function creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
+        static OrmDBManager GetDBManager()
+        {
+            return new OrmDBManager(new OrmCache(), new ObjectMappingEngine("1"), new SQLGenerator(), new Properties.Settings().connectionString);
+        }
 
-		static void Main2(string[] args)
-		{
-			using (OrmDBManager mgr = GetDBManager())
-			{
-				//create in-memory object
-				//it is a simple object that have no relation to database at all
-				test.Album firstAlbum = new test.Album();
+        static void Main2(string[] args)
+        {
+            using (OrmDBManager mgr = GetDBManager())
+            {
+                //create in-memory object
+                //it is a simple object that have no relation to database at all
+                test.Album firstAlbum = new test.Album();
 
-				//set properties
-				firstAlbum.Name = "firstAlbum";
-				firstAlbum.Release = new DateTime(2005, 1, 1);
+                //set properties
+                firstAlbum.Name = "firstAlbum";
+                firstAlbum.Release = new DateTime(2005, 1, 1);
 
-				//create transaction
-				mgr.BeginTransaction();
-				try
-				{
-					//ok. save it
-					//we pass true to Save parameter to accept changes immediately after saving into database
-					firstAlbum.SaveChanges(true);
-				}
-				finally
-				{
-					//rollback transaction to undo database changes
-					mgr.Rollback();
-				}
-			}
-		}
+                //create transaction
+                mgr.BeginTransaction();
+                try
+                {
+                    //ok. save it
+                    //we pass true to Save parameter to accept changes immediately after saving into database
+                    firstAlbum.SaveChanges(true);
+                }
+                finally
+                {
+                    //rollback transaction to undo database changes
+                    mgr.Rollback();
+                }
+            }
+        }
 
         static void Main3(string[] args)
         {
@@ -90,7 +90,7 @@ namespace exam1sharp
                 .Where(Ctor.prop(typeof(Store4), "Name").like("A%"))
                 .ToList())
             {
-                Console.WriteLine("Store id: {0}, name: {1}, sales person quota: {2}", 
+                Console.WriteLine("Store id: {0}, name: {1}, sales person quota: {2}",
                     s.ID, s.Name, s.SalesPerson.SalesQuota);
             }
         }
@@ -101,16 +101,16 @@ namespace exam1sharp
                 .Where(Ctor.prop(typeof(exam1sharp.Sales.Store), "Name").like("A%"))
                 .ToList())
             {
-                Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}", 
-                    s.ID, 
-                    s.Name, 
+                Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}",
+                    s.ID,
+                    s.Name,
                     s.SalesPerson.SalesTerritory.Name);
             }
 
             exam1sharp.Sales.SalesPerson p = exam1sharp.Sales.SalesPerson.Query
-                .Where(Ctor.prop(typeof(exam1sharp.Sales.SalesPerson),"ID").eq(280))
+                .Where(Ctor.prop(typeof(exam1sharp.Sales.SalesPerson), "ID").eq(280))
                 .Single() as exam1sharp.Sales.SalesPerson;
-            
+
             foreach (exam1sharp.Sales.Store s in p.Stores.ToList())
             {
                 Console.WriteLine("Store id: {0}, name: {1}, sales territory: {2}",
@@ -136,9 +136,9 @@ namespace exam1sharp
                     .and(typeof(SalesOrder), "LineTotal").less_than(10))
                 .ToList())
             {
-                Console.WriteLine("Date: {0}, LineTotal: {1}, sales territory: {2}", 
-                    s.OrderDate, 
-                    s.LineTotal, 
+                Console.WriteLine("Date: {0}, LineTotal: {1}, sales territory: {2}",
+                    s.OrderDate,
+                    s.LineTotal,
                     s.Territory.Name);
             }
         }
@@ -195,7 +195,7 @@ namespace exam1sharp
             Console.WriteLine("LineTotal={0}", o.LineTotal);
         }
 
-        static void Main(string[] args)
+        static void Main11(string[] args)
         {
             var o = SalesOrder.Query
                 .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
@@ -218,5 +218,35 @@ namespace exam1sharp
                 mt.AcceptModifications();
             }
         }
-	}
+
+        static void Main(string[] args)
+        {
+            //create new instance
+            Sales.SalesTerritory t = new exam1sharp.Sales.SalesTerritory()
+            {
+                Name = "China",
+                CountryRegionCode = "CH",
+                Group = "Asia",
+                SalesYTD = 100,
+                SalesLastYear = 100,
+                ModifiedDate = DateTime.Now
+            };
+
+            //save new instance
+            using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+            {
+                mt.Add(t);
+                mt.AcceptModifications();
+            }
+
+            Console.WriteLine("New SalesTerritory id = {0}", t.ID);
+
+            //delete created instance
+            using (ModificationsTracker mt = new ModificationsTracker(exam1sharp.Properties.Settings.Default.connString))
+            {
+                mt.Delete(t);
+                mt.AcceptModifications();
+            }
+        }
+    }
 }
