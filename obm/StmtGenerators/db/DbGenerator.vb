@@ -392,7 +392,7 @@ Namespace Database
                     Dim pkTable As SourceFragment = mpe.GetPKTable(real_t, es)
 
                     Dim col As Collections.IndexedCollection(Of String, MapField2Column) = es.GetFieldColumnMap
-                    Dim exec As New cls(real_t, es)
+                    Dim exec As New ExecutorCtx(real_t, es)
                     Dim ie As ICollection = mpe.GetProperties(real_t, es)
                     If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(real_t) Then
                         ie = col
@@ -801,12 +801,12 @@ l1:
         End Structure
 
         Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
-            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), ByVal unions As String()) As cls
+            ByVal sel_columns As Generic.List(Of EntityPropertyAttribute), ByVal unions As String()) As ExecutorCtx
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
-            Dim exec As New cls(rt, TryCast(oschema, IEntitySchema))
+            Dim exec As New ExecutorCtx(rt, TryCast(oschema, IEntitySchema))
             Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
             If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
                 ie = col
@@ -1386,7 +1386,7 @@ l2:
                         del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ").Append(params.CreateParam(p.Value)).Append(EndLine)
                     Next
 
-                    Dim exec As New cls(type, relSchema)
+                    Dim exec As New ExecutorCtx(type, relSchema)
                     GetDeletedConditions(mpe, deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
 
                     Dim pkFilter As IFilter = deleted_tables(relSchema.Table)
@@ -1919,7 +1919,7 @@ l2:
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, New cls(t, sch), filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, New ExecutorCtx(t, sch), filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -1937,41 +1937,6 @@ l2:
 
             Return AppendWhere(mpe, t, schema, filter, almgr, sb, filter_info, pmgr)
         End Function
-
-        Class cls
-            Implements IExecutionContext
-
-            Private _dic As New Dictionary(Of Type, IEntitySchema)
-
-            Public Sub New()
-
-            End Sub
-
-            Public Sub New(ByVal t As Type, ByVal oschema As IEntitySchema)
-                _dic.Add(t, oschema)
-            End Sub
-
-            Public Function GetEntitySchema2(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements Query.IExecutionContext.GetEntitySchema
-                If _dic.ContainsKey(t) Then
-                    Return _dic(t)
-                End If
-                Return mpe.GetEntitySchema(t)
-            End Function
-
-            Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements Query.IExecutionContext.GetFieldColumnMap
-                Return oschema.GetFieldColumnMap
-            End Function
-
-            Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema
-
-            End Sub
-
-            Public ReadOnly Property Dic() As Dictionary(Of Type, IEntitySchema)
-                Get
-                    Return _dic
-                End Get
-            End Property
-        End Class
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
@@ -2002,7 +1967,7 @@ l2:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, New cls(t, schema), filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, New ExecutorCtx(t, schema), filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If

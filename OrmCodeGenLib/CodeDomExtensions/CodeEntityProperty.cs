@@ -39,8 +39,11 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				                                       			                                 fieldName))
 				                                       	};
 
-				GetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(getUsingExpression,
-				                                                                                getInUsingStatements));
+                if (property.Entity.HasPkFlatEntity)
+                    GetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(getUsingExpression,
+                                                                                                getInUsingStatements));
+                else
+                    GetStatements.AddRange(getInUsingStatements);
 
 				if (property.Entity.OrmObjectsDef.EnableReadOnlyPropertiesSetter ||
 				    !property.HasAttribute(Field2DbRelations.ReadOnly) || property.HasAttribute(Field2DbRelations.PK))
@@ -103,10 +106,12 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 						));
 					}
 
-
-					SetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(setUsingExpression,
-					                                                                                setInUsingStatements.ToArray()));
-				}
+                    if (property.Entity.HasPkFlatEntity)
+                        SetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(setUsingExpression,
+                                                                                                    setInUsingStatements.ToArray()));
+                    else
+                        SetStatements.AddRange(setInUsingStatements.ToArray());
+                }
 				else
 					HasSet = false;
 			}

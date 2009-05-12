@@ -158,3 +158,50 @@ Public Class SimpleObj3
         End Set
     End Property
 End Class
+
+<Entity("dbo", "table2", "1")> _
+Public Class SimpleObj4
+    Inherits KeyEntity
+
+    Private _s As Pod.cls4
+
+    <EntityProperty("table1_id")> _
+    Public Property Obj1() As Pod.cls4
+        Get
+            Using Read("Obj1")
+                Return _s
+            End Using
+        End Get
+        Set(ByVal value As Pod.cls4)
+            Using Write("Obj1")
+                _s = value
+            End Using
+        End Set
+    End Property
+
+    Private _m As Decimal
+    <EntityPropertyAttribute(column:="m")> _
+    Public Property Money() As Decimal
+        Get
+            Using Read("Money")
+                Return _m
+            End Using
+        End Get
+        Set(ByVal value As Decimal)
+            Using Write("Money")
+                _m = value
+            End Using
+        End Set
+    End Property
+
+    Private _id As Integer
+    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+End Class

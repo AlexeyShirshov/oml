@@ -109,7 +109,7 @@ Imports Worm
         End Property
 
         Private _id As Integer
-        Public Property ID() As Integer
+        Public Overridable Property ID() As Integer
             Get
                 Return _id
             End Get
@@ -158,6 +158,15 @@ Imports Worm
     Public Class cls4
         Inherits cls2
 
+        <EntityProperty(Field2DbRelations.PK)> _
+        Public Overrides Property ID() As Integer
+            Get
+                Return MyBase.ID
+            End Get
+            Set(ByVal value As Integer)
+                MyBase.ID = value
+            End Set
+        End Property
     End Class
 
     <Entity(GetType(cls5.schema), "1")> _

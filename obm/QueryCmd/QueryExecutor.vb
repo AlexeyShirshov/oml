@@ -179,7 +179,19 @@ l1:
                                 End If
                             End If
                         Next
-                        args.Cancel = _cancel OrElse (cnt <> 0 And cnt <> sender._types.Count)
+                        args.Cancel = _cancel
+                        If Not _cancel Then
+                            If (cnt <> 0 And cnt <> sender._types.Count) Then
+                                args.Cancel = True
+                                _cancel = True
+                                Dim an As New EntityUnion(GetType(AnonymousEntity))
+                                For Each d As EntityUnion In sender._types.Keys
+                                    If Not GetType(_IEntity).IsAssignableFrom(d.GetRealType(_mgr.MappingEngine)) Then
+                                        sender._createTypes(d) = an
+                                    End If
+                                Next
+                            End If
+                        End If
                     End If
                 Else
                     Throw New InvalidOperationException

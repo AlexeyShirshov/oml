@@ -2386,9 +2386,17 @@ Public Class ObjectMappingEngine
 
         Select Case jft
             Case JoinFieldType.Direct
-                l.Add(MakeJoin(joinOS, GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, propertyAlias, FilterOperation.Equal, jt, False))
+                Dim pks As List(Of EntityPropertyAttribute) = GetPrimaryKeys(type2join, sh)
+                If pks.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Type {0} has {1} primary key column instead of one", type2join, pks.Count))
+                End If
+                l.Add(MakeJoin(joinOS, pks(0).PropertyAlias, selectOS, propertyAlias, FilterOperation.Equal, jt, False))
             Case JoinFieldType.Reverse
-                l.Add(MakeJoin(selectOS, GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, propertyAlias, FilterOperation.Equal, jt, True))
+                Dim pks As List(Of EntityPropertyAttribute) = GetPrimaryKeys(selectType, selSchema)
+                If pks.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Type {0} has {1} primary key columns instead of one", selectType, pks.Count))
+                End If
+                l.Add(MakeJoin(selectOS, pks(0).PropertyAlias, joinOS, propertyAlias, FilterOperation.Equal, jt, True))
             Case JoinFieldType.M2M
                 l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
             Case Else
