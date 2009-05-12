@@ -18,7 +18,7 @@ Namespace Query.Database
             Protected _almgr As IPrepareTable
             Private _cmdType As System.Data.CommandType
 
-            Private _oldct As EntityUnion
+            Private _oldct As Dictionary(Of EntityUnion, EntityUnion)
             Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
             Private _f As FromClauseDef
 
@@ -36,14 +36,14 @@ Namespace Query.Database
 
             Public Sub SetTemp(ByVal q As QueryCmd)
                 q._from = _f
-                q._createType = _oldct
+                q._createTypes = _oldct
                 If _types IsNot Nothing AndAlso q._sel Is Nothing Then
                     q._sel = New SelectClauseDef(_types)
                 End If
             End Sub
 
             Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
-                _oldct = q.CreateType
+                _oldct = New Dictionary(Of EntityUnion, EntityUnion)(q._CreateTypes)
                 If q.SelectClause IsNot Nothing AndAlso q.SelectClause.SelectTypes IsNot Nothing Then
                     _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(q.SelectClause.SelectTypes)
                 End If
@@ -179,7 +179,7 @@ Namespace Query.Database
                 Dim l As New List(Of ReadOnlyCollection(Of _IEntity))
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(Nothing, cmd, l, _q._types, _q._pdic, sl)
+                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(_q.createTypes, cmd, l, _q._types, _q._pdic, sl)
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)
             End Function

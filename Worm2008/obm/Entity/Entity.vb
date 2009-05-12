@@ -594,20 +594,51 @@ Namespace Entities
         End Function
     End Class
 
-    Public Class EntityLazyLoad
-        Inherits Entity
-        Implements IPropertyLazyLoad
+    'Public Class EntityLazyLoad
+    '    Inherits Entity
+    '    Implements IPropertyLazyLoad
 
-        Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
-            Return _Read(propertyAlias)
-        End Function
+    '    Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
+    '        Return _Read(propertyAlias)
+    '    End Function
 
-        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
-            Return _Read(propertyAlias, checkEntity)
-        End Function
+    '    Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
+    '        Return _Read(propertyAlias, checkEntity)
+    '    End Function
 
-        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
-            Return _Write(propertyAlias)
-        End Function
-    End Class
+    '    Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
+    '        Return _Write(propertyAlias)
+    '    End Function
+
+    '    Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
+    '        If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None)) Then
+    '            If Not IsLoaded AndAlso (ObjectState = Entities.ObjectState.NotLoaded OrElse ObjectState = Entities.ObjectState.None) AndAlso Not IsPropertyLoaded(propertyAlias) Then
+    '                Load(propertyAlias)
+    '            End If
+    '            d = SyncHelper(True)
+    '        End If
+    '    End Sub
+
+    '    Public Overridable Sub Load(ByVal propertyAlias As String)
+    '        Using mc As IGetManager = GetMgr()
+    '            If mc Is Nothing Then
+    '                Throw New InvalidOperationException("OrmManager required")
+    '            End If
+
+    '            Load(mc.Manager, propertyAlias)
+    '        End Using
+    '    End Sub
+
+    '    Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
+    '        Dim olds As ObjectState = ObjectState
+    '        'Using mc As IGetManager = GetMgr()
+    '        mgr.LoadObject(Me, propertyAlias)
+    '        'End Using
+    '        If olds = Entities.ObjectState.Created AndAlso ObjectState = Entities.ObjectState.Modified Then
+    '            AcceptChanges(True, True)
+    '        ElseIf IsLoaded Then
+    '            SetObjectState(Entities.ObjectState.None)
+    '        End If
+    '    End Sub
+    'End Class
 End Namespace

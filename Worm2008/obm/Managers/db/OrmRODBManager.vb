@@ -1205,7 +1205,7 @@ l1:
                                 s = MappingEngine.GetEntitySchema(pit, False)
                             End If
                             Dim f As IFilter = Nothing
-                            MappingEngine.AppendJoin(selOS, t, oschema, eu, pit, s, f, js, GetContextInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
+                            MappingEngine.AppendJoin(selOS, t, oschema, eu, pit, s, f, js, JoinType.LeftOuterJoin, GetContextInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
                             c.AddFilter(f)
                             Dim tp As trip = FindObjectsToLoad(pit, s, eu, c, eudic, js, selDic, Nothing)
                             tp.PropertyAlias = ep.PropertyAlias
@@ -1255,7 +1255,7 @@ l1:
             End Try
         End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
             Invariant()
 
             If obj Is Nothing Then
@@ -1265,13 +1265,26 @@ l1:
             Dim original_type As Type = obj.GetType
 
             Dim selOS As New EntityUnion(original_type)
+            Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
 
             Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            For Each pk As PKDesc In obj.GetPKValues
+            Dim pks() As PKDesc = Nothing
+            If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
+                pks = CType(obj, ICachedEntity).GetPKValues
+            Else
+                Dim l As New List(Of PKDesc)
+                For Each ea As EntityPropertyAttribute In MappingEngine.GetPrimaryKeys(original_type, oschema)
+                    l.Add(New PKDesc(ea.PropertyAlias, MappingEngine.GetPropertyValue(obj, ea.PropertyAlias, oschema)))
+                Next
+                pks = l.ToArray
+            End If
+            If pks.Length = 0 Then
+                Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
+            End If
+
+            For Each pk As PKDesc In pks
                 c.AddFilter(New cc.EntityFilter(selOS, pk.PropertyAlias, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
             Next
-
-            Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
 
             Dim eudic As New Dictionary(Of String, EntityUnion)
             Dim js As New List(Of QueryJoin)
@@ -1569,7 +1582,10 @@ l1:
                 sel.AddRange(MappingEngine.GetSortedFieldList(secondType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, secondType)))
             End If
 
-            QueryMultiTypeObjects(firstType, cmd, v, types, pdic, sel)
+            'Dim typesDic As New Dictionary(Of EntityUnion, Type)
+            'typesDic.Add(ost, firstType)
+            'typesDic.Add(ostt, secondType)
+            QueryMultiTypeObjects(Nothing, cmd, v, types, pdic, sel)
 
             For Each r As ReadOnlyCollection(Of _IEntity) In v
                 values.Add(r(0))
@@ -1684,7 +1700,7 @@ l1:
         End Sub
 
         Public Sub QueryMultiTypeObjects( _
-            ByVal createType As Type, _
+            ByVal createType As Dictionary(Of EntityUnion, EntityUnion), _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
             ByVal types As IDictionary(Of EntityUnion, IEntitySchema), _
@@ -1736,7 +1752,7 @@ l1:
         End Sub
 
         Protected Sub LoadMultiFromResultSet( _
-            ByVal createType As Type, _
+            ByVal createType As Dictionary(Of EntityUnion, EntityUnion), _
             ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
             ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
@@ -1752,11 +1768,15 @@ l1:
 
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
-                Dim t As Type = createType
                 Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
-                If os IsNot Nothing Then
+                Dim t As Type = Nothing, et As EntityUnion = Nothing
+                If createType IsNot Nothing AndAlso createType.TryGetValue(os, et) Then
+                    t = et.GetRealType(MappingEngine)
+                End If
+                If t Is Nothing Then
                     t = os.GetRealType(MappingEngine)
                 End If
+
                 Dim propertyAlias As String = se.IntoPropertyAlias
                 If String.IsNullOrEmpty(propertyAlias) Then
                     propertyAlias = se.PropertyAlias
@@ -3789,7 +3809,7 @@ l2:
                 Next
             End If
 
-            QueryMultiTypeObjects(tt, cmd, v, types, pdic, sel)
+            QueryMultiTypeObjects(Nothing, cmd, v, types, pdic, sel)
 
             Return New ReadonlyMatrix(v)
         End Function
