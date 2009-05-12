@@ -118,6 +118,8 @@ Namespace Entities
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
         Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
+        Sub GetChangedObjectGraph(ByVal gl As Generic.List(Of _ICachedEntity))
+        Function GetChangedObjectGraph() As Generic.List(Of _ICachedEntity)
     End Interface
 
     Public Interface ICachedEntity

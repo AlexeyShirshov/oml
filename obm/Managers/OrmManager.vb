@@ -3456,7 +3456,7 @@ l1:
     Protected MustOverride Function GetObjects(Of T As {IKeyEntity, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
        ByVal relation As M2MRelationDesc, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, CachedM2MRelation)
 
-    Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
+    Protected Friend MustOverride Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
     Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)

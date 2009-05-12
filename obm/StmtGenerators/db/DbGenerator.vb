@@ -1467,7 +1467,8 @@ l2:
             'Dim pmgr As ParamMgr = params 'New ParamMgr()
 
             If unions Is Nothing Then
-                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, TryCast(schema, IMultiTableObjectSchema))
+                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, _
+                           TryCast(schema, IMultiTableObjectSchema), original_type)
                 If joins IsNot Nothing Then
                     For i As Integer = 0 To joins.Length - 1
                         Dim join As QueryJoin = CType(joins(i), QueryJoin)
@@ -1533,7 +1534,8 @@ l2:
             Dim pmgr As ParamMgr = params 'New ParamMgr()
 
             If unions Is Nothing Then
-                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, pmgr, TryCast(schema, IMultiTableObjectSchema))
+                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, pmgr, _
+                           TryCast(schema, IMultiTableObjectSchema), original_type)
 
                 Dim r2 As M2MRelationDesc = mpe.GetM2MRelation(relation.Rel.GetRealType(mpe), original_type, True)
                 Dim tbl As SourceFragment = relation.Table
@@ -1879,7 +1881,7 @@ l2:
         ''' <remarks></remarks>
         Protected Friend Function AppendFrom(ByVal mpe As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
             ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
-            ByVal sch As IMultiTableObjectSchema) As StringBuilder
+            ByVal sch As IMultiTableObjectSchema, ByVal t As Type) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
             For i As Integer = 0 To tables.Length - 1
                 Dim tbl As SourceFragment = tables(i)
@@ -1917,7 +1919,7 @@ l2:
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, New cls(t, sch), filterInfo, almgr, pname, Nothing))
                         End If
                     Next
                 End If
@@ -2639,7 +2641,8 @@ l1:
             sb.Append("select left(")
             sb.Append(al).Append(Selector).Append(n)
             sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
-            AppendFrom(mpe, almgr, filter_info, mpe.GetTables(t), sb, params, TryCast(schema, IMultiTableObjectSchema))
+            AppendFrom(mpe, almgr, filter_info, mpe.GetTables(t), sb, params, _
+                       TryCast(schema, IMultiTableObjectSchema), t)
             If joins IsNot Nothing Then
                 For i As Integer = 0 To joins.Length - 1
                     Dim join As QueryJoin = CType(joins(i), QueryJoin)

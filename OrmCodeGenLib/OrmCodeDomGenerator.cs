@@ -339,7 +339,7 @@ namespace Worm.CodeGen.Core
                             CodeTypeReference entityType;
                             if (_ormObjectsDefinition.EntityBaseType == null)
                             {
-                                entityType = new CodeTypeReference(entity.HasSinglePk ? typeof(KeyEntity) : entity.HasPk ? typeof(CachedLazyLoad) : typeof(EntityLazyLoad));
+                                entityType = new CodeTypeReference(entity.HasSinglePk ? typeof(KeyEntity) : entity.HasPk ? typeof(CachedLazyLoad) : typeof(Entity));
                             }
                             else
                             {
@@ -2272,7 +2272,10 @@ namespace Worm.CodeGen.Core
                     new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName))
                 };
 
-            property.GetStatements.AddRange(Delegates.CodePatternUsingStatements(getUsingExpression, getInUsingStatements));
+            if (entity.HasPkFlatEntity)
+                property.GetStatements.AddRange(Delegates.CodePatternUsingStatements(getUsingExpression, getInUsingStatements));
+            else
+                property.GetStatements.AddRange(getInUsingStatements);
 
             #endregion property GetStatements
 
@@ -2296,8 +2299,10 @@ namespace Worm.CodeGen.Core
         		                                       			)
         		                                       	};
 
-
-                property.SetStatements.AddRange(Delegates.CodePatternUsingStatements(setUsingExpression, setInUsingStatements));
+                if (entity.HasPkFlatEntity)
+                    property.SetStatements.AddRange(Delegates.CodePatternUsingStatements(setUsingExpression, setInUsingStatements));
+                else
+                    property.SetStatements.AddRange(setInUsingStatements);
             }
             else
                 property.HasSet = false;

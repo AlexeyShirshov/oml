@@ -173,7 +173,7 @@ Namespace Xml
             Return Nothing
         End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity, ByVal propertyAlias As String)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
             Throw New NotImplementedException
         End Sub
 

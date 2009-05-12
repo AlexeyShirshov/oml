@@ -145,21 +145,26 @@ Namespace Query.Database
                                        ByVal type As Type) As Boolean
             Dim r As Boolean
 
-            If Not type.IsInterface Then
-                If query.CreateType Is Nothing Then
-                    query.Into(type)
-                End If
-            End If
-
             If Not GetType(AnonymousEntity).IsAssignableFrom(type) Then
                 If query.NeedSelectType(mgr.MappingEngine) Then
-                    query.SelectInt(query.CreateType.AnyType, mgr.MappingEngine)
+                    Dim tt As Type = Nothing
+                    If query.CreateType IsNot Nothing Then
+                        tt = query.CreateType.AnyType
+                    End If
+                    If tt Is Nothing Then
+                        tt = type
+                    End If
+                    query.SelectInt(tt, mgr.MappingEngine)
                     r = True
                 End If
             End If
 
             If query.CreateType Is Nothing Then
-                query.Into(query.GetSelectedType(mgr.MappingEngine))
+                If Not type.IsInterface Then
+                    query.Into(type)
+                Else
+                    query.Into(query.GetSelectedType(mgr.MappingEngine))
+                End If
             End If
 
             Return r

@@ -141,19 +141,8 @@ Namespace Query
 
             Public Sub prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
                 RemoveHandler sender.QueryPrepared, AddressOf prepared
-                Dim cnt As Integer = 0
-                For Each d As EntityUnion In sender._types.Keys
-                    If GetType(_IEntity).IsAssignableFrom(d.GetRealType(_mgr.MappingEngine)) Then
-                        cnt += 1
-                        If cnt > 1 Then
-                            _cancel = True
-                            Exit For
-                        End If
-                    End If
-                Next
-                args.Cancel = _cancel
-                If sender._createType IsNot Nothing Then
-                    Dim createType As Type = sender._createType.GetRealType(_mgr.MappingEngine)
+                If sender.CreateType IsNot Nothing Then
+                    Dim createType As Type = sender.CreateType.GetRealType(_mgr.MappingEngine)
                     If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
                         Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
                         Dim l As New List(Of String)
@@ -179,7 +168,21 @@ l1:
                         End If
                         _pk = l.ToArray
                         AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
+                    ElseIf Not GetType(AnonymousEntity).IsAssignableFrom(createType) Then
+                        Dim cnt As Integer = 0
+                        For Each d As EntityUnion In sender._types.Keys
+                            If GetType(_IEntity).IsAssignableFrom(d.GetRealType(_mgr.MappingEngine)) Then
+                                cnt += 1
+                                If cnt > 1 Then
+                                    _cancel = True
+                                    Exit For
+                                End If
+                            End If
+                        Next
+                        args.Cancel = _cancel OrElse (cnt <> 0 And cnt <> sender._types.Count)
                     End If
+                Else
+                    Throw New InvalidOperationException
                 End If
             End Sub
 

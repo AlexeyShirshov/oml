@@ -987,7 +987,7 @@ Imports System.ComponentModel
 
         Dim t As New SourceFragment("dbo", "table1")
 
-        q.From(t).Into(GetType(Table1)).Select(FCtor.column(t, "id", "ID"))
+        q.From(t).Select(FCtor.column(t, "id", "ID")).Into(GetType(Table1))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 

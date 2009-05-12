@@ -336,19 +336,19 @@ Namespace Entities
                 End Get
             End Property
 
-            Public Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
+            Public Function GetM2MRelatedChangedObjects() As List(Of ICachedEntity)
                 Return _o.GetM2MRelatedChangedObjects
             End Function
 
-            Public Function GetRelatedChangedObjects() As List(Of CachedEntity)
+            Public Function GetRelatedChangedObjects() As List(Of ICachedEntity)
                 Return _o.GetRelatedChangedObjects
             End Function
 
-            Public Function GetChangedObjectGraph() As List(Of CachedEntity)
+            Public Function GetChangedObjectGraph() As List(Of _ICachedEntity)
                 Return _o.GetChangedObjectGraph
             End Function
 
-            Public Function GetChangedObjectGraphWithSelf() As List(Of CachedEntity)
+            Public Function GetChangedObjectGraphWithSelf() As List(Of _ICachedEntity)
                 Return _o.GetChangedObjectGraphWithSelf
             End Function
 
@@ -1845,8 +1845,8 @@ l1:
 
 #End Region
 
-        Protected Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
-            Dim l As New List(Of CachedEntity)
+        Protected Function GetM2MRelatedChangedObjects() As List(Of ICachedEntity)
+            Dim l As New List(Of ICachedEntity)
             'Using mc As IGetManager = GetMgr()
             '    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
             '        Dim s As IListObjectConverter.ExtractListResult
@@ -1860,12 +1860,12 @@ l1:
             Return l
         End Function
 
-        Protected Overridable Function GetRelatedChangedObjects() As List(Of CachedEntity)
-            Dim l As New List(Of CachedEntity)
+        Protected Overridable Function GetRelatedChangedObjects() As List(Of ICachedEntity)
+            Dim l As New List(Of ICachedEntity)
             For Each kv As DictionaryEntry In MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-                    Dim o As CachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
+                    Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
                     If o IsNot Nothing AndAlso o.HasChanges Then
                         l.Add(o)
                     End If
@@ -1874,36 +1874,36 @@ l1:
             Return l
         End Function
 
-        Protected Friend Function GetChangedObjectGraph() As List(Of CachedEntity)
-            Dim l As New List(Of CachedEntity)
+        Protected Friend Function GetChangedObjectGraph() As List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
+            Dim l As New List(Of _ICachedEntity)
             GetChangedObjectGraph(l)
             Return l
         End Function
 
-        Protected Friend Sub GetChangedObjectGraph(ByVal gl As List(Of CachedEntity))
-            Dim l As New List(Of CachedEntity)
+        Protected Friend Sub GetChangedObjectGraph(ByVal gl As List(Of _ICachedEntity)) Implements _ICachedEntity.GetChangedObjectGraph
+            Dim l As New List(Of _ICachedEntity)
 
-            For Each o As CachedEntity In GetRelatedChangedObjects()
+            For Each o As _ICachedEntity In GetRelatedChangedObjects()
                 If Not gl.Contains(o) Then
                     gl.Add(o)
                     l.Add(o)
                 End If
             Next
 
-            For Each o As CachedEntity In GetM2MRelatedChangedObjects()
+            For Each o As _ICachedEntity In GetM2MRelatedChangedObjects()
                 If Not gl.Contains(o) Then
                     gl.Add(o)
                     l.Add(o)
                 End If
             Next
 
-            For Each o As CachedEntity In l
+            For Each o As _ICachedEntity In l
                 o.GetChangedObjectGraph(gl)
             Next
         End Sub
 
-        Protected Friend Function GetChangedObjectGraphWithSelf() As List(Of CachedEntity)
-            Dim l As List(Of CachedEntity) = GetChangedObjectGraph()
+        Protected Friend Function GetChangedObjectGraphWithSelf() As List(Of _ICachedEntity)
+            Dim l As List(Of _ICachedEntity) = GetChangedObjectGraph()
             If HasChanges AndAlso Not l.Contains(Me) Then
                 l.Add(Me)
             End If

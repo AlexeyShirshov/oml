@@ -158,7 +158,7 @@ Public Class ObjectMappingEngine
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                     Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then
+                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                             Continue For
                         ElseIf pi.DeclaringType Is bd.DeclaringType Then
                             Exit Do
@@ -193,7 +193,7 @@ Public Class ObjectMappingEngine
         Next
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-            If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then
+            If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                 Continue For
             End If
 
@@ -213,7 +213,7 @@ Public Class ObjectMappingEngine
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                     Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(EntityLazyLoad), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then
+                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                             Continue For
                         ElseIf pi.DeclaringType Is bd.DeclaringType Then
                             Exit Do
@@ -2352,7 +2352,7 @@ Public Class ObjectMappingEngine
     Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
         ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
         ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
-        ByVal filterInfo As Object)
+        ByVal filterInfo As Object, ByVal jt As JoinType)
 
         Dim jft As JoinFieldType
 
@@ -2376,19 +2376,19 @@ Public Class ObjectMappingEngine
             jft = JoinFieldType.Direct
         End If
 
-        AppendJoin(selectOS, selectType, selSchema, joinOS, type2join, sh, filter, l, filterInfo, jft, field)
+        AppendJoin(selectOS, selectType, selSchema, joinOS, type2join, sh, filter, l, jt, filterInfo, jft, field)
     End Sub
 
     Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
         ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
-        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
+        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), ByVal jt As JoinType, _
         ByVal filterInfo As Object, ByVal jft As JoinFieldType, ByVal propertyAlias As String)
 
         Select Case jft
             Case JoinFieldType.Direct
-                l.Add(MakeJoin(joinOS, GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, propertyAlias, FilterOperation.Equal, JoinType.Join, False))
+                l.Add(MakeJoin(joinOS, GetPrimaryKeys(type2join, sh)(0).PropertyAlias, selectOS, propertyAlias, FilterOperation.Equal, jt, False))
             Case JoinFieldType.Reverse
-                l.Add(MakeJoin(selectOS, GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, propertyAlias, FilterOperation.Equal, JoinType.Join, True))
+                l.Add(MakeJoin(selectOS, GetPrimaryKeys(selectType, selSchema)(0).PropertyAlias, joinOS, propertyAlias, FilterOperation.Equal, jt, True))
             Case JoinFieldType.M2M
                 l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
             Case Else

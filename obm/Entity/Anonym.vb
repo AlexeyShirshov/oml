@@ -933,5 +933,12 @@ Namespace Entities
             End Get
         End Property
 
+        Protected Overloads Sub _GetChangedObjectGraph(ByVal gl As System.Collections.Generic.List(Of _ICachedEntity)) Implements _ICachedEntity.GetChangedObjectGraph
+            Throw New NotImplementedException
+        End Sub
+
+        Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace
