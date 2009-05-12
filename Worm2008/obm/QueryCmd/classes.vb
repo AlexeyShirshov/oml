@@ -85,6 +85,41 @@ Namespace Query
         Function GetFieldColumnMap(ByVal oschema As IEntitySchema, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
+    Public Class ExecutorCtx
+        Implements IExecutionContext
+
+        Private _dic As New Dictionary(Of Type, IEntitySchema)
+
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal oschema As IEntitySchema)
+            _dic.Add(t, oschema)
+        End Sub
+
+        Public Function GetEntitySchema2(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements Query.IExecutionContext.GetEntitySchema
+            If _dic.ContainsKey(t) Then
+                Return _dic(t)
+            End If
+            Return mpe.GetEntitySchema(t)
+        End Function
+
+        Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements Query.IExecutionContext.GetFieldColumnMap
+            Return oschema.GetFieldColumnMap
+        End Function
+
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema
+
+        End Sub
+
+        Public ReadOnly Property Dic() As Dictionary(Of Type, IEntitySchema)
+            Get
+                Return _dic
+            End Get
+        End Property
+    End Class
+
     <Serializable()> _
     Public Class Top
         Private _perc As Boolean

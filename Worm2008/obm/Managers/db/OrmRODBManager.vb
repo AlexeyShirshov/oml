@@ -1304,7 +1304,7 @@ l1:
                         For Each lt As KeyValuePair(Of EntityUnion, trip) In selDic
                             For Each p As SelectExpression In lt.Value.Cols
                                 StmtGenerator.CreateSelectExpressionFormater() _
-                                    .Format(p, sb, Nothing, Nothing, MappingEngine, almgr, params, _
+                                    .Format(p, sb, New ExecutorCtx(lt.Key.GetRealType(MappingEngine), lt.Value.Schema), Nothing, MappingEngine, almgr, params, _
                                         GetContextInfo, Nothing, Nothing, True)
                                 sb.Append(", ")
                             Next
@@ -1788,7 +1788,7 @@ l1:
                 Dim c As EntityPropertyAttribute = se._c
 
                 If c Is Nothing Then
-                    For Each de As DictionaryEntry In pdic(t)
+                    For Each de As DictionaryEntry In pdic(os.GetRealType(MappingEngine))
                         c = CType(de.Key, EntityPropertyAttribute)
                         If c.PropertyAlias = propertyAlias Then
                             pi = CType(de.Value, Reflection.PropertyInfo)

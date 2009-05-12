@@ -1296,4 +1296,15 @@ Imports System.ComponentModel
             Assert.IsTrue(t.Obj1.InternalProperties.IsLoaded)
         Next
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestMixedEntity()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        For Each t As SimpleObj4 In q.SelectEntity(GetType(SimpleObj4)).ToList(Of SimpleObj4)()
+            Assert.IsFalse(t.InternalProperties.IsLoaded)
+            Assert.IsNotNull(t.Obj1)
+        Next
+    End Sub
 End Class
