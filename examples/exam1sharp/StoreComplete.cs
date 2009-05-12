@@ -34,7 +34,7 @@ namespace exam1sharp.Sales
             {
                 return new QueryCmd(exam1sharp.Properties.Settings.Default.connString)
                     .From(typeof(Store))
-                    .Select(typeof(Store));
+                    .SelectEntity(typeof(Store));
             }
         }
     }
@@ -64,7 +64,7 @@ namespace exam1sharp.Sales
             {
                 return new QueryCmd(exam1sharp.Properties.Settings.Default.connString)
                     .From(typeof(SalesPerson))
-                    .Select(typeof(SalesPerson));
+                    .SelectEntity(typeof(SalesPerson));
             }
         }
 

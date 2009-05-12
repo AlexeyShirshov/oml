@@ -149,7 +149,7 @@ namespace exam1sharp
 
             var SalesOrderQuery = new QueryCmd(cache, exam1sharp.Properties.Settings.Default.connString)
                     .From(typeof(SalesOrder))
-                    .Select(typeof(SalesOrder));
+                    .SelectEntity(typeof(SalesOrder));
 
             //Worm.Database.OrmReadOnlyDBManager.StmtSource.Listeners.Add(
             //    new System.Diagnostics.TextWriterTraceListener(Console.Out)
@@ -160,7 +160,7 @@ namespace exam1sharp
             {
                 foreach (SalesOrder s in new QueryCmd(cache, exam1sharp.Properties.Settings.Default.connString)
                     .From(typeof(SalesOrder))
-                    .Select(typeof(SalesOrder))
+                    .SelectEntity(typeof(SalesOrder))
                     .Where(Ctor
                         .prop(typeof(SalesOrder), "OrderDate").eq("2003-08-01")
                         .and(typeof(SalesOrder), "LineTotal").less_than(10))
@@ -219,7 +219,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main12(string[] args)
         {
             //create new instance
             Sales.SalesTerritory t = new exam1sharp.Sales.SalesTerritory()
@@ -247,6 +247,32 @@ namespace exam1sharp
                 mt.Delete(t);
                 mt.AcceptModifications();
             }
+        }
+
+        static void Main(string[] args)
+        {
+            int iterCount = 1000;
+            DateTime start = DateTime.Now;
+            //for (int i = 0; i < iterCount; i++)
+            //{
+            //    foreach (Sales.SalesPerson s in Sales.SalesPerson.Query
+            //        .ToPOCOList<Sales.SalesPerson>())
+            //    {
+            //        //Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Bonus);
+            //    }
+            //}
+            Console.WriteLine(DateTime.Now-start);
+
+            start = DateTime.Now;
+            //for (int i = 0; i < iterCount; i++)
+            {
+                foreach (Entity.SalesPerson s in Entity.SalesPerson.Query
+                    .ToList<Entity.SalesPerson>())
+                {
+                    //Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Bonus);
+                }
+            }
+            Console.WriteLine(DateTime.Now - start);
         }
     }
 }
