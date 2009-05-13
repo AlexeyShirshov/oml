@@ -4,6 +4,7 @@ Imports System.Collections.Generic
 Imports System.Xml.XPath
 Imports Worm.Entities
 Imports Worm.Criteria.Joins
+Imports Worm.Query.Sorting
 
 Namespace Xml
     Partial Public Class QueryManager
@@ -90,13 +91,13 @@ Namespace Xml
         End Property
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, _
             ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, _
             ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICacheItemProvoder(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -122,20 +123,20 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal relation As Entities.Meta.M2MRelationDesc, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
-            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IKeyEntity})( _
-            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal obj As _IKeyEntity, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, _
             ByVal queryAspect() As Entities.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
@@ -144,7 +145,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal aspect As Entities.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
@@ -203,11 +204,11 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
+        Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormatter) As ReadOnlyList(Of T)
+        Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormatter) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 

@@ -6,7 +6,7 @@ Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Criteria.Values
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core

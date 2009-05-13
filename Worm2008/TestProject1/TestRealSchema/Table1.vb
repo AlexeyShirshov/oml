@@ -1,7 +1,7 @@
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Cache
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Query
 
 Public Enum Enum1 As Byte

@@ -40,7 +40,7 @@ Namespace Entities
     End Class
 
     <Serializable()> _
-    Public MustInherit Class CachedEntity
+    Public Class CachedEntity
         Inherits Entity
         Implements _ICachedEntityEx
 
@@ -174,26 +174,12 @@ Namespace Entities
             Public Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
                 Return _o.IsPropertyLoaded(propertyAlias)
             End Function
-            'Public ReadOnly Property OrmCache() As OrmBase
-            '    Get
-            '        Using mc As IGetManager = GetMgr()
-            '            If mc IsNot Nothing Then
-            '                Return mc.Manager.Cache
-            '            Else
-            '                Return Nothing
-            '            End If
-            '        End Using
-            '    End Get
-            'End Property
 
-            '''' <summary>
-            '''' Объект, на котором можно синхронизировать загрузку
-            '''' </summary>
-            'Public ReadOnly Property SyncLoad() As Object
-            '    Get
-            '        Return Me
-            '    End Get
-            'End Property
+            Public ReadOnly Property MappingEngine() As ObjectMappingEngine
+                Get
+                    Return _o.MappingEngine
+                End Get
+            End Property
 
             Public ReadOnly Property ObjectState() As ObjectState
                 Get
@@ -383,7 +369,13 @@ Namespace Entities
             If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         End Sub
 
-        Protected MustOverride Function GetCacheKey() As Integer
+        Protected Overridable Function GetCacheKey() As Integer
+            Dim r As Integer
+            For Each pk As PKDesc In GetPKValues()
+                r = r Xor pk.Value.GetHashCode
+            Next
+            Return r
+        End Function
 
         Protected Overrides Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
             Throw New NotSupportedException

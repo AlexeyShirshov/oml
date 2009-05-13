@@ -2,7 +2,7 @@ Imports Worm
 Imports System.Collections.Generic
 Imports Worm.Cache
 Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports cc = Worm.Criteria.Core
 

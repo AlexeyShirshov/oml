@@ -451,7 +451,7 @@ l1:
                         Else
                             If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(selectOS) Then
                                 'se.ObjectSource = SelectTypes(0).First
-                                AddTypeFields(schema, _sl, SelectedEntities(0), Nothing, Nothing)
+                                AddTypeFields(schema, _sl, SelectedEntities(0), Nothing, Nothing, isAnonym)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)

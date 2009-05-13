@@ -5,6 +5,7 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Database
 Imports Worm
 Imports System.Collections
+Imports Worm.Query.Sorting
 
 <TestClass()> Public Class TestSort
 
@@ -59,7 +60,7 @@ Imports System.Collections
         End Using
     End Sub
 
-    Protected Function ExternalSort(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Worm.Sorting.Sort, ByVal objs As ICollection) As ICollection
+    Protected Function ExternalSort(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Sort, ByVal objs As ICollection) As ICollection
         Dim col As IList(Of Entity) = CType(objs, IList(Of Entity))
         Dim r As New List(Of Entity)
         Select Case sort.SortBy

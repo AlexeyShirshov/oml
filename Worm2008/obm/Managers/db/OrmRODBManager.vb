@@ -1,5 +1,5 @@
 Imports Worm
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports System.Collections.Generic
 Imports Worm.Entities
 Imports Worm.Criteria.Core
@@ -1242,9 +1242,19 @@ l1:
                     If GetType(IEntity).IsAssignableFrom(ov.GetType) Then
                         idx = LoadObj(selDic, eu, ec, dr, idx, CType(ov, _IEntity), eudic)
                     Else
-                        'Dim an As New AnonymousEntity
-                        'LoadSingleObject(cmd, lt.Value.Cols, an, True, True, lt.Value.Load, False, idx)
-                        Throw New NotImplementedException
+                        Dim an As New AnonymousEntity
+                        Dim ntp As trip = selDic(eu)
+                        'LoadSingleFromReader(Nothing, an, ntp.Load, True, ec, dr, Nothing, ntp.Cols, True, idx)
+                        'Dim dic As New Dictionary(Of EntityPropertyAttribute, Reflection.PropertyInfo)
+                        'Dim idic As IDictionary = dic
+                        'For Each p As Pair(Of EntityPropertyAttribute, Reflection.PropertyInfo) In ntp.Properties
+                        '    dic.Add(p.First, p.Second)
+                        'Next
+                        'If dic.Count = 0 Then
+                        '    idic = MappingEngine.GetProperties(pit, ntp.Schema)
+                        'End If
+                        LoadFromDataReader(an, dr, ntp.Cols, True, Nothing, True, Nothing, _
+                            ntp.Schema, ntp.Schema.GetFieldColumnMap, 0, Nothing, ntp.arr, idx)
                     End If
                 Next
                 Return idx
@@ -1301,13 +1311,16 @@ l1:
 
                     If selDic.Count > 1 Then
                         sb.Append("select ")
+                        Dim ctx As New ExecutorCtx
                         For Each lt As KeyValuePair(Of EntityUnion, trip) In selDic
+                            Dim tt As Type = lt.Key.GetRealType(MappingEngine)
                             For Each p As SelectExpression In lt.Value.Cols
                                 StmtGenerator.CreateSelectExpressionFormater() _
-                                    .Format(p, sb, New ExecutorCtx(lt.Key.GetRealType(MappingEngine), lt.Value.Schema), Nothing, MappingEngine, almgr, params, _
+                                    .Format(p, sb, New ExecutorCtx(tt, lt.Value.Schema), Nothing, MappingEngine, almgr, params, _
                                         GetContextInfo, Nothing, Nothing, True)
                                 sb.Append(", ")
                             Next
+                            ctx.Dic(tt) = lt.Value.Schema
                         Next
                         sb.Length -= 2
                         sb.Append(" from ")
@@ -1321,7 +1334,7 @@ l1:
                         Dim prd As New Criteria.PredicateLink
 
                         Query.Database.DbQueryExecutor.FormJoins(MappingEngine, GetContextInfo, Nothing, params, _
-                            oschema, js, almgr, sb, SQLGenerator, Nothing, from, prd, original_type)
+                            oschema, js, almgr, sb, SQLGenerator, ctx, Nothing, from, prd, original_type)
 
                         c.AddFilter(prd.Filter)
 
@@ -1789,16 +1802,23 @@ l1:
 
                 If c Is Nothing Then
                     For Each de As DictionaryEntry In pdic(os.GetRealType(MappingEngine))
-                        c = CType(de.Key, EntityPropertyAttribute)
-                        If c.PropertyAlias = propertyAlias Then
+                        Dim ep As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+                        If ep.PropertyAlias = propertyAlias Then
                             pi = CType(de.Value, Reflection.PropertyInfo)
-                            se._c = c
+                            se._c = ep
                             se._pi = pi
+                            c = ep
                             Exit For
                         End If
                     Next
 
-                    att = MappingEngine.GetAttributes(oschema, c)
+                    If c IsNot Nothing Then
+                        att = MappingEngine.GetAttributes(oschema, c)
+                    Else
+                        att = se.Attributes
+                        c = New EntityPropertyAttribute(propertyAlias, att, se.Column)
+                        se._c = c
+                    End If
                     se._realAtt = att
                 End If
 
@@ -2284,8 +2304,7 @@ l1:
                                     attr = se.Attributes
                                 End If
                             Else
-                                c = New EntityPropertyAttribute(propertyAlias, se.Attributes, Nothing)
-                                c.Column = se.Column
+                                c = New EntityPropertyAttribute(propertyAlias, se.Attributes, se.Column)
                                 se._c = c
                                 If propertyMap.ContainsKey(propertyAlias) Then
                                     Dim nattr As Field2DbRelations = propertyMap(propertyAlias).GetAttributes(c)

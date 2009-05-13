@@ -1,5 +1,5 @@
 Imports System.Xml
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Cache
 Imports Worm.Entities.Meta
 Imports Worm.Criteria

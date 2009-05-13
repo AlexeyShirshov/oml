@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
+Imports Worm.Query.Sorting
 
 Friend Interface IListEdit
     Inherits IList
@@ -356,7 +357,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End If
     End Function
 
-    Public Function ApplySort(ByVal s As Sorting.Sort) As ICollection(Of T)
+    Public Function ApplySort(ByVal s As Sort) As ICollection(Of T)
         Return OrmManager.ApplySort(Of T)(Me, s)
     End Function
 

@@ -1,7 +1,7 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports System.Reflection
@@ -621,7 +621,7 @@ Namespace Query
                             If col.Count > 0 Then
                                 If AutoFields AndAlso _outer Is Nothing Then
                                     Dim createType As EntityUnion = Nothing
-                                    If Not _createTypes.TryGetValue(de.Key, createType) OrElse GetType(AnonymousEntity) IsNot createType.GetRealType(mpe) Then
+                                    If Not _createTypes.TryGetValue(de.Key, createType) OrElse (GetType(AnonymousEntity) IsNot createType.GetRealType(mpe) AndAlso t Is createType.GetRealType(mpe)) Then
                                         For Each dice As DictionaryEntry In dic
                                             Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
                                             If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -775,7 +775,7 @@ l1:
                             If SelectedEntities.Count > 1 Then
                                 Throw New NotSupportedException
                             Else
-                                AddTypeFields(schema, _sl, SelectedEntities(0), _from.QueryEU, Nothing)
+                                AddTypeFields(schema, _sl, SelectedEntities(0), _from.QueryEU, Nothing, isAnonym)
                             End If
                         Else
                             Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectedEntities
@@ -793,7 +793,7 @@ l1:
                                         p = d.Value
                                     End If
                                 Next
-                                AddTypeFields(schema, _sl, tp, Nothing, If(p IsNot Nothing, p.First, Nothing))
+                                AddTypeFields(schema, _sl, tp, Nothing, If(p IsNot Nothing, p.First, Nothing), isAnonym)
                                 'If tp.Second Then
                                 '    Throw New NotImplementedException
                                 'Else
@@ -1050,7 +1050,7 @@ l1:
         End Function
 
         Protected Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
-                                  ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal os As EntityUnion, ByVal pref As String)
+            ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal os As EntityUnion, ByVal pref As String, ByVal isAnonym As Boolean)
             Dim t As Type = tp.First.GetRealType(schema)
             If os Is Nothing Then
                 os = tp.First
@@ -1095,7 +1095,7 @@ l1:
                     cl.Add(se)
                     Dim m As MapField2Column = oschema.GetFieldColumnMap(se.PropertyAlias)
                     se.Attributes = se.Attributes Or m._newattributes
-                    If hasPK Then
+                    If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(MappingEngine) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK
                     End If
                 Next

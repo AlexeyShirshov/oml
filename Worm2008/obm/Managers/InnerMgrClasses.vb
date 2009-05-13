@@ -1,7 +1,7 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports Worm.Cache
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 

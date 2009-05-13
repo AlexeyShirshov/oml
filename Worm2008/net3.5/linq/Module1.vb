@@ -22,11 +22,22 @@
 
         q = From t In ctx.Table1s.ToList
 
-        foo(New With {.fdf = 1})
+        Dim fdf As Func(Of Integer) = CType(AddressOf sdf, Func(Of Integer))
+        Dim fdf2 As Func(Of Integer) = CType(Function() 10, Func(Of Integer))
+
+        Dim k = New With {.j = 10, .dsa = CType(Function() 10, Func(Of Integer))}
+
+        Dim k2 = New With {.j = 10, .dsa = Function() 10}
+
+        Dim h = k2.dsa()
+
     End Sub
 
     Function foo(Of Res)(ByVal f As Res) As Expressions.Expression(Of Func(Of Res))
         Return Function() f
+    End Function
+    Function sdf() As Integer
+
     End Function
 
     Sub Main2()

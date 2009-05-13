@@ -9,7 +9,7 @@ Imports System.Collections
 Imports Worm.Entities
 Imports Worm
 Imports Worm.Criteria.Joins
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Misc
 
 'Imports Worm.Database.Sorting
@@ -181,7 +181,7 @@ Imports Worm.Misc
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.Sort = New Worm.Sorting.Sort(q.SelectList(0).Aggregate, SortType.Desc)
+            q.Sort = New Sort(q.SelectList(0).Aggregate, SortType.Desc)
             'q.propSort = sCTOR.
             l = q.ToSimpleList(Of Integer)(mgr)
 
@@ -364,7 +364,7 @@ Imports Worm.Misc
 
             Dim q As New QueryCmd()
             q.SelectEntity(typeE4)
-            q.Sort = New Worm.Sorting.Sort( _
+            q.Sort = New Sort( _
                 New QueryCmd().From(table). _
                     Select(FCtor.count). _
                     Where(Ctor.column(table, r2.Column).eq(typeE4, "ID")), SortType.Desc)
