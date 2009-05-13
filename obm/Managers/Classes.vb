@@ -1,4 +1,5 @@
 ﻿Imports Worm.Entities
+Imports Worm.Query.Sorting
 
 <Serializable()> _
 Public NotInheritable Class OrmManagerException
@@ -280,14 +281,14 @@ Namespace Entities.Query
         Inherits QueryAspect
 
         Private _top As Integer
-        Private _sort As Worm.Sorting.Sort
+        Private _sort As Sort
 
         Public Sub New(ByVal top As Integer)
             MyBase.New(AspectType.Columns)
             _top = top
         End Sub
 
-        Public Sub New(ByVal top As Integer, ByVal sort As Worm.Sorting.Sort)
+        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
             MyBase.New(AspectType.Columns)
             _top = top
             _sort = sort
@@ -321,7 +322,7 @@ Namespace Database
             MyBase.New(top)
         End Sub
 
-        Public Sub New(ByVal top As Integer, ByVal sort As Worm.Sorting.Sort)
+        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
             MyBase.New(top, sort)
         End Sub
 

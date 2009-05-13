@@ -3,7 +3,7 @@ Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Criteria.Joins
 Imports Worm.Cache
 

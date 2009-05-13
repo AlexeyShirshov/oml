@@ -3,7 +3,7 @@ Imports System.Configuration.Install
 Imports System.Diagnostics
 Imports System.ComponentModel
 Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports System.Collections.ObjectModel

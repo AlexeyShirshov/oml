@@ -1,4 +1,4 @@
-﻿Imports Worm.Sorting
+﻿Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm
@@ -55,7 +55,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Public Overloads Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Entities.Query.TopAspect
+        Public Overloads Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sort) As Entities.Query.TopAspect
             Throw New NotImplementedException
         End Function
 

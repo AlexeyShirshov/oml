@@ -1,5 +1,5 @@
 ﻿Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
 

@@ -193,8 +193,8 @@ l1:
                             End If
                         End If
                     End If
-                Else
-                    Throw New InvalidOperationException
+                    'Else
+                    '    Throw New InvalidOperationException
                 End If
             End Sub
 

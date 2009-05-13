@@ -5,7 +5,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Entities.Query
 Imports Worm.Criteria.Values
 Imports Worm.Criteria.Core
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Criteria.Conditions

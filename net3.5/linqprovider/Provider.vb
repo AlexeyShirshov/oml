@@ -4,7 +4,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Entities
 Imports System.Reflection
 Imports Worm.Entities.Meta
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Query
 Imports Worm.Expressions
 Imports Worm.Criteria.Core
@@ -894,7 +894,7 @@ Namespace Linq
             Return exp
         End Function
 
-        Protected Friend Function GetProperty(ByVal name As String) As Entities.SelectExpression
+        Protected Friend Function GetProperty(ByVal name As String) As SelectExpression
             If _sel Is Nothing Then
                 Throw New InvalidOperationException
             End If

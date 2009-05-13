@@ -5,6 +5,8 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Entities.Query
+Imports Worm.Query.Sorting
+Imports Worm.Query
 
 #Const TraceCreation = False
 
@@ -755,7 +757,7 @@ Namespace Cache
         End Sub
 
         Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, _
-            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean

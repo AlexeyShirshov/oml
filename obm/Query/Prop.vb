@@ -3,7 +3,7 @@ Imports System.Collections.Generic
 Imports Worm.Query
 Imports Worm.Criteria.Values
 
-Namespace Entities
+Namespace Query
 
     Public Enum PropType
         ObjectProperty
@@ -405,20 +405,20 @@ Namespace Entities
         Public ReadOnly Property PropType() As PropType
             Get
                 If _op.Entity IsNot Nothing Then
-                    Return Entities.PropType.ObjectProperty
+                    Return PropType.ObjectProperty
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
-                    Return Entities.PropType.TableColumn
+                    Return PropType.TableColumn
                 Else
                     If _custom IsNot Nothing Then
-                        Return Entities.PropType.CustomValue
+                        Return PropType.CustomValue
                     ElseIf Not String.IsNullOrEmpty(_column) Then
-                        Return Entities.PropType.TableColumn
+                        Return PropType.TableColumn
                     ElseIf _q IsNot Nothing Then
-                        Return Entities.PropType.Subquery
+                        Return PropType.Subquery
                     ElseIf _agr IsNot Nothing Then
-                        Return Entities.PropType.Aggregate
+                        Return PropType.Aggregate
                     ElseIf Not String.IsNullOrEmpty(_op.PropertyAlias) Then
-                        Return Entities.PropType.ObjectProperty
+                        Return PropType.ObjectProperty
                     Else
                         Throw New NotSupportedException
                     End If
@@ -660,9 +660,9 @@ Namespace Entities
         End Function
 
         Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
-            If PropType = Entities.PropType.Subquery Then
+            If PropType = PropType.Subquery Then
                 _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-            ElseIf PropType = Entities.PropType.ObjectProperty AndAlso ObjectSource IsNot Nothing AndAlso ObjectSource.IsQuery Then
+            ElseIf PropType = PropType.ObjectProperty AndAlso ObjectSource IsNot Nothing AndAlso ObjectSource.IsQuery Then
                 ObjectSource.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub

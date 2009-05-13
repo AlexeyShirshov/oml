@@ -7,7 +7,7 @@ Imports Worm.Criteria
 Imports Worm.Criteria.Values
 Imports dc = Worm.Criteria.Core
 Imports Worm.Entities.Query
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Cache
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions

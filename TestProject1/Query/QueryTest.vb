@@ -79,9 +79,9 @@ Imports System.ComponentModel
 
             Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd()
-            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Entities.SelectExpression)( _
-                New Entities.SelectExpression() { _
-                    New Entities.SelectExpression(t, "id", "ID") _
+            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of SelectExpression)( _
+                New SelectExpression() { _
+                    New SelectExpression(t, "id", "ID") _
                 })
             q.From(t)
             Assert.IsNotNull(q)
@@ -100,9 +100,9 @@ Imports System.ComponentModel
 
             Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd()
-            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Entities.SelectExpression)( _
-                New Entities.SelectExpression() { _
-                    New Entities.SelectExpression(t, "id", "ID") _
+            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of SelectExpression)( _
+                New SelectExpression() { _
+                    New SelectExpression(t, "id", "ID") _
                 })
             q.From(t)
             Assert.IsNotNull(q)
@@ -1304,6 +1304,17 @@ Imports System.ComponentModel
 
         For Each t As SimpleObj4 In q.SelectEntity(GetType(SimpleObj4)).ToList(Of SimpleObj4)()
             Assert.IsFalse(t.InternalProperties.IsLoaded)
+            Assert.IsNotNull(t.Obj1)
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestMixedEntityLoad()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+
+        For Each t As SimpleObj4 In q.SelectEntity(GetType(SimpleObj4), True).ToList(Of SimpleObj4)()
+            Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.IsNotNull(t.Obj1)
         Next
     End Sub

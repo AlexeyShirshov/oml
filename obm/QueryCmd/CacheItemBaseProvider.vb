@@ -3,7 +3,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities
 Imports Worm.OrmManager
 Imports Worm.Criteria.Joins
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Cache
 
 Namespace Query

@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports System.Collections.Generic
+Imports Worm.Query.Sorting
 
 Namespace Cache
 
@@ -333,7 +334,7 @@ Namespace Cache
         End Sub
 
         Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, _
-                                ByVal sort As Sorting.Sort) As Boolean
+                                ByVal sort As Sort) As Boolean
             'If sort.Previous IsNot Nothing Then
             '    Return False
             'End If

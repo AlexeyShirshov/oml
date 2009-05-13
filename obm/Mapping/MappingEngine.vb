@@ -4,7 +4,7 @@ Imports System.Collections.Generic
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
 Imports Worm.Entities
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Criteria
 Imports Worm.Criteria.Conditions
@@ -2599,6 +2599,7 @@ Public Class ObjectMappingEngine
                     MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value, Nothing)
                 End If
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                 Return o
             Else
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, value, oschema)

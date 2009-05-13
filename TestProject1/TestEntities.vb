@@ -4,7 +4,7 @@ Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins

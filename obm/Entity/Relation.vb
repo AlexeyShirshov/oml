@@ -1,8 +1,8 @@
 Imports System.Collections.Generic
-Imports Worm.Sorting
 Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Cache
+Imports Worm.Query.Sorting
 
 Namespace Entities
 

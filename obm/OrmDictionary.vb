@@ -6,6 +6,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Conditions
 Imports Worm.Query
 Imports Worm.Criteria
+Imports Worm.Query.Sorting
 
 Namespace Misc
 
@@ -271,7 +272,7 @@ Namespace Misc
             Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, Nothing, cmd)
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
@@ -367,7 +368,7 @@ Namespace Misc
 
         Protected Overridable Function FindObjects(ByVal mgr As OrmManager, _
             ByVal strong As Boolean, ByVal tt As Type, ByVal firstPropertyAlias As String, _
-            ByVal secPropertyAlias As String, ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
+            ByVal secPropertyAlias As String, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
 
             Dim cmd As New QueryCmd(_getMgr)
 
@@ -434,7 +435,7 @@ Namespace Misc
             Return CType(MyBase.FindById(id), DicIndexT(Of T))
         End Function
 
-        Public Overloads Function FindElements(ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
+        Public Overloads Function FindElements(ByVal sort As Sort) As ReadOnlyObjectList(Of T)
             Dim icm As ICreateManager = _cmd.CreateManager
             If icm Is Nothing Then
                 Throw New ArgumentException("OrmManager required")
@@ -461,7 +462,7 @@ Namespace Misc
             Return FindElementsLoadOnlyNames(icm)
         End Function
 
-        Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
+        Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
             Using mgr As OrmManager = getMgr.CreateManager
                 Return FindElementsInternal(mgr, False, sort)
@@ -528,7 +529,7 @@ Namespace Misc
             MyBase.New(name, parent, count, firstField, secField)
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As Sort) As ReadOnlyList(Of T)
             Return CType(FindElementsInternal(mgr, False, sort), Global.Worm.ReadOnlyList(Of T))
         End Function
 
@@ -541,7 +542,7 @@ Namespace Misc
         End Function
 
         Protected Overrides Function FindObjects(ByVal mgr As OrmManager, _
-            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Worm.Sorting.Sort) As ReadOnlyObjectList(Of T)
+            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
 
             If String.IsNullOrEmpty(field) Then
                 Throw New ArgumentNullException("field")

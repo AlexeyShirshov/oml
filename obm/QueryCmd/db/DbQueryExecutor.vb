@@ -922,7 +922,7 @@ l1:
         Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
             ByVal params As ICreateParam, ByVal selSchema As IEntitySchema, _
             ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal exec As IExecutionContext, _
             ByVal pk As Pair(Of SourceFragment, String), ByVal from As FromClauseDef, _
             ByVal predi As Criteria.PredicateLink, ByVal selectedType As Type)
 
@@ -981,10 +981,10 @@ l1:
                         '    oschema = query.GetEntitySchema(t)
                         'End If
                         Dim oschema As IEntitySchema = Nothing
-                        If query Is Nothing Then
+                        If exec Is Nothing Then
                             oschema = mpe.GetEntitySchema(t)
                         Else
-                            oschema = query.GetEntitySchema(mpe, t)
+                            oschema = exec.GetEntitySchema(mpe, t)
                         End If
 
                         Dim needAppend As Boolean = True
@@ -1091,7 +1091,7 @@ l1:
 
                                 Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
                                 FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, f, Nothing, _
-                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, From, s, query, filterInfo, almgr, params), predi)
+                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, from, s, exec, filterInfo, almgr, params), predi)
                             Else
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
@@ -1381,7 +1381,7 @@ l1:
                     query.FromClause, query.AppendMain, Nothing, p)
             End If
 
-            FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, newPK, query.FromClause, p, query.GetSelectedType(mpe))
+            FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, query, newPK, query.FromClause, p, query.GetSelectedType(mpe))
 
             ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
 

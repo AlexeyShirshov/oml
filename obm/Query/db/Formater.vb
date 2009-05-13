@@ -2,7 +2,7 @@
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Core
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports System.Collections.ObjectModel
 Imports Worm.Query
 
@@ -47,14 +47,14 @@ Namespace Database
             _s = s
         End Sub
 
-        Public Sub Format(ByVal se As Entities.SelectExpression, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
+        Public Sub Format(ByVal se As SelectExpression, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
                           ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
-                          ByVal context As Object, ByVal selList As ReadOnlyCollection(Of Entities.SelectExpression), _
+                          ByVal context As Object, ByVal selList As ReadOnlyCollection(Of SelectExpression), _
                           ByVal defaultTable As QueryCmd.FromClauseDef, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
                 Select Case se.PropType
-                    Case Entities.PropType.Aggregate
+                    Case PropType.Aggregate
                         'Dim a As Boolean = se.Aggregate.AddAlias
                         'se.Aggregate.AddAlias = False
                         sb.Append(" order by ")
@@ -63,7 +63,7 @@ Namespace Database
                             sb.Append(" desc")
                         End If
                         'se.Aggregate.AddAlias = a
-                    Case Entities.PropType.Subquery
+                    Case PropType.Subquery
                         Dim _q As Query.QueryCmd = se.Query
 
                         Dim c As New Query.QueryCmd.svct(_q)
@@ -183,7 +183,7 @@ Namespace Database
 l1:
                                         Dim clm As String = ns.SortBy
                                         If selList IsNot Nothing Then
-                                            For Each p As Entities.SelectExpression In selList
+                                            For Each p As SelectExpression In selList
                                                 If p.PropertyAlias = clm Then
                                                     clm = If(String.IsNullOrEmpty(p.ColumnAlias), p.Column, p.ColumnAlias)
                                                     Exit For
@@ -219,12 +219,12 @@ l1:
                 End Select
             Else
                 Select Case se.PropType
-                    Case Entities.PropType.Aggregate
+                    Case PropType.Aggregate
                         sb.Append(se.Aggregate.MakeStmt(schema, defaultTable, _s, pmgr, almgr, context, inSelect, executor))
                         If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
                             sb.Append(" ").Append(se.ColumnAlias)
                         End If
-                    Case Entities.PropType.TableColumn
+                    Case PropType.TableColumn
                         Dim t As SourceFragment = se.Table
                         If t Is Nothing Then
                             t = defaultTable.Table
@@ -250,7 +250,7 @@ l1:
                             End If
                             cols.Append(se.Column)
                         End If
-                    Case Entities.PropType.ObjectProperty
+                    Case PropType.ObjectProperty
                         If se.ObjectSource IsNot Nothing Then
                             Dim t As Type = se.ObjectSource.GetRealType(schema)
                             If t Is Nothing Then
@@ -347,7 +347,7 @@ l2:
                             'columnAliases.RemoveAt(columnAliases.Count - 1)
                             'columnAliases.Add(se.FieldAlias)
                         End If
-                    Case Entities.PropType.CustomValue
+                    Case PropType.CustomValue
                         If inSelect Then
                             'Dim sss As String = String.Format(se.Column, se.GetCustomExpressionValues(schema, Nothing, Nothing))
                             Dim sss As String = se.Custom.GetParam(schema, defaultTable, _s, pmgr, almgr, Nothing, context, inSelect, executor)
@@ -360,7 +360,7 @@ l2:
                         If Not String.IsNullOrEmpty(se.ColumnAlias) AndAlso inSelect Then
                             sb.Append(" ").Append(se.ColumnAlias)
                         End If
-                    Case Entities.PropType.Subquery
+                    Case PropType.Subquery
                         If Not String.IsNullOrEmpty(se._tempMark) Then
                             Dim _q As Query.QueryCmd = se.Query
                             'Dim c As New Query.QueryCmd.svct(_q)

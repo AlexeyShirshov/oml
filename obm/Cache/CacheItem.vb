@@ -1,5 +1,5 @@
 ﻿Imports Worm.Criteria.Core
-Imports Worm.Sorting
+Imports Worm.Query.Sorting
 Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Entities.Meta
@@ -146,7 +146,7 @@ Namespace Cache
             End Get
             Friend Set(ByVal value As Sort)
                 If value IsNot Nothing Then
-                    _sort = CType(value.Clone, Sorting.Sort)
+                    _sort = CType(value.Clone, Sort)
                 Else
                     _sort = Nothing
                 End If
@@ -407,7 +407,7 @@ Namespace Cache
         Public Sub New(ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
             ByVal mainType As Type, ByVal subType As Type, ByVal key As String, ByVal sort As Sort)
             If sort IsNot Nothing Then
-                _sort = CType(sort.Clone, Sorting.Sort)
+                _sort = CType(sort.Clone, Sort)
             End If
 
             '_st = sortType
@@ -425,7 +425,7 @@ Namespace Cache
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
             ByVal el As CachedM2MRelation, ByVal mgr As OrmManager)
             If sort IsNot Nothing Then
-                _sort = CType(sort.Clone, Sorting.Sort)
+                _sort = CType(sort.Clone, Sort)
             End If
 
             '_st = SortType
