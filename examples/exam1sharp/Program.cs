@@ -253,26 +253,30 @@ namespace exam1sharp
         {
             int iterCount = 1000;
             DateTime start = DateTime.Now;
-            //for (int i = 0; i < iterCount; i++)
-            //{
-            //    foreach (Sales.SalesPerson s in Sales.SalesPerson.Query
-            //        .ToPOCOList<Sales.SalesPerson>())
-            //    {
-            //        //Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Bonus);
-            //    }
-            //}
-            Console.WriteLine(DateTime.Now-start);
+            for (int i = 0; i < iterCount; i++)
+            {
+                foreach (Sales.SalesPerson s in Sales.SalesPerson.Query
+                    .ToPOCOList<Sales.SalesPerson>())
+                {
+                    string str = string.Format("Store id: {0}, bonus: {1}, territory name: {2}",
+                        s.ID, s.Bonus, s.SalesTerritory != null ? s.SalesTerritory.Name : "no territory");
+                    //Console.WriteLine(str);
+                }
+            }
+            Console.WriteLine("POCO time {0}", DateTime.Now - start);
 
             start = DateTime.Now;
-            //for (int i = 0; i < iterCount; i++)
+            for (int i = 0; i < iterCount; i++)
             {
                 foreach (Entity.SalesPerson s in Entity.SalesPerson.Query
                     .ToList<Entity.SalesPerson>())
                 {
-                    //Console.WriteLine("Store id: {0}, name: {1}", s.ID, s.Bonus);
+                    string str = string.Format("Store id: {0}, bonus: {1}, territory name: {2}",
+                        s.ID, s.Bonus, s.SalesTerritory != null ? s.SalesTerritory.Name : "no territory");
+                    //Console.WriteLine(str);
                 }
             }
-            Console.WriteLine(DateTime.Now - start);
+            Console.WriteLine("Entity time {0}", DateTime.Now - start);
         }
     }
 }

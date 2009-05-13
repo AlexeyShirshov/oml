@@ -9,7 +9,7 @@ using Worm.Query;
 namespace exam1sharp.Entity
 {
     [Entity("Sales", "SalesPerson", "1")]
-    public class SalesPerson : KeyEntityBase
+    public class SalesPerson : CachedEntity
     {
         [EntityProperty("SalesPersonID", Field2DbRelations.PK)]
         public int ID { get; set; }
@@ -32,18 +32,6 @@ namespace exam1sharp.Entity
         [EntityProperty("rowguid", Field2DbRelations.RowVersion)]
         public Guid Timestamp { get; protected set; }
 
-        public override object Identifier
-        {
-            get
-            {
-                return ID;
-            }
-            set
-            {
-                ID = (int)value;
-            }
-        }
-
         public static QueryCmd Query
         {
             get
@@ -53,6 +41,5 @@ namespace exam1sharp.Entity
                     .SelectEntity(typeof(SalesPerson));
             }
         }
-
     }
 }
