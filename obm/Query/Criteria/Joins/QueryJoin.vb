@@ -11,6 +11,8 @@ Namespace Criteria.Joins
         RightOuterJoin
         FullJoin
         CrossJoin
+        InnerApply
+        OuterApply
     End Enum
 
     <Serializable()> _
@@ -76,7 +78,7 @@ Namespace Criteria.Joins
 
         Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal schema As StmtGenerator, ByVal executor As IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, _
-            ByVal os As EntityUnion) As String
+            ByVal os As EntityUnion, ByVal sb As StringBuilder) As SourceFragment
             'If IsEmpty Then
             '    Throw New InvalidOperationException("Object must be created")
             'End If
@@ -89,37 +91,97 @@ Namespace Criteria.Joins
                 Throw New ArgumentNullException("almgr")
             End If
 
-            Dim tbl As SourceFragment = _table
-            If tbl Is Nothing Then
-                'If _type IsNot Nothing Then
-                '    tbl = schema.GetTables(_type)(0)
-                'Else
-                '    tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
-                'End If
-                tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
-            End If
-
             Dim os_ As EntityUnion = ObjectSource
             If os_ Is Nothing Then
                 os_ = os
             End If
 
-            Dim alTable As SourceFragment = tbl
-            'Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
-            If Not almgr.ContainsKey(tbl, os_) Then
-                almgr.AddTable(tbl, os_, pname)
+            If _joinType < Joins.JoinType.CrossJoin Then
+                For Each f As IFilter In Condition.GetAllFilters
+                    If os IsNot Nothing Then
+                        f.SetUnion(os)
+                    End If
+                    If ObjectSource IsNot Nothing Then
+                        f.SetUnion(ObjectSource)
+                    End If
+                Next
+
+                If os_ Is Nothing OrElse Not os_.IsQuery Then
+                    Dim tbl As SourceFragment = _table
+                    If tbl Is Nothing Then
+                        'If _type IsNot Nothing Then
+                        '    tbl = schema.GetTables(_type)(0)
+                        'Else
+                        '    tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
+                        'End If
+                        tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
+                    End If
+
+                    Dim alTable As SourceFragment = tbl
+                    'Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
+                    If Not almgr.ContainsKey(tbl, os_) Then
+                        almgr.AddTable(tbl, os_, pname)
+                    End If
+
+                    sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl))
+                    sb.Append(" " & almgr.GetAlias(alTable, os_)).Append(" on ")
+                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, filterInfo, almgr, pname))
+                    Return alTable
+                Else
+                    sb.Append(JoinTypeString()).Append("(")
+
+                    Dim al As EntityAlias = os_.ObjectAlias
+                    Dim q As QueryCmd = al.Query
+                    sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, AliasMgr.Create))
+
+                    Dim tbl2 As SourceFragment = al.Tbl
+                    If tbl2 Is Nothing Then
+                        tbl2 = New SourceFragment
+                        al.Tbl = tbl2
+                    End If
+
+                    Dim als As String = almgr.AddTable(tbl2, os_)
+
+                    sb.Append(") as ").Append(als).Append(" on ")
+                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, filterInfo, almgr, pname))
+                    'almgr.Replace(mpe, schema, tbl2, os_, sb)
+                    Return tbl2
+                End If
+            ElseIf JoinType = Joins.JoinType.CrossJoin Then
+                Dim tbl As SourceFragment = _table
+                If tbl Is Nothing Then
+                    tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
+                End If
+
+                Dim alTable As SourceFragment = tbl
+                If Not almgr.ContainsKey(tbl, os_) Then
+                    almgr.AddTable(tbl, os_, pname)
+                End If
+
+                sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl))
+                sb.Append(" ").Append(almgr.GetAlias(alTable, os_))
+                Return alTable
+            ElseIf os_ IsNot Nothing AndAlso os_.IsQuery Then
+                sb.Append(JoinTypeString()).Append("(")
+
+                Dim al As EntityAlias = os_.ObjectAlias
+                Dim q As QueryCmd = al.Query
+                sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, AliasMgr.Create))
+
+                Dim tbl2 As SourceFragment = al.Tbl
+                If tbl2 Is Nothing Then
+                    tbl2 = New SourceFragment
+                    al.Tbl = tbl2
+                End If
+
+                Dim als As String = almgr.AddTable(tbl2, os_)
+
+                sb.Append(") as ").Append(als)
+                'almgr.Replace(mpe, schema, tbl2, os_, sb)
+                Return tbl2
+            Else
+                Throw New NotSupportedException(JoinType.ToString)
             End If
-
-            For Each f As IFilter In Condition.GetAllFilters
-                If os IsNot Nothing Then
-                    f.SetUnion(os)
-                End If
-                If ObjectSource IsNot Nothing Then
-                    f.SetUnion(ObjectSource)
-                End If
-            Next
-
-            Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, os_) & " on " & Condition.MakeQueryStmt(mpe, fromClause, schema, executor, filterInfo, almgr, pname)
         End Function
 
         Public Function JoinTypeString() As String

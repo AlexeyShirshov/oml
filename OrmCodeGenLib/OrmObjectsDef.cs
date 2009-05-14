@@ -12,7 +12,7 @@ namespace Worm.CodeGen.Core
     public class OrmObjectsDef
     {
         public const string NS_PREFIX = "oos";
-        public const string NS_URI = "http://www.xmedia.ru/OrmObjectsSchema.xsd";
+        public const string NS_URI = "http://wise-orm.com/OrmObjectsSchema.xsd";
 
         #region Private Fields
 

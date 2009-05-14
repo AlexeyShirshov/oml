@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema
 		id="OrmObjectsSchema"
-		targetNamespace="http://www.xmedia.ru/OrmObjectsSchema.xsd"
+		targetNamespace="http://wise-orm.com/OrmObjectsSchema.xsd"
 		elementFormDefault="qualified"
-		xmlns="http://www.xmedia.ru/OrmObjectsSchema.xsd"
+		xmlns="http://wise-orm.com/OrmObjectsSchema.xsd"
 		xmlns:xs="http://www.w3.org/2001/XMLSchema"
-		xmlns:NS="http://www.xmedia.ru/OrmObjectsSchema.xsd"
+		xmlns:NS="http://wise-orm.com/OrmObjectsSchema.xsd"
 
 		version="1.0">
   <xs:complexType name="Entity_t">

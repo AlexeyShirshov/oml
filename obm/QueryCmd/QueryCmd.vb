@@ -4080,6 +4080,89 @@ l1:
             Return CType(o, T)
         End Function
 
+        Public Function [GetByIds](Of T As {New, IKeyEntity})( _
+                    ByVal ids As ICollection(Of Object), _
+                    ByVal ensureLoaded As Boolean, _
+                    ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+
+            If mgr Is Nothing Then Throw New QueryCmdException("Manager is required", Me)
+
+            Dim tp As Type = GetRealType(Of T)(mgr)
+            Dim list As IListEdit = New ReadOnlyList(Of T)
+
+
+            Using New SetManagerHelper(mgr, CreateManager, _schema)
+                Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
+                If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
+                    mgr.SetSchema(MappingEngine)
+                End If
+                Try
+                    If GetType(T) IsNot tp Then
+                        If ensureLoaded Then
+                            For Each id As Object In ids
+                                Dim obj As T = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                                If obj IsNot Nothing Then list.Add(obj)
+                            Next
+                        Else
+                            For Each id As Object In ids
+                                Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                                If obj IsNot Nothing Then list.Add(obj)
+                            Next
+                        End If
+                    Else
+                        If ensureLoaded Then
+                            For Each id As Object In ids
+                                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                                If obj IsNot Nothing Then list.Add(obj)
+                            Next
+                        Else
+                            For Each id As Object In ids
+                                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                                If obj IsNot Nothing Then list.Add(obj)
+                            Next
+                        End If
+                    End If
+
+                Finally
+                    mgr.SetSchema(oldSch)
+                End Try
+            End Using
+
+            Return CType(list, ReadOnlyList(Of T))
+        End Function
+
+        Public Function [GetByIds](Of T As {New, IKeyEntity})( _
+                            ByVal ids As ICollection(Of Object), _
+                            ByVal ensureLoaded As Boolean) As ReadOnlyList(Of T)
+
+            If _getMgr IsNot Nothing Then
+                Using mgr As OrmManager = _getMgr.CreateManager
+                    Return GetByIds(Of T)(ids, ensureLoaded, mgr)
+                End Using
+            Else
+                Throw New QueryCmdException("Manager is required", Me)
+            End If
+
+        End Function
+
+        Public Function [GetByIds](Of T As {New, IKeyEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
+            Return GetByIds(Of T)(ids, False)
+        End Function
+
+        Private Function GetRealType(Of T As {New, IKeyEntity})(ByVal mgr As OrmManager) As Type
+            Dim selou As EntityUnion = GetSelectedOS()
+            Dim tp As Type = Nothing
+            If selou IsNot Nothing Then
+                tp = selou.GetRealType(mgr.MappingEngine)
+            Else
+                tp = GetType(T)
+            End If
+
+            Return tp
+        End Function
+
+
+
         Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager

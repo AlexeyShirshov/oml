@@ -910,8 +910,8 @@ l1:
                         If Not almgr.ContainsKey(tables(j), osrc) Then
                             almgr.AddTable(tables(j), osrc, params)
                         End If
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_))
-                        almgr.Replace(mpe, s, join.Table, osrc, sb)
+                        sb.Append(s.EndLine)
+                        almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_, sb), osrc_, sb)
                     End If
                 Next
             End If
@@ -946,31 +946,32 @@ l1:
                         join.InjectJoinFilter(mpe, selectedType, pkname, pk.First, pk.Second)
                     End If
 
-                    If join.ObjectSource IsNot Nothing AndAlso join.ObjectSource.IsQuery Then
-                        sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
+                    'If join.ObjectSource IsNot Nothing AndAlso join.ObjectSource.IsQuery Then
+                    '    sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
 
-                        Dim al As EntityAlias = join.ObjectSource.ObjectAlias
-                        Dim q As QueryCmd = al.Query
-                        'Dim c As New Query.QueryCmd.svct(q)
-                        'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                        '    QueryCmd.Prepare(q, Nothing, mpe, filterInfo, s)
-                        sb.Append(s.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, params, AliasMgr.Create))
-                        'Dim almgr2 As AliasMgr = AliasMgr.Create
-                        'FormSingleQuery(mpe, sb, q, s, AliasMgr.Create, filterInfo, params)
-                        'End Using
+                    '    Dim al As EntityAlias = join.ObjectSource.ObjectAlias
+                    '    Dim q As QueryCmd = al.Query
+                    '    'Dim c As New Query.QueryCmd.svct(q)
+                    '    'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                    '    '    QueryCmd.Prepare(q, Nothing, mpe, filterInfo, s)
+                    '    sb.Append(s.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, params, AliasMgr.Create))
+                    '    'Dim almgr2 As AliasMgr = AliasMgr.Create
+                    '    'FormSingleQuery(mpe, sb, q, s, AliasMgr.Create, filterInfo, params)
+                    '    'End Using
 
-                        Dim tbl As SourceFragment = al.Tbl
-                        If tbl Is Nothing Then
-                            tbl = New SourceFragment
-                            al.Tbl = tbl
-                        End If
+                    '    Dim tbl As SourceFragment = al.Tbl
+                    '    If tbl Is Nothing Then
+                    '        tbl = New SourceFragment
+                    '        al.Tbl = tbl
+                    '    End If
 
-                        Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
+                    '    Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
 
-                        sb.Append(") as ").Append(als).Append(" on ")
-                        sb.Append(join.Condition.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
-                        almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
-                    ElseIf join.Table Is Nothing Then
+                    '    sb.Append(") as ").Append(als).Append(" on ")
+                    '    sb.Append(join.Condition.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
+                    '    almgr.Replace(mpe, s, tbl, join.ObjectSource, sb)
+                    'Else
+                    If join.Table Is Nothing Then
                         Dim t As Type = join.ObjectSource.GetRealType(mpe)
                         'If t Is Nothing Then
                         '    t = s.GetTypeByEntityName(join.EntityName)
@@ -1064,7 +1065,8 @@ l1:
 
                             Dim js() As QueryJoin = jl
                             js(0).ObjectSource = join.ObjectSource
-                            sb.Append(s.EndLine).Append(js(0).MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, join.M2MObjectSource))
+                            sb.Append(s.EndLine)
+                            js(0).MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, join.M2MObjectSource, sb)
 
                             If needAppend Then
                                 cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
@@ -1076,7 +1078,10 @@ l1:
                             End If
                         End If
 
-                        If needAppend Then
+                        If join.ObjectSource IsNot Nothing AndAlso join.ObjectSource.IsQuery Then
+                            sb.Append(s.EndLine)
+                            almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
+                        ElseIf needAppend Then
                             Dim mts As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                             If mts Is Nothing OrElse join.JoinType = JoinType.Join Then
                                 sb.Append(join.JoinTypeString())
@@ -1114,10 +1119,9 @@ l1:
                                 Next
                             End If
                         End If
-
                     Else
-                        sb.Append(s.EndLine).Append(join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing))
-                        almgr.Replace(mpe, s, join.Table, join.ObjectSource, sb)
+                        sb.Append(s.EndLine)
+                        almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
                     End If
                 End If
             Next
