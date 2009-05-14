@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<oos:OrmObjects xmlns:oos="http://www.xmedia.ru/OrmObjectsSchema.xsd" defaultNamespace="OrmCodeGenTests" entityBaseType="tBase">
+<oos:OrmObjects xmlns:oos="http://wise-orm.com/OrmObjectsSchema.xsd" defaultNamespace="OrmCodeGenTests" entityBaseType="tBase">
 	<oos:Types>
 		<oos:Type id="tBase">
 			<oos:UserType  name="OrmCodeGenTests.TestOrmBase"/>

@@ -1131,7 +1131,7 @@ l2:
                                 If Not amgr.ContainsKey(join.Table, Nothing) Then
                                     amgr.AddTable(join.Table, Nothing, params)
                                 End If
-                                upd_cmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params, Nothing))
+                                join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params, Nothing, upd_cmd)
                             Next
                             upd_cmd.Append(" where ")
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
@@ -1475,7 +1475,7 @@ l2:
 
                         If Not QueryJoin.IsEmpty(join) Then
                             'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing))
+                            join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
                         End If
                     Next
                 End If
@@ -1551,7 +1551,7 @@ l2:
                 Dim join As New QueryJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl, CType(Nothing, EntityUnion))
-                selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing))
+                join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
 
                 If appendSecondTable Then
                     Dim schema2 As IEntitySchema = mpe.GetEntitySchema(relation.Rel.GetRealType(mpe))
@@ -1788,7 +1788,7 @@ l2:
                             '    End If
                             'Next
 
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing, selectcmd)
                         End If
                     Next
                 End If
@@ -1808,7 +1808,7 @@ l2:
                 If adal Then
                     almgr.AddTable(pkTable, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                j.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing, selectcmd)
                 If sch IsNot Nothing Then
                     For i As Integer = 0 To tables.Length - 1
                         If tables(i) Is pkTable Then Continue For
@@ -1817,7 +1817,7 @@ l2:
 
                         If Not QueryJoin.IsEmpty(join) Then
                             almgr.AddTable(tables(i), Nothing, pname)
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing))
+                            join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, pname, Nothing, selectcmd)
                         End If
                     Next
                 End If
@@ -1919,7 +1919,7 @@ l2:
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(mpe, Nothing, Me, New ExecutorCtx(t, sch), filterInfo, almgr, pname, Nothing))
+                            join.MakeSQLStmt(mpe, Nothing, Me, New ExecutorCtx(t, sch), filterInfo, almgr, pname, Nothing, selectcmd)
                         End If
                     Next
                 End If
@@ -2420,18 +2420,17 @@ l1:
                     join.InjectJoinFilter(mpe, searchType, mpe.GetPrimaryKeys(searchType, searchSchema)(0).PropertyAlias, ct, FTSKey)
                     'Dim al As String = almgr.AddTable(join.Table)
                     'columns = columns.Replace(join.Table.TableName & ".", al & ".")
-                    Dim tbl As SourceFragment = join.Table
-                    If tbl Is Nothing Then
-                        'If join.Type IsNot Nothing Then
-                        '    tbl = GetTables(join.Type)(0)
-                        'Else
-                        '    tbl = GetTables(GetTypeByEntityName(join.EntityName))(0)
-                        'End If
-                        tbl = mpe.GetTables(join.ObjectSource.GetRealType(mpe))(0)
-                    End If
-                    almgr.AddTable(tbl, CType(Nothing, EntityUnion))
-                    almgr.Replace(mpe, Me, tbl, Nothing, columns)
-                    sb.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing))
+                    'Dim tbl As SourceFragment = join.Table
+                    'If tbl Is Nothing Then
+                    '    'If join.Type IsNot Nothing Then
+                    '    '    tbl = GetTables(join.Type)(0)
+                    '    'Else
+                    '    '    tbl = GetTables(GetTypeByEntityName(join.EntityName))(0)
+                    '    'End If
+                    '    tbl = mpe.GetTables(join.ObjectSource.GetRealType(mpe))(0)
+                    'End If
+                    'almgr.AddTable(tbl, CType(Nothing, EntityUnion))
+                    almgr.Replace(mpe, Me, join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing, sb), Nothing, columns)
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
@@ -2614,7 +2613,7 @@ l1:
 
                     If Not QueryJoin.IsEmpty(join) Then
                         'almgr.AddTable(join.Table, Nothing, params)
-                        sb.Append(join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing))
+                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing, sb)
                     End If
                 Next
             End If
