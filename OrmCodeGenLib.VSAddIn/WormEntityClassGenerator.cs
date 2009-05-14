@@ -10,9 +10,45 @@ using Microsoft.Win32;
 using Microsoft.VisualStudio.Shell;
 using Worm.CodeGen.Core;
 using VSLangProj80;
+using System.Collections.Generic;
+using Worm.CodeGen.Core.CodeDomExtensions;
 
 namespace Worm.CodeGen.VSTool
 {
+    class Pair
+    {
+        public byte[] Data;
+        public CodeCompileFileUnit Unit;
+    }
+
+    class Enumer : IEnumerable<Pair>
+    {
+        private OrmObjectsDef _ormObjectsDef;
+
+        public Enumer(OrmObjectsDef ormObjectsDef)
+        {
+            _ormObjectsDef = ormObjectsDef;
+        }
+
+        #region IEnumerable<Pair> Members
+
+        public IEnumerator<Pair> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region IEnumerable Members
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+    }
+
     /// <summary>
     /// This is the generator class. 
     /// When setting the 'Custom Tool' property of a C#, VB, or J# project item to "XmlClassGenerator", 
@@ -25,7 +61,9 @@ namespace Worm.CodeGen.VSTool
     [CodeGeneratorRegistration(typeof(WormEntityClassGenerator), "VB WORM Entity Class Generator", vsContextGuids.vsContextGuidVBProject, GeneratesDesignTimeSource = true)]
     [CodeGeneratorRegistration(typeof(WormEntityClassGenerator), "J# WORM Entity Class Generator", vsContextGuids.vsContextGuidVJSProject, GeneratesDesignTimeSource = true)]
     [ProvideObject(typeof(WormEntityClassGenerator))]
-    public class WormEntityClassGenerator : Microsoft.Samples.VisualStudio.GeneratorSample.BaseCodeGeneratorWithSite
+    public class WormEntityClassGenerator : 
+        VsMultipleFileGenerator.VsMultipleFileGenerator<Pair>
+        //Microsoft.Samples.VisualStudio.GeneratorSample.BaseCodeGeneratorWithSite
     {
 #pragma warning disable 0414
         //The name of this generator (use for 'Custom Tool' property of project item)
@@ -137,6 +175,21 @@ namespace Worm.CodeGen.VSTool
                 //Returning null signifies that generation has failed
                 return null;
             }
+        }
+
+        protected override string GetFileName(Pair element)
+        {
+            return element.Unit.Filename;
+        }
+
+        public override byte[] GenerateContent(Pair element)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override IEnumerable<Pair> GenerateElements(string inputFileContent)
+        {
+            throw new NotImplementedException();
         }
     }
 }

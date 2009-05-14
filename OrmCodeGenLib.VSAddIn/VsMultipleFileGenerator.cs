@@ -154,7 +154,7 @@ namespace VsMultipleFileGenerator
     //                 * is intented to perform its own generation process.
     //                 * Or, set the target file as an 'Embedded Resource' so that
     //                 * it is embedded into the final Assembly.
-                         
+
     //                EnvDTE.Property prop = itm.Properties.Item("CustomTool");
     //                //// set to embedded resource
     //                itm.Properties.Item("BuildAction").Value = 3;
@@ -240,12 +240,12 @@ namespace VsMultipleFileGenerator
     //    public abstract int DefaultExtension(out string pbstrDefaultExtension);
     //}
 
-    public abstract class VsMultipleFileGenerator<IterativeElementType> : 
+    public abstract class VsMultipleFileGenerator<IterativeElementType> :
         BaseCodeGeneratorWithSite//, IEnumerable<IterativeElementType>
     {
         protected abstract string GetFileName(IterativeElementType element);
         public abstract byte[] GenerateContent(IterativeElementType element);
-        
+
         //public abstract IEnumerator<IterativeElementType> GetEnumerator();
 
         //System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -259,7 +259,7 @@ namespace VsMultipleFileGenerator
         //{
         //    List<string> newFileNames = new List<string>();
         //    string wszInputFilePath = InputFilePath;
-            
+
         //    int iFound = 0;
         //    uint itemId = 0;
         //    EnvDTE.ProjectItem item;
@@ -320,7 +320,7 @@ namespace VsMultipleFileGenerator
         //             * is intented to perform its own generation process.
         //             * Or, set the target file as an 'Embedded Resource' so that
         //             * it is embedded into the final Assembly.
-                         
+
         //            EnvDTE.Property prop = itm.Properties.Item("CustomTool");
         //            //// set to embedded resource
         //            itm.Properties.Item("BuildAction").Value = 3;
@@ -387,6 +387,15 @@ namespace VsMultipleFileGenerator
             // now we can start our work, iterate across all the 'elements' in our source file 
             foreach (IterativeElementType element in GenerateElements(inputFileContent))
             {
+                // generate our target file content
+                byte[] data = GenerateContent(element);
+
+                if (returnValue == null)
+                {
+                    returnValue = data;
+                    continue;
+                }
+
                 // obtain a name for this target file
                 string fileName = GetFileName(element);
                 // add it to the tracking cache
@@ -399,14 +408,9 @@ namespace VsMultipleFileGenerator
                 bool err = true;
                 try
                 {
+
                     using (FileStream fs = File.Create(strFile))
                     {
-                        // generate our target file content
-                        byte[] data = GenerateContent(element);
-
-                        if (returnValue == null)
-                            returnValue = data;
-
                         // write it out to the stream
                         fs.Write(data, 0, data.Length);
                     }
