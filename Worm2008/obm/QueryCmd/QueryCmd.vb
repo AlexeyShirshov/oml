@@ -1461,25 +1461,13 @@ l1:
         End Function
 
         Protected Function GetRealSelectedOS() As EntityUnion
-            If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
+            If SelectedEntities IsNot Nothing AndAlso SelectedEntities.Count > 0 Then
+                Return SelectedEntities(0).First
+            ElseIf _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                 Return _from.ObjectSource
             ElseIf _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso GetType(SearchFragment).IsAssignableFrom(_from.Table.GetType) Then
                 Dim sf As SearchFragment = CType(_from.Table, SearchFragment)
-                If sf.Entity Is Nothing Then GoTo l1
-                Return sf.Entity
-            Else
-l1:
-                If SelectedEntities IsNot Nothing AndAlso SelectedEntities.Count > 0 Then
-                    Return SelectedEntities(0).First
-                    'ElseIf SelectList IsNot Nothing Then
-                    '    Dim os As ObjectSource = SelectList(0).ObjectSource
-                    '    For i As Integer = 1 To SelectList.Count - 1
-                    '        If Not SelectList(i).ObjectSource.Equals(os) Then
-                    '            Return Nothing
-                    '        End If
-                    '    Next
-                    '    Return os
-                End If
+                If sf.Entity IsNot Nothing Then Return sf.Entity
             End If
             Return Nothing
         End Function

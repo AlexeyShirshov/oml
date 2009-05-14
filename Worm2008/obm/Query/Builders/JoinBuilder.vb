@@ -7,6 +7,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
+Imports System.ComponentModel
 
 'Imports Worm.Database.Criteria.Core
 
@@ -166,6 +167,7 @@ Namespace Query
             Return New JC2(r)
         End Function
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Class JC2
             Private _r As RelationDesc
             Private _j As List(Of QueryJoin)
@@ -236,11 +238,17 @@ Namespace Query
             End Function
         End Class
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Class JoinLinkBase
             Protected _jc As List(Of QueryJoin)
 
             Public Sub New(ByVal l As List(Of QueryJoin))
                 _jc = l
+            End Sub
+
+            Public Sub New(ByVal join As QueryJoin)
+                _jc = New List(Of QueryJoin)
+                _jc.Add(join)
             End Sub
 
             Protected Overridable Sub PreAdd()
@@ -337,8 +345,37 @@ Namespace Query
                 _jc.Add(j)
                 Return New JoinCondition(_jc)
             End Function
+
+#Region " Apply "
+
+            Public Function apply(ByVal cmd As EntityAlias) As JoinLinkBase
+                PreAdd()
+                Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.InnerApply, CType(Nothing, IFilter))
+                _jc.Add(j)
+                Return Me
+            End Function
+
+            Public Function outer_apply(ByVal cmd As EntityAlias) As JoinLinkBase
+                PreAdd()
+                Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.OuterApply, CType(Nothing, IFilter))
+                _jc.Add(j)
+                Return Me
+            End Function
+
+#End Region
+
+            Public Shared Widening Operator CType(ByVal jl As JoinLinkBase) As QueryJoin()
+                jl.PreAdd()
+                Return jl._jc.ToArray
+            End Operator
+
+            Public Shared Widening Operator CType(ByVal jl As JoinLinkBase) As QueryJoin
+                jl.PreAdd()
+                Return jl._jc(0)
+            End Operator
         End Class
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Class JC3
             Inherits JoinLinkBase
             'Private _j As List(Of QueryJoin)
@@ -351,11 +388,25 @@ Namespace Query
                 Return New JC2(r, _jc)
             End Function
 
-            Public Shared Widening Operator CType(ByVal jl As JC3) As QueryJoin()
-                'jl.AddFilterCon()
-                Return jl._jc.ToArray
-            End Operator
+            'Public Shared Widening Operator CType(ByVal jl As JC3) As QueryJoin()
+            '    'jl.AddFilterCon()
+            '    Return jl._jc.ToArray
+            'End Operator
         End Class
+#End Region
+
+#Region " Apply "
+
+        Public Shared Function apply(ByVal cmd As EntityAlias) As JoinLinkBase
+            Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.InnerApply, CType(Nothing, IFilter))
+            Return New JoinLinkBase(j)
+        End Function
+
+        Public Shared Function outer_apply(ByVal cmd As EntityAlias) As JoinLinkBase
+            Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.OuterApply, CType(Nothing, IFilter))
+            Return New JoinLinkBase(j)
+        End Function
+
 #End Region
     End Class
 

@@ -83,10 +83,6 @@ Namespace Criteria.Joins
             '    Throw New InvalidOperationException("Object must be created")
             'End If
 
-            If Condition Is Nothing Then
-                Throw New InvalidOperationException("Join condition must be specified")
-            End If
-
             If almgr Is Nothing Then
                 Throw New ArgumentNullException("almgr")
             End If
@@ -97,6 +93,10 @@ Namespace Criteria.Joins
             End If
 
             If _joinType < Joins.JoinType.CrossJoin Then
+                If Condition Is Nothing Then
+                    Throw New InvalidOperationException("Join condition must be specified")
+                End If
+
                 For Each f As IFilter In Condition.GetAllFilters
                     If os IsNot Nothing Then
                         f.SetUnion(os)
@@ -166,7 +166,7 @@ Namespace Criteria.Joins
 
                 Dim al As EntityAlias = os_.ObjectAlias
                 Dim q As QueryCmd = al.Query
-                sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, AliasMgr.Create))
+                sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, almgr))
 
                 Dim tbl2 As SourceFragment = al.Tbl
                 If tbl2 Is Nothing Then
@@ -200,6 +200,10 @@ Namespace Criteria.Joins
                     Return " full join "
                 Case Worm.Criteria.Joins.JoinType.CrossJoin
                     Return " cross join "
+                Case Joins.JoinType.InnerApply
+                    Return " cross apply "
+                Case Joins.JoinType.OuterApply
+                    Return " outer apply "
                 Case Else
                     Throw New ObjectMappingException("invalid join type " & type.ToString)
             End Select
@@ -233,13 +237,10 @@ Namespace Criteria.Joins
         Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
-            Else
+            ElseIf _jos IsNot Nothing Then
                 Return s & JoinTypeString() & _jos.ToStaticString(mpe, contextFilter) & _key
-                'If _jt IsNot Nothing Then
-                '    Return s & JoinTypeString() & _jos.ToStaticString & _key
-                'Else
-                '    Return s & JoinTypeString() & _jen & _key
-                'End If
+            Else
+                Return s & JoinTypeString()
             End If
         End Function
 
@@ -262,13 +263,10 @@ Namespace Criteria.Joins
         Private Function gd(ByVal s As String) As String
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition._ToString
-            Else
+            ElseIf _jos IsNot Nothing Then
                 Return s & JoinTypeString() & _jos._ToString & _key
-                'If _jt IsNot Nothing Then
-                '    Return s & JoinTypeString() & _jt.ToString & _key
-                'Else
-                '    Return s & JoinTypeString() & _jen & _key
-                'End If
+            Else
+                Return s & JoinTypeString()
             End If
         End Function
 

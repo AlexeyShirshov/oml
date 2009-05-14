@@ -19,7 +19,7 @@ Imports System.Text
     '    j.MakeSQLStmt(Nothing, Nothing, Nothing)
     'End Sub
 
-    <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
+    <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt()
         Dim j As New QueryJoin(New SourceFragment("table1"), Worm.Criteria.Joins.JoinType.Join, Nothing)
 

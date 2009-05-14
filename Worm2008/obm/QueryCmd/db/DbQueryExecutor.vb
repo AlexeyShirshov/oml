@@ -762,15 +762,21 @@ l1:
                 osrc_ = osrc
             End If
 
+            Dim fromOS As IEntitySchema = Nothing
             Dim pkTable As SourceFragment = Nothing
             If from Is Nothing OrElse from.Table Is Nothing Then
-                Dim mts As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
+                If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
+                    fromOS = q.GetEntitySchema(mpe, from.ObjectSource.GetRealType(mpe))
+                Else
+                    fromOS = os
+                End If
+                Dim mts As IMultiTableObjectSchema = TryCast(fromOS, IMultiTableObjectSchema)
                 If mts Is Nothing Then
-                    tables = New SourceFragment() {os.Table}
-                    pkTable = os.Table
+                    tables = New SourceFragment() {fromOS.Table}
+                    pkTable = fromOS.Table
                 Else
                     tables = mts.GetTables()
-                    pkTable = mpe.GetPKTable(osrc.GetRealType(mpe), os)
+                    pkTable = mpe.GetPKTable(osrc.GetRealType(mpe), fromOS)
                 End If
             Else
                 pkTable = from.Table
@@ -898,7 +904,7 @@ l1:
                 End If
             End If
 
-            Dim fs As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
+            Dim fs As IMultiTableObjectSchema = TryCast(fromOS, IMultiTableObjectSchema)
 
             If fs IsNot Nothing Then
                 For j As Integer = 0 To tables.Length - 1
