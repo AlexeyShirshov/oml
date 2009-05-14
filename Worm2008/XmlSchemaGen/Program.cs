@@ -89,7 +89,7 @@ namespace Worm.CodeGen.XmlGenerator
 			string file = null;
 			if (!param.TryGetParam("O", out file))
 			{
-				file = server + ".xml";
+				file = db + ".xml";
 			}
 
 			string merge = null;
@@ -143,7 +143,7 @@ namespace Worm.CodeGen.XmlGenerator
 		static void ShowUsage()
 		{
 			Console.WriteLine("Command line parameters");
-			Console.WriteLine("  -O=value\t-  Output file name. Example: -O=test.xml. Default is <server>.xml");
+			Console.WriteLine("  -O=value\t-  Output file name. Example: -O=test.xml. Default is <database>.xml");
 			Console.WriteLine("  -S=value\t-  Database server. Example: -S=(local). Default is (local).");
 			Console.WriteLine("  -E\t\t-  Integrated security.");
 			Console.WriteLine("  -U=value\t-  Username");
