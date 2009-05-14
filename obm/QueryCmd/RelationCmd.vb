@@ -356,57 +356,57 @@ Namespace Query
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, ByVal isAnonym As Boolean)
+            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
-            If selectOS Is Nothing Then
-                Throw New QueryCmdException("RelationCmd must not select more than one type", Me)
-            End If
+            'If selectOS Is Nothing Then
+            '    Throw New QueryCmdException("RelationCmd must not select more than one type", Me)
+            'End If
 
-            Dim _m2mObject As IKeyEntity = _rel.Host
-            Dim _m2mKey As String = _rel.Key
-            Dim selectType As Type = selectOS.GetRealType(schema)
+            Dim m2mObject As IKeyEntity = _rel.Host
+            Dim m2mKey As String = _rel.Key
+            'Dim m2mType As Type = selectOS.GetRealType(schema)
+            Dim rel As RelationDesc = PrepareRel(schema, Nothing, Nothing)
+            Dim m2mEU As EntityUnion = rel.Rel
+            Dim m2mType As Type = m2mEU.GetRealType(schema)
 
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                 Dim appendMain_ As Boolean
-                If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain_) Then
+                If OrmManager.HasJoins(schema, m2mType, f, Sort, filterInfo, joins, appendMain_) Then
                     _js.AddRange(joins)
                 End If
                 AppendMain = AppendMain OrElse appendMain_
 
             End If
 
-            If _m2mObject IsNot Nothing Then
-                Dim selectedType As Type = selectType
-                Dim filteredType As Type = _m2mObject.GetType
-
-                Dim rel As RelationDesc = PrepareRel(schema, selectOS, selectType)
+            If m2mObject IsNot Nothing Then
+                Dim hostType As Type = m2mObject.GetType
 
                 Dim m2m As Boolean = TypeOf rel Is M2MRelationDesc
 
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
-                    Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(m2mtype)
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = Nothing
-                    If filteredType Is selectedType Then
-                        filtered_r = schema.GetM2MRelation(oschema, filteredType, M2MRelationDesc.GetRevKey(_m2mKey))
+                    If hostType Is m2mtype Then
+                        filtered_r = schema.GetM2MRelation(oschema, hostType, M2MRelationDesc.GetRevKey(m2mKey))
                     Else
-                        filtered_r = schema.GetM2MRelation(oschema, filteredType, _m2mKey)
+                        filtered_r = schema.GetM2MRelation(oschema, hostType, m2mKey)
                     End If
 
                     If filtered_r Is Nothing Then
-                        Dim en As String = schema.GetEntityNameByType(filteredType)
+                        Dim en As String = schema.GetEntityNameByType(hostType)
                         If String.IsNullOrEmpty(en) Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
                         End If
 
-                        filtered_r = schema.GetM2MRelation(selectedType, schema.GetTypeByEntityName(en), _m2mKey)
+                        filtered_r = schema.GetM2MRelation(m2mtype, schema.GetTypeByEntityName(en), m2mKey)
 
                         If filtered_r Is Nothing Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
                         End If
                     End If
 
@@ -414,28 +414,28 @@ Namespace Query
                     Dim table As SourceFragment = filtered_r.Table
 
                     If table Is Nothing Then
-                        Throw New ArgumentException("Invalid relation", filteredType.ToString)
+                        Throw New ArgumentException("Invalid relation", hostType.ToString)
                     End If
 
-                    Dim ideu As EntityUnion = selectOS
+                    Dim ideu As EntityUnion = m2mEU
                     Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(selectOS, schema) OrElse IsFTS
+                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, schema) OrElse IsFTS
                     If prd OrElse mt IsNot Nothing Then
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
-                            selectOS, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, _fo)
+                            m2mEU, schema.GetPrimaryKeys(m2mtype)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         jn.ObjectSource = selected_r.Rel
                         _js.Insert(0, jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
-                            _from = New FromClauseDef(selectOS)
+                            _from = New FromClauseDef(m2mEU)
                         End If
-                        tu = selectOS
+                        tu = m2mEU
 
-                        If _WithLoad(selectOS, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                        If _WithLoad(m2mEU, schema) Then
+                            _sl.AddRange(schema.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         ElseIf SelectedEntities IsNot Nothing Then
                             GoTo l1
                         Else
@@ -449,12 +449,12 @@ l1:
                         If SelectList IsNot Nothing Then
                             PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
                         Else
-                            If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(selectOS) Then
+                            If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(m2mEU) Then
                                 'se.ObjectSource = SelectTypes(0).First
                                 AddTypeFields(schema, _sl, SelectedEntities(0), Nothing, Nothing, isAnonym)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
-                                Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
+                                Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(m2mType)(0)
                                 Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                                 se.Attributes = Field2DbRelations.PK
                                 se.ObjectSource = ideu
@@ -475,16 +475,16 @@ l1:
                     'End If
 
                     addf = New TableFilter(table, filtered_r.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
+                        New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If tu IsNot Nothing Then addf.SetUnion(tu)
                 Else
                     If SelectList Is Nothing Then
-                        If _WithLoad(selectOS, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(selectedType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, selectOS)))
+                        If _WithLoad(m2mEU, schema) Then
+                            _sl.AddRange(schema.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
-                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(selectType)(0)
-                            Dim se As New SelectExpression(selectOS, pk.PropertyAlias)
+                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(m2mType)(0)
+                            Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
                             se.Attributes = Field2DbRelations.PK
                             _sl.Add(se)
                         End If
@@ -493,9 +493,9 @@ l1:
                     End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
-                        New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), _fo)
+                        New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
-                    If _from Is Nothing Then _from = New FromClauseDef(selectOS)
+                    If _from Is Nothing Then _from = New FromClauseDef(m2mEU)
                 End If
 
                 Dim mf As New ModifyFilter(addf)
@@ -525,20 +525,20 @@ l1:
             Dim selRel As RelationDesc = _rel.Relation
 
             If selRel Is Nothing OrElse selRel.Rel Is Nothing OrElse String.IsNullOrEmpty(selRel.Column) Then
-                Dim _m2mObject As IKeyEntity = _rel.Host
-                Dim _m2mKey As String = _rel.Key
+                Dim m2mObject As IKeyEntity = _rel.Host
+                Dim m2mKey As String = _rel.Key
 
-                Dim filteredType As Type = _m2mObject.GetType
+                Dim filteredType As Type = m2mObject.GetType
 
                 Dim needReplace As RelationDesc = Nothing
                 Dim field As String = Nothing
 
-                If selectOS Is Nothing Then
-                    selectOS = GetSelectedOS()
-                End If
+                'If selectOS Is Nothing Then
+                '    selectOS = GetSelectedOS()
+                'End If
 
                 If schema Is Nothing Then
-                    schema = _m2mObject.MappingEngine
+                    schema = m2mObject.MappingEngine
                     If schema Is Nothing AndAlso _getMgr IsNot Nothing Then
                         Using mgr As OrmManager = _getMgr.CreateManager
                             schema = mgr.MappingEngine
@@ -552,10 +552,9 @@ l1:
 
                 If selectedType Is Nothing Then
                     If selectOS Is Nothing Then
-                        selectedType = selRel.Rel.GetRealType(schema)
-                    Else
-                        selectedType = selectOS.GetRealType(schema)
+                        selectOS = selRel.Rel
                     End If
+                    selectedType = selectOS.GetRealType(schema)
                 End If
 
                 If _rel.Relation Is Nothing OrElse _rel.Relation.Rel Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
@@ -570,7 +569,7 @@ l1:
                     'If selectedType Is filteredType Then
                     '    revKey = M2MRelationDesc.GetRevKey(_m2mKey)
                     'End If
-                    selRel = schema.GetM2MRelation(filteredType, selectedType, _m2mKey)
+                    selRel = schema.GetM2MRelation(filteredType, selectedType, m2mKey)
 
                     If selRel Is Nothing Then
                         Throw New QueryCmdException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name), Me)
@@ -593,7 +592,7 @@ l1:
                     Else
                         newRel = New Relation(_rel.Host, needReplace)
                     End If
-                    _m2mObject._ReplaceRel(_rel, newRel, schema)
+                    m2mObject._ReplaceRel(_rel, newRel, schema)
                     _rel = newRel
                 End If
             End If

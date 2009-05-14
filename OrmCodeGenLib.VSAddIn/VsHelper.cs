@@ -14,11 +14,20 @@ namespace VsMultipleFileGenerator
     {
         public static IVsHierarchy GetCurrentHierarchy(IServiceProvider provider)
         {
-            DTE vs = (DTE)provider.GetService(typeof(DTE)); if (vs == null) throw new InvalidOperationException("DTE not found."); return ToHierarchy(vs.SelectedItems.Item(1).ProjectItem.ContainingProject);
+            DTE vs = (DTE)provider.GetService(typeof(DTE)); 
+            if (vs == null) 
+                throw new InvalidOperationException("DTE not found."); 
+            return ToHierarchy(vs.SelectedItems.Item(1).ProjectItem.ContainingProject);
         }
+
         public static IVsHierarchy ToHierarchy(EnvDTE.Project project)
         {
-            if (project == null) throw new ArgumentNullException("project"); string projectGuid = null;        // DTE does not expose the project GUID that exists at in the msbuild project file.        // Cannot use MSBuild object model because it uses a static instance of the Engine,         // and using the Project will cause it to be unloaded from the engine when the         // GC collects the variable that we declare.       
+            if (project == null) throw new ArgumentNullException("project"); 
+            string projectGuid = null;        
+            // DTE does not expose the project GUID that exists at in the msbuild project file.        
+            // Cannot use MSBuild object model because it uses a static instance of the Engine,         
+            // and using the Project will cause it to be unloaded from the engine when the         
+            // GC collects the variable that we declare.       
             using (XmlReader projectReader = XmlReader.Create(project.FileName))
             {
                 projectReader.MoveToContent();
@@ -27,13 +36,16 @@ namespace VsMultipleFileGenerator
                 {
                     if (Object.Equals(projectReader.LocalName, nodeName))
                     {
-                        projectGuid = (String)projectReader.ReadElementContentAsString(); break;
+                        projectGuid = projectReader.ReadElementContentAsString(); 
+                        break;
                     }
                 }
             }
             Debug.Assert(!String.IsNullOrEmpty(projectGuid));
-            IServiceProvider serviceProvider = new ServiceProvider(project.DTE as Microsoft.VisualStudio.OLE.Interop.IServiceProvider); return VsShellUtilities.GetHierarchy(serviceProvider, new Guid(projectGuid));
+            IServiceProvider serviceProvider = new ServiceProvider(project.DTE as Microsoft.VisualStudio.OLE.Interop.IServiceProvider); 
+            return VsShellUtilities.GetHierarchy(serviceProvider, new Guid(projectGuid));
         }
+
         public static IVsProject ToVsProject(EnvDTE.Project project)
         {
             if (project == null) throw new ArgumentNullException("project");
@@ -44,6 +56,7 @@ namespace VsMultipleFileGenerator
             }
             return vsProject;
         }
+
         public static EnvDTE.Project ToDteProject(IVsHierarchy hierarchy)
         {
             if (hierarchy == null) throw new ArgumentNullException("hierarchy");
@@ -57,14 +70,12 @@ namespace VsMultipleFileGenerator
                 throw new ArgumentException("Hierarchy is not a project.");
             }
         }
+
         public static EnvDTE.Project ToDteProject(IVsProject project)
         {
             if (project == null) throw new ArgumentNullException("project");
             return ToDteProject(project as IVsHierarchy);
         }
-
-
-
 
         public static EnvDTE.ProjectItem FindProjectItem(EnvDTE.Project project, string file)
         {

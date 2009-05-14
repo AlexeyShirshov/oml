@@ -55,6 +55,8 @@ namespace Worm.CodeGen.Core
 
         public bool GenerateSchemaOnly { get; set; }
 
+        public bool GenerateSingleFile { get; set; }
+
         public bool AddVersionToSchemaName { get; set; }
 
         public void ClearEntities()

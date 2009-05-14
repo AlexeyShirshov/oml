@@ -86,6 +86,7 @@ namespace Worm.CodeGen.VSTool
                 settings.PrivateMembersPrefix = "m_";
                 //settings.Split = false;
 
+                //ormObjectsDef.GenerateSchemaOnly
                 OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
                 CodeCompileUnit compileUnit = generator.GetFullSingleUnit();
 

@@ -119,15 +119,15 @@ Namespace Criteria.Joins
             _jc(_jc.Count - 1).M2MKey = key
         End Sub
 
-        Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin()
-            jl.PreAdd()
-            Return jl._jc.ToArray
-        End Operator
+        'Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin()
+        '    jl.PreAdd()
+        '    Return jl._jc.ToArray
+        'End Operator
 
-        Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin
-            jl.PreAdd()
-            Return jl._jc(0)
-        End Operator
+        'Public Shared Widening Operator CType(ByVal jl As JoinLink) As QueryJoin
+        '    jl.PreAdd()
+        '    Return jl._jc(0)
+        'End Operator
 
         Public Function ToList() As IList(Of QueryJoin)
             PreAdd()
