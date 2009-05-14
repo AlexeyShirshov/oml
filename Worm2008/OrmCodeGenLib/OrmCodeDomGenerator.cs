@@ -179,9 +179,9 @@ namespace Worm.CodeGen.Core
             get { return _ormCodeDomGeneratorSettings; }
         }
 
-        public Dictionary<string, CodeCompileUnit> GetFullDom()
+        public Dictionary<string, CodeCompileFileUnit> GetFullDom()
         {
-            var result = new Dictionary<string, CodeCompileUnit>(_ormObjectsDefinition.ActiveEntities.Count());
+            var result = new Dictionary<string, CodeCompileFileUnit>(_ormObjectsDefinition.ActiveEntities.Count());
             foreach (EntityDescription entity in _ormObjectsDefinition.ActiveEntities)
             {
                 foreach (var pair in GetEntityCompileUnits(entity.Identifier))
@@ -201,10 +201,10 @@ namespace Worm.CodeGen.Core
         [ThreadStatic]
         private static EntityGeneratorController s_ctrl;
 
-        public CodeCompileUnit GetFullSingleUnit()
+        public CodeCompileFileUnit GetFullSingleUnit()
         {
-            CodeCompileUnit unit = new CodeCompileUnit();
-            foreach (CodeCompileUnit u in GetFullDom().Values)
+            CodeCompileFileUnit unit = new CodeCompileFileUnit();
+            foreach (CodeCompileFileUnit u in GetFullDom().Values)
             {
                 foreach (CodeNamespace n in u.Namespaces)
                 {
