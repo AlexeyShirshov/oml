@@ -211,7 +211,7 @@ namespace TestsCodeGenLib
                 odef = OrmObjectsDef.LoadFromXml(reader);
             }
             OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
-            Dictionary<string,CodeCompileUnit> dic = gen.GetFullDom();
+            Dictionary<string,Worm.CodeGen.Core.CodeDomExtensions.CodeCompileFileUnit> dic = gen.GetFullDom();
 
             
             CompilerParameters prms = new CompilerParameters();

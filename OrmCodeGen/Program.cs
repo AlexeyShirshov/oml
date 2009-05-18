@@ -9,7 +9,7 @@ using Worm.CodeGen.Core.Descriptors;
 using System.Xml;
 using System.CodeDom.Compiler;
 using System.IO;
-
+using System.Linq;
 
 namespace Worm.CodeGen.CodeGenerator
 {
@@ -255,36 +255,38 @@ namespace Worm.CodeGen.CodeGenerator
                     skipEntities, processEntities, settings, testRun, gen);
         }
 
-        private static void GenerateMultipleFilesOutput(string outputFolder, OrmObjectsDef ormObjectsDef, CodeDomProvider codeDomProvider, bool separateFolder, string[] skipEntities, string[] processEntities, OrmCodeDomGeneratorSettings settings, bool testRun, OrmCodeDomGenerator gen)
+        private static void GenerateMultipleFilesOutput(string outputFolder, OrmObjectsDef ormObjectsDef, 
+            CodeDomProvider codeDomProvider, bool separateFolder, string[] skipEntities, string[] processEntities, 
+            OrmCodeDomGeneratorSettings settings, bool testRun, OrmCodeDomGenerator gen)
         {
             List<string> errorList = new List<string>();
             int totalEntities = 0;
             int totalFiles = 0;
             foreach (EntityDescription entity in ormObjectsDef.Entities)
             {
-                bool skip = false;
-                if (processEntities.Length != 0)
-                {
-                    skip = true;
-                    foreach (string processEntityId in processEntities)
-                    {
-                        if (processEntityId == entity.Identifier)
-                        {
-                            skip = false;
-                            break;
-                        }
-                    }
-                }
-                foreach (string skipEntityId in skipEntities)
-                {
-                    if (skipEntityId == entity.Identifier)
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
+                //bool skip = false;
+                //if (processEntities.Length != 0)
+                //{
+                //    skip = true;
+                //    foreach (string processEntityId in processEntities)
+                //    {
+                //        if (processEntityId == entity.Identifier)
+                //        {
+                //            skip = false;
+                //            break;
+                //        }
+                //    }
+                //}
+                //foreach (string skipEntityId in skipEntities)
+                //{
+                //    if (skipEntityId == entity.Identifier)
+                //    {
+                //        skip = true;
+                //        break;
+                //    }
+                //}
 
-                if (skip)
+                if (skipEntities.Contains(entity.Identifier) || !processEntities.Contains(entity.Identifier))
                     continue;
 
                 string privateFolder;

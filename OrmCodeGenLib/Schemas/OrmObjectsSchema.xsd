@@ -804,5 +804,6 @@
     </xs:attribute>
     <xs:attribute name="generateSchemaOnly" default="false" use="optional" type="xs:boolean"></xs:attribute>
     <xs:attribute name="addVersionToSchemaName" default="false" use="optional" type="xs:boolean"></xs:attribute>
+      <xs:attribute name="singleFile" default="false" use="optional" type="xs:boolean"/>
   </xs:complexType>
 </xs:schema>

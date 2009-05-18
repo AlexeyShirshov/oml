@@ -15,35 +15,67 @@ using Worm.CodeGen.Core.CodeDomExtensions;
 
 namespace Worm.CodeGen.VSTool
 {
-    class Pair
+    public class Pair
     {
-        public byte[] Data;
+        //public byte[] Data;
         public CodeCompileFileUnit Unit;
     }
 
     class Enumer : IEnumerable<Pair>
     {
         private OrmObjectsDef _ormObjectsDef;
+        private List<Pair> _units;
 
-        public Enumer(OrmObjectsDef ormObjectsDef)
+        public Enumer(OrmObjectsDef ormObjectsDef, string ext)
         {
             _ormObjectsDef = ormObjectsDef;
+
+            //Create the CodeCompileUnit from the passed-in XML file
+            OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
+            settings.EntitySchemaDefClassNameSuffix = "SchemaDef";
+            switch (ext)
+            {
+                case ".cs":
+                    settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
+                    break;
+                case ".vb":
+                    settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
+                    break;
+                //case ".js":
+                //    settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
+                //    break;
+            }
+            settings.PrivateMembersPrefix = "m_";
+            //settings.Split = false;
+
+            //ormObjectsDef.GenerateSchemaOnly
+            OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
+
+            if (ormObjectsDef.GenerateSingleFile)
+            {
+                CodeCompileFileUnit compileUnit = generator.GetFullSingleUnit();
+                _units = new List<Pair>() { new Pair() { Unit = compileUnit } };
+            }
+            else
+            {
+                _units = new List<Pair>();
+                foreach (var entity in ormObjectsDef.Entities)
+                {
+                    _units.Add(new Pair() { Unit = generator.GetEntityCompileUnits(entity.Identifier)[0] });
+                }
+            }
         }
 
         #region IEnumerable<Pair> Members
 
         public IEnumerator<Pair> GetEnumerator()
         {
-            throw new NotImplementedException();
+            return _units.GetEnumerator();
         }
-
-        #endregion
-
-        #region IEnumerable Members
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+            return _units.GetEnumerator();
         }
 
         #endregion
@@ -61,113 +93,83 @@ namespace Worm.CodeGen.VSTool
     [CodeGeneratorRegistration(typeof(WormEntityClassGenerator), "VB WORM Entity Class Generator", vsContextGuids.vsContextGuidVBProject, GeneratesDesignTimeSource = true)]
     [CodeGeneratorRegistration(typeof(WormEntityClassGenerator), "J# WORM Entity Class Generator", vsContextGuids.vsContextGuidVJSProject, GeneratesDesignTimeSource = true)]
     [ProvideObject(typeof(WormEntityClassGenerator))]
-    public class WormEntityClassGenerator : 
+    public class WormEntityClassGenerator :
         VsMultipleFileGenerator.VsMultipleFileGenerator<Pair>
-        //Microsoft.Samples.VisualStudio.GeneratorSample.BaseCodeGeneratorWithSite
+    //Microsoft.Samples.VisualStudio.GeneratorSample.BaseCodeGeneratorWithSite
     {
 #pragma warning disable 0414
         //The name of this generator (use for 'Custom Tool' property of project item)
         internal static string name = "WormEntityClassGenerator";
 #pragma warning restore 0414
 
-        //internal static bool validXML;
-
-        /// <summary>
-        /// Function that builds the contents of the generated file based on the contents of the input file
-        /// </summary>
-        /// <param name="inputFileContent">Content of the input file</param>
-        /// <returns>Generated file as a byte array</returns>
-        protected override byte[] GenerateCode(string inputFileContent)
+        protected override string GetFileName(Pair element)
         {
-            //Validate the XML file against the schema
-            OrmObjectsDef ormObjectsDef;
-            using (StringReader contentReader = new StringReader(inputFileContent))
-            {
-                try
-                {
-                    using (XmlReader rdr = XmlReader.Create(contentReader))
-                    {
-                        ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
-                    }
-                }
-                catch
-                {
-                    return null;
-                }
-            }
+            return element.Unit.Filename + GetDefaultExtension();
+        }
 
+        public override byte[] GenerateContent(Pair element)
+        {
+            CodeCompileUnit compileUnit = element.Unit;
             CodeDomProvider provider = GetCodeProvider();
 
+            using (StringWriter writer = new StringWriter(new StringBuilder()))
+            {
+                CodeGeneratorOptions options = new CodeGeneratorOptions();
+                options.BlankLinesBetweenMembers = false;
+                options.BracingStyle = "C";
+
+                //Generate the code
+                provider.GenerateCodeFromCompileUnit(compileUnit, writer, options);
+
+                if (this.CodeGeneratorProgress != null)
+                {
+                    //Report that we are done
+                    this.CodeGeneratorProgress.Progress(100, 100);
+                }
+                writer.Flush();
+
+                //Get the Encoding used by the writer. We're getting the WindowsCodePage encoding, 
+                //which may not work with all languages
+                Encoding enc = Encoding.GetEncoding(writer.Encoding.WindowsCodePage);
+
+                //Get the preamble (byte-order mark) for our encoding
+                byte[] preamble = enc.GetPreamble();
+                int preambleLength = preamble.Length;
+
+                //Convert the writer contents to a byte array
+                byte[] body = enc.GetBytes(writer.ToString());
+
+                //Prepend the preamble to body (store result in resized preamble array)
+                Array.Resize<byte>(ref preamble, preambleLength + body.Length);
+                Array.Copy(body, 0, preamble, preambleLength, body.Length);
+
+                //Return the combined byte array
+                return preamble;
+            }
+        }
+
+        protected override IEnumerable<Pair> GenerateElements(string inputFileContent)
+        {
             try
             {
-                if (this.CodeGeneratorProgress != null)
+                //Validate the XML file against the schema
+                OrmObjectsDef ormObjectsDef;
+                using (StringReader contentReader = new StringReader(inputFileContent))
                 {
-                    //Report that we are 1/2 done
-                    this.CodeGeneratorProgress.Progress(33, 100);
-                }
-
-                //Create the CodeCompileUnit from the passed-in XML file
-                OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
-                settings.EntitySchemaDefClassNameSuffix = "SchemaDef";
-                switch (GetDefaultExtension())
-                {
-                    case ".cs":
-                        settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
-                        break;
-                    case ".vb":
-                        settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
-                        break;
-                    //case ".js":
-                    //    settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
-                    //    break;
-                }
-                settings.PrivateMembersPrefix = "m_";
-                //settings.Split = false;
-
-                //ormObjectsDef.GenerateSchemaOnly
-                OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
-                CodeCompileUnit compileUnit = generator.GetFullSingleUnit();
-
-                if (this.CodeGeneratorProgress != null)
-                {
-                    //Report that we are 1/2 done
-                    this.CodeGeneratorProgress.Progress(66, 100);
-                }
-
-                using (StringWriter writer = new StringWriter(new StringBuilder()))
-                {
-                    CodeGeneratorOptions options = new CodeGeneratorOptions();
-                    options.BlankLinesBetweenMembers = false;
-                    options.BracingStyle = "C";
-
-                    //Generate the code
-                    provider.GenerateCodeFromCompileUnit(compileUnit, writer, options);
-
-                    if (this.CodeGeneratorProgress != null)
+                    try
                     {
-                        //Report that we are done
-                        this.CodeGeneratorProgress.Progress(100, 100);
+                        using (XmlReader rdr = XmlReader.Create(contentReader))
+                        {
+                            ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                        }
                     }
-                    writer.Flush();
-
-                    //Get the Encoding used by the writer. We're getting the WindowsCodePage encoding, 
-                    //which may not work with all languages
-                    Encoding enc = Encoding.GetEncoding(writer.Encoding.WindowsCodePage);
-
-                    //Get the preamble (byte-order mark) for our encoding
-                    byte[] preamble = enc.GetPreamble();
-                    int preambleLength = preamble.Length;
-
-                    //Convert the writer contents to a byte array
-                    byte[] body = enc.GetBytes(writer.ToString());
-
-                    //Prepend the preamble to body (store result in resized preamble array)
-                    Array.Resize<byte>(ref preamble, preambleLength + body.Length);
-                    Array.Copy(body, 0, preamble, preambleLength, body.Length);
-
-                    //Return the combined byte array
-                    return preamble;
+                    catch
+                    {
+                        return null;
+                    }
                 }
+
+                return new Enumer(ormObjectsDef, GetDefaultExtension());
             }
             catch (Exception e)
             {
@@ -175,21 +177,6 @@ namespace Worm.CodeGen.VSTool
                 //Returning null signifies that generation has failed
                 return null;
             }
-        }
-
-        protected override string GetFileName(Pair element)
-        {
-            return element.Unit.Filename;
-        }
-
-        public override byte[] GenerateContent(Pair element)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override IEnumerable<Pair> GenerateElements(string inputFileContent)
-        {
-            throw new NotImplementedException();
         }
     }
 }

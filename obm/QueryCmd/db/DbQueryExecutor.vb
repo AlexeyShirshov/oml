@@ -766,7 +766,11 @@ l1:
             Dim pkTable As SourceFragment = Nothing
             If from Is Nothing OrElse from.Table Is Nothing Then
                 If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
-                    fromOS = q.GetEntitySchema(mpe, from.ObjectSource.GetRealType(mpe))
+                    If q IsNot Nothing Then
+                        fromOS = q.GetEntitySchema(mpe, from.ObjectSource.GetRealType(mpe))
+                    Else
+                        fromOS = mpe.GetEntitySchema(from.ObjectSource.GetRealType(mpe))
+                    End If
                 Else
                     fromOS = os
                 End If

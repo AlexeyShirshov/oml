@@ -312,6 +312,10 @@ namespace Worm.CodeGen.Core
             string addVersionToSchemaName = _ormXmlDocument.DocumentElement.GetAttribute("addVersionToSchemaName");
             if (!string.IsNullOrEmpty(addVersionToSchemaName))
                 _ormObjectsDef.AddVersionToSchemaName = XmlConvert.ToBoolean(addVersionToSchemaName);
+
+            string singleFile = _ormXmlDocument.DocumentElement.GetAttribute("singleFile");
+            if (!string.IsNullOrEmpty(singleFile))
+                _ormObjectsDef.GenerateSingleFile = XmlConvert.ToBoolean(singleFile);
         }
 
         internal protected void FindEntities()
