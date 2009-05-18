@@ -384,20 +384,35 @@ namespace VsMultipleFileGenerator
             else
                 throw new ApplicationException("Unable to retrieve Visual Studio ProjectItem");
 
-            // now we can start our work, iterate across all the 'elements' in our source file 
-            foreach (IterativeElementType element in GenerateElements(inputFileContent))
+            foreach (EnvDTE.ProjectItem childItem in item.ProjectItems)
             {
+                if ((childItem.Name.EndsWith(GetDefaultExtension()) /*|| newFileNames.Contains(childItem.Name)*/))
+                    // then delete it
+                    childItem.Delete();
+            }
+
+            // now we can start our work, iterate across all the 'elements' in our source file 
+            IEnumerable<IterativeElementType> elements = GenerateElements(inputFileContent);
+            int count = 0;
+            if (typeof(System.Collections.ICollection).IsAssignableFrom(elements.GetEnumerator().GetType()))
+                count = (elements.GetEnumerator() as System.Collections.ICollection).Count;
+            int i = 0;
+            string firstFileName = null;
+            foreach (IterativeElementType element in elements)
+            {
+                // obtain a name for this target file
+                string fileName = GetFileName(element);
+
                 // generate our target file content
                 byte[] data = GenerateContent(element);
 
                 if (returnValue == null)
                 {
                     returnValue = data;
+                    firstFileName = fileName;
                     continue;
                 }
 
-                // obtain a name for this target file
-                string fileName = GetFileName(element);
                 // add it to the tracking cache
                 newFileNames.Add(fileName);
                 // fully qualify the file on the filesystem
@@ -439,15 +454,25 @@ namespace VsMultipleFileGenerator
                     if (err && File.Exists(strFile))
                         File.Delete(strFile);
                 }
+
+                if (this.CodeGeneratorProgress != null)
+                {
+                    //Report that we are 1/2 done
+                    this.CodeGeneratorProgress.Progress((uint)i, (uint)count);
+                }
+
+                i++;
             }
 
+            //if (i == 1)
+            //    _fileName = firstFileName;
             // perform some clean-up, making sure we delete any old (stale) target-files
-            foreach (EnvDTE.ProjectItem childItem in item.ProjectItems)
-            {
-                if (!(childItem.Name.EndsWith(GetDefaultExtension()) || newFileNames.Contains(childItem.Name)))
-                    // then delete it
-                    childItem.Delete();
-            }
+            //foreach (EnvDTE.ProjectItem childItem in item.ProjectItems)
+            //{
+            //    if ((childItem.Name.EndsWith(GetDefaultExtension()) /*|| newFileNames.Contains(childItem.Name)*/))
+            //        // then delete it
+            //        childItem.Delete();
+            //}
 
             return returnValue;
         }

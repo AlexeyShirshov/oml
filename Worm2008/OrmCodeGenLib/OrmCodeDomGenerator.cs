@@ -208,7 +208,19 @@ namespace Worm.CodeGen.Core
             {
                 foreach (CodeNamespace n in u.Namespaces)
                 {
-                    unit.Namespaces.Add(n);
+                    CodeNamespace ns = n;
+                    if (unit.Namespaces.Count == 0)
+                    {
+                        ns = new CodeNamespace(n.Name);
+                        unit.Namespaces.Add(ns);
+                    }
+                    else
+                        ns = unit.Namespaces[0];
+
+                    foreach (CodeTypeDeclaration c in n.Types)
+                    {
+                        ns.Types.Add(c);
+                    }
                 }
             }
             CodeCompileFileUnit linq = GetLinqContext();
