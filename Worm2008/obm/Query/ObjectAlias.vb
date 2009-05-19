@@ -210,9 +210,12 @@ Namespace Query
         End Property
 
         Private _calc As Type
+        Private _ver As String
+
         Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-            If _calc Is Nothing Then
+            If _calc Is Nothing OrElse _ver <> schema.Version Then
                 _calc = AnyType
+                _ver = schema.Version
                 If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
                     _calc = schema.GetTypeByEntityName(AnyEntityName)
                 ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then

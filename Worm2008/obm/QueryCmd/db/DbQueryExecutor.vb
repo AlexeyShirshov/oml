@@ -1148,7 +1148,7 @@ l1:
 
         Protected Shared Function GetJoin(ByVal js As IEnumerable(Of QueryJoin), ByVal join As QueryJoin) As QueryJoin
             For Each j As QueryJoin In js
-                If Not join.Equals(j) AndAlso join.M2MObjectSource.Equals(j.ObjectSource) Then
+                If Not join.Equals(j) AndAlso join.M2MObjectSource.Equals(j.ObjectSource) AndAlso j.TmpTable IsNot Nothing Then
                     Return j
                 End If
             Next

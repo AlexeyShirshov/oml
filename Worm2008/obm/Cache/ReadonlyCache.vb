@@ -385,7 +385,7 @@ Namespace Cache
                 'If tt Is mo.Proxy.EntityType Then
                 '    al.Add(mgr.GetEntityOrOrmFromCacheOrCreate(Of T)(mo.Proxy.PK))
                 'End If
-                If tt Is mo.Obj Then
+                If tt Is mo.Obj.GetType Then
                     al.Add(CType(mo.Obj, T))
                 End If
             Next

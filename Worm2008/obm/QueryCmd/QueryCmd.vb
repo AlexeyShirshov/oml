@@ -1095,7 +1095,7 @@ l1:
                     cl.Add(se)
                     Dim m As MapField2Column = oschema.GetFieldColumnMap(se.PropertyAlias)
                     se.Attributes = se.Attributes Or m._newattributes
-                    If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(MappingEngine) Is GetType(AnonymousCachedEntity)) Then
+                    If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(schema) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK
                     End If
                 Next
