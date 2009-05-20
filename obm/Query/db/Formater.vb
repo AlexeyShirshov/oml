@@ -311,6 +311,10 @@ l1:
                         Else
 l2:
                             Dim eu As EntityUnion = defaultTable.QueryEU
+
+                            If eu Is Nothing Then
+                                Throw New InvalidOperationException("Property " & se.PropertyAlias & " has not source")
+                            End If
                             Dim tbl As SourceFragment = eu.ObjectAlias.Tbl
                             If tbl Is Nothing Then
                                 tbl = New SourceFragment
