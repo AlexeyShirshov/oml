@@ -2,6 +2,7 @@
 Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports Worm.Query.Sorting
+Imports Worm.Entities
 
 Friend Interface IListEdit
     Inherits IList
@@ -11,8 +12,8 @@ Friend Interface IListEdit
     ReadOnly Property List() As IList
 End Interface
 
-Friend Interface ILoadableList
-    Inherits IListEdit
+Public Interface ILoadableList
+    Inherits IList
     Sub LoadObjects()
     Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
 End Interface
@@ -107,7 +108,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Return New ReadOnlyList(Of T)(l.Keys)
     End Function
 
-    Public Function LoadChildren(Of ReturnType As Entities.IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+    Public Function LoadChildren(Of ReturnType As Entities._IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
         Return rd.Load(Of T, ReturnType)(Me, loadWithObjects)
     End Function
 
@@ -148,6 +149,50 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         End If
     End Function
 
+    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+        Dim r As IListEdit = Nothing
+        Dim mpe As ObjectMappingEngine = Nothing
+        Dim oschema As IEntitySchema = Nothing
+        For i As Integer = 0 To Me.Count - 1
+            If start <= i AndAlso start + length > i Then
+                Dim o As T = Me(i)
+                If mpe Is Nothing Then
+                    mpe = o.MappingEngine
+                    oschema = mpe.GetEntitySchema(o.GetType)
+                End If
+                Dim obj As IEntity = CType(mpe.GetPropertyValue(o, propertyAlias, oschema), IEntity)
+                If obj IsNot Nothing Then
+                    If r Is Nothing Then
+                        r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
+                    End If
+                    r.Add(obj)
+                End If
+            End If
+        Next
+        Return CType(r, ReadOnlyList(Of EntityType))
+    End Function
+
+    Public Function SelectProperties(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray propertyAliases() As String) As ReadOnlyEntityList(Of Entities.AnonymousCachedEntity)
+        Dim r As IListEdit = New ReadOnlyEntityList(Of AnonymousCachedEntity)
+        Dim mpe As ObjectMappingEngine = Nothing
+        Dim oschema As IEntitySchema = Nothing
+        For i As Integer = 0 To Me.Count - 1
+            If start <= i AndAlso start + length > i Then
+                Dim o As T = Me(i)
+                If mpe Is Nothing Then
+                    mpe = o.MappingEngine
+                    oschema = mpe.GetEntitySchema(o.GetType)
+                End If
+                Dim obj As New AnonymousCachedEntity
+                For Each propertyAlias As String In propertyAliases
+                    Dim propValue As Object = mpe.GetPropertyValue(o, propertyAlias, oschema)
+                    obj(propertyAlias) = propValue
+                Next
+                r.Add(obj)
+            End If
+        Next
+        Return CType(r, ReadOnlyEntityList(Of AnonymousCachedEntity))
+    End Function
 End Class
 
 <Serializable()> _
@@ -239,22 +284,43 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
         LoadObjects()
     End Sub
 
-    Public Sub LoadParent(ByVal parentField As String)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                mc.Manager.LoadObjects(Me, New String() {parentField}, 0, Me.Count)
-            End Using
-        End If
+    Public Sub LoadParentEntities(ByVal ParamArray parentPropertyAliases() As String)
+        LoadParentEntities(0, Me.Count, parentPropertyAliases)
     End Sub
 
-    Public Sub LoadParents(ByVal parentsField() As String)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                mc.Manager.LoadObjects(Me, parentsField, 0, Me.Count)
-            End Using
-        End If
+    Public Sub LoadParentEntities(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray parentPropertyAliases() As String)
+        Dim prop_objs(parentPropertyAliases.Length - 1) As IListEdit
+        Dim mpe As ObjectMappingEngine = Nothing
+        Dim oschema As IEntitySchema = Nothing
+        For i As Integer = 0 To Me.Count - 1
+            If start <= i AndAlso start + length > i Then
+                Dim o As T = Me(i)
+                If mpe Is Nothing Then
+                    mpe = o.MappingEngine
+                    oschema = mpe.GetEntitySchema(o.GetType)
+                End If
+                For j As Integer = 0 To parentPropertyAliases.Length - 1
+                    Dim propValue As Object = mpe.GetPropertyValue(o, parentPropertyAliases(j), oschema)
+                    Dim obj As IEntity = TryCast(propValue, IEntity)
+                    If obj Is Nothing Then
+                        Throw New ArgumentException("Preperty " & parentPropertyAliases(j) & " is not entity")
+                    End If
+                    If prop_objs(i) Is Nothing Then
+                        prop_objs(i) = OrmManager._CreateReadOnlyList(obj.GetType)
+                    End If
+                    prop_objs(i).Add(obj)
+                Next
+            End If
+        Next
+
+        For Each po As IList In prop_objs
+            If po IsNot Nothing AndAlso po.Count > 0 Then
+                Dim l As ILoadableList = TryCast(po, ILoadableList)
+                If l IsNot Nothing Then
+                    l.LoadObjects()
+                End If
+            End If
+        Next
     End Sub
 
     Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyEntityList(Of T)
@@ -265,6 +331,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
             Return Me
         End If
     End Function
+
 End Class
 
 <Serializable()> _

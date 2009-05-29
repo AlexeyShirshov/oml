@@ -465,12 +465,15 @@ Namespace Cache
 #End If
                 For Each t As Type In ts
                     Dim tkey As Object = t
-                    Dim c As ICacheBehavior = TryCast(schema.GetEntitySchema(t), ICacheBehavior)
-                    If c IsNot Nothing Then
-                        tkey = c.GetEntityKey(filterInfo)
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
+                    If oschema IsNot Nothing Then
+                        Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+                        If c IsNot Nothing Then
+                            tkey = c.GetEntityKey(filterInfo)
+                        End If
+                        Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
+                        r = l.Add(f, key, id)
                     End If
-                    Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
-                    r = l.Add(f, key, id)
                 Next
                 'Dim h As List(Of String) = l.GetIds(key, f)
                 'If Not h.Contains(id) Then

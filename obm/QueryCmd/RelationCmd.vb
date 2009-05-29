@@ -14,6 +14,7 @@ Namespace Query
         Friend _rel As Relation
         Private _desc As RelationDesc
         Private _fo As Criteria.FilterOperation = Criteria.FilterOperation.Equal
+        Private _withHost As Boolean
 
 #Region " Ctors "
         Protected Sub New()
@@ -355,7 +356,7 @@ Namespace Query
         End Function
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
             'If selectOS Is Nothing Then
@@ -365,14 +366,14 @@ Namespace Query
             Dim m2mObject As IKeyEntity = _rel.Host
             Dim m2mKey As String = _rel.Key
             'Dim m2mType As Type = selectOS.GetRealType(schema)
-            Dim rel As RelationDesc = PrepareRel(schema, Nothing, Nothing)
+            Dim rel As RelationDesc = PrepareRel(mpe, Nothing, Nothing)
             Dim m2mEU As EntityUnion = rel.Rel
-            Dim m2mType As Type = m2mEU.GetRealType(schema)
+            Dim m2mType As Type = m2mEU.GetRealType(mpe)
 
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                 Dim appendMain_ As Boolean
-                If OrmManager.HasJoins(schema, m2mType, f, Sort, filterInfo, joins, appendMain_) Then
+                If OrmManager.HasJoins(mpe, m2mType, f, Sort, filterInfo, joins, appendMain_) Then
                     _js.AddRange(joins)
                 End If
                 AppendMain = AppendMain OrElse appendMain_
@@ -387,23 +388,23 @@ Namespace Query
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
-                    Dim oschema As IEntitySchema = schema.GetEntitySchema(m2mtype)
+                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(m2mtype)
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = Nothing
                     If hostType Is m2mtype Then
-                        filtered_r = schema.GetM2MRelation(oschema, hostType, M2MRelationDesc.GetRevKey(m2mKey))
+                        filtered_r = mpe.GetM2MRelation(oschema, hostType, M2MRelationDesc.GetRevKey(m2mKey))
                     Else
-                        filtered_r = schema.GetM2MRelation(oschema, hostType, m2mKey)
+                        filtered_r = mpe.GetM2MRelation(oschema, hostType, m2mKey)
                     End If
 
                     If filtered_r Is Nothing Then
-                        Dim en As String = schema.GetEntityNameByType(hostType)
+                        Dim en As String = mpe.GetEntityNameByType(hostType)
                         If String.IsNullOrEmpty(en) Then
                             Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
                         End If
 
-                        filtered_r = schema.GetM2MRelation(m2mtype, schema.GetTypeByEntityName(en), m2mKey)
+                        filtered_r = mpe.GetM2MRelation(m2mtype, mpe.GetTypeByEntityName(en), m2mKey)
 
                         If filtered_r Is Nothing Then
                             Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
@@ -420,12 +421,12 @@ Namespace Query
                     Dim ideu As EntityUnion = m2mEU
                     Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, schema) OrElse IsFTS
+                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS
                     If prd OrElse mt IsNot Nothing Then
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
-                            m2mEU, schema.GetPrimaryKeys(m2mtype)(0).PropertyAlias, _fo)
+                            m2mEU, mpe.GetPrimaryKeys(m2mtype)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         jn.ObjectSource = selected_r.Rel
                         _js.Insert(0, jn)
@@ -434,12 +435,12 @@ Namespace Query
                         End If
                         tu = m2mEU
 
-                        If _WithLoad(m2mEU, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                        If _WithLoad(m2mEU, mpe) Then
+                            _sl.AddRange(mpe.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         ElseIf SelectedEntities IsNot Nothing Then
                             GoTo l1
                         Else
-                            PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
+                            PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                         End If
 
                     Else
@@ -447,14 +448,14 @@ Namespace Query
                         ideu = Nothing
 l1:
                         If SelectList IsNot Nothing Then
-                            PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
+                            PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                         Else
                             If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(m2mEU) Then
                                 'se.ObjectSource = SelectTypes(0).First
-                                AddTypeFields(schema, _sl, SelectedEntities(0), Nothing, Nothing, isAnonym)
+                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, Nothing, isAnonym)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
-                                Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(m2mType)(0)
+                                Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
                                 Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
                                 se.Attributes = Field2DbRelations.PK
                                 se.ObjectSource = ideu
@@ -478,18 +479,33 @@ l1:
                         New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If tu IsNot Nothing Then addf.SetUnion(tu)
+
+                    _types.Add(m2mEU, oschema)
+
+                    If QueryWithHost Then
+                        Dim heu As New EntityUnion(hostType)
+                        Dim hschema As IEntitySchema = mpe.GetEntitySchema(hostType)
+                        _types.Add(heu, hschema)
+                        _sl.Add(New SelectExpression(table, filtered_r.Column, mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias, heu))
+
+                        SelectAdd(heu, False)
+
+                        _pdic.Add(m2mType, mpe.GetProperties(m2mType, oschema))
+                        _pdic.Add(hostType, mpe.GetProperties(hostType, hschema))
+                    End If
+
                 Else
                     If SelectList Is Nothing Then
-                        If _WithLoad(m2mEU, schema) Then
-                            _sl.AddRange(schema.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                        If _WithLoad(m2mEU, mpe) Then
+                            _sl.AddRange(mpe.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
-                            Dim pk As EntityPropertyAttribute = schema.GetPrimaryKeys(m2mType)(0)
+                            Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
                             Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
                             se.Attributes = Field2DbRelations.PK
                             _sl.Add(se)
                         End If
                     Else
-                        PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
+                        PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                     End If
 
                     addf = New EntityFilter(rel.Rel, rel.Column, _
@@ -511,8 +527,9 @@ l1:
                 f = con.Condition
 
                 _f = f
-                Return
             End If
+
+
         End Sub
 
         Protected Function PrepareRel() As RelationDesc
@@ -610,7 +627,7 @@ l1:
             End Get
             Set(ByVal value As System.Collections.ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
                 If value IsNot Nothing Then
-                    If value.Count > 1 Then
+                    If value.Count > 1 AndAlso Not QueryWithHost Then
                         Throw New QueryCmdException("RelationCmd cant have more than one select type", Me)
                     End If
                 End If
@@ -754,5 +771,21 @@ l1:
                 CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
             End Using
         End Sub
+
+        Public ReadOnly Property IsM2M() As Boolean
+            Get
+                PrepareRel()
+                Return TypeOf _rel.Relation Is M2MRelationDesc
+            End Get
+        End Property
+
+        Public Property QueryWithHost() As Boolean
+            Get
+                Return _withHost
+            End Get
+            Set(ByVal value As Boolean)
+                _withHost = value
+            End Set
+        End Property
     End Class
 End Namespace

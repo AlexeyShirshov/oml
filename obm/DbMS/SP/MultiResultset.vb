@@ -96,7 +96,7 @@ Namespace Database.Storedprocs
             End Property
 
             Public Overridable Sub EndProcess(ByVal mgr As OrmManager) Implements IResultSetDescriptor.EndProcess
-                Dim l As ReadOnlyObjectList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T), _l), Global.Worm.ReadOnlyObjectList(Of T))
+                Dim l As ReadOnlyObjectList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T), _l), Global.Worm.ReadOnlyObjectList(Of T))
                 If GetType(ICachedEntity).IsAssignableFrom(GetType(T)) Then
                     _o = mgr.ListConverter.ToWeakList(l)
                 Else

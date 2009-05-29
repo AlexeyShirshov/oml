@@ -6,6 +6,7 @@ Imports Worm.Query
 Imports Worm
 Imports Worm.Database
 Imports Worm.Cache
+Imports Worm.Entities
 
 <TestClass()> Public Class TestRel
 
@@ -237,7 +238,7 @@ Imports Worm.Cache
 
         Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1), q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
 
-        Dim r As ReadOnlyList(Of Entities.IKeyEntity) = Table1.Table2Relation.Load(Of Table1, Entities.IKeyEntity)(t, False)
+        Dim r As ReadOnlyList(Of _IKeyEntity) = Table1.Table2Relation.Load(Of Table1, _IKeyEntity)(t, False)
 
         Assert.AreEqual(2, r.Count)
     End Sub

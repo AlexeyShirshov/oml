@@ -857,7 +857,12 @@ l1:
                                             original = mpe.CreateObj(currentType, original, sch)
                                             GoTo l1
                                         Else
-                                            Throw New InvalidOperationException(String.Format("Property {0} has different types {1} and {2}", pa, originalType, currentType))
+                                            'Throw New InvalidOperationException(String.Format("Property {0} has different types {1} and {2}", pa, originalType, currentType))
+                                            If SizeOf(original) > SizeOf(current) Then
+                                                current = Convert.ChangeType(current, currentType)
+                                            Else
+                                                current = Convert.ChangeType(current, originalType)
+                                            End If
                                         End If
                                     ElseIf Not GetType(IEntity).IsAssignableFrom(originalType) _
                                         AndAlso Not GetType(IEntity).IsAssignableFrom(currentType) _
@@ -992,7 +997,13 @@ l2:
                         For Each de_table As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
-                                'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
+                                Dim sb As IEntitySchemaBase = TryCast(oschema, IEntitySchemaBase)
+                                If sb IsNot Nothing Then
+                                    Dim nv As Object = Nothing
+                                    If sb.ChangeValueType(c, original, nv) Then
+                                        original = nv
+                                    End If
+                                End If
                                 de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.PropertyAlias, New ScalarValue(original), FilterOperation.Equal))
                             Else
                                 Dim joinableSchema As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
@@ -1382,8 +1393,17 @@ l2:
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
 
                     For Each p As PKDesc In obj.GetPKValues
-                        del_cmd.Append(DeclareVariable("@id_" & p.PropertyAlias, "int")).Append(EndLine)
-                        del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ").Append(params.CreateParam(p.Value)).Append(EndLine)
+                        Dim dbt As String = "int"
+                        Dim c As EntityPropertyAttribute = mpe.GetColumnByPropertyAlias(type, p.PropertyAlias, oschema)
+                        If c Is Nothing Then
+                            c = New EntityPropertyAttribute()
+                            c.PropertyAlias = p.PropertyAlias
+                        End If
+                        dbt = GetDBType(mpe, type, oschema, c, p.Value.GetType)
+                        del_cmd.Append(DeclareVariable("@id_" & p.PropertyAlias, dbt))
+                        del_cmd.Append(EndLine)
+                        del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ")
+                        del_cmd.Append(params.CreateParam(mpe.ChangeValueType(oschema, c, p.Value))).Append(EndLine)
                     Next
 
                     Dim exec As New ExecutorCtx(type, relSchema)

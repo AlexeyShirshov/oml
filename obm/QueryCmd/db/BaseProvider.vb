@@ -176,10 +176,27 @@ Namespace Query.Database
             End Function
 
             Protected Overridable Function ExecMatrix(ByVal cmd As System.Data.Common.DbCommand) As ReadonlyMatrix
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim l As New List(Of ReadOnlyCollection(Of _IEntity))
-                'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                CType(_mgr, OrmReadOnlyDBManager).QueryMultiTypeObjects(_q.createTypes, cmd, l, _q._types, _q._pdic, sl)
+                Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
+                If batch IsNot Nothing Then
+                    Dim pcnt As Integer = _params.Params.Count
+                    Dim nidx As Integer = pcnt
+                    For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
+                        Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                            With newCmd
+                                .CommandText = cmd.CommandText & cmd_str.First
+                                _params.AppendParams(.Parameters, 0, pcnt)
+                                _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                nidx = cmd_str.Second
+                            End With
+                            dbm.QueryMultiTypeObjects(_q.CreateTypes, newCmd, l, _q._types, _q._pdic, sl)
+                        End Using
+                    Next
+                Else
+                    dbm.QueryMultiTypeObjects(_q.CreateTypes, cmd, l, _q._types, _q._pdic, sl)
+                End If
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)
             End Function

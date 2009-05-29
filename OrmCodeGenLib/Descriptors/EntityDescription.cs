@@ -437,23 +437,6 @@ namespace Worm.CodeGen.Core.Descriptors
             }
         }
 
-        //public bool NeedJoins
-        //{
-        //    get
-        //    {
-        //        List<SourceFragmentRefDescription> sf = SourceFragments;
-        //        int cnt = sf.Count;
-        //        for (int i = 0; i < cnt-1; i++)
-        //        {
-        //            for (int j = 0; j < cnt; j++)
-        //            {
-
-        //            }
-        //        }
-        //        return false;
-        //    }
-        //}
-
         public EntityBehaviuor Behaviour { get; set; }
 
         public List<PropertyDescription> SuppressedProperties

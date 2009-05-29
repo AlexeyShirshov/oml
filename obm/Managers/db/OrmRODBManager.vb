@@ -1468,7 +1468,7 @@ l1:
                         If fromRS Then
                             Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, props, cols, baseIdx)
                             AfterLoadingProcess(dic, obj, lock, ro)
-                            obj = CType(ro, _ICachedEntity)
+                            obj = ro
                             ce = TryCast(obj, _ICachedEntity)
                         Else
                             LoadFromDataReader(obj, dr, arr, check_pk, dic, fromRS, lock, oschema, cm, 0, props, cols, baseIdx)

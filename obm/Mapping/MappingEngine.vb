@@ -117,9 +117,9 @@ Public Class ObjectMappingEngine
         Return GetProperties(t, GetEntitySchema(t, False))
     End Function
 
-    'Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchema) As IDictionary
-    '    Return GetProperties(t, schema)
-    'End Function
+    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal raw As Boolean) As IDictionary
+        Return GetMappedProperties(t, Nothing, Nothing, raw)
+    End Function
 
     Public Shared Function GetMappedProperties(ByVal t As Type) As IDictionary
         Return GetMappedProperties(t, Nothing, Nothing, True)
@@ -891,7 +891,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(original_type, Nothing)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(original_type, False)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -1597,7 +1597,7 @@ Public Class ObjectMappingEngine
                             schema = New SimpleTwotableObjectSchema(l, l2)
                         Else
                             Dim l As New List(Of EntityPropertyAttribute)
-                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
                                 l.Add(c)
                             Next
 
@@ -1659,7 +1659,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
                                     l.Add(c)
                                 Next
 
@@ -1728,7 +1728,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
                                     l.Add(c)
                                 Next
 
@@ -1802,7 +1802,7 @@ Public Class ObjectMappingEngine
                                     schema = New SimpleTwotableObjectSchema(l, l2)
                                 Else
                                     Dim l As New List(Of EntityPropertyAttribute)
-                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
                                         l.Add(c)
                                     Next
 

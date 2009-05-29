@@ -471,7 +471,7 @@ Namespace Cache
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
             Dim tt As Type = GetType(T)
-            Dim r As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim r As ReadOnlyEntityList(Of T) = CType(OrmManager._CreateReadOnlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
             If withLoad OrElse mgr._externalFilter IsNot Nothing Then
                 Dim c As Integer = mgr.GetLoadedCount(tt, Entry.Current)
                 Dim cnt As Integer = Entry.CurrentCount

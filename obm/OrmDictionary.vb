@@ -344,7 +344,7 @@ Namespace Misc
                             End If
                             c.Add(fv, ar)
                         Next
-                        Dim result As ReadOnlyObjectList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), ReadOnlyObjectList(Of T))
+                        Dim result As ReadOnlyObjectList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T)), ReadOnlyObjectList(Of T))
                         For Each ar As T In c.Values
                             CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
