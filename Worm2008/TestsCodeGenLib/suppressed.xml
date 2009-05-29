@@ -12,9 +12,7 @@
 			</Properties>
 		</Entity>
 		<Entity id="e11" name="E1" namespace="NS2" baseEntity="e1">
-			<SourceFragments>
-				<SourceFragment ref="tbl1"/>
-			</SourceFragments>
+			<SourceFragments />
 			<Properties>
 				<Property propertyName="Prop11" table="tbl1" fieldName="prop11" typeRef="tString" description="prop11"/>				
 			</Properties>

@@ -238,7 +238,7 @@ l1:
                         For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
                             l.Add(CType(row(0), ReturnType))
                         Next
-                        res = CType(OrmManager.CreateReadonlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                        res = CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
                     Else
                         Throw New InvalidOperationException
                     End If

@@ -28,13 +28,13 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
         protected virtual void OnPopulateBaseTypes(object sender, EventArgs e)
         {
-            if (ContextClassBehaviour == ContextClassBehaviourType.BaseClass || ContextClassBehaviour == ContextClassBehaviourType.BasePartialClass)
-            {
-                BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormDBContext"));
-            }
+            //if (ContextClassBehaviour == ContextClassBehaviourType.BaseClass || ContextClassBehaviour == ContextClassBehaviourType.BasePartialClass)
+            //{
+            //    BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormDBContext"));
+            //}
             if (ContextClassBehaviour == ContextClassBehaviourType.PartialClass)
             {
-                BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormContext"));
+                BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormLinqContext"));
             }
         }
 

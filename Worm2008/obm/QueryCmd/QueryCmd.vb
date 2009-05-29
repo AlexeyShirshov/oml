@@ -61,26 +61,44 @@ Namespace Query
             Private _qeu As EntityUnion
 
             Public Sub New(ByVal table As SourceFragment)
+                If table Is Nothing Then
+                    Throw New ArgumentNullException("table")
+                End If
                 Me.Table = table
             End Sub
 
             Public Sub New(ByVal query As QueryCmd)
+                If query Is Nothing Then
+                    Throw New ArgumentNullException("query")
+                End If
                 Me.Query = query
             End Sub
 
             Public Sub New(ByVal [alias] As EntityAlias)
+                If [alias] Is Nothing Then
+                    Throw New ArgumentNullException("alias")
+                End If
                 Me.ObjectSource = New EntityUnion([alias])
             End Sub
 
             Public Sub New(ByVal t As Type)
+                If t Is Nothing Then
+                    Throw New ArgumentNullException("t")
+                End If
                 Me.ObjectSource = New EntityUnion(t)
             End Sub
 
             Public Sub New(ByVal entityName As String)
+                If String.IsNullOrEmpty(entityName) Then
+                    Throw New ArgumentNullException("entityName")
+                End If
                 Me.ObjectSource = New EntityUnion(entityName)
             End Sub
 
             Public Sub New(ByVal os As EntityUnion)
+                If os Is Nothing Then
+                    Throw New ArgumentNullException("os")
+                End If
                 Me.ObjectSource = os
             End Sub
 
@@ -561,9 +579,9 @@ Namespace Query
                     se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
                 End If
             End If
-            'If se.ObjectSource Is Nothing AndAlso _from.AnyQuery IsNot Nothing Then
-            '    se.ObjectSource = _from.QueryEU
-            'End If
+            If String.IsNullOrEmpty(se.GetIntoPropertyAlias) AndAlso Not String.IsNullOrEmpty(se.Column) Then
+                se.IntoPropertyAlias = se.Column
+            End If
         End Sub
 
         Protected Sub PrepareSelectList(ByVal executor As IExecutor, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean, ByVal mpe As ObjectMappingEngine, _
@@ -2078,6 +2096,12 @@ l1:
         End Function
 
 #Region " From "
+
+        Public Function From(ByVal f As FromClauseDef) As QueryCmd
+            _from = f
+            RenewMark()
+            Return Me
+        End Function
 
         Public Function From(ByVal t As Type) As QueryCmd
             _from = New FromClauseDef(t)
@@ -4369,50 +4393,75 @@ l1:
             ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
 
             If Not String.IsNullOrEmpty(secondPropertyAlias) Then
-                Dim tt As Type = GetType(T)
+                Dim selEU As EntityUnion = GetSelectedOS()
+                If selEU Is Nothing Then
+                    Dim tt As Type = GetType(T)
 
-                If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
-                    tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
+                    If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
+                        tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
+                    End If
+
+                    selEU = New EntityUnion(tt)
                 End If
 
-                Dim s1 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, firstPropertyAlias))
-                Dim s2 As SelectExpression = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, secondPropertyAlias))
+                Dim s1 As SelectExpression = FCtor.custom("Pref", _
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, firstPropertyAlias))
+                Dim s2 As SelectExpression = FCtor.custom("Pref", _
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, secondPropertyAlias))
 
-                Dim c As New QueryCmd.svct(Me)
-                Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                'Dim c As New QueryCmd.svct(Me)
+                'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
 
-                    Dim g As ObjectModel.ReadOnlyCollection(Of Grouping) = Nothing
-                    If _group IsNot Nothing Then
-                        g = New ObjectModel.ReadOnlyCollection(Of Grouping)(_group)
-                    End If
-                    Dim srt As Sort = Nothing
-                    If _order IsNot Nothing Then
-                        srt = _order
-                    End If
+                '    Dim g As ObjectModel.ReadOnlyCollection(Of Grouping) = Nothing
+                '    If _group IsNot Nothing Then
+                '        g = New ObjectModel.ReadOnlyCollection(Of Grouping)(_group)
+                '    End If
+                '    Dim srt As Sort = Nothing
+                '    If _order IsNot Nothing Then
+                '        srt = _order
+                '    End If
 
-                    Try
-                        From( _
-                            New QueryCmd() _
-                                .[Select](FCtor.Exp(s1).count("Count")) _
-                                .From(tt) _
-                                .GroupBy(FCtor.Exp(s1)) _
-                                .UnionAll( _
-                            New QueryCmd() _
-                                .[Select](FCtor.Exp(s2).count("Count")) _
-                                .From(tt) _
-                                .GroupBy(FCtor.Exp(s2)) _
-                            ) _
-                        ) _
-                        .Select(FCtor.prop("Pref").sum("Count", "Count")) _
-                        .GroupBy(FCtor.prop("Pref")) _
-                        .OrderBy(SCtor.prop("Pref").desc)
+                '    Try
+                'From( _
+                '    New QueryCmd() _
+                '        .[Select](FCtor.Exp(s1).count("Count")) _
+                '        .From(tt) _
+                '        .GroupBy(FCtor.Exp(s1)) _
+                '        .UnionAll( _
+                '    New QueryCmd() _
+                '        .[Select](FCtor.Exp(s2).count("Count")) _
+                '        .From(tt) _
+                '        .GroupBy(FCtor.Exp(s2)) _
+                '    ) _
+                ') _
+                Dim f As FromClauseDef = FromClause
+                If f Is Nothing Then
+                    f = New FromClauseDef(selEU)
+                End If
 
-                        Return BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
-                    Finally
-                        Group = g
-                        _order = srt
-                    End Try
-                End Using
+                Dim q As New QueryCmd(_getMgr)
+                q.MappingEngine = MappingEngine
+                q.From(CType(Clone(), QueryCmd) _
+                     .[Select](FCtor.Exp(s1).count("Count")) _
+                     .From(f) _
+                     .GroupBy(FCtor.Exp(s1)) _
+                     .UnionAll( _
+                     CType(Clone(), QueryCmd) _
+                     .[Select](FCtor.Exp(s2).count("Count")) _
+                     .From(f) _
+                     .GroupBy(FCtor.Exp(s2)) _
+                     ) _
+                ) _
+                .Select(FCtor.prop("Pref").sum("Count", "Count")) _
+                .GroupBy(FCtor.prop("Pref")) _
+                .OrderBy(SCtor.prop("Pref").desc)
+
+                Return q.BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)
+                '    Finally
+                '    Group = g
+                '    _order = srt
+                'End Try
+                'End Using
             Else
                 Return BuildDictionary(Of T)(mgr, firstPropertyAlias, level)
             End If

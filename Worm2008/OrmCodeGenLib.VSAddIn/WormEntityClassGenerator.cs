@@ -59,7 +59,7 @@ namespace Worm.CodeGen.VSTool
             else
             {
                 _units = new List<Pair>();
-                foreach (var entity in ormObjectsDef.Entities)
+                foreach (var entity in ormObjectsDef.ActiveEntities)
                 {
                     _units.Add(new Pair() { Unit = generator.GetEntityCompileUnits(entity.Identifier)[0] });
                 }

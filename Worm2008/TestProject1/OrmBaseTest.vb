@@ -198,7 +198,7 @@ Imports Worm.Entities
 
             o.Delete()
 
-            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id_ID"
             Dim gen As New SQLGenerator
@@ -260,7 +260,7 @@ Imports Worm.Entities
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.t1 where i = @id_ID" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id_ID"
@@ -293,7 +293,7 @@ Imports Worm.Entities
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.ent3 where (id = @id_ID and version = @p2)"
 

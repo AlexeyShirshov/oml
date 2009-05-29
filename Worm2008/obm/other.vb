@@ -206,6 +206,13 @@ Public Module helper
         Return New MergeResult(pairs, rest)
     End Function
 
+    Public Function SizeOf(ByVal v As Object) As Integer
+        Using ms As New IO.MemoryStream
+            Dim f As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            f.Serialize(ms, v)
+            Return CInt(ms.Length)
+        End Using
+    End Function
 End Module
 
 Public Class ObjectWrap(Of T)

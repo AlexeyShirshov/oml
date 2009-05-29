@@ -1749,7 +1749,7 @@ l1:
             If schema Is Nothing Then
                 If _attList Is Nothing Then
                     Dim l As New List(Of EntityPropertyAttribute)
-                    For Each cl As EntityPropertyAttribute In ObjectMappingEngine.GetMappedProperties(Me.GetType, Nothing).Keys
+                    For Each cl As EntityPropertyAttribute In ObjectMappingEngine.GetMappedProperties(Me.GetType, False).Keys
                         Dim idx As Integer = l.BinarySearch(cl)
                         If idx < 0 Then
                             l.Insert(Not idx, cl)
@@ -1776,7 +1776,7 @@ l1:
             Dim c As New EntityPropertyAttribute(propertyAlias, String.Empty)
             Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
             Dim idx As Integer = arr.BinarySearch(c)
-            If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias & " in type " & Me.GetType.ToString)
+            If idx < 0 Then Throw New OrmObjectException("Property " & propertyAlias & " not found in type " & Me.GetType.ToString & ". Ensure it is not suppressed")
             Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), MappingEngine)
         End Function
 

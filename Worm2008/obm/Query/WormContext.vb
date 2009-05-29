@@ -122,5 +122,11 @@ Namespace Query
                 Return New Worm.Database.OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, Worm.Database.SQLGenerator), _conn)
             End If
         End Function
+
+        Public ReadOnly Property ConnectionString() As String
+            Get
+                Return _conn
+            End Get
+        End Property
     End Class
 End Namespace

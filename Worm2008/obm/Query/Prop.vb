@@ -293,6 +293,14 @@ Namespace Query
             _dst = New EntityUnion(intoType)
         End Sub
 
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, _
+                       ByVal propertyAlias As String, ByVal intoType As EntityUnion)
+            _column = column
+            _table = t
+            _dstProp = propertyAlias
+            _dst = intoType
+        End Sub
+
         Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal propertyAlias As String, ByVal intoEntityName As String)
             _column = column
             _table = t

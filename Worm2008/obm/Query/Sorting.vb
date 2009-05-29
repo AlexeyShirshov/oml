@@ -450,7 +450,7 @@ Namespace Query
                     If GetType(ReadOnlyObjectList(Of T)).IsAssignableFrom(en.GetType) Then
                         Return CType(en, ReadOnlyObjectList(Of T))
                     Else
-                        Return CType(OrmManager.CreateReadonlyList(GetType(T), en), ReadOnlyObjectList(Of T))
+                        Return CType(OrmManager._CreateReadOnlyList(GetType(T), en), ReadOnlyObjectList(Of T))
                     End If
                 Else
                     Throw New InvalidOperationException("Delegate is not set")

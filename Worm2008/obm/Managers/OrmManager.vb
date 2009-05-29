@@ -1024,7 +1024,7 @@ l1:
                                         sc = New OrmComparer(Of T)(psort)
                                     End If
                                     If sc IsNot Nothing Then
-                                        Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
+                                        Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                         os.Sort(sc)
                                         ce = del.GetCacheItem(os)
                                         dic(id) = ce
@@ -1492,7 +1492,7 @@ l1:
                                 sc = New OrmComparer(Of T)(psort)
                             End If
                             If sc IsNot Nothing Then
-                                Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
+                                Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
                                 Dim ce2 As UpdatableCachedItem = del.GetCacheItem(os)
                                 If ce_.CanRenewAfterSort Then
@@ -2523,7 +2523,43 @@ l1:
 
 #End Region
 
-    Friend Shared Function CreateReadonlyList(ByVal t As Type) As IListEdit
+    Public Shared Function CreateReadOnlyList(ByVal t As Type) As ILoadableList
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(t) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(t) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), ILoadableList)
+    End Function
+
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal l As IEnumerable) As ILoadableList
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {l}), ILoadableList)
+    End Function
+
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable) As ILoadableList
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), ILoadableList)
+    End Function
+
+    Friend Shared Function _CreateReadOnlyList(ByVal t As Type) As IListEdit
         Dim rt As Type = Nothing
         If GetType(IKeyEntity).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2535,7 +2571,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), IListEdit)
     End Function
 
-    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IEnumerable) As IListEdit
+    Friend Shared Function _CreateReadOnlyList(ByVal t As Type, ByVal l As IEnumerable) As IListEdit
         Dim rt As Type = Nothing
         If GetType(IKeyEntity).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2547,16 +2583,28 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {l}), IListEdit)
     End Function
 
-    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IEnumerable, ByVal et As Type) As IListEdit
+    Friend Shared Function _CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable) As IListEdit
         Dim rt As Type = Nothing
-        If GetType(IKeyEntity).IsAssignableFrom(t) Then
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyList(Of ))
-        ElseIf GetType(ICachedEntity).IsAssignableFrom(t) Then
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyEntityList(Of ))
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {et, l}), IListEdit)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), IListEdit)
+    End Function
+
+    Friend Shared Function _CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As IListEdit
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), IListEdit)
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
@@ -2574,7 +2622,7 @@ l1:
         If f Is Nothing Then
             Return col
         Else
-            Dim l As IListEdit = CreateReadonlyList(GetType(T))
+            Dim l As IListEdit = _CreateReadOnlyList(GetType(T))
             Dim oschema As IEntitySchema = Nothing
             Dim i As Integer = 0
             For Each o As T In col
@@ -2958,7 +3006,7 @@ l1:
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
                         'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
-                        prop_objs(i) = CreateReadonlyList(obj.GetType)
+                        prop_objs(i) = _CreateReadOnlyList(obj.GetType)
                     End If
                     prop_objs(i).Add(obj)
                 End If
@@ -3633,7 +3681,7 @@ l1:
             first = False
         End If
 l1:
-        If p Is root And name <> "" Then
+        If p Is root AndAlso name <> "" Then
             If name(0) = "'" Then
                 Dim s As New T
                 DicIndexT(Of T2).Init(s, "'", Nothing, 0, firstField, secField, root.Cmd)
@@ -3667,11 +3715,14 @@ l1:
                 _prev = s
             Next
             current = _prev
-        Else
+        ElseIf Not root.Dictionary.Contains(name) Then
             current = New T
             DicIndexT(Of T2).Init(current, name, p, cnt, firstField, secField, root.Cmd)
             p.AddChild(current)
             root.Add2Dictionary(current)
+        Else
+            current = root
+            first = True
         End If
 
         'End If

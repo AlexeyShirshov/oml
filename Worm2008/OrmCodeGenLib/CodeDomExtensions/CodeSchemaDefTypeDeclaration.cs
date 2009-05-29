@@ -147,7 +147,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
 
-            if (m_entityClass.Entity.Behaviour != EntityBehaviuor.PartialObjects ||
+            if (m_entityClass.Entity.Behaviour == EntityBehaviuor.Default ||
                 m_entityClass.Entity.SourceFragments.Exists(sf => sf.AnchorTable != null))
             {
                 CodeMemberMethod jmethod = Define.Method(MemberAttributes.Public, typeof(Criteria.Joins.QueryJoin),
@@ -163,14 +163,14 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     if (cond == null)
                     {
                         CodeConditionStatement cond2 = Emit.@if((SourceFragment left, SourceFragment right) =>
-                            (left == CodeDom.@this.Call<SourceFragment>("GetTables")(tblIdx) && right == CodeDom.@this.Call<SourceFragment>("GetTables")(sfrIdx)),
+                            (left.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[tblIdx]) && right.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[sfrIdx])),
                                 Emit.@return((SourceFragment left, SourceFragment right) =>
                                     JCtor.join(right).on(left, tbl.Conditions[0].LeftColumn).eq(right, tbl.Conditions[0].RightColumn))
                             );
                         jmethod.Statements.Add(cond2);
 
                         cond = Emit.@if((SourceFragment left, SourceFragment right) =>
-                            (right == CodeDom.@this.Call<SourceFragment>("GetTables")(tblIdx) && left == CodeDom.@this.Call<SourceFragment>("GetTables")(sfrIdx)),
+                            (right.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[tblIdx]) && left.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[sfrIdx])),
                                 Emit.@return((SourceFragment left, SourceFragment right) =>
                                     JCtor.join(right).on(left, tbl.Conditions[0].RightColumn).eq(right, tbl.Conditions[0].LeftColumn))
                             );
@@ -180,7 +180,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     else
                     {
                         CodeConditionStatement cond2 = Emit.@if((SourceFragment left, SourceFragment right) =>
-                            left == CodeDom.@this.Call<SourceFragment>("GetTables")(tblIdx) && right == CodeDom.@this.Call<SourceFragment>("GetTables")(sfrIdx),
+                            left.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[tblIdx]) && right.Equals(CodeDom.@this.Call<SourceFragment[]>("GetTables")()[sfrIdx]),
                                 Emit.@return((SourceFragment left, SourceFragment right) =>
                                     JCtor.join(right).on(left, tbl.Conditions[0].LeftColumn).eq(right, tbl.Conditions[0].RightColumn))
                             );
@@ -191,8 +191,11 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     }
                 }
 
-                cond.FalseStatements.Add(Emit.@throw(() => new NotImplementedException("Entity has more then one table: this method must be implemented.")));
-
+                if (cond != null)
+                    cond.FalseStatements.Add(Emit.@throw(() => new NotImplementedException("Entity has more then one table: this method must be implemented.")));
+                else
+                    jmethod.Statements.Add(Emit.@throw(() => new NotImplementedException("Entity has more then one table: this method must be implemented.")));
+                
                 jmethod.Implements(typeof(IMultiTableObjectSchema));
                 Members.Add(jmethod);
             }

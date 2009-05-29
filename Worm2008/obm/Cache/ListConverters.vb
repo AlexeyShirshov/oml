@@ -51,7 +51,7 @@ Namespace Cache
                     l.Add(o)
                     rt = o.GetType
                 Next
-                c = CType(OrmManager.CreateReadonlyList(GetType(T), l, rt), ReadOnlyEntityList(Of T))
+                c = CType(OrmManager._CreateReadOnlyList(GetType(T), rt, l), ReadOnlyEntityList(Of T))
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso Not created Then
@@ -114,7 +114,7 @@ Namespace Cache
                     If mc.GetRev Then
                         l.Reverse()
                     End If
-                    c = CType(OrmManager.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
+                    c = CType(OrmManager._CreateReadOnlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
                 End If
             End If
             Return c
@@ -199,7 +199,7 @@ Namespace Cache
                         Dim t As Type = e.GetType
                         Dim o2l As IListEdit = Nothing
                         If Not dic.TryGetValue(t, o2l) Then
-                            o2l = OrmManager.CreateReadonlyList(t)
+                            o2l = OrmManager._CreateReadOnlyList(t)
                             dic(t) = o2l
                         End If
                         o2l.Add(e)
@@ -230,7 +230,7 @@ Namespace Cache
             If weak_list Is Nothing Then Return Nothing
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
-            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
             Dim realT As Type = Nothing
             If l.Count > 0 Then
                 realT = l(0).EntityType
@@ -277,7 +277,7 @@ Namespace Cache
                             c.LoadObjects()
                         Else
                             successed = IListObjectConverter.ExtractListResult.NeedLoad
-                            Return CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+                            Return CType(OrmManager._CreateReadOnlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
                         End If
                     End If
                     Dim s As Boolean = True
@@ -382,7 +382,7 @@ Namespace Cache
                     OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return CType(OrmManager.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
+            Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
         End Function
 
         Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
@@ -410,7 +410,7 @@ Namespace Cache
                         Dim t As Type = o.GetType
                         Dim o2l As IListEdit = Nothing
                         If Not dic.TryGetValue(t, o2l) Then
-                            o2l = OrmManager.CreateReadonlyList(t)
+                            o2l = OrmManager._CreateReadOnlyList(t)
                             dic(t) = o2l
                         End If
                         o2l.Add(o)
