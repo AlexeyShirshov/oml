@@ -1,42 +1,39 @@
 ﻿Imports System.Linq.Expressions
 Imports Worm.Database
 Imports System.Runtime.CompilerServices
+Imports Worm.Cache
 
 Namespace Linq
-    Public MustInherit Class WormContext
+    Public Class WormLinqContext
+        Inherits Query.WormDBContext
 
-        Public MustOverride Function GetReadonlyManager() As ICreateManager
-        Public MustOverride Function GetManager() As ICreateManager
+        Public Sub New(ByVal connectionString As String)
+            MyBase.New(connectionString)
+        End Sub
 
-        Private _schema As ObjectMappingEngine
-        Public Property MappingEngine() As ObjectMappingEngine
-            Get
-                Return _schema
-            End Get
-            Set(ByVal value As ObjectMappingEngine)
-                _schema = value
-            End Set
-        End Property
+        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase)
+            MyBase.New(connectionString, cache)
+        End Sub
 
-        Private _cache As Cache.CacheBase
-        Public Property Cache() As Cache.CacheBase
-            Get
-                Return _cache
-            End Get
-            Set(ByVal value As Cache.CacheBase)
-                _cache = value
-            End Set
-        End Property
+        Public Sub New(ByVal connectionString As String, ByVal stmtGen As Worm.Database.SQLGenerator)
+            MyBase.New(connectionString, stmtGen)
+        End Sub
 
-        Private _gen As StmtGenerator
-        Public Property StmtGenerator() As StmtGenerator
-            Get
-                Return _gen
-            End Get
-            Set(ByVal value As StmtGenerator)
-                _gen = value
-            End Set
-        End Property
+        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
+            MyBase.New(connectionString, cache, New ObjectMappingEngine("1"))
+        End Sub
+
+        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As Worm.Database.SQLGenerator)
+            MyBase.New(connectionString, cache, mpe, stmtGen)
+        End Sub
+
+        Public Sub New(ByVal createDelegate As CreateManagerDelegate)
+            MyBase.New(createDelegate)
+        End Sub
+
+        Public Sub New(ByVal createDelegate As CreateManagerDelegate, ByVal cache As CacheBase)
+            MyBase.New(createDelegate, cache)
+        End Sub
 
         Public Function CreateQueryWrapper(ByVal t As Type) As QueryWrapper
             Return New QueryWrapper(t, Me)
@@ -53,39 +50,7 @@ Namespace Linq
         Public Function CreateQueryWrapper(Of T)(ByVal provider As WormLinqProvider, ByVal exp As Expression) As QueryWrapperT(Of T)
             Return New QueryWrapperT(Of T)(provider, exp)
         End Function
-    End Class
 
-    Public Class WormDBContext
-        Inherits WormContext
-
-        Private _conn As String
-
-        Public Sub New(ByVal conn As String)
-            MyClass.New(New Cache.ReadonlyCache, New ObjectMappingEngine("1"), New SQLGenerator, conn)
-        End Sub
-
-        Public Sub New(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal conn As String)
-            _conn = conn
-            Me.Cache = cache
-            Me.MappingEngine = schema
-            Me.StmtGenerator = gen
-        End Sub
-
-        Public Overrides Function GetManager() As ICreateManager
-            Return New CreateManager(Function() New OrmDBManager(CType(Cache, Worm.Cache.OrmCache), MappingEngine, CType(StmtGenerator, SQLGenerator), _conn))
-        End Function
-
-        Public Overrides Function GetReadonlyManager() As ICreateManager
-            Return New CreateManager(Function() New OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, SQLGenerator), _conn))
-        End Function
-    End Class
-
-    Public Class WormMSSQL2005DBContext
-        Inherits WormDBContext
-
-        Public Sub New(ByVal conn As String)
-            MyBase.New(New Cache.OrmCache, New ObjectMappingEngine("1"), New MSSQL2005Generator, conn)
-        End Sub
     End Class
 
     Public Class QueryWrapper
@@ -95,12 +60,12 @@ Namespace Linq
         Protected _expression As Expression
         Private _t As Type
 
-        Public Sub New(ByVal t As Type, ByVal ctx As WormContext)
+        Public Sub New(ByVal t As Type, ByVal ctx As WormLinqContext)
             MyClass.New(ctx)
             _t = t
         End Sub
 
-        Protected Sub New(ByVal ctx As WormContext)
+        Protected Sub New(ByVal ctx As WormLinqContext)
             _provider = New WormLinqProvider(ctx)
             _expression = System.Linq.Expressions.Expression.Constant(Me)
         End Sub
@@ -144,7 +109,7 @@ Namespace Linq
         Inherits QueryWrapper
         Implements IQueryable(Of T), IOrderedQueryable(Of T)
 
-        Public Sub New(ByVal ctx As WormContext)
+        Public Sub New(ByVal ctx As WormLinqContext)
             MyBase.new(ctx)
         End Sub
 

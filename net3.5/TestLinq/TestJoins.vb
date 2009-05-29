@@ -45,7 +45,7 @@ Imports Worm.Linq
 
     <TestMethod()> Public Sub TestJoin()
 
-        Dim ctx As New WormDBContext(TestLinq.GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -59,7 +59,7 @@ Imports Worm.Linq
 
     <TestMethod()> Public Sub TestSelect()
 
-        Dim ctx As New WormDBContext(TestLinq.GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -74,7 +74,7 @@ Imports Worm.Linq
 
     <TestMethod()> Public Sub TestSelfJoin()
 
-        Dim ctx As New WormDBContext(TestLinq.GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 

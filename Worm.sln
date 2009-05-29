@@ -41,6 +41,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Help", "Help", "{559EB33E-8
 		Help\worm.shfbproj = Help\worm.shfbproj
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Binaries", "Binaries", "{DDEDC24E-8B2F-4495-A3C0-79F779A0EC93}"
+	ProjectSection(SolutionItems) = preProject
+		Binaries\CoreFramework.dll = Binaries\CoreFramework.dll
+		Binaries\CoreFramework.pdb = Binaries\CoreFramework.pdb
+		Binaries\LinqToCodedom.dll = Binaries\LinqToCodedom.dll
+		Binaries\LinqToCodedom.pdb = Binaries\LinqToCodedom.pdb
+		Binaries\Mvp.Xml.dll = Binaries\Mvp.Xml.dll
+		Binaries\Mvp.Xml.xml = Binaries\Mvp.Xml.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 13
