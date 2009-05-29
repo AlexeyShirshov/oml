@@ -14,7 +14,9 @@
     </Entity>
     <Entity id="e11" name="E1" namespace="NS2" baseEntity="e1">
       <SourceFragments>
-        <SourceFragment ref="tbl1"/>
+        <SourceFragment ref="tbl2" anchorTableRef="tbl1">
+          <join refColumn="xx" anchorColumn="yy" />
+        </SourceFragment>
       </SourceFragments>
       <Properties>
         <Property propertyName="Prop11" table="tbl1" fieldName="prop11" typeRef="tString" description="prop11"/>
@@ -34,5 +36,6 @@
   </Types>
   <SourceFragments>
     <SourceFragment id="tbl1" name="tbl1" />
+    <SourceFragment id="tbl2" name="tbl2" />
   </SourceFragments>
 </OrmObjects>

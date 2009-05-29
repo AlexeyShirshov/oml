@@ -55,7 +55,7 @@ Imports Worm.Linq
 
     <TestMethod()> Public Sub TestQuery()
 
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -112,7 +112,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestOrder()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -139,7 +139,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSelect()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -155,7 +155,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSelect2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -173,7 +173,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSelect3()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -190,7 +190,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
    Public Sub TestSelect4()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -204,7 +204,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
         Public Sub TestDistinct()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -235,7 +235,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestCount()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -253,7 +253,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestFirst()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -286,7 +286,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(ArgumentOutOfRangeException))> _
     Public Sub TestFirst2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -295,7 +295,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(ArgumentOutOfRangeException))> _
     Public Sub TestFirst3()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -304,7 +304,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestFirstOrDefault()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -324,7 +324,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSingle()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -344,7 +344,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(LinqException))> _
     Public Sub TestSingle2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -353,7 +353,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(LinqException))> _
     Public Sub TestSingle3()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -362,7 +362,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSingleOrDefault()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -372,7 +372,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(LinqException))> _
     Public Sub TestSingleOrDefault2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -381,7 +381,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestLast()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -392,7 +392,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(LinqException))> _
     Public Sub TestLast2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -402,7 +402,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestLastOrDefault()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -412,7 +412,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestDefaultIfEmpty()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -422,7 +422,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestContains()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
         Dim tt = (From k In e).First
@@ -431,7 +431,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestConcat()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -446,7 +446,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestUnion()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -459,7 +459,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestElementAt()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -468,7 +468,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestElementAtOrDefault()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -477,7 +477,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestIntersect()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -491,7 +491,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestSecuenceEqual()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -500,7 +500,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestReverse()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -509,7 +509,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestTake()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -522,7 +522,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
     Public Sub TestSkip2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -543,7 +543,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSkip()
-        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn, New Worm.Database.MSSQL2005Generator)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -564,7 +564,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestAll()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -573,7 +573,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestAny()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -582,7 +582,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(NotSupportedException))> _
     Public Sub TestAggregate()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -591,7 +591,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestAverage()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -614,7 +614,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestMax()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -627,7 +627,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestMin()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -643,7 +643,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestMin2()
-        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn, New Worm.Database.MSSQL2005Generator)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -662,7 +662,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSum()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -676,7 +676,7 @@ Imports Worm.Linq
 
     <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
     Public Sub TestSum2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -686,7 +686,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSum3()
-        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn, New Worm.Database.MSSQL2005Generator)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -702,7 +702,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSum4()
-        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn, New Worm.Database.MSSQL2005Generator)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -713,7 +713,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestSum5()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -723,7 +723,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestLet()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -736,7 +736,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestWhere()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -753,7 +753,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestVariableRef()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormLinqContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 

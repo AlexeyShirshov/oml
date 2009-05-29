@@ -244,6 +244,16 @@ namespace TestsCodeGenLib
                 }
                 Assert.Fail(sb.ToString());
             }
+
+            CodeCompileUnit dd = new CodeCompileUnit();
+            foreach (CodeCompileUnit unit in dic.Values)
+            {
+                dd.Namespaces.AddRange(unit.Namespaces);
+            }
+            CodeGeneratorOptions opt = new CodeGeneratorOptions();
+
+            prov.GenerateCodeFromCompileUnit(dd, Console.Out, opt);
+
             //foreach (CompilerError error in result.Errors)
             //{
             //    Assert.IsTrue(error.IsWarning, error.ToString());

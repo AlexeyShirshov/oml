@@ -45,7 +45,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestCount()
-        Dim ctx As New WormDBContext(TestLinq.GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
@@ -64,7 +64,7 @@ Imports Worm.Linq
 
     <TestMethod()> _
     Public Sub TestCountSkip()
-        Dim ctx As New WormMSSQL2005DBContext(TestLinq.GetConn)
+        Dim ctx As New WormLinqContext(TestLinq.GetConn, New Worm.Database.MSSQL2005Generator)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 

@@ -27,7 +27,7 @@
           <Property fieldName="id" propertyName="Identifier1" propertyAlias="ID" description="prop" table="tbl2" typeRef="tInt32" attributes="PrimaryKey"/>
       </Properties>
     </Entity>
-    <Entity id="e3" name="E3" baseEntity="e2" >
+    <Entity id="e3" name="E3" baseEntity="e2">
       <SourceFragments />
         <!--<SourceFragment ref="tbl2"/>-->
         <!--<SourceFragment ref="tbl2"/>-->

@@ -26,7 +26,7 @@
 		</Entity>
     <Entity id="e2" name="E2" baseEntity="e1">
       <SourceFragments>
-        <SourceFragment ref="tbl1"/>
+        <!--<SourceFragment ref="tbl1"/>-->
         <!--<SourceFragment ref="tbl2"/>-->
         <!--<SourceFragment ref="tblS1"/>-->
       </SourceFragments>

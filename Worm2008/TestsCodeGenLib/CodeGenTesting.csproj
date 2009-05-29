@@ -45,9 +45,9 @@
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CoreFramework.dll</HintPath>
+      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />

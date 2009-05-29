@@ -46,9 +46,9 @@ Namespace Linq
     Public Class WormLinqProvider
         Implements IQueryProvider
 
-        Private _ctx As WormContext
+        Private _ctx As WormLinqContext
 
-        Public Sub New(ByVal ctx As WormContext)
+        Public Sub New(ByVal ctx As WormLinqContext)
             _ctx = ctx
         End Sub
 
@@ -66,117 +66,96 @@ Namespace Linq
             'End Using
         End Function
 
-        'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-        '    args.Manager = _ctx.CreateReadonlyManager
-        'End Sub
-
-        Protected Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As IEntity)
-            'AddHandler o.ManagerRequired, AddressOf GetManager
-            CType(o, _IEntity).SetCreateManager(_ctx.GetReadonlyManager)
-        End Sub
-
         Public Function Execute(Of TResult)(ByVal expression As System.Linq.Expressions.Expression) As TResult Implements System.Linq.IQueryProvider.Execute
-            Using mgr As OrmManager = _ctx.GetReadonlyManager.CreateManager
-                'mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectLoaded, AddressOf ObjectCreated
+            'Try
+            Dim ev As New QueryVisitor(_ctx)
+            ev.Visit(expression)
+            'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
+            Dim q As Worm.Query.QueryCmd = ev.Query
+            Dim rt As Type = GetType(TResult)
+            If GetType(IEnumerator).IsAssignableFrom(rt) Then
+                Dim t As Type = rt.GetGenericArguments(0)
+                If GetType(KeyEntity).IsAssignableFrom(t) Then
+                    q.SelectEntity(t)
+                    Dim e As IEnumerator = q.ToList().GetEnumerator
+                    Return CType(e, TResult)
+                Else
+                    Dim lt As Type = GetType(List(Of ))
+                    Dim glt As Type = lt.MakeGenericType(New Type() {t})
+                    Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
+                    q.SelectEntity(ev.T)
+                    Dim e As IEnumerator = q.ToList().GetEnumerator
+                    Do While e.MoveNext
+                        Dim o As KeyEntity = CType(e.Current, KeyEntity)
+                        l.Add(ev.GetNew(o))
+                    Loop
+                    Return CType(l.GetEnumerator, TResult)
+                End If
+            Else
+                q.SelectEntity(ev.T)
+                Dim l As IList(Of TResult) = Nothing
 
-                'Try
-                Dim ev As New QueryVisitor(_ctx.MappingEngine)
-                ev.Visit(expression)
-                'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
-                Dim q As Worm.Query.QueryCmd = ev.Query
-                Dim rt As Type = GetType(TResult)
-                If GetType(IEnumerator).IsAssignableFrom(rt) Then
-                    Dim t As Type = rt.GetGenericArguments(0)
-                    If GetType(KeyEntity).IsAssignableFrom(t) Then
-                        q.SelectEntity(t)
-                        Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
-                        Return CType(e, TResult)
+                'Else
+                If rt.IsValueType OrElse rt Is GetType(String) Then
+                    l = q.ToSimpleList(Of TResult)()
+                Else
+                    If GetType(KeyEntity).IsAssignableFrom(rt) Then
+                        l = CType(q.ToList(), IList(Of TResult))
                     Else
-                        Dim lt As Type = GetType(List(Of ))
-                        Dim glt As Type = lt.MakeGenericType(New Type() {t})
-                        Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
-                        q.SelectEntity(ev.T)
-                        Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
+                        l = New List(Of TResult)
+                        Dim e As IEnumerator = q.ToList().GetEnumerator
                         Do While e.MoveNext
                             Dim o As KeyEntity = CType(e.Current, KeyEntity)
-                            l.Add(ev.GetNew(o))
+                            l.Add(CType(ev.GetNew(o), TResult))
                         Loop
-                        Return CType(l.GetEnumerator, TResult)
                     End If
-                Else
-                    q.SelectEntity(ev.T)
-                    Dim l As IList(Of TResult) = Nothing
-
-                    'Else
-                    If rt.IsValueType OrElse rt Is GetType(String) Then
-                        l = q.ToSimpleList(Of TResult)(mgr)
-                    Else
-                        If GetType(KeyEntity).IsAssignableFrom(rt) Then
-                            l = CType(q.ToList(mgr), IList(Of TResult))
-                        Else
-                            l = New List(Of TResult)
-                            Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
-                            Do While e.MoveNext
-                                Dim o As KeyEntity = CType(e.Current, KeyEntity)
-                                l.Add(CType(ev.GetNew(o), TResult))
-                            Loop
-                        End If
-                    End If
-
-                    Select Case ev.Constr
-                        Case Constr.First
-                            Return l(0)
-                        Case Constr.FirstOrDef
-                            If l.Count = 0 Then
-                                Return Nothing
-                            Else
-                                Return l(0)
-                            End If
-                        Case Constr.Single
-                            If l.Count <> 1 Then
-                                Throw New LinqException
-                            Else
-                                Return l(0)
-                            End If
-                        Case Constr.SingleOrDef
-                            If l.Count > 1 Then
-                                Throw New LinqException
-                            ElseIf l.Count = 0 Then
-                                Return Nothing
-                            Else
-                                Return l(0)
-                            End If
-                        Case Constr.None
-                            If l.Count > 0 Then
-                                Return l(0)
-                            Else
-                                Throw New InvalidOperationException
-                            End If
-                        Case Constr.Last
-                            If l.Count = 0 Then
-                                Throw New LinqException
-                            Else
-                                Return l(l.Count - 1)
-                            End If
-                        Case Constr.LastOrDef
-                            If l.Count = 0 Then
-                                Return Nothing
-                            Else
-                                Return l(l.Count - 1)
-                            End If
-                        Case Else
-                            Throw New NotImplementedException
-                    End Select
                 End If
-                'Finally
-                '    If mgr IsNot Nothing Then
-                '        RemoveHandler mgr.ObjectCreated, AddressOf ObjectCreated
-                '        mgr.Dispose()
-                '    End If
-                'End Try
-                RemoveHandler mgr.ObjectLoaded, AddressOf ObjectCreated
-            End Using
+
+                Select Case ev.Constr
+                    Case Constr.First
+                        Return l(0)
+                    Case Constr.FirstOrDef
+                        If l.Count = 0 Then
+                            Return Nothing
+                        Else
+                            Return l(0)
+                        End If
+                    Case Constr.Single
+                        If l.Count <> 1 Then
+                            Throw New LinqException
+                        Else
+                            Return l(0)
+                        End If
+                    Case Constr.SingleOrDef
+                        If l.Count > 1 Then
+                            Throw New LinqException
+                        ElseIf l.Count = 0 Then
+                            Return Nothing
+                        Else
+                            Return l(0)
+                        End If
+                    Case Constr.None
+                        If l.Count > 0 Then
+                            Return l(0)
+                        Else
+                            Throw New InvalidOperationException
+                        End If
+                    Case Constr.Last
+                        If l.Count = 0 Then
+                            Throw New LinqException
+                        Else
+                            Return l(l.Count - 1)
+                        End If
+                    Case Constr.LastOrDef
+                        If l.Count = 0 Then
+                            Return Nothing
+                        Else
+                            Return l(l.Count - 1)
+                        End If
+                    Case Else
+                        Throw New NotImplementedException
+                End Select
+            End If
         End Function
     End Class
 
@@ -800,9 +779,9 @@ Namespace Linq
             End If
         End Function
 
-        Sub New(ByVal schema As ObjectMappingEngine)
-            MyBase.new(schema)
-            _q = New Query.QueryCmd()
+        Sub New(ByVal ctx As WormLinqContext)
+            MyBase.new(ctx.MappingEngine)
+            _q = New Query.QueryCmd(ctx)
         End Sub
 
         'Sub New(ByVal q As Query.QueryCmdBase)

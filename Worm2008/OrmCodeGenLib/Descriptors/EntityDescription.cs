@@ -60,7 +60,13 @@ namespace Worm.CodeGen.Core.Descriptors
 
         public List<SourceFragmentRefDescription> SourceFragments
         {
-            get { return _sourceFragments; }
+            get 
+            {
+                if (InheritsBaseTables && _baseEntity != null)
+                    return new List<SourceFragmentRefDescription>(_sourceFragments.Union(_baseEntity.SourceFragments));
+                else
+                    return _sourceFragments; 
+            }
         }
 
         public List<PropertyDescription> Properties
@@ -430,6 +436,23 @@ namespace Worm.CodeGen.Core.Descriptors
                 return MergeEntities(baseEntity, this);
             }
         }
+
+        //public bool NeedJoins
+        //{
+        //    get
+        //    {
+        //        List<SourceFragmentRefDescription> sf = SourceFragments;
+        //        int cnt = sf.Count;
+        //        for (int i = 0; i < cnt-1; i++)
+        //        {
+        //            for (int j = 0; j < cnt; j++)
+        //            {
+
+        //            }
+        //        }
+        //        return false;
+        //    }
+        //}
 
         public EntityBehaviuor Behaviour { get; set; }
 
