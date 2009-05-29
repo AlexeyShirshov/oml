@@ -2,6 +2,7 @@
 using System.CodeDom;
 using System.Collections.Generic;
 using Worm.CodeGen.Core.Descriptors;
+using Worm.Database;
 
 namespace Worm.CodeGen.Core.CodeDomExtensions
 {
@@ -32,10 +33,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
             //{
             //    BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormDBContext"));
             //}
-            if (ContextClassBehaviour == ContextClassBehaviourType.PartialClass)
-            {
+            //if (ContextClassBehaviour == ContextClassBehaviourType.PartialClass)
+            //{
                 BaseTypes.Add(new CodeTypeReference("Worm.Linq.WormLinqContext"));
-            }
+            //}
         }
 
         protected virtual void OnPopulateMembers(object sender, EventArgs e)
@@ -48,14 +49,14 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
             {
                 var ctor = new CodeConstructor();
                 ctor.Attributes = MemberAttributes.Public;
-                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cache.OrmCache)),"cache"));
-                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(ObjectMappingEngine)), "schema"));
-                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (StmtGenerator)), "gen"));
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(string)), "conn"));
+                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cache.OrmCache)), "cache"));
+                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(ObjectMappingEngine)), "schema"));
+                ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof (SQLGenerator)), "gen"));
+                ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("conn"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("cache"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("schema"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("gen"));
-                ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("conn"));
                 Members.Add(ctor);
                 ctor = new CodeConstructor();
                 ctor.Attributes = MemberAttributes.Public;
