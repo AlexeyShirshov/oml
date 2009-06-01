@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using Worm.CodeGen.Core.Descriptors;
+using System.Linq;
 
 namespace Worm.CodeGen.Core
 {
@@ -280,7 +281,8 @@ namespace Worm.CodeGen.Core
 					entityElement.SetAttribute("useGenerics", XmlConvert.ToString(entity.UseGenerics));
 				if (entity.MakeInterface)
 					entityElement.SetAttribute("makeInterface", XmlConvert.ToString(entity.MakeInterface));
-
+                if (entity.BaseEntity != null)
+                    entityElement.SetAttribute("baseEntity", entity.Identifier);
 				if (entity.Disabled)
 					entityElement.SetAttribute("disabled", XmlConvert.ToString(entity.Disabled));
 
@@ -296,11 +298,13 @@ namespace Worm.CodeGen.Core
                     if (table.AnchorTable != null)
                     {
                         tableElement.SetAttribute("anchorTableRef", table.AnchorTable.Identifier);
+                        tableElement.SetAttribute("type", table.JoinType.ToString());
                         foreach (SourceFragmentRefDescription.Condition c in table.Conditions)
                         {
                             XmlElement join = CreateElement("join");
                             join.SetAttribute("refColumn", c.LeftColumn);
                             join.SetAttribute("anchorColumn", c.RightColumn);
+                            tableElement.AppendChild(join);
                         }
                     }
                     tablesNode.AppendChild(tableElement);
@@ -313,12 +317,12 @@ namespace Worm.CodeGen.Core
 				entityElement.AppendChild(tablesNode);	
 
                 XmlNode propertiesNode = CreateElement("Properties");
-                List<PropertyDescription> properties = entity.Properties.FindAll(p => p.Group == null);
+                IEnumerable<PropertyDescription> properties = entity.Properties.Where(p => p.Group == null);
                 FillEntityProperties(properties, propertiesNode);
                 entityElement.AppendChild(propertiesNode);
 
                 List<PropertyGroup> groups = new List<PropertyGroup>();
-                properties = entity.Properties.FindAll(p => p.Group != null);
+                properties = entity.Properties.Where(p => p.Group != null);
 
                 foreach (var property in properties)
                 {
@@ -329,7 +333,7 @@ namespace Worm.CodeGen.Core
                 foreach (var propertyGroup in groups)
                 {
                     PropertyGroup propertyGroup1 = propertyGroup;
-                    var props = properties.FindAll(p => p.Group == propertyGroup1);
+                    var props = properties.Where(p => p.Group == propertyGroup1);
 
                     XmlElement groupNode = CreateElement("Group");
                     groupNode.SetAttribute("name", propertyGroup.Name);
@@ -370,7 +374,7 @@ namespace Worm.CodeGen.Core
             }
         }
 
-        private void FillEntityProperties(List<PropertyDescription> properties, XmlNode propertiesNode)
+        private void FillEntityProperties(IEnumerable<PropertyDescription> properties, XmlNode propertiesNode)
         {
             foreach (PropertyDescription property in properties)
             {

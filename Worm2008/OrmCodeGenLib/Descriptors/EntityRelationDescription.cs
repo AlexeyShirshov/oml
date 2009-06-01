@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
@@ -49,21 +50,21 @@ namespace Worm.CodeGen.Core.Descriptors
                 PropertyDescription res = null;
                 if(!string.IsNullOrEmpty(PropertyAlias))
                 {
-                    res = Entity.Properties.Find(p => p.PropertyAlias == PropertyAlias);
+                    res = Entity.Properties.SingleOrDefault(p => p.PropertyAlias == PropertyAlias);
                 }
                 else
                 {
-                    var lst = Entity.Properties.FindAll(p => p.PropertyType.IsEntityType && p.PropertyType.Entity == SourceEntity);
-                    if (lst.Count > 1)
+                    var lst = Entity.Properties.Where(p => p.PropertyType.IsEntityType && p.PropertyType.Entity == SourceEntity);
+                    if (lst.Count() > 1)
                     {
                         throw new OrmCodeGenException(
                             string.Format(
                                 "Возможно несколько вариантов связи от сущности '{0}' к '{1}'. Конкретизируйте связи.",
                                 SourceEntity.Name, Entity.Name));
                     }
-                    else if (lst.Count > 0)
+                    else if (lst.Count() > 0)
                     {
-                        res = lst[0];
+                        res = lst.First();
                     }
                 }
                 return res;

@@ -744,13 +744,13 @@ namespace Worm.CodeGen.Core
 
                         #region m2m relation methods
 
-                        if (!Settings.RemoveOldM2M)
+                        if (!Settings.RemoveOldM2M && entity.HasSinglePk)
                             CreateM2MMethodsSet(entity, entityClass);
 
                         #endregion
 
-                        if (setvalueMethod.Statements.Count <= 1)
-                            entityClass.Members.Remove(setvalueMethod);
+                        //if (setvalueMethod.Statements.Count <= 1)
+                        //    entityClass.Members.Remove(setvalueMethod);
                     }
 
                     #region custom attribute EntityAttribute
@@ -1017,7 +1017,7 @@ namespace Worm.CodeGen.Core
         private void UpdateSetPKMethod(CodeEntityTypeDeclaration entityClass, bool composite)
         {
             EntityDescription entity = entityClass.Entity;
-            if (entity.PkProperties.Count == 0)
+            if (entity.PkProperties.Count() == 0)
                 return;
 
             CodeMemberMethod meth = new CodeMemberMethod();
@@ -1049,8 +1049,7 @@ namespace Worm.CodeGen.Core
                         new CodeTypeReference(typeof(PKDesc)), "pk",
                         new CodeArgumentReferenceExpression("pks"),
                         entity.PkProperties.
-                        ConvertAll<CodeStatement>(
-                            delegate(PropertyDescription pd_)
+                        Select((PropertyDescription pd_) =>
                             {
                                 //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
                                 CodeTypeReference typeReference = pd_.PropertyType;
@@ -1099,7 +1098,7 @@ namespace Worm.CodeGen.Core
         private void UpdateGetPKValuesMethod(CodeEntityTypeDeclaration entityClass)
         {
             EntityDescription entity = entityClass.Entity;
-            if (entity.PkProperties.Count == 0)
+            if (entity.PkProperties.Count() == 0)
                 return;
 
             CodeMemberMethod meth = new CodeMemberMethod();
@@ -1123,7 +1122,7 @@ namespace Worm.CodeGen.Core
                         new CodeBinaryOperatorExpression(
                             new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("basePks"), "Length"),
                             CodeBinaryOperatorType.Add,
-                            new CodePrimitiveExpression(entity.PkProperties.Count)
+                            new CodePrimitiveExpression(entity.PkProperties.Count())
                         )
 
                     )
@@ -1143,7 +1142,7 @@ namespace Worm.CodeGen.Core
                     "newPks",
                     new CodeArrayCreateExpression(
                         new CodeTypeReference(tr, 1),
-                        entity.PkProperties.ConvertAll<CodeExpression>(pd_ => new CodeObjectCreateExpression(tr, new CodePrimitiveExpression(pd_.PropertyAlias),
+                        entity.PkProperties.Select<PropertyDescription,CodeExpression>(pd_ => new CodeObjectCreateExpression(tr, new CodePrimitiveExpression(pd_.PropertyAlias),
                                                               new CodeFieldReferenceExpression(
                                                                   new CodeThisReferenceExpression(),
                                                                   OrmCodeGenNameHelper.GetPrivateMemberName
@@ -1162,7 +1161,7 @@ namespace Worm.CodeGen.Core
         {
             EntityDescription entity = entityClass.Entity;
 
-            if (entity.PkProperties.Count == 0)
+            if (entity.PkProperties.Count() == 0)
                 return;
 
             CodeMemberMethod meth = new CodeMemberMethod();
@@ -1250,7 +1249,7 @@ namespace Worm.CodeGen.Core
                         new CodeTypeReference(typeof(PKDesc)), "pk",
                         new CodeArgumentReferenceExpression("pks"),
                         entity.PkProperties.
-                        ConvertAll<CodeStatement>(
+                        Select(
                             delegate(PropertyDescription pd_)
                             {
                                 //var typeReference = new CodeTypeReference(pd_.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetEntityClassName(pd_.PropertyType.Entity, true) : pd_.PropertyType.TypeName);
@@ -1313,9 +1312,9 @@ namespace Worm.CodeGen.Core
 
             meth.Statements.Add(
                 new CodeMethodReturnStatement(new CodeArrayCreateExpression(meth.ReturnType,
-                    entity.Properties.FindAll(
+                    entity.Properties.Where(
                         pd_ => pd_.HasAttribute(Field2DbRelations.PK)).
-                    ConvertAll<CodeExpression>(
+                    Select<PropertyDescription,CodeExpression>(
                         pd_ => new CodeObjectCreateExpression(tr, new CodePrimitiveExpression(pd_.PropertyAlias),
                                                               new CodeFieldReferenceExpression(
                                                                   new CodeThisReferenceExpression(),
@@ -1535,7 +1534,11 @@ namespace Worm.CodeGen.Core
         {
             foreach (RelationDescriptionBase relation in entity.GetAllRelations(false))
             {
-                if (!relation.HasAccessors)
+                LinkTarget link = null;
+                RelationDescription rd = relation as RelationDescription;
+                if (rd != null)
+                    link = rd.Left.Entity == entity ? rd.Right : rd.Left;
+                if (!relation.HasAccessors || (link != null && !link.Entity.HasSinglePk))
                     continue;
                 CreateM2MGenMethods(CreateM2MAddMethod, entity, relation, entityClass);
                 CreateM2MGenMethods(CreateM2MRemoveMethod, entity, relation, entityClass);
@@ -1844,7 +1847,7 @@ namespace Worm.CodeGen.Core
                     new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(IRelation.RelationDesc)),
                         OrmCodeGenHelper.GetFieldNameReferenceExpression(
-                            entity.Properties.Find(
+                            entity.Properties.First(
                                 match => match.FieldName == relation.Direct.FieldName)),
                         new CodeMethodInvokeExpression(
                             new CodeMethodReferenceExpression(
@@ -1876,7 +1879,8 @@ namespace Worm.CodeGen.Core
                 new CodeMethodReturnStatement(
                     new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(IRelation.RelationDesc)),
-                        OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(match => match.FieldName == relation.Reverse.FieldName)),
+                        OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.First(
+                            match => match.FieldName == relation.Reverse.FieldName)),
                         new CodeMethodInvokeExpression(
                             new CodeMethodReferenceExpression(
                                 new CodeFieldReferenceExpression(
@@ -2470,14 +2474,10 @@ namespace Worm.CodeGen.Core
                 int tableNum = 0;
 
                 tablesEnum.Members.AddRange(fullTables.ConvertAll<CodeTypeMember>(tbl => new CodeMemberField
-                                                                                            {
-                                                                                                InitExpression =
-                                                                                                    new CodePrimitiveExpression(
-                                                                                                    tableNum++),
-                                                                                                Name =
-                                                                                                    OrmCodeGenNameHelper.
-                                                                                                    GetSafeName(tbl.Identifier)
-                                                                                            }).ToArray());
+                {
+                    InitExpression = new CodePrimitiveExpression(tableNum++),
+                    Name = OrmCodeGenNameHelper.GetSafeName(tbl.Identifier)
+                }).ToArray());
                 entitySchemaDefClass.Members.Add(tablesEnum);
             }
         }

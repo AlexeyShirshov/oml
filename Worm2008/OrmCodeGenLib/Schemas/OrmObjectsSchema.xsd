@@ -186,6 +186,7 @@
     </xs:sequence>
     <xs:attribute name="ref" type="xs:Name" use="required" />
     <xs:attribute name="anchorTableRef" type="xs:Name" />
+    <xs:attribute name="type" type="JoinTypeEnum_t" use="optional" default="inner" />
   </xs:complexType>
   <xs:complexType name="EntitiesCollection_t">
     <xs:annotation>
@@ -620,6 +621,19 @@
           <xs:enumeration value="PrimaryKey" />
           <xs:enumeration value="Private" />
           <xs:enumeration value="Factory" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:list>
+  </xs:simpleType>
+  <xs:simpleType name="JoinTypeEnum_t">
+    <xs:annotation>
+      <xs:documentation>Типы джоинов</xs:documentation>
+    </xs:annotation>
+    <xs:list>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="inner" />
+          <xs:enumeration value="outer" />
         </xs:restriction>
       </xs:simpleType>
     </xs:list>

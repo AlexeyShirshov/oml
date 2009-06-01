@@ -18,7 +18,15 @@ namespace Worm.CodeGen.Core.Descriptors
             }
         }
 
+        public enum JoinTypeEnum
+        {
+            inner,
+            outer
+        }
+
         public SourceFragmentDescription AnchorTable { get; set; }
+        public JoinTypeEnum JoinType { get; set; }
+        
         public List<Condition> _c = new List<Condition>();
         public List<Condition> Conditions
         {
