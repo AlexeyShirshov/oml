@@ -72,6 +72,11 @@ namespace Worm.CodeGen.Core
             _entities.Add(e);
         }
 
+        public void RemoveEntity(EntityDescription e)
+        {
+            _entities.Remove(e);
+        }
+
         public IEnumerable<EntityDescription> Entities
         {
             get
@@ -329,6 +334,15 @@ namespace Worm.CodeGen.Core
                                           return
                                               relation.Similar(match);
                                       });
+        }
+
+        public bool HasSimilarRelationM2M(RelationDescription relation)
+        {
+            return _relations.AsEnumerable().OfType<RelationDescription>().Any((RelationDescription match)=>
+                relation != match && (
+                (match.Left.Entity == relation.Left.Entity && match.Right.Entity == relation.Right.Entity) ||
+                (match.Left.Entity == relation.Right.Entity && match.Right.Entity == relation.Left.Entity))
+            );
         }
 
         public static OrmObjectsDef LoadFromXml(XmlReader reader)

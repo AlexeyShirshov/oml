@@ -341,8 +341,8 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			                                         			)
 			                                         	};
             condTrueStatements.AddRange(m_entityClass.Entity.Properties
-                .FindAll(action => !action.Disabled)
-                .ConvertAll<CodeStatement>(action =>
+                .Where(action => !action.Disabled)
+                .Select<PropertyDescription,CodeStatement>(action =>
                     //new CodeExpressionStatement(
                     //    new CodeMethodInvokeExpression(
                     //        new CodeVariableReferenceExpression("idx"),

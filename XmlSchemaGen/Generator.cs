@@ -39,6 +39,41 @@ namespace Worm.CodeGen.XmlGenerator
         }
     }
 
+    public class Pair<T, T2>
+    {
+        internal T _first;
+        internal T2 _second;
+
+        public Pair()
+        {
+        }
+
+        public Pair(T first, T2 second)
+        {
+            this._first = first;
+            this._second = second;
+        }
+
+        public T First
+        {
+            get { return _first; }
+            set { _first = value; }
+        }
+
+        public T2 Second
+        {
+            get { return _second; }
+            set { _second = value; }
+        }
+    }
+
+    public enum relation1to1
+    {
+        Default,
+        Unify,
+        Hierarchy
+    }
+
     public class Generator
     {
         private string _server;
@@ -62,10 +97,10 @@ namespace Worm.CodeGen.XmlGenerator
         }
 
         public void MakeWork(string schemas, string namelike, string file, string merge,
-            bool dr, string name_space, bool unify, bool escape)
+            bool dr, string name_space, relation1to1 rb, bool escape)
         {
             Dictionary<Column, Column> columns = new Dictionary<Column, Column>();
-            List<Pair<string>> proh = new List<Pair<string>>();
+            List<Pair<string>> defferedCols = new List<Pair<string>>();
 
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
@@ -138,7 +173,7 @@ namespace Worm.CodeGen.XmlGenerator
                         while (reader.Read())
                         {
                             Column c = Column.Create(reader);
-                            if (proh.Find((kv) => kv.First == c.FullTableName) == null)
+                            if (defferedCols.Find((kv) => kv.First == c.FullTableName) == null)
                             {
                                 try
                                 {
@@ -147,11 +182,11 @@ namespace Worm.CodeGen.XmlGenerator
                                 catch (ArgumentException ex)
                                 {
                                     string[] attr;
-                                    if (IsPrimaryKey(c, out attr) && columns[c].IsFK)
+                                    if (IsPrimaryKey(c, out attr) && columns[c].IsFK && c.PKCount == 1)
                                     {
-                                        if (unify)
+                                        if (rb == relation1to1.Unify)
                                         {
-                                            proh.Add(new Pair<string>(c.FullTableName, "FOREIGN KEY"));
+                                            defferedCols.Add(new Pair<string>(c.FullTableName, columns[c].FKName));
                                             foreach (Column clm in new List<Column>(columns.Keys))
                                             {
                                                 if (clm.FullTableName == c.FullTableName)
@@ -163,11 +198,11 @@ namespace Worm.CodeGen.XmlGenerator
                                             columns[c].Constraints.AddRange(c.Constraints);
                                         }
                                     }
-                                    else if (IsPrimaryKey(columns[c], out attr) && c.IsFK)
+                                    else if (IsPrimaryKey(columns[c], out attr) && c.IsFK && c.PKCount == 1)
                                     {
-                                        if (unify)
+                                        if (rb == relation1to1.Unify)
                                         {
-                                            proh.Add(new Pair<string>(c.FullTableName, "FOREIGN KEY"));
+                                            defferedCols.Add(new Pair<string>(c.FullTableName, c.FKName));
                                             foreach (Column clm in new List<Column>(columns.Keys))
                                             {
                                                 if (clm.FullTableName == c.FullTableName)
@@ -193,7 +228,7 @@ namespace Worm.CodeGen.XmlGenerator
             if (string.IsNullOrEmpty(name_space))
                 name_space = _db;
 
-            ProcessColumns(columns, file, merge, dr, name_space, proh, escape);
+            ProcessColumns(columns, file, merge, dr, name_space, defferedCols, escape, rb);
         }
 
         #region Helpers
@@ -210,7 +245,7 @@ namespace Worm.CodeGen.XmlGenerator
         }
 
         protected void ProcessColumns(Dictionary<Column, Column> columns, string file, string merge,
-            bool dropColumns, string name_space, List<Pair<string>> prohibited, bool escape)
+            bool dropColumns, string name_space, List<Pair<string>> defferedCols, bool escape, relation1to1 rb)
         {
             OrmObjectsDef odef = null;
 
@@ -231,6 +266,8 @@ namespace Worm.CodeGen.XmlGenerator
                 //File.Create(file);
             }
 
+            List<Pair<Column, PropertyDescription>> notFound = new List<Pair<Column, PropertyDescription>>();
+
             foreach (Column c in columns.Keys)
             {
                 if (c.GetTableColumns(columns.Keys).Count() == 2 &&
@@ -239,7 +276,13 @@ namespace Worm.CodeGen.XmlGenerator
 
                 bool ent, col;
                 EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent, escape);
-                PropertyDescription pd = AppendColumn(columns, c, e, out col, escape);
+                Pair<Column, PropertyDescription> p = null;
+                PropertyDescription pd = AppendColumn(columns, c, e, out col, escape, (clm)=>p = new Pair<Column,PropertyDescription>(clm, null), defferedCols, rb);
+                if (p != null)
+                {
+                    p.Second = pd;
+                    notFound.Add(p);
+                }
                 if (ent)
                 {
                     Console.WriteLine("Create class {0} ({1})", e.Name, e.Identifier);
@@ -256,9 +299,9 @@ namespace Worm.CodeGen.XmlGenerator
                 }
             }
 
-            ProcessProhibited(columns, prohibited, odef, escape);
+            Dictionary<string, EntityDescription> dic = Process1to1Relations(columns, defferedCols, odef, escape, notFound, rb);
 
-            ProcessM2M(columns, odef, escape);
+            ProcessM2M(columns, odef, escape, dic);
 
             if (dropColumns)
             {
@@ -277,7 +320,7 @@ namespace Worm.CodeGen.XmlGenerator
                     }
                     foreach (PropertyDescription pd in col2remove)
                     {
-                        ed.Properties.Remove(pd);
+                        ed.RemoveProperty(pd);
                         Console.WriteLine("Remove: {0}.{1}", ed.Name, pd.Name);
                     }
                 }
@@ -289,7 +332,7 @@ namespace Worm.CodeGen.XmlGenerator
                 {
                     foreach (EntityDescription oe in
                         from k in odef.ActiveEntities
-                        where k != e && 
+                        where k != e &&
                             e.EntityRelations.Count(er => !er.Disabled && er.Entity.Identifier == k.Identifier) == 0
                         select k)
                     {
@@ -298,10 +341,10 @@ namespace Worm.CodeGen.XmlGenerator
                         int idx = 1;
                         foreach (PropertyDescription pd in entityProps)
                         {
-                            int cnt = odef.ActiveRelations.OfType<RelationDescription>().Count(r=>
+                            int cnt = odef.ActiveRelations.OfType<RelationDescription>().Count(r =>
                                 (r.Left.Entity.Identifier == oe.Identifier && r.Right.Entity.Identifier == e.Identifier) ||
                                 (r.Left.Entity.Identifier == e.Identifier && r.Right.Entity.Identifier == oe.Identifier));
-                            
+
                             string accName = null; string prop = null;
                             if (entityProps.Count > 1 || cnt > 0)
                             {
@@ -338,7 +381,8 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        protected void ProcessM2M(Dictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
+        protected void ProcessM2M(Dictionary<Column, Column> columns, OrmObjectsDef odef, bool escape,
+            Dictionary<string, EntityDescription> dic)
         {
             List<Pair<string>> tables = new List<Pair<string>>();
 
@@ -417,9 +461,19 @@ namespace Worm.CodeGen.XmlGenerator
                                         reader.GetString(reader.GetOrdinal("table_schema")),
                                         reader.GetString(reader.GetOrdinal("table_name")), out c, escape),
                                         reader.GetString(reader.GetOrdinal("column_name")), deleteCascade);
+                                if (c)
+                                {
+                                    EntityDescription e = lt.Entity;
+                                    odef.RemoveEntity(e);
+                                    lt.Entity = dic[e.Identifier];
+                                }
                                 targets.Add(lt);
                             }
                         }
+
+                        if (targets.Count != 2)
+                            continue;
+
                         if (targets[0].Entity.Name == targets[1].Entity.Name)
                         {
                             LinkTarget t = targets[0];
@@ -447,7 +501,7 @@ namespace Worm.CodeGen.XmlGenerator
                                     //    r.Left.AccessorName == newRel.Left.AccessorName) ||
                                     //    (r.Left.Entity.Identifier == newRel.Entity.Identifier &&
                                     //    r.Right.AccessorName == newRel.Left.AccessorName)) > 0)
-                                        
+
                                     //    newRel.Left.AccessorName = newRel.SourceFragment.Identifier + newRel.Left.AccessorName;
                                 }
 
@@ -458,7 +512,7 @@ namespace Worm.CodeGen.XmlGenerator
                                     else if (newRel.Right.FieldName.EndsWith("id", StringComparison.InvariantCultureIgnoreCase))
                                         newRel.Right.AccessorName = newRel.Right.FieldName.Substring(0, newRel.Right.FieldName.Length - 2);
                                     else
-                                        newRel.Right.AccessorName = newRel.Entity.Name+postFix;
+                                        newRel.Right.AccessorName = newRel.Entity.Name + postFix;
 
                                     //if (odef.ActiveRelations.OfType<SelfRelationDescription>()
                                     //    .Count(r => r.Entity.Identifier == newRel.Entity.Identifier &&
@@ -477,17 +531,21 @@ namespace Worm.CodeGen.XmlGenerator
                         else
                         {
                             RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second, escape), ued);
-                            if (odef.GetSimilarRelation(newRel) == null)
+                            if (odef.HasSimilarRelationM2M(newRel))
                             {
                                 if (string.IsNullOrEmpty(newRel.Left.AccessorName) ||
                                     string.IsNullOrEmpty(newRel.Right.AccessorName))
                                 {
                                     var lst = from r in odef.Relations.OfType<RelationDescription>()
-                                              where 
-                                                !ReferenceEquals(r.Left, newRel.Left) && 
+                                              where
+                                                !ReferenceEquals(r.Left, newRel.Left) &&
                                                 !ReferenceEquals(r.Right, newRel.Right) &&
-                                                ((r.Left.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
-                                                    && (r.Right.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Left.AccessorName)))
+                                                (
+                                                    ((r.Left.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
+                                                        && (r.Right.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Left.AccessorName))) ||
+                                                    ((r.Left.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
+                                                        && (r.Right.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Left.AccessorName)))
+                                                )
                                               select r;
 
                                     if (lst.Count() > 0)
@@ -505,9 +563,9 @@ namespace Worm.CodeGen.XmlGenerator
                                         if (string.IsNullOrEmpty(newRel.Right.AccessorName))
                                             newRel.Right.AccessorName = newRel.SourceFragment.Name + newRel.Left.Entity.Name;
                                     }
-                                }
-                                odef.Relations.Add(newRel);
+                                }                                
                             }
+                            odef.Relations.Add(newRel);
                         }
                     }
                 }
@@ -569,11 +627,12 @@ namespace Worm.CodeGen.XmlGenerator
         }
 
         protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c,
-            EntityDescription e, out bool created, bool escape)
+            EntityDescription e, out bool created, bool escape, Action<Column> notFound, 
+            List<Pair<string>> defferedCols, relation1to1 rb)
         {
             OrmObjectsDef odef = e.OrmObjectsDef;
             created = false;
-            PropertyDescription pe = e.Properties.Find(delegate(PropertyDescription pd)
+            PropertyDescription pe = e.Properties.SingleOrDefault((PropertyDescription pd)=>
             {
                 if (pd.FieldName == c.ColumnName || pd.FieldName.TrimEnd(']').TrimStart('[') == c.ColumnName)
                     return true;
@@ -596,25 +655,31 @@ namespace Worm.CodeGen.XmlGenerator
                 }
                 else
                 {
-                    pt = GetType(c, columns, odef, escape);
+                    pt = GetType(c, columns, odef, escape, notFound, defferedCols);
                 }
+
+                SourceFragmentDescription sfd = GetSourceFragment(odef, c.Schema, c.Table, escape);
 
                 pe = new PropertyDescription(name,
                      null, attrs, null, pt, c.ColumnName,
-                     e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public)
+                     sfd, AccessLevel.Private, AccessLevel.Public)
                      {
                          DbTypeName = c.DbType,
                          DbTypeNullable = c.IsNullable,
                          DbTypeSize = c.DbSize
                      };
 
-                e.Properties.Add(pe);
+                e.AddProperty(pe);
                 created = true;
 
                 if (c.IsFK && pk)
                 {
-                    var pt2 = GetRelatedType(c, columns, odef, escape);
-                    if (!pt2.Entity.IsAssignableFrom(e))
+                    var pt2 = GetRelatedType(c, columns, odef, escape, null, defferedCols);
+                    if (rb == relation1to1.Hierarchy)
+                    {
+                        e.BaseEntity = pt2.Entity;
+                    }
+                    else if (!pt2.Entity.IsAssignableFrom(e))
                     {
                         attrs = new string[] { "ReadOnly", "SyncInsert" };
                         string propName = pt2.Entity.Name;
@@ -624,13 +689,13 @@ namespace Worm.CodeGen.XmlGenerator
 
                         pe = new PropertyDescription(propName,
                             null, attrs, null, pt2, c.ColumnName,
-                            e.SourceFragments[0], AccessLevel.Private, AccessLevel.Public)
+                            sfd, AccessLevel.Private, AccessLevel.Public)
                         {
                             DbTypeName = c.DbType,
                             DbTypeNullable = c.IsNullable,
                             DbTypeSize = c.DbSize
                         };
-                        e.Properties.Add(pe);
+                        e.AddProperty(pe);
                     }
                 }
             }
@@ -642,7 +707,7 @@ namespace Worm.CodeGen.XmlGenerator
                 pe.Attributes = Merge(pe.Attributes, attrs);
 
                 if (!pe.PropertyType.IsUserType)
-                    pe.PropertyType = GetType(c, columns, odef, escape);
+                    pe.PropertyType = GetType(c, columns, odef, escape, null, defferedCols);
 
                 pe.DbTypeName = c.DbType;
                 pe.DbTypeNullable = c.IsNullable;
@@ -698,25 +763,50 @@ namespace Worm.CodeGen.XmlGenerator
                 return columnName;
         }
 
-        protected void ProcessProhibited(Dictionary<Column, Column> columns,
-            List<Pair<string>> prohibited, OrmObjectsDef odef, bool escape)
+        protected Dictionary<string, EntityDescription> Process1to1Relations(Dictionary<Column, Column> columns,
+            List<Pair<string>> defferedCols, OrmObjectsDef odef, bool escape,
+            List<Pair<Column, PropertyDescription>> notFound, relation1to1 rb)
         {
-            foreach (Pair<string> p in prohibited)
+            List<Pair<string>> defferedCols2 = new List<Pair<string>>();
+            Dictionary<string, EntityDescription> dic = new Dictionary<string, EntityDescription>();
+            do
             {
-                TypeDescription td = GetRelatedType(p.Second, columns, odef, escape);
-                if (td.Entity != null)
+                foreach (Pair<string> p in defferedCols)
                 {
-                    EntityDescription ed = td.Entity;
-                    string[] ss = p.First.Split('.');
-                    AppendColumns(columns, ed, ss[0], ss[1], p.Second, escape);
-                    var t = new SourceFragmentRefDescription(GetSourceFragment(odef, ss[0], ss[1], escape));
-                    if (!ed.SourceFragments.Contains(t))
-                        ed.SourceFragments.Add(t);
-                    //SourceFragmentDescription t = GetSourceFragment(odef, ss[0], ss[1]);
-                    //if (!ed.SourceFragments.Contains(t))
-                    //    ed.SourceFragments.Add(t);
+                    string columnName = null;
+                    TypeDescription td = GetRelatedType(p.Second, columns, odef, escape, defferedCols, ref columnName);
+                    if (td == null)
+                    {
+                        defferedCols2.Add(p);
+                        continue;
+                    }
+
+                    if (td.Entity != null)
+                    {
+                        EntityDescription ed = td.Entity;
+                        string[] ss = p.First.Split('.');
+                        PropertyDescription pd = AppendColumns(columns, ed, ss[0], ss[1], p.Second, escape, notFound, defferedCols, rb);
+                        var t = new SourceFragmentRefDescription(GetSourceFragment(odef, ss[0], ss[1], escape));
+                        dic[GetEntityName(t.Selector, t.Name)] = ed;
+                        if (!ed.SourceFragments.Contains(t))
+                        {
+                            ed.SourceFragments.Add(t);
+                            t.AnchorTable = ed.SourceFragments[0];
+                            t.JoinType = SourceFragmentRefDescription.JoinTypeEnum.outer;
+                            t.Conditions.Add(new SourceFragmentRefDescription.Condition(
+                                ed.PkProperty.FieldName, columnName));
+                        }
+                        Column c = new Column(t.Selector, t.Name, columnName, false, null, false, 1);
+                        foreach (Pair<Column, PropertyDescription> p2 in notFound.FindAll((ff) => ff.First.Equals(c)))
+                        {
+                            p2.Second.PropertyType = td;
+                        }
+                    }
                 }
-            }
+                defferedCols = new List<Pair<string>>(defferedCols2);
+                defferedCols2.Clear();
+            } while (defferedCols.Count != 0);
+            return dic;
         }
 
         private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table, bool escape)
@@ -739,15 +829,21 @@ namespace Worm.CodeGen.XmlGenerator
             return t;
         }
 
-        protected void AppendColumns(Dictionary<Column, Column> columns, EntityDescription ed,
-            string schema, string table, string constraint, bool escape)
+        protected PropertyDescription AppendColumns(Dictionary<Column, Column> columns, EntityDescription ed,
+            string schema, string table, string constraint, bool escape, List<Pair<Column,PropertyDescription>> notFound,
+            List<Pair<string>> defferedCols, relation1to1 rb)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = @"select c.table_schema,@rtbl table_name,c.column_name,is_nullable,data_type,tc.constraint_type,cc.constraint_name from INFORMATION_SCHEMA.columns c
+                    cmd.CommandText = @"select c.table_schema,c.table_name,c.column_name,is_nullable,data_type,tc.constraint_type,cc.constraint_name, " + AppendIdentity() + @",(select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
+                        join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE cc on 
+                        tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
+                        where c.table_name = tc.table_name and c.table_schema = tc.table_schema
+                        and tc.constraint_type = 'PRIMARY KEY'
+                        ) pk_cnt,c.character_maximum_length from INFORMATION_SCHEMA.columns c
 						left join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE cc on c.table_name = cc.table_name and c.table_schema = cc.table_schema and c.column_name = cc.column_name and cc.constraint_name != @cns
 						left join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc on c.table_name = cc.table_name and c.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
 						where c.table_name = @tbl and c.table_schema = @schema
@@ -762,10 +858,15 @@ namespace Worm.CodeGen.XmlGenerator
                     s.Value = schema;
                     cmd.Parameters.Add(s);
 
-                    DbParameter rt = cmd.CreateParameter();
-                    rt.ParameterName = "rtbl";
-                    rt.Value = ed.SourceFragments[0].Name.Split('.')[1].Trim(new char[] { '[', ']' });
-                    cmd.Parameters.Add(rt);
+                    //DbParameter rt = cmd.CreateParameter();
+                    //rt.ParameterName = "rtbl";
+                    //rt.Value = ed.SourceFragments[0].Name.Trim(new char[] { '[', ']' });
+                    //cmd.Parameters.Add(rt);
+
+                    //DbParameter rs = cmd.CreateParameter();
+                    //rs.ParameterName = "rsch";
+                    //rs.Value = ed.SourceFragments[0].Selector.Trim(new char[] { '[', ']' });
+                    //cmd.Parameters.Add(rs);
 
                     DbParameter cns = cmd.CreateParameter();
                     cns.ParameterName = "cns";
@@ -783,7 +884,13 @@ namespace Worm.CodeGen.XmlGenerator
                             {
                                 columns.Add(c, c);
                                 bool cr;
-                                PropertyDescription pd = AppendColumn(columns, c, ed, out cr, escape);
+                                Pair<Column, PropertyDescription> pfd = null;
+                                PropertyDescription pd = AppendColumn(columns, c, ed, out cr, escape, (clm) => pfd = new Pair<Column, PropertyDescription>(clm, null), defferedCols, rb);
+                                if (pfd != null)
+                                {
+                                    pfd.Second = pd;
+                                    notFound.Add(pfd);
+                                }
                                 if (String.IsNullOrEmpty(pd.Description))
                                 {
                                     pd.Description = "Autogenerated from table " + schema + "." + table;
@@ -793,15 +900,17 @@ namespace Worm.CodeGen.XmlGenerator
                     }
                 }
             }
+            return null;
         }
 
-        protected TypeDescription GetType(Column c, IDictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
+        protected TypeDescription GetType(Column c, IDictionary<Column, Column> columns,
+            OrmObjectsDef odef, bool escape, Action<Column> notFound, List<Pair<string>> defferedCols)
         {
             TypeDescription t = null;
 
             if (c.IsFK)
             {
-                t = GetRelatedType(c, columns, odef, escape);
+                t = GetRelatedType(c, columns, odef, escape, notFound, defferedCols);
             }
             else
             {
@@ -810,7 +919,8 @@ namespace Worm.CodeGen.XmlGenerator
             return t;
         }
 
-        protected TypeDescription GetRelatedType(Column col, IDictionary<Column, Column> columns, OrmObjectsDef odef, bool escape)
+        protected TypeDescription GetRelatedType(Column col, IDictionary<Column, Column> columns,
+            OrmObjectsDef odef, bool escape, Action<Column> notFound, List<Pair<string>> defferedCols)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
@@ -855,7 +965,26 @@ namespace Worm.CodeGen.XmlGenerator
                             }
                             else
                             {
-                                return GetClrType(col.DbType, col.IsNullable, odef);
+                                Pair<string> p = defferedCols.Find((pp) => pp.First == c.FullTableName);
+                                if (p != null)
+                                {
+                                    string clm = null;
+                                    reader.Close();
+                                    try
+                                    {
+                                        return GetRelatedType(p.Second, columns, odef, escape, defferedCols, ref clm);
+                                    }
+                                    catch (InvalidDataException ex)
+                                    {
+                                        notFound(c);
+                                        return GetClrType(col.DbType, col.IsNullable, odef);
+                                    }
+                                }
+                                else
+                                {
+                                    notFound(c);
+                                    return GetClrType(col.DbType, col.IsNullable, odef);
+                                }
                             }
                         }
                     }
@@ -865,14 +994,16 @@ namespace Worm.CodeGen.XmlGenerator
         }
 
         protected TypeDescription GetRelatedType(string constraint, IDictionary<Column, Column> columns,
-            OrmObjectsDef odef, bool escape)
+            OrmObjectsDef odef, bool escape, List<Pair<string>> defferedCols, ref string clm)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
                 using (DbCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = @"select tc.table_schema,tc.table_name,cc.column_name from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                    cmd.CommandText = @"select tc.table_schema,tc.table_name,cc.column_name, (
+                        select ccu.column_name from INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE ccu where ccu.CONSTRAINT_NAME = @cn
+                        ) clm  from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
 						join INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc on tc.constraint_name = rc.unique_constraint_name
 						join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE cc on tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and tc.constraint_name = cc.constraint_name
 						where rc.constraint_name = @cn";
@@ -890,19 +1021,42 @@ namespace Worm.CodeGen.XmlGenerator
                             Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
                                 reader.GetString(reader.GetOrdinal("table_name")),
                                 reader.GetString(reader.GetOrdinal("column_name")), false, null, false, 1);
+                            clm = reader.GetString(reader.GetOrdinal("clm"));
                             if (columns.ContainsKey(c))
                             {
                                 string id = "t" + Capitalize(c.Table);
-                                TypeDescription t = odef.GetType(id, true);
+                                TypeDescription t = odef.GetType(id, false);
                                 if (t == null)
                                 {
                                     bool cr;
                                     t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr, escape));
                                     if (cr)
-                                        throw new InvalidDataException(String.Format("Entity for column {0} was referenced but not created.", c.ToString()));
+                                    {
+                                        Pair<string> p = defferedCols.Find((pp) => pp.First == c.FullTableName);
+                                        if (p != null)
+                                        {
+                                            //odef.RemoveEntity(t.Entity);
+                                            reader.Close();
+                                            return GetRelatedType(p.Second, columns, odef, escape, defferedCols, ref clm);
+                                        }
+                                        else
+                                        {
+                                            odef.RemoveEntity(t.Entity);
+                                            throw new InvalidDataException(String.Format("Entity for column {0} was referenced but not created.", c.ToString()));
+                                        }
+                                    }
                                     odef.Types.Add(t);
                                 }
                                 return t;
+                            }
+                            else
+                            {
+                                Pair<string> p = defferedCols.Find((pp) => pp.First == c.FullTableName);
+                                if (p != null)
+                                {
+                                    reader.Close();
+                                    return GetRelatedType(p.Second, columns, odef, escape, defferedCols, ref clm);
+                                }
                             }
                         }
                     }

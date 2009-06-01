@@ -393,77 +393,79 @@ namespace VsMultipleFileGenerator
 
             // now we can start our work, iterate across all the 'elements' in our source file 
             IEnumerable<IterativeElementType> elements = GenerateElements(inputFileContent);
-            int count = 0;
-            if (typeof(System.Collections.ICollection).IsAssignableFrom(elements.GetEnumerator().GetType()))
-                count = (elements.GetEnumerator() as System.Collections.ICollection).Count;
-            int i = 0;
-            string firstFileName = null;
-            foreach (IterativeElementType element in elements)
+            if (elements != null)
             {
-                // obtain a name for this target file
-                string fileName = GetFileName(element);
-
-                // generate our target file content
-                byte[] data = GenerateContent(element);
-
-                if (returnValue == null)
+                int count = 0;
+                if (typeof(System.Collections.ICollection).IsAssignableFrom(elements.GetEnumerator().GetType()))
+                    count = (elements.GetEnumerator() as System.Collections.ICollection).Count;
+                int i = 0;
+                string firstFileName = null;
+                foreach (IterativeElementType element in elements)
                 {
-                    returnValue = data;
-                    firstFileName = fileName;
-                    continue;
-                }
+                    // obtain a name for this target file
+                    string fileName = GetFileName(element);
 
-                // add it to the tracking cache
-                newFileNames.Add(fileName);
-                // fully qualify the file on the filesystem
-                string strFile = Path.Combine(
-                    wszInputFilePath.Substring(0, wszInputFilePath.LastIndexOf(Path.DirectorySeparatorChar)),
-                    fileName);
-                // create the file
-                bool err = true;
-                try
-                {
+                    // generate our target file content
+                    byte[] data = GenerateContent(element);
 
-                    using (FileStream fs = File.Create(strFile))
+                    if (returnValue == null)
                     {
-                        // write it out to the stream
-                        fs.Write(data, 0, data.Length);
+                        returnValue = data;
+                        firstFileName = fileName;
+                        continue;
                     }
 
-                    // add the newly generated file to the solution, as a child of the source file...
-                    EnvDTE.ProjectItem itm = item.ProjectItems.AddFromFile(strFile);
-                    /*
-                     * Here you may wish to perform some addition logic
-                     * such as, setting a custom tool for the target file if it
-                     * is intented to perform its own generation process.
-                     * Or, set the target file as an 'Embedded Resource' so that
-                     * it is embedded into the final Assembly.
-
-                    EnvDTE.Property prop = itm.Properties.Item("CustomTool");
-                    //// set to embedded resource
-                    itm.Properties.Item("BuildAction").Value = 3;
-                    if (String.IsNullOrEmpty((string)prop.Value) || !String.Equals((string)prop.Value, typeof(AnotherCustomTool).Name))
+                    // add it to the tracking cache
+                    newFileNames.Add(fileName);
+                    // fully qualify the file on the filesystem
+                    string strFile = Path.Combine(
+                        wszInputFilePath.Substring(0, wszInputFilePath.LastIndexOf(Path.DirectorySeparatorChar)),
+                        fileName);
+                    // create the file
+                    bool err = true;
+                    try
                     {
-                        prop.Value = typeof(AnotherCustomTool).Name;
+
+                        using (FileStream fs = File.Create(strFile))
+                        {
+                            // write it out to the stream
+                            fs.Write(data, 0, data.Length);
+                        }
+
+                        // add the newly generated file to the solution, as a child of the source file...
+                        EnvDTE.ProjectItem itm = item.ProjectItems.AddFromFile(strFile);
+                        /*
+                         * Here you may wish to perform some addition logic
+                         * such as, setting a custom tool for the target file if it
+                         * is intented to perform its own generation process.
+                         * Or, set the target file as an 'Embedded Resource' so that
+                         * it is embedded into the final Assembly.
+
+                        EnvDTE.Property prop = itm.Properties.Item("CustomTool");
+                        //// set to embedded resource
+                        itm.Properties.Item("BuildAction").Value = 3;
+                        if (String.IsNullOrEmpty((string)prop.Value) || !String.Equals((string)prop.Value, typeof(AnotherCustomTool).Name))
+                        {
+                            prop.Value = typeof(AnotherCustomTool).Name;
+                        }
+                        */
+                        err = false;
                     }
-                    */
-                    err = false;
-                }
-                finally
-                {
-                    if (err && File.Exists(strFile))
-                        File.Delete(strFile);
-                }
+                    finally
+                    {
+                        if (err && File.Exists(strFile))
+                            File.Delete(strFile);
+                    }
 
-                if (this.CodeGeneratorProgress != null)
-                {
-                    //Report that we are 1/2 done
-                    this.CodeGeneratorProgress.Progress((uint)i, (uint)count);
-                }
+                    if (this.CodeGeneratorProgress != null)
+                    {
+                        //Report that we are 1/2 done
+                        this.CodeGeneratorProgress.Progress((uint)i, (uint)count);
+                    }
 
-                i++;
+                    i++;
+                }
             }
-
             //if (i == 1)
             //    _fileName = firstFileName;
             // perform some clean-up, making sure we delete any old (stale) target-files

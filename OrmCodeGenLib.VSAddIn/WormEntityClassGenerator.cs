@@ -163,8 +163,10 @@ namespace Worm.CodeGen.VSTool
                             ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
                         }
                     }
-                    catch
+                    catch (Exception e)
                     {
+                        this.GeneratorError(4, e.ToString(), 1, 1);
+                        //Returning null signifies that generation has failed
                         return null;
                     }
                 }

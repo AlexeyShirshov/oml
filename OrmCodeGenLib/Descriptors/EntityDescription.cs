@@ -69,7 +69,7 @@ namespace Worm.CodeGen.Core.Descriptors
             }
         }
 
-        public List<PropertyDescription> Properties
+        public IEnumerable<PropertyDescription> Properties
         {
             get { return _properties; }
         }
@@ -148,7 +148,7 @@ namespace Worm.CodeGen.Core.Descriptors
 
         public PropertyDescription GetProperty(string propertyName, bool throwNotFoundException)
         {
-            PropertyDescription result = Properties.Find(match => match.Name == propertyName);
+            PropertyDescription result = Properties.SingleOrDefault(match => match.Name == propertyName);
             if (result == null && throwNotFoundException)
                 throw new KeyNotFoundException(
                     string.Format("Property with name '{0}' in entity '{1}' not found.", propertyName, Identifier));
@@ -331,7 +331,7 @@ namespace Worm.CodeGen.Core.Descriptors
         private static EntityDescription MergeEntities(EntityDescription oldOne, EntityDescription newOne)
         {
             EntityDescription resultOne =
-                new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description ?? oldOne.Description,
+                new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description ?? (oldOne==null?null:oldOne.Description),
                                       newOne.OrmObjectsDef);
             if (oldOne != null)
             {
@@ -360,7 +360,7 @@ namespace Worm.CodeGen.Core.Descriptors
                 PropertyDescription newProperty1 = newProperty;
                 if (newOne.SuppressedProperties.Exists(match => match.Name == newProperty1.Name))
                     prop.IsSuppressed = true;
-                resultOne.Properties.Add(prop);
+                resultOne.AddProperty(prop);
             }
 
             foreach (PropertyDescription newProperty in newOne.SuppressedProperties)
@@ -414,7 +414,7 @@ namespace Worm.CodeGen.Core.Descriptors
                                 isRefreshed = true;
                             }
                         }
-                        resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
+                        resultOne.InsertProperty(resultOne.Properties.Count() - newOne.Properties.Count(),
                                                 new PropertyDescription(resultOne, oldProperty.Name, oldProperty.PropertyAlias,
                                                                         oldProperty.Attributes,
                                                                         oldProperty.Description,
@@ -478,11 +478,11 @@ namespace Worm.CodeGen.Core.Descriptors
             }
         }
 
-        public List<PropertyDescription> PkProperties
+        public IEnumerable<PropertyDescription> PkProperties
         {
             get
             {
-                return Properties.FindAll(p => p.HasAttribute(Entities.Meta.Field2DbRelations.PK));
+                return Properties.Where(p => p.HasAttribute(Entities.Meta.Field2DbRelations.PK));
             }
         }
 
@@ -490,7 +490,7 @@ namespace Worm.CodeGen.Core.Descriptors
         {
             get
             {
-                return Properties.Exists(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
+                return Properties.Any(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
             }
         }
 
@@ -498,7 +498,7 @@ namespace Worm.CodeGen.Core.Descriptors
         {
             get
             {
-                return CompleteEntity.Properties.Exists(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
+                return CompleteEntity.Properties.Any(p => !p.Disabled && !string.IsNullOrEmpty(p.DefferedLoadGroup));
             }
         }
 
@@ -557,5 +557,24 @@ namespace Worm.CodeGen.Core.Descriptors
 
             return baseProperties;
         }
+
+        public void AddProperty(PropertyDescription pe)
+        {
+            pe.Entity = this;
+            _properties.Add(pe);
+        }
+
+        public void RemoveProperty(PropertyDescription pe)
+        {
+            pe.Entity = null;
+            _properties.Remove(pe);
+        }
+
+        public void InsertProperty(int pos, PropertyDescription pe)
+        {
+            pe.Entity = this;
+            _properties.Insert(pos, pe);
+        }
+
     }
 }

@@ -220,7 +220,7 @@ namespace TestsCodeGenLib
 
             parser.FillProperties(entity);
 
-            Assert.AreEqual<int>(8, entity.Properties.Count);
+            Assert.AreEqual<int>(8, entity.Properties.Count());
             PropertyDescription prop;
 
             prop = entity.GetProperty("ID");
@@ -307,7 +307,7 @@ namespace TestsCodeGenLib
 
             parser.FillProperties(entity);
 
-            Assert.AreEqual<int>(6, entity.Properties.Count);
+            Assert.AreEqual<int>(6, entity.Properties.Count());
             PropertyDescription prop;
 
             prop = entity.GetProperty("Identifier1");

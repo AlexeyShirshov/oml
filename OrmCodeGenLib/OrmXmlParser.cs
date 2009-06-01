@@ -479,7 +479,7 @@ namespace Worm.CodeGen.Core
                     property.DbTypeNullable = XmlConvert.ToBoolean(dbTypeNullableAttribute);
             	property.DefferedLoadGroup = defferedLoadGroup;
 
-                entity.Properties.Add(property);
+                entity.AddProperty(property);
             }
         }
 
@@ -645,7 +645,7 @@ namespace Worm.CodeGen.Core
 			}
 		}
 
-    	internal protected void FillEntityTables(EntityDescription entity)
+        internal protected void FillEntityTables(EntityDescription entity)
         {
             XmlNodeList tableNodes;
             XmlNode entityNode;
@@ -661,7 +661,7 @@ namespace Worm.CodeGen.Core
 
             foreach (XmlNode tableNode in tableNodes)
             {
-                XmlElement tableElement = (XmlElement) tableNode;
+                XmlElement tableElement = (XmlElement)tableNode;
                 string tableId = tableElement.GetAttribute("ref");
                 var table = entity.OrmObjectsDef.GetSourceFragment(tableId);
                 if (table == null)
@@ -673,6 +673,10 @@ namespace Worm.CodeGen.Core
                 if (!string.IsNullOrEmpty(anchorId))
                 {
                     tableRef.AnchorTable = entity.OrmObjectsDef.GetSourceFragment(anchorId);
+                    string jt = tableElement.GetAttribute("joinType");
+                    if (string.IsNullOrEmpty(jt))
+                        jt = "inner";
+                    tableRef.JoinType = (SourceFragmentRefDescription.JoinTypeEnum)Enum.Parse(typeof(SourceFragmentRefDescription.JoinTypeEnum), jt);
                     var joinNodes = tableElement.SelectNodes(string.Format("{0}:join", OrmObjectsDef.NS_PREFIX), _nsMgr);
                     foreach (XmlElement joinNode in joinNodes)
                     {
@@ -686,9 +690,9 @@ namespace Worm.CodeGen.Core
                 entity.SourceFragments.Add(tableRef);
             }
 
-			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", OrmObjectsDef.NS_PREFIX), _nsMgr);
-        	string inheritsTablesValue = ((XmlElement) tablesNode).GetAttribute("inheritsBase");
-        	entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
+            XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            string inheritsTablesValue = ((XmlElement)tablesNode).GetAttribute("inheritsBase");
+            entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
         }
 
         internal protected void Read()

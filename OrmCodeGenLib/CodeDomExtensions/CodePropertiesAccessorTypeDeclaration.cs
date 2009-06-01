@@ -1,7 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using Worm.CodeGen.Core.Descriptors;
-
+using System.Linq;
 namespace Worm.CodeGen.Core.CodeDomExtensions
 {
     public class CodePropertiesAccessorTypeDeclaration : CodeTypeDeclaration
@@ -17,13 +17,13 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
         void OnPopulateMemebers(object sender, EventArgs e)
         {
-            if (Entity.BaseEntity != null && Entity.BaseEntity.Properties.Exists(p => p.Group != null && p.Group.Name == Group.Name))
+            if (Entity.BaseEntity != null && Entity.BaseEntity.Properties.Any(p => p.Group != null && p.Group.Name == Group.Name))
                 throw new OrmCodeGenException(
                     string.Format(
                         "В сущности {0} описана группа {1} перекрывающая одноименную группу базовой сущности {2}.",
                         Entity.Name, Group.Name, Entity.BaseEntity.Name));
 
-            var properties = Entity.Properties.FindAll(p => p.Group == Group);
+            var properties = Entity.Properties.Where(p => p.Group == Group);
             CodeTypeReference entityClassTypeReference = OrmCodeGenHelper.GetEntityClassTypeReference(Entity);
 
             var entityField = new CodeMemberField(entityClassTypeReference,
