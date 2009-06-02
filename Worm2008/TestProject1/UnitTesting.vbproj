@@ -121,6 +121,7 @@
     <Compile Include="Query\Cache.vb" />
     <Compile Include="Query\QueryTest.vb" />
     <Compile Include="Relations\TestM2M.vb" />
+    <Compile Include="Relations\TestModify.vb" />
     <Compile Include="Relations\TestRel.vb" />
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\Table1to1.vb" />

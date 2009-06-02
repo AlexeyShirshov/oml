@@ -242,7 +242,7 @@ End Class
         Assert.IsTrue(c.Equals(New Condition(f, Nothing, ConditionOperator.Or)))
         Assert.IsFalse(c.Equals(Nothing))
 
-        Assert.AreEqual(1, c.GetAllFilters.Count)
+        Assert.AreEqual(1, c.GetAllFilters.Length)
 
         c.MakeQueryStmt(Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
@@ -291,7 +291,7 @@ End Class
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Assert.AreEqual(f.Template.GetStaticString(schema, Nothing) & " or " & f2.Template.GetStaticString(Nothing, Nothing), c.Template.GetStaticString(schema, Nothing))
-        Assert.AreEqual(2, c.GetAllFilters.Count)
+        Assert.AreEqual(2, c.GetAllFilters.Length)
 
         Assert.AreEqual(f.ToString & " or " & f2.ToString, c.ToString)
         Assert.AreEqual(c, New Condition(f, f2, ConditionOperator.Or))
@@ -475,7 +475,7 @@ End Class
 
         Assert.AreEqual("TestProject1.EntityIDGreaterEqualThan", f.Template.GetStaticString(Nothing, Nothing))
 
-        Assert.AreEqual(1, f.GetAllFilters.Count)
+        Assert.AreEqual(1, f.GetAllFilters.Length)
         Dim gen As New SQLGenerator
         f.MakeSingleQueryStmt(Nothing, gen, Nothing, Nothing, Nothing, Nothing)
     End Sub

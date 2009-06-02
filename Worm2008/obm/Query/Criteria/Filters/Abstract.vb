@@ -15,7 +15,7 @@ Namespace Criteria.Core
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-        Function GetAllFilters() As ICollection(Of IFilter)
+        Function GetAllFilters() As IFilter()
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
         Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter

@@ -174,8 +174,53 @@ Imports Worm.Entities.Meta
 
                     CType(e, Worm.Entities.IRelations).Add(e2)
 
-                    Assert.IsFalse(CType(e2, Worm.Entities.IRelations).GetCmd(GetType(Entity)).ToList(Of Entity)(mgr).Contains(e))
+                    Assert.IsTrue(CType(e2, Worm.Entities.IRelations).GetRelation(GetType(Entity)).Added.Contains(e))
 
+                    s.AcceptModifications()
+                End Using
+
+                l = CType(e, Worm.Entities.IRelations).GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
+                Assert.IsNotNull(l)
+                Assert.AreEqual(5, l.Count)
+
+                Assert.IsTrue(l.Contains(e2))
+
+                Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Entities.IRelations).GetCmd(GetType(Entity)).ToList(Of Entity)(mgr)
+                Assert.IsTrue(l2.Contains(e))
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2MAddCmd()
+        Dim t As New TestManager
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
+            mgr.Cache.NewObjectManager = t
+            Dim q As New QueryCmd()
+            q.SelectEntity(GetType(Entity))
+            Assert.IsNotNull(q)
+
+            q.Filter = Ctor.prop(GetType(Entity), "ID").eq(1)
+
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
+
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Entities.IRelations).GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
+            Assert.IsNotNull(l)
+            Assert.AreEqual(4, l.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Dim e2 As Entity4 = Nothing
+
+                Using s As New ModificationsTracker(mgr)
+                    e2 = s.CreateNewObject(Of Entity4)()
+
+                    e.GetCmd(GetType(Entity4)).Add(e2)
+
+                    Assert.IsTrue(CType(e2, Worm.Entities.IRelations).GetRelation(GetType(Entity)).Added.Contains(e))
+                    Assert.IsTrue(e2.InternalProperties.HasChanges)
+                    Assert.IsTrue(e.InternalProperties.HasM2MChanges)
                     s.AcceptModifications()
                 End Using
 

@@ -2655,7 +2655,8 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As IKeyEntity, ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation, _
+        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As IKeyEntity, _
+            ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation, _
             ByVal pmgr As ParamMgr) As String
 
             If obj Is Nothing Then
@@ -2670,9 +2671,11 @@ l1:
                 Throw New ArgumentNullException("entry")
             End If
 
+            Dim almgr As IPrepareTable = AliasMgr.Create
             Dim sb As New StringBuilder
             Dim tbl As SourceFragment = relation.Table
-            Dim param_relation As M2MRelationDesc = mpe.GetRevM2MRelation(obj.GetType, relation.Rel.GetRealType(mpe), Not relation.non_direct)
+            Dim param_relation As M2MRelationDesc = mpe.GetRevM2MRelation(obj.GetType, relation.Rel.GetRealType(mpe), relation.Key)
+            Dim al As String = almgr.AddTable(tbl, Nothing)
 
             If param_relation Is Nothing Then
                 Throw New ArgumentException("Invalid relation")
@@ -2680,15 +2683,24 @@ l1:
 
             Dim pk As String = Nothing
             If entry.HasDeleted Then
-                sb.Append("delete from ").Append(GetTableName(tbl))
-                sb.Append(" where ").Append(param_relation.Column).Append(" = ")
+                sb.Append("delete ").Append(al).Append(" from ").Append(GetTableName(tbl)).Append(" ").Append(al)
+                sb.Append(" where ").Append(al).Append(".").Append(param_relation.Column).Append(" = ")
                 pk = pmgr.AddParam(pk, obj.Identifier)
-                sb.Append(pk).Append(" and ").Append(relation.Column).Append(" in(")
+                sb.Append(pk).Append(" and ").Append(al).Append(".").Append(relation.Column).Append(" in(")
                 For Each toDel As IKeyEntity In entry.Deleted
                     sb.Append(toDel.Identifier).Append(",")
                 Next
                 sb.Length -= 1
-                sb.AppendLine(")")
+                sb.Append(")")
+                If relation.Constants IsNot Nothing Then
+                    For Each f As IFilter In relation.Constants
+                        sb.Append(" and ")
+                        sb.Append(f.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, pmgr))
+                    Next
+                End If
+
+                sb.Append(EndLine)
+
                 If entry.HasAdded Then
                     sb.Append("if ").Append(LastError).AppendLine(" = 0 begin")
                 End If
@@ -2701,9 +2713,23 @@ l1:
                     End If
                     sb.Append("if ").Append(LastError).Append(" = 0 ")
                     sb.Append("insert into ").Append(GetTableName(tbl)).Append("(")
-                    sb.Append(param_relation.Column).Append(",").Append(relation.Column).Append(") values(")
+                    sb.Append(param_relation.Column).Append(",").Append(relation.Column)
+                    Dim consts As New List(Of String)
+                    If relation.Constants IsNot Nothing Then
+                        For Each f As ITemplateFilter In relation.Constants
+                            sb.Append(",")
+                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, pmgr, Nothing)
+                            sb.Append(p.First)
+                            consts.Add(p.Second)
+                        Next
+                    End If
+                    sb.Append(") values(")
                     pk = pmgr.AddParam(pk, obj.Identifier)
-                    sb.Append(pk).Append(",").Append(toAdd.Identifier).AppendLine(")")
+                    sb.Append(pk).Append(",").Append(toAdd.Identifier)
+                    For Each s As String In consts
+                        sb.Append(",").Append(s)
+                    Next
+                    sb.AppendLine(")")
                 Next
 
                 If entry.HasDeleted Then

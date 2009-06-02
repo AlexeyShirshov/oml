@@ -820,8 +820,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     constant = relationConstants[i];
                     exp = new CodeMethodInvokeExpression(new CodeMethodInvokeExpression(exp, "column", tableExpression, new CodePrimitiveExpression(constant.Name)), "eq", new CodePrimitiveExpression(constant.Value));
                 }
-                exp = new CodePropertyReferenceExpression(exp, "Filter");
-                result.Parameters.Add(new CodeArrayCreateExpression(new CodeTypeReference(typeof(Worm.Criteria.Core.IFilter)), new CodeExpression[] { exp }));
+                result.Parameters.Add(exp);
             }
             return result;
         }

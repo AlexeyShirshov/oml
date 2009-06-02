@@ -134,6 +134,7 @@ Namespace Entities
         Sub RejectChanges()
         Sub RejectRelationChanges(ByVal mc As OrmManager)
         ReadOnly Property HasChanges() As Boolean
+        ReadOnly Property HasBodyChanges() As Boolean
         ReadOnly Property ChangeDescription() As String
         Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs)
         Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs)
@@ -174,20 +175,7 @@ Namespace Entities
         Function GetCmd(ByVal entityName As String, ByVal key As String) As Worm.Query.RelationCmd
         Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd
 
-        'Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
-        'Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.RelationCmd
+        ReadOnly Property HasChanges() As Boolean
 
         Sub Add(ByVal o As IKeyEntity)
         Sub Add(ByVal o As IKeyEntity, ByVal key As String)

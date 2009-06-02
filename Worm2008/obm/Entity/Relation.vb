@@ -165,6 +165,7 @@ Namespace Entities
         End Sub
 
         Public Sub Add(ByVal obj As IKeyEntity)
+
             Using SyncRoot
                 If _deletedList.Contains(obj) Then
                     _deletedList.Remove(obj)

@@ -480,40 +480,11 @@ Namespace Entities.Meta
 
 #End Region
 
-        '<Obsolete("direct parameter is obsolete")> _
-        'Public Sub New(ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type, ByVal direct As Boolean)
-        '    MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
-        '    Me.ConnectedType = connectedType
-        'End Sub
-
-        ''<Obsolete("direct parameter is obsolete")> _
-        ''Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-        ''    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
-        ''    MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
-        ''End Sub
-
-        ''Public Sub New(ByVal generator As ObjectMappingEngine, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
-        ''    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
-        ''    MyBase.New(New EntityUnion(entityName), column, key)
-        ''    Me.Table = table
-        ''    Me.DeleteCascade = delete
-        ''    Me.Mapping = mapping
-        ''End Sub
-
-        '<Obsolete("direct parameter is obsolete")> _
-        'Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
-        '    MyClass.New(type, table, column, delete, mapping, GetKey(direct))
-        'End Sub
-
-        '<Obsolete("direct parameter is obsolete")> _
-        'Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-        '    ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
-        '    ByVal connectedType As Type, ByVal direct As Boolean)
-        '    MyClass.New(type, table, column, delete, mapping, GetKey(direct))
-        '    Me.ConnectedType = connectedType
-        'End Sub
+        Public ReadOnly Property Constants() As IFilter()
+            Get
+                Return _const
+            End Get
+        End Property
 
         Public ReadOnly Property non_direct() As Boolean
             Get
@@ -521,12 +492,12 @@ Namespace Entities.Meta
             End Get
         End Property
 
-Public Shared Function IsDirect(ByVal key As string) As boolean
-            If String.IsNullOrEmpty(key) orelse not key.StartsWith(ReversePrefix) Then
-return true
-else
-return false
-end if
+        Public Shared Function IsDirect(ByVal key As String) As Boolean
+            If String.IsNullOrEmpty(key) OrElse Not key.StartsWith(ReversePrefix) Then
+                Return True
+            Else
+                Return False
+            End If
         End Function
 
         Public Shared Function GetKey(ByVal direct As Boolean) As String

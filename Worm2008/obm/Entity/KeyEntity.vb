@@ -306,7 +306,7 @@ Namespace Entities
 
 #Region " Protected functions "
 
-        Protected Overrides ReadOnly Property HasM2MChanges() As Boolean
+        Protected Overrides ReadOnly Property HasM2MChanges() As Boolean Implements IRelations.HasChanges
             Get
                 If _needAccept IsNot Nothing AndAlso _needAccept.Count > 0 Then
                     Return True

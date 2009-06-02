@@ -478,6 +478,15 @@ l1:
                     addf = New TableFilter(table, filtered_r.Column, _
                         New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
+                    If selected_r.Constants IsNot Nothing Then
+                        Dim cond As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                        cond.AddFilter(addf)
+                        For Each tf As IFilter In selected_r.Constants
+                            cond.AddFilter(tf)
+                        Next
+                        addf = cond.Condition
+                    End If
+
                     If tu IsNot Nothing Then addf.SetUnion(tu)
 
                     _types.Add(m2mEU, oschema)
@@ -730,29 +739,45 @@ l1:
             End If
         End Sub
 
-        Public Sub Add(ByVal o As IKeyEntity)
+        Public Sub Add(ByVal o As IKeyEntity, ByVal key As String)
             If o IsNot Nothing Then
-                Relation.Add(o)
-                Using gm As IGetManager = o.GetMgr
-                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                    mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
-                End Using
+                Relation.Host.Add(o, key)
+                If Not IsM2M Then
+                    Using gm As IGetManager = o.GetMgr
+                        Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                    End Using
+                End If
             End If
         End Sub
 
+        Public Sub Add(ByVal o As IKeyEntity)
+            If o IsNot Nothing Then
+                Relation.Host.Add(o)
+                If Not IsM2M Then
+                    Using gm As IGetManager = o.GetMgr
+                        Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                    End Using
+                End If
+            End If
+        End Sub
+
+        Public Sub Remove(ByVal o As IKeyEntity, ByVal key As String)
+            Relation.Host.Remove(o, key)
+        End Sub
+
         Public Sub Remove(ByVal o As IKeyEntity)
-            Relation.Delete(o)
+            Relation.Host.Remove(o)
         End Sub
 
         Public Sub RemoveAll()
-            PrepareRel()
             For Each o As IKeyEntity In ToList()
                 Remove(o)
             Next
         End Sub
 
         Public Sub RemoveAll(ByVal mgr As OrmManager)
-            PrepareRel()
             For Each o As IKeyEntity In ToList(mgr)
                 Remove(o)
             Next

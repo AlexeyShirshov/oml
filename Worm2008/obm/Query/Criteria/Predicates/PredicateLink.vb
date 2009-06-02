@@ -370,20 +370,13 @@ Namespace Criteria
             End Get
         End Property
 
-        'Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter Implements IGetFilter.Filter
-        '    Get
-        '        If _con IsNot Nothing Then
-        '            Dim f As IFilter = _con.Condition
-        '            Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
-        '            If ef IsNot Nothing Then
-        '                ef.GetFilterTemplate.SetType(New ObjectAlias(t))
-        '            End If
-        '            Return f
-        '        Else
-        '            Return Nothing
-        '        End If
-        '    End Get
-        'End Property
+        Public Function GetAllFilters() As IFilter()
+            If _con IsNot Nothing Then
+                Return _con.Condition.GetAllFilters
+            Else
+                Return New IFilter() {}
+            End If
+        End Function
 
         Protected ReadOnly Property ConditionCtor() As Condition.ConditionConstructor
             Get

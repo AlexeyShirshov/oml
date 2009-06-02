@@ -743,7 +743,7 @@ Namespace Entities
             Return mo
         End Function
 
-        Protected Overridable ReadOnly Property HasBodyChanges() As Boolean
+        Protected Overridable ReadOnly Property HasBodyChanges() As Boolean Implements ICachedEntity.HasBodyChanges
             Get
                 Return ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Created
             End Get
