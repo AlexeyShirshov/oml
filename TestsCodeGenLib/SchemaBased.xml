@@ -4,7 +4,7 @@
 		<oos:SourceFragment id="tblAlbums" name="albums" selector="dbo" />
 		<oos:SourceFragment id="tblArtists" name="artists" selector="dbo" />
 		<oos:SourceFragment id="tblAl2Ar" name="al2ar" selector="dbo" />
-		<oos:SourceFragment id="tblSiteAccess" name="sites_access" />
+		<oos:SourceFragment id="tblSiteAccess" name="sites_access" selector="dbo"/>
 		<oos:SourceFragment id="tbla2b" name="a2b" selector="dbo" />
 		<oos:SourceFragment id="tblal2al" name="al2al" selector="dbo" />
 	</oos:SourceFragments>

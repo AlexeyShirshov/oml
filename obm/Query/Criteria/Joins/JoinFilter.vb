@@ -371,7 +371,7 @@ Namespace Criteria.Joins
                 (_l.Equals(obj._r) AndAlso _r.Equals(obj._l))
         End Function
 
-        Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of Core.IFilter) Implements Core.IFilter.GetAllFilters
+        Public Function GetAllFilters() As IFilter() Implements Core.IFilter.GetAllFilters
             Return New JoinFilter() {Me}
         End Function
 

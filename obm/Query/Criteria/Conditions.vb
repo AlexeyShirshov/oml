@@ -145,14 +145,14 @@ Namespace Criteria.Conditions
             Return Me
         End Function
 
-        Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
-            Dim res As ICollection(Of IFilter) = _left.GetAllFilters
+        Public Function GetAllFilters() As IFilter() Implements IFilter.GetAllFilters
+            Dim res As IFilter() = _left.GetAllFilters
 
             If _right IsNot Nothing Then
                 Dim l As New List(Of IFilter)
                 l.AddRange(res)
                 l.AddRange(_right.GetAllFilters)
-                res = l
+                res = l.ToArray
             End If
 
             Return res

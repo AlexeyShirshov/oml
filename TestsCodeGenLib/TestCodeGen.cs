@@ -314,6 +314,15 @@ namespace TestsCodeGenLib
 			}
 		}
 
+        [TestMethod]
+        public void TestCSSchemaBased()
+        {
+            using (Stream stream = Resources.GetXmlDocumentStream("SchemaBased"))
+            {
+                TestCSCodeInternal(stream);
+            }
+        }
+
         public void TestVBCodeInternal(Stream stream)
         {
             CodeDomProvider prov = new Microsoft.VisualBasic.VBCodeProvider();

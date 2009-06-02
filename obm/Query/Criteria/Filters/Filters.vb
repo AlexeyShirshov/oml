@@ -112,7 +112,7 @@ Namespace Criteria.Core
             'End If
         End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter)
+        Public Overrides Function GetAllFilters() As IFilter()
             Return New EntityFilter() {Me}
         End Function
 
@@ -396,7 +396,7 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of Worm.Criteria.Core.IFilter)
+        Public Overrides Function GetAllFilters() As IFilter()
             Return New TableFilter() {Me}
         End Function
 
@@ -555,7 +555,7 @@ Namespace Criteria.Core
             Return _str
         End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of Worm.Criteria.Core.IFilter)
+        Public Overrides Function GetAllFilters() As IFilter()
             Return New CustomFilter() {Me}
         End Function
 
@@ -688,7 +688,7 @@ Namespace Criteria.Core
             Return Equals(TryCast(obj, ExpressionFilter))
         End Function
 
-        Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
+        Public Function GetAllFilters() As IFilter() Implements IFilter.GetAllFilters
             Return New IFilter() {Me}
         End Function
 
@@ -770,7 +770,7 @@ Namespace Criteria.Core
             Return _str
         End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of Worm.Criteria.Core.IFilter)
+        Public Overrides Function GetAllFilters() As IFilter()
             Return New NonTemplateUnaryFilter() {Me}
         End Function
 
@@ -838,7 +838,7 @@ Namespace Criteria.Core
         '    Return _agg.Equals(fl._agg) AndAlso _fo = fl._fo
         'End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) 'Implements IFilter.GetAllFilters
+        Public Overrides Function GetAllFilters() As IFilter() 'Implements IFilter.GetAllFilters
             Return New IFilter() {Me}
         End Function
 
@@ -903,7 +903,7 @@ Namespace Criteria.Core
         '    Return _agg.Equals(fl._agg) AndAlso _fo = fl._fo
         'End Function
 
-        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) 'Implements IFilter.GetAllFilters
+        Public Overrides Function GetAllFilters() As IFilter() 'Implements IFilter.GetAllFilters
             Return New IFilter() {Me}
         End Function
 

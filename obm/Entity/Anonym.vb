@@ -483,9 +483,15 @@ Namespace Entities
             Return l.ToArray
         End Function
 
-        Public ReadOnly Property HasChanges() As Boolean Implements ICachedEntity.HasChanges
+        Public ReadOnly Property HasBodyChanges() As Boolean Implements ICachedEntity.HasBodyChanges
             Get
                 Return ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted OrElse ObjectState = Entities.ObjectState.Created
+            End Get
+        End Property
+
+        Public ReadOnly Property HasChanges() As Boolean Implements ICachedEntity.HasChanges
+            Get
+                Return HasBodyChanges
             End Get
         End Property
 

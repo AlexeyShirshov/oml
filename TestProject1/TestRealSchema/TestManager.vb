@@ -1283,20 +1283,25 @@ Public Class TestManagerRS
         End Using
     End Sub
 
-    '<TestMethod()> _
-    'Public Sub TestSortAny()
-    '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-    '        Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
-    '            Orm.Criteria.AutoTypeField("Code").Between(2, 45), _
-    '            Orm.Sorting.Field("Code"), False)
+    <TestMethod()> _
+    Public Sub TestLoadNonCached()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t As Table1 = mgr.Find(Of Table1)(1)
+            Assert.IsNotNull(t)
+            Assert.IsTrue(t.InternalProperties.IsLoaded)
+            Assert.IsTrue(mgr.IsInCachePrecise(t))
 
-    '        c = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Any, False)
-    '    End Using
+            Dim t2 As New Table1(1, mgr.Cache, mgr.MappingEngine)
+            Assert.IsFalse(t2.InternalProperties.IsLoaded)
+            Assert.IsFalse(mgr.IsInCachePrecise(t2))
 
-    '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-    '        Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Any, False)
-    '    End Using
-    'End Sub
+            t2.Load()
+
+            Assert.IsTrue(t2.InternalProperties.IsLoaded)
+            Assert.IsFalse(mgr.IsInCachePrecise(t2))
+        End Using
+
+    End Sub
 
     Private Function GetList(Of T As {KeyEntity})(ByVal col As ICollection(Of T)) As IList(Of T)
         Return CType(col, Global.System.Collections.Generic.IList(Of T))

@@ -2375,6 +2375,11 @@ l1:
                                     End If
                                 End If
                             End SyncLock
+
+                            If check_pk Then
+                                robj = Nothing
+                                ce = CType(obj, _ICachedEntity)
+                            End If
                         End If
                     End If
                 ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso obj.ObjectState = ObjectState.Created Then

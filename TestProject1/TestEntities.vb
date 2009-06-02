@@ -161,7 +161,7 @@ Public Class EntitySchema1v1Implementation
     Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
             _rels = New M2MRelationDesc() { _
-                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, Nothing, Ctor.column(_schema.GetSharedSourceFragment("dbo", "[1to2]"), "xxx").eq("yyy")) _
+                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, Nothing) _
                 }
         End If
         Return _rels

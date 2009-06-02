@@ -947,7 +947,7 @@ l1:
                                 ElseIf o.ShadowCopy(_mgr).Reason = ObjectModification.ReasonEnum.Edit Then
                                     'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
                                     Debug.Assert(Not _saver._deleted.Contains(o))
-                                    Debug.Assert(_saver._updated.Contains(o))
+                                    Debug.Assert(_saver._updated.Contains(o) OrElse (GetType(IRelations).IsAssignableFrom(o.GetType) AndAlso CType(o, IRelations).HasChanges))
                                     'End If
                                 End If
                             End If

@@ -305,10 +305,10 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
                     If obj Is Nothing Then
                         Throw New ArgumentException("Preperty " & parentPropertyAliases(j) & " is not entity")
                     End If
-                    If prop_objs(i) Is Nothing Then
-                        prop_objs(i) = OrmManager._CreateReadOnlyList(obj.GetType)
+                    If prop_objs(j) Is Nothing Then
+                        prop_objs(j) = OrmManager._CreateReadOnlyList(obj.GetType)
                     End If
-                    prop_objs(i).Add(obj)
+                    prop_objs(j).Add(obj)
                 Next
             End If
         Next

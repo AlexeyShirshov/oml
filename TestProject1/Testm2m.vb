@@ -113,7 +113,7 @@ Imports Worm.Entities
 
         Dim m As M2MRelationDesc = schema.GetM2MRelation(t, t2, True)
 
-        Assert.AreEqual("delete from dbo.[1to2] where ent1_id = @p1 and ent2_id in(10)" & vbCrLf & _
+        Assert.AreEqual("delete t1 from dbo.[1to2] t1 where t1.ent1_id = @p1 and t1.ent2_id in(10)" & vbCrLf & _
         "if @@error = 0 begin" & vbCrLf & _
             vbTab & "if @@error = 0 insert into dbo.[1to2](ent1_id,ent2_id) values(@p1,234)" & vbCrLf & _
         "end" & vbCrLf, gen.SaveM2M(schema, e, m, el, pmgr))
