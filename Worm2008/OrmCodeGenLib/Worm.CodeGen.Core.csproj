@@ -80,27 +80,6 @@
     <Compile Include="CodeDomExtensions\CodeLinqContextDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodePropertiesAccessorTypeDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodeSchemaDefTypeDeclaration.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeCsMemberOperatorOverride.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeMemberOperatorOverride.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ConversionOperator\CodeVbConversionOperator.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeCsForeachStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeForeachStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeVbForeachStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeIsExpressionBase.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeCsIsExpression.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeVbIsExpression.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeCsLockStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeLockStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeVbLockStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeCSUsingStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeUsingStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeVBUsingStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeXorExpressionBase.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeCsXorExpression.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeVbXorExpression.cs" />
     <Compile Include="CodeGenHelper.cs" />
     <Compile Include="Descriptors\SourceFragmentRefDescription.cs" />
     <Compile Include="Descriptors\EntityRelationDescription.cs" />
@@ -156,9 +135,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="RelatedFiles\SchemaBased.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="CodeDomPatterns\LanguageIndependent\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
