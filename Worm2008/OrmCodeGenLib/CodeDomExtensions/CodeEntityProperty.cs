@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Worm.CodeGen.Core.Descriptors;
 using Worm.Entities.Meta;
+using LinqToCodedom.CodeDomPatterns;
 
 namespace Worm.CodeGen.Core.CodeDomExtensions
 {
@@ -40,8 +41,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				                                       	};
 
                 if (property.Entity.HasPkFlatEntity)
-                    GetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(getUsingExpression,
-                                                                                                getInUsingStatements));
+                    GetStatements.Add(new LinqToCodedom.CodeDomPatterns.CodeUsingStatement(
+                        getUsingExpression,
+                        getInUsingStatements)
+                    );
                 else
                     GetStatements.AddRange(getInUsingStatements);
 
@@ -107,8 +110,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 					}
 
                     if (property.Entity.HasPkFlatEntity)
-                        SetStatements.AddRange(OrmCodeDomGenerator.Delegates.CodePatternUsingStatements(setUsingExpression,
-                                                                                                    setInUsingStatements.ToArray()));
+                        SetStatements.Add(new CodeUsingStatement(setUsingExpression,setInUsingStatements.ToArray()));
                     else
                         SetStatements.AddRange(setInUsingStatements.ToArray());
                 }
