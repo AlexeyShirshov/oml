@@ -10,6 +10,9 @@ using Worm.Entities.Meta;
 using Worm.Cache;
 using Worm.Query;
 using System.Linq;
+using LinqToCodedom.Generator;
+using LinqToCodedom;
+using LinqToCodedom.CodeDomPatterns;
 
 namespace Worm.CodeGen.Core
 {
@@ -179,12 +182,12 @@ namespace Worm.CodeGen.Core
             get { return _ormCodeDomGeneratorSettings; }
         }
 
-        public Dictionary<string, CodeCompileFileUnit> GetFullDom()
+        public Dictionary<string, CodeCompileFileUnit> GetFullDom(LinqToCodedom.CodeDomGenerator.Language language)
         {
             var result = new Dictionary<string, CodeCompileFileUnit>(_ormObjectsDefinition.ActiveEntities.Count());
             foreach (EntityDescription entity in _ormObjectsDefinition.ActiveEntities)
             {
-                foreach (var pair in GetEntityCompileUnits(entity.Identifier))
+                foreach (var pair in GetEntityCompileUnits(entity.Identifier, language))
                 {
                     string key = pair.Filename;
                     for (int i = 0; result.ContainsKey(key); i++)
@@ -201,10 +204,10 @@ namespace Worm.CodeGen.Core
         [ThreadStatic]
         private static EntityGeneratorController s_ctrl;
 
-        public CodeCompileFileUnit GetFullSingleUnit()
+        public CodeCompileFileUnit GetFullSingleUnit(LinqToCodedom.CodeDomGenerator.Language language)
         {
             CodeCompileFileUnit unit = new CodeCompileFileUnit();
-            foreach (CodeCompileFileUnit u in GetFullDom().Values)
+            foreach (CodeCompileFileUnit u in GetFullDom(language).Values)
             {
                 foreach (CodeNamespace n in u.Namespaces)
                 {
@@ -258,9 +261,10 @@ namespace Worm.CodeGen.Core
         }
 
         [Obsolete("Use GetEntityCompileUnits instead.")]
-        public Dictionary<string, CodeCompileUnit> GetEntityDom(string entityId, OrmCodeDomGeneratorSettings settings)
+        public Dictionary<string, CodeCompileUnit> GetEntityDom(string entityId, 
+            OrmCodeDomGeneratorSettings settings, LinqToCodedom.CodeDomGenerator.Language language)
         {
-            var units = GetEntityCompileUnits(entityId);
+            var units = GetEntityCompileUnits(entityId, language);
             var result = new Dictionary<string, CodeCompileUnit>();
             foreach (var unit in units)
             {
@@ -269,7 +273,7 @@ namespace Worm.CodeGen.Core
             return result;
         }
 
-        public IList<CodeCompileFileUnit> GetEntityCompileUnits(string entityId)
+        public IList<CodeCompileFileUnit> GetEntityCompileUnits(string entityId, LinqToCodedom.CodeDomGenerator.Language language)
         {
             using (s_ctrl = new EntityGeneratorController())
             {
@@ -499,15 +503,22 @@ namespace Worm.CodeGen.Core
                             instancedPropertyAliasClass.Members.Add(instancedPropertyAliasfield);
 
                             instancedPropertyAliasClass.Members.Add(
-                                Delegates.CodeMemberOperatorOverride(
-                                    CodeDomPatterns.OperatorType.Implicit,
-                                    new CodeTypeReference(typeof(EntityAlias)),
-                                    new[]{new CodeParameterDeclarationExpression(new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
-																		  instancedPropertyAliasClass.Name), "entityAlias")},
-                                    new CodeStatement[] { new CodeMethodReturnStatement(new CodeFieldReferenceExpression(new CodeArgumentReferenceExpression("entityAlias"), instancedPropertyAliasfield.Name)) }
-
+                                //Delegates.CodeMemberOperatorOverride(
+                                //    CodeDomPatterns.OperatorType.Implicit,
+                                //    new CodeTypeReference(typeof(EntityAlias)),
+                                //    new[]{new CodeParameterDeclarationExpression(new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
+                                //                                          instancedPropertyAliasClass.Name), "entityAlias")},
+                                Define.Operator(new CodeTypeReference(typeof(EntityAlias)),
+                                    (DynType t) => CodeDom.TypedSeq(OperatorType.Implicit,
+                                        OrmCodeGenNameHelper.GetEntityClassName(entity) + "." + instancedPropertyAliasClass.Name),
+                                    new CodeMethodReturnStatement(
+                                        new CodeFieldReferenceExpression(
+                                            new CodeArgumentReferenceExpression("entityAlias"), 
+                                            instancedPropertyAliasfield.Name
                                         )
-                                );
+                                    )
+                                )
+                            );
 
                             if (entity.BaseEntity != null)
                             {
@@ -960,6 +971,19 @@ namespace Worm.CodeGen.Core
                         }
                     }
 
+                    List<CodeCompileFileUnit> res = new List<CodeCompileFileUnit>();
+                    foreach (CodeCompileFileUnit compileUnit in result)
+                    {
+                        CodeCompileFileUnit newUnit = new CodeCompileFileUnit()
+                        {
+                            Filename = compileUnit.Filename
+                        };
+
+                        CodeNamespace[] namespaces = new CodeNamespace[compileUnit.Namespaces.Count];
+                        compileUnit.Namespaces.CopyTo(namespaces, 0);
+                        CodeDomTreeProcessor.ProcessNS(newUnit, language, namespaces);
+                        res.Add(newUnit);
+                    }
                     return result;
                 }
                 finally
@@ -1045,9 +1069,10 @@ namespace Worm.CodeGen.Core
             if (composite)
             {
                 meth.Statements.Add(
-                    Delegates.CodePatternForeachStatement(
-                        new CodeTypeReference(typeof(PKDesc)), "pk",
-                        new CodeArgumentReferenceExpression("pks"),
+                    //Delegates.CodePatternForeachStatement(
+                    //    new CodeTypeReference(typeof(PKDesc)), "pk",
+                    //    new CodeArgumentReferenceExpression("pks"),
+                    Emit.@foreach("pk", ()=>CodeDom.VarRef<PKDesc[]>("pks"),
                         entity.PkProperties.
                         Select((PropertyDescription pd_) =>
                             {
@@ -1185,7 +1210,7 @@ namespace Worm.CodeGen.Core
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fn),
                         "GetHashCode", new CodeExpression[0]);
 
-                    lf = Delegates.CodePatternXorStatement(lf, exp);
+                    lf = new CodeXorExpression(lf, exp);
 
                 }
             }
@@ -1245,9 +1270,10 @@ namespace Worm.CodeGen.Core
             if (composite)
             {
                 meth.Statements.Add(
-                    Delegates.CodePatternForeachStatement(
-                        new CodeTypeReference(typeof(PKDesc)), "pk",
-                        new CodeArgumentReferenceExpression("pks"),
+                    //Delegates.CodePatternForeachStatement(
+                    //    new CodeTypeReference(typeof(PKDesc)), "pk",
+                    //    new CodeArgumentReferenceExpression("pks"),
+                    Emit.@foreach("pk", () => CodeDom.VarRef<PKDesc[]>("pks"),
                         entity.PkProperties.
                         Select(
                             delegate(PropertyDescription pd_)
@@ -1350,7 +1376,7 @@ namespace Worm.CodeGen.Core
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fn),
                         "GetHashCode", new CodeExpression[0]);
 
-                    lf = lf == null ? exp : Delegates.CodePatternXorStatement(lf, exp);
+                    lf = lf == null ? exp : new CodeXorExpression(lf, exp);
                 }
             }
             meth.Statements.Add(new CodeMethodReturnStatement(lf));
@@ -1366,11 +1392,11 @@ namespace Worm.CodeGen.Core
             if (!propDesc.EnablePropertyChanged || propDesc.FromBase || !property.HasSet)
                 return;
 
-            CodeDomPatterns.CodeUsingStatementBase usingStatement = null;
+            CodeUsingStatement usingStatement = null;
 
             foreach (CodeStatement statement in property.SetStatements)
             {
-                usingStatement = statement as CodeDomPatterns.CodeUsingStatementBase;
+                usingStatement = statement as CodeUsingStatement;
             }
             if (usingStatement != null)
             {
@@ -2289,7 +2315,7 @@ namespace Worm.CodeGen.Core
                 };
 
             if (entity.HasPkFlatEntity)
-                property.GetStatements.AddRange(Delegates.CodePatternUsingStatements(getUsingExpression, getInUsingStatements));
+                property.GetStatements.Add(new CodeUsingStatement(getUsingExpression, getInUsingStatements));
             else
                 property.GetStatements.AddRange(getInUsingStatements);
 
@@ -2316,7 +2342,7 @@ namespace Worm.CodeGen.Core
         		                                       	};
 
                 if (entity.HasPkFlatEntity)
-                    property.SetStatements.AddRange(Delegates.CodePatternUsingStatements(setUsingExpression, setInUsingStatements));
+                    property.SetStatements.Add(new CodeUsingStatement(setUsingExpression, setInUsingStatements));
                 else
                     property.SetStatements.AddRange(setInUsingStatements);
             }
@@ -2514,14 +2540,11 @@ namespace Worm.CodeGen.Core
                 throw new ArgumentNullException("condition");
 
             return new CodeConditionStatement(
-                condition,
-                    Delegates.CodePatternLockStatement(lockExpression,
-                        new CodeConditionStatement(
-                            condition,
-                            statements
-                        )
-                    )
-                );
+                condition, 
+                new CodeLockStatement(lockExpression,
+                    new CodeConditionStatement(condition, statements)
+                )
+            );
         }
     }
 }

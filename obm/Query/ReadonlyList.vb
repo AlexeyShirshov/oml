@@ -302,13 +302,15 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
                 For j As Integer = 0 To parentPropertyAliases.Length - 1
                     Dim propValue As Object = mpe.GetPropertyValue(o, parentPropertyAliases(j), oschema)
                     Dim obj As IEntity = TryCast(propValue, IEntity)
-                    If obj Is Nothing Then
-                        Throw New ArgumentException("Preperty " & parentPropertyAliases(j) & " is not entity")
+                    If obj Is Nothing AndAlso propValue IsNot Nothing Then
+                        Throw New ArgumentException("Property " & parentPropertyAliases(j) & " is not entity")
                     End If
-                    If prop_objs(j) Is Nothing Then
-                        prop_objs(j) = OrmManager._CreateReadOnlyList(obj.GetType)
+                    If obj IsNot Nothing Then
+                        If prop_objs(j) Is Nothing Then
+                            prop_objs(j) = OrmManager._CreateReadOnlyList(obj.GetType)
+                        End If
+                        prop_objs(j).Add(obj)
                     End If
-                    prop_objs(j).Add(obj)
                 Next
             End If
         Next

@@ -932,9 +932,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
             inlockStatemets.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(List<string[]>)), "res", new CodeObjectCreateExpression(new CodeTypeReference(typeof(List<string[]>)))));
             inlockStatemets.Add(
-                OrmCodeDomGenerator.Delegates.CodePatternForeachStatement(
-                    new CodeTypeReference(typeof(List<string>)), "l",
-                    new CodePropertyReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName + "Dic"), "Values"),
+                //OrmCodeDomGenerator.Delegates.CodePatternForeachStatement(
+                //    new CodeTypeReference(typeof(List<string>)), "l",
+                //    new CodePropertyReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName + "Dic"), "Values"),
+                Emit.@foreach("l", ()=>CodeDom.@this.Field<IDictionary<string, List<string>>>(fieldName + "Dic").Values,
                     new CodeExpressionStatement(new CodeMethodInvokeExpression(
                         new CodeVariableReferenceExpression("res"),
                         "Add",
@@ -942,7 +943,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                             new CodeArgumentReferenceExpression("l"),
                             "ToArray"
                         )
-                                    ))));
+                    ))
+                 )
+            );
 
             inlockStatemets.Add(
                 new CodeAssignStatement(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), fieldName),

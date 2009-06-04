@@ -43,7 +43,8 @@ namespace TestsCodeGenLib
 		private void CompileCode(OrmObjectsDef odef, CodeDomProvider prov, OrmCodeDomGeneratorSettings settings)
 		{
 			OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
-			Dictionary<string, Worm.CodeGen.Core.CodeDomExtensions.CodeCompileFileUnit> dic = gen.GetFullDom();
+            Dictionary<string, Worm.CodeGen.Core.CodeDomExtensions.CodeCompileFileUnit> dic =
+                gen.GetFullDom(typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(prov.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
 
 			CompilerParameters prms = new CompilerParameters();
 			prms.GenerateExecutable = false;
