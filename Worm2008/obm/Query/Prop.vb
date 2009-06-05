@@ -29,7 +29,7 @@ Namespace Query
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String)
             _op = New ObjectProperty([alias], propertyAlias)
         End Sub
 
@@ -199,7 +199,7 @@ Namespace Query
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
@@ -219,7 +219,7 @@ Namespace Query
             _dstProp = fieldAlias
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String, ByVal fieldAlias As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
@@ -258,7 +258,7 @@ Namespace Query
             _dst = New EntityUnion(intoEntityName)
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal into As Type)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)
@@ -266,7 +266,7 @@ Namespace Query
             _dst = New EntityUnion(into)
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String, ByVal intoPropertyAlias As String, ByVal intoEntityName As String)
             '_field = propertyAlias
             '_osrc = New ObjectSource([alias])
             _op = New ObjectProperty([alias], propertyAlias)

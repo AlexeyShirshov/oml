@@ -273,7 +273,7 @@ Imports Worm.Entities.Meta
 
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
-        Dim a As New EntityAlias(GetType(Table1))
+        Dim a As New QueryAlias(GetType(Table1))
         Dim eu As New EntityUnion(a)
 
         Dim mq As QueryCmd = t.GetCmd(New M2MRelationDesc(eu, M2MRelationDesc.DirKey)).SelectEntity(eu)
@@ -281,7 +281,7 @@ Imports Worm.Entities.Meta
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
 
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
         mq.Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, a))
 
@@ -305,7 +305,7 @@ Imports Worm.Entities.Meta
         Assert.AreEqual(1, mq.Count)
         Assert.AreEqual(2, mq.First(Of Table1).ID)
 
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
         mq.Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, GetType(Table1)))
 
@@ -324,8 +324,8 @@ Imports Worm.Entities.Meta
 
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
-        Dim a1 As New EntityAlias(GetType(Table1))
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a1 As New QueryAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
@@ -346,8 +346,8 @@ Imports Worm.Entities.Meta
 
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
-        Dim a1 As New EntityAlias(GetType(Table1))
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a1 As New QueryAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
         'Dim r As New M2MRelationDesc(New EntityUnion(GetType(Table1)), M2MRelationDesc.RevKey)
         Dim r2 As New M2MRelationDesc(New EntityUnion(a1), M2MRelationDesc.RevKey)
@@ -372,8 +372,8 @@ Imports Worm.Entities.Meta
 
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
-        Dim a1 As New EntityAlias(GetType(Table1))
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a1 As New QueryAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
@@ -392,11 +392,11 @@ Imports Worm.Entities.Meta
 
     <TestMethod()> _
     Public Sub TestM2MManyEx()
-        Dim a1 As New EntityAlias(GetType(Table1))
-        Dim a2 As New EntityAlias(GetType(Table1))
+        Dim a1 As New QueryAlias(GetType(Table1))
+        Dim a2 As New QueryAlias(GetType(Table1))
 
-        Dim a3 As New EntityAlias(GetType(Table1))
-        Dim a4 As New EntityAlias(GetType(Table1))
+        Dim a3 As New QueryAlias(GetType(Table1))
+        Dim a4 As New QueryAlias(GetType(Table1))
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q1.From(a1).Join(JCtor.join(a2).onM2M(M2MRelationDesc.RevKey, a1)).SelectEntity(a1)

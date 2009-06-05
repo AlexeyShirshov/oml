@@ -5,6 +5,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Core
 Imports Worm.Query
 Imports System.Collections.Generic
+Imports Worm.Expressions2
 
 Public MustInherit Class StmtGenerator
     'Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
@@ -36,10 +37,8 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Function CreateSelectExpressionFormater() As ISelectExpressionFormater
 
-    'Protected Friend MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-    '    ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
-
-    'Protected Friend MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
+    Public MustOverride Function BinaryOperator2String(ByVal oper As BinaryOperationType) As String
+    Public MustOverride Function UnaryOperator2String(ByVal oper As UnaryOperationType) As String
 
     Public MustOverride Function Oper2String(ByVal oper As Worm.Criteria.FilterOperation) As String
 

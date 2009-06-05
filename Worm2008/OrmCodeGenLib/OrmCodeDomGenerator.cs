@@ -476,7 +476,7 @@ namespace Worm.CodeGen.Core
                                 propertyAliasClassCtor.BaseConstructorArgs.Add(OrmCodeGenHelper.GetEntityNameReferenceExpression(entity));
 
                             propertyAliasClass.Members.Add(propertyAliasClassCtor);
-                            propertyAliasClass.BaseTypes.Add(new CodeTypeReference(typeof(EntityAlias)));
+                            propertyAliasClass.BaseTypes.Add(new CodeTypeReference(typeof(QueryAlias)));
 
 
                             instancedPropertyAliasClass = new CodeTypeDeclaration
@@ -488,7 +488,7 @@ namespace Worm.CodeGen.Core
                             var instancedPropertyAliasClassCtor = new CodeConstructor { Attributes = MemberAttributes.Public };
 
                             instancedPropertyAliasClassCtor.Parameters.Add(
-                                new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(EntityAlias)), "objectAlias"));
+                                new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(QueryAlias)), "objectAlias"));
 
                             instancedPropertyAliasClassCtor.Statements.Add(
                                 new CodeAssignStatement(
@@ -498,7 +498,7 @@ namespace Worm.CodeGen.Core
 
                             instancedPropertyAliasClass.Members.Add(instancedPropertyAliasClassCtor);
 
-                            var instancedPropertyAliasfield = new CodeMemberField(new CodeTypeReference(typeof(EntityAlias)),
+                            var instancedPropertyAliasfield = new CodeMemberField(new CodeTypeReference(typeof(QueryAlias)),
                                                             OrmCodeGenNameHelper.GetPrivateMemberName("objectAlias"));
                             instancedPropertyAliasClass.Members.Add(instancedPropertyAliasfield);
 
@@ -508,9 +508,9 @@ namespace Worm.CodeGen.Core
                                 //    new CodeTypeReference(typeof(EntityAlias)),
                                 //    new[]{new CodeParameterDeclarationExpression(new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
                                 //                                          instancedPropertyAliasClass.Name), "entityAlias")},
-                                Define.Operator(new CodeTypeReference(typeof(EntityAlias)),
-                                    (DynType t) => CodeDom.TypedSeq(OperatorType.Implicit,
-                                        OrmCodeGenNameHelper.GetEntityClassName(entity) + "." + instancedPropertyAliasClass.Name),
+                                Define.Operator(new CodeTypeReference(typeof(QueryAlias)),
+                                    (DynType entityAlias) => CodeDom.TypedSeq(OperatorType.Implicit,
+                                        entityAlias.SetType(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." + instancedPropertyAliasClass.Name)),
                                     new CodeMethodReturnStatement(
                                         new CodeFieldReferenceExpression(
                                             new CodeArgumentReferenceExpression("entityAlias"), 
@@ -563,7 +563,7 @@ namespace Worm.CodeGen.Core
 
                             if (entity.BaseEntity != null)
                                 getMethod.Attributes |= MemberAttributes.New;
-                            getMethod.Parameters.Add(new CodeParameterDeclarationExpression { Name = "objectAlias", Type = new CodeTypeReference(typeof(EntityAlias)) });
+                            getMethod.Parameters.Add(new CodeParameterDeclarationExpression { Name = "objectAlias", Type = new CodeTypeReference(typeof(QueryAlias)) });
 
                             getMethod.Statements.Add(
                                 new CodeMethodReturnStatement(

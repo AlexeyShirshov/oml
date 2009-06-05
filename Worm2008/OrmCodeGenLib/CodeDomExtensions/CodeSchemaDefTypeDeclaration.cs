@@ -147,8 +147,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
 
-            if (m_entityClass.Entity.Behaviour == EntityBehaviuor.Default ||
-                m_entityClass.Entity.SourceFragments.Exists(sf => sf.AnchorTable != null))
+            if (!IsPartial || m_entityClass.Entity.SourceFragments.Exists(sf => sf.AnchorTable != null))
             {
                 CodeMemberMethod jmethod = Define.Method(MemberAttributes.Public, typeof(Criteria.Joins.QueryJoin),
                     (SourceFragment left, SourceFragment right) => "GetJoins");

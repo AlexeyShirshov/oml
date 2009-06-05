@@ -7,7 +7,7 @@ Imports Worm.Criteria
 Imports System.Collections.Generic
 Imports Worm.Query
 
-Public Class Expressions
+Namespace Expressions
     Public Enum ExpOperation
         None
         Neg
@@ -284,4 +284,4 @@ l1:
             Return ToString.GetHashCode
         End Function
     End Class
-End Class
+End Namespace

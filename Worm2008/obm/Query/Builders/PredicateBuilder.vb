@@ -70,7 +70,7 @@ Namespace Query
         '    Return Field(t, propertyAlias)
         'End Function
 
-        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
+        Public Shared Function prop(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PropertyPredicate
             Return prop(New EntityUnion([alias]), propertyAlias)
         End Function
 
@@ -200,7 +200,7 @@ Namespace Query
             Return New AggPredicate(New Aggregate(AggregateFunction.Max, en, propertyAlias))
         End Function
 
-        Public Shared Function max(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As PredicateBase
+        Public Shared Function max(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
             Return New AggPredicate(New Aggregate(AggregateFunction.Max, New ObjectProperty([alias], propertyAlias)))
         End Function
 
@@ -224,7 +224,7 @@ Namespace Query
             Return New AggPredicate(New Aggregate(AggregateFunction.Min, en, propertyAlias))
         End Function
 
-        Public Shared Function min(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As PredicateBase
+        Public Shared Function min(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
             Return New AggPredicate(New Aggregate(AggregateFunction.Min, New ObjectProperty([alias], propertyAlias)))
         End Function
 
@@ -248,7 +248,7 @@ Namespace Query
             Return New AggPredicate(New Aggregate(AggregateFunction.Sum, en, propertyAlias))
         End Function
 
-        Public Shared Function sum(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As PredicateBase
+        Public Shared Function sum(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
             Return New AggPredicate(New Aggregate(AggregateFunction.Sum, New ObjectProperty([alias], propertyAlias)))
         End Function
 

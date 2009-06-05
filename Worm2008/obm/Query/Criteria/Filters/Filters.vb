@@ -31,7 +31,7 @@ Namespace Criteria.Core
             MyBase.New(value, New OrmFilterTemplate(entityName, propertyAlias, operation))
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
             MyBase.New(value, New OrmFilterTemplate([alias], propertyAlias, operation))
         End Sub
 
@@ -173,24 +173,30 @@ Namespace Criteria.Core
                 End If
 
                 Dim map As MapField2Column = Nothing
-                Try
-                    If executor Is Nothing Then
-                        map = oschema.GetFieldColumnMap(Template.PropertyAlias)
-                    Else
-                        map = executor.GetFieldColumnMap(oschema, t)(Template.PropertyAlias)
-                    End If
-                Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.ObjectSource.ToStaticString(schema, filterInfo) & "." & Template.PropertyAlias, ex))
-                End Try
 
                 Dim [alias] As String = String.Empty
 
+                'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                Dim tbl As SourceFragment = Nothing
+
+                If Template.ObjectSource.IsQuery Then
+                    tbl = Template.ObjectSource.ObjectAlias.Tbl
+                    Dim q As QueryCmd = Template.ObjectSource.ObjectAlias.Query
+                    map = New MapField2Column(Template.PropertyAlias, q.FindColumn(schema, Template.PropertyAlias), tbl)
+                Else
+                    Try
+                        If executor Is Nothing Then
+                            map = oschema.GetFieldColumnMap(Template.PropertyAlias)
+                        Else
+                            map = executor.GetFieldColumnMap(oschema, t)(Template.PropertyAlias)
+                        End If
+                        tbl = map.Table
+                    Catch ex As KeyNotFoundException
+                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.ObjectSource.ToStaticString(schema, filterInfo) & "." & Template.PropertyAlias, ex))
+                    End Try
+                End If
+
                 If almgr IsNot Nothing Then
-                    'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    Dim tbl As SourceFragment = map.Table
-                    If Template.ObjectSource.IsQuery Then
-                        tbl = Template.ObjectSource.ObjectAlias.Tbl
-                    End If
                     Try
                         [alias] = almgr.GetAlias(tbl, Template.ObjectSource) & stmt.Selector
                     Catch ex As KeyNotFoundException

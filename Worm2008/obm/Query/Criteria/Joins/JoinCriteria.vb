@@ -181,7 +181,7 @@ Namespace Criteria.Joins
             Return GetLink()
         End Function
 
-        Public Function eq(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As JoinLink
+        Public Function eq(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As JoinLink
             _jf.Right = New FieldReference(New EntityUnion([alias]), propertyAlias)
             _jf._oper = FilterOperation.Equal
             Return GetLink()

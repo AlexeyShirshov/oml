@@ -46,8 +46,8 @@ Imports Worm.Criteria.Joins
 #End Region
 
     <TestMethod()> Public Sub TestJoin()
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q.From(t1).Join(JCtor.join(t2).[on](t1, "ID").eq(t2, "Enum")).Select(FCtor.count)
@@ -60,8 +60,8 @@ Imports Worm.Criteria.Joins
     End Sub
 
     <TestMethod()> Public Sub TestOuterJoin()
-        Dim t1 As New EntityAlias(GetType(Entity))
-        Dim t2 As New EntityAlias(GetType(Entity4))
+        Dim t1 As New QueryAlias(GetType(Entity))
+        Dim t2 As New QueryAlias(GetType(Entity4))
 
         Dim q As New QueryCmd(Function() TestManager.CreateManager(New ObjectMappingEngine("joins")))
         q.From(t2).Join(JCtor.join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)
@@ -74,8 +74,8 @@ Imports Worm.Criteria.Joins
     End Sub
 
     <TestMethod()> Public Sub TestOuterJoinWhere()
-        Dim t1 As New EntityAlias(GetType(Entity))
-        Dim t2 As New EntityAlias(GetType(Entity4))
+        Dim t1 As New QueryAlias(GetType(Entity))
+        Dim t2 As New QueryAlias(GetType(Entity4))
 
         Dim q As New QueryCmd(Function() TestManager.CreateManager(New ObjectMappingEngine("joins")))
         q.From(t2).Join(JCtor.join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)

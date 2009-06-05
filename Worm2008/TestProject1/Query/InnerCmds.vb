@@ -195,7 +195,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4))
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -215,7 +215,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4))
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -235,7 +235,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4), True)
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -260,7 +260,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)).SelectEntity(GetType(Entity4), True)
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -288,7 +288,7 @@ Imports Worm.Entities
             .Select(FCtor.count) _
             .Where(Ctor.custom("left({0},1)", FCtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -312,7 +312,7 @@ Imports Worm.Entities
             .Select(FCtor.count) _
             .Where(Ctor.custom("left({0},1)", FCtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))
@@ -333,7 +333,7 @@ Imports Worm.Entities
         inner.From(GetType(Entity4)) _
             .Select(FCtor.prop(GetType(Entity4), "Title").prop(GetType(Entity4), "ID"))
 
-        Dim al As New EntityAlias(inner)
+        Dim al As New QueryAlias(inner)
 
         Dim q As New QueryCmd(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1")))

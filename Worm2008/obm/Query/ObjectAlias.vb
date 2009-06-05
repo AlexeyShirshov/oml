@@ -4,7 +4,7 @@ Imports Worm.Criteria.Values
 Namespace Query
 
     <Serializable()> _
-    Public Class EntityAlias
+    Public Class QueryAlias
         Private _t As Type
         Private _en As String
         Private _q As Worm.Query.QueryCmd
@@ -100,7 +100,7 @@ Namespace Query
 
         Private _t As Type
         Private _en As String
-        Private _a As EntityAlias
+        Private _a As QueryAlias
 
         Public Sub New(ByVal t As Type)
             If t Is Nothing Then
@@ -116,7 +116,7 @@ Namespace Query
             _en = entityName
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias)
+        Public Sub New(ByVal [alias] As QueryAlias)
             If [alias] Is Nothing Then
                 Throw New ArgumentNullException("alias")
             End If
@@ -203,7 +203,7 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property ObjectAlias() As EntityAlias
+        Public ReadOnly Property ObjectAlias() As QueryAlias
             Get
                 Return _a
             End Get
@@ -269,7 +269,7 @@ Namespace Query
             Me.PropertyAlias = propertyAlias
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String)
             Me.Entity = New EntityUnion([alias])
             Me.PropertyAlias = propertyAlias
         End Sub

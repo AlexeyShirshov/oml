@@ -2937,6 +2937,72 @@ l1:
                 Return " option(use plan N'{0}')"
             End Get
         End Property
+
+        Public Overrides Function BinaryOperator2String(ByVal oper As Expressions2.BinaryOperationType) As String
+            Select Case oper
+                Case Expressions2.BinaryOperationType.Equal
+                    Return " = "
+                Case Expressions2.BinaryOperationType.GreaterEqualThan
+                    Return " >= "
+                Case Expressions2.BinaryOperationType.GreaterThan
+                    Return " > "
+                Case Expressions2.BinaryOperationType.In
+                    Return " in "
+                Case Expressions2.BinaryOperationType.NotEqual
+                    Return " <> "
+                Case Expressions2.BinaryOperationType.NotIn
+                    Return " not in "
+                Case Expressions2.BinaryOperationType.LessEqualThan
+                    Return " <= "
+                Case Expressions2.BinaryOperationType.Like
+                    Return " like "
+                Case Expressions2.BinaryOperationType.LessThan
+                    Return " < "
+                Case Expressions2.BinaryOperationType.Is
+                    Return " is "
+                Case Expressions2.BinaryOperationType.IsNot
+                    Return " is not "
+                Case Expressions2.BinaryOperationType.Exists
+                    Return " exists "
+                Case Expressions2.BinaryOperationType.NotExists
+                    Return " not exists "
+                Case Expressions2.BinaryOperationType.Between
+                    Return " between "
+                Case Expressions2.BinaryOperationType.And
+                    Return " and "
+                Case Expressions2.BinaryOperationType.Or
+                    Return " or "
+                Case Expressions2.BinaryOperationType.ExclusiveOr
+                    Return "^"
+                Case Expressions2.BinaryOperationType.BitAnd
+                    Return "&"
+                Case Expressions2.BinaryOperationType.BitOr
+                    Return "|"
+                Case Expressions2.BinaryOperationType.Add
+                    Return "+"
+                Case Expressions2.BinaryOperationType.Subtract
+                    Return "-"
+                Case Expressions2.BinaryOperationType.Divide
+                    Return "/"
+                Case Expressions2.BinaryOperationType.Multiply
+                    Return "*"
+                Case Expressions2.BinaryOperationType.Modulo
+                    Return "%"
+                Case Else
+                    Throw New ObjectMappingException("invalid opration " & oper.ToString)
+            End Select
+        End Function
+
+        Public Overrides Function UnaryOperator2String(ByVal oper As Expressions2.UnaryOperationType) As String
+            Select Case oper
+                Case Expressions2.UnaryOperationType.Negate
+                    Return "-"
+                Case Expressions2.UnaryOperationType.Not
+                    Return "~"
+                Case Else
+                    Throw New ObjectMappingException("invalid opration " & oper.ToString)
+            End Select
+        End Function
     End Class
 
     <Serializable()> _

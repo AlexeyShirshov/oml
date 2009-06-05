@@ -56,8 +56,8 @@ Imports System.Collections.ObjectModel
     End Class
 
     <TestMethod()> Public Sub TestSelect()
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -78,8 +78,8 @@ Imports System.Collections.ObjectModel
     End Sub
 
     <TestMethod()> Public Sub TestSelectWithload()
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -91,8 +91,8 @@ Imports System.Collections.ObjectModel
     End Sub
 
     <TestMethod()> Public Sub TestSelectListConverter()
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared( _
                                   New ObjectMappingEngine("1"), New localcache))
@@ -107,8 +107,8 @@ Imports System.Collections.ObjectModel
     <TestMethod()> Public Sub TestSelectCache()
         Dim c As New OrmCache
 
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
@@ -145,8 +145,8 @@ Imports System.Collections.ObjectModel
     <TestMethod()> Public Sub TestSelectWebCache()
         Dim c As New localcache
 
-        Dim t1 As New EntityAlias(GetType(Table1))
-        Dim t2 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
+        Dim t2 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 

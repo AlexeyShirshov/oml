@@ -358,12 +358,12 @@ Namespace Entities.Meta
         Implements IPrepareTable
 
         Private _defaultAliases As Generic.IDictionary(Of SourceFragment, String)
-        Private _objectAlises As Generic.IDictionary(Of EntityAlias, Generic.IDictionary(Of SourceFragment, String))
+        Private _objectAlises As Generic.IDictionary(Of QueryAlias, Generic.IDictionary(Of SourceFragment, String))
         Private _cnt As Integer
 
         Private Sub New(ByVal aliases As Generic.IDictionary(Of SourceFragment, String))
             _defaultAliases = aliases
-            _objectAlises = New Generic.Dictionary(Of EntityAlias, Generic.IDictionary(Of SourceFragment, String))
+            _objectAlises = New Generic.Dictionary(Of QueryAlias, Generic.IDictionary(Of SourceFragment, String))
         End Sub
 
         Public Shared Function Create() As AliasMgr

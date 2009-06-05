@@ -1194,7 +1194,7 @@ l1:
                         AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                         Dim eu As EntityUnion = Nothing
                         If Not eudic.TryGetValue(ep.PropertyAlias & "$" & pit.ToString, eu) Then
-                            eu = New EntityUnion(New EntityAlias(pit))
+                            eu = New EntityUnion(New QueryAlias(pit))
                             eudic(ep.PropertyAlias & "$" & pit.ToString) = eu
                         End If
                         If js.Find(Function(q As QueryJoin) eu.Equals(q.ObjectSource)) Is Nothing Then
@@ -1235,7 +1235,7 @@ l1:
                     Dim pit As Type = pr.Second.PropertyType
                     Dim eu As EntityUnion = Nothing
                     If Not eudic.TryGetValue(pr.First.PropertyAlias & "$" & pit.ToString, eu) Then
-                        eu = New EntityUnion(New EntityAlias(pit))
+                        eu = New EntityUnion(New QueryAlias(pit))
                         eudic(pr.First.PropertyAlias & "$" & pit.ToString) = eu
                     End If
                     Dim ov As Object = MappingEngine.GetPropertyValue(o, pr.First.PropertyAlias, tp.Schema, pr.Second)
@@ -1568,7 +1568,7 @@ l1:
             If firstType IsNot secondType Then
                 ostt = New EntityUnion(secondType)
             Else
-                ostt = New EntityUnion(New EntityAlias(secondType))
+                ostt = New EntityUnion(New QueryAlias(secondType))
             End If
 
             Dim types As New Dictionary(Of EntityUnion, IEntitySchema)
@@ -3808,7 +3808,7 @@ l2:
             If t IsNot tt Then
                 ostt = New EntityUnion(tt)
             Else
-                ostt = New EntityUnion(New EntityAlias(tt))
+                ostt = New EntityUnion(New QueryAlias(tt))
             End If
 
             Dim types As New Dictionary(Of EntityUnion, IEntitySchema)

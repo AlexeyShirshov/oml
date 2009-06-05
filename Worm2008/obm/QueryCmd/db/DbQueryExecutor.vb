@@ -959,7 +959,7 @@ l1:
                     'If join.ObjectSource IsNot Nothing AndAlso join.ObjectSource.IsQuery Then
                     '    sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
 
-                    '    Dim al As EntityAlias = join.ObjectSource.ObjectAlias
+                    '    Dim al As QueryAlias = join.ObjectSource.ObjectAlias
                     '    Dim q As QueryCmd = al.Query
                     '    'Dim c As New Query.QueryCmd.svct(q)
                     '    'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)

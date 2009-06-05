@@ -42,7 +42,7 @@ Namespace Criteria
             _os = os
         End Sub
 
-        Public Sub New(ByVal oa As EntityAlias)
+        Public Sub New(ByVal oa As QueryAlias)
             _os = New EntityUnion(oa)
         End Sub
 
@@ -108,7 +108,7 @@ Namespace Criteria
             Return CreateField(t, propertyAlias, _con, ConditionOperator.And)
         End Function
 
-        Public Function [and](ByVal oa As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [and](ByVal oa As QueryAlias, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If
@@ -160,7 +160,7 @@ Namespace Criteria
             Return CreateField(t, propertyAlias, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [or](ByVal oa As EntityAlias, ByVal propertyAlias As String) As PropertyPredicate
+        Public Function [or](ByVal oa As QueryAlias, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
             End If
