@@ -200,5 +200,28 @@ Namespace Xml
                 Return Nothing
             End Get
         End Property
+
+        Public Overrides Function BinaryOperator2String(ByVal oper As Expressions2.BinaryOperationType) As String
+            Select Case oper
+                Case Expressions2.BinaryOperationType.Equal
+                    Return " = "
+                Case Expressions2.BinaryOperationType.GreaterEqualThan
+                    Return " >= "
+                Case Expressions2.BinaryOperationType.GreaterThan
+                    Return " > "
+                Case Expressions2.BinaryOperationType.NotEqual
+                    Return " != "
+                Case Expressions2.BinaryOperationType.LessEqualThan
+                    Return " <= "
+                Case Expressions2.BinaryOperationType.LessThan
+                    Return " < "
+                Case Else
+                    Throw New ObjectMappingException("invalid opration " & oper.ToString)
+            End Select
+        End Function
+
+        Public Overrides Function UnaryOperator2String(ByVal oper As Expressions2.UnaryOperationType) As String
+            Throw New ObjectMappingException("invalid opration " & oper.ToString)
+        End Function
     End Class
 End Namespace

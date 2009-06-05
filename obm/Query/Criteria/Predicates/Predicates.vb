@@ -79,8 +79,8 @@ Namespace Criteria
         Protected MustOverride Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As IFilter
         Protected MustOverride Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As IFilter
 
-        Protected Function cjf(ByVal t As Type, ByVal joinPropertyAlias As String, ByVal fo As FilterOperation) As IFilter
-            Dim j As IFilter = CreateJoinFilter(New ObjectProperty(t, joinPropertyAlias), fo)
+        Protected Function cjf(ByVal t As Type, ByVal joinPropertyAlias As String, ByVal jfo As FilterOperation, ByVal fo As FilterOperation) As IFilter
+            Dim j As IFilter = CreateJoinFilter(New ObjectProperty(t, joinPropertyAlias), jfo)
             Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
         End Function
 
@@ -128,7 +128,7 @@ Namespace Criteria
             End If
         End Function
 
-        Public Function eq(ByVal al As EntityAlias, ByVal propertyAlias As String) As PredicateLink
+        Public Function eq(ByVal al As QueryAlias, ByVal propertyAlias As String) As PredicateLink
             Return GetLink(CreateJoinFilter(New ObjectProperty(al, propertyAlias), FilterOperation.Equal))
         End Function
 
@@ -278,13 +278,13 @@ Namespace Criteria
         Public Function exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
             'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
             'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.Exists))
-            Return GetLink(cjf(t, joinField, FilterOperation.Exists))
+            Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.Exists))
         End Function
 
         Public Function not_exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
             'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
             'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.NotExists))
-            Return GetLink(cjf(t, joinField, FilterOperation.NotExists))
+            Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.NotExists))
         End Function
 
         Public Function exists(ByVal t As Type) As PredicateLink
@@ -414,12 +414,12 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(ObjectProp, op, FilterOperation.Equal)
+            Dim j As New JoinFilter(ObjectProp, op, fo)
             Return j
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(t, column, ObjectProp, FilterOperation.Equal)
+            Dim j As New JoinFilter(t, column, ObjectProp, fo)
             Return j
         End Function
     End Class

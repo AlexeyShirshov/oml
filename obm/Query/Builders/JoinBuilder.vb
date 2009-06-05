@@ -31,7 +31,7 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal [alias] As EntityAlias) As JoinCondition
+        Public Shared Function join(ByVal [alias] As QueryAlias) As JoinCondition
             Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.Join, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
@@ -76,7 +76,7 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function left_join(ByVal [alias] As EntityAlias) As JoinCondition
+        Public Shared Function left_join(ByVal [alias] As QueryAlias) As JoinCondition
             Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
@@ -125,7 +125,7 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function full_join(ByVal [alias] As EntityAlias) As JoinCondition
+        Public Shared Function full_join(ByVal [alias] As QueryAlias) As JoinCondition
             Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
             Dim jc As New JCtor
             jc._j.Add(j)
@@ -193,7 +193,7 @@ Namespace Query
                 Return CreateJC(GetJoin(eu))
             End Function
 
-            Public Function [with](ByVal ea As EntityAlias) As JC3
+            Public Function [with](ByVal ea As QueryAlias) As JC3
                 Return CreateJC(GetJoin(ea))
             End Function
 
@@ -221,7 +221,7 @@ Namespace Query
                 End If
             End Function
 
-            Protected Function GetJoin(ByVal ea As EntityAlias) As QueryJoin
+            Protected Function GetJoin(ByVal ea As QueryAlias) As QueryJoin
                 If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
                     Return JCtor.join(_r.Rel).onM2M(_r.Key, ea)
                 Else
@@ -255,7 +255,7 @@ Namespace Query
 
             End Sub
 
-            Public Function join(ByVal ea As EntityAlias) As JoinCondition
+            Public Function join(ByVal ea As QueryAlias) As JoinCondition
                 PreAdd()
                 Dim j As New QueryJoin(ea, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
                 _jc.Add(j)
@@ -348,14 +348,14 @@ Namespace Query
 
 #Region " Apply "
 
-            Public Function apply(ByVal cmd As EntityAlias) As JoinLinkBase
+            Public Function apply(ByVal cmd As QueryAlias) As JoinLinkBase
                 PreAdd()
                 Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.InnerApply, CType(Nothing, IFilter))
                 _jc.Add(j)
                 Return Me
             End Function
 
-            Public Function outer_apply(ByVal cmd As EntityAlias) As JoinLinkBase
+            Public Function outer_apply(ByVal cmd As QueryAlias) As JoinLinkBase
                 PreAdd()
                 Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.OuterApply, CType(Nothing, IFilter))
                 _jc.Add(j)
@@ -397,12 +397,12 @@ Namespace Query
 
 #Region " Apply "
 
-        Public Shared Function apply(ByVal cmd As EntityAlias) As JoinLinkBase
+        Public Shared Function apply(ByVal cmd As QueryAlias) As JoinLinkBase
             Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.InnerApply, CType(Nothing, IFilter))
             Return New JoinLinkBase(j)
         End Function
 
-        Public Shared Function outer_apply(ByVal cmd As EntityAlias) As JoinLinkBase
+        Public Shared Function outer_apply(ByVal cmd As QueryAlias) As JoinLinkBase
             Dim j As New QueryJoin(cmd, Worm.Criteria.Joins.JoinType.OuterApply, CType(Nothing, IFilter))
             Return New JoinLinkBase(j)
         End Function
@@ -425,11 +425,11 @@ Namespace Query
             Return New JoinLink(m2mType, _j)
         End Function
 
-        Public Function onM2M(ByVal m2mAlias As EntityAlias) As JoinLink
+        Public Function onM2M(ByVal m2mAlias As QueryAlias) As JoinLink
             Return New JoinLink(New EntityUnion(m2mAlias), _j)
         End Function
 
-        Public Function onM2M(ByVal m2mKey As String, ByVal m2mAlias As EntityAlias) As JoinLink
+        Public Function onM2M(ByVal m2mKey As String, ByVal m2mAlias As QueryAlias) As JoinLink
             Return New JoinLink(New EntityUnion(m2mAlias), m2mKey, _j)
         End Function
 
@@ -465,7 +465,7 @@ Namespace Query
             Return c
         End Function
 
-        Public Function [on](ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As CriteriaJoin
+        Public Function [on](ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As CriteriaJoin
             Dim jf As New JoinFilter(New EntityUnion([alias]), propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
             Dim c As New CriteriaJoin(jf, _j)
             Return c

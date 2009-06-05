@@ -44,8 +44,14 @@ Imports Worm
     '
 #End Region
 
+    Private _cache As New Cache.ReadonlyCache
+
     Protected Function CreateCmd() As QueryCmd
         Return New QueryCmd(Function() TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
+    End Function
+
+    Protected Function CreateCmdRS() As QueryCmd
+        Return New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), _cache))
     End Function
 
     <TestMethod(), Ignore()> Public Sub TestAdd()
@@ -59,4 +65,10 @@ Imports Worm
         Assert.AreEqual(cnt + 1, e.GetCmd(GetType(Entity4)).Count)
     End Sub
 
+    <TestMethod()> Public Sub TestUnderlying()
+        Dim t As Table1 = CreateCmdRS.GetByID(Of Table1)(1)
+        Dim c As Integer = t.GetCmd(GetType(Table3)).Count
+
+
+    End Sub
 End Class

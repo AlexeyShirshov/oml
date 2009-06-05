@@ -29,7 +29,7 @@ Namespace Query
             Return New SortLink(CType(Nothing, EntityUnion), propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As SortLink
+        Public Shared Function prop(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As SortLink
             Return New SortLink(New EntityUnion([alias]), propertyAlias)
         End Function
 

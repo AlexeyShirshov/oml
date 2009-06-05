@@ -53,7 +53,7 @@ Imports Worm
             .Where(Ctor.prop(GetType(Table1), "ID").eq(GetType(Table2), "Table1")) _
             .Top(1)
 
-        Dim al As New EntityAlias(q)
+        Dim al As New QueryAlias(q)
 
         Dim q2 As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))

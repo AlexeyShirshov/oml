@@ -46,7 +46,7 @@ Namespace Criteria.Joins
             _condition = condition
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _src = New EntityUnion([alias])
             _joinType = joinType
             _condition = condition
@@ -130,7 +130,7 @@ Namespace Criteria.Joins
                 Else
                     sb.Append(JoinTypeString()).Append("(")
 
-                    Dim al As EntityAlias = os_.ObjectAlias
+                    Dim al As QueryAlias = os_.ObjectAlias
                     Dim q As QueryCmd = al.Query
                     sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, AliasMgr.Create))
 
@@ -164,7 +164,7 @@ Namespace Criteria.Joins
             ElseIf os_ IsNot Nothing AndAlso os_.IsQuery Then
                 sb.Append(JoinTypeString()).Append("(")
 
-                Dim al As EntityAlias = os_.ObjectAlias
+                Dim al As QueryAlias = os_.ObjectAlias
                 Dim q As QueryCmd = al.Query
                 sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, almgr))
 

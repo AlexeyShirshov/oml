@@ -110,7 +110,7 @@ Namespace Criteria.Core
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
-        Public Sub New(ByVal [alias] As EntityAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+        Public Sub New(ByVal [alias] As QueryAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
             '_os = New ObjectSource([alias])
             '_fieldname = propertyAlias
@@ -227,7 +227,7 @@ Namespace Criteria.Core
             Return New EntityFilter(entityName, propertyAlias, value, operation)
         End Function
 
-        Protected Function CreateEntityFilter(ByVal oa As EntityAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
+        Protected Function CreateEntityFilter(ByVal oa As QueryAlias, ByVal propertyAlias As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilter
             Return New EntityFilter(oa, propertyAlias, value, operation)
         End Function
 

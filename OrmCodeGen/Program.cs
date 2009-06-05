@@ -169,7 +169,7 @@ namespace Worm.CodeGen.CodeGenerator
 
             if(!System.IO.File.Exists(inputFilename))
             {
-                Console.WriteLine("Error: source file not found.");
+                Console.WriteLine("Error: source file {0} not found.", inputFilename);
                 return;
             }
 
@@ -223,7 +223,7 @@ namespace Worm.CodeGen.CodeGenerator
             settings.LanguageSpecificHacks = languageHacks;
 
             Console.WriteLine("Generation entities from file '{0}' using these settings:", inputFilename);
-            Console.WriteLine("  Output folder: {0}", outputFolder);
+            Console.WriteLine("  Output folder: {0}", System.IO.Path.GetFullPath(outputFolder));
             Console.WriteLine("  Language: {0}", outputLanguage.ToLower());
             Console.WriteLine("  Split files: {0}", split);
             Console.WriteLine("  Skip entities: {0}", string.Join(" ", skipEntities));
@@ -233,8 +233,8 @@ namespace Worm.CodeGen.CodeGenerator
             if (oneFile)
             {
                 string privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
-                
-                CodeCompileUnit unit = gen.GetFullSingleUnit();
+
+                CodeCompileUnit unit = gen.GetFullSingleUnit(typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(codeDomProvider.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
 
                 if (!System.IO.Directory.Exists(privateFolder))
                     System.IO.Directory.CreateDirectory(privateFolder);
@@ -286,7 +286,7 @@ namespace Worm.CodeGen.CodeGenerator
                 //    }
                 //}
 
-                if (skipEntities.Contains(entity.Identifier) || !processEntities.Contains(entity.Identifier))
+                if (skipEntities.Contains(entity.Identifier) || processEntities.Contains(entity.Identifier))
                     continue;
 
                 string privateFolder;
@@ -295,7 +295,7 @@ namespace Worm.CodeGen.CodeGenerator
                 else
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
 
-                var units = gen.GetEntityCompileUnits(entity.Identifier);
+                var units = gen.GetEntityCompileUnits(entity.Identifier, typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(codeDomProvider.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
 
                 Console.Write(".");
 

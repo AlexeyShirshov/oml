@@ -74,7 +74,7 @@ Namespace Query
                 Me.Query = query
             End Sub
 
-            Public Sub New(ByVal [alias] As EntityAlias)
+            Public Sub New(ByVal [alias] As QueryAlias)
                 If [alias] Is Nothing Then
                     Throw New ArgumentNullException("alias")
                 End If
@@ -106,7 +106,7 @@ Namespace Query
                 Get
                     If Query IsNot Nothing Then
                         If _qeu Is Nothing Then
-                            _qeu = New EntityUnion(New EntityAlias(Query))
+                            _qeu = New EntityUnion(New QueryAlias(Query))
                         End If
                         Return _qeu
                     End If
@@ -845,7 +845,7 @@ l1:
                                                 Dim eu As EntityUnion = Nothing
                                                 Dim p As Pair(Of String, EntityUnion) = Nothing
                                                 If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
-                                                    eu = New EntityUnion(New EntityAlias(pit))
+                                                    eu = New EntityUnion(New QueryAlias(pit))
                                                     eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
                                                 Else
                                                     eu = p.Second
@@ -2109,7 +2109,7 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal [alias] As EntityAlias) As QueryCmd
+        Public Function From(ByVal [alias] As QueryAlias) As QueryCmd
             _from = New FromClauseDef([alias])
             RenewMark()
             Return Me
@@ -2305,10 +2305,10 @@ l1:
             Return Me
         End Function
 
-        Public Function SelectEntity(ByVal ParamArray aliases() As EntityAlias) As QueryCmd
+        Public Function SelectEntity(ByVal ParamArray aliases() As QueryAlias) As QueryCmd
             SelectedEntities = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))( _
-                Array.ConvertAll(Of EntityAlias, Pair(Of EntityUnion, Boolean?))(aliases, _
-                    Function(item As EntityAlias) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
+                Array.ConvertAll(Of QueryAlias, Pair(Of EntityUnion, Boolean?))(aliases, _
+                    Function(item As QueryAlias) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
             Return Me
         End Function
 
@@ -2352,7 +2352,7 @@ l1:
             Return Me
         End Function
 
-        Public Function SelectEntity(ByVal [alias] As EntityAlias, ByVal withLoad As Boolean) As QueryCmd
+        Public Function SelectEntity(ByVal [alias] As QueryAlias, ByVal withLoad As Boolean) As QueryCmd
             Dim l As New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion([alias]), withLoad)})
             SelectedEntities = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(l)
             Return Me
@@ -2388,7 +2388,7 @@ l1:
             Return Me
         End Function
 
-        Public Function [SelectAdd](ByVal [alias] As EntityAlias, ByVal withLoad As Boolean) As QueryCmd
+        Public Function [SelectAdd](ByVal [alias] As QueryAlias, ByVal withLoad As Boolean) As QueryCmd
             Dim l As New List(Of Pair(Of EntityUnion, Boolean?))()
             If SelectedEntities IsNot Nothing Then
                 l.AddRange(SelectedEntities)
@@ -4134,6 +4134,19 @@ l1:
                             Next
                         End If
                     End If
+
+
+                    For Each o As IKeyEntity In list
+                        If o IsNot Nothing Then
+                            If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
+                                o.SetCreateManager(_getMgr)
+                            End If
+                            If o.GetSpecificSchema Is Nothing Then
+                                o.MappingEngine = MappingEngine
+                            End If
+                        End If
+                    Next
+
 
                 Finally
                     mgr.SetSchema(oldSch)

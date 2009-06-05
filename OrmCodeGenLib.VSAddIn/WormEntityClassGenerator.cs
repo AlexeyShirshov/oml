@@ -33,14 +33,19 @@ namespace Worm.CodeGen.VSTool
             //Create the CodeCompileUnit from the passed-in XML file
             OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
             settings.EntitySchemaDefClassNameSuffix = "SchemaDef";
+            LinqToCodedom.CodeDomGenerator.Language language;
             switch (ext)
             {
                 case ".cs":
                     settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
+                    language = LinqToCodedom.CodeDomGenerator.Language.CSharp;
                     break;
                 case ".vb":
                     settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
+                    language = LinqToCodedom.CodeDomGenerator.Language.VB;
                     break;
+                default:
+                    throw new NotSupportedException(ext);
                 //case ".js":
                 //    settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
                 //    break;
@@ -53,7 +58,7 @@ namespace Worm.CodeGen.VSTool
 
             if (ormObjectsDef.GenerateSingleFile)
             {
-                CodeCompileFileUnit compileUnit = generator.GetFullSingleUnit();
+                CodeCompileFileUnit compileUnit = generator.GetFullSingleUnit(language);
                 _units = new List<Pair>() { new Pair() { Unit = compileUnit } };
             }
             else
@@ -61,7 +66,7 @@ namespace Worm.CodeGen.VSTool
                 _units = new List<Pair>();
                 foreach (var entity in ormObjectsDef.ActiveEntities)
                 {
-                    _units.Add(new Pair() { Unit = generator.GetEntityCompileUnits(entity.Identifier)[0] });
+                    _units.Add(new Pair() { Unit = generator.GetEntityCompileUnits(entity.Identifier, language)[0] });
                 }
             }
         }

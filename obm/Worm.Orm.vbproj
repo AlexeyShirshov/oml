@@ -170,6 +170,12 @@
     <Compile Include="QueryCmd\classes.vb" />
     <Compile Include="Query\Builders\SelectListBuilder.vb" />
     <Compile Include="Query\db\Formater.vb" />
+    <Compile Include="Query\Expressions\BinaryExpression.vb" />
+    <Compile Include="Query\Expressions\EntityExpression.vb" />
+    <Compile Include="Query\Expressions\Interfaces.vb" />
+    <Compile Include="Query\Expressions\ParameterExpression.vb" />
+    <Compile Include="Query\Expressions\Primitive.vb" />
+    <Compile Include="Query\Expressions\SelectExpressions.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />

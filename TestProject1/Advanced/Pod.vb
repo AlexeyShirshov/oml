@@ -371,9 +371,9 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        Dim c1 As New EntityAlias(GetType(cls4))
+        Dim c1 As New QueryAlias(GetType(cls4))
 
-        Dim c2 As New EntityAlias(GetType(cls4))
+        Dim c2 As New QueryAlias(GetType(cls4))
 
         q _
             .From(c1) _

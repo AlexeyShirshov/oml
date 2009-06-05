@@ -50,7 +50,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong()
-        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -61,7 +61,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> _
     Public Sub TestFilter()
-        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -72,7 +72,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestFilterWrong2()
-        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
@@ -83,7 +83,7 @@ Imports Worm.Criteria.Joins
 
     <TestMethod()> _
     Public Sub TestSort()
-        Dim t1 As New EntityAlias(GetType(Table1))
+        Dim t1 As New QueryAlias(GetType(Table1))
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 

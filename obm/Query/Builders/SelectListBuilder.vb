@@ -24,7 +24,7 @@ Namespace Query
             Return prop(New EntityUnion(entityName), propertyAlias)
         End Function
 
-        Public Shared Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As Int
+        Public Shared Function prop(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As Int
             Return prop(New EntityUnion([alias]), propertyAlias)
         End Function
 
@@ -315,7 +315,7 @@ Namespace Query
                 Return Me
             End Function
 
-            Public Function prop(ByVal [alias] As EntityAlias, ByVal propertyAlias As String) As Int
+            Public Function prop(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As Int
                 GetAllProperties.Add(New SelectExpression([alias], propertyAlias))
                 Return Me
             End Function
