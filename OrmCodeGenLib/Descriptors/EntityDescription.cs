@@ -63,7 +63,7 @@ namespace Worm.CodeGen.Core.Descriptors
             get 
             {
                 if (InheritsBaseTables && _baseEntity != null)
-                    return new List<SourceFragmentRefDescription>(_sourceFragments.Union(_baseEntity.SourceFragments));
+                    return new List<SourceFragmentRefDescription>(_baseEntity.SourceFragments.Union(_sourceFragments));
                 else
                     return _sourceFragments; 
             }

@@ -2607,7 +2607,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), IListEdit)
     End Function
 
-    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter) As ReadOnlyObjectList(Of T)
         Dim evaluated As Boolean
         Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, evaluated)
         If Not evaluated Then
@@ -2616,9 +2616,9 @@ l1:
         Return r
     End Function
 
-    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         evaluated = True
-        Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
+        Dim f As IEntityFilter = TryCast(If(filter Is Nothing, Nothing, filter.Filter), IEntityFilter)
         If f Is Nothing Then
             Return col
         Else
@@ -3785,21 +3785,17 @@ l1:
                     '    type2join = schema.GetTypeByEntityName(ot.EntityName)
                     'End If
 
-                    If type2join Is Nothing Then
-                        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                    End If
-
-                    If selectType Is type2join Then
-                        appendMain = True
-                    Else
-                        Dim s2 As IEntitySchema = schema.GetEntitySchema(type2join)
-                        If oschema.Equals(s2) OrElse oschema.GetType.FullName = s2.GetType.FullName Then
-                            appendMain = True
-                        Else
-                            If Not types.Contains(type2join) Then
-                                AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2)
+                    AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, type2join)
+                Else
+                    Dim cf As CustomFilter = TryCast(fl, CustomFilter)
+                    If cf IsNot Nothing Then
+                        Dim cfv As CustomValue = CType(cf.Template, CustomValue)
+                        For Each v As IFilterValue In cfv.Values
+                            Dim ef As SelectExpressionValue = TryCast(v, SelectExpressionValue)
+                            If ef IsNot Nothing Then
+                                AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource.GetRealType(schema))
                             End If
-                        End If
+                        Next
                     End If
                 End If
             Next
@@ -3834,12 +3830,38 @@ l1:
                     ElseIf sortType Is selectType OrElse sortType Is Nothing Then
                         appendMain = True
                     End If
+                ElseIf ns.IsCustom Then
+                    For Each v As IFilterValue In ns.Custom.Values
+                        Dim ef As SelectExpressionValue = TryCast(v, SelectExpressionValue)
+                        If ef IsNot Nothing Then
+                            AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource.GetRealType(schema))
+                        End If
+                    Next
                 End If
             Next
         End If
         joins = l.ToArray
         Return joins.Length > 0
     End Function
+
+    Private Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, ByRef filter As IFilter, ByVal filterInfo As Object, ByRef appendMain As Boolean, ByVal l As List(Of QueryJoin), ByVal oschema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type)
+        If type2join Is Nothing Then
+            Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+        End If
+
+        If selectType Is type2join Then
+            appendMain = True
+        Else
+            Dim s2 As IEntitySchema = schema.GetEntitySchema(type2join)
+            If oschema.Equals(s2) OrElse oschema.GetType.FullName = s2.GetType.FullName Then
+                appendMain = True
+            Else
+                If Not types.Contains(type2join) Then
+                    AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2)
+                End If
+            End If
+        End If
+    End Sub
 
     Public Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal filterInfo As Object, ByVal l As List(Of QueryJoin), _

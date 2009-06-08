@@ -648,14 +648,16 @@ Namespace Entities
         End Sub
 
 #Region " Relations "
-        Protected Sub _ReplaceRel(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) Implements IRelations._ReplaceRel
+        Protected Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation Implements IRelations.NormalizeRelation
             Using GetSyncRoot()
                 If _relations.Count > 0 Then
                     For Each rl As Relation In _relations
-                        If Relation.MetaEquals(rl, oldRel, schema) Then
+                        If rl.MainType Is newRel.MainType AndAlso rl.MainId.Equals(newRel.MainId) AndAlso Object.Equals(rl.Relation.Rel, newRel.Relation.Rel) AndAlso Object.Equals(rl.Relation.Key, newRel.Relation.Key) AndAlso Object.Equals(rl.Relation.Column, newRel.Relation.Column) Then
+                            Return rl
+                        ElseIf Relation.MetaEquals(rl, oldRel, schema) Then
                             _relations.Remove(rl)
                             _relations.Add(newRel)
-                            Return
+                            Return newRel
                         End If
                     Next
                     If oldRel.Relation Is Nothing Then
@@ -667,7 +669,9 @@ Namespace Entities
                     _relations.Add(newRel)
                 End If
             End Using
-        End Sub
+
+            Return newRel
+        End Function
 
         Protected Sub AddRel(ByVal rel As Relation)
             Using GetSyncRoot()

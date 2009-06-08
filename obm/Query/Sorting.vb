@@ -473,6 +473,24 @@ Namespace Query
                     Return s
                 End If
             End Function
+
+            Public Function CreateComparer(Of T As _IEntity)(ByVal rt As Type) As OrmComparer(Of T)
+                Dim q As New Stack(Of Sort)
+                If Not IsExternal Then
+                    For Each ns As Sort In New Sort.Iterator(Me)
+                        If ns.IsExternal Then
+                            Throw New ObjectMappingException("External sort must be alone")
+                        End If
+                        If ns.IsCustom Then
+                            Throw New ObjectMappingException("Custom sort is not supported")
+                        End If
+                        q.Push(ns)
+                    Next
+
+                    Return New OrmComparer(Of T)(rt, q)
+                End If
+                Return Nothing
+            End Function
         End Class
 
         Public Class OrmComparer(Of T As {_IEntity})

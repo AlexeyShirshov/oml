@@ -200,7 +200,7 @@ Namespace Entities
         Function GetRelation(ByVal en As String, ByVal key As String) As Relation
         Function GetAllRelation() As Generic.IList(Of Relation)
 
-        Sub _ReplaceRel(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine)
+        Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation
     End Interface
 
     Public Interface IKeyEntity

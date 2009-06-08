@@ -292,7 +292,7 @@ Namespace Query
         Protected _rn As TableFilter
         Friend _outer As QueryCmd
         Private _er As OrmManager.ExecutionResult
-        'Private _selectSrc As ObjectSource
+        Private _includeFields As New Dictionary(Of String, Pair(Of Type, List(Of String)))
         Friend _resDic As Boolean
         Private _appendMain As Boolean?
         '<NonSerialized()> _
@@ -326,7 +326,51 @@ Namespace Query
         Friend _stypes As Dictionary(Of EntityUnion, Object)
 #End Region
 
-        'Friend Shared ReadOnly InnerTbl As New SourceFragment
+        Public Function Include(ByVal propertyPath As String) As QueryCmd
+            Dim mpe As ObjectMappingEngine = Nothing
+            Dim t As Type = Nothing
+            If CreateManager IsNot Nothing Then
+                mpe = GetMappingEngine
+                t = GetSelectedType(mpe)
+            End If
+            Include(mpe, t, "^this", propertyPath)
+            Return Me
+        End Function
+
+        Protected Sub Include(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal base As String, ByVal propertyPath As String)
+            Dim ss() As String = propertyPath.Split("."c)
+            Dim p As Pair(Of Type, List(Of String)) = Nothing
+            If base <> "^this" Then
+                If _includeFields.TryGetValue(base, p) Then
+                    t = p.First
+                ElseIf t IsNot Nothing Then
+                    Dim pi As Reflection.PropertyInfo = mpe.GetProperty(t, base)
+                    If pi IsNot Nothing Then
+                        Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
+                    Else
+                        t = pi.PropertyType
+                    End If
+                Else
+                    Throw New QueryCmdException(String.Format("You should specify selected type first"), Me)
+                End If
+            End If
+            If t IsNot Nothing Then
+                Dim pi As Reflection.PropertyInfo = mpe.GetProperty(t, ss(0))
+                If pi IsNot Nothing Then
+                    Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
+                End If
+            End If
+            If p Is Nothing AndAlso Not _includeFields.TryGetValue(base, p) Then
+                p = New Pair(Of Type, List(Of String))(t, New List(Of String))
+                _includeFields(base) = p
+            End If
+            If Not p.Second.Contains(ss(0)) Then
+                p.Second.Add(ss(0))
+            End If
+            If ss.Length > 1 Then
+                Include(mpe, t, ss(0), String.Join(".", ss, 1, ss.Length - 1))
+            End If
+        End Sub
 
         Public Sub OptimizeInFilter(ByVal inFilter As IFilter)
             _optimizeIn = inFilter
@@ -838,31 +882,24 @@ l1:
                                     For Each tde As DictionaryEntry In schema.GetRefProperties(t, de.Value)
                                         Dim pi As Reflection.PropertyInfo = CType(tde.Value, PropertyInfo)
                                         Dim pit As Type = pi.PropertyType
+                                        Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                         If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                            Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                             Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
-                                                Dim eu As EntityUnion = Nothing
-                                                Dim p As Pair(Of String, EntityUnion) = Nothing
-                                                If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
-                                                    eu = New EntityUnion(New QueryAlias(pit))
-                                                    eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
-                                                Else
-                                                    eu = p.Second
-                                                End If
-                                                If Not HasInQuery(eu, _js) Then
-                                                    Dim s As IEntitySchema = Nothing
-                                                    If Not GetType(IEntity).IsAssignableFrom(pit) Then
-                                                        Dim hasPK As Boolean
-                                                        s = GetSchema(schema, pit, hasPK)
-                                                        AddPOCO(pit, s)
-                                                    Else
-                                                        s = schema.GetEntitySchema(pit, False)
+                                                _PrepareExtracted(schema, filterInfo, f, eudic, de, t, hasCmplx, pit, ep, selex)
+                                            End If
+                                        Else
+                                            If t Is selTypes(0).First.GetRealType(schema) Then
+                                                Dim p As Pair(Of Type, List(Of String)) = Nothing
+                                                _includeFields.TryGetValue("^this", p)
+                                                If p IsNot Nothing Then
+                                                    'Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
+                                                    If p.Second.Contains(ep.PropertyAlias) Then
+                                                        _PrepareExtracted(schema, filterInfo, f, eudic, de, t, hasCmplx, pit, ep, New SelectExpression(t, ep.PropertyAlias))
                                                     End If
-                                                    schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, JoinType.LeftOuterJoin, filterInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
-                                                    hasCmplx = True
-                                                    SelectAdd(eu, True)
                                                 End If
+                                            Else
+
                                             End If
                                         End If
                                     Next
@@ -921,6 +958,34 @@ l1:
             End If
 
             _f = f
+        End Sub
+
+        Private Sub _PrepareExtracted(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByRef f As IFilter, ByVal eudic As Dictionary(Of String, Pair(Of String, EntityUnion)), _
+            ByVal de As KeyValuePair(Of EntityUnion, IEntitySchema), ByVal t As Type, _
+            ByRef hasCmplx As Boolean, ByVal pit As Type, ByVal ep As EntityPropertyAttribute, _
+            ByVal selex As SelectExpression)
+            Dim eu As EntityUnion = Nothing
+            Dim p As Pair(Of String, EntityUnion) = Nothing
+            If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
+                eu = New EntityUnion(New QueryAlias(pit))
+                eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
+            Else
+                eu = p.Second
+            End If
+            If Not HasInQuery(eu, _js) Then
+                Dim s As IEntitySchema = Nothing
+                If Not GetType(IEntity).IsAssignableFrom(pit) Then
+                    Dim hasPK As Boolean
+                    s = GetSchema(schema, pit, hasPK)
+                    AddPOCO(pit, s)
+                Else
+                    s = schema.GetEntitySchema(pit, False)
+                End If
+                schema.AppendJoin(de.Key, t, de.Value, eu, pit, s, f, _js, JoinType.LeftOuterJoin, filterInfo, ObjectMappingEngine.JoinFieldType.Direct, ep.PropertyAlias)
+                hasCmplx = True
+                SelectAdd(eu, True)
+            End If
         End Sub
 
         Friend _prepared As Boolean
@@ -1587,6 +1652,10 @@ l1:
 
         Protected Function _WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
             Return (tp.Second.HasValue AndAlso tp.Second.Value) OrElse Not GetType(IPropertyLazyLoad).IsAssignableFrom(tp.First.GetRealType(mpe))
+        End Function
+
+        Protected Friend Overridable Function ModifyResult(Of T As _IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+            Return result
         End Function
 
 #Region " Properties "
@@ -2808,7 +2877,7 @@ l1:
         'End Function
 #End Region
 
-        Public Function Count(ByVal mgr As OrmManager) As Integer
+        Public Overridable Function Count(ByVal mgr As OrmManager) As Integer
             Dim s As Sort = _order
             Dim p As Paging = _clientPage
             Dim pp As IPager = _pager
@@ -3514,6 +3583,218 @@ l1:
 
 #End Region
 
+#Region " Lasts "
+
+#Region " Last "
+        Public Function Last(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)(mgr)
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)(mgr)
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(l.Count - 1)
+        End Function
+
+        Public Function Last(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)(getMgr)
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)(getMgr)
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(l.Count - 1)
+        End Function
+
+        Public Function Last(Of T As {New, _ICachedEntity})() As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)()
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)()
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(l.Count - 1)
+        End Function
+#End Region
+
+#Region " LastOrDefault "
+        Public Function LastOrDefault(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)(mgr)
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)(mgr)
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Return Nothing
+            End If
+            Return l(l.Count - 1)
+        End Function
+
+        Public Function LastOrDefault(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)(getMgr)
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)(getMgr)
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Return Nothing
+            End If
+            Return l(l.Count - 1)
+        End Function
+
+        Public Function LastOrDefault(Of T As {New, _ICachedEntity})() As T
+            Dim l As ReadOnlyEntityList(Of T) = Nothing
+            If Sort Is Nothing Then
+                l = ToList(Of T)()
+            Else
+                Dim sort As Sort = Me.Sort
+                Dim newSort As Sort = Nothing
+                For Each ns As Sort In New Sort.Iterator(sort)
+                    If newSort Is Nothing Then
+                        newSort = ns
+                    Else
+                        newSort.Previous = ns
+                        newSort = ns
+                    End If
+                    Dim newOrder As SortType = SortType.Asc
+                    If newSort.Order = SortType.Asc Then
+                        newOrder = SortType.Desc
+                    End If
+                    newSort.Order = newOrder
+                Next
+                Dim oldT As Top = TopParam
+                Try
+                    l = OrderBy(newSort).Top(1).ToList(Of T)()
+                Finally
+                    _top = oldT
+                    _order = sort
+                End Try
+            End If
+            If l.Count = 0 Then
+                Return Nothing
+            End If
+            Return l(l.Count - 1)
+        End Function
+#End Region
+
+#End Region
+
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IEntitySchema
             Dim s As IEntitySchema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
@@ -3681,7 +3962,7 @@ l1:
                 ._order = _order
                 '._page = _page
                 ._statementMark = _statementMark
-                '._selectSrc = _selectSrc
+                ._includeFields = New Dictionary(Of String, Pair(Of Type, List(Of String)))(_includeFields)
                 ._from = _from
                 ._top = _top
                 ._rn = _rn

@@ -489,13 +489,13 @@ Public Class ObjectMappingEngine
                 n = GetEntityNameByType(r.Rel.GetRealType(Me))
                 If Not String.IsNullOrEmpty(n) Then
                     Dim n2 As String = GetEntityNameByType(subtype)
-                    If String.Equals(n, n2) AndAlso String.Equals(r.Key, key) Then
+                    If String.Equals(n, n2) AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.Key) = M2MRelationDesc.IsDirect(key)) Then
                         Return r
                     End If
                 End If
             Else
                 Dim n2 As String = GetEntityNameByType(subtype)
-                If String.Equals(n, n2) AndAlso String.Equals(r.Key, key) Then
+                If String.Equals(n, n2) AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.Key) = M2MRelationDesc.IsDirect(key)) Then
                     Return r
                 End If
             End If
