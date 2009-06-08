@@ -5,11 +5,13 @@ Imports Worm.Query.Sorting
 Imports Worm.Entities
 
 Friend Interface IListEdit
-    Inherits IList
+    Inherits IList, ICloneable
     Overloads Sub Add(ByVal o As Entities.IEntity)
     Overloads Sub Remove(ByVal o As Entities.IEntity)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
     ReadOnly Property List() As IList
+    Function CloneEmpty() As IListEdit
+    ReadOnly Property RealType() As Type
 End Interface
 
 Public Interface ILoadableList
@@ -193,6 +195,20 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Next
         Return CType(r, ReadOnlyEntityList(Of AnonymousCachedEntity))
     End Function
+
+    Friend Overrides Function CloneEmpty() As IListEdit
+        Return New ReadOnlyList(Of T)(_rt)
+    End Function
+
+    Public Overrides Function Clone() As Object
+        Return New ReadOnlyEntityList(Of T)(_rt, _l)
+    End Function
+
+    Public Overrides ReadOnly Property RealType() As System.Type
+        Get
+            Return _rt
+        End Get
+    End Property
 End Class
 
 <Serializable()> _
@@ -334,6 +350,13 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
         End If
     End Function
 
+    Friend Overrides Function CloneEmpty() As IListEdit
+        Return New ReadOnlyEntityList(Of T)
+    End Function
+
+    Public Overrides Function Clone() As Object
+        Return New ReadOnlyEntityList(Of T)(_l)
+    End Function
 End Class
 
 <Serializable()> _
@@ -349,7 +372,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End Get
     End Property
 
-    Protected Friend ReadOnly Property List() As IList(Of T)
+    Protected Friend ReadOnly Property List() As List(Of T)
         Get
             Return _l
         End Get
@@ -399,7 +422,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         CType(_l, IList).Remove(o)
     End Sub
 
-    Public Function ApplyFilter(ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+    Public Function ApplyFilter(ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
@@ -410,7 +433,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End If
     End Function
 
-    Public Function ApplyFilter(ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
+    Public Function ApplyFilter(ByVal filter As IGetFilter) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
             Dim evaluated As Boolean
             Dim o As T = _l(0)
@@ -450,4 +473,18 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Public Function GetListName(ByVal listAccessors() As System.ComponentModel.PropertyDescriptor) As String Implements System.ComponentModel.ITypedList.GetListName
         Return Nothing
     End Function
+
+    Friend Overridable Function CloneEmpty() As IListEdit Implements IListEdit.CloneEmpty
+        Return New ReadOnlyObjectList(Of T)()
+    End Function
+
+    Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
+        Return New ReadOnlyObjectList(Of T)(_l)
+    End Function
+
+    Public Overridable ReadOnly Property RealType() As System.Type Implements IListEdit.RealType
+        Get
+            Return GetType(T)
+        End Get
+    End Property
 End Class

@@ -102,22 +102,34 @@ Namespace Query
         End Function
 
         Public Function Exec(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
-            'Dim mi As Reflection.MethodInfo = GetType(UpdatableCachedItem).GetMethod("GetObjectList", New Type() {GetType(OrmManager)})
-            'Dim mig As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {query.GetSelectedType(mgr.MappingEngine)})
-            'Return CType(_Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
-            '   Function() GetProcessor(Of ReturnType)(mgr, query), _
-            '   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-            '       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-            '   Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-            '       CType(mig.Invoke(ce, New Object() {m, q.propWithLoad, created, m.GetStart, m.GetLength, s}), ReadOnlyEntityList(Of ReturnType)) _
-            '   ), ReadOnlyEntityList(Of ReturnType))
-            Return CType(_Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
-               Function() GetProcessor(Of ReturnType)(mgr, query), _
-               Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                   m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-               Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
-                   CType(ce, UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s) _
-               ), ReadOnlyEntityList(Of ReturnType))
+            Dim c As New cls(mgr)
+            Try
+                AddHandler query.QueryPrepared, AddressOf c.prepared
+                Dim res As ReadOnlyEntityList(Of ReturnType) = CType(_Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
+                   Function() GetProcessor(Of ReturnType)(mgr, query), _
+                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
+                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
+                   Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
+                       CType(ce, UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s) _
+                   ), ReadOnlyEntityList(Of ReturnType))
+                If res Is Nothing Then
+                    If c.Cancel Then
+                        Prepared = True
+                        Dim r As ReadonlyMatrix = Exec(mgr, query)
+                        Dim l As New List(Of ReturnType)
+                        For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
+                            l.Add(CType(row(0), ReturnType))
+                        Next
+                        res = CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                    Else
+                        Throw New InvalidOperationException
+                    End If
+                End If
+
+                Return CType(query.ModifyResult(res), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+            Finally
+                c.RemoveEvent()
+            End Try
         End Function
 
         Public Class cls
@@ -235,6 +247,9 @@ l1:
                         Prepared = True
                         Dim r As ReadonlyMatrix = Exec(mgr, query)
                         Dim l As New List(Of ReturnType)
+                        'If query.Includes IsNot Nothing Then
+
+                        'End If
                         For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
                             l.Add(CType(row(0), ReturnType))
                         Next
@@ -244,7 +259,7 @@ l1:
                     End If
                 End If
 
-                Return res
+                Return CType(query.ModifyResult(res), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             Finally
                 c.RemoveEvent()
             End Try
@@ -256,11 +271,12 @@ l1:
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.prepared
-                Return _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
+                Dim res As ReadOnlyObjectList(Of ReturnType) = _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
                     Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
                         m.GetFromCache2(dic, sync, id, True, p2), _
                     Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase, ce As Cache.CachedItemBase, s As Cache.IListObjectConverter.ExtractListResult, created As Boolean) _
                        CType(ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s), Global.Worm.ReadOnlyObjectList(Of ReturnType)))
+                Return query.ModifyResult(res)
             Finally
                 c.RemoveEvent()
             End Try

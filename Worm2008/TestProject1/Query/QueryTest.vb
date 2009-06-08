@@ -1318,4 +1318,18 @@ Imports System.ComponentModel
             Assert.IsNotNull(t.Obj1)
         Next
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestInclude()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim r As ReadOnlyEntityList(Of Table2) = q.Include("Table1").Include("Table1").ToList(Of Table2)()
+
+        For Each t As Table2 In r
+            Assert.IsTrue(t.Tbl.InternalProperties.IsLoaded)
+        Next
+    End Sub
 End Class

@@ -618,8 +618,7 @@ l1:
                     Else
                         newRel = New Relation(_rel.Host, needReplace)
                     End If
-                    m2mObject._ReplaceRel(_rel, newRel, schema)
-                    _rel = newRel
+                    _rel = m2mObject.NormalizeRelation(_rel, newRel, schema)
                 End If
             End If
 
@@ -812,5 +811,63 @@ l1:
                 _withHost = value
             End Set
         End Property
+
+        Public Overrides Function Count(ByVal mgr As OrmManager) As Integer
+            Return MyBase.Count(mgr) + Relation.Added.Count - Relation.Deleted.Count
+        End Function
+
+        Protected Friend Overrides Function ModifyResult(Of T As Entities._IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+            If Relation.HasChanges Then
+                Dim toRem As New ReadOnlyObjectList(Of T)
+                For Each e As _IEntity In Relation.Deleted
+                    toRem.List.Add(CType(e, T))
+                Next
+
+                Dim newRes As IListEdit = CType(result.Clone, IListEdit)
+
+                For Each o As IEntity In toRem.ApplyFilter(Filter)
+                    newRes.Remove(o)
+                Next
+
+                Dim toAdd As New ReadOnlyObjectList(Of T)
+                For Each e As _IEntity In Relation.Added
+                    toAdd.List.Add(CType(e, T))
+                Next
+
+                toAdd = New ReadOnlyObjectList(Of T)(toAdd.ApplyFilter(Filter))
+
+                If Sort IsNot Nothing Then
+                    Dim c As Sorting.OrmComparer(Of T) = Sort.CreateComparer(Of T)(newRes.RealType)
+                    For Each o As IEntity In toAdd
+                        Dim pos As Integer = CType(newRes, ReadOnlyObjectList(Of T)).List.BinarySearch(CType(o, T), c)
+                        If pos < 0 Then
+                            newRes.Insert(Not pos, o)
+                        Else
+                            Throw New QueryCmdException("Object in added list already in query", Me)
+                        End If
+                    Next
+                    If TopParam IsNot Nothing Then
+                        Dim cnt As Integer = newRes.List.Count
+                        For i As Integer = TopParam.Count To cnt - 1
+                            newRes.List.RemoveAt(i)
+                        Next
+                    End If
+                Else
+                    For i As Integer = 0 To toAdd.Count - 1
+                        If TopParam IsNot Nothing Then
+                            If TopParam.Count + i <= newRes.List.Count Then
+                                Exit For
+                            End If
+                        End If
+                        Dim o As T = toAdd(i)
+                        newRes.Add(o)
+                    Next
+                End If
+
+                Return CType(newRes, Global.Worm.ReadOnlyObjectList(Of T))
+            Else
+                Return result
+            End If
+        End Function
     End Class
 End Namespace

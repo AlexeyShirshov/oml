@@ -461,6 +461,7 @@ Namespace Criteria.Values
                             r = IEvaluableValue.EvalResult.Found
                         ElseIf evaluatedValue IsNot Nothing Then
                             Dim vt As Type = evaluatedValue.GetType()
+                            Dim valt As Type = filterValue.GetType
                             If GetType(IKeyEntity).IsAssignableFrom(vt) Then
                                 If Equals(CType(evaluatedValue, IKeyEntity).Identifier, filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
@@ -479,6 +480,26 @@ Namespace Criteria.Values
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
                                 If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias, Nothing), filterValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            ElseIf GetType(IKeyEntity).IsAssignableFrom(valt) Then
+                                If Equals(CType(filterValue, IKeyEntity).Identifier, evaluatedValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            ElseIf GetType(ICachedEntity).IsAssignableFrom(valt) Then
+                                Dim pks() As PKDesc = CType(filterValue, ICachedEntity).GetPKValues
+                                If pks.Length <> 1 Then
+                                    Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
+                                End If
+                                If Equals(pks(0).Value, evaluatedValue) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            ElseIf ObjectMappingEngine.IsEntityType(valt, mpe) Then
+                                Dim pks As IList(Of EntityPropertyAttribute) = mpe.GetPrimaryKeys(valt)
+                                If pks.Count <> 1 Then
+                                    Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
+                                End If
+                                If Equals(mpe.GetPropertyValue(filterValue, pks(0).PropertyAlias, Nothing), evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             End If
