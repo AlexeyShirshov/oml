@@ -1905,6 +1905,16 @@ l1:
         Public Overridable Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
             Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, mgr.MappingEngine.GetEntitySchema(Me.GetType))
         End Function
+
+        Public Overridable ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
+            Get
+                Dim r As New StringBuilder
+                For Each pk As PKDesc In GetPKValues()
+                    r.Append(pk.PropertyAlias).Append(":").Append(pk.Value.ToString)
+                Next
+                Return r.ToString
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class CachedLazyLoad

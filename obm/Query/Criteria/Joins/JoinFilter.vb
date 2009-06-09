@@ -451,7 +451,7 @@ Namespace Criteria.Joins
                         Else
                             map = executor.GetFieldColumnMap(oschema, lt)(f)
                         End If
-                        map = New MapField2Column(Nothing, map.Column, _l.Property.Entity.ObjectAlias.Tbl)
+                        map = New MapField2Column(Nothing, map.ColumnExpression, _l.Property.Entity.ObjectAlias.Tbl)
                     Else
                         map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
                     End If
@@ -514,7 +514,7 @@ Namespace Criteria.Joins
                         Else
                             map2 = executor.GetFieldColumnMap(oschema, rt)(f)
                         End If
-                        map2 = New MapField2Column(Nothing, map2.Column, _r.Property.Entity.ObjectAlias.Tbl)
+                        map2 = New MapField2Column(Nothing, map2.ColumnExpression, _r.Property.Entity.ObjectAlias.Tbl)
                     Else
                         map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
                     End If
@@ -576,12 +576,12 @@ Namespace Criteria.Joins
 
             Dim lp As String = [alias]
             If map IsNot Nothing Then
-                lp &= map.Column
+                lp &= map.ColumnExpression
             End If
 
             Dim rp As String = alias2
             If map2 IsNot Nothing Then
-                rp &= map2.Column
+                rp &= map2.ColumnExpression
             End If
 
             Return lp & stmt.Oper2String(_oper) & rp

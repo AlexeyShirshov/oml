@@ -412,6 +412,8 @@ namespace Worm.CodeGen.Core
                     propertyElement.SetAttribute("dbTypeNullable", XmlConvert.ToString(property.DbTypeNullable.Value));
 				if (!string.IsNullOrEmpty(property.DefferedLoadGroup))
 					propertyElement.SetAttribute("defferedLoadGroup", property.DefferedLoadGroup);
+                if (!string.IsNullOrEmpty(property.ColumnName))
+                    propertyElement.SetAttribute("fieldAlias", property.ColumnName);
                 propertiesNode.AppendChild(propertyElement);
             }
         }

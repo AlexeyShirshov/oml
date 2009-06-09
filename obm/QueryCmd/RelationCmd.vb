@@ -812,7 +812,7 @@ l1:
             End Set
         End Property
 
-        Public Overrides Function Count(ByVal mgr As OrmManager) As Integer
+        Public Overloads Overrides Function Count(ByVal mgr As OrmManager) As Integer
             Return MyBase.Count(mgr) + Relation.Added.Count - Relation.Deleted.Count
         End Function
 

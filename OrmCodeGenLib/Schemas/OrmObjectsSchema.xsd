@@ -294,6 +294,11 @@
 				</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+    <xs:attribute name="fieldAlias" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Алиас колонки из БД</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="PropertiesCollection_t">
     <xs:annotation>

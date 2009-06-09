@@ -375,7 +375,7 @@ Imports System.Collections.ObjectModel
                     en4.Title = "xxx"
                     e.Relations.Add(en4)
 
-                    Assert.AreEqual(4, q.ToList(Of Entity4)(mgr).Count)
+                    Assert.AreEqual(5, q.ToList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
                     Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)

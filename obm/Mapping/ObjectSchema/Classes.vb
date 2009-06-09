@@ -38,53 +38,54 @@ Namespace Entities.Meta
         Implements ICloneable
 
         Public ReadOnly _propertyAlias As String
-        Public ReadOnly Column As String
+        Public ReadOnly ColumnExpression As String
         Public ReadOnly DBType As DBType
         Public ReadOnly _newattributes As Field2DbRelations
         Private _tbl As SourceFragment
+        Private _columnName As String
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment)
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
             _propertyAlias = propertyAlias
-            Column = columnName
+            Me.ColumnExpression = columnExpression
             Table = tableName
             _newattributes = Field2DbRelations.None
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
             _propertyAlias = propertyAlias
-            Column = columnName
+            Me.ColumnExpression = columnExpression
             Table = tableName
             _newattributes = newAttributes
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
-            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
             Me.DBType = dbType
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
-            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
             Me.DBType = New DBType(dbType)
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
-            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
             Me.DBType = New DBType(dbType, size)
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
-            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
             Me.DBType = New DBType(dbType, size, nullable)
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
-            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
             Me.DBType = New DBType(dbType, nullable)
         End Sub
 
@@ -105,8 +106,17 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        Public Property ColumnName() As String
+            Get
+                Return _columnName
+            End Get
+            Set(ByVal value As String)
+                _columnName = value
+            End Set
+        End Property
+
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New MapField2Column(Me._propertyAlias, Column, Table, Me._newattributes, Me.DBType)
+            Return New MapField2Column(Me._propertyAlias, ColumnExpression, Table, Me._newattributes, Me.DBType)
         End Function
     End Class
 

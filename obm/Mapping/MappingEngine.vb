@@ -151,9 +151,11 @@ Public Class ObjectMappingEngine
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc._newattributes)
-                        column.Column = mc.Column
-                        column.PropertyAlias = mc._propertyAlias
+                        column = New EntityPropertyAttribute(mc._newattributes) With { _
+                            .Column = mc.ColumnExpression, _
+                            .PropertyAlias = mc._propertyAlias, _
+                            .ColumnName = mc.ColumnName _
+                        }
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
@@ -181,8 +183,12 @@ Public Class ObjectMappingEngine
                 End If
 
                 If propertyMap IsNot Nothing Then
-                    If (column.Behavior = Field2DbRelations.None) AndAlso propertyMap.ContainsKey(column.PropertyAlias) Then
-                        column.Behavior = propertyMap(column.PropertyAlias)._newattributes
+                    If propertyMap.ContainsKey(column.PropertyAlias) Then
+                        Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias)._newattributes
+                        If attr <> Field2DbRelations.None Then
+                            column.Behavior = attr
+                        End If
+                        column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
                     End If
                 End If
 
@@ -206,9 +212,11 @@ Public Class ObjectMappingEngine
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc._newattributes)
-                        column.Column = mc.Column
-                        column.PropertyAlias = mc._propertyAlias
+                        column = New EntityPropertyAttribute(mc._newattributes) With { _
+                            .Column = mc.ColumnExpression, _
+                            .PropertyAlias = mc._propertyAlias, _
+                            .ColumnName = mc.ColumnName _
+                        }
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
@@ -234,8 +242,12 @@ Public Class ObjectMappingEngine
                     AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
 
                     If propertyMap IsNot Nothing Then
-                        If (column.Behavior = Field2DbRelations.None) AndAlso propertyMap.ContainsKey(column.PropertyAlias) Then
-                            column.Behavior = propertyMap(column.PropertyAlias)._newattributes
+                        If propertyMap.ContainsKey(column.PropertyAlias) Then
+                            Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias)._newattributes
+                            If attr <> Field2DbRelations.None Then
+                                column.Behavior = attr
+                            End If
+                            column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
                         End If
                     End If
 
@@ -368,7 +380,7 @@ Public Class ObjectMappingEngine
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
         For Each p As MapField2Column In coll
-            If p.Column = columnName Then
+            If p.ColumnExpression = columnName Then
                 Return p._propertyAlias
             End If
         Next
@@ -478,7 +490,7 @@ Public Class ObjectMappingEngine
     Private Function GetM2MRel(ByVal mr() As M2MRelationDesc, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
         For Each r As M2MRelationDesc In mr
-            If r.Rel.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) orelse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
+            If r.Rel.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
                 Return r
             End If
         Next
@@ -1368,7 +1380,7 @@ Public Class ObjectMappingEngine
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(propertyAlias, p) Then
             Dim c As String = Nothing
-            c = p.Column
+            c = p.ColumnExpression
             Return c
         End If
 
@@ -1585,7 +1597,7 @@ Public Class ObjectMappingEngine
                             Dim l As New OrmObjectIndex
                             Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
                             For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
-                                l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
+                                l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
                             Next
 
                             Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
@@ -1647,7 +1659,7 @@ Public Class ObjectMappingEngine
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea.TableSchema, ea.TableName)
                                 For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
-                                    l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
+                                    l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
                                 Next
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
@@ -1716,7 +1728,7 @@ Public Class ObjectMappingEngine
                                 Dim l As New OrmObjectIndex
                                 Dim tbl As New SourceFragment(ea1.TableSchema, ea1.TableName)
                                 For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
-                                    l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
+                                    l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
                                 Next
 
                                 Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
@@ -1790,7 +1802,7 @@ Public Class ObjectMappingEngine
                                     Dim l As New OrmObjectIndex
                                     Dim tbl As New SourceFragment(ea2.TableSchema, ea2.TableName)
                                     For Each c As EntityPropertyAttribute In GetMappedProperties(tp).Keys
-                                        l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize))
+                                        l.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
                                     Next
 
                                     Dim bsch As IEntitySchema = CType(idic(tp.BaseType), IEntitySchema)
@@ -2140,7 +2152,7 @@ Public Class ObjectMappingEngine
         Dim map As MapField2Column = Nothing
         'Dim fld As String = p.Second
         If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
-            fld = map.Column
+            fld = map.ColumnExpression
             tbl = map.Table
         Else
             tbl = oschema.Table
@@ -2175,10 +2187,10 @@ Public Class ObjectMappingEngine
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(propertyAlias, p) Then
             Dim c As String = Nothing
-            If add_alias AndAlso ShouldPrefix(p.Column) Then
-                c = p.Table.UniqueName(os) & Delimiter & p.Column
+            If add_alias AndAlso ShouldPrefix(p.ColumnExpression) Then
+                c = p.Table.UniqueName(os) & Delimiter & p.ColumnExpression
             Else
-                c = p.Column
+                c = p.ColumnExpression
             End If
             'If columnAliases IsNot Nothing Then
             '    columnAliases.Add(p._columnName)
@@ -2290,7 +2302,7 @@ Public Class ObjectMappingEngine
 
         If sb.Length = 0 Then
             For Each m As MapField2Column In schema.GetFieldColumnMap
-                sb.Append(m.Column).Append(", ")
+                sb.Append(m.ColumnExpression).Append(", ")
             Next
         End If
 
@@ -2403,32 +2415,32 @@ Public Class ObjectMappingEngine
                 Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
         End Select
 
-        Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
-        If ts IsNot Nothing Then
-            Dim pk_table As SourceFragment = sh.Table
-            For i As Integer = 1 To ts.GetTables.Length - 1
-                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
-                Dim join As QueryJoin = Nothing
-                If joinableTs IsNot Nothing Then
-                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
-                Else
-                    join = ts.GetJoins(pk_table, ts.GetTables(i))
-                End If
+        'Dim ts As IMultiTableObjectSchema = TryCast(sh, IMultiTableObjectSchema)
+        'If ts IsNot Nothing Then
+        '    Dim pk_table As SourceFragment = sh.Table
+        '    For i As Integer = 1 To ts.GetTables.Length - 1
+        '        Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+        '        Dim join As QueryJoin = Nothing
+        '        If joinableTs IsNot Nothing Then
+        '            join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
+        '        Else
+        '            join = ts.GetJoins(pk_table, ts.GetTables(i))
+        '        End If
 
-                If Not QueryJoin.IsEmpty(join) Then
-                    l.Add(join)
-                End If
-            Next
+        '        If Not QueryJoin.IsEmpty(join) Then
+        '            l.Add(join)
+        '        End If
+        '    Next
+        'End If
 
-            Dim cfs As IContextObjectSchema = TryCast(sh, IContextObjectSchema)
-            If cfs IsNot Nothing Then
-                Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
-                If newfl IsNot Nothing Then
-                    Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
-                    con.AddFilter(filter)
-                    con.AddFilter(newfl)
-                    filter = con.Condition
-                End If
+        Dim cfs As IContextObjectSchema = TryCast(sh, IContextObjectSchema)
+        If cfs IsNot Nothing Then
+            Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
+            If newfl IsNot Nothing Then
+                Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                con.AddFilter(filter)
+                con.AddFilter(newfl.SetUnion(joinOS))
+                filter = con.Condition
             End If
         End If
     End Sub

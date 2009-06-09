@@ -407,7 +407,7 @@ Namespace Database
                             pi = CType(de.Value, Reflection.PropertyInfo)
                         Else
                             Dim m As MapField2Column = CType(o, MapField2Column)
-                            c = New EntityPropertyAttribute(m.Column)
+                            c = New EntityPropertyAttribute(m.ColumnExpression)
                             c.PropertyAlias = m._propertyAlias
                         End If
                         If c IsNot Nothing Then
@@ -590,7 +590,7 @@ l1:
                             pi = CType(de.Value, Reflection.PropertyInfo)
                         Else
                             Dim m As MapField2Column = CType(o, MapField2Column)
-                            c = New EntityPropertyAttribute(m.Column)
+                            c = New EntityPropertyAttribute(m.ColumnExpression)
                             c.PropertyAlias = m._propertyAlias
                         End If
                         Dim att As Field2DbRelations = mpe.GetAttributes(os, c)
@@ -821,7 +821,7 @@ l1:
                     pi = CType(de.Value, Reflection.PropertyInfo)
                 Else
                     Dim m As MapField2Column = CType(o, MapField2Column)
-                    c = New EntityPropertyAttribute(m.Column)
+                    c = New EntityPropertyAttribute(m.ColumnExpression)
                     c.PropertyAlias = m._propertyAlias
                 End If
                 Dim pa As String = c.PropertyAlias
@@ -977,7 +977,7 @@ l2:
                     pi = CType(de.Value, Reflection.PropertyInfo)
                 Else
                     Dim m As MapField2Column = CType(o, MapField2Column)
-                    c = New EntityPropertyAttribute(m.Column)
+                    c = New EntityPropertyAttribute(m.ColumnExpression)
                     c.PropertyAlias = m._propertyAlias
                 End If
                 Dim pa As String = c.PropertyAlias
@@ -1328,7 +1328,7 @@ l2:
                             pi = CType(de.Value, Reflection.PropertyInfo)
                         Else
                             Dim m As MapField2Column = CType(oo, MapField2Column)
-                            c = New EntityPropertyAttribute(m.Column)
+                            c = New EntityPropertyAttribute(m.ColumnExpression)
                             c.PropertyAlias = m._propertyAlias
                         End If
 
@@ -2077,7 +2077,7 @@ l2:
                                     Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
                                 End If
 
-                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map.Column)
+                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map.ColumnExpression)
                                 If ns.Order = SortType.Desc Then
                                     sb2.Append(" desc")
                                 End If
@@ -2351,7 +2351,7 @@ l1:
                         Throw New InvalidOperationException("Type " & field.Second.ToString & " is not select type or search type")
                     End If
                     columns.Append(m.Table.UniqueName(Nothing)).Append(mpe.Delimiter)
-                    columns.Append(m.Column).Append(",")
+                    columns.Append(m.ColumnExpression).Append(",")
                 Next
                 '    For Each field As Pair(Of String, Type) In fields
                 '        If field.Second Is searchType Then
@@ -2402,7 +2402,7 @@ l1:
                 sb.Append("(")
                 For Each f As String In queryFields
                     Dim m As MapField2Column = searchSchema.GetFieldColumnMap(f)
-                    sb.Append(m.Column).Append(",")
+                    sb.Append(m.ColumnExpression).Append(",")
                 Next
                 sb.Length -= 1
                 sb.Append(")")

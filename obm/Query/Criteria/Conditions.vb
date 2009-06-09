@@ -347,7 +347,11 @@ Namespace Criteria.Conditions
             Else
                 If _left IsNot Nothing Then
                     If _left.Equals(f) Then
-                        _left = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("0"))
+                        If _right Is Nothing Then
+                            _left = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("1"))
+                        Else
+                            _left = New CustomFilter("1", FilterOperation.Equal, New LiteralValue("0"))
+                        End If
                     Else
                         _left = _left.RemoveFilter(f)
                     End If

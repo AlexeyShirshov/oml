@@ -402,7 +402,7 @@ namespace Worm.CodeGen.Core
         {
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute, defferedLoadGroup;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute, dbTypeNameAttribute, dbTypeSizeAttribute, dbTypeNullableAttribute, defferedLoadGroup, fieldAlias;
                 string[] attributes;
                 SourceFragmentDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
@@ -423,6 +423,7 @@ namespace Worm.CodeGen.Core
                 propertyObsolete = propertyElement.GetAttribute("obsolete");
                 propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
                 enablePropertyChangedAttribute = propertyElement.GetAttribute("enablePropertyChanged");
+                fieldAlias = propertyElement.GetAttribute("fieldAlias");
 
                 dbTypeNameAttribute = propertyElement.GetAttribute("dbTypeName");
                 dbTypeSizeAttribute = propertyElement.GetAttribute("dbTypeSize");
@@ -471,6 +472,7 @@ namespace Worm.CodeGen.Core
                 property.ObsoleteDescripton = propertyObsoleteDescription;
                 property.EnablePropertyChanged = enablePropertyChanged;
                 property.Group = group;
+                property.ColumnName = fieldAlias;
 
                 property.DbTypeName = dbTypeNameAttribute;
                 if (!string.IsNullOrEmpty(dbTypeSizeAttribute))

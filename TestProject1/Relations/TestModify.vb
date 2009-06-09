@@ -80,9 +80,9 @@ Imports Worm
             .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
             .ToList(Of Entity4).Count
 
-        e4.Title = "xxxxx"
+        e4.Title = "xxxxxx"
 
-        Assert.AreEqual(cnt + 1, e.GetCmd(GetType(Entity4)) _
+        Assert.AreEqual(cnt - 1, e.GetCmd(GetType(Entity4)) _
             .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
             .ToList(Of Entity4).Count)
     End Sub

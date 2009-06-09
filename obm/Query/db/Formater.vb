@@ -172,7 +172,7 @@ Namespace Database
                                                 Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
                                             End If
 
-                                            sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(_s.Selector).Append(map.Column)
+                                            sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(_s.Selector).Append(map.ColumnExpression)
                                             If ns.Order = SortType.Desc Then
                                                 sb2.Append(" desc")
                                             End If
@@ -244,11 +244,18 @@ l1:
                             sb.Append(al)
                         End If
                         sb.Append(se.Column)
+                        If Not String.IsNullOrEmpty(se.ColumnAlias) Then
+                            sb.Append(" ").Append(se.ColumnAlias)
+                        End If
                         If cols IsNot Nothing Then
                             If Not String.IsNullOrEmpty(al) Then
                                 cols.Append(al)
                             End If
-                            cols.Append(se.Column)
+                            If Not String.IsNullOrEmpty(se.ColumnAlias) Then
+                                cols.Append(se.ColumnAlias)
+                            Else
+                                cols.Append(se.Column)
+                            End If
                         End If
                     Case PropType.ObjectProperty
                         If se.ObjectSource IsNot Nothing Then
@@ -283,10 +290,20 @@ l1:
                                 Else
                                     al = map.Table.UniqueName(se.ObjectSource)
                                 End If
-                                Dim col As String = schema.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
-                                sb.Append(al).Append(schema.Delimiter).Append(col)
+                                'Dim col As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(t, se.PropertyAlias, oschema)
+                                Dim colExp As String = map.ColumnExpression 'col.Column
+                                Dim colName As String = map.ColumnName 'col.ColumnName
+                                sb.Append(al).Append(schema.Delimiter).Append(colExp)
+                                If Not String.IsNullOrEmpty(colName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
+                                    sb.Append(" as ").Append(colName)
+                                End If
                                 If cols IsNot Nothing Then
-                                    cols.Append(al).Append(schema.Delimiter).Append(col)
+                                    cols.Append(al).Append(schema.Delimiter)
+                                    If Not String.IsNullOrEmpty(colName) Then
+                                        cols.Append(colName)
+                                    Else
+                                        cols.Append(colExp)
+                                    End If
                                 End If
                             Else
                                 Dim al As String = Nothing
@@ -305,8 +322,17 @@ l1:
                                     End If
                                 End If
 
-                                sb.Append(al).Append(_s.Selector).Append(map.Column)
-                                If cols IsNot Nothing Then cols.Append(map.Column)
+                                sb.Append(al).Append(_s.Selector).Append(map.ColumnExpression)
+                                If Not String.IsNullOrEmpty(map.ColumnName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
+                                    sb.Append(" as ").Append(map.ColumnName)
+                                End If
+                                If cols IsNot Nothing Then
+                                    If Not String.IsNullOrEmpty(map.ColumnName) Then
+                                        cols.Append(map.ColumnName)
+                                    Else
+                                        cols.Append(map.ColumnExpression)
+                                    End If
+                                End If
                             End If
                         Else
 l2:

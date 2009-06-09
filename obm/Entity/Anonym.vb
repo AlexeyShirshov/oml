@@ -195,6 +195,7 @@ Namespace Entities
 
         Friend _pk() As String
         Private _hasPK As Boolean
+        Private _key As Integer?
 
         <NonSerialized()> _
         Private _upd As New UpdateCtx
@@ -495,16 +496,24 @@ Namespace Entities
             End Get
         End Property
 
+        Friend Sub SetKey(ByVal k As Integer)
+            _key = k
+        End Sub
+
         Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
             Get
-                If _pk Is Nothing Then
-                    Throw New OrmObjectException("PK is not loaded")
+                If _key.HasValue Then
+                    Return _key.Value
+                Else
+                    If _pk Is Nothing Then
+                        Throw New OrmObjectException("PK is not loaded")
+                    End If
+                    Dim k As Integer
+                    For Each pk As String In _pk
+                        k = k Xor Me(pk).GetHashCode
+                    Next
+                    Return k
                 End If
-                Dim k As Integer
-                For Each pk As String In _pk
-                    k = k Xor Me(pk).GetHashCode
-                Next
-                Return k
             End Get
         End Property
 
@@ -946,5 +955,15 @@ Namespace Entities
         Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
             Throw New NotImplementedException
         End Function
+
+        Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
+            Get
+                Dim r As New StringBuilder
+                For Each pk As String In _pk
+                    r.Append(pk).Append(":").Append(Me(pk).ToString)
+                Next
+                Return r.ToString
+            End Get
+        End Property
     End Class
 End Namespace

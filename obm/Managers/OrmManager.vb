@@ -2617,11 +2617,11 @@ l1:
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
-        evaluated = True
         Dim f As IEntityFilter = TryCast(If(filter Is Nothing, Nothing, filter.Filter), IEntityFilter)
         If f Is Nothing Then
             Return col
         Else
+            evaluated = True
             Dim l As IListEdit = _CreateReadOnlyList(GetType(T))
             Dim oschema As IEntitySchema = Nothing
             Dim i As Integer = 0

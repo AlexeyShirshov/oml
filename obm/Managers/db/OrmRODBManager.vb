@@ -1137,7 +1137,7 @@ l1:
             Dim arr As New List(Of EntityPropertyAttribute)(MappingEngine.GetSortedFieldList(original_type, oschema))
             If arr.Count = 0 Then
                 For Each m As MapField2Column In oschema.GetFieldColumnMap
-                    arr.Add(New EntityPropertyAttribute(m._propertyAlias, m._newattributes, m.Column))
+                    arr.Add(New EntityPropertyAttribute(m._propertyAlias, m._newattributes, m.ColumnExpression))
                 Next
             End If
             Dim load As Boolean = True
@@ -1451,7 +1451,7 @@ l1:
             If ce IsNot Nothing Then
                 Dim k As String = String.Empty
                 If ce.IsPKLoaded Then
-                    k = ce.Key.ToString
+                    k = ce.UniqueString
                 End If
                 Dim sync_key As String = "LoadType" & k & obj.GetType.ToString
                 loadLock = SyncHelper.AcquireDynamicLock(sync_key)
@@ -2101,7 +2101,7 @@ l1:
                             selectList = New List(Of SelectExpression)
                             For Each m As MapField2Column In fields_idx
                                 Dim se As New SelectExpression(original_type, m._propertyAlias)
-                                se.Column = If(Not String.IsNullOrEmpty(m.Column), m.Column, m._propertyAlias)
+                                se.Column = If(Not String.IsNullOrEmpty(m.ColumnExpression), m.ColumnExpression, m._propertyAlias)
                                 se.Attributes = m._newattributes
                                 selectList.Add(se)
                             Next

@@ -200,7 +200,7 @@ Namespace Criteria.Core
                     Try
                         [alias] = almgr.GetAlias(tbl, Template.ObjectSource) & stmt.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
+                        Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
                     End Try
                 End If
 
@@ -209,7 +209,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
+                Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
             Else
                 Return String.Empty
             End If
@@ -253,7 +253,7 @@ Namespace Criteria.Core
                 End If
             End If
 
-            Return New Pair(Of String)(map.Column, prname)
+            Return New Pair(Of String)(map.ColumnExpression, prname)
         End Function
 
         Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
@@ -395,7 +395,7 @@ Namespace Criteria.Core
                         End Try
                     End If
 
-                    Return [alias] & map.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
+                    Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
                 End If
             Else
                 Return String.Empty

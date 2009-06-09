@@ -156,6 +156,8 @@ namespace Worm.CodeGen.Core.Descriptors
 
         public PropertyGroup Group { get; set; }
 
+        public string ColumnName { get; set; }
+
         public string PropertyName
         {
             get { return Name; }
