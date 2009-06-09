@@ -11,9 +11,10 @@ Namespace Entities.Meta
         Private _fieldName As String
         Private _behavior As Field2DbRelations
         Private _ver As String
-        Private _column As String
+        Private _columnExpression As String
         Private _idx As Integer = -1
         Private _db As DBType
+        Private _columnName As String
 
         Public Sub New()
         End Sub
@@ -22,21 +23,21 @@ Namespace Entities.Meta
             Me._behavior = behavior
         End Sub
 
-        Public Sub New(ByVal column As String)
-            _column = column
+        Public Sub New(ByVal columnExpression As String)
+            _columnExpression = columnExpression
             Me._behavior = Field2DbRelations.None
         End Sub
 
-        Public Sub New(ByVal column As String, ByVal behavior As Field2DbRelations)
-            _column = column
+        Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations)
+            _columnExpression = columnExpression
             Me._behavior = behavior
         End Sub
 
-        Friend Sub New(ByVal propertAlias As String, ByVal column As String)
+        Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
             _fieldName = propertAlias
         End Sub
 
-        Friend Sub New(ByVal propertAlias As String, ByVal behavior As Field2DbRelations, ByVal column As String)
+        Friend Sub New(ByVal propertAlias As String, ByVal behavior As Field2DbRelations, ByVal columnExpression As String)
             _fieldName = propertAlias
             _behavior = behavior
         End Sub
@@ -64,10 +65,10 @@ Namespace Entities.Meta
 
         Public Property Column() As String
             Get
-                Return _column
+                Return _columnExpression
             End Get
             Set(ByVal value As String)
-                _column = value
+                _columnExpression = value
             End Set
         End Property
 
@@ -144,13 +145,22 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        Public Property ColumnName() As String
+            Get
+                Return _columnName
+            End Get
+            Set(ByVal value As String)
+                _columnName = value
+            End Set
+        End Property
+
         Public Function Clone() As EntityPropertyAttribute
             Return CType(_Clone(), EntityPropertyAttribute)
         End Function
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
             Dim c As New EntityPropertyAttribute(_fieldName, Behavior, Nothing)
-            c._column = _column
+            c._columnExpression = _columnExpression
             c._db = _db
             c._idx = _idx
             c._n = _n

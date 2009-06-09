@@ -726,9 +726,9 @@ l1:
                 sb.Append("(")
                 For Each f As String In ifields
                     Dim m As MapField2Column = os.GetFieldColumnMap(f)
-                    sb.Append(m.Column).Append(",")
+                    sb.Append(m.ColumnExpression).Append(",")
                     If tf IsNot Nothing AndAlso Not replaced Then
-                        sb.Replace("{290ghern}", tf.GetRealTable(m.Column))
+                        sb.Replace("{290ghern}", tf.GetRealTable(m.ColumnExpression))
                         replaced = True
                     End If
                 Next
@@ -1112,12 +1112,27 @@ l1:
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
 
                                 Dim q As QueryCmd = New QueryCmd().SelectEntity(join.ObjectSource, True)
+
+                                'For Each sf As SourceFragment In mts.GetTables
+                                '    If query._f IsNot Nothing Then
+                                '        For Each fl As IFilter In query._f.GetAllFilters
+                                '            Dim tf As TableFilter = TryCast(fl, TableFilter)
+                                '            If tf IsNot Nothing AndAlso tf.Template.Table Is sf Then
+                                '                'query._f = query._f.ReplaceFilter(fl, New TableFilter(tbl, tf.Template.Column, tf.Value, tf.Template.Operation).SetUnion(join.ObjectSource))
+                                '                q.WhereAdd(tf)
+                                '                query._f = query._f.RemoveFilter(fl)
+                                '            End If
+                                '        Next
+                                '    End If
+                                'Next
+
                                 q.Prepare(Nothing, mpe, filterInfo, s, False)
                                 Dim tbl As New SourceFragment
                                 'join.TmpTable = tbl
 
                                 Dim als As String = almgr.AddTable(tbl, join.ObjectSource)
                                 query.ReplaceSchema(mpe, t, CreateNewMap(oschema, tbl))
+
                                 sb.Append(s.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, params, AliasMgr.Create))
 
                                 sb.Append(") as ").Append(als).Append(" on ")
@@ -1125,8 +1140,28 @@ l1:
 
                                 For Each sf As SourceFragment In mts.GetTables
                                     'almgr.Replace(mpe, s, sf, join.ObjectSource, sb)
-                                    sb.Replace(sf.UniqueName(join.ObjectSource) & mpe.Delimiter, almgr.GetAlias(tbl, join.ObjectSource) & s.Selector)
+                                    sb.Replace(sf.UniqueName(join.ObjectSource) & mpe.Delimiter, als & s.Selector)
+
+                                    If query._f IsNot Nothing Then
+                                        For Each fl As IFilter In query._f.GetAllFilters
+                                            Dim tf As TableFilter = TryCast(fl, TableFilter)
+                                            If tf IsNot Nothing AndAlso tf.Template.Table Is sf Then
+                                                'query._f = query._f.ReplaceFilter(fl, New TableFilter(tbl, tf.Template.Column, tf.Value, tf.Template.Operation).SetUnion(join.ObjectSource))
+                                                query._f = query._f.RemoveFilter(fl)
+                                            Else
+                                                Dim jf As JoinFilter = TryCast(fl, JoinFilter)
+                                                If jf IsNot Nothing Then
+                                                    If (jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First Is sf) OrElse _
+                                                        (jf.Right.Column IsNot Nothing AndAlso jf.Right.Column.First Is sf) Then
+                                                        query._f = query._f.RemoveFilter(fl)
+                                                    End If
+                                                End If
+                                            End If
+                                        Next
+                                    End If
                                 Next
+
+
                             End If
                         End If
                     Else

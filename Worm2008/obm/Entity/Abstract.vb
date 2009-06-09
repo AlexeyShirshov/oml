@@ -122,9 +122,13 @@ Namespace Entities
         Function GetChangedObjectGraph() As Generic.List(Of _ICachedEntity)
     End Interface
 
-    Public Interface ICachedEntity
-        Inherits _IEntity
+    Public Interface IKeyProvider
         ReadOnly Property Key() As Integer
+        ReadOnly Property UniqueString() As String
+    End Interface
+
+    Public Interface ICachedEntity
+        Inherits _IEntity, IKeyProvider
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub Load(ByVal propertyAlias As String)
         Sub RemoveOriginalCopy(ByVal cache As CacheBase)

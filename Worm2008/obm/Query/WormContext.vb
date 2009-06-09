@@ -70,10 +70,18 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal stmtGen As StmtGenerator)
-            _gen = stmtGen
+            MyClass.New(New ReadonlyCache, New ObjectMappingEngine("1"), stmtGen)
+        End Sub
+
+        Public Sub New(ByVal mpe As ObjectMappingEngine)
+            MyClass.New(New ReadonlyCache, mpe, New Worm.Database.SQLGenerator)
         End Sub
 
         Public MustOverride Function CreateManager() As OrmManager Implements ICreateManager.CreateManager
+
+        Public Function CreateCmd() As QueryCmd
+            Return New QueryCmd(Me)
+        End Function
     End Class
 
     Public Class WormDBContext
@@ -91,6 +99,11 @@ Namespace Query
 
         Public Sub New(ByVal connectionString As String, ByVal stmtGen As Worm.Database.SQLGenerator)
             MyBase.New(stmtGen)
+            _conn = connectionString
+        End Sub
+
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine)
+            MyBase.New(mpe)
             _conn = connectionString
         End Sub
 

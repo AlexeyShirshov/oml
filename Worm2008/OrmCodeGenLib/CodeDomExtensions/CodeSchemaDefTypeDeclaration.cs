@@ -341,21 +341,25 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			                                         	};
             condTrueStatements.AddRange(m_entityClass.Entity.Properties
                 .Where(action => !action.Disabled)
-                .Select<PropertyDescription,CodeStatement>(action =>
-                    //new CodeExpressionStatement(
-                    //    new CodeMethodInvokeExpression(
-                    //        new CodeVariableReferenceExpression("idx"),
-                    //        "Add",
-                    //        GetMapField2ColumObjectCreationExpression(action)
-                    //    )
-                    //)
-                    new CodeAssignStatement(
-                        new CodeIndexerExpression(
-                            new CodeVariableReferenceExpression("idx"),
-                            new CodePrimitiveExpression(action.PropertyAlias)
-                        ),
-                        GetMapField2ColumObjectCreationExpression(action)
-                    )
+                .SelectMany<PropertyDescription, CodeStatement>(action =>
+                    {
+                        List<CodeStatement> coll = new List<CodeStatement>();
+                        coll.Add(new CodeAssignStatement(
+                            new CodeIndexerExpression(
+                                new CodeVariableReferenceExpression("idx"),
+                                new CodePrimitiveExpression(action.PropertyAlias)
+                            ),
+                            GetMapField2ColumObjectCreationExpression(action)
+                        ));
+                        if (!string.IsNullOrEmpty(action.ColumnName))
+                            coll.Add(
+                                Emit.assignProperty(new CodeIndexerExpression(
+                                        new CodeVariableReferenceExpression("idx"),
+                                        new CodePrimitiveExpression(action.PropertyAlias)
+                                    ), "ColumnName", ()=>action.ColumnName)
+                                );
+                        return coll;
+                    }
                 )
             );
 

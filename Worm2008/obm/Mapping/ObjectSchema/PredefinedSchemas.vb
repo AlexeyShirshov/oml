@@ -58,7 +58,7 @@ Namespace Entities.Meta
                 '    tbl = _tables(0)
                 'End If
 
-                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table, c.Behavior, c.DBType, c.DBSize))
+                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
             Next
 
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
@@ -92,13 +92,13 @@ Namespace Entities.Meta
             For Each m As MapField2Column In realTypecols
                 _cols.Add(m)
                 If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    _pk = m.Column
+                    _pk = m.ColumnExpression
                 End If
             Next
 
             For Each m As MapField2Column In baseTypeCols
                 If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    _fk = m.Column
+                    _fk = m.ColumnExpression
                 Else
                     _cols(m._propertyAlias).Table = m.Table
                 End If

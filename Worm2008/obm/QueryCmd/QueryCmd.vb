@@ -345,7 +345,7 @@ Namespace Query
                     t = p.First
                 ElseIf t IsNot Nothing Then
                     Dim pi As Reflection.PropertyInfo = mpe.GetProperty(t, base)
-                    If pi IsNot Nothing Then
+                    If pi Is Nothing Then
                         Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
                     Else
                         t = pi.PropertyType
@@ -356,7 +356,7 @@ Namespace Query
             End If
             If t IsNot Nothing Then
                 Dim pi As Reflection.PropertyInfo = mpe.GetProperty(t, ss(0))
-                If pi IsNot Nothing Then
+                If pi Is Nothing Then
                     Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
                 End If
             End If
@@ -886,7 +886,7 @@ l1:
                                         If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                                             Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
-                                                _PrepareExtracted(schema, filterInfo, f, eudic, de, t, hasCmplx, pit, ep, selex)
+                                                hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, selex)
                                             End If
                                         Else
                                             If t Is selTypes(0).First.GetRealType(schema) Then
@@ -895,11 +895,34 @@ l1:
                                                 If p IsNot Nothing Then
                                                     'Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                                     If p.Second.Contains(ep.PropertyAlias) Then
-                                                        _PrepareExtracted(schema, filterInfo, f, eudic, de, t, hasCmplx, pit, ep, New SelectExpression(t, ep.PropertyAlias))
+                                                        hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
+                                                        If Not hasCmplx AndAlso Not _sl.Exists(Function(se) se.PropertyAlias = ep.PropertyAlias) Then
+                                                            _sl.Add(New SelectExpression(de.Key, ep.PropertyAlias) With { _
+                                                                .Attributes = ep.Behavior, _
+                                                                .Column = ep.Column, _
+                                                                .ColumnAlias = ep.ColumnName _
+                                                            })
+                                                        End If
                                                     End If
                                                 End If
                                             Else
+                                                Dim prop As String = Nothing
+                                                For Each p As Pair(Of String, EntityUnion) In eudic.Values
+                                                    If p.Second Is de.Key Then
+                                                        prop = p.First
+                                                        Exit For
+                                                    End If
+                                                Next
 
+                                                If Not String.IsNullOrEmpty(prop) Then
+                                                    Dim ip As Pair(Of Type, List(Of String)) = Nothing
+                                                    _includeFields.TryGetValue(prop, ip)
+                                                    If ip IsNot Nothing Then
+                                                        If ip.Second.Contains(ep.PropertyAlias) Then
+                                                            hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
+                                                        End If
+                                                    End If
+                                                End If
                                             End If
                                         End If
                                     Next
@@ -960,13 +983,14 @@ l1:
             _f = f
         End Sub
 
-        Private Sub _PrepareExtracted(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+        Private Function _PrepareExtracted(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByRef f As IFilter, ByVal eudic As Dictionary(Of String, Pair(Of String, EntityUnion)), _
             ByVal de As KeyValuePair(Of EntityUnion, IEntitySchema), ByVal t As Type, _
-            ByRef hasCmplx As Boolean, ByVal pit As Type, ByVal ep As EntityPropertyAttribute, _
-            ByVal selex As SelectExpression)
+            ByVal pit As Type, ByVal ep As EntityPropertyAttribute, _
+            ByVal selex As SelectExpression) As Boolean
             Dim eu As EntityUnion = Nothing
             Dim p As Pair(Of String, EntityUnion) = Nothing
+            Dim hasCmplx As Boolean = False
             If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
                 eu = New EntityUnion(New QueryAlias(pit))
                 eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
@@ -986,7 +1010,8 @@ l1:
                 hasCmplx = True
                 SelectAdd(eu, True)
             End If
-        End Sub
+            Return hasCmplx
+        End Function
 
         Friend _prepared As Boolean
         Friend _cancel As Boolean
@@ -4005,7 +4030,7 @@ l1:
                         Else
                             Dim oschema As IEntitySchema = GetEntitySchema(mpe, t)
                             Dim map As MapField2Column = GetFieldColumnMap(oschema, t)(se.PropertyAlias)
-                            Return map.Column 'mpe.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
+                            Return map.ColumnExpression 'mpe.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
                         End If
                     End If
                 End If

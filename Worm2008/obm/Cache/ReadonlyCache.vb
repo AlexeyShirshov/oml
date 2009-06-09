@@ -319,18 +319,18 @@ Namespace Cache
             If Not condition Then Throw New OrmCacheException(message)
         End Sub
 
-        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal mpe As ObjectMappingEngine, _
-            ByVal context As Object, ByVal oschema As IEntitySchema) As String
-            Return GetModificationKey(obj, obj.Key, mpe, context, oschema)
-        End Function
+        'Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal mpe As ObjectMappingEngine, _
+        '    ByVal context As Object, ByVal oschema As IEntitySchema) As String
+        '    Return GetModificationKey(obj, mpe, context, oschema)
+        'End Function
 
-        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal key As Integer, _
+        Protected Function GetModificationKey(ByVal obj As _ICachedEntity, _
             ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal oschema As IEntitySchema) As String
             If mpe IsNot Nothing Then
                 Dim t As Type = obj.GetType
-                Return mpe.GetEntityTypeKey(context, t, oschema).ToString & ":" & key
+                Return mpe.GetEntityTypeKey(context, t, oschema).ToString & ":" & obj.UniqueString
             Else
-                Return obj.GetType().FullName & ":" & key
+                Return obj.GetType().FullName & ":" & obj.UniqueString
             End If
         End Function
 
@@ -858,7 +858,10 @@ Namespace Cache
                 pk.Add(pkd)
             Next
             Dim c As _ICachedEntity = CachedEntity.CreateEntity(pk.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
-
+            Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
+            If cc IsNot Nothing Then
+                CType(c, AnonymousCachedEntity).SetKey(cc.Key)
+            End If
             c.SetObjectState(ObjectState.NotLoaded)
 
             Dim ro As _ICachedEntity = NormalizeObject(c, False, False, _
