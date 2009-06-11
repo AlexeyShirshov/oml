@@ -215,8 +215,8 @@ Namespace Query
                             Else
                                 Dim rcmd As RelationCmd = TryCast(_q, RelationCmd)
                                 If rcmd IsNot Nothing Then
-                                    cache.validate_AddDeleteType(New Type() {rcmd.RelationDesc.Rel.GetRealType(MappingEngine)}, _key, _id)
-                                    cache.validate_UpdateType(New Type() {rcmd.RelationDesc.Rel.GetRealType(MappingEngine)}, _key, _id)
+                                    cache.validate_AddDeleteType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
+                                    cache.validate_UpdateType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
                                 End If
                             End If
                         End If

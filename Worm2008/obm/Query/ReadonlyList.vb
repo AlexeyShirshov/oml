@@ -151,6 +151,10 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         End If
     End Function
 
+    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+        Return SelectEntity(Of EntityType)(0, Count, propertyAlias)
+    End Function
+
     Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
         Dim r As IListEdit = Nothing
         Dim mpe As ObjectMappingEngine = Nothing

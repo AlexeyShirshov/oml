@@ -22,24 +22,24 @@ Namespace Query
 
         Public Sub New(ByVal rel As Relation)
             _rel = rel
-            [From](rel.Relation.Rel)
+            [From](rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _desc = desc
-            [From](desc.Rel)
+            [From](desc.Entity)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc)
             _desc = desc
-            [From](desc.Rel)
+            [From](desc.Entity)
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _rel = rel
-            [From](rel.Relation.Rel)
+            [From](rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type)
@@ -49,7 +49,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
@@ -59,7 +59,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion)
@@ -69,7 +69,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion, ByVal key As String)
@@ -79,25 +79,25 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As IKeyEntity)
             'MyBase.New(obj, desc.Key)
             _rel = New Relation(obj, desc)
-            [From](desc.Rel)
+            [From](desc.Entity)
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = rel
-            [From](rel.Relation.Rel)
+            [From](rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _desc = desc
-            [From](desc.Rel)
+            [From](desc.Entity)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
@@ -107,7 +107,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
@@ -117,7 +117,7 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
@@ -127,13 +127,13 @@ Namespace Query
             Else
                 _rel = New Relation(obj, _desc)
             End If
-            [From](_rel.Relation.Rel)
+            [From](_rel.Relation.Entity)
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = New Relation(obj, desc)
-            [From](desc.Rel)
+            [From](desc.Entity)
         End Sub
 #End Region
 
@@ -349,7 +349,7 @@ Namespace Query
             End With
         End Sub
 
-        Public Overrides Function Clone() As Object
+        Protected Overrides Function _Clone() As Object
             Dim q As New RelationCmd
             CopyTo(q)
             Return q
@@ -367,17 +367,20 @@ Namespace Query
             Dim m2mKey As String = _rel.Key
             'Dim m2mType As Type = selectOS.GetRealType(schema)
             Dim rel As RelationDesc = PrepareRel(mpe, Nothing, Nothing)
-            Dim m2mEU As EntityUnion = rel.Rel
+            Dim m2mEU As EntityUnion = rel.Entity
             Dim m2mType As Type = m2mEU.GetRealType(mpe)
 
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                 Dim appendMain_ As Boolean
-                If OrmManager.HasJoins(mpe, m2mType, f, Sort, filterInfo, joins, appendMain_) Then
-                    _js.AddRange(joins)
+                If OrmManager.HasJoins(mpe, m2mType, f, Sort, filterInfo, joins, appendMain_, m2mEU) Then
+                    For Each j As QueryJoin In joins
+                        If Not HasInQueryJS(j.ObjectSource) Then
+                            _js.Add(j)
+                        End If
+                    Next
                 End If
                 AppendMain = AppendMain OrElse appendMain_
-
             End If
 
             If m2mObject IsNot Nothing Then
@@ -428,7 +431,7 @@ Namespace Query
                         Dim jf As New JoinFilter(table, selected_r.Column, _
                             m2mEU, mpe.GetPrimaryKeys(m2mtype)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
-                        jn.ObjectSource = selected_r.Rel
+                        jn.ObjectSource = selected_r.Entity
                         _js.Insert(0, jn)
                         If _from Is Nothing OrElse table.Equals(_from.Table) Then
                             _from = New FromClauseDef(m2mEU)
@@ -517,7 +520,7 @@ l1:
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                     End If
 
-                    addf = New EntityFilter(rel.Rel, rel.Column, _
+                    addf = New EntityFilter(rel.Entity, rel.Column, _
                         New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If _from Is Nothing Then _from = New FromClauseDef(m2mEU)
@@ -550,7 +553,7 @@ l1:
 
             Dim selRel As RelationDesc = _rel.Relation
 
-            If selRel Is Nothing OrElse selRel.Rel Is Nothing OrElse String.IsNullOrEmpty(selRel.Column) Then
+            If selRel Is Nothing OrElse selRel.Entity Is Nothing OrElse String.IsNullOrEmpty(selRel.Column) Then
                 Dim m2mObject As IKeyEntity = _rel.Host
                 Dim m2mKey As String = _rel.Key
 
@@ -578,12 +581,12 @@ l1:
 
                 If selectedType Is Nothing Then
                     If selectOS Is Nothing Then
-                        selectOS = selRel.Rel
+                        selectOS = selRel.Entity
                     End If
                     selectedType = selectOS.GetRealType(schema)
                 End If
 
-                If _rel.Relation Is Nothing OrElse _rel.Relation.Rel Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
+                If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
                     field = schema.GetJoinFieldNameByType(selectedType, filteredType, schema.GetEntitySchema(selectedType))
                     needReplace = New RelationDesc(selectOS, field)
                 ElseIf Not TypeOf _rel.Relation Is M2MRelationDesc Then
@@ -600,13 +603,13 @@ l1:
                     If selRel Is Nothing Then
                         Throw New QueryCmdException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name), Me)
                     Else
-                        If _rel.Relation Is Nothing OrElse _rel.Relation.Rel Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
+                        If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
                             needReplace = selRel
                             If _rel.Relation IsNot Nothing Then
-                                needReplace.Rel = _rel.Relation.Rel
+                                needReplace.Entity = _rel.Relation.Entity
                             End If
-                        ElseIf _rel.Relation.Rel.GetRealType(schema) IsNot selectedType Then
-                            Throw New QueryCmdException(String.Format("Relation type is {0}, selected type is {1}", _rel.Relation.Rel.GetRealType(schema), selectedType), Me)
+                        ElseIf _rel.Relation.Entity.GetRealType(schema) IsNot selectedType Then
+                            Throw New QueryCmdException(String.Format("Relation type is {0}, selected type is {1}", _rel.Relation.Entity.GetRealType(schema), selectedType), Me)
                         End If
                     End If
                 End If

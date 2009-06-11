@@ -490,7 +490,7 @@ Public Class ObjectMappingEngine
     Private Function GetM2MRel(ByVal mr() As M2MRelationDesc, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
         For Each r As M2MRelationDesc In mr
-            If r.Rel.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
+            If r.Entity.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
                 Return r
             End If
         Next
@@ -498,7 +498,7 @@ Public Class ObjectMappingEngine
         For Each r As M2MRelationDesc In mr
             Dim n As String = r.EntityName
             If String.IsNullOrEmpty(n) Then
-                n = GetEntityNameByType(r.Rel.GetRealType(Me))
+                n = GetEntityNameByType(r.Entity.GetRealType(Me))
                 If Not String.IsNullOrEmpty(n) Then
                     Dim n2 As String = GetEntityNameByType(subtype)
                     If String.Equals(n, n2) AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.Key) = M2MRelationDesc.IsDirect(key)) Then

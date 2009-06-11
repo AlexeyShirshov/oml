@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Worm.CodeGen.Core.Descriptors;
 using Worm.Entities.Meta;
 using Worm.Query;
+using LinqToCodedom.Generator;
 
 namespace Worm.CodeGen.Core.CodeDomExtensions
 {
@@ -48,7 +49,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
         protected virtual void OnPupulateM2MRelations()
         {
-            var relationDescType = new CodeTypeReference(typeof(M2MRelationDesc));
+            var relationDescType = new CodeTypeReference(typeof(RelationDescEx));
+
+            #region Relation
             foreach (var relation in m_entity.GetRelations(false))
             {
                 if (relation.Left.Entity == relation.Right.Entity)
@@ -93,11 +96,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     Type = relationDescType
                 };
 
-                staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                staticProperty.GetStatements.Add(new CodeMethodReturnStatement(
+                    new CodeObjectCreateExpression(typeof(RelationDescEx),
+                    new CodeObjectCreateExpression(typeof(EntityUnion),
+                        OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity)
+                    ), desc)
+                ));
+
                 desc.Parameters.Add(new CodePrimitiveExpression(relation.SourceFragment.Identifier));
 
                 Members.Add(staticProperty);
 
+                GetRelationMethods(relation.SourceFragment.Identifier, staticProperty.Name);
 
                 var memberProperty = new CodeMemberProperty
                 {
@@ -108,14 +118,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         MemberAttributes.Public | MemberAttributes.Final,
                     Type = new CodeTypeReference(typeof(RelationCmd))
                 };
+
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
                             new CodeThisReferenceExpression(),
                             "GetCmd",
                             new CodePropertyReferenceExpression(
-                                OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
-                                staticProperty.Name
+                                new CodePropertyReferenceExpression(
+                                    OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
+                                    staticProperty.Name
+                                ),
+                                "M2MRel"
                             )
                         )
                     )
@@ -123,13 +137,17 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 Members.Add(memberProperty);
             }
 
+            #endregion
+
+            #region SelfRelation
             foreach (var relation in m_entity.GetSelfRelations(false))
             {
                 var accessorName = relation.Direct.AccessorName;
 
                 if (!string.IsNullOrEmpty(accessorName))
                 {
-                    var entityTypeExpression = OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity);
+                    var entityTypeExpression = _useType ? OrmCodeGenHelper.GetEntityClassTypeReferenceExpression(m_entity) : OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity);
+
                     var desc = new CodeObjectCreateExpression(
                         new CodeTypeReference(typeof(M2MRelationDesc)),
                         entityTypeExpression);
@@ -145,7 +163,15 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         Type = relationDescType
                     };
 
-                    staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                    staticProperty.GetStatements.Add(new CodeMethodReturnStatement(
+                        new CodeObjectCreateExpression(typeof(RelationDescEx),
+                        new CodeObjectCreateExpression(typeof(EntityUnion),
+                            OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity)
+                        ), desc)
+                    ));
+
+                    GetRelationMethods(relation.SourceFragment.Identifier, staticProperty.Name);
+
                     //desc.Parameters.Add(new CodePrimitiveExpression(relation.Direct.FieldName));
                     //desc.Parameters.Add(new CodeFieldReferenceExpression(
                     //    new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),"DirKey")
@@ -153,8 +179,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     desc.Parameters.Add(new CodePrimitiveExpression(relation.SourceFragment.Identifier));
 
                     Members.Add(staticProperty);
-
-
+                    
                     var memberProperty = new CodeMemberProperty
                     {
                         Name = accessorName,
@@ -164,14 +189,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                             MemberAttributes.Public | MemberAttributes.Final,
                         Type = new CodeTypeReference(typeof(RelationCmd))
                     };
+
                     memberProperty.GetStatements.Add(
                         new CodeMethodReturnStatement(
                             new CodeMethodInvokeExpression(
                                 new CodeThisReferenceExpression(),
                                 "GetCmd",
                                 new CodePropertyReferenceExpression(
-                                    OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
-                                    staticProperty.Name
+                                    new CodePropertyReferenceExpression(
+                                        OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
+                                        staticProperty.Name
+                                    ),
+                                    "M2MRel"
                                 )
                             )
                         )
@@ -199,12 +228,19 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         Type = relationDescType
                     };
 
-                    staticProperty.GetStatements.Add(new CodeMethodReturnStatement(desc));
+                    staticProperty.GetStatements.Add(new CodeMethodReturnStatement(
+                        new CodeObjectCreateExpression(typeof(RelationDescEx), 
+                        new CodeObjectCreateExpression(typeof(EntityUnion),
+                            OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity)
+                        ), desc)
+                    ));
                     //desc.Parameters.Add(new CodePrimitiveExpression(relation.Reverse.FieldName));
                     //desc.Parameters.Add(new CodeFieldReferenceExpression(
                     //    new CodeTypeReferenceExpression(typeof(M2MRelationDesc)),"RevKey")
                     //);
                     desc.Parameters.Add(new CodePrimitiveExpression(M2MRelationDesc.ReversePrefix+relation.SourceFragment.Identifier));
+
+                    GetRelationMethods(relation.SourceFragment.Identifier, staticProperty.Name);
 
                     Members.Add(staticProperty);
                     
@@ -223,24 +259,70 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                                 new CodeThisReferenceExpression(),
                                 "GetCmd",
                                 new CodePropertyReferenceExpression(
-                                    OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
-                                    staticProperty.Name
+                                    new CodePropertyReferenceExpression(
+                                        OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
+                                        staticProperty.Name
+                                    ),
+                                    "M2MRel"
                                 )
                             )
                         )
                     );
                     Members.Add(memberProperty);
                 }
-
-
-
-
             }
+            
+            #endregion
+
+        }
+
+        private void GetRelationMethods(string relationIdentifier, string propName)
+        {
+            string cln = OrmCodeGenNameHelper.GetEntityClassName(m_entity, true);
+            string dn = cln + ".Descriptor";
+
+            if (_useType)
+            {
+                Members.Add(Define.Method(MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                    typeof(RelationDescEx),
+                    (EntityUnion hostEntity) => "Get" + propName,
+                    Emit.@return((EntityUnion hostEntity) =>
+                        new RelationDescEx(hostEntity, new M2MRelationDesc(
+                            new EntityUnion(CodeDom.TypeOf(cln)),
+                            relationIdentifier
+                        ))
+                    )
+                ));
+            }
+            else
+            {
+                Members.Add(Define.Method(MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                    typeof(RelationDescEx),
+                    (EntityUnion hostEntity) => "Get" + propName,
+                    Emit.@return((EntityUnion hostEntity) =>
+                        new RelationDescEx(hostEntity, new M2MRelationDesc(
+                            new EntityUnion(CodeDom.Field<string>(CodeDom.TypeRef(dn), "EntityName")),
+                            relationIdentifier
+                        ))
+                    )
+                ));
+            }
+
+            Members.Add(Define.Method(MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                typeof(RelationDescEx),
+                (EntityUnion hostEntity, EntityUnion joinEntity) => "Get" + propName,
+                Emit.@return((EntityUnion hostEntity, EntityUnion joinEntity) =>
+                    new RelationDescEx(hostEntity, new M2MRelationDesc(
+                        joinEntity,
+                        relationIdentifier
+                    ))
+                )
+            ));
         }
 
         protected virtual void OnPupulateEntityRelations()
         {
-            var relationDescType = new CodeTypeReference(typeof(RelationDesc));
+            var relationDescType = new CodeTypeReference(typeof(RelationDescEx));
 
             foreach (var entityRelation in m_entity.GetEntityRelations(false))
             {
@@ -262,34 +344,71 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         new CodeObjectCreateExpression(
                             relationDescType,
                             new CodeObjectCreateExpression(
-                                new CodeTypeReference(typeof(EntityUnion)),
-                                OrmCodeGenHelper.GetEntityNameReferenceExpression(entityRelation.Entity)
+                                typeof(EntityUnion),
+                                OrmCodeGenHelper.GetEntityNameReferenceExpression(m_entity)
                             ),
-                            OrmCodeGenHelper.GetFieldNameReferenceExpression(entityRelation.Property),
-                            new CodePrimitiveExpression(entityRelation.Name ?? "default")
+                            new CodeObjectCreateExpression(
+                                typeof(RelationDesc),
+                                new CodeObjectCreateExpression(
+                                    new CodeTypeReference(typeof(EntityUnion)),
+                                    OrmCodeGenHelper.GetEntityNameReferenceExpression(entityRelation.Entity)
+                                ),
+                                OrmCodeGenHelper.GetFieldNameReferenceExpression(entityRelation.Property),
+                                new CodePrimitiveExpression(entityRelation.Name ?? "default")
+                            )
                         )
                     )
                 );
 
                 Members.Add(staticProperty);
 
+                string cd = OrmCodeGenNameHelper.GetEntityClassName(entityRelation.Property.Entity, true) + ".Properties";
+                string dn = OrmCodeGenNameHelper.GetEntityClassName(entityRelation.Entity, true) + ".Descriptor";
+
+                Members.Add(Define.Method(MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static, 
+                    typeof(RelationDescEx),
+                    (EntityUnion hostEntity)=>"Get" + staticProperty.Name,
+                    Emit.@return((EntityUnion hostEntity)=> 
+                        new RelationDescEx(hostEntity, new RelationDesc(
+                            new EntityUnion(CodeDom.Field<string>(CodeDom.TypeRef(dn), "EntityName")),
+                            CodeDom.Field<string>(CodeDom.TypeRef(cd), entityRelation.Property.PropertyAlias),
+                            entityRelation.Name
+                        ))
+                    )
+                ));
+
+                Members.Add(Define.Method(MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                    typeof(RelationDescEx),
+                    (EntityUnion hostEntity, EntityUnion joinEntity) => "Get" + staticProperty.Name,
+                    Emit.@return((EntityUnion hostEntity, EntityUnion joinEntity) =>
+                        new RelationDescEx(hostEntity, new RelationDesc(
+                            joinEntity,
+                            CodeDom.Field<string>(CodeDom.TypeRef(cd), entityRelation.Property.PropertyAlias),
+                            entityRelation.Name
+                        ))
+                    )
+                ));
+
                 var memberProperty = new CodeMemberProperty
-                                         {
-                                             Name = accessorName,
-                                             HasGet = true,
-                                             HasSet = false,
-                                             Attributes =
-                                                 MemberAttributes.Public | MemberAttributes.Final,
-                                             Type = new CodeTypeReference(typeof(RelationCmd))
-                                         };
+                 {
+                     Name = accessorName,
+                     HasGet = true,
+                     HasSet = false,
+                     Attributes =
+                         MemberAttributes.Public | MemberAttributes.Final,
+                     Type = new CodeTypeReference(typeof(RelationCmd))
+                 };
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
                             new CodeThisReferenceExpression(),
                             "GetCmd",
                             new CodePropertyReferenceExpression(
-                                OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
-                                staticProperty.Name
+                                new CodePropertyReferenceExpression(
+                                    OrmCodeGenHelper.GetEntityClassReferenceExpression(m_entity),
+                                    staticProperty.Name
+                                ),
+                                "Rel"
                             )
                         )
                     )

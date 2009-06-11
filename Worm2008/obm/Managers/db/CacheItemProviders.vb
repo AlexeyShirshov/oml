@@ -326,7 +326,7 @@ Namespace Database
                 End If
 
                 _rel = relation
-                Dim s As IEntitySchema = mgr.MappingEngine.GetEntitySchema(relation.Rel.GetRealType(mgr.MappingEngine))
+                Dim s As IEntitySchema = mgr.MappingEngine.GetEntitySchema(relation.Entity.GetRealType(mgr.MappingEngine))
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
 
                 If cs IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetContextInfo) IsNot Nothing Then
@@ -338,7 +338,7 @@ Namespace Database
                             If rt Is Nothing Then
                                 Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                             End If
-                            If rt Is relation.Rel.GetRealType(mgr.MappingEngine) Then
+                            If rt Is relation.Entity.GetRealType(mgr.MappingEngine) Then
                                 _appendSecong = True
                                 Exit For
                             End If
@@ -356,7 +356,7 @@ Namespace Database
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Dim s As IEntitySchema = Mgr.MappingEngine.GetEntitySchema(_rel.Rel.GetRealType(Mgr.MappingEngine))
+                Dim s As IEntitySchema = Mgr.MappingEngine.GetEntitySchema(_rel.Entity.GetRealType(Mgr.MappingEngine))
                 Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
                 If cs IsNot Nothing Then
                     Return CType(cs.GetContextFilter(Mgr.GetContextInfo), IFilter)

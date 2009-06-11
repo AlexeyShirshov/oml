@@ -652,7 +652,7 @@ Namespace Entities
             Using GetSyncRoot()
                 If _relations.Count > 0 Then
                     For Each rl As Relation In _relations
-                        If rl.MainType Is newRel.MainType AndAlso rl.MainId.Equals(newRel.MainId) AndAlso Object.Equals(rl.Relation.Rel, newRel.Relation.Rel) AndAlso Object.Equals(rl.Relation.Key, newRel.Relation.Key) AndAlso Object.Equals(rl.Relation.Column, newRel.Relation.Column) Then
+                        If rl.MainType Is newRel.MainType AndAlso rl.MainId.Equals(newRel.MainId) AndAlso Object.Equals(rl.Relation.Entity, newRel.Relation.Entity) AndAlso Object.Equals(rl.Relation.Key, newRel.Relation.Key) AndAlso Object.Equals(rl.Relation.Column, newRel.Relation.Column) Then
                             Return rl
                         ElseIf Relation.MetaEquals(rl, oldRel, schema) Then
                             _relations.Remove(rl)
@@ -746,7 +746,7 @@ Namespace Entities
         End Function
 
         Public Function GetCmd(ByVal desc As RelationDesc) As Worm.Query.RelationCmd Implements IRelations.GetCmd
-            Return CType(CreateRelCmd(desc).SelectEntity(desc.Rel), RelationCmd)
+            Return CType(CreateRelCmd(desc).SelectEntity(desc.Entity), RelationCmd)
         End Function
 
         Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M

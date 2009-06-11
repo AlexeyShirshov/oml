@@ -35,8 +35,8 @@ Namespace Entities
             End If
 
             If r2.Relation IsNot Nothing AndAlso r1.Relation IsNot Nothing Then
-                Dim e1 As EntityUnion = r1.Relation.Rel
-                Dim e2 As EntityUnion = r2.Relation.Rel
+                Dim e1 As EntityUnion = r1.Relation.Entity
+                Dim e2 As EntityUnion = r2.Relation.Entity
                 If Not String.IsNullOrEmpty(e1.EntityName) AndAlso Not String.IsNullOrEmpty(e2.EntityName) Then
                     Return e1.EntityName = e2.EntityName
                 ElseIf e1.Type IsNot Nothing AndAlso e2.Type IsNot Nothing Then
@@ -561,7 +561,7 @@ Namespace Entities
         Public ReadOnly Property SubType() As Type
             Get
                 Dim mpe As ObjectMappingEngine = OrmManager.CurrentManager.MappingEngine
-                Return Relation.Rel.GetRealType(mpe)
+                Return Relation.Entity.GetRealType(mpe)
             End Get
         End Property
 

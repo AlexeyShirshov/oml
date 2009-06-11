@@ -163,80 +163,98 @@ Namespace Query
         End Property
 
 #Region " Relations "
-        Public Shared Function join_relation(ByVal r As RelationDesc) As JC2
-            Return New JC2(r)
+        Public Shared Function join_relation(ByVal eu As EntityUnion, ByVal r As RelationDesc) As JC3
+            Return join_relation(New RelationDescEx(eu, r))
         End Function
 
-        <EditorBrowsable(EditorBrowsableState.Never)> _
-        Class JC2
-            Private _r As RelationDesc
-            Private _j As List(Of QueryJoin)
+        Public Shared Function join_relation(ByVal r As RelationDescEx) As JC3
+            Return CreateJC(GetJoin(r))
+        End Function
 
-            Public Sub New(ByVal r As RelationDesc)
-                _r = r
-            End Sub
+        Protected Shared Function GetJoin(ByVal r As RelationDescEx) As QueryJoin
+            If GetType(M2MRelationDesc).IsAssignableFrom(r.Rel.GetType) Then
+                Return JCtor.join(r.Rel.Entity).onM2M(r.Rel.Key, r.HostEntity)
+            Else
+                Return JCtor.join(r.Rel.Entity).on(r.HostEntity, ObjectProperty.PrimaryKeyReference).eq(r.Rel.Entity, r.Rel.Column)
+            End If
+        End Function
 
-            Public Sub New(ByVal r As RelationDesc, ByVal j As List(Of QueryJoin))
-                _r = r
-                _j = j
-            End Sub
+        Protected Shared Function CreateJC(ByVal j As QueryJoin) As JC3
+            Dim _j As New List(Of QueryJoin)
+            _j.Add(j)
+            Return New JC3(_j)
+        End Function
 
-            Public Function [with](ByVal t As Type) As JC3
-                Return CreateJC(GetJoin(t))
-            End Function
+        '<EditorBrowsable(EditorBrowsableState.Never)> _
+        'Class JC2
+        '    Private _r As RelationDescEx
+        '    Private _j As List(Of QueryJoin)
 
-            Public Function [with](ByVal en As String) As JC3
-                Return CreateJC(GetJoin(en))
-            End Function
+        '    Public Sub New(ByVal r As RelationDesc)
+        '        _r = r
+        '    End Sub
 
-            Public Function [with](ByVal eu As EntityUnion) As JC3
-                Return CreateJC(GetJoin(eu))
-            End Function
+        '    Public Sub New(ByVal r As RelationDesc, ByVal j As List(Of QueryJoin))
+        '        _r = r
+        '        _j = j
+        '    End Sub
 
-            Public Function [with](ByVal ea As QueryAlias) As JC3
-                Return CreateJC(GetJoin(ea))
-            End Function
+        '    Public Function [with](ByVal t As Type) As JC3
+        '        Return CreateJC(GetJoin(t))
+        '    End Function
 
-            Protected Function GetJoin(ByVal t As Type) As QueryJoin
-                If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
-                    Return JCtor.join(_r.Rel).onM2M(_r.Key, t)
-                Else
-                    Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(t, _r.Column)
-                End If
-            End Function
+        '    Public Function [with](ByVal en As String) As JC3
+        '        Return CreateJC(GetJoin(en))
+        '    End Function
 
-            Protected Function GetJoin(ByVal en As String) As QueryJoin
-                If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
-                    Return JCtor.join(_r.Rel).onM2M(_r.Key, en)
-                Else
-                    Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(en, _r.Column)
-                End If
-            End Function
+        '    Public Function [with](ByVal eu As EntityUnion) As JC3
+        '        Return CreateJC(GetJoin(eu))
+        '    End Function
 
-            Protected Function GetJoin(ByVal eu As EntityUnion) As QueryJoin
-                If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
-                    Return JCtor.join(_r.Rel).onM2M(_r.Key, eu)
-                Else
-                    Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(eu, _r.Column)
-                End If
-            End Function
+        '    Public Function [with](ByVal ea As QueryAlias) As JC3
+        '        Return CreateJC(GetJoin(ea))
+        '    End Function
 
-            Protected Function GetJoin(ByVal ea As QueryAlias) As QueryJoin
-                If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
-                    Return JCtor.join(_r.Rel).onM2M(_r.Key, ea)
-                Else
-                    Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(ea, _r.Column)
-                End If
-            End Function
+        '    Protected Function GetJoin(ByVal t As Type) As QueryJoin
+        '        If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
+        '            Return JCtor.join(_r.Rel).onM2M(_r.Key, t)
+        '        Else
+        '            Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(t, _r.Column)
+        '        End If
+        '    End Function
 
-            Protected Function CreateJC(ByVal j As QueryJoin) As JC3
-                If _j Is Nothing Then
-                    _j = New List(Of QueryJoin)
-                End If
-                _j.Add(j)
-                Return New JC3(_j)
-            End Function
-        End Class
+        '    Protected Function GetJoin(ByVal en As String) As QueryJoin
+        '        If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
+        '            Return JCtor.join(_r.Rel).onM2M(_r.Key, en)
+        '        Else
+        '            Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(en, _r.Column)
+        '        End If
+        '    End Function
+
+        '    Protected Function GetJoin(ByVal eu As EntityUnion) As QueryJoin
+        '        If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
+        '            Return JCtor.join(_r.Rel).onM2M(_r.Key, eu)
+        '        Else
+        '            Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(eu, _r.Column)
+        '        End If
+        '    End Function
+
+        '    Protected Function GetJoin(ByVal ea As QueryAlias) As QueryJoin
+        '        If GetType(M2MRelationDesc).IsAssignableFrom(_r.GetType) Then
+        '            Return JCtor.join(_r.Rel).onM2M(_r.Key, ea)
+        '        Else
+        '            Return JCtor.join(_r.Rel).on(_r.Rel, ObjectProperty.PrimaryKeyReference).eq(ea, _r.Column)
+        '        End If
+        '    End Function
+
+        '    Protected Function CreateJC(ByVal j As QueryJoin) As JC3
+        '        If _j Is Nothing Then
+        '            _j = New List(Of QueryJoin)
+        '        End If
+        '        _j.Add(j)
+        '        Return New JC3(_j)
+        '    End Function
+        'End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Class JoinLinkBase
@@ -384,8 +402,9 @@ Namespace Query
                 MyBase.New(l)
             End Sub
 
-            Public Function join_relation(ByVal r As RelationDesc) As JC2
-                Return New JC2(r, _jc)
+            Public Function join_relation(ByVal r As RelationDescEx) As JC3
+                _jc.Add(GetJoin(r))
+                Return Me
             End Function
 
             'Public Shared Widening Operator CType(ByVal jl As JC3) As QueryJoin()
