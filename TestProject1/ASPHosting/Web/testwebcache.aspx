@@ -38,7 +38,7 @@
         
         If Request.QueryString.ToString = "reset" Then
             Using mgr As OrmReadOnlyDBManager = CreateDBManager()
-                Dim q As Query.QueryCmd = New Query.QueryCmd().Select(GetType(TestProject1.Table1), True)
+                Dim q As Query.QueryCmd = New Query.QueryCmd().SelectEntity(GetType(TestProject1.Table1), True)
                 Dim r As ReadOnlyList(Of TestProject1.Table1) = q.ToList(Of TestProject1.Table1)(mgr)
                 
                 q.ResetObjects(mgr)
@@ -58,7 +58,7 @@
                 Next
             End Using
         ElseIf Request.QueryString.ToString = "resetCmd" Then
-            Dim q As Query.QueryCmd = New Worm.Query.QueryCmd(AddressOf _CreateDBManager).Select(GetType(TestProject1.Table1))
+            Dim q As Query.QueryCmd = New Worm.Query.QueryCmd(AddressOf _CreateDBManager).SelectEntity(GetType(TestProject1.Table1))
             Dim r As ReadOnlyList(Of TestProject1.Table1) = q.ToList(Of TestProject1.Table1)()
             
             q.ResetObjects()

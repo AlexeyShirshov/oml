@@ -77,24 +77,24 @@ Imports Worm
         Assert.AreEqual(cnt + 1, e.GetCmd(GetType(Entity4)).ToList(Of Entity4).Count)
 
         cnt = e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .ToList(Of Entity4).Count
 
         e4.Title = "xxxxxx"
 
         Assert.AreEqual(cnt - 1, e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .ToList(Of Entity4).Count)
     End Sub
 
     <TestMethod()> Public Sub TestRemoveToList()
         Dim e As Entity = CreateCmd.GetByID(Of Entity)(1)
-        Dim e4 As Entity4 = CreateCmd.GetByID(Of Entity4)(1)
+        Dim e4 As Entity4 = CreateCmd.GetByID(Of Entity4)(4)
 
         Dim cnt As Integer = e.GetCmd(GetType(Entity4)).ToList(Of Entity4).Count
 
         Dim cnt2 As Integer = e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .ToList(Of Entity4).Count
 
         e.GetCmd(GetType(Entity4)).Remove(e4)
@@ -102,7 +102,7 @@ Imports Worm
         Assert.AreEqual(cnt - 1, e.GetCmd(GetType(Entity4)).ToList(Of Entity4).Count)
 
         Assert.AreEqual(cnt2 - 1, e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .ToList(Of Entity4).Count)
     End Sub
 
@@ -128,20 +128,20 @@ Imports Worm
             .OrderBy(SCtor.prop(GetType(Entity4), "Title")) _
             .Last(Of Entity4)().ID)
 
-        Assert.AreEqual(6, e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+        Assert.AreEqual(10, e.GetCmd(GetType(Entity4)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .OrderBy(SCtor.prop(GetType(Entity4), "Title")) _
             .First(Of Entity4)().ID)
 
         Assert.AreEqual(2, e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .OrderBy(SCtor.prop(GetType(Entity4), "Title")) _
             .Last(Of Entity4)().ID)
 
-        e4.Title = "11111"
+        e4.Title = "ab"
 
-        Assert.AreEqual(1, e.GetCmd(GetType(Entity4)) _
-            .Where(Ctor.custom("len({0})", FCtor.prop(GetType(Entity4), "Title")).eq(5)) _
+        Assert.AreEqual(4, e.GetCmd(GetType(Entity4)) _
+            .Where(Ctor.prop(GetType(Entity4), "Title").like("%b%")) _
             .OrderBy(SCtor.prop(GetType(Entity4), "Title")) _
             .Last(Of Entity4)().ID)
     End Sub

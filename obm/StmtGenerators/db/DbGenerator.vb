@@ -1557,13 +1557,13 @@ l2:
                 AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, pmgr, _
                            TryCast(schema, IMultiTableObjectSchema), original_type)
 
-                Dim r2 As M2MRelationDesc = mpe.GetM2MRelation(relation.Rel.GetRealType(mpe), original_type, True)
+                Dim r2 As M2MRelationDesc = mpe.GetM2MRelation(relation.Entity.GetRealType(mpe), original_type, True)
                 Dim tbl As SourceFragment = relation.Table
                 If tbl Is Nothing Then
                     If relation.ConnectedType IsNot Nothing Then
                         tbl = mpe.GetTables(relation.ConnectedType)(0)
                     Else
-                        Throw New InvalidOperationException(String.Format("Relation from type {0} to {1} has not table", original_type, relation.Rel.GetRealType(mpe)))
+                        Throw New InvalidOperationException(String.Format("Relation from type {0} to {1} has not table", original_type, relation.Entity.GetRealType(mpe)))
                     End If
                 End If
 
@@ -1574,8 +1574,8 @@ l2:
                 join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
 
                 If appendSecondTable Then
-                    Dim schema2 As IEntitySchema = mpe.GetEntitySchema(relation.Rel.GetRealType(mpe))
-                    AppendNativeTypeJoins(mpe, relation.Rel.GetRealType(mpe), almgr, mpe.GetTables(relation.Rel.GetRealType(mpe)), selectcmd, params, tbl, relation.Column, True, filterInfo, schema2)
+                    Dim schema2 As IEntitySchema = mpe.GetEntitySchema(relation.Entity.GetRealType(mpe))
+                    AppendNativeTypeJoins(mpe, relation.Entity.GetRealType(mpe), almgr, mpe.GetTables(relation.Entity.GetRealType(mpe)), selectcmd, params, tbl, relation.Column, True, filterInfo, schema2)
                 End If
             Else
                 Throw New NotImplementedException
@@ -2674,7 +2674,7 @@ l1:
             Dim almgr As IPrepareTable = AliasMgr.Create
             Dim sb As New StringBuilder
             Dim tbl As SourceFragment = relation.Table
-            Dim param_relation As M2MRelationDesc = mpe.GetRevM2MRelation(obj.GetType, relation.Rel.GetRealType(mpe), relation.Key)
+            Dim param_relation As M2MRelationDesc = mpe.GetRevM2MRelation(obj.GetType, relation.Entity.GetRealType(mpe), relation.Key)
             Dim al As String = almgr.AddTable(tbl, Nothing)
 
             If param_relation Is Nothing Then

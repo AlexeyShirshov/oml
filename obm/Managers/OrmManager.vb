@@ -577,7 +577,7 @@ Partial Public MustInherit Class OrmManager
             Return
         End If
 
-        If type2load IsNot relation.Rel.GetRealType(MappingEngine) Then
+        If type2load IsNot relation.Entity.GetRealType(MappingEngine) Then
             Throw New ArgumentException("Relation is not suit for type " & type2load.Name)
         End If
 
@@ -1189,7 +1189,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain, New EntityUnion(GetType(T)))
         Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
@@ -1205,7 +1205,7 @@ l1:
 
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        If HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain) Then
+        If HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain, New EntityUnion(GetType(T))) Then
             Dim c As Condition.ConditionConstructor = New Condition.ConditionConstructor
             c.AddFilter(filter)
             Return FindWithJoins(Of T)(Nothing, joins, New PredicateLink(c), sort, withLoad)
@@ -1288,7 +1288,7 @@ l1:
         End If
         Dim joins() As QueryJoin = Nothing
         Dim appendMain As Boolean
-        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain)
+        HasJoins(_schema, GetType(T), filter, sort, GetContextInfo, joins, appendMain, New EntityUnion(GetType(T)))
         Return FindWithJoins(Of T)(StmtGenerator.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
@@ -1916,9 +1916,18 @@ l1:
 #End Region
 
 #Region " helpers "
-    Protected Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As QueryJoin
-        Return MakeJoin(_schema, type2join, selectType, field, oper, joinType, switchTable)
+    Protected Function MakeJoin(ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion, _
+        ByVal type2join As Type, ByVal field As String, _
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, _
+        Optional ByVal switchTable As Boolean = False) As QueryJoin
+        Return MakeJoin(_schema, joinOS, type2join, selectOS, field, oper, joinType, switchTable)
+    End Function
+
+    Protected Function MakeJoin( _
+        ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, _
+        Optional ByVal switchTable As Boolean = False) As QueryJoin
+        Return MakeJoin(_schema, New EntityUnion(type2join), type2join, New EntityUnion(selectType), field, oper, joinType, switchTable)
     End Function
 
     Protected Function MakeM2MJoin(ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As QueryJoin()
@@ -2363,7 +2372,7 @@ l1:
 
             For Each r As M2MRelationDesc In _schema.GetM2MRelations(obj.GetType)
 
-                Dim key As String = GetM2MKey(tt1, r.Rel.GetRealType(MappingEngine), r.Key)
+                Dim key As String = GetM2MKey(tt1, r.Entity.GetRealType(MappingEngine), r.Key)
                 Dim dic As IDictionary = GetDic(_cache, key)
                 Dim id As String = obj.Identifier.ToString
                 'Dim sync As String = GetSync(key, id)
@@ -2372,7 +2381,7 @@ l1:
                     Dim m As M2MCache = CType(dic(id), M2MCache)
 
                     For Each oid As Integer In m.Entry.Current
-                        Dim o As _IKeyEntity = CType(GetKeyEntityFromCacheOrCreate(oid, r.Rel.GetRealType(MappingEngine), False), _IKeyEntity)
+                        Dim o As _IKeyEntity = CType(GetKeyEntityFromCacheOrCreate(oid, r.Entity.GetRealType(MappingEngine), False), _IKeyEntity)
                         M2MSubUpdate(o, obj, oldId, obj.GetType)
                     Next
                 End If
@@ -2617,6 +2626,11 @@ l1:
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+        If filter Is Nothing Then
+            evaluated = True
+            Return col
+        End If
+
         Dim f As IEntityFilter = TryCast(If(filter Is Nothing, Nothing, filter.Filter), IEntityFilter)
         If f Is Nothing Then
             Return col
@@ -3284,15 +3298,15 @@ l1:
                                 Dim acs As AcceptState2 = Nothing
                                 If r.ConnectedType Is Nothing Then
                                     If r.DeleteCascade Then
-                                        M2MDelete(orm, r.Rel.GetRealType(MappingEngine), r.Key)
+                                        M2MDelete(orm, r.Entity.GetRealType(MappingEngine), r.Key)
                                         Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
                                         If cmd IsNot Nothing Then
                                             cmd.RemoveAll(Me)
                                             toDel.Add(CType(cmd.Relation, M2MRelation))
                                         End If
                                     End If
-                                    acs = M2MSave(orm, r.Rel.GetRealType(MappingEngine), r.Key)
-                                    processedType.Add(r.Rel.GetRealType(MappingEngine))
+                                    acs = M2MSave(orm, r.Entity.GetRealType(MappingEngine), r.Key)
+                                    processedType.Add(r.Entity.GetRealType(MappingEngine))
                                 End If
                                 If acs IsNot Nothing Then CType(orm, _IKeyEntity).AddAccept(acs)
                             Next
@@ -3334,7 +3348,7 @@ l1:
                             M2MUpdate(orm, old_id)
 
                             For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
-                                Dim tt As Type = r.Rel.GetRealType(MappingEngine)
+                                Dim tt As Type = r.Entity.GetRealType(MappingEngine)
                                 If Not MappingEngine.IsMany2ManyReadonly(t, tt) Then
                                     Dim acs As AcceptState2 = M2MSave(orm, tt, r.Key)
                                     If acs IsNot Nothing Then
@@ -3449,7 +3463,7 @@ l1:
     End Function
 
     Protected Friend Sub M2MSave(ByVal obj As IKeyEntity, ByVal el As M2MRelation)
-        M2MSave(obj, el.Relation.Rel.GetRealType(MappingEngine), el.Key, el)
+        M2MSave(obj, el.Relation.Entity.GetRealType(MappingEngine), el.Key, el)
     End Sub
 
 #Region " Abstract members "
@@ -3766,7 +3780,7 @@ l1:
 
     Protected Friend Shared Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As QueryJoin, _
-        ByRef appendMain As Boolean) As Boolean
+        ByRef appendMain As Boolean, ByVal selectOS As EntityUnion) As Boolean
         Dim l As New List(Of QueryJoin)
         Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
         Dim ictx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
@@ -3785,7 +3799,7 @@ l1:
                     '    type2join = schema.GetTypeByEntityName(ot.EntityName)
                     'End If
 
-                    AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, type2join)
+                    AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
                 Else
                     Dim cf As CustomFilter = TryCast(fl, CustomFilter)
                     If cf IsNot Nothing Then
@@ -3793,7 +3807,7 @@ l1:
                         For Each v As IFilterValue In cfv.Values
                             Dim ef As SelectExpressionValue = TryCast(v, SelectExpressionValue)
                             If ef IsNot Nothing Then
-                                AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource.GetRealType(schema))
+                                AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource, ef.Expression.ObjectSource.GetRealType(schema), selectOS)
                             End If
                         Next
                     End If
@@ -3810,7 +3824,7 @@ l1:
 
                         If Not String.IsNullOrEmpty(field) Then
                             types.Add(sortType)
-                            l.Add(MakeJoin(schema, sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                            l.Add(MakeJoin(schema, ns.ObjectSource, sortType, selectOS, field, FilterOperation.Equal, JoinType.Join))
                             Continue For
                         End If
 
@@ -3834,7 +3848,7 @@ l1:
                     For Each v As IFilterValue In ns.Custom.Values
                         Dim ef As SelectExpressionValue = TryCast(v, SelectExpressionValue)
                         If ef IsNot Nothing Then
-                            AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource.GetRealType(schema))
+                            AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ef.Expression.ObjectSource, ef.Expression.ObjectSource.GetRealType(schema), selectOS)
                         End If
                     Next
                 End If
@@ -3844,7 +3858,13 @@ l1:
         Return joins.Length > 0
     End Function
 
-    Private Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, ByRef filter As IFilter, ByVal filterInfo As Object, ByRef appendMain As Boolean, ByVal l As List(Of QueryJoin), ByVal oschema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type)
+    Private Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
+        ByRef filter As IFilter, ByVal filterInfo As Object, ByRef appendMain As Boolean, _
+        ByVal l As List(Of QueryJoin), ByVal oschema As IEntitySchema, ByVal types As List(Of Type), _
+        ByVal joinOS As EntityUnion, ByVal type2join As System.Type, ByVal selectOS As EntityUnion)
+
+        'Dim type2join As System.Type = joinOS.GetRealType(schema)
+
         If type2join Is Nothing Then
             Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
         End If
@@ -3857,7 +3877,7 @@ l1:
                 appendMain = True
             Else
                 If Not types.Contains(type2join) Then
-                    AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2)
+                    AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2, joinOS, selectOS)
                 End If
             End If
         End If
@@ -3866,7 +3886,7 @@ l1:
     Public Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal filterInfo As Object, ByVal l As List(Of QueryJoin), _
         ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type, _
-        ByVal t2jSchema As IEntitySchema)
+        ByVal t2jSchema As IEntitySchema, ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion)
 
         Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
 
@@ -3882,66 +3902,71 @@ l1:
                     Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                 End If
             Else
-                l.Add(MakeJoin(schema, selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+                l.Add(MakeJoin(schema, selectOS, selectType, joinOS, field, FilterOperation.Equal, JoinType.Join, True))
             End If
         Else
-            l.Add(MakeJoin(schema, type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+            l.Add(MakeJoin(schema, joinOS, type2join, selectOS, field, FilterOperation.Equal, JoinType.Join))
         End If
 
         If types IsNot Nothing Then
             types.Add(type2join)
         End If
 
-        Dim ts As IMultiTableObjectSchema = TryCast(t2jSchema, IMultiTableObjectSchema)
-        If ts IsNot Nothing Then
-            Dim pk_table As SourceFragment = t2jSchema.Table
-            For i As Integer = 1 To ts.GetTables.Length - 1
-                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
-                Dim join As QueryJoin = Nothing
-                If joinableTs IsNot Nothing Then
-                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
-                Else
-                    join = ts.GetJoins(pk_table, ts.GetTables(i))
-                End If
+        'Dim ts As IMultiTableObjectSchema = TryCast(t2jSchema, IMultiTableObjectSchema)
+        'If ts IsNot Nothing Then
+        '    Dim pk_table As SourceFragment = t2jSchema.Table
+        '    For i As Integer = 1 To ts.GetTables.Length - 1
+        '        Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+        '        Dim join As QueryJoin = Nothing
+        '        If joinableTs IsNot Nothing Then
+        '            join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
+        '        Else
+        '            join = ts.GetJoins(pk_table, ts.GetTables(i))
+        '        End If
 
-                If Not QueryJoin.IsEmpty(join) Then
-                    l.Add(join)
-                End If
-            Next
+        '        If Not QueryJoin.IsEmpty(join) Then
+        '            l.Add(join)
+        '        End If
+        '    Next
 
-            Dim cfs As IContextObjectSchema = TryCast(t2jSchema, IContextObjectSchema)
-            If cfs IsNot Nothing Then
-                Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
-                If newfl IsNot Nothing Then
-                    Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
-                    con.AddFilter(filter)
-                    con.AddFilter(newfl)
-                    filter = con.Condition
-                End If
+
+        'End If
+
+        Dim cfs As IContextObjectSchema = TryCast(t2jSchema, IContextObjectSchema)
+        If cfs IsNot Nothing Then
+            Dim newfl As IFilter = cfs.GetContextFilter(filterInfo)
+            If newfl IsNot Nothing Then
+                Dim con As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                con.AddFilter(filter)
+                con.AddFilter(newfl)
+                filter = con.Condition
             End If
         End If
     End Sub
 
     Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
-        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Rel.GetRealType(schema), schema.GetPrimaryKeys(m2m.Rel.GetRealType(schema))(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetPrimaryKeys(m2m.Entity.GetRealType(schema))(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
         Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
-        m2m = schema.GetM2MRelation(m2m.Rel.GetRealType(schema), type2join, True)
+        m2m = schema.GetM2MRelation(m2m.Entity.GetRealType(schema), type2join, True)
         Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
         Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
         Return New QueryJoin() {mj, tj}
     End Function
 
-    Protected Friend Shared Function MakeJoin(ByVal schema As ObjectMappingEngine, ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-           ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
+    Protected Friend Shared Function MakeJoin(ByVal schema As ObjectMappingEngine, _
+        ByVal joinOS As EntityUnion, ByVal type2join As Type, _
+        ByVal selectType As EntityUnion, ByVal field As String, _
+        ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, _
+        Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
 
         'Dim tbl As SourceFragment = GetTables(type2join)(0)
         'If switchTable Then
         '    tbl = GetTables(selectType)(0)
         'End If
 
-        Dim jf As New JoinFilter(type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, selectType, field, oper)
+        Dim jf As New JoinFilter(joinOS, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, selectType, field, oper)
 
-        Dim t As Type = type2join
+        Dim t As EntityUnion = joinos
         If switchTable Then
             t = selectType
         End If

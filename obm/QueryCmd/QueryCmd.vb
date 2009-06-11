@@ -285,7 +285,7 @@ Namespace Query
         Protected _hint As String
         Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
         Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
-        'Protected _returnType As Type
+        Protected _includeEntities As New List(Of EntityUnion)
         'Protected _realType As Type
         'Private _m2mObject As IKeyEntity
         'Protected _m2mKey As String
@@ -755,7 +755,7 @@ l1:
                         Dim selSchema As IEntitySchema = mpe.GetEntitySchema(t)
                         For Each se As SelectExpression In SelectList
                             If se.ObjectSource IsNot Nothing Then
-                                If Not HasInQuery(se.ObjectSource, _js) Then
+                                If Not HasInQuery(se.ObjectSource) Then
                                     mpe.AppendJoin(selOS, t, selSchema, _
                                         se.ObjectSource, se.ObjectSource.GetRealType(mpe), mpe.GetEntitySchema(se.ObjectSource.GetRealType(mpe)), _
                                         f, _js, filterInfo, JoinType.Join)
@@ -831,6 +831,10 @@ l1:
                         End If
                     Next
                 Else
+                    For Each eu As EntityUnion In _includeEntities
+                        SelectAdd(eu, True)
+                    Next
+
                     If SelectedEntities IsNot Nothing Then
 l1:
                         If _from IsNot Nothing AndAlso _from.Query IsNot Nothing Then
@@ -971,7 +975,7 @@ l1:
                     Dim t As Type = selectOS.GetRealType(schema)
                     Dim selSchema As IEntitySchema = _types(selectOS) 'schema.GetEntitySchema(t)
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If Not HasInQuery(tp.First, _js) Then
+                        If Not HasInQuery(tp.First) Then
                             schema.AppendJoin(selectOS, t, selSchema, _
                                 tp.First, tp.First.GetRealType(schema), schema.GetEntitySchema(tp.First.GetRealType(schema)), _
                                 f, _js, filterInfo, JoinType.Join)
@@ -997,7 +1001,7 @@ l1:
             Else
                 eu = p.Second
             End If
-            If Not HasInQuery(eu, _js) Then
+            If Not HasInQuery(eu) Then
                 Dim s As IEntitySchema = Nothing
                 If Not GetType(IEntity).IsAssignableFrom(pit) Then
                     Dim hasPK As Boolean
@@ -1080,7 +1084,7 @@ l1:
                 If AutoJoins Then
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
-                    If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain) Then
+                    If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain, selectOS) Then
                         _js.AddRange(joins)
                     End If
                     _appendMain = _appendMain OrElse appendMain
@@ -1137,22 +1141,25 @@ l1:
             End If
         End Sub
 
-        Private Function HasInQuery(ByVal os As EntityUnion, ByVal js As List(Of QueryJoin)) As Boolean
+        Protected Function HasInQuery(ByVal os As EntityUnion) As Boolean
             If FromClause IsNot Nothing AndAlso FromClause.ObjectSource.Equals(os) Then
                 Return True
-            Else
-                For Each j As QueryJoin In js
-                    If os.Equals(j.ObjectSource) OrElse os.Equals(j.M2MObjectSource) Then
+            End If
+            Return HasInQueryJS(os)
+        End Function
+
+        Protected Function HasInQueryJS(ByVal os As EntityUnion) As Boolean
+            For Each j As QueryJoin In _js
+                If os.Equals(j.ObjectSource) OrElse os.Equals(j.M2MObjectSource) Then
+                    Return True
+                End If
+            Next
+            If SelectedEntities IsNot Nothing Then
+                For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
+                    If os.Equals(tp.First) AndAlso (FromClause Is Nothing OrElse Not FromClause.ObjectSource.Equals(os)) Then
                         Return True
                     End If
                 Next
-                If SelectedEntities IsNot Nothing Then
-                    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If os.Equals(tp.First) Then
-                            Return True
-                        End If
-                    Next
-                End If
             End If
             Return False
         End Function
@@ -2101,6 +2108,10 @@ l1:
             End If
             Me.Joins = l.ToArray
             Return Me
+        End Function
+
+        Public Function Join(ByVal rel As RelationDescEx) As QueryCmd
+            Return JoinAdd(JCtor.join_relation(rel))
         End Function
 
         Public Function Join(ByVal joins() As QueryJoin) As QueryCmd
@@ -3997,7 +4008,7 @@ l1:
                 ._resDic = _resDic
                 ._appendMain = _appendMain
                 ._getMgr = _getMgr
-                '._createType = _createType
+                ._includeEntities = New List(Of EntityUnion)(_includeEntities)
                 ._liveTime = _liveTime
                 ._mgrMark = _mgrMark
                 ._name = _name
@@ -4010,10 +4021,14 @@ l1:
             End With
         End Sub
 
-        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
+        Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
             Dim q As New QueryCmd
             CopyTo(q)
             Return q
+        End Function
+
+        Public Function Clone() As QueryCmd
+            Return CType(_Clone(), QueryCmd)
         End Function
 
         Friend Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
@@ -4117,20 +4132,59 @@ l1:
             Return dp.Get
         End Function
 
-        'Public Function GetOrmCommand(Of T As {New, _IKeyEntity})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-        '    'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-        '    Dim q As New OrmQueryCmd(Of T)()
-        '    CopyTo(q)
-        '    If _getMgr Is Nothing Then
-        '        q.Exec(mgr)
-        '    End If
-        '    Return q
-        'End Function
+        Public Function Load(ByVal entityName As String) As QueryCmd
+            Dim os As EntityUnion = GetSelectedOS()
+            If os isnot nothing andalso String.Equals(os.AnyEntityName, entityName) Then
+                Throw New NotSupportedException
+            End If
+            If _joins Is Nothing Then
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            Else
+                For Each j As QueryJoin In _joins
+                    If j.ObjectSource IsNot Nothing AndAlso String.Equals(j.ObjectSource.AnyEntityName, entityName) Then
+                        _includeEntities.Add(j.ObjectSource)
+                        Return Me
+                    End If
+                Next
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            End If
+        End Function
 
-        'Public Function GetOrmCommand(Of T As {New, _IKeyEntity})() As OrmQueryCmd(Of T)
-        '    Dim mgr As OrmManager = OrmManager.CurrentManager
-        '    Return GetOrmCommand(Of T)(mgr)
-        'End Function
+        Public Function Load(ByVal t As Type) As QueryCmd
+            Dim os As EntityUnion = GetSelectedOS()
+            If os IsNot Nothing AndAlso os.AnyType Is t Then
+                Throw New NotSupportedException
+            End If
+            If _joins Is Nothing Then
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            Else
+                For Each j As QueryJoin In _joins
+                    If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.AnyType Is t Then
+                        _includeEntities.Add(j.ObjectSource)
+                        Return Me
+                    End If
+                Next
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            End If
+        End Function
+
+        Public Function Load(ByVal al As QueryAlias) As QueryCmd
+            Dim os As EntityUnion = GetSelectedOS()
+            If os IsNot Nothing AndAlso os.ObjectAlias Is al Then
+                Throw New NotSupportedException
+            End If
+            If _joins Is Nothing Then
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            Else
+                For Each j As QueryJoin In _joins
+                    If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.ObjectAlias Is al Then
+                        _includeEntities.Add(j.ObjectSource)
+                        Return Me
+                    End If
+                Next
+                Throw New QueryCmdException("Entity must be present among joins", Me)
+            End If
+        End Function
 
 #Region " Create methods "
 

@@ -350,15 +350,15 @@ Imports Worm.Entities.Meta
         Dim a2 As New QueryAlias(GetType(Table1))
 
         'Dim r As New M2MRelationDesc(New EntityUnion(GetType(Table1)), M2MRelationDesc.RevKey)
-        Dim r2 As New M2MRelationDesc(New EntityUnion(a1), M2MRelationDesc.RevKey)
-        Dim r3 As New M2MRelationDesc(New EntityUnion(a2), M2MRelationDesc.RevKey)
+        Dim r2 As New RelationDescEx(New EntityUnion(GetType(Table1)), New M2MRelationDesc(New EntityUnion(a1), M2MRelationDesc.RevKey))
+        Dim r3 As New RelationDescEx(New EntityUnion(a1), New M2MRelationDesc(New EntityUnion(a2), M2MRelationDesc.RevKey))
 
         Dim t2 As Table1 = q _
             .From(GetType(Table1)) _
             .SelectEntity(a2) _
             .Join(JCtor _
-                  .join_relation(r2).with(GetType(Table1)) _
-                  .join_relation(r3).with(a1)) _
+                  .join_relation(r2) _
+                  .join_relation(r3)) _
             .Where(Ctor.prop(GetType(Table1), "ID").eq(t)) _
             .First(Of Table1)()
 

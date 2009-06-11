@@ -80,11 +80,17 @@ Namespace Criteria.Joins
             Return c
         End Function
 
-        'Public ReadOnly Property Condition() As IFilter
-        '    Get
-        '        Return _c.Condition
-        '    End Get
-        'End Property
+        Public Function [and](ByVal al As QueryAlias, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(New EntityUnion(al), propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc)
+            Return c
+        End Function
+
+        Public Function [and](ByVal eu As EntityUnion, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(eu, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc)
+            Return c
+        End Function
 
         Protected Overrides Sub PreAdd()
             If _c IsNot Nothing Then
@@ -163,6 +169,7 @@ Namespace Criteria.Joins
             _jc = jc
         End Sub
 
+#Region " eq "
         Public Function eq(ByVal t As Type, ByVal propertyAlias As String) As JoinLink
             _jf.Right = New FieldReference(New EntityUnion(t), propertyAlias)
             _jf._oper = FilterOperation.Equal
@@ -199,6 +206,45 @@ Namespace Criteria.Joins
             Return GetLink()
         End Function
 
+#End Region
+
+#Region " not eq "
+        Public Function not_eq(ByVal t As Type, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(New EntityUnion(t), propertyAlias)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+
+        Public Function not_eq(ByVal entityName As String, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(New EntityUnion(entityName), propertyAlias)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+
+        Public Function not_eq(ByVal op As ObjectProperty) As JoinLink
+            _jf.Right = New FieldReference(op.Entity, op.PropertyAlias)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+
+        Public Function not_eq(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(New EntityUnion([alias]), propertyAlias)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+
+        Public Function not_eq(ByVal eu As EntityUnion, ByVal propertyAlias As String) As JoinLink
+            _jf.Right = New FieldReference(eu, propertyAlias)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+
+        Public Function not_eq(ByVal table As SourceFragment, ByVal column As String) As JoinLink
+            _jf.Right = New FieldReference(table, column)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+#End Region
         Protected Function GetLink() As JoinLink
             If _c Is Nothing Then
                 _c = New Condition.ConditionConstructor
