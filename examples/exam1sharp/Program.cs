@@ -249,7 +249,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main(string[] args)
+        static void Main13(string[] args)
         {
             int iterCount = 1000;
             DateTime start = DateTime.Now;

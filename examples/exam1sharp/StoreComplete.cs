@@ -78,7 +78,7 @@ namespace exam1sharp.Sales
         }
     }
 
-    [Entity("Sales", "SalesTerritory", "1")]
+    [Entity("Sales", "SalesTerritory", "1", RawProperties=true)]
     public class SalesTerritory : SalesBase
     {
         [EntityProperty("TerritoryID", Field2DbRelations.PrimaryKey)]

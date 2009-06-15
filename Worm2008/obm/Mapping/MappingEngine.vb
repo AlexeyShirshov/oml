@@ -1609,7 +1609,7 @@ Public Class ObjectMappingEngine
                             schema = New SimpleTwotableObjectSchema(l, l2)
                         Else
                             Dim l As New List(Of EntityPropertyAttribute)
-                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
+                            For Each c As EntityPropertyAttribute In GetMappedProperties(tp, ea.RawProperties).Keys
                                 l.Add(c)
                             Next
 
@@ -1671,7 +1671,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, ea.RawProperties).Keys
                                     l.Add(c)
                                 Next
 
@@ -1740,7 +1740,7 @@ Public Class ObjectMappingEngine
                                 schema = New SimpleTwotableObjectSchema(l, l2)
                             Else
                                 Dim l As New List(Of EntityPropertyAttribute)
-                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
+                                For Each c As EntityPropertyAttribute In GetMappedProperties(tp, ea1.RawProperties).Keys
                                     l.Add(c)
                                 Next
 
@@ -1814,7 +1814,7 @@ Public Class ObjectMappingEngine
                                     schema = New SimpleTwotableObjectSchema(l, l2)
                                 Else
                                     Dim l As New List(Of EntityPropertyAttribute)
-                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, False).Keys
+                                    For Each c As EntityPropertyAttribute In GetMappedProperties(tp, ea2.RawProperties).Keys
                                         l.Add(c)
                                     Next
 
