@@ -203,24 +203,13 @@ Namespace Entities.Meta
         Private _table As String
         Private _schema As String
         Private _pk As String
+        Private _rawProps As Boolean
 
         Public Sub New(ByVal schema As String, ByVal tableName As String, ByVal version As String)
             _v = version
             _table = tableName
             _schema = schema
         End Sub
-
-        'Public Sub New(ByVal schema As String, ByVal tableName As String, ByVal primaryKeyColumn As String, ByVal version As String)
-        '    _table = tableName
-        '    _schema = schema
-        '    _v = version
-        '    _pk = primaryKeyColumn
-        'End Sub
-
-        'Public Sub New(ByVal tableName As String, ByVal version As String)
-        '    _table = tableName
-        '    _v = version
-        'End Sub
 
         Public Sub New(ByVal schemaType As Type, ByVal version As String)
             _t = schemaType
@@ -276,6 +265,15 @@ Namespace Entities.Meta
             End Get
             Set(ByVal value As String)
                 _schema = value
+            End Set
+        End Property
+
+        Public Property RawProperties() As Boolean
+            Get
+                Return _rawProps
+            End Get
+            Set(ByVal value As Boolean)
+                _rawProps = value
             End Set
         End Property
     End Class
