@@ -2,8 +2,6 @@
 Imports Worm.Cache
 Imports Worm.Query
 
-#Const OLDM2M = True
-
 Namespace Entities
 
     Public Class ObjectSavedArgs
@@ -72,9 +70,6 @@ Namespace Entities
         Sub SetCreateManager(ByVal createManager As ICreateManager)
         ReadOnly Property IsLoading() As Boolean
         Sub SetMgrString(ByVal str As String)
-        Function GetSpecificSchema() As ObjectMappingEngine
-        Property MappingEngine() As ObjectMappingEngine
-        Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
     End Interface
 
     Public Interface IEntity
@@ -88,6 +83,9 @@ Namespace Entities
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
         Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
+        Property SpecificMappingEngine() As ObjectMappingEngine
+        Function GetMappingEngine() As ObjectMappingEngine
+        Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
     End Interface
 
     Public Interface IPropertyLazyLoad
@@ -181,10 +179,10 @@ Namespace Entities
 
         ReadOnly Property HasChanges() As Boolean
 
-        Sub Add(ByVal o As IKeyEntity)
-        Sub Add(ByVal o As IKeyEntity, ByVal key As String)
-        Sub Remove(ByVal o As IKeyEntity)
-        Sub Remove(ByVal o As IKeyEntity, ByVal key As String)
+        Sub Add(ByVal o As ICachedEntity)
+        Sub Add(ByVal o As ICachedEntity, ByVal key As String)
+        Sub Remove(ByVal o As ICachedEntity)
+        Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
 
         Sub Cancel(ByVal t As Type)
         Sub Cancel(ByVal t As Type, ByVal key As String)
@@ -211,7 +209,9 @@ Namespace Entities
         Inherits _ICachedEntity, IRelations
         Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
+#If OLDM2M Then
         Function GetOldName(ByVal id As Object) As String
+#End If
         Function GetName() As String
         'Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase
         'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
@@ -234,6 +234,7 @@ Namespace Entities
         Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface
 
+#If OLDM2M Then
     <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
     Public Class AcceptState2
         'Public ReadOnly el As EditableList
@@ -291,6 +292,7 @@ Namespace Entities
             Return True
         End Function
     End Class
+#End If
 
     Public Class UpdateCtx
         Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilter)

@@ -138,6 +138,16 @@ Namespace Query
         Private _dstProp As String
         Private _dst As EntityUnion
 
+        Private _addAlias As Boolean = True
+        Public Property AddAlias() As Boolean
+            Get
+                Return _addAlias
+            End Get
+            Set(ByVal value As Boolean)
+                _addAlias = value
+            End Set
+        End Property
+
 #Region " Cache "
         Friend _c As EntityPropertyAttribute
         Friend _pi As Reflection.PropertyInfo

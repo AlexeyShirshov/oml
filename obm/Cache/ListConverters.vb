@@ -28,7 +28,7 @@ Namespace Cache
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
-        Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity)
+        Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity, ByVal mc As OrmManager)
         Sub Clear(ByVal weak_list As Object, ByVal mgr As OrmManager)
         ReadOnly Property IsWeak() As Boolean
         Function GetAliveCount(ByVal weakList As Object) As Integer
@@ -124,10 +124,24 @@ Namespace Cache
             Return objects
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, _
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal o As ICachedEntity, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim l As IListEdit = CType(weak_list, IListEdit)
             Dim st As IOrmSorting = Nothing
+            Dim obj As ICachedEntity = o
+            If l.RealType IsNot obj.GetType Then
+                Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
+                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
+                If props.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                End If
+                Dim prop As String = Nothing
+                For Each p As String In props
+                    prop = p
+                Next
+                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+            End If
+
             If sort Is Nothing Then
                 l.Add(obj)
                 Return True
@@ -152,8 +166,21 @@ Namespace Cache
             Return False
         End Function
 
-        Public Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity) Implements IListObjectConverter.Delete
+        Public Sub Delete(ByVal weak_list As Object, ByVal o As ICachedEntity, ByVal mc As OrmManager) Implements IListObjectConverter.Delete
             Dim l As IListEdit = CType(weak_list, IListEdit)
+            Dim obj As ICachedEntity = o
+            If l.RealType IsNot obj.GetType Then
+                Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
+                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
+                If props.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                End If
+                Dim prop As String = Nothing
+                For Each p As String In props
+                    prop = p
+                Next
+                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+            End If
             l.Remove(obj)
         End Sub
 
@@ -306,14 +333,28 @@ Namespace Cache
                     If t Is Nothing Then t = o.GetType
                     l.Add(New WeakEntityReference(o))
                 Next
-                Return New WeakEntityList(l)
+                Return New WeakEntityList(l, t)
             End If
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, _
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal o As ICachedEntity, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
+
+            Dim obj As ICachedEntity = o
+            If lo.RealType IsNot obj.GetType Then
+                Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
+                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
+                If props.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                End If
+                Dim prop As String = Nothing
+                For Each p As String In props
+                    prop = p
+                Next
+                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+            End If
 
             If sort Is Nothing Then
                 l.Add(New WeakEntityReference(obj))
@@ -340,8 +381,22 @@ Namespace Cache
             Return False
         End Function
 
-        Public Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity) Implements IListObjectConverter.Delete
+        Public Sub Delete(ByVal weak_list As Object, ByVal o As ICachedEntity, ByVal mc As OrmManager) Implements IListObjectConverter.Delete
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
+
+            Dim obj As ICachedEntity = o
+            If lo.RealType IsNot obj.GetType Then
+                Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
+                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
+                If props.Count <> 1 Then
+                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                End If
+                Dim prop As String = Nothing
+                For Each p As String In props
+                    prop = p
+                Next
+                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+            End If
 
             lo.Remove(obj)
         End Sub

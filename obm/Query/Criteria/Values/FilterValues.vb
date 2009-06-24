@@ -110,7 +110,11 @@ Namespace Criteria.Values
             If _v IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IFilterValue In _v
-                    l.Add(v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor))
+                    If TypeOf v Is SelectExpressionValue Then
+                        CType(v, SelectExpressionValue).AddAlias = False
+                    End If
+                    Dim s As String = v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
+                    l.Add(s)
                 Next
                 Return String.Format(_f, l.ToArray)
             Else
@@ -249,6 +253,15 @@ Namespace Criteria.Values
             Return _p._ToString
         End Function
 
+        Public Property AddAlias() As Boolean
+            Get
+                Return _p.AddAlias
+            End Get
+            Set(ByVal value As Boolean)
+                _p.AddAlias = value
+            End Set
+        End Property
+
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
@@ -262,10 +275,10 @@ Namespace Criteria.Values
                 Throw New ArgumentNullException("schema")
             End If
 
-            Dim d As String = schema.Delimiter
-            If Not inSelect Then
-                d = stmt.Selector
-            End If
+            'Dim d As String = schema.Delimiter
+            'If Not inSelect Then
+            '    d = stmt.Selector
+            'End If
 
             Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
             Dim sb As New StringBuilder

@@ -158,6 +158,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
+#If OLDM2M Then
         Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
             ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Object), _
             ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Entities.Meta.M2MRelationDesc, _
@@ -165,6 +166,7 @@ Namespace Xml
 
             Throw New NotImplementedException
         End Function
+#End If
 
         Protected Overrides Function GetSearchSection() As String
             Throw New NotImplementedException

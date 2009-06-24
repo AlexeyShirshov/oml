@@ -91,6 +91,12 @@ Public Class ObjectMappingEngine
 
     Public ReadOnly Mark As Guid = Guid.NewGuid
 
+    Public Const DefaultVersion As String = "1"
+
+    Public Sub New()
+        MyClass.New(DefaultVersion)
+    End Sub
+
     Public Sub New(ByVal version As String)
         _version = version
     End Sub
@@ -2794,6 +2800,13 @@ Public Class ObjectMappingEngine
             End If
         Next
     End Sub
+
+    Public Overridable ReadOnly Property CaseSensitive() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
 End Class
 
 'End Namespace

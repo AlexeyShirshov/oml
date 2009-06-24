@@ -38,6 +38,7 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRules>-Microsoft.Design#CA1012;-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1010;-Microsoft.Design#CA1011;-Microsoft.Design#CA1009;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Design#CA1034;-Microsoft.Design#CA1024;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1800;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002;-Microsoft.Security#CA2104</CodeAnalysisRules>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <DefineConstants>OLDM2M = True,ExcludeFindMethods = False</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -46,6 +47,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <DefineConstants>OLDM2M = True,ExcludeFindMethods = False</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Signed Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -116,6 +118,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
+    <None Include="Query\Expressions\Expressions.cd" />
     <None Include="Worm.snk" />
   </ItemGroup>
   <ItemGroup>
@@ -170,12 +173,14 @@
     <Compile Include="QueryCmd\classes.vb" />
     <Compile Include="Query\Builders\SelectListBuilder.vb" />
     <Compile Include="Query\db\Formater.vb" />
+    <Compile Include="Query\Expressions\AggregateExpression.vb" />
     <Compile Include="Query\Expressions\BinaryExpression.vb" />
     <Compile Include="Query\Expressions\EntityExpression.vb" />
     <Compile Include="Query\Expressions\Interfaces.vb" />
     <Compile Include="Query\Expressions\ParameterExpression.vb" />
     <Compile Include="Query\Expressions\Primitive.vb" />
     <Compile Include="Query\Expressions\SelectExpressions.vb" />
+    <Compile Include="Query\Expressions\TableExpression.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />
@@ -213,6 +218,7 @@
     <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
     <Compile Include="Query\Criteria\Filters\Filters.vb" />
     <Compile Include="Mapping\MappingEngine.vb" />
+    <Compile Include="StmtGenerators\db\SQL2008Generator.vb" />
     <Compile Include="StmtGenerators\StmtGenerator.vb" />
     <Compile Include="StmtGenerators\xml\XmlGenerator.vb" />
     <Compile Include="Web\HttpCacheDic.vb" />

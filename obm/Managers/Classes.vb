@@ -116,7 +116,7 @@ Class ManagerWrapper
     End Property
 
     Protected Sub OnObjectLoaded(ByVal sender As OrmManager, ByVal o As IEntity)
-        CType(o, _IEntity).MappingEngine = sender.MappingEngine
+        CType(o, _IEntity).SpecificMappingEngine = sender.MappingEngine
     End Sub
 
 #Region " IDisposable Support "
@@ -177,8 +177,8 @@ Public Class SetManagerHelper
 
     Public Sub ObjectRestored(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
         Dim e As _IEntity = CType(o, _IEntity)
-        If Not Equals(e.GetSpecificSchema, _schema) Then
-            e.MappingEngine = _schema
+        If Not Equals(e.SpecificMappingEngine, _schema) Then
+            e.SpecificMappingEngine = _schema
         End If
         ObjectCreated(mgr, o)
     End Sub

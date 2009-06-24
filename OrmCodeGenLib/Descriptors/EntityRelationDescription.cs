@@ -59,7 +59,14 @@ namespace Worm.CodeGen.Core.Descriptors
                     {
                         throw new OrmCodeGenException(
                             string.Format(
-                                "Возможно несколько вариантов связи от сущности '{0}' к '{1}'. Конкретизируйте связи.",
+                                "Возможно несколько вариантов связи от сущности '{0}' к '{1}'. Используйте PropertyAlias для указания свойства-связки.",
+                                SourceEntity.Name, Entity.Name));
+                    }
+                    else if (lst.Count() == 0)
+                    {
+                        throw new OrmCodeGenException(
+                            string.Format(
+                                "Не возможно определить связь между сущностями '{0}' и '{1}'. Используйте PropertyAlias для указания свойства-связки.",
                                 SourceEntity.Name, Entity.Name));
                     }
                     else if (lst.Count() > 0)

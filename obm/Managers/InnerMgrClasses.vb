@@ -6,7 +6,7 @@ Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 
 Partial Public Class OrmManager
-
+#If OLDM2M Then
     Friend Class M2MEnum
         Public ReadOnly o As IRelation
         'Public ReadOnly obj As OrmBase
@@ -27,6 +27,7 @@ Partial Public Class OrmManager
             o2 = CType(schema.GetPropertyValue(obj, p2.PropertyName, oschema), IKeyEntity)
         End Sub
 
+
         Public Function Add(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
@@ -35,10 +36,10 @@ Partial Public Class OrmManager
             Dim el As CachedM2MRelation = e.Entry
             Dim obj As IKeyEntity = Nothing, subobj As IKeyEntity = Nothing
             Dim main As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(el.MainId, el.MainType)
-            If Main.Equals(o1) Then
+            If main.Equals(o1) Then
                 obj = o1
                 subobj = o2
-            ElseIf Main.Equals(o2) Then
+            ElseIf main.Equals(o2) Then
                 obj = o2
                 subobj = o1
             End If
@@ -112,6 +113,7 @@ Partial Public Class OrmManager
             Return True
         End Function
     End Class
+#End If
 
     Public Enum SaveAction
         Update
@@ -132,7 +134,7 @@ Partial Public Class OrmManager
         End Sub
 
         Private Sub ObjectCreated(ByVal mgr As OrmManager, ByVal obj As IEntity)
-            CType(obj, _IEntity).MappingEngine = mgr.MappingEngine
+            CType(obj, _IEntity).SpecificMappingEngine = mgr.MappingEngine
         End Sub
 
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)

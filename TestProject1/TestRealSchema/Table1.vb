@@ -108,7 +108,7 @@ Public Class Table1
         If fieldName = "ddd" Then
             Return Name
         Else
-            Return MappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
+            Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
             'Throw New NotSupportedException(fieldName)
             'Return MyBase.GetValue(pi, fieldName, oschema)
         End If

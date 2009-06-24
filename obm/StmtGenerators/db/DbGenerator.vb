@@ -24,11 +24,11 @@ Namespace Database
         Private _prefix As String
         Private _named_params As Boolean
 
-        Public Sub New(ByVal schema As SQLGenerator, ByVal prefix As String)
-            _schema = schema
+        Public Sub New(ByVal mpe As SQLGenerator, ByVal prefix As String)
+            _schema = mpe
             _params = New List(Of System.Data.Common.DbParameter)
             _prefix = prefix
-            _named_params = schema.ParamName("p", 1) <> schema.ParamName("p", 2)
+            _named_params = mpe.ParamName("p", 1) <> mpe.ParamName("p", 2)
         End Sub
 
         ', ByVal mpe As ObjectMappingEngine
@@ -3001,6 +3001,61 @@ l1:
                     Return "~"
                 Case Else
                     Throw New ObjectMappingException("invalid opration " & oper.ToString)
+            End Select
+        End Function
+
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+            Select Case t
+                Case Expressions2.GroupExpressions.SummaryValues.None
+                    Return "group by " & fields
+                Case Expressions2.GroupExpressions.SummaryValues.Cube
+                    Return "group by " & fields & " with cube"
+                Case Expressions2.GroupExpressions.SummaryValues.Rollup
+                    Return "group by " & fields & " with rollup"
+                Case Else
+                    Throw New NotSupportedException(t.ToString)
+            End Select
+        End Function
+
+        Public Overrides Function FormatOrderBy(ByVal t As Expressions2.SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
+            Dim sb As New StringBuilder
+
+            sb.Append(fields)
+            If Not String.IsNullOrEmpty(collation) Then
+                sb.Append(" collate ").Append(collation)
+            End If
+
+            If t = Expressions2.SortExpression.SortType.Desc Then
+                sb.Append(" desc")
+            End If
+
+            Return sb.ToString
+        End Function
+
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+            Select Case t
+                Case Expressions2.AggregateExpression.AggregateFunction.Max
+                    Return "max(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.Min
+                    Return "min(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.Average
+                    Return "avg(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.Count
+                    Return "count(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.BigCount
+                    Return "count_big(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.Sum
+                    Return "sum(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.StandardDeviation
+                    Return "stdev(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.StandardDeviationOfPopulation
+                    Return "stdevp(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.Variance
+                    Return "var(" & fields & "{0})"
+                Case Expressions2.AggregateExpression.AggregateFunction.VarianceOfPopulation
+                    Return "varp(" & fields & "{0})"
+                Case Else
+                    Throw New NotImplementedException(t.ToString)
             End Select
         End Function
     End Class

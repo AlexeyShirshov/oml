@@ -326,11 +326,11 @@ Namespace Cache
     <Serializable()> _
     Public Class WeakEntityList
         Private _l As Generic.List(Of WeakEntityReference)
-        'Private _t As Type
+        Private _t As Type
 
-        Public Sub New(ByVal l As List(Of WeakEntityReference))
+        Public Sub New(ByVal l As List(Of WeakEntityReference), ByVal t As Type)
             _l = l
-            '_t = t
+            _t = t
         End Sub
 
         Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, _
@@ -386,6 +386,12 @@ Namespace Cache
         Public ReadOnly Property List() As List(Of WeakEntityReference)
             Get
                 Return _l
+            End Get
+        End Property
+
+        Public ReadOnly Property RealType() As Type
+            Get
+                Return _t
             End Get
         End Property
     End Class

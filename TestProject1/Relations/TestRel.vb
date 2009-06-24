@@ -196,6 +196,11 @@ Imports Worm.Entities
                     t.Table2s.Add(t2)
 
                     Assert.IsNotNull(t2.Tbl)
+
+                    'Assert.IsTrue(t.InternalProperties.HasChanges)
+                    Assert.IsTrue(t2.InternalProperties.HasChanges)
+                    Assert.IsTrue(t.InternalProperties.HasRelaionalChanges)
+                    Assert.IsFalse(t2.InternalProperties.HasRelaionalChanges)
                 End Using
             Finally
                 mgr.Rollback()

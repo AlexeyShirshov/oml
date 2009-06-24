@@ -9,7 +9,6 @@ Imports Worm.Criteria.Core
 Imports Worm.Query
 
 #Const TraceSetState = False
-#Const OLDM2M = True
 
 Namespace Entities
 
@@ -274,7 +273,7 @@ Namespace Entities
             End Function
 
             Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
-                Dim m2m As M2MRelationDesc = _o.MappingEngine.GetM2MRelation(_o.GetType, t, key)
+                Dim m2m As M2MRelationDesc = _o.GetMappingEngine.GetM2MRelation(_o.GetType, t, key)
                 If m2m Is Nothing Then
                     Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
                 Else
@@ -288,6 +287,19 @@ Namespace Entities
         End Class
 #End If
 
+        Public Class InternalClass2
+            Inherits InternalClass
+
+            Public Sub New(ByVal o As KeyEntityBase)
+                MyBase.New(o)
+            End Sub
+
+            Public ReadOnly Property HasRelaionalChanges() As Boolean
+                Get
+                    Return CType(Obj, IRelations).HasChanges()
+                End Get
+            End Property
+        End Class
 #End Region
 
         <NonSerialized()> _
@@ -306,21 +318,22 @@ Namespace Entities
 
 #Region " Protected functions "
 
-        Protected Overrides ReadOnly Property HasM2MChanges() As Boolean Implements IRelations.HasChanges
+        Protected Overridable ReadOnly Property _HasChanges() As Boolean Implements IRelations.HasChanges
             Get
+#If OLDM2M Then
                 If _needAccept IsNot Nothing AndAlso _needAccept.Count > 0 Then
                     Return True
                 End If
-
+#End If
                 For Each r As Relation In _relations
-                    Dim el As M2MRelation = TryCast(r, M2MRelation)
-                    If el IsNot Nothing Then
-                        If el.HasChanges Then
-                            Return True
-                        End If
+                    'Dim el As M2MRelation = TryCast(r, M2MRelation)
+                    'If el IsNot Nothing Then
+                    If r.HasChanges Then
+                        Return True
                     End If
+                    'End If
                 Next
-                Return MyBase.HasM2MChanges()
+                Return False
             End Get
         End Property
 
@@ -402,17 +415,20 @@ Namespace Entities
             Dim t As Type = Me.GetType
             Dim cache As OrmCache = TryCast(mgr.Cache, OrmCache)
 
-            For Each acs As AcceptState2 In _needAccept
-                acs.Accept(Me, mgr)
-            Next
+#If OLDM2M Then
+            for each acs as acceptstate2 in _needaccept
+                acs.accept(me, mgr)
+            next
             _needAccept.Clear()
+#End If
 
             Dim rel As IRelation = mgr.MappingEngine.GetConnectedTypeRelation(t)
-
+#If OLDM2M Then
             If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                 Dim c As New OrmManager.M2MEnum(rel, Me, mgr.MappingEngine)
                 cache.ConnectedEntityEnum(mgr, t, AddressOf c.Accept)
             End If
+#End If
 
             For Each rl As Relation In _relations
                 Dim el As M2MRelation = TryCast(rl, M2MRelation)
@@ -487,7 +503,7 @@ Namespace Entities
             Return _needAccept
         End Function
 
-#End If
+
 
         Private Function GetAccept(ByVal m As M2MCache) As AcceptState2 Implements _IKeyEntity.GetAccept
             Using SyncHelper(False)
@@ -499,11 +515,29 @@ Namespace Entities
             End Using
             Return Nothing
         End Function
+#End If
 
 
 #End Region
 
 #Region " Public properties "
+        Public Shadows ReadOnly Property InternalProperties() As InternalClass2
+            Get
+                Return New InternalClass2(Me)
+            End Get
+        End Property
+
+        Protected Overrides ReadOnly Property HasChanges() As Boolean
+            Get
+                Return MyBase.HasChanges OrElse _HasChanges
+            End Get
+        End Property
+
+        'Public Overrides ReadOnly Property InternalProperties() As InternalClass
+        '    Get
+        '        Return New InternalClass2(Me)
+        '    End Get
+        'End Property
 
 #If OLDM2M Then
         Public ReadOnly Property M2M() As M2MClass
@@ -570,11 +604,14 @@ Namespace Entities
 
         Private Sub _RejectM2MIntermidiate() Implements _IKeyEntity.RejectM2MIntermidiate
             Using SyncHelper(False)
+#If OLDM2M Then
                 For Each acs As AcceptState2 In _needAccept
                     If acs.el IsNot Nothing Then
                         acs.el.Reject2()
                     End If
                 Next
+#End If
+
 
                 For Each rl As Relation In _relations
                     Dim el As M2MRelation = TryCast(rl, M2MRelation)
@@ -590,6 +627,7 @@ Namespace Entities
                 'Dim mc As OrmManager = gmc.Manager
                 Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
                 Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
+#If OLDM2M Then
                 If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                     Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
                     cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
@@ -600,10 +638,13 @@ Namespace Entities
                     End If
                 Next
                 _needAccept.Clear()
+#End If
+
 
                 For Each rl As Relation In _relations
-                    Dim el As M2MRelation = TryCast(rl, M2MRelation)
-                    If el IsNot Nothing Then el.Reject(mc, True)
+                    'Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                    'If el IsNot Nothing Then el.Reject(mc, True)
+                    rl.Reject(mc)
                 Next
                 'End Using
             End Using
@@ -648,6 +689,16 @@ Namespace Entities
         End Sub
 
 #Region " Relations "
+        Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
+            Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
+            For Each rl As Relation In _relations
+                For Each e As ICachedEntity In GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
+                    l.Add(e)
+                Next
+            Next
+            Return l
+        End Function
+
         Protected Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation Implements IRelations.NormalizeRelation
             Using GetSyncRoot()
                 If _relations.Count > 0 Then
@@ -691,7 +742,7 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu)
             End If
-            q.MappingEngine = _schema
+            q.SpecificMappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function
@@ -703,28 +754,28 @@ Namespace Entities
             Else
                 q = Worm.Query.RelationCmd.Create(Me, eu, key)
             End If
-            q.MappingEngine = _schema
+            q.SpecificMappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function
 
         Public Function CreateRelCmd(ByVal desc As RelationDesc) As Worm.Query.QueryCmd
             Dim q As Worm.Query.RelationCmd = Nothing
-            Dim mr As M2MRelationDesc = TryCast(desc, M2MRelationDesc)
+            'Dim mr As M2MRelationDesc = TryCast(desc, M2MRelationDesc)
             If CreateManager IsNot Nothing Then
-                If mr IsNot Nothing Then
-                    q = New Worm.Query.RelationCmd(New M2MRelation(Me, mr), CreateManager)
-                Else
-                    q = New Worm.Query.RelationCmd(New Relation(Me, desc), CreateManager)
-                End If
+                'If mr IsNot Nothing Then
+                '    q = New Worm.Query.RelationCmd(New M2MRelation(Me, mr), CreateManager)
+                'Else
+                q = New Worm.Query.RelationCmd(GetRelation(desc), CreateManager)
+                'End If
             Else
-                If mr IsNot Nothing Then
-                    q = Worm.Query.RelationCmd.Create(New M2MRelation(Me, mr))
-                Else
-                    q = Worm.Query.RelationCmd.Create(New Relation(Me, desc))
-                End If
+                'If mr IsNot Nothing Then
+                '    q = Worm.Query.RelationCmd.Create(New M2MRelation(Me, mr))
+                'Else
+                q = Worm.Query.RelationCmd.Create(GetRelation(desc))
+                'End If
             End If
-            q.MappingEngine = _schema
+            q.SpecificMappingEngine = _schema
             AddRel(q._rel)
             Return q
         End Function
@@ -749,65 +800,90 @@ Namespace Entities
             Return CType(CreateRelCmd(desc).SelectEntity(desc.Entity), RelationCmd)
         End Function
 
-        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M
-            Dim el As M2MRelation = Nothing
-            Using GetSyncRoot()
-                For Each rl As Relation In _relations
-                    Dim e As M2MRelation = TryCast(rl, M2MRelation)
-                    If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
-                        If e.Relation.Type Is Nothing Then
-                            If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
-                                el = e
-                                Exit For
-                            End If
-                        ElseIf e.Relation.Type Is t Then
-                            el = e
-                            Exit For
-                        End If
-                    End If
-                Next
-                If el Is Nothing Then
-                    el = New M2MRelation(Me, t, key)
-                    _relations.Add(el)
-                End If
-            End Using
-            Return el
-        End Function
+        'Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M
+        '    Dim el As M2MRelation = Nothing
+        '    Using GetSyncRoot()
+        '        For Each rl As Relation In _relations
+        '            Dim e As M2MRelation = TryCast(rl, M2MRelation)
+        '            If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
+        '                If e.Relation.Type Is Nothing Then
+        '                    If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
+        '                        el = e
+        '                        Exit For
+        '                    End If
+        '                ElseIf e.Relation.Type Is t Then
+        '                    el = e
+        '                    Exit For
+        '                End If
+        '            End If
+        '        Next
+        '        If el Is Nothing Then
+        '            el = New M2MRelation(Me, t, key)
+        '            _relations.Add(el)
+        '        End If
+        '    End Using
+        '    Return el
+        'End Function
 
-        Protected Sub _Add(ByVal obj As IKeyEntity) Implements IRelations.Add
+        Protected Sub _Add(ByVal obj As ICachedEntity) Implements IRelations.Add
             _Add(obj, Nothing)
         End Sub
 
-        Protected Sub _Add(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Add
-            Dim el As M2MRelation = GetM2M(obj.GetType, key)
+        Protected Sub _Add(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Add
+            Dim el As Relation = GetRelation(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
-                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
-                    SyncLock "1efb139gf8bh"
-                        If Not el2.Added.Contains(Me) Then
-                            If el.Deleted.Contains(obj) Then
-                                el.Deleted.Remove(obj)
-                                el2.Deleted.Remove(Me)
-                            Else
-                                el.Add(obj)
-                                el2.Add(Me)
-                                Dim mc As OrmManager = GetCurrent()
-                                If mc IsNot Nothing Then
-                                    mc.RaiseBeginUpdate(Me)
-                                    mc.RaiseBeginUpdate(obj)
-                                    mc.Cache.RaiseBeginUpdate(Me)
-                                    mc.Cache.RaiseBeginUpdate(obj)
+                    If TypeOf el Is M2MRelation Then
+                        Dim ke As IKeyEntity = CType(obj, IKeyEntity)
+                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
+                        SyncLock "1efb139gf8bh"
+                            If Not el2.Added.Contains(Me) Then
+                                If el.Deleted.Contains(obj) Then
+                                    el.Deleted.Remove(obj)
+                                    el2.Deleted.Remove(Me)
                                 Else
-                                    Using gm As IGetManager = GetMgr()
-                                        If gm IsNot Nothing Then
-                                            gm.Manager.Cache.RaiseBeginUpdate(Me)
-                                            gm.Manager.Cache.RaiseBeginUpdate(obj)
-                                        End If
-                                    End Using
+                                    el.Add(obj)
+                                    el2.Add(Me)
+                                    Dim mc As OrmManager = GetCurrent()
+                                    If mc IsNot Nothing Then
+                                        mc.RaiseBeginUpdate(Me)
+                                        mc.RaiseBeginUpdate(obj)
+                                        mc.Cache.RaiseBeginUpdate(Me)
+                                        mc.Cache.RaiseBeginUpdate(obj)
+                                    Else
+                                        Using gm As IGetManager = GetMgr()
+                                            If gm IsNot Nothing Then
+                                                gm.Manager.Cache.RaiseBeginUpdate(Me)
+                                                gm.Manager.Cache.RaiseBeginUpdate(obj)
+                                            End If
+                                        End Using
+                                    End If
                                 End If
                             End If
-                        End If
-                    End SyncLock
+                        End SyncLock
+                    Else
+                        SyncLock "1efb139gf8bh"
+                            If el.Deleted.Contains(obj) Then
+                                el.Deleted.Remove(obj)
+                            Else
+                                el.Add(obj)
+                            End If
+                            Dim mc As OrmManager = GetCurrent()
+                            If mc IsNot Nothing Then
+                                mc.RaiseBeginUpdate(Me)
+                                mc.RaiseBeginUpdate(obj)
+                                mc.Cache.RaiseBeginUpdate(Me)
+                                mc.Cache.RaiseBeginUpdate(obj)
+                            Else
+                                Using gm As IGetManager = GetMgr()
+                                    If gm IsNot Nothing Then
+                                        gm.Manager.Cache.RaiseBeginUpdate(Me)
+                                        gm.Manager.Cache.RaiseBeginUpdate(obj)
+                                    End If
+                                End Using
+                            End If
+                        End SyncLock
+                    End If
                 End If
             End Using
         End Sub
@@ -825,23 +901,48 @@ Namespace Entities
         '    End Using
         'End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity) Implements IRelations.Remove
+        Protected Sub _DeleteM2M(ByVal obj As ICachedEntity) Implements IRelations.Remove
             _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As IKeyEntity, ByVal key As String) Implements IRelations.Remove
-            Dim el As M2MRelation = GetM2M(obj.GetType, key)
+        Protected Sub _DeleteM2M(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Remove
+            Dim el As Relation = GetRelation(obj.GetType, key)
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then
-                    Dim el2 As M2MRelation = CType(obj.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
-                    SyncLock "1efb139gf8bh"
-                        If Not el2.Deleted.Contains(Me) Then
+                    If TypeOf el Is M2MRelation Then
+                        Dim ke As IKeyEntity = CType(obj, IKeyEntity)
+                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
+                        SyncLock "1efb139gf8bh"
+                            If Not el2.Deleted.Contains(Me) Then
+                                If el.Added.Contains(obj) Then
+                                    el.Added.Remove(obj)
+                                    el2.Added.Remove(Me)
+                                Else
+                                    el.Delete(obj)
+                                    el2.Delete(Me)
+                                    Dim mc As OrmManager = GetCurrent()
+                                    If mc IsNot Nothing Then
+                                        mc.RaiseBeginDelete(Me)
+                                        mc.RaiseBeginDelete(obj)
+                                        mc.Cache.RaiseBeginUpdate(Me)
+                                        mc.Cache.RaiseBeginUpdate(obj)
+                                    Else
+                                        Using gm As IGetManager = GetMgr()
+                                            If gm IsNot Nothing Then
+                                                gm.Manager.Cache.RaiseBeginUpdate(Me)
+                                                gm.Manager.Cache.RaiseBeginUpdate(obj)
+                                            End If
+                                        End Using
+                                    End If
+                                End If
+                            End If
+                        End SyncLock
+                    Else
+                        SyncLock "1efb139gf8bh"
                             If el.Added.Contains(obj) Then
                                 el.Added.Remove(obj)
-                                el2.Added.Remove(Me)
                             Else
                                 el.Delete(obj)
-                                el2.Delete(Me)
                                 Dim mc As OrmManager = GetCurrent()
                                 If mc IsNot Nothing Then
                                     mc.RaiseBeginDelete(Me)
@@ -857,18 +958,26 @@ Namespace Entities
                                     End Using
                                 End If
                             End If
-                        End If
-                    End SyncLock
+                        End SyncLock
+                    End If
                 End If
             End Using
         End Sub
 
         Protected Sub _Cancel(ByVal en As String) Implements IRelations.Cancel
-            _Cancel(New RelationDesc(New EntityUnion(en), Nothing, Nothing))
+            _Cancel(en, Nothing)
         End Sub
 
         Protected Sub _Cancel(ByVal en As String, ByVal key As String) Implements IRelations.Cancel
-            _Cancel(New RelationDesc(New EntityUnion(en), Nothing, key))
+#If OLDM2M Then
+            Using mc As IGetManager = GetMgr()
+                Dim el As Relation = GetRelation(en, key)
+                el.Reject(mc.Manager)
+            End Using
+#Else
+            Dim el As Relation = GetRelation(en, key)
+            el.Reject(nothing)
+#End If
         End Sub
 
         Protected Sub _Cancel(ByVal t As Type) Implements IRelations.Cancel
@@ -876,14 +985,23 @@ Namespace Entities
         End Sub
 
         Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IRelations.Cancel
+#If OLDM2M Then
             Using mc As IGetManager = GetMgr()
-                Dim el As M2MRelation = GetM2M(t, key)
-                el.Reject(mc.Manager, True)
+                Dim el As Relation = GetRelation(t, key)
+                el.Reject(mc.Manager)
             End Using
+#Else
+            Dim el As Relation = GetRelation(t, key)
+            el.Reject(nothing)
+#End If
         End Sub
 
         Protected Sub _Cancel(ByVal desc As RelationDesc) Implements IRelations.Cancel
-            Throw New NotImplementedException
+            If desc.Type Is Nothing Then
+                _Cancel(desc.EntityName)
+            Else
+                _Cancel(desc.Type)
+            End If
         End Sub
 
         Public ReadOnly Property Relations() As IRelations
@@ -911,27 +1029,106 @@ Namespace Entities
         End Function
 
         Public Function GetRelation(ByVal en As String) As Entities.Relation Implements IRelations.GetRelation
-            Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, Nothing))
+            Return GetRelation(en, Nothing)
         End Function
 
         Public Function GetRelation(ByVal en As String, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
-            Return GetRelation(New RelationDesc(New EntityUnion(en), Nothing, key))
+            Dim el As Relation = Nothing
+            Using GetSyncRoot()
+                For Each rl As Relation In _relations
+                    Dim e As M2MRelation = TryCast(rl, M2MRelation)
+                    If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
+                        If e.Relation.Type Is Nothing Then
+                            If e.Relation.EntityName = en Then
+                                el = e
+                                Exit For
+                            End If
+                        ElseIf e.Relation.Type Is GetMappingEngine.GetTypeByEntityName(en) Then
+                            el = e
+                            Exit For
+                        End If
+                    Else
+                        Dim r As Relation = TryCast(rl, Relation)
+                        If r IsNot Nothing Then
+                            If r.Relation.Type Is Nothing Then
+                                If r.Relation.EntityName = en Then
+                                    el = r
+                                    Exit For
+                                End If
+                            ElseIf r.Relation.Type Is GetMappingEngine.GetTypeByEntityName(en) Then
+                                el = r
+                                Exit For
+                            End If
+                        End If
+                    End If
+                Next
+                If el Is Nothing Then
+                    Dim mpe As ObjectMappingEngine = GetMappingEngine()
+                    Dim d As M2MRelationDesc = mpe.GetM2MRelation(Me.GetType, mpe.GetTypeByEntityName(en), key)
+                    If d Is Nothing Then
+                        el = New Relation(Me, en)
+                    Else
+                        el = New M2MRelation(Me, en, key)
+                    End If
+                    _relations.Add(el)
+                End If
+            End Using
+            Return el
         End Function
 
         Public Function GetRelation(ByVal t As System.Type) As Entities.Relation Implements IRelations.GetRelation
-            Return GetM2M(t, Nothing)
+            Return GetRelation(t, Nothing)
         End Function
 
         Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
-            Return GetM2M(t, key)
+            Dim el As Relation = Nothing
+            Using GetSyncRoot()
+                For Each rl As Relation In _relations
+                    Dim e As M2MRelation = TryCast(rl, M2MRelation)
+                    If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
+                        If e.Relation.Type Is Nothing Then
+                            If e.Relation.EntityName = GetMappingEngine.GetEntityNameByType(t) Then
+                                el = e
+                                Exit For
+                            End If
+                        ElseIf e.Relation.Type Is t Then
+                            el = e
+                            Exit For
+                        End If
+                    Else
+                        Dim r As Relation = TryCast(rl, Relation)
+                        If r IsNot Nothing Then
+                            If r.Relation.Type Is Nothing Then
+                                If r.Relation.EntityName = GetMappingEngine.GetEntityNameByType(t) Then
+                                    el = r
+                                    Exit For
+                                End If
+                            ElseIf r.Relation.Type Is t Then
+                                el = r
+                                Exit For
+                            End If
+                        End If
+                    End If
+                Next
+                If el Is Nothing Then
+                    Dim d As M2MRelationDesc = GetMappingEngine.GetM2MRelation(Me.GetType, t, key)
+                    If d Is Nothing Then
+                        el = New Relation(Me, t)
+                    Else
+                        el = New M2MRelation(Me, t, key)
+                    End If
+                    _relations.Add(el)
+                End If
+            End Using
+            Return el
         End Function
 
         Public Function GetRelationSchema(ByVal en As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
-            Throw New NotImplementedException
+            Return GetRelationSchema(GetMappingEngine.GetTypeByEntityName(en))
         End Function
 
         Public Function GetRelationSchema(ByVal en As String, ByVal key As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
-            Throw New NotImplementedException
+            Return GetRelationSchema(GetMappingEngine.GetTypeByEntityName(en), key)
         End Function
 
         Public Function GetRelationSchema(ByVal t As System.Type) As Meta.RelationDesc Implements IRelations.GetRelationDesc
@@ -939,7 +1136,7 @@ Namespace Entities
         End Function
 
         Public Function GetRelationSchema(ByVal t As System.Type, ByVal key As String) As Meta.RelationDesc Implements IRelations.GetRelationDesc
-            Dim s As ObjectMappingEngine = MappingEngine
+            Dim s As ObjectMappingEngine = GetMappingEngine()
             Dim m2m As M2MRelationDesc = s.GetM2MRelation(Me.GetType, t, key)
             If m2m Is Nothing Then
                 Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
@@ -1090,7 +1287,7 @@ Namespace Entities
                 _id = value
                 If Not CType(Me, _ICachedEntity).IsPKLoaded Then
                     PKLoaded(1)
-                    Dim schema As ObjectMappingEngine = MappingEngine
+                    Dim schema As ObjectMappingEngine = GetMappingEngine()
                     If schema IsNot Nothing Then
                         CType(Me, _ICachedEntity).SetLoaded(GetPKValues()(0).PropertyAlias, True, True, schema)
                     End If

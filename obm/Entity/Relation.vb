@@ -9,19 +9,27 @@ Namespace Entities
     <Serializable()> _
     Public Class Relation
         Private _host As IKeyEntity
-        Private _addedList As New List(Of IKeyEntity)
-        Private _deletedList As New List(Of IKeyEntity)
+        Private _addedList As New List(Of ICachedEntity)
+        Private _deletedList As New List(Of ICachedEntity)
         'Private _subType As Type
         'Private _key As String
         Private _desc As RelationDesc
         Private _syncRoot As New Object
 
-        Sub New(ByVal main As IKeyEntity, ByVal subType As Type)
+        Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type)
             MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, Nothing))
         End Sub
 
-        Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal key As String)
+        Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal key As String)
             MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, key))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal entityName As String)
+            MyClass.New(main, New RelationDesc(New EntityUnion(entityName), Nothing, Nothing))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal entityName As String, ByVal key As String)
+            MyClass.New(main, New RelationDesc(New EntityUnion(entityName), Nothing, key))
         End Sub
 
         Sub New(ByVal main As IKeyEntity, ByVal desc As RelationDesc)
@@ -86,21 +94,21 @@ Namespace Entities
             End Get
         End Property
 
-        Public Property Deleted() As IList(Of IKeyEntity)
+        Public Property Deleted() As List(Of ICachedEntity)
             Get
                 Return _deletedList
             End Get
-            Protected Set(ByVal value As IList(Of IKeyEntity))
-                _deletedList = CType(value, List(Of IKeyEntity))
+            Protected Set(ByVal value As List(Of ICachedEntity))
+                _deletedList = value
             End Set
         End Property
 
-        Public Property Added() As IList(Of IKeyEntity)
+        Public Property Added() As List(Of ICachedEntity)
             Get
                 Return _addedList
             End Get
-            Protected Set(ByVal value As IList(Of IKeyEntity))
-                _addedList = CType(value, List(Of IKeyEntity))
+            Protected Set(ByVal value As List(Of ICachedEntity))
+                _addedList = value
             End Set
         End Property
 
@@ -143,11 +151,11 @@ Namespace Entities
             Next
         End Sub
 
-        Protected Overridable Function PreAdd(ByVal obj As IKeyEntity) As Boolean
+        Protected Overridable Function PreAdd(ByVal obj As ICachedEntity) As Boolean
             Return False
         End Function
 
-        Public Sub Merge(ByVal cmd As RelationCmd, ByVal col As IList(Of IKeyEntity), ByVal removeNotInList As Boolean)
+        Public Sub Merge(ByVal cmd As RelationCmd, ByVal col As IList(Of ICachedEntity), ByVal removeNotInList As Boolean)
             'Dim cmd As RelationCmd = Relation.CreateCmd(Host)
             Dim cur As IList = cmd.ToList
             If removeNotInList Then
@@ -164,7 +172,7 @@ Namespace Entities
             Next
         End Sub
 
-        Public Sub Add(ByVal obj As IKeyEntity)
+        Public Sub Add(ByVal obj As ICachedEntity)
 
             Using SyncRoot
                 If _deletedList.Contains(obj) Then
@@ -177,7 +185,7 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Sub Add(ByVal obj As IKeyEntity, ByVal idx As Integer)
+        Public Sub Add(ByVal obj As ICachedEntity, ByVal idx As Integer)
             Using SyncRoot
                 If _deletedList.Contains(obj) Then
                     _deletedList.Remove(obj)
@@ -187,7 +195,7 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Sub Delete(ByVal obj As IKeyEntity)
+        Public Sub Delete(ByVal obj As ICachedEntity)
             Using SyncRoot
                 If _addedList.Contains(obj) Then
                     _addedList.Remove(obj)
@@ -229,6 +237,13 @@ Namespace Entities
         Protected Overridable Function GetCopy() As Relation
             Return New Relation(_host, _desc)
         End Function
+
+        Public Overridable Sub Reject(ByVal mgr As OrmManager)
+            Using SyncRoot
+                Added.Clear()
+                Deleted.Clear()
+            End Using
+        End Sub
     End Class
 
     <Serializable()> _
@@ -238,9 +253,9 @@ Namespace Entities
         'Protected _addedList As New List(Of IKeyEntity)
         'Protected _deletedList As New List(Of IKeyEntity)
         'Protected _subType As Type
-        Private _new As List(Of IKeyEntity)
+        Private _new As List(Of ICachedEntity)
         'Private _key As String
-        Protected Friend _savedIds As New List(Of IKeyEntity)
+        Protected Friend _savedIds As New List(Of ICachedEntity)
         'Private _syncRoot As New Object
 
         Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type)
@@ -255,6 +270,16 @@ Namespace Entities
         Public Sub New(ByVal main As IKeyEntity, ByVal subType As Type, ByVal key As String)
             'MyBase.New(main, subType, key)
             MyClass.New(main, New M2MRelationDesc(subType, key))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal entityName As String, ByVal direct As Boolean)
+            'MyClass.New(main, subType, Meta.M2MRelationDesc.GetKey(direct))
+            MyClass.New(main, New M2MRelationDesc(entityName, Meta.M2MRelationDesc.GetKey(direct)))
+        End Sub
+
+        Public Sub New(ByVal main As IKeyEntity, ByVal entityName As String, ByVal key As String)
+            'MyBase.New(main, subType, key)
+            MyClass.New(main, New M2MRelationDesc(entityName, key))
         End Sub
 
         Sub New(ByVal main As IKeyEntity, ByVal desc As M2MRelationDesc)
@@ -291,11 +316,15 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Sub Reject(ByVal rejectDual As Boolean)
+        Public Overloads Sub Reject(ByVal rejectDual As Boolean)
             Reject(Nothing, rejectDual)
         End Sub
 
-        Public Sub Reject(ByVal mgr As OrmManager, ByVal rejectDual As Boolean)
+        Public Overrides Sub Reject(ByVal mgr As OrmManager)
+            Reject(mgr, True)
+        End Sub
+
+        Public Overloads Sub Reject(ByVal mgr As OrmManager, ByVal rejectDual As Boolean)
             Using SyncRoot
                 If rejectDual Then
                     For Each obj As _IKeyEntity In Added
@@ -324,7 +353,7 @@ Namespace Entities
             'Dim m As M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As M2MRelation = GetRevert(mgr, obj)
 
-            Dim l As IList(Of IKeyEntity) = el.Added
+            Dim l As IList(Of ICachedEntity) = el.Added
             If Not add Then
                 l = el.Deleted
             End If
@@ -334,13 +363,13 @@ Namespace Entities
             End If
         End Sub
 
-        Protected Function FindMainIdx(ByVal l As IList(Of IKeyEntity)) As Integer
+        Protected Function FindMainIdx(ByVal l As IList(Of ICachedEntity)) As Integer
             Return FindIdIdx(l, _mainId)
         End Function
 
-        Protected Shared Function FindIdIdx(ByVal l As IList(Of IKeyEntity), ByVal id As Object) As Integer
+        Protected Shared Function FindIdIdx(ByVal l As IList(Of ICachedEntity), ByVal id As Object) As Integer
             For i As Integer = 0 To l.Count - 1
-                If l(i).Identifier.Equals(id) Then
+                If CType(l(i), IKeyEntity).Identifier.Equals(id) Then
                     Return i
                 End If
             Next
@@ -476,13 +505,13 @@ Namespace Entities
             'Dim mo As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(_mainId, _mainType, False)
             'If Not mgr.Cache.IsNewObject(_mainType, mo.GetPKValues) Then
             If Not IsMainObjectNew(mgr) Then
-                Dim ad As New List(Of IKeyEntity)
+                Dim ad As New List(Of ICachedEntity)
                 For Each ao As _IKeyEntity In Added
                     'Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
                     'If mgr.Cache.IsNewObject(SubType, ao.GetPKValues) Then
                     If ao.ObjectState = ObjectState.Created Then
                         If _new Is Nothing Then
-                            _new = New List(Of IKeyEntity)
+                            _new = New List(Of ICachedEntity)
                         End If
                         Dim newIdx As Integer = FindIdIdx(_new, ao.Identifier)
                         If newIdx < 0 Then
@@ -512,6 +541,7 @@ Namespace Entities
         End Function
     End Class
 
+#If OLDM2M Then
     <Serializable()> _
     Public Class CachedM2MRelation
         Inherits M2MRelation
@@ -588,7 +618,7 @@ Namespace Entities
                             Dim c As IComparer = Nothing
                             If _sort Is Nothing Then
                                 arr.AddRange(_mainList)
-                                arr.AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                                arr.AddRange(Added.ConvertAll(Function(o As ICachedEntity) CType(o, IKeyEntity).Identifier))
                             Else
                                 Dim sr As IOrmSorting = Nothing
                                 col.AddRange(mgr.ConvertIds2Objects(SubType, _mainList, False))
@@ -609,7 +639,7 @@ Namespace Entities
                                 Do
                                     If i = _mainList.Count Then
                                         For k As Integer = j To Added.Count - 1
-                                            arr.Add(Added(k).Identifier)
+                                            arr.Add(CType(Added(k), IKeyEntity).Identifier)
                                         Next
                                         Exit Do
                                     End If
@@ -620,7 +650,7 @@ Namespace Entities
                                         Exit Do
                                     End If
                                     Dim ex As IKeyEntity = CType(col(i), IKeyEntity)
-                                    Dim ad As IKeyEntity = Added(j) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
+                                    Dim ad As IKeyEntity = CType(Added(j), IKeyEntity) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
                                     If c.Compare(ex, ad) < 0 Then
                                         arr.Add(ex.Identifier)
                                         i += 1
@@ -632,7 +662,7 @@ Namespace Entities
                             End If
                         Else
                             arr.AddRange(_mainList)
-                            arr.AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                            arr.AddRange(Added.ConvertAll(Function(o As ICachedEntity) CType(o, IKeyEntity).Identifier))
                         End If
 
                         For Each obj As IKeyEntity In Deleted
@@ -659,7 +689,7 @@ Namespace Entities
             Using SyncRoot
                 Dim needaccept As Boolean = Added.Count > 0
                 If _sort Is Nothing Then
-                    CType(_mainList, List(Of Object)).AddRange(CType(Added, List(Of IKeyEntity)).ConvertAll(Function(o As IKeyEntity) o.Identifier))
+                    CType(_mainList, List(Of Object)).AddRange(Added.ConvertAll(Function(o As ICachedEntity) CType(o, IKeyEntity).Identifier))
                     Added.Clear()
                 Else
                     If Added.Count > 0 Then
@@ -690,7 +720,7 @@ Namespace Entities
                         Do
                             If i = _mainList.Count Then
                                 For k As Integer = j To Added.Count - 1
-                                    ml.Add(Added(k).Identifier)
+                                    ml.Add(CType(Added(k), IKeyEntity).Identifier)
                                 Next
                                 Exit Do
                             End If
@@ -701,7 +731,7 @@ Namespace Entities
                                 Exit Do
                             End If
                             Dim ex As IKeyEntity = CType(col(i), IKeyEntity)
-                            Dim ad As IKeyEntity = Added(j) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
+                            Dim ad As IKeyEntity = CType(Added(j), IKeyEntity) 'mgr.GetOrmBaseFromCacheOrCreate(Added(j), subtype, False)
                             If c.Compare(ex, ad) < 0 Then
                                 ml.Add(ex.Identifier)
                                 i += 1
@@ -772,11 +802,11 @@ Namespace Entities
             Return True
         End Function
 
-        Protected Overrides Function PreAdd(ByVal obj As IKeyEntity) As Boolean
+        Protected Overrides Function PreAdd(ByVal obj As ICachedEntity) As Boolean
             If _sort IsNot Nothing Then
                 Dim sr As IOrmSorting = Nothing
                 'Dim mgr As OrmManager = OrmManager.CurrentManager
-                If OrmManager.CanSortOnClient(SubType, CType(Added, List(Of IKeyEntity)), _sort, sr) Then
+                If OrmManager.CanSortOnClient(SubType, Added, _sort, sr) Then
                     Dim c As IComparer = Nothing
                     If sr Is Nothing Then
                         c = New OrmComparer(Of KeyEntity)(SubType, _sort)
@@ -784,9 +814,8 @@ Namespace Entities
                         c = sr.CreateSortComparer(_sort)
                     End If
                     If c IsNot Nothing Then
-                        Dim o As IKeyEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, subtype, False)
-                        Dim col As New ArrayList(CType(Added, List(Of IKeyEntity)))
-                        Dim pos As Integer = col.BinarySearch(o, c)
+                        Dim o As ICachedEntity = obj 'mgr.GetOrmBaseFromCacheOrCreate(id, subtype, False)
+                        Dim pos As Integer = ArrayList.Adapter(Added).BinarySearch(o, c)
                         If pos < 0 Then
                             Added.Insert(Not pos, obj)
                             Return True
@@ -914,5 +943,6 @@ Namespace Entities
 #End Region
 
     End Class
+#End If
 
 End Namespace

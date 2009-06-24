@@ -1962,17 +1962,20 @@ namespace Worm.CodeGen.Core
             else
             {
                 method.Statements.Add(
-                    new CodeMethodReturnStatement(
-                        new CodeMethodInvokeExpression(
-                            new CodePropertyReferenceExpression(
-                                new CodeThisReferenceExpression(),
-                                "MappingEngine"
-                            ),
-                            "GetPropertyValue",
-                            new CodeThisReferenceExpression(),
-                            new CodeArgumentReferenceExpression("propertyAlias")
-                        )
-                    )
+                    //new CodeMethodReturnStatement(
+                    //    new CodeMethodInvokeExpression(
+                    //        new CodePropertyReferenceExpression(
+                    //            new CodeThisReferenceExpression(),
+                    //            "MappingEngine"
+                    //        ),
+                    //        "GetPropertyValue",
+                    //        new CodeThisReferenceExpression(),
+                    //        new CodeArgumentReferenceExpression("propertyAlias")
+                    //    )
+                    //)
+                    Emit.@return((string propertyAlias)=>
+                        CodeDom.@this.Call<ObjectMappingEngine>("GetMappingEngine")()
+                            .GetPropertyValue(CodeDom.@this.cast<_IEntity>(), propertyAlias))
                 );
             }
             entityClass.Members.Add(method);

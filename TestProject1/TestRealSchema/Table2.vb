@@ -81,7 +81,7 @@ Public Class Table2
             Case "DT"
                 Return _dt
             Case Else
-                Return MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                Return GetMappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select

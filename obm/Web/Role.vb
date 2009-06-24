@@ -78,9 +78,9 @@ Namespace Web
             Dim oschema As Meta.IEntitySchema = Nothing
             For Each u As IKeyEntity In FindUsersInRoleInternal(roleName, usernameToMatch)
                 If oschema Is Nothing Then
-                    oschema = u.MappingEngine.GetEntitySchema(UserMapper.GetUserType)
+                    oschema = u.GetMappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 End If
-                users.Add(CStr(u.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
+                users.Add(CStr(u.GetMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
             Next
             Return users.ToArray
             'End Using
@@ -94,9 +94,9 @@ Namespace Web
             Dim col As IEnumerable = New Query.QueryCmd(UserMapper.CreateManager).SelectEntity(GetRoleType).ToList()
             For Each r As IKeyEntity In col
                 If oschema Is Nothing Then
-                    oschema = r.MappingEngine.GetEntitySchema(GetRoleType)
+                    oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                roles.Add(CStr(r.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
+                roles.Add(CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
             Next
             Return roles.ToArray
             'End Using
@@ -112,9 +112,9 @@ Namespace Web
             Dim oschema As Meta.IEntitySchema = Nothing
             For Each r As IKeyEntity In GetRolesForUserInternal(username)
                 If oschema Is Nothing Then
-                    oschema = r.MappingEngine.GetEntitySchema(GetRoleType)
+                    oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                roles.Add(CStr(r.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
+                roles.Add(CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
             Next
             Return roles.ToArray
             'End Using
@@ -130,9 +130,9 @@ Namespace Web
             Dim oschema As Meta.IEntitySchema = Nothing
             For Each u As IKeyEntity In FindUsersInRoleInternal(roleName, Nothing)
                 If oschema Is Nothing Then
-                    oschema = u.MappingEngine.GetEntitySchema(UserMapper.GetUserType)
+                    oschema = u.GetMappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 End If
-                users.Add(CStr(u.MappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
+                users.Add(CStr(u.GetMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
             Next
             Return users.ToArray
             'End Using
@@ -143,9 +143,9 @@ Namespace Web
             Dim oschema As Meta.IEntitySchema = Nothing
             For Each r As IKeyEntity In GetRolesForUserInternal(username)
                 If oschema Is Nothing Then
-                    oschema = r.MappingEngine.GetEntitySchema(GetRoleType)
+                    oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                If CStr(r.MappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
+                If CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
                     Return True
                 End If
             Next

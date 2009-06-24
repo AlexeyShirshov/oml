@@ -198,11 +198,11 @@ Namespace Query.Database
 #End Region
 
         Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal created As Boolean, ByVal o As IEntity)
-            CType(o, _IEntity).MappingEngine = mgr.MappingEngine
+            CType(o, _IEntity).SpecificMappingEngine = mgr.MappingEngine
         End Sub
 
         Private Sub SetSchema4Object(ByVal mgr As OrmManager, ByVal o As IEntity)
-            CType(o, _IEntity).MappingEngine = mgr.MappingEngine
+            CType(o, _IEntity).SpecificMappingEngine = mgr.MappingEngine
         End Sub
 
         Protected Function ExecBase(Of ReturnType)(ByVal mgr As OrmManager, _
@@ -242,9 +242,9 @@ Namespace Query.Database
                 mgr._list = query.ExternalCacheMark
             End If
 
-            If query.MappingEngine IsNot Nothing Then
+            If query.SpecificMappingEngine IsNot Nothing Then
                 'mgr.RaiseObjectCreation = True
-                mgr.SetSchema(query.MappingEngine)
+                mgr.SetSchema(query.SpecificMappingEngine)
                 AddHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
                 AddHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
             End If
@@ -615,6 +615,7 @@ Namespace Query.Database
                 If (p.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     colsa_ = colsa
                 End If
+                p.AddAlias = True
                 s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
                     filterInfo, Nothing, query.FromClause, True)
                 cols.Append(", ")
@@ -1160,8 +1161,6 @@ l1:
                                         Next
                                     End If
                                 Next
-
-
                             End If
                         End If
                     Else

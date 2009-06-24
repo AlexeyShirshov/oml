@@ -294,8 +294,10 @@ l1:
                                 Dim colExp As String = map.ColumnExpression 'col.Column
                                 Dim colName As String = map.ColumnName 'col.ColumnName
                                 sb.Append(al).Append(schema.Delimiter).Append(colExp)
-                                If Not String.IsNullOrEmpty(colName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
-                                    sb.Append(" as ").Append(colName)
+                                If se.AddAlias Then
+                                    If Not String.IsNullOrEmpty(colName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
+                                        sb.Append(" as ").Append(colName)
+                                    End If
                                 End If
                                 If cols IsNot Nothing Then
                                     cols.Append(al).Append(schema.Delimiter)
@@ -323,9 +325,9 @@ l1:
                                 End If
 
                                 sb.Append(al).Append(_s.Selector).Append(map.ColumnExpression)
-                                If Not String.IsNullOrEmpty(map.ColumnName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
-                                    sb.Append(" as ").Append(map.ColumnName)
-                                End If
+                                'If Not String.IsNullOrEmpty(map.ColumnName) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
+                                '    sb.Append(" as ").Append(map.ColumnName)
+                                'End If
                                 If cols IsNot Nothing Then
                                     If Not String.IsNullOrEmpty(map.ColumnName) Then
                                         cols.Append(map.ColumnName)
