@@ -105,6 +105,8 @@
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
     <Compile Include="ASPHosting\TestRoles.vb" />
+    <Compile Include="Expressions\BinaryTest.vb" />
+    <Compile Include="Expressions\UnaryTest.vb" />
     <Compile Include="Query\fts.vb" />
     <Compile Include="Query\ImmCache.vb" />
     <Compile Include="Query\InnerCmds.vb" />

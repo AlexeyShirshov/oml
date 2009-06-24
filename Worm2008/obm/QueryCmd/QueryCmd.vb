@@ -10,6 +10,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Misc
 Imports System.Collections.ObjectModel
 Imports Worm.Cache
+Imports System.ComponentModel
 
 Namespace Query
 
@@ -169,6 +170,7 @@ Namespace Query
             End Property
         End Class
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Class svct
             Private _oldct As Dictionary(Of EntityUnion, EntityUnion)
             Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
@@ -213,6 +215,67 @@ Namespace Query
                         Throw New NotSupportedException
                     End If
                     _cmd._from = _f
+                End If
+            End Sub
+        End Class
+
+        <EditorBrowsable(EditorBrowsableState.Never)> _
+        Class RowNumberFilterInfo
+            Public Enum RowNumberFilterStatus
+                IsClearFilter
+                IsSkip
+                IsTake
+                IsSkipTake
+            End Enum
+
+            Protected _status As RowNumberFilterStatus
+            Protected _fromPosition As Integer
+            Protected _toPosition As Integer
+
+            Public ReadOnly Property Status() As RowNumberFilterStatus
+                Get
+                    Return _status
+                End Get
+            End Property
+
+            Public ReadOnly Property FromPostion() As Integer
+                Get
+                    Return _fromPosition
+                End Get
+            End Property
+
+            Public ReadOnly Property ToPostion() As Integer
+                Get
+                    Return _fromPosition
+                End Get
+            End Property
+
+            Public Sub New(ByVal filter As TableFilter)
+                If Not filter Is Nothing Then
+                    Dim scalarValue As ScalarValue = TryCast(filter.Value, ScalarValue)
+
+                    If Not scalarValue Is Nothing Then
+                        If filter.Template.Operation = Criteria.FilterOperation.GreaterThan Then
+                            _status = RowNumberFilterStatus.IsSkip
+                            _fromPosition = CType(scalarValue.Value, Int32)
+                        ElseIf filter.Template.Operation = Criteria.FilterOperation.LessEqualThan Then
+                            _status = RowNumberFilterStatus.IsTake
+                            _toPosition = CType(scalarValue.Value, Int32)
+                        End If
+                    Else
+                        Dim betweenValue As BetweenValue = TryCast(filter.Value, BetweenValue)
+
+                        If Not betweenValue Is Nothing Then
+                            _status = RowNumberFilterStatus.IsSkipTake
+                            _fromPosition = CType(CType(betweenValue.Value.First, ScalarValue).Value, Int32)
+                            _toPosition = CType(CType(betweenValue.Value.Second, ScalarValue).Value, Int32)
+                        Else
+                            Throw New NotSupportedException(String.Format("Filter of type {0} is not supported", filter.GetType))
+                        End If
+                    End If
+
+                Else
+                    _status = RowNumberFilterStatus.IsClearFilter
                 End If
             End Sub
         End Class
@@ -330,7 +393,7 @@ Namespace Query
             Dim mpe As ObjectMappingEngine = Nothing
             Dim t As Type = Nothing
             If CreateManager IsNot Nothing Then
-                mpe = GetMappingEngine
+                mpe = GetMappingEngine()
                 t = GetSelectedType(mpe)
             End If
             Include(mpe, t, "^this", propertyPath)
@@ -434,7 +497,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property MappingEngine() As ObjectMappingEngine
+        Public Property SpecificMappingEngine() As ObjectMappingEngine
             Get
                 Return _schema
             End Get
@@ -471,13 +534,17 @@ Namespace Query
             End Set
         End Property
 
-        Protected ReadOnly Property GetMappingEngine() As ObjectMappingEngine
-            Get
+        Public Function GetMappingEngine() As ObjectMappingEngine
+            If SpecificMappingEngine IsNot Nothing Then
+                Return SpecificMappingEngine
+            ElseIf CreateManager IsNot Nothing Then
                 Using mgr As OrmManager = CreateManager.CreateManager
                     Return mgr.MappingEngine
                 End Using
-            End Get
-        End Property
+            Else
+                Throw New QueryCmdException("OrmManager required", Me)
+            End If
+        End Function
 
         Public ReadOnly Property CreateManager() As ICreateManager
             Get
@@ -2098,6 +2165,7 @@ l1:
         'End Property
 #End Region
 
+        <Obsolete("User Join method")> _
         Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
             Dim l As New List(Of QueryJoin)
             If Me.Joins IsNot Nothing Then
@@ -2111,11 +2179,19 @@ l1:
         End Function
 
         Public Function Join(ByVal rel As RelationDescEx) As QueryCmd
-            Return JoinAdd(JCtor.join_relation(rel))
+            Return Join(JCtor.join_relation(rel))
         End Function
 
         Public Function Join(ByVal joins() As QueryJoin) As QueryCmd
-            Me.Joins = joins
+            'Me.Joins = joins
+            Dim l As New List(Of QueryJoin)
+            If Me.Joins IsNot Nothing Then
+                l.AddRange(Me.Joins)
+            End If
+            If joins IsNot Nothing Then
+                l.AddRange(joins)
+            End If
+            Me.Joins = l.ToArray
             Return Me
         End Function
 
@@ -2527,6 +2603,92 @@ l1:
             Me.Pager = pager
             Return Me
         End Function
+
+        Public Function Skip(ByVal skipedPosition As Integer) As QueryCmd
+            If skipedPosition <= 0 Then
+                Throw New ArgumentException("Параметр должен быть больше нуля", "skipedPosition")
+            End If
+
+            Dim filterInfo As RowNumberFilterInfo = New RowNumberFilterInfo(RowNumberFilter)
+
+            Select Case filterInfo.Status
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsClearFilter
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New ScalarValue(skipedPosition), _
+                        Criteria.FilterOperation.GreaterThan)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsSkip
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New ScalarValue(filterInfo.FromPostion + skipedPosition), _
+                        Criteria.FilterOperation.GreaterThan)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsTake
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New BetweenValue(skipedPosition + 1, filterInfo.ToPostion), _
+                        Criteria.FilterOperation.Between)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsSkipTake
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New BetweenValue(skipedPosition + filterInfo.FromPostion, filterInfo.ToPostion), _
+                        Criteria.FilterOperation.Between)
+                Case Else
+                    Throw New NotImplementedException(filterInfo.Status.ToString)
+            End Select
+
+            Return Me
+        End Function
+
+        Public Function Take(ByVal takedPosition As Integer) As QueryCmd
+            If takedPosition <= 0 Then
+                Throw New ArgumentException("Параметр должен быть больше нуля", "takedPosition")
+            End If
+
+            Dim filterInfo As RowNumberFilterInfo = New RowNumberFilterInfo(RowNumberFilter)
+
+            Select Case filterInfo.Status
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsClearFilter
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New ScalarValue(takedPosition), _
+                        Criteria.FilterOperation.LessEqualThan)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsSkip
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New BetweenValue(filterInfo.FromPostion + 1, filterInfo.FromPostion + takedPosition), _
+                        Criteria.FilterOperation.Between)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsTake
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New ScalarValue(Math.Min(filterInfo.ToPostion, takedPosition)), _
+                        Criteria.FilterOperation.LessEqualThan)
+                Case RowNumberFilterInfo.RowNumberFilterStatus.IsSkipTake
+                    Me.RowNumberFilter = New TableFilter( _
+                        QueryCmd.RowNumerColumn, _
+                        New BetweenValue( _
+                                filterInfo.FromPostion, _
+                                filterInfo.FromPostion + Math.Min(filterInfo.ToPostion - filterInfo.FromPostion + 1, takedPosition) - 1), _
+                        Criteria.FilterOperation.Between)
+                Case Else
+                    Throw New NotImplementedException(filterInfo.Status.ToString)
+            End Select
+
+            'If Not Me.RowNumberFilter Is Nothing Then
+            '    Dim prevValue As ScalarValue = TryCast(Me.RowNumberFilter.Value, ScalarValue)
+            '    If prevValue Is Nothing Then
+            '        Me.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(takedPosition), Criteria.FilterOperation.LessEqualThan)
+            '    Else
+            '        Dim toPosition As Int32 = takedPosition + CType(prevValue.Value, Int32)
+            '        Dim fromPosition As Int32 = CType(prevValue.Value, Int32) + 1
+            '        Me.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New BetweenValue(fromPosition, toPosition), Criteria.FilterOperation.Between)
+            '    End If
+            'Else
+            '    Me.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(takedPosition), Criteria.FilterOperation.LessEqualThan)
+            'End If
+
+            Return Me
+        End Function
+
 
         'Public Function [SelectAgg](ByVal aggrs() As AggregateBase) As QueryCmd
         '    Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggrs)
@@ -3538,34 +3700,56 @@ l1:
 #Region " First "
         Public Function First(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
             Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
             Try
-                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(mgr)
+
+                Dim l As ReadOnlyEntityList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToList(Of T)(mgr)
+                Else
+                    l = Take(1).ToList(Of T)(mgr)
+                End If
+
                 If l.Count = 0 Then
                     Throw New InvalidOperationException("Number of items is " & l.Count)
                 End If
                 Return l(0)
             Finally
                 _top = oldT
+                _rn = oldRowFilter
             End Try
         End Function
 
         Public Function First(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
             Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
             Try
-                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)(getMgr)
+                Dim l As ReadOnlyEntityList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToList(Of T)(getMgr)
+                Else
+                    l = Take(1).ToList(Of T)(getMgr)
+                End If
                 If l.Count = 0 Then
                     Throw New InvalidOperationException("Number of items is " & l.Count)
                 End If
                 Return l(0)
             Finally
                 _top = oldT
+                _rn = oldRowFilter
             End Try
         End Function
 
         Public Function First(Of T As {New, _ICachedEntity})() As T
             Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
             Try
-                Dim l As ReadOnlyEntityList(Of T) = Top(1).ToList(Of T)()
+                Dim l As ReadOnlyEntityList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToList(Of T)()
+                Else
+                    l = Take(1).ToList(Of T)()
+                End If
                 If l.Count = 0 Then
                     Throw New InvalidOperationException("Number of items is " & l.Count)
                 End If
@@ -4134,7 +4318,7 @@ l1:
 
         Public Function Load(ByVal entityName As String) As QueryCmd
             Dim os As EntityUnion = GetSelectedOS()
-            If os isnot nothing andalso String.Equals(os.AnyEntityName, entityName) Then
+            If os IsNot Nothing AndAlso String.Equals(os.AnyEntityName, entityName) Then
                 Throw New NotSupportedException
             End If
             If _joins Is Nothing Then
@@ -4415,8 +4599,8 @@ l1:
             Dim o As IKeyEntity = Nothing
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
-                If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
-                    mgr.SetSchema(MappingEngine)
+                If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
+                    mgr.SetSchema(SpecificMappingEngine)
                 End If
                 Try
                     If GetType(T) IsNot tp Then
@@ -4443,8 +4627,8 @@ l1:
                 If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                     o.SetCreateManager(_getMgr)
                 End If
-                If o.GetSpecificSchema Is Nothing Then
-                    o.MappingEngine = MappingEngine
+                If o.SpecificMappingEngine Is Nothing Then
+                    o.SpecificMappingEngine = SpecificMappingEngine
                 End If
             End If
 
@@ -4465,8 +4649,8 @@ l1:
 
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
-                If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
-                    mgr.SetSchema(MappingEngine)
+                If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
+                    mgr.SetSchema(SpecificMappingEngine)
                 End If
                 Try
                     If GetType(T) IsNot tp Then
@@ -4501,8 +4685,8 @@ l1:
                             If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                                 o.SetCreateManager(_getMgr)
                             End If
-                            If o.GetSpecificSchema Is Nothing Then
-                                o.MappingEngine = MappingEngine
+                            If o.SpecificMappingEngine Is Nothing Then
+                                o.SpecificMappingEngine = SpecificMappingEngine
                             End If
                         End If
                     Next
@@ -4577,8 +4761,8 @@ l1:
             Dim o As IKeyEntity = Nothing
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
-                If MappingEngine IsNot Nothing AndAlso Not oldSch.Equals(MappingEngine) Then
-                    mgr.SetSchema(MappingEngine)
+                If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
+                    mgr.SetSchema(SpecificMappingEngine)
                 End If
                 Try
                     If ensureLoaded Then
@@ -4595,8 +4779,8 @@ l1:
                 If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                     o.SetCreateManager(_getMgr)
                 End If
-                If o.GetSpecificSchema Is Nothing Then
-                    o.MappingEngine = MappingEngine
+                If o.SpecificMappingEngine Is Nothing Then
+                    o.SpecificMappingEngine = SpecificMappingEngine
                 End If
             End If
 
@@ -4813,7 +4997,7 @@ l1:
                 End If
 
                 Dim q As New QueryCmd(_getMgr)
-                q.MappingEngine = MappingEngine
+                q.SpecificMappingEngine = SpecificMappingEngine
                 q.From(CType(Clone(), QueryCmd) _
                      .[Select](FCtor.Exp(s1).count("Count")) _
                      .From(f) _
@@ -4901,6 +5085,20 @@ l1:
             End If
             Return oschema.GetFieldColumnMap
         End Function
+
+        Public Sub SetCache(ByVal l As IEnumerable)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Using mgr As OrmManager = CreateManager.CreateManager
+                SetCache(mgr, l)
+            End Using
+        End Sub
+
+        Public Sub SetCache(ByVal mgr As OrmManager, ByVal l As IEnumerable)
+            CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
+        End Sub
     End Class
 
     '    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

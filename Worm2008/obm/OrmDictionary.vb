@@ -541,6 +541,7 @@ Namespace Misc
             Return CType(FindElementsInternal(mgr, True, Nothing), Global.Worm.ReadOnlyList(Of T))
         End Function
 
+#If Not ExcludeFindMethods Then
         Protected Overrides Function FindObjects(ByVal mgr As OrmManager, _
             ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
 
@@ -590,6 +591,7 @@ Namespace Misc
 
             Return col
         End Function
+#End If
 
         Public Shared Shadows Function CreateRoot(ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
             Return New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secondField)

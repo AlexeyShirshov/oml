@@ -218,8 +218,9 @@ Namespace Cache
         Private _addedTypes As New Dictionary(Of Type, Type)
         Private _deletedTypes As New Dictionary(Of Type, Type)
         Private _m2mQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
-
+#If OLDM2M Then
         Public Delegate Function EnumM2MCache(ByVal mgr As OrmManager, ByVal entity As M2MCache) As Boolean
+#End If
 
         Public Event OnObjectUpdated(ByVal cache As OrmCache, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
         Public Event OnObjectAdded(ByVal cache As OrmCache, ByVal obj As _ICachedEntity)
@@ -720,11 +721,11 @@ Namespace Cache
 
         End Sub
 
+#If OLDM2M Then
         Protected Friend Sub ConnectedEntityEnum(ByVal mgr As OrmManager, ByVal ct As Type, ByVal f As EnumM2MCache)
             If ct Is Nothing Then
                 Throw New ArgumentNullException("ct")
             End If
-
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("8907h13fkonhasdgft7","d:\temp\")
 #Else
@@ -758,7 +759,7 @@ Namespace Cache
                 End If
             End Using
         End Sub
-
+#End If
         Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, _
             ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 

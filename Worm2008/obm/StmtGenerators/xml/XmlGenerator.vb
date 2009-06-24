@@ -223,5 +223,17 @@ Namespace Xml
         Public Overrides Function UnaryOperator2String(ByVal oper As Expressions2.UnaryOperationType) As String
             Throw New ObjectMappingException("invalid opration " & oper.ToString)
         End Function
+
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+            Throw New NotSupportedException
+        End Function
+
+        Public Overrides Function FormatOrderBy(ByVal t As Expressions2.SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
+            Throw New NotSupportedException
+        End Function
+
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+            Throw New NotSupportedException
+        End Function
     End Class
 End Namespace

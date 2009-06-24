@@ -8,7 +8,6 @@ Namespace Expressions2
 
         Private _v As Object
         Private _pname As String
-        Private _case As Boolean
 
         Protected Sub New()
         End Sub
@@ -17,23 +16,9 @@ Namespace Expressions2
             _v = value
         End Sub
 
-        Public Sub New(ByVal value As Object, ByVal caseSensitive As Boolean)
-            _v = value
-            _case = caseSensitive
-        End Sub
-
-        Public Property CaseSensitive() As Boolean
-            Get
-                Return _case
-            End Get
-            Protected Set(ByVal value As Boolean)
-                _case = value
-            End Set
-        End Property
-
         Public Overridable Function GetDynamicString() As String Implements IParameterExpression.GetDynamicString
             If _v IsNot Nothing Then
-                Return _v.ToString & _case.ToString
+                Return _v.ToString
             End If
             Return String.Empty
         End Function
@@ -44,9 +29,9 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overridable Function Test(ByVal oper As BinaryOperationType, ByVal evaluatedValue As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult Implements IParameterExpression.Test
-            Return Helper.Test(_v, evaluatedValue, oper, _case, mpe)
-        End Function
+        'Public Overridable Function Test(ByVal oper As BinaryOperationType, ByVal evaluatedValue As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult Implements IParameterExpression.Test
+        '    Return Helper.Test(_v, evaluatedValue, oper, _case, mpe)
+        'End Function
 
         Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IParameterExpression.ShouldUse
             Get
@@ -62,7 +47,7 @@ Namespace Expressions2
             'do nothing
         End Sub
 
-        Public Function GetExpressions() As System.Collections.Generic.ICollection(Of IExpression) Implements IExpression.GetExpressions
+        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
 
@@ -120,9 +105,9 @@ Namespace Expressions2
             MyBase.New(value)
         End Sub
 
-        Public Sub New(ByVal value As ICollection, ByVal caseSensitive As Boolean)
-            MyBase.New(value, caseSensitive)
-        End Sub
+        'Public Sub New(ByVal value As ICollection, ByVal caseSensitive As Boolean)
+        '    MyBase.New(value, caseSensitive)
+        'End Sub
 
         Public Overrides Function GetDynamicString() As String
             If String.IsNullOrEmpty(_str) Then
@@ -140,30 +125,30 @@ Namespace Expressions2
             Return _str
         End Function
 
-        Public Overrides Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult
-            Dim r As IParameterExpression.EvalResult = IParameterExpression.EvalResult.NotFound
+        'Public Overrides Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult
+        '    Dim r As IParameterExpression.EvalResult = IParameterExpression.EvalResult.NotFound
 
-            Select Case oper
-                Case BinaryOperationType.In
-                    For Each o As Object In Value
-                        If Object.Equals(o, v) Then
-                            r = IParameterExpression.EvalResult.Found
-                            Exit For
-                        End If
-                    Next
-                Case BinaryOperationType.NotIn
-                    For Each o As Object In Value
-                        If Object.Equals(o, v) Then
-                            r = IParameterExpression.EvalResult.NotFound
-                            Exit For
-                        End If
-                    Next
-                Case Else
-                    Throw New InvalidOperationException(String.Format("Invalid operation {0} for InValue", oper))
-            End Select
+        '    Select Case oper
+        '        Case BinaryOperationType.In
+        '            For Each o As Object In Value
+        '                If Object.Equals(o, v) Then
+        '                    r = IParameterExpression.EvalResult.Found
+        '                    Exit For
+        '                End If
+        '            Next
+        '        Case BinaryOperationType.NotIn
+        '            For Each o As Object In Value
+        '                If Object.Equals(o, v) Then
+        '                    r = IParameterExpression.EvalResult.NotFound
+        '                    Exit For
+        '                End If
+        '            Next
+        '        Case Else
+        '            Throw New InvalidOperationException(String.Format("Invalid operation {0} for InValue", oper))
+        '    End Select
 
-            Return r
-        End Function
+        '    Return r
+        'End Function
 
         Public Shadows ReadOnly Property Value() As ICollection
             Get

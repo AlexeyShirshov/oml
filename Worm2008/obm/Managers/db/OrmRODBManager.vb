@@ -752,6 +752,7 @@ l1:
             End Using
         End Function
 
+#If OLDM2M Then
         Protected Overrides Function GetObjects(Of T As {IKeyEntity, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
             ByVal relation As M2MRelationDesc, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, CachedM2MRelation)
             Invariant()
@@ -882,7 +883,7 @@ l1:
                 End If
             Next
         End Sub
-
+#End If
         'Protected Sub LoadM2MWithRelation(Of T As {IKeyEntity, New})(ByVal cmd As System.Data.Common.DbCommand, _
         '    ByVal type2load As Type, ByVal oschema2 As IEntitySchema, ByVal withLoad As Boolean, _
         '    ByVal type As Type, ByVal edic As Dictionary(Of Object, EditableList))
@@ -2543,7 +2544,11 @@ l1:
                 If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim v As Object = pi.GetValue(obj, Nothing)
                     If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
-                        value = Convert.ChangeType(value, propType)
+                        If propType.IsEnum Then
+                            value = [Enum].ToObject(propType, value)
+                        Else
+                            value = Convert.ChangeType(value, propType)
+                        End If
                     End If
                     If Not v.Equals(value) Then
                         Throw New OrmManagerException("PK values is not equals (" & dr.GetName(i) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)

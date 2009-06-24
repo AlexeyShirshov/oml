@@ -467,6 +467,7 @@ Namespace Database
                 End Using
             End Function
 
+#If OLDM2M Then
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As UpdatableCachedItem
                 Dim mt As Type = _obj.GetType
                 Dim t As Type = GetType(T)
@@ -524,7 +525,7 @@ Namespace Database
                 Next
                 Return New M2MCache(_obj.Identifier, ids, _mgr, _obj.GetType, GetType(T), _direct, _sort)
             End Function
-
+#End If
             Public Overrides Sub CreateDepends()
                 If Not _mgr._dont_cache_lists Then
                     Dim tt As Type = GetType(T)

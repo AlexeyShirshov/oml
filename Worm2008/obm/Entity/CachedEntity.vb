@@ -128,7 +128,7 @@ Namespace Entities
         Public Class InternalClass
             Private _o As CachedEntity
 
-            Friend Sub New(ByVal o As CachedEntity)
+            Public Sub New(ByVal o As CachedEntity)
                 _o = o
             End Sub
 
@@ -175,11 +175,9 @@ Namespace Entities
                 Return _o.IsPropertyLoaded(propertyAlias)
             End Function
 
-            Public ReadOnly Property MappingEngine() As ObjectMappingEngine
-                Get
-                    Return _o.MappingEngine
-                End Get
-            End Property
+            Public Function GetMappingEngine() As ObjectMappingEngine
+                Return _o.GetMappingEngine
+            End Function
 
             Public ReadOnly Property ObjectState() As ObjectState
                 Get
@@ -187,22 +185,11 @@ Namespace Entities
                 End Get
             End Property
 
-            'Public Property ObjectState() As ObjectState
-            '    Get
-            '        Return _o._state
-            '    End Get
-            '    Protected Friend Set(ByVal value As ObjectState)
-            '        _o.ObjectState = value
-            '        'Using _o.SyncHelper(False)
-            '        '    _o._state = value
-            '        '    Debug.Assert(_o._state = value)
-            '        '    Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
-            '        '    If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
-            '        '        Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
-            '        '    End If
-            '        'End Using
-            '    End Set
-            'End Property
+            Public ReadOnly Property Obj() As CachedEntity
+                Get
+                    Return _o
+                End Get
+            End Property
 
             ''' <summary>
             ''' Модифицированная версия объекта
@@ -308,14 +295,6 @@ Namespace Entities
                 End Get
             End Property
 
-            Public ReadOnly Property HasM2MChanges() As Boolean
-                Get
-                    'Using mc As IGetManager = GetMgr
-                    Return _o.HasM2MChanges()
-                    'End Using
-                End Get
-            End Property
-
             Public ReadOnly Property HasChanges() As Boolean
                 Get
                     Return _o.HasChanges
@@ -323,7 +302,7 @@ Namespace Entities
             End Property
 
             Public Function GetM2MRelatedChangedObjects() As List(Of ICachedEntity)
-                Return _o.GetM2MRelatedChangedObjects
+                Return _o.GetChangedRelationObjects
             End Function
 
             Public Function GetRelatedChangedObjects() As List(Of ICachedEntity)
@@ -749,15 +728,15 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overridable ReadOnly Property HasM2MChanges() As Boolean
-            Get
-                Return False
-            End Get
-        End Property
+        'Protected Overridable ReadOnly Property HasM2MChanges() As Boolean
+        '    Get
+        '        Return False
+        '    End Get
+        'End Property
 
         Protected Overridable ReadOnly Property HasChanges() As Boolean Implements ICachedEntity.HasChanges
             Get
-                Return HasBodyChanges OrElse HasM2MChanges()
+                Return HasBodyChanges 'OrElse HasM2MChanges()
             End Get
         End Property
 
@@ -934,10 +913,10 @@ l1:
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
                 Dim objs As New List(Of Pair(Of String, PKDesc()))
 
-                For Each de As DictionaryEntry In MappingEngine.GetProperties(t)
+                For Each de As DictionaryEntry In GetMappingEngine.GetProperties(t)
                     Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    If c IsNot Nothing AndAlso (MappingEngine.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
+                    If c IsNot Nothing AndAlso (GetMappingEngine.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
                         If IsLoaded Then
                             Dim v As Object = pi.GetValue(Me, Nothing)
                             Dim tt As Type = pi.PropertyType
@@ -964,7 +943,7 @@ l1:
                                     .WriteAttributeString(c.PropertyAlias, "xxx:nil")
                                 End If
                             End If
-                        ElseIf (MappingEngine.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        ElseIf (GetMappingEngine.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             .WriteAttributeString(c.PropertyAlias, pi.GetValue(Me, Nothing).ToString)
                         End If
                     End If
@@ -1205,7 +1184,7 @@ l1:
         Public Overridable Function GetPKValues() As PKDesc() Implements ICachedEntity.GetPKValues
             Dim l As New List(Of PKDesc)
             'Using mc As IGetManager = GetMgr()
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             If schema Is Nothing Then
                 Dim oschema As IEntitySchema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
                 For Each kv As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(Me.GetType)
@@ -1280,10 +1259,10 @@ l1:
                 Dim columns As New Generic.List(Of EntityPropertyAttribute)
                 Dim t As Type = obj.GetType
                 'Using mc As IGetManager = GetMgr()
-                Dim schema As ObjectMappingEngine = MappingEngine
+                Dim schema As ObjectMappingEngine = GetMappingEngine()
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
-                If Not Object.Equals(obj.GetSpecificSchema, GetSpecificSchema) Then
-                    obj.MappingEngine = GetSpecificSchema()
+                If Not Object.Equals(obj.SpecificMappingEngine, SpecificMappingEngine) Then
+                    obj.SpecificMappingEngine = SpecificMappingEngine()
                 End If
                 For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
                     Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -1727,7 +1706,7 @@ l1:
         Protected Function SortedColumnAttributeCount(ByVal sch As ObjectMappingEngine) As Integer
             Dim schema As ObjectMappingEngine = sch
             If schema Is Nothing Then
-                schema = MappingEngine
+                schema = GetMappingEngine()
             End If
             If schema Is Nothing Then
                 If _attList IsNot Nothing Then
@@ -1744,7 +1723,7 @@ l1:
         Protected Function SortedColumnAttributeList(ByVal sch As ObjectMappingEngine) As List(Of EntityPropertyAttribute)
             Dim schema As ObjectMappingEngine = sch
             If schema Is Nothing Then
-                schema = MappingEngine
+                schema = GetMappingEngine()
             End If
             If schema Is Nothing Then
                 If _attList Is Nothing Then
@@ -1777,7 +1756,7 @@ l1:
             Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
             Dim idx As Integer = arr.BinarySearch(c)
             If idx < 0 Then Throw New OrmObjectException("Property " & propertyAlias & " not found in type " & Me.GetType.ToString & ". Ensure it is not suppressed")
-            Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), MappingEngine)
+            Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), GetMappingEngine)
         End Function
 
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
@@ -1837,7 +1816,7 @@ l1:
 
 #End Region
 
-        Protected Function GetM2MRelatedChangedObjects() As List(Of ICachedEntity)
+        Protected Overridable Function GetChangedRelationObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
             'Using mc As IGetManager = GetMgr()
             '    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
@@ -1854,15 +1833,15 @@ l1:
 
         Protected Overridable Function GetRelatedChangedObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
-            For Each kv As DictionaryEntry In MappingEngine.GetProperties(Me.GetType)
-                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-                    Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
-                    If o IsNot Nothing AndAlso o.HasChanges Then
-                        l.Add(o)
-                    End If
-                End If
-            Next
+            'For Each kv As DictionaryEntry In MappingEngine.GetProperties(Me.GetType)
+            '    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+            '    If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
+            '        Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
+            '        If o IsNot Nothing AndAlso o.HasChanges Then
+            '            l.Add(o)
+            '        End If
+            '    End If
+            'Next
             Return l
         End Function
 
@@ -1882,7 +1861,7 @@ l1:
                 End If
             Next
 
-            For Each o As _ICachedEntity In GetM2MRelatedChangedObjects()
+            For Each o As _ICachedEntity In GetChangedRelationObjects()
                 If Not gl.Contains(o) Then
                     gl.Add(o)
                     l.Add(o)

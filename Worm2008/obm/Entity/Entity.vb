@@ -184,7 +184,7 @@ Namespace Entities
                             Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
                             If ov IsNot Nothing Then
                                 Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType)
-                                If eo.CreateManager IsNot Nothing Then eo.SetCreateManager(CreateManager)
+                                If eo.CreateManager Is Nothing Then eo.SetCreateManager(CreateManager)
                                 ov.SetValueOptimized(propertyAlias, schema, eo)
                             Else
                                 Throw New OrmObjectException("Check read requires IOptimizedValues")
@@ -269,29 +269,24 @@ Namespace Entities
             End If
         End Function
 
-        Protected Property MappingEngine() As ObjectMappingEngine Implements _IEntity.MappingEngine
-            Get
-                If _schema IsNot Nothing Then
-                    Return _schema
+        Protected Function GetMappingEngine() As ObjectMappingEngine Implements _IEntity.GetMappingEngine
+            If _schema IsNot Nothing Then
+                Return _schema
+            Else
+                Dim mgr As OrmManager = GetCurrent()
+                If mgr IsNot Nothing Then
+                    Return mgr.MappingEngine
                 Else
-                    Dim mgr As OrmManager = GetCurrent()
-                    If mgr IsNot Nothing Then
-                        Return mgr.MappingEngine
-                    Else
-                        Using mc As IGetManager = GetMgr()
-                            If mc IsNot Nothing Then
-                                Return mc.Manager.MappingEngine
-                            Else
-                                Return Nothing
-                            End If
-                        End Using
-                    End If
+                    Using mc As IGetManager = GetMgr()
+                        If mc IsNot Nothing Then
+                            Return mc.Manager.MappingEngine
+                        Else
+                            Return Nothing
+                        End If
+                    End Using
                 End If
-            End Get
-            Set(ByVal value As ObjectMappingEngine)
-                _schema = value
-            End Set
-        End Property
+            End If
+        End Function
 
         Protected Sub SetCreateManager(ByVal createManager As ICreateManager) Implements _IEntity.SetCreateManager
             _cm = createManager
@@ -307,9 +302,14 @@ Namespace Entities
             _mgrStr = str
         End Sub
 
-        Protected Function GetSpecificSchema() As ObjectMappingEngine Implements _IEntity.GetSpecificSchema
-            Return _schema
-        End Function
+        Protected Property SpecificMappingEngine() As ObjectMappingEngine Implements _IEntity.SpecificMappingEngine
+            Get
+                Return _schema
+            End Get
+            Set(ByVal value As ObjectMappingEngine)
+                _schema = value
+            End Set
+        End Property
 
 #End Region
 
@@ -322,7 +322,7 @@ Namespace Entities
         End Property
 
         Protected Overridable Function DumpState() As String
-            Dim schema As ObjectMappingEngine = MappingEngine
+            Dim schema As ObjectMappingEngine = GetMappingEngine()
             Dim props As IDictionary = Nothing
             Dim oschema As IEntitySchema = Nothing
             If schema Is Nothing Then
@@ -465,11 +465,11 @@ Namespace Entities
         Public Function CreateCmd() As QueryCmd
             If _cm IsNot Nothing Then
                 Dim q As QueryCmd = New QueryCmd(_cm)
-                q.MappingEngine = _schema
+                q.SpecificMappingEngine = _schema
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create()
-                q.MappingEngine = _schema
+                q.SpecificMappingEngine = _schema
                 Return q
             End If
         End Function
@@ -478,11 +478,11 @@ Namespace Entities
             If _cm IsNot Nothing Then
                 Dim q As New QueryCmd(_cm)
                 q.Name = name
-                q.MappingEngine = _schema
+                q.SpecificMappingEngine = _schema
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create(name)
-                q.MappingEngine = _schema
+                q.SpecificMappingEngine = _schema
                 Return q
             End If
         End Function
@@ -546,7 +546,7 @@ Namespace Entities
 #End Region
 
         Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             If schema Is Nothing Then
                 Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
             Else
@@ -555,7 +555,7 @@ Namespace Entities
         End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             Dim pi As Reflection.PropertyInfo
             If schema Is Nothing Then
                 pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
@@ -566,7 +566,7 @@ Namespace Entities
         End Function
 
         Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
-            Dim schema As Worm.ObjectMappingEngine = MappingEngine
+            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             Dim pi As Reflection.PropertyInfo
             If schema Is Nothing Then
                 pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)

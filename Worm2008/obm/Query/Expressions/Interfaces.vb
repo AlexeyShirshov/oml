@@ -50,7 +50,7 @@ Namespace Expressions2
         Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
         Function GetDynamicString() As String
         Sub Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
         Function Equals(ByVal f As IQueryElement) As Boolean
     End Interface
@@ -60,18 +60,18 @@ Namespace Expressions2
     End Interface
 
     Public Interface IHashable
-        Function Test(ByVal schema As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema) As IParameterExpression.EvalResult
-        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As Entities.ICachedEntity) As String
+        Function Test(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema) As IParameterExpression.EvalResult
+        Function MakeDynamicString(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As Entities.ICachedEntity) As String
     End Interface
 
     Public Interface IExpression
         Inherits IQueryElement, IGetExpression
-        Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
+        Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                           ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, _
                           ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
         ReadOnly Property ShouldUse() As Boolean
-        Function GetExpressions() As ICollection(Of IExpression)
+        Function GetExpressions() As IExpression()
     End Interface
 
     Public Interface IParameterExpression
@@ -84,7 +84,7 @@ Namespace Expressions2
         End Enum
 
         ReadOnly Property Value() As Object
-        Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As EvalResult
+        'Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As EvalResult
 
         Class ModifyValueArgs
             Private _modified As Boolean
@@ -112,17 +112,27 @@ Namespace Expressions2
         Event ModifyValue As ModifyValueDelegate
     End Interface
 
+    Public Interface IContextable
+        Inherits IExpression
+        Function SetEntity(ByVal eu As Query.EntityUnion) As IContextable
+    End Interface
+
     Public Interface IEntityPropertyExpression
-        Inherits IExpression, ICloneable
-        Property Entity() As EntityUnion
-        Property PropertyAlias() As String
-        Function SetEntity(ByVal eu As Query.EntityUnion) As IEntityPropertyExpression
+        Inherits IContextable, ICloneable
+        'Property Entity() As EntityUnion
+        'Property PropertyAlias() As String
+        Property ObjectProperty() As ObjectProperty
     End Interface
 
     Public Interface IComplexExpression
-        Inherits IExpression, ICloneable, IHashable
-        Function ReplaceExpression(ByVal replacement As IComplexExpression, ByVal replacer As IComplexExpression) As IComplexExpression
-        Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression
+        Inherits IExpression, ICloneable
+        Function ReplaceExpression(ByVal replacement As IExpression, ByVal replacer As IExpression) As IComplexExpression
+        'Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression
     End Interface
 
+    Public Interface IEvaluable
+        Function Eval(ByVal mpe As ObjectMappingEngine, _
+            ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema, ByRef v As Object) As Boolean
+        Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean
+    End Interface
 End Namespace

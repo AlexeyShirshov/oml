@@ -6,7 +6,7 @@ Namespace Expressions2
 
     <Serializable()> _
     Public Class UnaryExpression
-        Implements IComplexExpression
+        Implements IComplexExpression, IEvaluable
 
         Private _oper As UnaryOperationType
         Private _v As IExpression
@@ -55,53 +55,94 @@ Namespace Expressions2
             Return New UnaryExpression(_oper, CloneExpression(_v))
         End Function
 
-        Public Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression Implements IComplexExpression.RemoveExpression
-            If Equals(f) Then
-                Return Nothing
-            End If
-            Dim e As IComplexExpression = TryCast(_v, IComplexExpression)
-            If e IsNot Nothing Then
-                Dim v As IExpression = e.RemoveExpression(f)
-                If v IsNot _v Then
-                    Return New UnaryExpression(_oper, v)
-                End If
-            End If
-            Return Me
-        End Function
+        'Public Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression Implements IComplexExpression.RemoveExpression
+        '    If Equals(f) Then
+        '        Return Nothing
+        '    End If
+        '    Dim e As IComplexExpression = TryCast(_v, IComplexExpression)
+        '    If e IsNot Nothing Then
+        '        Dim v As IExpression = e.RemoveExpression(f)
+        '        If v IsNot _v Then
+        '            Return New UnaryExpression(_oper, v)
+        '        End If
+        '    End If
+        '    Return Me
+        'End Function
 
-        Public Function ReplaceExpression(ByVal replacement As IComplexExpression, ByVal replacer As IComplexExpression) As IComplexExpression Implements IComplexExpression.ReplaceExpression
+        Public Function ReplaceExpression(ByVal replacement As IExpression, ByVal replacer As IExpression) As IComplexExpression Implements IComplexExpression.ReplaceExpression
             If Equals(replacement) Then
-                Return replacer
+                Return CType(replacer, IComplexExpression)
             End If
+
             Dim e As IComplexExpression = TryCast(_v, IComplexExpression)
             If e IsNot Nothing Then
-                Dim v As IExpression = e.RemoveExpression(replacement)
+                Dim v As IComplexExpression = e.ReplaceExpression(replacement, replacer)
                 If v IsNot _v Then
                     Return New UnaryExpression(_oper, v)
                 End If
+            ElseIf _v.Equals(replacement) Then
+                Return New UnaryExpression(_oper, replacer)
             End If
             Return Me
         End Function
 
-        Public Function GetExpressions() As System.Collections.Generic.ICollection(Of IExpression) Implements IExpression.GetExpressions
+        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Dim l As New List(Of IExpression)
             l.Add(Me)
             l.AddRange(_v.GetExpressions)
-            Return l
+            Return l.ToArray
         End Function
 
         Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Return stmt.UnaryOperator2String(_oper) & _v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, inSelect, executor)
         End Function
 
-        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As Entities.Meta.IEntitySchema, ByVal obj As Entities.ICachedEntity) As String Implements IHashable.MakeHash
-            Return EmptyHash
+        'Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As Entities.Meta.IEntitySchema, ByVal obj As Entities.ICachedEntity) As String Implements IHashable.MakeDynamicString
+        '    Return EmptyHash
+        'End Function
+
+        'Public Function Test(ByVal schema As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As Entities.Meta.IEntitySchema) As IParameterExpression.EvalResult Implements IHashable.Test
+        '    Throw New NotSupportedException
+        'End Function
+
+        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As Entities.Meta.IEntitySchema, ByRef v As Object) As Boolean Implements IEvaluable.Eval
+            Dim val As Object = Nothing
+            If GetValue(mpe, obj, oschema, _v, val) Then
+                Select Case _oper
+                    Case UnaryOperationType.Negate
+                        If IsNumeric(val) Then
+                            v = Convert.ChangeType(-CDec(val), val.GetType)
+                            Return True
+                        End If
+                    Case UnaryOperationType.Not
+                        If TypeOf val Is Boolean Then
+                            v = Not CBool(val)
+                            Return True
+                        ElseIf IsNumeric(val) Then
+                            v = Convert.ChangeType(Not CLng(val), val.GetType)
+                            Return True
+                        End If
+                    Case Else
+                        Throw New NotSupportedException(OperationType2String(_oper))
+                End Select
+            End If
+            Return False
         End Function
 
-        Public Function Test(ByVal schema As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As Entities.Meta.IEntitySchema) As IParameterExpression.EvalResult Implements IHashable.Test
-            Throw New NotSupportedException
-        End Function
+        Public ReadOnly Property Operand() As IExpression
+            Get
+                Return _v
+            End Get
+        End Property
 
+        Public Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean Implements IEvaluable.CanEval
+            'Dim val As Object = Nothing
+            'If GetValue(mpe, obj, oschema, _v, val) Then
+
+            'End If
+
+            Return False
+        End Function
     End Class
 
     <Serializable()> _
@@ -132,7 +173,7 @@ Namespace Expressions2
             'do nothing
         End Sub
 
-        Public Function GetExpressions() As System.Collections.Generic.ICollection(Of IExpression) Implements IExpression.GetExpressions
+        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
 
@@ -167,23 +208,23 @@ Namespace Expressions2
             MyBase.New("null")
         End Sub
 
-        Public Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult Implements IParameterExpression.Test
-            If oper = BinaryOperationType.Is Then
-                If v Is Nothing Then
-                    Return IParameterExpression.EvalResult.Found
-                Else
-                    Return IParameterExpression.EvalResult.NotFound
-                End If
-            ElseIf oper = BinaryOperationType.IsNot Then
-                If v IsNot Nothing Then
-                    Return IParameterExpression.EvalResult.Found
-                Else
-                    Return IParameterExpression.EvalResult.NotFound
-                End If
-            Else
-                Throw New NotSupportedException(String.Format("Operation {0} is not supported for IsNull statement", oper))
-            End If
-        End Function
+        'Public Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult Implements IParameterExpression.Test
+        '    If oper = BinaryOperationType.Is Then
+        '        If v Is Nothing Then
+        '            Return IParameterExpression.EvalResult.Found
+        '        Else
+        '            Return IParameterExpression.EvalResult.NotFound
+        '        End If
+        '    ElseIf oper = BinaryOperationType.IsNot Then
+        '        If v IsNot Nothing Then
+        '            Return IParameterExpression.EvalResult.Found
+        '        Else
+        '            Return IParameterExpression.EvalResult.NotFound
+        '        End If
+        '    Else
+        '        Throw New NotSupportedException(String.Format("Operation {0} is not supported for IsNull statement", oper))
+        '    End If
+        'End Function
 
         Public ReadOnly Property Value() As Object Implements IParameterExpression.Value
             Get
@@ -200,7 +241,7 @@ Namespace Expressions2
 
         Private _q As Query.QueryCmd
 
-        Public Function GetExpressions() As System.Collections.Generic.ICollection(Of IExpression) Implements IExpression.GetExpressions
+        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
 
@@ -245,6 +286,108 @@ Namespace Expressions2
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             _q.Prepare(executor, schema, contextFilter, stmt, isAnonym)
+        End Sub
+    End Class
+
+    <Serializable()> _
+    Public Class CustomExpression
+        Implements IExpression
+
+        Public Sub New(ByVal format As String)
+            _f = format
+        End Sub
+
+        Public Sub New(ByVal format As String, ByVal ParamArray v() As IExpression)
+            _f = format
+            _v = v
+        End Sub
+
+        Private _f As String
+        Public ReadOnly Property Format() As String
+            Get
+                Return _f
+            End Get
+        End Property
+
+        Private _v() As IExpression
+        Public ReadOnly Property Values() As IExpression()
+            Get
+                Return _v
+            End Get
+        End Property
+
+        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
+            Dim l As New List(Of IExpression)
+            l.Add(Me)
+            l.AddRange(Values)
+            Return l.ToArray
+        End Function
+
+        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
+            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+                Next
+                Return String.Format(_f, l.ToArray)
+            Else
+                Return _f
+            End If
+        End Function
+
+        Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse
+            Get
+                Return Not String.IsNullOrEmpty(_f)
+            End Get
+        End Property
+
+        Public ReadOnly Property Expression() As IExpression Implements IGetExpression.Expression
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public Overloads Function Equals(ByVal f As IQueryElement) As Boolean Implements IQueryElement.Equals
+            Return Equals(TryCast(f, CustomExpression))
+        End Function
+
+        Public Overloads Function Equals(ByVal f As CustomExpression) As Boolean
+            If f Is Nothing Then
+                Return False
+            End If
+
+            Return _f = f._f AndAlso GetDynamicString() = f.GetDynamicString
+        End Function
+
+        Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.GetDynamicString())
+                Next
+                Return String.Format(_f, l.ToArray)
+            Else
+                Return _f
+            End If
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.GetStaticString(mpe, contextFilter))
+                Next
+                Return String.Format(_f, l.ToArray)
+            Else
+                Return _f
+            End If
+        End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            For Each e As IExpression In Values
+                e.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
+            Next
         End Sub
     End Class
 
@@ -300,6 +443,30 @@ Namespace Expressions2
                     Return "NotExists"
                 Case BinaryOperationType.Between
                     Return "Between"
+                Case BinaryOperationType.And
+                    Return "And"
+                Case BinaryOperationType.Or
+                    Return "Or"
+                Case BinaryOperationType.ExclusiveOr
+                    Return "EOr"
+                Case BinaryOperationType.BitAnd
+                    Return "BAnd"
+                Case BinaryOperationType.BitOr
+                    Return "BOr"
+                Case BinaryOperationType.Add
+                    Return "Add"
+                Case BinaryOperationType.Subtract
+                    Return "Subtract"
+                Case BinaryOperationType.Divide
+                    Return "Divide"
+                Case BinaryOperationType.Multiply
+                    Return "Mul"
+                Case BinaryOperationType.Modulo
+                    Return "Mod"
+                Case BinaryOperationType.LeftShift
+                    Return "LShift"
+                Case BinaryOperationType.RightShift
+                    Return "RShift"
                 Case Else
                     Throw New ObjectMappingException("Operation " & oper & " not supported")
             End Select
@@ -446,12 +613,129 @@ Namespace Expressions2
                             r = IParameterExpression.EvalResult.Found
                         End If
                     End If
+                Case BinaryOperationType.In
+                    For Each o As Object In CType(evaluatedValue, IEnumerable)
+                        If Object.Equals(o, filterValue) Then
+                            r = IParameterExpression.EvalResult.Found
+                            Exit For
+                        End If
+                    Next
+                Case BinaryOperationType.NotIn
+                    For Each o As Object In CType(evaluatedValue, IEnumerable)
+                        If Object.Equals(o, filterValue) Then
+                            r = IParameterExpression.EvalResult.NotFound
+                            Exit For
+                        End If
+                    Next
+                Case BinaryOperationType.Is
+                    If evaluatedValue Is Nothing Then
+                        Return IParameterExpression.EvalResult.Found
+                    Else
+                        Return IParameterExpression.EvalResult.NotFound
+                    End If
+                Case BinaryOperationType.IsNot
+                    If evaluatedValue IsNot Nothing Then
+                        Return IParameterExpression.EvalResult.Found
+                    Else
+                        Return IParameterExpression.EvalResult.NotFound
+                    End If
                 Case Else
-                    r = IParameterExpression.EvalResult.Unknown
+                        r = IParameterExpression.EvalResult.Unknown
             End Select
 
             Return r
         End Function
 
+        Public Function Eval(ByVal filterValue As Object, ByVal evaluatedValue As Object, _
+                             ByVal oper As BinaryOperationType, _
+                             ByVal mpe As ObjectMappingEngine, ByRef v As Object) As Boolean
+
+            Select Case oper
+                Case BinaryOperationType.ExclusiveOr
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CLng(filterValue) Xor CLng(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.BitAnd
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CLng(filterValue) And CLng(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.BitOr
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CLng(filterValue) Or CLng(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.Add
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CDec(filterValue) + CDec(evaluatedValue), filterValue.GetType)
+                        Return True
+                    ElseIf TypeOf filterValue Is String Then
+                        v = CStr(filterValue) & CStr(evaluatedValue)
+                    End If
+                Case BinaryOperationType.Subtract
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CDec(filterValue) - CDec(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.Divide
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CDec(filterValue) / CDec(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.Multiply
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CDec(filterValue) * CDec(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.Modulo
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CDec(filterValue) Mod CDec(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.LeftShift
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CLng(filterValue) << CInt(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case BinaryOperationType.RightShift
+                    If IsNumeric(filterValue) Then
+                        v = Convert.ChangeType(CLng(filterValue) >> CInt(evaluatedValue), filterValue.GetType)
+                        Return True
+                    End If
+                Case Else
+                    Throw New NotSupportedException(oper.ToString)
+            End Select
+
+            Return False
+        End Function
+
+        Public Function GetValue(ByVal mpe As ObjectMappingEngine, _
+            ByVal obj As _IEntity, ByVal oschema As IEntitySchema, ByVal exp As IExpression, ByRef v As Object) As Boolean
+
+            Dim eexp As IEntityPropertyExpression = TryCast(exp, IEntityPropertyExpression)
+
+            If eexp IsNot Nothing Then
+                Dim t As Type = obj.GetType
+                Dim rt As Type = eexp.ObjectProperty.Entity.GetRealType(mpe)
+                If rt Is t Then
+                    v = mpe.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)
+                    Return True
+                Else
+                    Throw New NotSupportedException(String.Format("Different types in expression ({0}) and object ({1})", rt, t))
+                End If
+            Else
+                Dim pexp As IParameterExpression = TryCast(exp, IParameterExpression)
+                If pexp IsNot Nothing Then
+                    v = pexp.Value
+                    Return True
+                Else
+                    Dim cexp As IEvaluable = TryCast(exp, IEvaluable)
+                    If cexp IsNot Nothing Then
+                        Return cexp.Eval(mpe, obj, oschema, v)
+                    End If
+                End If
+            End If
+        End Function
     End Module
 End Namespace

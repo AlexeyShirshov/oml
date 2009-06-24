@@ -5,7 +5,7 @@ Imports Worm.Query.Sorting
 Imports Worm.Entities
 
 Friend Interface IListEdit
-    Inherits IList, ICloneable
+    Inherits IReadOnlyList, ICloneable
     Overloads Sub Add(ByVal o As Entities.IEntity)
     Overloads Sub Remove(ByVal o As Entities.IEntity)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
@@ -18,6 +18,10 @@ Public Interface ILoadableList
     Inherits IList
     Sub LoadObjects()
     Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
+End Interface
+
+Public Interface IReadOnlyList
+    Inherits IList
 End Interface
 
 <Serializable()> _
@@ -114,6 +118,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Return rd.Load(Of T, ReturnType)(Me, loadWithObjects)
     End Function
 
+#If OLDM2M Then
     Public Function LoadChilds(Of ChildType As {New, Entities.IKeyEntity})() As ReadOnlyList(Of ChildType)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
@@ -139,6 +144,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         End If
         Return New ReadOnlyList(Of ChildType)
     End Function
+#End If
 
     Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyList(Of T)
         If _l.Count > 0 Then
@@ -163,7 +169,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
             If start <= i AndAlso start + length > i Then
                 Dim o As T = Me(i)
                 If mpe Is Nothing Then
-                    mpe = o.MappingEngine
+                    mpe = o.GetMappingEngine
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
                 Dim obj As IEntity = CType(mpe.GetPropertyValue(o, propertyAlias, oschema), IEntity)
@@ -186,7 +192,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
             If start <= i AndAlso start + length > i Then
                 Dim o As T = Me(i)
                 If mpe Is Nothing Then
-                    mpe = o.MappingEngine
+                    mpe = o.GetMappingEngine
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
                 Dim obj As New AnonymousCachedEntity
@@ -316,7 +322,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
             If start <= i AndAlso start + length > i Then
                 Dim o As T = Me(i)
                 If mpe Is Nothing Then
-                    mpe = o.MappingEngine
+                    mpe = o.GetMappingEngine
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
                 For j As Integer = 0 To parentPropertyAliases.Length - 1

@@ -256,7 +256,7 @@ Namespace Web
                 For i As Integer = start To [end] - 1
                     Dim u As KeyEntity = CType(col(i), KeyEntity)
                     If schema Is Nothing Then
-                        schema = CType(u, IKeyEntity).MappingEngine
+                        schema = CType(u, IKeyEntity).GetMappingEngine
                     End If
 
                     Dim upd As Date
@@ -546,8 +546,8 @@ Namespace Web
                         Else
                             'Using mgr As OrmManager = _getMgr()
                             Using user.BeginEdit
-                                Dim oschema As IEntitySchema = user.MappingEngine.GetEntitySchema(user.GetType)
-                                user.MappingEngine.SetPropertyValue(user, p.Name, p.PropertyValue, oschema)
+                                Dim oschema As IEntitySchema = user.GetMappingEngine.GetEntitySchema(user.GetType)
+                                user.GetMappingEngine.SetPropertyValue(user, p.Name, p.PropertyValue, oschema)
                             End Using
                             'End Using
                         End If
@@ -567,14 +567,14 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     'Using mgr As OrmManager = _getMgr()
-                    Dim oschema As IEntitySchema = user.MappingEngine.GetEntitySchema(user.GetType)
+                    Dim oschema As IEntitySchema = user.GetMappingEngine.GetEntitySchema(user.GetType)
                     Using st As New ModificationsTracker(CreateManager)
                         Using user.BeginEdit
                             If Not String.IsNullOrEmpty(_lastActivityField) Then
-                                user.MappingEngine.SetPropertyValue(user, _lastActivityField, d, oschema)
+                                user.GetMappingEngine.SetPropertyValue(user, _lastActivityField, d, oschema)
                             End If
                             If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                                user.MappingEngine.SetPropertyValue(user, _lastUpdateField, d, oschema)
+                                user.GetMappingEngine.SetPropertyValue(user, _lastUpdateField, d, oschema)
                             End If
                         End Using
                         st.Add(user)

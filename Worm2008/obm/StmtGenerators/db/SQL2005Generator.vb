@@ -185,6 +185,22 @@ Namespace Database
             End Get
         End Property
 
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+            If t = Expressions2.GroupExpressions.SummaryValues.Custom Then
+                Return "group by " & custom & "(" & fields & ")"
+            Else
+                Return MyBase.FormatGroupBy(t, fields, custom)
+            End If
+        End Function
+
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+            If t = Expressions2.AggregateExpression.AggregateFunction.Custom Then
+                Return custom & "(" & fields & ")"
+            Else
+                Return MyBase.FormatAggregate(t, fields, custom)
+            End If
+        End Function
+
         '    Protected sub AddOutput(ByVal type As Type, ByVal sel_column As ICollection(Of ColumnAttribute), ByVal sb As StringBuilder) As String
         '        For Each c As ColumnAttribute In sel_column
         '            sb.Append("inserted.")

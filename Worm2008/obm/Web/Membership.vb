@@ -154,7 +154,7 @@ Namespace Web
                 u = FindUserByName(username, Nothing)
             End If
             If u IsNot Nothing Then
-                Dim schema As ObjectMappingEngine = u.MappingEngine
+                Dim schema As ObjectMappingEngine = u.GetMappingEngine
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
                 Using st As New ModificationsTracker(UserMapper.CreateManager)
                     Using u.BeginEdit()
@@ -220,7 +220,7 @@ Namespace Web
             Using mt As New ModificationsTracker(UserMapper.CreateManager)
 
                 u = UserMapper.CreateUser(mt, username, Nothing, providerUserKey)
-                Dim schema As ObjectMappingEngine = u.MappingEngine
+                Dim schema As ObjectMappingEngine = u.GetMappingEngine
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(u.GetType)
 
                 schema.SetPropertyValue(u, GetField("Email"), email, oschema)
@@ -258,7 +258,7 @@ Namespace Web
 
             UserCreated(u)
             status = MembershipCreateStatus.Success
-            Return CreateMembershipUser(u.MappingEngine, u)
+            Return CreateMembershipUser(u.GetMappingEngine, u)
             'End Using
 
         End Function
@@ -304,7 +304,7 @@ Namespace Web
             End If
             If u IsNot Nothing Then
                 'Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(u.GetType)
+                Dim oschema As IEntitySchema = u.GetMappingEngine.GetEntitySchema(u.GetType)
                 Using st As New ModificationsTracker(UserMapper.CreateManager)
                     Using u.BeginEdit()
                         Schema.SetPropertyValue(u, GetField("Password"), HashPassword(psw), oschema)
@@ -334,7 +334,7 @@ Namespace Web
                 'Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim lf As String = GetField("IsLockedOut")
                 If schema.HasProperty(u.GetType, lf) Then
-                    Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(u.GetType)
+                    Dim oschema As IEntitySchema = u.GetMappingEngine.GetEntitySchema(u.GetType)
                     Using st As New ModificationsTracker(UserMapper.CreateManager)
                         Using u.BeginEdit()
                             Schema.SetPropertyValue(u, lf, False, oschema)
@@ -358,7 +358,7 @@ Namespace Web
                 Dim u As IKeyEntity = FindUserByEmail(user.Email, Nothing)
                 If u IsNot Nothing Then
                     'Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(u.GetType)
+                    Dim oschema As IEntitySchema = u.GetMappingEngine.GetEntitySchema(u.GetType)
                     Using st As New ModificationsTracker(UserMapper.CreateManager)
                         Using u.BeginEdit()
                             Schema.SetPropertyValue(u, UserMapper.UserNameField, user.Comment, oschema)
@@ -385,7 +385,7 @@ Namespace Web
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim lf As String = GetField("IsLockedOut")
             Dim tt As System.Type = u.GetType
-            Dim oschema As IEntitySchema = u.MappingEngine.GetEntitySchema(tt)
+            Dim oschema As IEntitySchema = u.GetMappingEngine.GetEntitySchema(tt)
             If schema.HasProperty(tt, lf) AndAlso CBool(schema.GetPropertyValue(u, lf, oschema)) Then
                 Return False
             End If
@@ -510,7 +510,7 @@ Namespace Web
                     Return Nothing
                 End If
             End If
-            Return CreateMembershipUser(u.MappingEngine, u)
+            Return CreateMembershipUser(u.GetMappingEngine, u)
             'End Using
         End Function
 
@@ -527,7 +527,7 @@ Namespace Web
                 If u Is Nothing Then
                     Return Nothing
                 End If
-                Return CreateMembershipUser(u.MappingEngine, u)
+                Return CreateMembershipUser(u.GetMappingEngine, u)
                 'End Using
             End If
             Return Nothing
@@ -540,7 +540,7 @@ Namespace Web
             If u Is Nothing Then
                 Return Nothing
             End If
-            Return CStr(u.MappingEngine.GetPropertyValue(u, GetField("Email"), Nothing))
+            Return CStr(u.GetMappingEngine.GetPropertyValue(u, GetField("Email"), Nothing))
             'End Using
         End Function
 #End Region
@@ -716,7 +716,7 @@ Namespace Web
             End If
 
             If u IsNot Nothing Then
-                Dim schema As ObjectMappingEngine = u.MappingEngine
+                Dim schema As ObjectMappingEngine = u.GetMappingEngine
                 Dim laf As String = UserMapper.LastActivityField
                 If Not String.IsNullOrEmpty(laf) Then
                     Dim dt As Date = CDate(schema.GetPropertyValue(u, laf, Nothing))
@@ -746,7 +746,7 @@ Namespace Web
 
             Dim onlineSpan As TimeSpan = New TimeSpan(0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0)
             Dim compareTime As DateTime = UserMapper.GetNow.Subtract(onlineSpan)
-            Dim last As Date = CDate(u.MappingEngine.GetPropertyValue(u, UserMapper.LastActivityField, Nothing))
+            Dim last As Date = CDate(u.GetMappingEngine.GetPropertyValue(u, UserMapper.LastActivityField, Nothing))
             Return last > compareTime
         End Function
 

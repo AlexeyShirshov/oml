@@ -534,6 +534,8 @@ Namespace Cache
             End Using
         End Sub
 
+
+#If OLDM2M Then
         Protected Friend Function GetM2MEntries(ByVal obj As _IKeyEntity, ByVal name As String) As ICollection(Of Pair(Of M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -570,7 +572,7 @@ Namespace Cache
                 Return etrs
             End Using
         End Function
-
+#End If
         Protected Friend Sub UpdateM2MEntries(ByVal obj As _IKeyEntity, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")

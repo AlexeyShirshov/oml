@@ -372,7 +372,7 @@ Namespace Cache
         End Function
 
         Public Overridable Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
-            mgr.ListConverter.Delete(_obj, obj)
+            mgr.ListConverter.Delete(_obj, obj, mgr)
         End Sub
 
         Public Overridable Sub Clear(ByVal mgr As OrmManager)
@@ -394,6 +394,8 @@ Namespace Cache
         '    End Get
         'End Property
     End Class
+
+#If OLDM2M Then
 
     <Serializable()> _
     Public Class M2MCache
@@ -555,5 +557,7 @@ Namespace Cache
             Return 0
         End Function
     End Class
+
+#End If
 
 End Namespace

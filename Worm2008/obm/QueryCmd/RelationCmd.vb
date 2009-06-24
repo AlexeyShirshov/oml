@@ -511,10 +511,11 @@ l1:
                         If _WithLoad(m2mEU, mpe) Then
                             _sl.AddRange(mpe.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
-                            Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
-                            Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
-                            se.Attributes = Field2DbRelations.PK
-                            _sl.Add(se)
+                            'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
+                            'Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
+                            'se.Attributes = Field2DbRelations.PK
+                            '_sl.Add(se)
+                            _sl.AddRange(mpe.GetPrimaryKeys(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         End If
                     Else
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
@@ -567,7 +568,7 @@ l1:
                 'End If
 
                 If schema Is Nothing Then
-                    schema = m2mObject.MappingEngine
+                    schema = m2mObject.GetMappingEngine
                     If schema Is Nothing AndAlso _getMgr IsNot Nothing Then
                         Using mgr As OrmManager = _getMgr.CreateManager
                             schema = mgr.MappingEngine
@@ -661,7 +662,7 @@ l1:
 
         Public Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr, MappingEngine)
+                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr)
                 End Using
             End Using
@@ -698,7 +699,7 @@ l1:
 
         Public Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using mgr As OrmManager = getMgr.CreateManager
-                Using New SetManagerHelper(mgr, getMgr, MappingEngine)
+                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr, start, length)
                 End Using
             End Using
@@ -741,35 +742,43 @@ l1:
             End If
         End Sub
 
-        Public Sub Add(ByVal o As IKeyEntity, ByVal key As String)
+        Public Sub Add(ByVal o As ICachedEntity, ByVal key As String)
             If o IsNot Nothing Then
                 Relation.Host.Add(o, key)
                 If Not IsM2M Then
                     Using gm As IGetManager = o.GetMgr
                         Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                        Try
+                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                        Catch ex As InvalidCastException
+                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
+                        End Try
                     End Using
                 End If
             End If
         End Sub
 
-        Public Sub Add(ByVal o As IKeyEntity)
+        Public Sub Add(ByVal o As ICachedEntity)
             If o IsNot Nothing Then
                 Relation.Host.Add(o)
                 If Not IsM2M Then
                     Using gm As IGetManager = o.GetMgr
                         Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                        Try
+                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                        Catch ex As InvalidCastException
+                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
+                        End Try
                     End Using
                 End If
             End If
         End Sub
 
-        Public Sub Remove(ByVal o As IKeyEntity, ByVal key As String)
+        Public Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
             Relation.Host.Remove(o, key)
         End Sub
 
-        Public Sub Remove(ByVal o As IKeyEntity)
+        Public Sub Remove(ByVal o As ICachedEntity)
             Relation.Host.Remove(o)
         End Sub
 
@@ -785,18 +794,22 @@ l1:
             Next
         End Sub
 
-        Public Sub Merge(ByVal col As IList(Of IKeyEntity), ByVal removeNotInList As Boolean)
-            Relation.Merge(Me, col, removeNotInList)
+        Public Sub Reject(ByVal mgr As OrmManager)
+            Relation.Reject(mgr)
         End Sub
 
-        Friend Sub SetCache(ByVal l As IEnumerable)
-            If _getMgr Is Nothing Then
+        Public Sub Reject()
+            If CreateManager Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
             Using mgr As OrmManager = CreateManager.CreateManager
-                CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
+                Reject(mgr)
             End Using
+        End Sub
+
+        Public Sub Merge(ByVal col As IList(Of ICachedEntity), ByVal removeNotInList As Boolean)
+            Relation.Merge(Me, col, removeNotInList)
         End Sub
 
         Public ReadOnly Property IsM2M() As Boolean
@@ -816,7 +829,12 @@ l1:
         End Property
 
         Public Overloads Overrides Function Count(ByVal mgr As OrmManager) As Integer
-            Return MyBase.Count(mgr) + Relation.Added.Count - Relation.Deleted.Count
+            Dim cnt As Integer = MyBase.Count(mgr)
+            If Relation.HasChanges Then
+                cnt -= mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Deleted, Filter).Count
+                cnt += mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Added, Filter).Count
+            End If
+            Return cnt
         End Function
 
         Protected Friend Overrides Function ModifyResult(Of T As Entities._IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)

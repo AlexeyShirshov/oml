@@ -20,13 +20,6 @@ Public MustInherit Class StmtGenerator
     Public MustOverride ReadOnly Property FTSKey() As String
     Public MustOverride Function Comment(ByVal s As String) As String
     Public MustOverride ReadOnly Property PlanHint() As String
-    'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource) As Criteria.ICtor
-    'Public MustOverride Function CreateCriteria(ByVal os As ObjectSource, ByVal propertyAlias As String) As Criteria.CriteriaField
-    'Public MustOverride Function CreateCriteria(ByVal table As SourceFragment) As Criteria.ICtor
-    'Public MustOverride Function CreateCriteria(ByVal table As SourceFragment, ByVal columnName As String) As Criteria.CriteriaColumn
-    'Public MustOverride Function CreateCustom(ByVal format As String, ByVal value As Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilter
-    'Public MustOverride Function CreateConditionCtor() As Condition.ConditionConstructor
-    'Public MustOverride Function CreateCriteriaLink(ByVal con As Condition.ConditionConstructor) As Criteria.CriteriaLink
 
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Entities.Query.TopAspect
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Entities.Query.TopAspect
@@ -50,6 +43,10 @@ Public MustInherit Class StmtGenerator
     Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal filterInfo As Object, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
+
+    Public MustOverride Function FormatGroupBy(ByVal t As GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+    Public MustOverride Function FormatOrderBy(ByVal t As SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
+    Public MustOverride Function FormatAggregate(ByVal t As AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
 
     Public MustOverride ReadOnly Property SupportParams() As Boolean
 

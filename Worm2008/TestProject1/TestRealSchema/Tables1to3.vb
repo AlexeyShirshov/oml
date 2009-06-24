@@ -69,7 +69,7 @@ Public Class Tables1to3
             Case "Table3"
                 Return _table3
             Case Else
-                Return MappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                Return GetMappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select

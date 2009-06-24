@@ -125,19 +125,19 @@ Imports Worm.Entities.Meta
             Try
                 Using s As New ModificationsTracker(mgr)
 
-                    Assert.IsFalse(e.InternalProperties.HasM2MChanges)
-                    Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
+                    Assert.IsFalse(e.InternalProperties.HasRelaionalChanges)
+                    Assert.IsFalse(e2.InternalProperties.HasRelaionalChanges)
 
                     e.Relations.Add(e2)
 
-                    Assert.IsTrue(e.InternalProperties.HasM2MChanges)
-                    Assert.IsTrue(e2.InternalProperties.HasM2MChanges)
+                    Assert.IsTrue(e.InternalProperties.HasRelaionalChanges)
+                    Assert.IsTrue(e2.InternalProperties.HasRelaionalChanges)
 
                     s.AcceptModifications()
                 End Using
 
-                Assert.IsFalse(e.InternalProperties.HasM2MChanges)
-                Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
+                Assert.IsFalse(e.InternalProperties.HasRelaionalChanges)
+                Assert.IsFalse(e2.InternalProperties.HasRelaionalChanges)
 
                 l = e.Relations.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.AreEqual(5, l.Count)
@@ -220,7 +220,7 @@ Imports Worm.Entities.Meta
 
                     Assert.IsTrue(CType(e2, Worm.Entities.IRelations).GetRelation(GetType(Entity)).Added.Contains(e))
                     Assert.IsTrue(e2.InternalProperties.HasChanges)
-                    Assert.IsTrue(e.InternalProperties.HasM2MChanges)
+                    Assert.IsTrue(e.InternalProperties.HasRelaionalChanges)
                     s.AcceptModifications()
                 End Using
 

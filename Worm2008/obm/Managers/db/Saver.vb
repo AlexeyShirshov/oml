@@ -364,9 +364,9 @@ l1:
                         Dim oldME As ObjectMappingEngine = Nothing
                         Dim blb As Boolean
                         Try
-                            If Not _mgr.MappingEngine.Equals(o.MappingEngine) Then
+                            If Not _mgr.MappingEngine.Equals(o.GetMappingEngine) Then
                                 oldME = _mgr._schema
-                                _mgr._schema = o.MappingEngine
+                                _mgr._schema = o.GetMappingEngine
                             End If
                             blb = _mgr.SaveChanges(o, False)
                         Finally
