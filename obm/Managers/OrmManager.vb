@@ -1815,16 +1815,23 @@ l1:
         'End If
 
         'Debug.Assert(obj.IsLoaded)
-        Dim dic As IDictionary = GetDictionary(obj.GetType)
+        Dim t As Type = obj.GetType
+
+        Dim dic As IDictionary = GetDictionary(t)
 
         If dic Is Nothing Then
             ''todo: throw an exception when all collections will be implemented
             'Return
-            Dim name As String = obj.GetType.Name
+            Dim name As String = t.Name
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        CacheBase.AddObjectInternal(obj, New CacheKey(obj), dic)
+        Dim id As CacheKey = New CacheKey(obj)
+        Dim sync_key As String = "LoadType" & id.ToString & t.ToString
+
+        Using SyncHelper.AcquireDynamicLock(sync_key)
+            CacheBase.AddObjectInternal(obj, id, dic)
+        End Using
     End Sub
 
     Protected Friend Function EnsureInCache(ByVal obj As ICachedEntity) As ICachedEntity
@@ -1865,18 +1872,11 @@ l1:
     End Function
 
     Public Function RemoveObjectFromCache(ByVal obj As _ICachedEntity) As Boolean
-
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj parameter cannot be nothing")
         End If
 
-        Using obj.GetSyncRoot
-            If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                Return False
-            End If
-
-            Return _RemoveObjectFromCache(obj)
-        End Using
+        Return _RemoveObjectFromCache(obj)
     End Function
 
     Protected Friend Function _RemoveObjectFromCache(ByVal obj As _ICachedEntity) As Boolean
@@ -1896,29 +1896,35 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
-                Return False
-            End If
-
-            dic.Remove(id)
-
-            Dim c As OrmCache = TryCast(_cache, OrmCache)
-            If c IsNot Nothing Then
-                c.RemoveDepends(obj)
-#If OLDM2M Then
-                Dim orm As _IKeyEntity = TryCast(obj, _IKeyEntity)
-                If orm IsNot Nothing Then
-                    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
-                        If Not o.First.Entry.HasChanges Then
-                            Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
-                            mdic.Remove(o.Second.Second)
-                        End If
-                    Next
+            Using obj.GetSyncRoot
+                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                    Return False
                 End If
-#End If
-            End If
 
-            _cache.RegisterRemoval(obj, Me, oschema)
+                If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
+                    Return False
+                End If
+
+                dic.Remove(id)
+
+                Dim c As OrmCache = TryCast(_cache, OrmCache)
+                If c IsNot Nothing Then
+                    c.RemoveDepends(obj)
+#If OLDM2M Then
+                    Dim orm As _IKeyEntity = TryCast(obj, _IKeyEntity)
+                    If orm IsNot Nothing Then
+                        For Each o As Pair(Of M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
+                            If Not o.First.Entry.HasChanges Then
+                                Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
+                                mdic.Remove(o.Second.Second)
+                            End If
+                        Next
+                    End If
+#End If
+                End If
+
+                _cache.RegisterRemoval(obj, Me, oschema)
+            End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
             Debug.Assert(Cache.ShadowCopy(obj, Me, oschema) Is Nothing)
