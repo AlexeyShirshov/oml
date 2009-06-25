@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Worm.CodeGen.Core.CodeDomExtensions;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
@@ -41,6 +42,23 @@ namespace Worm.CodeGen.Core.Descriptors
             RawNamespace = nameSpace;
             _baseEntity = baseEntity;
             Behaviour = behaviour;
+        }
+
+        private CodeEntityTypeDeclaration _decl;
+        public CodeEntityTypeDeclaration TypeDeclaration 
+        {
+            get
+            {
+                if (_decl == null)
+                {
+                    _decl = Worm.CodeGen.Core.OrmCodeDomGenerator.s_ctrl.Current.GetEntityDeclaration(this);
+                }
+                return _decl;
+            }
+            set
+            {
+                _decl = value;
+            }
         }
 
         public string Identifier

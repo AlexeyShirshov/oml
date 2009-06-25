@@ -54,7 +54,7 @@ Imports Worm.Criteria.Joins
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1.Type).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
+        q.From(t1.EntityType).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
 
         Assert.AreEqual(2, q.SingleSimple(Of Integer))
     End Sub

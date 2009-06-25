@@ -60,7 +60,7 @@ Namespace Expressions2
     End Interface
 
     Public Interface IHashable
-        Function Test(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema) As IParameterExpression.EvalResult
+        Function Test(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As Entities._IEntity) As IParameterExpression.EvalResult
         Function MakeDynamicString(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As Entities.ICachedEntity) As String
     End Interface
 
@@ -106,10 +106,10 @@ Namespace Expressions2
                     _v = value
                 End Set
             End Property
+
         End Class
 
-        Delegate Sub ModifyValueDelegate(ByVal sender As IParameterExpression, ByVal args As ModifyValueArgs)
-        Event ModifyValue As ModifyValueDelegate
+        Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As ModifyValueArgs)
     End Interface
 
     Public Interface IContextable
@@ -119,8 +119,23 @@ Namespace Expressions2
 
     Public Interface IEntityPropertyExpression
         Inherits IContextable, ICloneable
-        'Property Entity() As EntityUnion
-        'Property PropertyAlias() As String
+
+        Class FormatBehaviourArgs
+
+            Private _notNeedAlias As Boolean
+            Public Property NeedAlias() As Boolean
+                Get
+                    Return Not _notNeedAlias
+                End Get
+                Set(ByVal value As Boolean)
+                    _notNeedAlias = Not value
+                End Set
+            End Property
+
+        End Class
+
+        Event FormatBehaviour(ByVal sender As IEntityPropertyExpression, ByVal args As FormatBehaviourArgs)
+
         Property ObjectProperty() As ObjectProperty
     End Interface
 

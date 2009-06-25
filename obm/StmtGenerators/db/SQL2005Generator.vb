@@ -79,7 +79,7 @@ Namespace Database
             Next
             sb.Length -= 1
             If sb.Length > 7 Then
-                sb.Append(" INTO ").Append(table).Append("(")
+                sb.Append(" into ").Append(table).Append("(")
                 For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
                     sb.Append(pp.Second.First).Append(",")
 
@@ -185,8 +185,8 @@ Namespace Database
             End Get
         End Property
 
-        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
-            If t = Expressions2.GroupExpressions.SummaryValues.Custom Then
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpression.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+            If t = Expressions2.GroupExpression.SummaryValues.Custom Then
                 Return "group by " & custom & "(" & fields & ")"
             Else
                 Return MyBase.FormatGroupBy(t, fields, custom)

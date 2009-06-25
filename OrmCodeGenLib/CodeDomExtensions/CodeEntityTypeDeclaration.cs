@@ -119,6 +119,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     Type = new CodeTypeReference(typeof(RelationCmd))
                 };
 
+                if (!string.IsNullOrEmpty(link.AccessorDescription))
+                    OrmCodeDomGenerator.SetMemberDescription(memberProperty, link.AccessorDescription);
+
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
@@ -134,7 +137,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         )
                     )
                 );
+
                 Members.Add(memberProperty);
+
+                OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
             }
 
             #endregion
@@ -190,6 +196,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                         Type = new CodeTypeReference(typeof(RelationCmd))
                     };
 
+                    if (!string.IsNullOrEmpty(relation.Direct.AccessorDescription))
+                        OrmCodeDomGenerator.SetMemberDescription(memberProperty, relation.Direct.AccessorDescription);
+
                     memberProperty.GetStatements.Add(
                         new CodeMethodReturnStatement(
                             new CodeMethodInvokeExpression(
@@ -205,7 +214,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                             )
                         )
                     );
+
                     Members.Add(memberProperty);
+
+                    OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
                 }
 
                 accessorName = relation.Reverse.AccessorName;
@@ -253,6 +265,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                             MemberAttributes.Public | MemberAttributes.Final,
                         Type = new CodeTypeReference(typeof(RelationCmd))
                     };
+
+                    if (!string.IsNullOrEmpty(relation.Reverse.AccessorDescription))
+                        OrmCodeDomGenerator.SetMemberDescription(memberProperty, relation.Reverse.AccessorDescription);
+
                     memberProperty.GetStatements.Add(
                         new CodeMethodReturnStatement(
                             new CodeMethodInvokeExpression(
@@ -268,7 +284,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                             )
                         )
                     );
+
                     Members.Add(memberProperty);
+
+                    OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
                 }
             }
             
@@ -326,17 +345,16 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
             foreach (var entityRelation in m_entity.GetEntityRelations(false))
             {
-
                 string accessorName = string.IsNullOrEmpty(entityRelation.AccessorName) ? OrmCodeGenNameHelper.GetMultipleForm(entityRelation.Entity.Name) : entityRelation.AccessorName;
 
                 var staticProperty = new CodeMemberProperty
-                                         {
-                                             Name = accessorName + "Relation",
-                                             HasGet = true,
-                                             HasSet = false,
-                                             Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
-                                             Type = relationDescType
-                                         };
+                 {
+                     Name = accessorName + "Relation",
+                     HasGet = true,
+                     HasSet = false,
+                     Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.Static,
+                     Type = relationDescType
+                 };
 
 
                 staticProperty.GetStatements.Add(
@@ -398,6 +416,10 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                          MemberAttributes.Public | MemberAttributes.Final,
                      Type = new CodeTypeReference(typeof(RelationCmd))
                  };
+
+                if (!string.IsNullOrEmpty(entityRelation.AccessorDescription))
+                    OrmCodeDomGenerator.SetMemberDescription(memberProperty, entityRelation.AccessorDescription);
+
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
@@ -414,12 +436,14 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
                 Members.Add(memberProperty);
+                
+                OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
             }
         }
 
         protected virtual void OnPopulatePropertiesAccessors()
         {
-            foreach (var propertyDescription in Entity.Properties)
+            foreach (var propertyDescription in Entity.ActiveProperties)
             {
                 if (propertyDescription.Group == null)
                     continue;
@@ -447,7 +471,6 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 Members.Add(property);
             }
 
-
         }
 
         public CodeEntityTypeDeclaration(EntityDescription entity, bool useType)
@@ -455,6 +478,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
         {
             Entity = entity;
             m_typeReference.BaseType = FullName;
+            entity.TypeDeclaration = this;
         }
 
         public CodeSchemaDefTypeDeclaration SchemaDef

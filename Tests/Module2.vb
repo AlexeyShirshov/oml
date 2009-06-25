@@ -25,10 +25,9 @@ Module Module2
         End Sub
     End Class
 
-    <Entities.Meta.Entity("junk", "id", "1")> _
+    <Entities.Meta.Entity("dbo", "junk", "1")> _
     Public Class TestEditTable
-        Inherits Entities.OrmBaseT(Of TestEditTable)
-        Implements Entities.IOrmEditable(Of TestEditTable)
+        Inherits Entities.KeyEntity
 
         Private _dt As Date
         Public ReadOnly Property Dt() As Date
@@ -78,16 +77,17 @@ Module Module2
             _s = args.SavedObject.ObjectState
         End Sub
 
-        'Protected _rs As Orm.ObjectState
-        'Public ReadOnly Property RejectedState() As Orm.ObjectState
-        '    Get
-        '        Return _rs
-        '    End Get
-        'End Property
+        Private _id As Integer
 
-        'Protected Sub Rejected(ByVal state As Worm.Orm.ObjectState)
-        '    _rs = state
-        'End Sub
+        <Entities.Meta.EntityPropertyAttribute(Entities.Meta.Field2DbRelations.PrimaryKey, column:="id", PropertyAlias:="ID", DbType:="int")> _
+        Public Overrides Property Identifier() As Object
+            Get
+                Return _id
+            End Get
+            Set(ByVal value As Object)
+                _id = CInt(value)
+            End Set
+        End Property
 
         Public Sub New()
 
@@ -136,12 +136,12 @@ Module Module2
             End Set
         End Property
 
-        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Entities.IOrmEditable(Of TestEditTable).CopyBody
-            With [to]
-                ._name = from._name
-                ._code = from._code
-            End With
-        End Sub
+        'Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Entities.IOrmEditable(Of TestEditTable).CopyBody
+        '    With [to]
+        '        ._name = from._name
+        '        ._code = from._code
+        '    End With
+        'End Sub
     End Class
 
     Private _cache As New OrmCache

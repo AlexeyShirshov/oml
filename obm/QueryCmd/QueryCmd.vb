@@ -452,7 +452,19 @@ Namespace Query
                     Dim ef As OrmFilterTemplate = TryCast(tmf.Template, OrmFilterTemplate)
                     fr = New FieldReference(ef.ObjectSource, ef.PropertyAlias)
                 End If
-                Return New Pair(Of List(Of Object), FieldReference)(CType(CType(tmf.Value, InValue).Value, List(Of Object)), fr)
+                Dim col As ICollection = CType(tmf.Value, InValue).Value
+                If Not TypeOf col Is List(Of Object) Then
+                    Dim l As New List(Of Object)
+                    For Each oo As Object In col
+                        If GetType(IKeyEntity).IsAssignableFrom(oo.GetType) Then
+                            l.Add(CType(oo, IKeyEntity).Identifier)
+                        Else
+                            l.Add(oo)
+                        End If
+                    Next
+                    col = l
+                End If
+                Return New Pair(Of List(Of Object), FieldReference)(CType(col, List(Of Object)), fr)
             End Get
         End Property
 
@@ -2165,6 +2177,10 @@ l1:
         'End Property
 #End Region
 
+        Public Sub ClearJoins()
+            Joins = New QueryJoin() {}
+        End Sub
+
         <Obsolete("User Join method")> _
         Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
             Dim l As New List(Of QueryJoin)
@@ -2789,7 +2805,7 @@ l1:
                     Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(st)
                     For Each tt As Type In types
                         Dim pk As String = mgr.MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias
-                        JoinAdd(JCtor.left_join(tt).on(selOS, spk).eq(tt, pk))
+                        Join(JCtor.left_join(tt).on(selOS, spk).eq(tt, pk))
                         SelectAdd(tt, withLoad)
                     Next
                     Dim l As New List(Of T)
@@ -3138,7 +3154,9 @@ l1:
                         l = New List(Of TValue)
                         d(key) = l
                     End If
-                    l.Add(val)
+                    If val IsNot Nothing Then
+                        l.Add(val)
+                    End If
                 Next
 
                 Return d

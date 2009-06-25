@@ -217,6 +217,29 @@ Imports Worm.Query
 
     End Sub
 
+    <TestMethod()> Public Sub TestRemoveExpression()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.BitAnd, p)
+
+        Assert.AreEqual(a.Expression, a)
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,x)", a.GetDynamicString)
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+
+        Dim a2 As IComplexExpression = a.ReplaceExpression(p, Nothing)
+
+        Assert.AreNotEqual(a2, a)
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str)", a2.GetDynamicString)
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str)", a2.GetStaticString(mpe, contextFilter))
+
+    End Sub
+
     <TestMethod()> Public Sub TestEval()
         Dim mpe As New ObjectMappingEngine
         Dim contextFilter As Object = Nothing
@@ -241,5 +264,141 @@ Imports Worm.Query
         Assert.IsTrue(New BinaryExpression(a, BinaryOperationType.And, a3).CanEval(mpe))
 
         Assert.IsFalse(New BinaryExpression(a, BinaryOperationType.Or, a3).CanEval(mpe))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestMakeDynString()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.Equal, p)
+
+        Dim obj As New Entity2
+        obj.Str = "x"
+
+        Assert.AreEqual(a.GetDynamicString, a.MakeDynamicString(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestMakeDynStringComplex()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.Equal, p)
+
+        Dim e2 As New EntityExpression("ID", GetType(Entity2))
+        Dim p2 As New ParameterExpression(1)
+        Dim a2 As New BinaryExpression(e2, BinaryOperationType.Equal, p2)
+
+        Dim a3 As New BinaryExpression(a, BinaryOperationType.And, a2)
+
+        Dim obj As New Entity2(1, Nothing, mpe)
+        obj.Str = "x"
+
+        Assert.AreEqual(a3.GetDynamicString, a3.MakeDynamicString(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestTestMethod()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.Equal, p)
+
+        Dim obj As New Entity2
+        obj.Str = "x"
+
+        Assert.AreEqual(IParameterExpression.EvalResult.Found, a.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+
+        obj.Str = "y"
+        Assert.AreEqual(IParameterExpression.EvalResult.NotFound, a.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestTestMethodComplex()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.Equal, p)
+
+        Dim e2 As New EntityExpression("ID", GetType(Entity2))
+        Dim p2 As New ParameterExpression(1)
+        Dim a2 As New BinaryExpression(e2, BinaryOperationType.Equal, p2)
+
+        Dim a3 As New BinaryExpression(a, BinaryOperationType.And, a2)
+
+        Dim obj As New Entity2(1, Nothing, mpe)
+        obj.Str = "x"
+
+        Assert.AreEqual(IParameterExpression.EvalResult.Found, a.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+
+        obj.Str = "y"
+        Assert.AreEqual(IParameterExpression.EvalResult.NotFound, a.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestTestMethod2()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.NotEqual, p)
+
+        Dim obj As New Entity2
+        obj.Str = "x"
+
+        Assert.AreEqual(IParameterExpression.EvalResult.NotFound, a.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestTestMethodComplex2()
+        Dim mpe As New ObjectMappingEngine
+        Dim contextFilter As Object = Nothing
+        Dim stmt As New SQLGenerator
+        Dim pmgr As New ParamMgr(stmt, "p")
+        Dim almgr As IPrepareTable = AliasMgr.Create
+
+        Dim e As New EntityExpression("Str", GetType(Entity2))
+        Dim p As New ParameterExpression("x")
+        Dim a As New BinaryExpression(e, BinaryOperationType.Equal, p)
+
+        Dim e2 As New EntityExpression("ID", GetType(Entity2))
+        Dim p2 As New ParameterExpression(1)
+        Dim a2 As New BinaryExpression(e2, BinaryOperationType.Equal, p2)
+
+        Dim a3 As New BinaryExpression(a, BinaryOperationType.Or, a2)
+
+        Dim obj As New Entity2(2, Nothing, mpe)
+        obj.Str = "x"
+
+        Assert.AreEqual(IParameterExpression.EvalResult.Found, a3.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
+
+        a3 = New BinaryExpression(a, BinaryOperationType.And, a2)
+
+        Assert.AreEqual(IParameterExpression.EvalResult.NotFound, a3.Test(mpe, mpe.GetEntitySchema(GetType(Entity2)), obj))
     End Sub
 End Class

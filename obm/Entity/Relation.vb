@@ -47,8 +47,8 @@ Namespace Entities
                 Dim e2 As EntityUnion = r2.Relation.Entity
                 If Not String.IsNullOrEmpty(e1.EntityName) AndAlso Not String.IsNullOrEmpty(e2.EntityName) Then
                     Return e1.EntityName = e2.EntityName
-                ElseIf e1.Type IsNot Nothing AndAlso e2.Type IsNot Nothing Then
-                    Return e1.Type Is e2.Type
+                ElseIf e1.EntityType IsNot Nothing AndAlso e2.EntityType IsNot Nothing Then
+                    Return e1.EntityType Is e2.EntityType
                 Else
                     Return e1.GetRealType(schema) Is e2.GetRealType(schema)
                 End If

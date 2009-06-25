@@ -490,6 +490,11 @@
         <xs:documentation>Disable relation</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="accessorDescription" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Комментарий для свойства сущности</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="SelfDirectionTarget_t">
 	<xs:annotation>
@@ -515,6 +520,11 @@
 			  <xs:documentation>Тип связанной сущности для генерации методов</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+    <xs:attribute name="accessorDescription" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Комментарий для свойства сущности</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="LinkTarget_t">
     <xs:annotation>
@@ -545,6 +555,11 @@
 			  <xs:documentation>Тип связанной сущности для генерации методов</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+    <xs:attribute name="accessorDescription" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation>Комментарий для свойства сущности</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="TypesCollection_t">
     <xs:annotation>

@@ -476,13 +476,7 @@ Namespace Expressions2
                              ByVal oper As BinaryOperationType, ByVal [case] As Boolean, _
                              ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult
 
-            Dim r As IParameterExpression.EvalResult
-
-            If r <> IParameterExpression.EvalResult.Unknown Then
-                Return r
-            Else
-                r = IParameterExpression.EvalResult.NotFound
-            End If
+            Dim r As IParameterExpression.EvalResult = IParameterExpression.EvalResult.NotFound
 
             If filterValue IsNot Nothing AndAlso evaluatedValue IsNot Nothing Then
                 Dim vt As Type = evaluatedValue.GetType()

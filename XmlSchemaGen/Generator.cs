@@ -179,7 +179,7 @@ namespace Worm.CodeGen.XmlGenerator
                                 {
                                     columns.Add(c, c);
                                 }
-                                catch (ArgumentException ex)
+                                catch (ArgumentException)
                                 {
                                     string[] attr;
                                     if (IsPrimaryKey(c, out attr) && columns[c].IsFK && c.PKCount == 1)
@@ -974,7 +974,7 @@ namespace Worm.CodeGen.XmlGenerator
                                     {
                                         return GetRelatedType(p.Second, columns, odef, escape, defferedCols, ref clm);
                                     }
-                                    catch (InvalidDataException ex)
+                                    catch (InvalidDataException)
                                     {
                                         notFound(c);
                                         return GetClrType(col.DbType, col.IsNullable, odef);

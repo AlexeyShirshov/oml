@@ -48,6 +48,14 @@ Namespace Expressions2
             _case = [case]
         End Sub
 
+        Public Sub New(ByVal left As IExpression)
+            If left Is Nothing Then
+                Throw New ArgumentNullException("left")
+            End If
+
+            _v = New Pair(Of IExpression)(left, Nothing)
+        End Sub
+
         Protected Function GetCase() As String
             If _case.HasValue Then
                 Return "$" & _case.Value
@@ -57,11 +65,21 @@ Namespace Expressions2
         End Function
 
         Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
-            Return BinaryType & "(" & Value.First.GetDynamicString & "," & Value.Second.GetDynamicString & ")" & GetCase()
+            Dim s As String = BinaryType & "(" & Left.GetDynamicString
+            If Right IsNot Nothing Then
+                s &= "," & Right.GetDynamicString
+            End If
+            s &= ")" & GetCase()
+            Return s
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return BinaryType & GetCase() & "(" & Value.First.GetStaticString(mpe, contextFilter) & "," & Value.Second.GetStaticString(mpe, contextFilter) & ")"
+            Dim s As String = BinaryType & GetCase() & "(" & Left.GetStaticString(mpe, contextFilter)
+            If Right IsNot Nothing Then
+                s &= "," & Right.GetStaticString(mpe, contextFilter)
+            End If
+            s &= ")"
+            Return s
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
@@ -88,11 +106,22 @@ Namespace Expressions2
         End Function
 
         Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            Dim sb As New StringBuilder
             If _parentheses Then
-                Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & "," & Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & ")"
-            Else
-                Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & "," & Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor)
+                sb.Append("(" ) 
             End If
+
+            sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+
+            If Right IsNot Nothing Then
+                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+            End If
+
+            If _parentheses Then
+                sb.Append(")")
+            End If
+
+            Return sb.ToString
         End Function
 
         'Public MustOverride Function MakeDynamicString(ByVal schema As ObjectMappingEngine, ByVal oschema As Entities.Meta.IEntitySchema, ByVal obj As Entities.ICachedEntity) As String Implements IHashable.MakeDynamicString
@@ -261,7 +290,7 @@ Namespace Expressions2
             For Each e As IExpression In GetExpressions()
                 Dim bexp As BinaryExpression = TryCast(e, BinaryExpression)
                 If bexp IsNot Nothing Then
-                    If bexp.ExpressionType <> BinaryOperationType.Equal Then
+                    If bexp.ExpressionType <> BinaryOperationType.Equal AndAlso bexp.ExpressionType <> BinaryOperationType.And Then
                         Throw New NotSupportedException
                     End If
 
@@ -348,8 +377,8 @@ Namespace Expressions2
         '    End If
         'End Function
 
-        Public Function Test(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, _
-            ByVal oschema As Entities.Meta.IEntitySchema) As IParameterExpression.EvalResult Implements IHashable.Test
+        Public Function Test(ByVal mpe As ObjectMappingEngine, _
+            ByVal oschema As Entities.Meta.IEntitySchema, ByVal obj As Worm.Entities._IEntity) As IParameterExpression.EvalResult Implements IHashable.Test
 
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("schema")
@@ -364,7 +393,7 @@ Namespace Expressions2
             If _oper < BinaryOperationType.Between Then
                 Dim l As Object = Nothing, r As Object = Nothing
                 If GetValue(mpe, obj, oschema, Left, l) AndAlso GetValue(mpe, obj, oschema, Right, r) Then
-                    Helper.Test(l, r, _oper, IsCaseSensitive(mpe), mpe)
+                    b = Helper.Test(l, r, _oper, IsCaseSensitive(mpe), mpe)
                 End If
             ElseIf _oper = BinaryOperationType.Between Then
                 Dim l As Object = Nothing, lv As Object = Nothing, rv As Object = Nothing
@@ -382,16 +411,16 @@ Namespace Expressions2
                 Dim left_ As IHashable = TryCast(Left, IHashable)
 
                 If left_ IsNot Nothing Then
-                    b = left_.Test(mpe, obj, oschema)
+                    b = left_.Test(mpe, oschema, obj)
                     Dim _right As IHashable = TryCast(Right, IHashable)
                     If _right IsNot Nothing Then
                         If _oper = BinaryOperationType.And Then
                             If b = IParameterExpression.EvalResult.Found Then
-                                b = _right.Test(mpe, obj, oschema)
+                                b = _right.Test(mpe, oschema, obj)
                             End If
                         ElseIf _oper = BinaryOperationType.Or Then
                             If b <> IParameterExpression.EvalResult.Unknown Then
-                                Dim r As IParameterExpression.EvalResult = _right.Test(mpe, obj, oschema)
+                                Dim r As IParameterExpression.EvalResult = _right.Test(mpe, oschema, obj)
                                 If r <> IParameterExpression.EvalResult.Unknown Then
                                     If b <> IParameterExpression.EvalResult.Found Then
                                         b = r

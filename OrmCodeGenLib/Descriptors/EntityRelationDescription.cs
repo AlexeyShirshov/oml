@@ -7,6 +7,8 @@ namespace Worm.CodeGen.Core.Descriptors
 {
     public class EntityRelationDescription
     {
+        public string AccessorDescription { get; set; }
+
         public EntityDescription SourceEntity
         {
             get;

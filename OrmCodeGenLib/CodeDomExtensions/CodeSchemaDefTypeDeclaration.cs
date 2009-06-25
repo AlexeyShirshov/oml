@@ -1139,9 +1139,9 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
             IsPartial = m_entityClass.IsPartial;
             Attributes = m_entityClass.Attributes;
-            if (m_entityClass.Entity.BaseEntity != null)
+            if (m_entityClass.Entity.BaseEntity != null &&
+                Name == OrmCodeGenNameHelper.GetEntitySchemaDefClassName(m_entityClass.Entity.BaseEntity))
                 Attributes |= MemberAttributes.New;
-
         }
 
     }

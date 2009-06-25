@@ -224,7 +224,7 @@ Namespace Xml
             Throw New ObjectMappingException("invalid opration " & oper.ToString)
         End Function
 
-        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpression.SummaryValues, ByVal fields As String, ByVal custom As String) As String
             Throw New NotSupportedException
         End Function
 

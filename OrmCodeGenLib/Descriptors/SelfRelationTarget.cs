@@ -19,7 +19,9 @@ namespace Worm.CodeGen.Core.Descriptors
             _cascadeDelete = cascadeDelete;
 			_accessorName = accessorName;
         }
-        
+
+        public string AccessorDescription { get; set; }
+
         public string FieldName
         {
             get { return _fieldName; }
