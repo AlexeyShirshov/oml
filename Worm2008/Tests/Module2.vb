@@ -4,6 +4,7 @@ Imports Worm
 Imports Worm.Database.OrmReadOnlyDBManager
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm.Entities.Meta
 
 Module Module2
 
@@ -79,7 +80,7 @@ Module Module2
 
         Private _id As Integer
 
-        <Entities.Meta.EntityPropertyAttribute(Entities.Meta.Field2DbRelations.PrimaryKey, column:="id", PropertyAlias:="ID", DbType:="int")> _
+        <Entities.Meta.EntityPropertyAttribute(Entities.Meta.Field2DbRelations.PrimaryKey, column:="id", PropertyAlias:="ID", DBType:="int")> _
         Public Overrides Property Identifier() As Object
             Get
                 Return _id
@@ -88,6 +89,10 @@ Module Module2
                 _id = CInt(value)
             End Set
         End Property
+
+        Public Overrides Function GetPKValues() As Worm.Entities.Meta.PKDesc()
+            Return New PKDesc() {New PKDesc("ID", _id)}
+        End Function
 
         Public Sub New()
 
@@ -151,7 +156,7 @@ Module Module2
     Private _deleted As ArrayList = ArrayList.Synchronized(New ArrayList)
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
-    Private Const iterCount As Integer = 1000
+    Private Const iterCount As Integer = 500
     Private Const threadCount As Integer = 2
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
@@ -171,13 +176,25 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
+
+        For i As Integer = 0 To 1
+            Dim t As Threading.Thread = Nothing
+            t = New Threading.Thread(AddressOf QuerySub)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf QuerySub2)
+            trd.Add(t)
+        Next
+
         For i As Integer = 0 To threadCount
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
+            t.Priority = Threading.ThreadPriority.AboveNormal
             t = New Threading.Thread(AddressOf Load)
             trd.Add(t)
+            t.Priority = Threading.ThreadPriority.BelowNormal
             t = New Threading.Thread(AddressOf Unload)
             trd.Add(t)
+            t.Priority = Threading.ThreadPriority.BelowNormal
             't = New Threading.Thread(AddressOf DeleteSub)
             'trd.Add(t)
             't = New Threading.Thread(AddressOf AddSub)
@@ -186,17 +203,12 @@ Module Module2
             'Dim t As New Threading.Thread(AddressOf AddSub)
             'trd.Add(t)
         Next
-        For i As Integer = 0 To 1
-            Dim t As Threading.Thread = Nothing
-            t = New Threading.Thread(AddressOf QuerySub)
-            trd.Add(t)
-            t = New Threading.Thread(AddressOf QuerySub2)
-            trd.Add(t)
-        Next
+
         For i As Integer = 0 To trd.Count - 1
             Dim t As Threading.Thread = trd(i)
             t.Start(i)
         Next
+
         For Each t As Threading.Thread In trd
             t.Join()
         Next
@@ -238,6 +250,7 @@ Module Module2
             End Using
             If i Mod 10 = 0 Then
                 Console.WriteLine(String.Format("thread: {0} load: {1}", o, i))
+                Threading.Thread.Sleep(50)
             End If
         Next
     End Sub
@@ -268,6 +281,7 @@ Module Module2
             End Using
             If i Mod 10 = 0 Then
                 Console.WriteLine(String.Format("thread: {0} unload: {1}", o, i))
+                Threading.Thread.Sleep(50)
             End If
         Next
     End Sub
@@ -393,7 +407,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount * 4
+        For i As Integer = 0 To iterCount
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -451,7 +465,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount
+        For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
@@ -485,7 +499,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount
+        For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
