@@ -83,6 +83,12 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
+        Public Shared Function left_join(ByVal eu As EntityUnion) As JoinCondition
+            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+            Dim jc As New JCtor
+            jc._j.Add(j)
+            Return New JoinCondition(jc._j)
+        End Function
 #End Region
 
 #Region " Right joins "

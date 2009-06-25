@@ -1,38 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Worm.Expressions2.BetweenExpresssion" Collapsed="true">
-    <Position X="7" Y="1.75" Width="2" />
+    <Position X="7.25" Y="2" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAQAAAAAAAAAABQEAAAAAAAACAAAAAAAAAAACAAAABA=</HashCode>
+      <HashCode>AAQAAAAAAAAAABAEAAAAAAAACAAAAAAAAAAAAAAAABA=</HashCode>
       <FileName>Query\Expressions\BinaryExpression.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Expressions2.BinaryExpressionBase" Collapsed="true">
-    <Position X="5.5" Y="0.5" Width="2" />
+    <Position X="6" Y="0.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAgAAAQgQEgAAAAAQACAAAAAAQiAChCQAAABA=</HashCode>
+      <HashCode>AAAAAAAAgAABQgAEgACAAAQAiAAAAAAQiAChAQAAAJA=</HashCode>
       <FileName>Query\Expressions\BinaryExpression.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Worm.Expressions2.BinaryExpresssion" Collapsed="true">
-    <Position X="4.25" Y="1.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAgAAAAAAgQEAAAAAAAACAAAAAAAAAAACAAAABA=</HashCode>
-      <FileName>Query\Expressions\BinaryExpression.vb</FileName>
-    </TypeIdentifier>
-  </Class>
   <Class Name="Worm.Expressions2.DBNullExpression" Collapsed="true">
-    <Position X="5.75" Y="4.75" Width="1.5" />
+    <Position X="2.75" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgCAAAAAA=</HashCode>
+      <HashCode>AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAA=</HashCode>
       <FileName>Query\Expressions\Primitive.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Expressions2.EntityExpression" Collapsed="true">
-    <Position X="2.5" Y="0.75" Width="1.5" />
+    <Position X="0.5" Y="5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAgABAQAAAgAAAEAQACAAAEAAQAAAhAAAgABA=</HashCode>
       <FileName>Query\Expressions\EntityExpression.vb</FileName>
@@ -42,13 +35,13 @@
   <Class Name="Worm.Expressions2.GroupExpressions" Collapsed="true">
     <Position X="0.5" Y="1.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAgAAAQAABAAAAAAQACAAABAAQAAAhAIAAQAA=</HashCode>
+      <HashCode>AAAAAAAAgAAAQAQAgAAAAAQACAAAAAAQAAAhAAAAQAA=</HashCode>
       <FileName>Query\Expressions\SelectExpressions.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Expressions2.LiteralExpression" Collapsed="true">
-    <Position X="5.75" Y="3.25" Width="1.5" />
+    <Position X="2.75" Y="3.25" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAgACAQAAAgAAAAAQACAAAAAAQAAAhAAAAAAA=</HashCode>
       <FileName>Query\Expressions\Primitive.vb</FileName>
@@ -56,9 +49,9 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Expressions2.ParameterExpression" Collapsed="true">
-    <Position X="2.75" Y="4.75" Width="2" />
+    <Position X="2.5" Y="0.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAQAAAAggAAAQAAAgAAAAgQACAAAAAAQgAAhCAAAAAA=</HashCode>
+      <HashCode>AAQAAAAggAAAQAAAgAAAAgQACAAAAAAQgAAhAAAAAAA=</HashCode>
       <FileName>Query\Expressions\ParameterExpression.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -74,7 +67,7 @@
   <Class Name="Worm.Expressions2.SortExpression" Collapsed="true">
     <Position X="0.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAACgAAAQAABAAAAAAQACAAAAAAQAAAhAAAAQAA=</HashCode>
+      <HashCode>AAAAAAACgAgAQAAAgAAAAAQACAAAAAAQAAAhAAAAQAA=</HashCode>
       <FileName>Query\Expressions\SelectExpressions.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -82,16 +75,47 @@
   <Class Name="Worm.Expressions2.UnaryExpression" Collapsed="true">
     <Position X="0.5" Y="2.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAgAAAQgQAgAAAAAQACAAAAAAQgAAhCAAAABA=</HashCode>
+      <HashCode>AACAAAAAoAAAQgAAgAAAAAQACAAAAAAQgAAhAAEAABA=</HashCode>
       <FileName>Query\Expressions\Primitive.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Worm.Expressions2.CustomExpression" Collapsed="true">
-    <Position X="2.75" Y="3" Width="1.5" />
+    <Position X="5" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AACAAAAAgAAAQAAAgAAAAAQACAgAAAAQgAAhAAAAAAA=</HashCode>
       <FileName>Query\Expressions\Primitive.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Expressions2.BinaryExpression" Collapsed="true">
+    <Position X="5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAIAAAAgAEAAAAAAAICAAAAAAAAAAACAAAALA=</HashCode>
+      <FileName>Query\Expressions\BinaryExpression.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Expressions2.AggregateExpression" Collapsed="true">
+    <Position X="5" Y="3.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAQAAAgAAAAAQACgAAAAAQAAAhAAAAQAA=</HashCode>
+      <FileName>Query\Expressions\AggregateExpression.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Expressions2.InExpression" Collapsed="true">
+    <Position X="2.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAABAAAAAAAAAQACAAAAAACAAAhAAAAAAA=</HashCode>
+      <FileName>Query\Expressions\ParameterExpression.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Expressions2.TableExpression" Collapsed="true">
+    <Position X="7.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAgAAAAAgABEQAAAgAAAEAQQCAEAAAAQAAAhAAAAAAA=</HashCode>
+      <FileName>Query\Expressions\TableExpression.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>

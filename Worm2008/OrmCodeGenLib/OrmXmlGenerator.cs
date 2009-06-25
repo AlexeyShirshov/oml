@@ -180,25 +180,35 @@ namespace Worm.CodeGen.Core
                     leftElement.SetAttribute("entity", relation.Left.Entity.Identifier);
                     leftElement.SetAttribute("fieldName", relation.Left.FieldName);
                     leftElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Left.CascadeDelete));
-					if (!string.IsNullOrEmpty(relation.Left.AccessorName))
+					
+                    if (!string.IsNullOrEmpty(relation.Left.AccessorName))
 						leftElement.SetAttribute("accessorName", relation.Left.AccessorName);
+
+                    if (!string.IsNullOrEmpty(relation.Left.AccessorDescription))
+                        leftElement.SetAttribute("accessorDescription", relation.Left.AccessorDescription);
+
+                    if (relation.Left.AccessedEntityType != null)
+                        leftElement.SetAttribute("accessedEntityType", relation.Left.AccessedEntityType.Identifier);
 
                     XmlElement rightElement = CreateElement("Right");
                     rightElement.SetAttribute("entity", relation.Right.Entity.Identifier);
                     rightElement.SetAttribute("fieldName", relation.Right.FieldName);
                     rightElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Right.CascadeDelete));
-					if (!string.IsNullOrEmpty(relation.Right.AccessorName))
+					
+                    if (!string.IsNullOrEmpty(relation.Right.AccessorName))
 						rightElement.SetAttribute("accessorName", relation.Right.AccessorName);
 
-					if (relation.Left.AccessedEntityType != null)
-						leftElement.SetAttribute("accessedEntityType", relation.Left.AccessedEntityType.Identifier);
-					if (relation.Right.AccessedEntityType != null)
+                    if (!string.IsNullOrEmpty(relation.Right.AccessorDescription))
+                        rightElement.SetAttribute("accessorDescription", relation.Right.AccessorDescription);
+
+                    if (relation.Right.AccessedEntityType != null)
 						rightElement.SetAttribute("accessedEntityType", relation.Right.AccessedEntityType.Identifier);
 
                     if (relation.UnderlyingEntity != null)
                     {
                         relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
                     }
+
                     relationElement.AppendChild(leftElement);
                     relationElement.AppendChild(rightElement);
                     relationsNode.AppendChild(relationElement);
@@ -220,18 +230,27 @@ namespace Worm.CodeGen.Core
 
                     directElement.SetAttribute("fieldName", relation.Direct.FieldName);
                     directElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Direct.CascadeDelete));
-					if (!string.IsNullOrEmpty(relation.Direct.AccessorName))
+					
+                    if (!string.IsNullOrEmpty(relation.Direct.AccessorName))
 						directElement.SetAttribute("accessorName", relation.Direct.AccessorName);
+
+                    if (!string.IsNullOrEmpty(relation.Direct.AccessorDescription))
+                        directElement.SetAttribute("accessorDescription", relation.Direct.AccessorDescription);
+
+                    if (relation.Direct.AccessedEntityType != null)
+                        directElement.SetAttribute("accessedEntityType", relation.Direct.AccessedEntityType.Identifier);
 
                     XmlElement reverseElement = CreateElement("Reverse");
                     reverseElement.SetAttribute("fieldName", relation.Reverse.FieldName);
                     reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
-					if (!string.IsNullOrEmpty(relation.Reverse.AccessorName))
+					
+                    if (!string.IsNullOrEmpty(relation.Reverse.AccessorName))
 						reverseElement.SetAttribute("accessorName", relation.Reverse.AccessorName);
 
-					if (relation.Direct.AccessedEntityType != null)
-						directElement.SetAttribute("accessedEntityType", relation.Direct.AccessedEntityType.Identifier);
-					if (relation.Reverse.AccessedEntityType != null)
+                    if (!string.IsNullOrEmpty(relation.Reverse.AccessorDescription))
+                        reverseElement.SetAttribute("accessorDescription", relation.Reverse.AccessorDescription);
+
+                    if (relation.Reverse.AccessedEntityType != null)
 						reverseElement.SetAttribute("accessedEntityType", relation.Reverse.AccessedEntityType.Identifier);
 
                     if (relation.UnderlyingEntity != null)
@@ -364,6 +383,10 @@ namespace Worm.CodeGen.Core
 
                         if (!entityRelation.Disabled)
                             relationNode.SetAttribute("disabled", XmlConvert.ToString(entityRelation.Disabled));
+
+                        if (!string.IsNullOrEmpty(entityRelation.AccessorDescription))
+                            relationNode.SetAttribute("accessorDescription", entityRelation.AccessorDescription);
+
                         relationsNode.AppendChild(relationNode);
                     }
 

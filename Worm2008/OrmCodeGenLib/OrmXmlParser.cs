@@ -247,6 +247,8 @@ namespace Worm.CodeGen.Core
                                     ? false
                                     : XmlConvert.ToBoolean(disabledAttribute);
 
+                string accessorDescription = relationNode.GetAttribute("accessorDescription");
+
                 EntityRelationDescription relation = new EntityRelationDescription
                                                          {
                                                              SourceEntity = entity,
@@ -254,7 +256,8 @@ namespace Worm.CodeGen.Core
                                                              PropertyAlias = propertyAlias,
                                                              Name = name,
                                                              AccessorName = accessorName,
-                                                             Disabled = disabled
+                                                             Disabled = disabled,
+                                                             AccessorDescription = accessorDescription
                                                          };
                 entity.EntityRelations.Add(relation);
             }
@@ -518,6 +521,9 @@ namespace Worm.CodeGen.Core
 				string leftAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
 				string rightAccessedEntityTypeId = rightTargetElement.GetAttribute("accessedEntityType");
 
+                string leftAccessorDescription = leftTargetElement.GetAttribute("accessorDescription");
+                string rightAccessorDescription = rightTargetElement.GetAttribute("accessorDescription");
+
 				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, true);
 				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, true);
 
@@ -536,15 +542,21 @@ namespace Worm.CodeGen.Core
 					disabled = XmlConvert.ToBoolean(disabledValue);
 
 
-
 				EntityDescription leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
 
 				EntityDescription rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
 
-				LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete, leftAccessorName);
-				LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete, rightAccessorName);
-				leftLinkTarget.AccessedEntityType = leftAccessedEntityType;
-				rightLinkTarget.AccessedEntityType = rightAccessedEntityType;
+                LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete, leftAccessorName) 
+                { 
+                    AccessorDescription = leftAccessorDescription,
+                    AccessedEntityType = leftAccessedEntityType
+                };
+
+                LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete, rightAccessorName) 
+                { 
+                    AccessorDescription = rightAccessorDescription,
+                    AccessedEntityType = rightAccessedEntityType
+                };
 
 				RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);
@@ -599,7 +611,10 @@ namespace Worm.CodeGen.Core
 				string directAccessedEntityTypeId = directTargetElement.GetAttribute("accessedEntityType");
 				string reverseAccessedEntityTypeId = reverseTargetElement.GetAttribute("accessedEntityType");
 
-				TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, true);
+                string directAccessorDescription = directTargetElement.GetAttribute("accessorDescription");
+                string reverseAccessorDescription = reverseTargetElement.GetAttribute("accessorDescription");
+                
+                TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, true);
 				TypeDescription reverseAccessedEntityType = _ormObjectsDef.GetType(reverseAccessedEntityTypeId, true);
 
 				var relationTable = _ormObjectsDef.GetSourceFragment(relationTableId);
@@ -616,15 +631,19 @@ namespace Worm.CodeGen.Core
 				else
 					disabled = XmlConvert.ToBoolean(disabledValue);
 
-
-
 				EntityDescription entity = _ormObjectsDef.GetEntity(entityId);
 
-				SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete, directAccessorName);
-				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete, reverseAccessorName);
+                SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete, directAccessorName)
+                {
+                    AccessorDescription = directAccessorDescription,
+                    AccessedEntityType = directAccessedEntityType
+                };
 
-				directTarget.AccessedEntityType = directAccessedEntityType;
-				reverseTarget.AccessedEntityType = reverseAccessedEntityType;
+                SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete, reverseAccessorName)
+                {
+                    AccessorDescription = reverseAccessorDescription,
+                    AccessedEntityType = reverseAccessedEntityType
+                };
 
 				SelfRelationDescription relation = new SelfRelationDescription(entity, directTarget, reverseTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);

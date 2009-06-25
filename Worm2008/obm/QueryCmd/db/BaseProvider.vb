@@ -133,7 +133,9 @@ Namespace Query.Database
                 Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 _almgr = AliasMgr.Create
                 If _q._optimizeIn IsNot Nothing Then
-                    _q._f = _q._f.RemoveFilter(_q._optimizeIn)
+                    If _q._f IsNot Nothing Then
+                        _q._f = _q._f.RemoveFilter(_q._optimizeIn)
+                    End If
                     If _q._f Is Nothing Then
                         _q._f = New CustomFilter("1", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("1"))
                     End If

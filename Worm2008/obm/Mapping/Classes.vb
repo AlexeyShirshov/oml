@@ -56,7 +56,7 @@ Namespace Entities.Meta
 
         Public ReadOnly Property UniqueName(ByVal os As EntityUnion) As String
             Get
-                If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+                If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                     Return "%-$" & RawName & "^" & _uqName
                 Else
                     Return os.ObjectAlias.UniqueName & "$" & RawName & "^" & _uqName
@@ -386,7 +386,7 @@ Namespace Entities.Meta
             End If
             Dim i As Integer = _cnt + 1
             Dim [alias] As String = "t" & i
-            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 _defaultAliases.Add(t, [alias])
             Else
                 Dim dic As Generic.IDictionary(Of SourceFragment, String) = Nothing
@@ -421,7 +421,7 @@ Namespace Entities.Meta
         'End Property
 
         Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
-            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 sb.Replace(table.UniqueName(Nothing) & schema.Delimiter, _defaultAliases(table) & gen.Selector)
             Else
                 sb.Replace(table.UniqueName(os) & schema.Delimiter, _objectAlises(os.ObjectAlias)(table) & gen.Selector)
@@ -429,7 +429,7 @@ Namespace Entities.Meta
         End Sub
 
         Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As String Implements IPrepareTable.GetAlias
-            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 Return _defaultAliases(table)
             Else
                 Return _objectAlises(os.ObjectAlias)(table)
@@ -437,7 +437,7 @@ Namespace Entities.Meta
         End Function
 
         Public Function ContainsKey(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As Boolean Implements IPrepareTable.ContainsKey
-            If os Is Nothing OrElse os.Type IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
                 Return _defaultAliases.ContainsKey(table)
             Else
                 Dim dic As Generic.IDictionary(Of SourceFragment, String) = Nothing

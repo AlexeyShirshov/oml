@@ -153,7 +153,7 @@ Namespace Entities.Meta
 
         Public ReadOnly Property Type() As Type
             Get
-                Return _eu.Type
+                Return _eu.EntityType
             End Get
         End Property
 

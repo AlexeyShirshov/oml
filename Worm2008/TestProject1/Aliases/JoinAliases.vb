@@ -68,6 +68,7 @@ Imports Worm.Criteria.Joins
 
         Assert.AreEqual(3, q.SingleSimple(Of Integer))
 
+        q.ClearJoins()
         q.Join(JCtor.left_join(t1).[on](t1, "ID").eq(t2, "ID")).Select(FCtor.count)
 
         Assert.AreEqual(12, q.SingleSimple(Of Integer))

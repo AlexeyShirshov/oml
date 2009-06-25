@@ -90,7 +90,18 @@ Namespace Expressions2
                 End Try
             End If
 
-            Return [alias] & map.ColumnExpression
+            Dim s As String = [alias] & map.ColumnExpression
+
+            If Not String.IsNullOrEmpty(map.ColumnName) Then
+                Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
+                RaiseEvent FormatBehaviour(Me, args)
+
+                If args.NeedAlias Then
+                    s &= " " & map.ColumnName
+                End If
+            End If
+
+            Return s
         End Function
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse
@@ -137,5 +148,7 @@ Namespace Expressions2
                 _op = value
             End Set
         End Property
+
+        Public Event FormatBehaviour(ByVal sender As IEntityPropertyExpression, ByVal args As IEntityPropertyExpression.FormatBehaviourArgs) Implements IEntityPropertyExpression.FormatBehaviour
     End Class
 End Namespace

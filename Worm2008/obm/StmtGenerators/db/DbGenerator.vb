@@ -3004,13 +3004,13 @@ l1:
             End Select
         End Function
 
-        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+        Public Overrides Function FormatGroupBy(ByVal t As Expressions2.GroupExpression.SummaryValues, ByVal fields As String, ByVal custom As String) As String
             Select Case t
-                Case Expressions2.GroupExpressions.SummaryValues.None
+                Case Expressions2.GroupExpression.SummaryValues.None
                     Return "group by " & fields
-                Case Expressions2.GroupExpressions.SummaryValues.Cube
+                Case Expressions2.GroupExpression.SummaryValues.Cube
                     Return "group by " & fields & " with cube"
-                Case Expressions2.GroupExpressions.SummaryValues.Rollup
+                Case Expressions2.GroupExpression.SummaryValues.Rollup
                     Return "group by " & fields & " with rollup"
                 Case Else
                     Throw New NotSupportedException(t.ToString)
@@ -3035,25 +3035,25 @@ l1:
         Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
             Select Case t
                 Case Expressions2.AggregateExpression.AggregateFunction.Max
-                    Return "max(" & fields & "{0})"
+                    Return "max(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.Min
-                    Return "min(" & fields & "{0})"
+                    Return "min(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.Average
-                    Return "avg(" & fields & "{0})"
+                    Return "avg(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.Count
-                    Return "count(" & fields & "{0})"
+                    Return "count(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.BigCount
-                    Return "count_big(" & fields & "{0})"
+                    Return "count_big(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.Sum
-                    Return "sum(" & fields & "{0})"
+                    Return "sum(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.StandardDeviation
-                    Return "stdev(" & fields & "{0})"
+                    Return "stdev(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.StandardDeviationOfPopulation
-                    Return "stdevp(" & fields & "{0})"
+                    Return "stdevp(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.Variance
-                    Return "var(" & fields & "{0})"
+                    Return "var(" & fields & ")"
                 Case Expressions2.AggregateExpression.AggregateFunction.VarianceOfPopulation
-                    Return "varp(" & fields & "{0})"
+                    Return "varp(" & fields & ")"
                 Case Else
                     Throw New NotImplementedException(t.ToString)
             End Select

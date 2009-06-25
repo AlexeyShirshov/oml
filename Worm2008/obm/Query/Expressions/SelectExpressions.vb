@@ -1,5 +1,5 @@
 ﻿Namespace Expressions2
-    Public Class GroupExpressions
+    Public Class GroupExpression
         Implements IExpression
 
         Public Enum SummaryValues
@@ -13,6 +13,15 @@
         Private _type As SummaryValues
         Private _exp As IExpression
         Private _custom As String
+
+        Public Sub New(ByVal type As SummaryValues, ByVal exp As IExpression)
+            _type = type
+            _exp = exp
+        End Sub
+
+        Public Sub New(ByVal exp As IExpression)
+            _exp = exp
+        End Sub
 
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me, _exp}
@@ -35,10 +44,10 @@
         End Property
 
         Public Overloads Function Equals(ByVal f As IQueryElement) As Boolean Implements IQueryElement.Equals
-            Return Equals(TryCast(f, GroupExpressions))
+            Return Equals(TryCast(f, GroupExpression))
         End Function
 
-        Public Overloads Function Equals(ByVal f As GroupExpressions) As Boolean
+        Public Overloads Function Equals(ByVal f As GroupExpression) As Boolean
             If f Is Nothing Then
                 Return False
             End If
@@ -47,11 +56,11 @@
         End Function
 
         Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
-            Return _type.ToString & _custom & _exp.GetDynamicString()
+            Return _type.ToString & "$" & _custom & "$" & _exp.GetDynamicString()
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return _type.ToString & _custom & _exp.GetStaticString(mpe, contextFilter)
+            Return _type.ToString & "$" & _custom & "$" & _exp.GetStaticString(mpe, contextFilter)
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
@@ -70,6 +79,15 @@
         Private _order As SortType
         Private _exp As IExpression
         Private _collation As String
+
+        Public Sub New(ByVal type As SortType, ByVal exp As IExpression)
+            _order = type
+            _exp = exp
+        End Sub
+
+        Public Sub New(ByVal exp As IExpression)
+            _exp = exp
+        End Sub
 
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me, _exp}
@@ -104,11 +122,11 @@
         End Function
 
         Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
-            Return _order.ToString & _collation & _exp.GetDynamicString
+            Return _order.ToString & "$" & _collation & "$" & _exp.GetDynamicString
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return _order.ToString & _collation & _exp.GetStaticString(mpe, contextFilter)
+            Return _order.ToString & "$" & _collation & "$" & _exp.GetStaticString(mpe, contextFilter)
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare

@@ -44,7 +44,7 @@ Public MustInherit Class StmtGenerator
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
 
-    Public MustOverride Function FormatGroupBy(ByVal t As GroupExpressions.SummaryValues, ByVal fields As String, ByVal custom As String) As String
+    Public MustOverride Function FormatGroupBy(ByVal t As GroupExpression.SummaryValues, ByVal fields As String, ByVal custom As String) As String
     Public MustOverride Function FormatOrderBy(ByVal t As SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
     Public MustOverride Function FormatAggregate(ByVal t As AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
 

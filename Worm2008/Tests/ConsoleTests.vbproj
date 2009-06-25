@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8E02FB04-15DE-416A-9468-0C99CC1DBE65}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>Tests.Module1</StartupObject>
+    <StartupObject>Tests.Module2</StartupObject>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
     <MyType>Console</MyType>

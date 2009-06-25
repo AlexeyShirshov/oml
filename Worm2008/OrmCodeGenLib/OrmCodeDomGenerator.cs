@@ -138,6 +138,14 @@ namespace Worm.CodeGen.Core
 
         protected internal class EntityGeneratorController : IDisposable
         {
+            public OrmCodeDomGenerator Current { get; private set; }
+            public EntityGeneratorController(OrmCodeDomGenerator gen)
+            {
+                Current = gen;
+                if (OrmCodeDomGenerator.s_ctrl == null)
+                    OrmCodeDomGenerator.s_ctrl = this;
+            }
+
             public System.ComponentModel.EventHandlerList EventDelegates = new System.ComponentModel.EventHandlerList();
 
             public static readonly object EntityClassCreatedKey = new object();
@@ -202,7 +210,7 @@ namespace Worm.CodeGen.Core
         }
 
         [ThreadStatic]
-        private static EntityGeneratorController s_ctrl;
+        internal static EntityGeneratorController s_ctrl;
 
         public CodeCompileFileUnit GetFullSingleUnit(LinqToCodedom.CodeDomGenerator.Language language)
         {
@@ -273,11 +281,23 @@ namespace Worm.CodeGen.Core
             return result;
         }
 
+        public CodeEntityTypeDeclaration GetEntityDeclaration(EntityDescription entity)
+        {
+            foreach (CodeCompileFileUnit fu in GetEntityCompileUnits(entity.Identifier, CodeDomGenerator.Language.CSharp))
+            {
+                foreach (CodeNamespace ns in fu.Namespaces)
+                {
+                    return ns.Types.OfType<CodeEntityTypeDeclaration>().SingleOrDefault(e => e.Name == OrmCodeGenNameHelper.GetEntityClassName(entity));
+                }
+            }
+
+            return null;
+        }
+
         public IList<CodeCompileFileUnit> GetEntityCompileUnits(string entityId, LinqToCodedom.CodeDomGenerator.Language language)
         {
-            using (s_ctrl = new EntityGeneratorController())
+            using (new EntityGeneratorController(this))
             {
-
                 //using (new SettingsManager(settings, null))
                 //{
 
@@ -520,7 +540,7 @@ namespace Worm.CodeGen.Core
                                 )
                             );
 
-                            if (entity.BaseEntity != null)
+                            if (entity.BaseEntity != null && entity.Name == entity.BaseEntity.Name)
                             {
                                 propertyAliasClass.Attributes |= MemberAttributes.New;
                                 instancedPropertyAliasClass.Attributes |= MemberAttributes.New;
@@ -608,73 +628,7 @@ namespace Worm.CodeGen.Core
 
                         #region метод OrmBase.CopyBody(CopyBody(...)
 
-
-                        EntityDescription superbaseEntity;
-                        for (superbaseEntity = entity;
-                             superbaseEntity.BaseEntity != null;
-                             superbaseEntity = superbaseEntity.BaseEntity)
-                        {
-
-                        }
-
-                        bool isInitialImplemantation = entity == superbaseEntity;
-
-                        CodeMemberMethod copyMethod = new CodeMemberMethod();
-                        entityClass.Members.Add(copyMethod);
-                        copyMethod.Name = "CopyProperties";
-                        copyMethod.ReturnType = null;
-                        // модификаторы доступа
-                        copyMethod.Attributes = MemberAttributes.Family | MemberAttributes.Override;
-                        copyMethod.Parameters.Add(
-                            new CodeParameterDeclarationExpression(typeof(_IEntity),
-                                                                   "from"));
-                        copyMethod.Parameters.Add(
-                            new CodeParameterDeclarationExpression(typeof(_IEntity),
-                                                                   "to"));
-                        copyMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmManager), "mgr"));
-                        copyMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IEntitySchema), "oschema"));
-
-                        if (!isInitialImplemantation)
-                            copyMethod.Statements.Add(
-                                new CodeMethodInvokeExpression(
-                                    new CodeBaseReferenceExpression(),
-                                    "CopyProperties",
-                                    new CodeArgumentReferenceExpression("from"),
-                                    new CodeArgumentReferenceExpression("to"),
-                                    new CodeArgumentReferenceExpression("mgr"),
-                                    new CodeArgumentReferenceExpression("oschema")
-                                    )
-                                );
-
-                        PropertyCreated += delegate(object sender, EntityPropertyCreatedEventArgs e)
-                                               {
-                                                   if (e.FieldMember == null) return;
-                                                   string fieldName = e.FieldMember.Name;
-
-                                                   CodeTypeReference entityType =
-                                                       new CodeTypeReference(
-                                                           OrmCodeGenNameHelper.GetEntityClassName(entity, true));
-
-                                                   CodeExpression leftTargetExpression =
-                                                       new CodeArgumentReferenceExpression("to");
-
-                                                   CodeExpression rightTargetExpression =
-                                                       new CodeArgumentReferenceExpression("from");
-
-                                                   leftTargetExpression = new CodeCastExpression(entityType,
-                                                                                                 leftTargetExpression);
-                                                   rightTargetExpression = new CodeCastExpression(entityType,
-                                                                                                  rightTargetExpression);
-
-                                                   copyMethod.Statements.Add(
-                                                       new CodeAssignStatement(
-                                                           new CodeFieldReferenceExpression(leftTargetExpression,
-                                                                                            fieldName),
-                                                           new CodeFieldReferenceExpression(rightTargetExpression,
-                                                                                            fieldName))
-                                                       );
-                                                   //#endregion // реализация метода Copy
-                                               };
+                        CopyPropertiesMethodGeneration(entityClass);
 
                         #endregion метод OrmBase.CopyBody(CopyBody(OrmBase from, OrmBase to)
 
@@ -1002,6 +956,88 @@ namespace Worm.CodeGen.Core
                         PropertyCreated -= OnPropertyChangedImplementationRequired;
                     }
                 }
+            }
+        }
+
+        private void CopyPropertiesMethodGeneration(CodeEntityTypeDeclaration entityClass)
+        {
+            EntityDescription entity = entityClass.Entity;
+
+            EntityDescription superbaseEntity;
+            for (superbaseEntity = entity;
+                 superbaseEntity.BaseEntity != null;
+                 superbaseEntity = superbaseEntity.BaseEntity)
+            {
+
+            }
+
+            bool isInitialImplemantation = entity == superbaseEntity;
+
+            CodeMemberMethod copyMethod = new CodeMemberMethod();
+            entityClass.Members.Add(copyMethod);
+            copyMethod.Name = "CopyProperties";
+            copyMethod.ReturnType = null;
+            // модификаторы доступа
+            copyMethod.Attributes = MemberAttributes.Family | MemberAttributes.Override;
+            copyMethod.Parameters.Add(
+                new CodeParameterDeclarationExpression(typeof(_IEntity),
+                                                       "from"));
+            copyMethod.Parameters.Add(
+                new CodeParameterDeclarationExpression(typeof(_IEntity),
+                                                       "to"));
+            copyMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmManager), "mgr"));
+            copyMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IEntitySchema), "oschema"));
+
+            if (!isInitialImplemantation)
+                copyMethod.Statements.Add(
+                    new CodeMethodInvokeExpression(
+                        new CodeBaseReferenceExpression(),
+                        "CopyProperties",
+                        new CodeArgumentReferenceExpression("from"),
+                        new CodeArgumentReferenceExpression("to"),
+                        new CodeArgumentReferenceExpression("mgr"),
+                        new CodeArgumentReferenceExpression("oschema")
+                        )
+                    );
+
+            PropertyCreated += new ssss() { copyMethod = copyMethod, entity=entity}.jkjk;
+        }
+
+        class ssss
+        {
+            public CodeMemberMethod copyMethod;
+            public EntityDescription entity;
+
+            public void jkjk(object sender, EntityPropertyCreatedEventArgs e)
+            {
+                if (e.FieldMember == null) return;
+                if (e.EntityTypeDeclaration.Entity != entity) return;
+
+                string fieldName = e.FieldMember.Name;
+
+                CodeTypeReference entityType =
+                    new CodeTypeReference(
+                        OrmCodeGenNameHelper.GetEntityClassName(entity, true));
+
+                CodeExpression leftTargetExpression =
+                    new CodeArgumentReferenceExpression("to");
+
+                CodeExpression rightTargetExpression =
+                    new CodeArgumentReferenceExpression("from");
+
+                leftTargetExpression = new CodeCastExpression(entityType,
+                                                              leftTargetExpression);
+                rightTargetExpression = new CodeCastExpression(entityType,
+                                                               rightTargetExpression);
+
+                copyMethod.Statements.Add(
+                    new CodeAssignStatement(
+                        new CodeFieldReferenceExpression(leftTargetExpression,
+                                                         fieldName),
+                        new CodeFieldReferenceExpression(rightTargetExpression,
+                                                         fieldName))
+                    );
+                //#endregion // реализация метода Copy
             }
         }
 
@@ -1384,8 +1420,11 @@ namespace Worm.CodeGen.Core
 
         void OnPropertyChangedImplementationRequired(object sender, EntityPropertyCreatedEventArgs e)
         {
-            CodeMemberProperty property = e.PropertyMember;
             PropertyDescription propDesc = e.PropertyDescription;
+            if (propDesc == null)
+                return;
+
+            CodeMemberProperty property = e.PropertyMember;
             CodeMemberField field = e.FieldMember;
             //CodeEntityTypeDeclaration entityClass = e.
 
@@ -1402,32 +1441,33 @@ namespace Worm.CodeGen.Core
             {
                 List<CodeStatement> statements = new List<CodeStatement>(usingStatement.Statements);
                 statements.InsertRange(0,
-                                       new CodeStatement[]
-				                       	{
-				                       		new CodeVariableDeclarationStatement(
-				                       			typeof (bool),
-				                       			"notChanged",
-				                       			new CodeBinaryOperatorExpression(
-				                       				new CodeFieldReferenceExpression(
-				                       					new CodeThisReferenceExpression(),
-				                       					field.Name
-				                       					),
-				                       				propDesc.PropertyType.IsValueType
-				                       					? CodeBinaryOperatorType.ValueEquality
-				                       					: CodeBinaryOperatorType.IdentityEquality,
-				                       				new CodePropertySetValueReferenceExpression()
-				                       				)
-				                       			),
-				                       		new CodeVariableDeclarationStatement(
-				                       			field.Type,
-				                       			"oldValue",
-				                       			new CodeFieldReferenceExpression(
-				                       				new CodeThisReferenceExpression(),
-				                       				field.Name
-				                       				)
-				                       			)
-				                       	}
-                    );
+                   new CodeStatement[]
+                   	{
+                   		new CodeVariableDeclarationStatement(
+                   			typeof (bool),
+                   			"notChanged",
+                   			new CodeBinaryOperatorExpression(
+                   				new CodeFieldReferenceExpression(
+                   					new CodeThisReferenceExpression(),
+                   					field.Name
+                   					),
+                   				propDesc.PropertyType.IsValueType
+                   					? CodeBinaryOperatorType.ValueEquality
+                   					: CodeBinaryOperatorType.IdentityEquality,
+                   				new CodePropertySetValueReferenceExpression()
+                   				)
+                   			),
+                   		new CodeVariableDeclarationStatement(
+                   			field.Type,
+                   			"oldValue",
+                   			new CodeFieldReferenceExpression(
+                   				new CodeThisReferenceExpression(),
+                   				field.Name
+                   				)
+                   			)
+                   	}
+                );
+                
                 statements.Add(
                     new CodeConditionStatement(
                         new CodeBinaryOperatorExpression(
@@ -1490,9 +1530,12 @@ namespace Worm.CodeGen.Core
         protected virtual void OnPropertyDocumentationRequiered(object sender, EntityPropertyCreatedEventArgs e)
         {
             PropertyDescription propertyDesc = e.PropertyDescription;
-            CodeMemberProperty property = e.PropertyMember;
+            if (propertyDesc != null)
+            {
+                CodeMemberProperty property = e.PropertyMember;
 
-            SetMemberDescription(property, propertyDesc.Description);
+                SetMemberDescription(property, propertyDesc.Description);
+            }
         }
 
         protected virtual void OnPropertyCreatedFillEntityInterface(object sender, EntityPropertyCreatedEventArgs e)
@@ -1502,7 +1545,8 @@ namespace Worm.CodeGen.Core
 
             CodeEntityInterfaceDeclaration entityPropertiesInterface = entityClass.EntityPropertiesInterfaceDeclaration;
 
-            CreatePropertyInInterface(entityPropertiesInterface, propertyMember);
+            if (entityPropertiesInterface != null)
+                CreatePropertyInInterface(entityPropertiesInterface, propertyMember);
         }
 
         private void CreatePropertyInInterface(CodeEntityInterfaceDeclaration entityInterface, CodeMemberProperty propertyMember)
@@ -1512,6 +1556,13 @@ namespace Worm.CodeGen.Core
 
             CodeMemberProperty interfaceProperty = new CodeMemberProperty();
             entityInterface.Members.Add(interfaceProperty);
+
+            if (entityInterface.Entity.BaseEntity != null &&
+                entityInterface.Entity.BaseEntity.TypeDeclaration.EntityPropertiesInterfaceDeclaration != null &&
+                entityInterface.Entity.BaseEntity.TypeDeclaration.EntityPropertiesInterfaceDeclaration.Members.OfType<CodeMemberProperty>().Any(p => p.Name == propertyMember.Name))
+            {
+                interfaceProperty.Attributes |= MemberAttributes.New;
+            }
 
             interfaceProperty.HasGet = propertyMember.HasGet;
             interfaceProperty.HasSet = propertyMember.HasSet;
@@ -1531,7 +1582,8 @@ namespace Worm.CodeGen.Core
             CodeEntityTypeDeclaration entityClass = e.TypeDeclaration;
             CodeNamespace entityNamespace = e.Namespace;
 
-            CreateEntityInterfaces(entityNamespace, entityClass);
+            if (entityClass.Entity.MakeInterface)
+                CreateEntityInterfaces(entityNamespace, entityClass);
         }
 
         private void CreateEntityInterfaces(CodeNamespace entityNamespace, CodeEntityTypeDeclaration entityClass)
@@ -2091,8 +2143,7 @@ namespace Worm.CodeGen.Core
             CodeTypeDeclaration propertyAliasClass, CodeTypeDeclaration instancedPropertyAliasClass)
         {
             foreach (PropertyDescription propertyDesc in
-                from k in entity.CompleteEntity.Properties
-                where !k.Disabled
+                from k in entity.CompleteEntity.ActiveProperties
                 select k)
             {
 
@@ -2199,12 +2250,12 @@ namespace Worm.CodeGen.Core
                 throw new ArgumentException("Used reserved property name 'Identifier'");
         }
 
-        private void RaisePropertyCreated(PropertyDescription propertyDesc, CodeEntityTypeDeclaration entityClass, CodeMemberProperty property, CodeMemberField field)
+        public static void RaisePropertyCreated(PropertyDescription propertyDesc, CodeEntityTypeDeclaration entityClass, CodeMemberProperty property, CodeMemberField field)
         {
             EventHandler<EntityPropertyCreatedEventArgs> h = s_ctrl.EventDelegates[EntityGeneratorController.PropertyCreatedKey] as EventHandler<EntityPropertyCreatedEventArgs>;
             if (h != null)
             {
-                h(this, new EntityPropertyCreatedEventArgs(propertyDesc, entityClass, field, property));
+                h(null, new EntityPropertyCreatedEventArgs(propertyDesc, entityClass, field, property));
             }
         }
 
@@ -2515,7 +2566,7 @@ namespace Worm.CodeGen.Core
         {
             if (string.IsNullOrEmpty(description))
                 return;
-            member.Comments.Add(new CodeCommentStatement(string.Format("<summary>\n{0}\n</summary>", description), true));
+            member.Comments.Add(new CodeCommentStatement(string.Format("<summary>{1}{0}{1}</summary>", description, Environment.NewLine), true));
         }
 
         internal static MemberAttributes GetMemberAttribute(AccessLevel accessLevel)

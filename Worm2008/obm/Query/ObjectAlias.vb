@@ -23,7 +23,7 @@ Namespace Query
             _q = query
         End Sub
 
-        Public ReadOnly Property Type() As Type
+        Public ReadOnly Property EntityType() As Type
             Get
                 Return _t
             End Get
@@ -67,7 +67,7 @@ Namespace Query
         End Function
 
         Protected Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-            Dim rt As Type = Type
+            Dim rt As Type = EntityType
             If rt Is Nothing Then
                 rt = schema.GetTypeByEntityName(EntityName)
             End If
@@ -176,7 +176,7 @@ Namespace Query
         Public ReadOnly Property AnyType() As Type
             Get
                 If _t Is Nothing AndAlso _a IsNot Nothing Then
-                    Return _a.Type
+                    Return _a.EntityType
                 End If
                 Return _t
             End Get
@@ -191,7 +191,7 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property Type() As Type
+        Public ReadOnly Property EntityType() As Type
             Get
                 Return _t
             End Get
