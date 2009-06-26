@@ -145,8 +145,8 @@ internal class WormCodeGenCore_OrmXmlGeneratorAccessor : BaseAccessor {
 [System.Diagnostics.DebuggerStepThrough()]
 [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TestTools.UnitTestGeneration", "1.0.0.0")]
 internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
-    
-    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser");
+
+    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.CodeGen.Core", "Worm.CodeGen.Core.WXMLModelReader");
     
     internal Worm_CodeGen_Core_OrmXmlParserAccessor(object target) : 
             base(target, m_privateType) {
@@ -244,7 +244,7 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
     internal static object CreatePrivate(global::System.Xml.XmlReader reader) {
         object[] args = new object[] {
                 reader};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.WXMLModelReader", new System.Type[] {
                     typeof(global::System.Xml.XmlReader)}, args);
         return priv_obj.Target;
     }
@@ -253,7 +253,7 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
         object[] args = new object[] {
                 reader,
                 xmlResolver};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.WXMLModelReader", new System.Type[] {
                     typeof(global::System.Xml.XmlReader),
                     typeof(global::System.Xml.XmlResolver)}, args);
         return priv_obj.Target;
@@ -262,7 +262,7 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
     internal static object CreatePrivate(global::System.Xml.XmlDocument document) {
         object[] args = new object[] {
                 document};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.WXMLModelReader", new System.Type[] {
                     typeof(global::System.Xml.XmlDocument)}, args);
         return priv_obj.Target;
     }
