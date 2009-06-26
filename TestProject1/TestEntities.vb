@@ -21,7 +21,7 @@ Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")> _
 Public Class Entity
-    Inherits OrmBaseT(Of Entity)
+    Inherits KeyEntity
     Implements IEnt
 
     Public Sub New()
@@ -29,30 +29,29 @@ Public Class Entity
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Private _id As Integer
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-
-    'End Sub
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
     Private _char As String
     <EntityProperty(PropertyAlias:="Char")> _
@@ -368,8 +367,7 @@ End Class
 Entity(GetType(EntitySchema4v1Implementation), "joins"), _
 Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
-    Inherits OrmBaseT(Of Entity4)
-    Implements IOrmEditable(Of Entity4)
+    Inherits KeyEntity
 
     Private _name As String
 
@@ -378,36 +376,35 @@ Public Class Entity4
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity4(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Private _id As Integer
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyEntity4(CType(from, Entity4), CType([to], Entity4))
-    'End Sub
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    Protected Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4) Implements IOrmEditable(Of Entity4).CopyBody
-        With [from]
-            [to]._name = ._name
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Entity4)
+            CType([to], Entity4)._name = ._name
+            CType([to], Entity4)._id = ._id
         End With
     End Sub
-
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Return New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType)
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType), Global.System.Collections.Generic.IComparer(Of T))
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
 
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
@@ -595,46 +592,44 @@ End Class
 
 <Entity(GetType(EntitySchema5v1Implementation), "1")> _
 Public Class Entity5
-    Inherits OrmBaseT(Of Entity5)
-    Implements IOrmEditable(Of Entity5)
+    Inherits KeyEntity
 
     Private _name As String
     Private _mark() As Byte
+    Private _id As Integer
 
     Public Sub New()
         MyBase.New()
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity5(Identifier, OrmCache, OrmSchema)
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyEntity5(CType([from], Entity5), CType([to], Entity5))
-    'End Sub
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyEntity5(ByVal [from] As Entity5, ByVal [to] As Entity5) Implements IOrmEditable(Of Entity5).CopyBody
-        With [from]
-            [to]._name = ._name
-            [to]._mark = ._mark
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Entity5)
+            CType([to], Entity5)._name = ._name
+            CType([to], Entity5)._mark = ._mark
+            CType([to], Entity5)._id = ._id
         End With
     End Sub
 

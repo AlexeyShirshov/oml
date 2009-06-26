@@ -1016,7 +1016,7 @@ l1:
                     If (schema.GetAttributes(Me.GetType, c) And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                         Dim f As IPropertyConverter = TryCast(Me, IPropertyConverter)
                         If f IsNot Nothing Then
-                            Dim e As _IEntity = f.CreateObject(mgr, pk(0).PropertyAlias, pk(0).Value)
+                            Dim e As _IEntity = f.CreateContainingEntity(mgr, pk(0).PropertyAlias, pk(0).Value)
                             If e IsNot Nothing Then
                                 'e.SetMgrString(IdentityString)
                                 'RaiseObjectLoaded(e)
@@ -1889,7 +1889,7 @@ l1:
             Get
                 Dim r As New StringBuilder
                 For Each pk As PKDesc In GetPKValues()
-                    r.Append(pk.PropertyAlias).Append(":").Append(pk.Value.ToString)
+                    r.Append(pk.PropertyAlias).Append(":").Append(pk.Value.ToString).Append(",")
                 Next
                 Return r.ToString
             End Get

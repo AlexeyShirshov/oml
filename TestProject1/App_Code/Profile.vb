@@ -122,8 +122,7 @@ End Class
 
 <Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
-    Inherits OrmBaseT(Of MyUser)
-    Implements IOrmEditable(Of MyUser)
+    Inherits KeyEntity
 
     Private _lastActivity As Date
     Private _isAnonymous As Boolean
@@ -140,40 +139,42 @@ Public Class MyUser
         'MyBase.New()
     End Sub
 
-    'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
-    '    MyBase.New(id, cache, schema)
-    'End Sub
+    Private _id As Integer
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyUser(CType(from, MyUser), CType([to], MyUser))
-    'End Sub
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    Protected Sub CopyUser(ByVal from As MyUser, ByVal [to] As MyUser) Implements IOrmEditable(Of MyUser).CopyBody
-        With from
-            [to]._lastActivity = ._lastActivity
-            [to]._field = ._field
-            [to]._isAnonymous = ._isAnonymous
-            [to]._username = ._username
-            [to]._psw = ._psw
-            [to]._email = ._email
-            [to]._failcnt = ._failcnt
-            [to]._faildt = ._faildt
-            [to]._islocked = ._islocked
-            [to]._lastlocked = ._lastlocked
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType(from, MyUser)
+            CType([to], MyUser)._id = ._id
+            CType([to], MyUser)._lastActivity = ._lastActivity
+            CType([to], MyUser)._field = ._field
+            CType([to], MyUser)._isAnonymous = ._isAnonymous
+            CType([to], MyUser)._username = ._username
+            CType([to], MyUser)._psw = ._psw
+            CType([to], MyUser)._email = ._email
+            CType([to], MyUser)._failcnt = ._failcnt
+            CType([to], MyUser)._faildt = ._faildt
+            CType([to], MyUser)._islocked = ._islocked
+            CType([to], MyUser)._lastlocked = ._lastlocked
         End With
     End Sub
-
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New MyUser(Identifier, OrmCache, OrmSchema)
-    'End Function
 
     <EntityPropertyAttribute(PropertyAlias:="LastActivity")> _
     Public Property LastActivity() As Date
@@ -359,8 +360,7 @@ End Class
 
 <Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
-    Inherits OrmBaseT(Of MyRole)
-    Implements IOrmEditable(Of MyRole)
+    Inherits KeyEntity
 
     Private _role As String
 
@@ -368,31 +368,31 @@ Public Class MyRole
 
     End Sub
 
-    'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
-    '    MyBase.New(id, cache, schema)
-    'End Sub
+    Private _id As Integer
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyRole(CType(from, MyRole), CType([to], MyRole))
-    'End Sub
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    Protected Sub CopyRole(ByVal from As MyRole, ByVal [to] As MyRole) Implements IOrmEditable(Of MyRole).CopyBody
-        With from
-            [to]._role = ._role
-        End With
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        CType([to], MyRole)._role = _role
+        CType([to], MyRole)._id = _id
     End Sub
-
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New MyRole(Identifier, OrmCache, OrmSchema)
-    'End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Name")> _
     Public Property RoleName() As String

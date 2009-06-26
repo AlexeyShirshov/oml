@@ -4,8 +4,8 @@ Imports Worm.Cache
 
 <Entity(GetType(Table2Implementation), "1")> _
 Public Class Table2
-    Inherits OrmBaseT(Of Table2)
-    Implements IOrmEditable(Of Table2), IOptimizedValues
+    Inherits KeyEntity
+    Implements IOptimizedValues
 
     Private _tbl1 As Table1
     Private _blob As Byte()
@@ -17,37 +17,37 @@ Public Class Table2
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable2(CType([from], Table2), CType([to], Table2))
-    'End Sub
+    Private _id As Integer
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table2(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable2(ByVal [from] As Table2, ByVal [to] As Table2) Implements IOrmEditable(Of Table2).CopyBody
-        With [from]
-            [to]._tbl1 = ._tbl1
-            [to]._blob = ._blob
-            [to]._m = ._m
-            [to]._dt = ._dt
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Table2)
+            CType([to], Table2)._id = ._id
+            CType([to], Table2)._tbl1 = ._tbl1
+            CType([to], Table2)._blob = ._blob
+            CType([to], Table2)._m = ._m
+            CType([to], Table2)._dt = ._dt
         End With
     End Sub
 

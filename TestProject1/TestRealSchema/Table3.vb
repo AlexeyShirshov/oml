@@ -5,8 +5,8 @@ Imports Worm.Entities
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
-    Inherits OrmBaseT(Of Table3)
-    Implements IOrmEditable(Of Table3), IOptimizedValues
+    Inherits KeyEntity
+    Implements IOptimizedValues, IPropertyConverter
 
     Private _obj As IKeyEntity
     Private _code As Byte
@@ -20,37 +20,35 @@ Public Class Table3
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable3(CType([from], Table3), CType([to], Table3))
-    'End Sub
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table3(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable3(ByVal [from] As Table3, ByVal [to] As Table3) Implements IOrmEditable(Of Table3).CopyBody
-        With [from]
-            [to]._obj = ._obj
-            [to]._code = ._code
-            [to]._v = ._v
-            [to]._x = ._x
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Table3)
+            CType([to], Table3)._id = ._id
+            CType([to], Table3)._obj = ._obj
+            CType([to], Table3)._code = ._code
+            CType([to], Table3)._v = ._v
+            CType([to], Table3)._x = ._x
         End With
     End Sub
 
@@ -64,16 +62,16 @@ Public Class Table3
         End If
     End Function
 
-    Public Overrides Function CreateObject(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
-        _id = CInt(value)
-        If _code = 0 Then
-            _trigger = True
-            Return Nothing
-        Else
-            _obj = mgr.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
-            Return _obj
-        End If
-    End Function
+    'Public Overrides Function CreateObject(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
+    '    _id = CInt(value)
+    '    If _code = 0 Then
+    '        _trigger = True
+    '        Return Nothing
+    '    Else
+    '        _obj = mgr.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
+    '        Return _obj
+    '    End If
+    'End Function
 
     Public Overridable Sub SetValue( _
         ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
@@ -179,6 +177,11 @@ Public Class Table3
     Protected Sub NodeChanged(ByVal sender As Object, ByVal e As System.Xml.XmlNodeChangedEventArgs)
         StartUpdate()
     End Sub
+
+    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IPropertyConverter.CreateContainingEntity
+        _obj = mgr.GetKeyEntityFromCacheOrCreate(CInt(value), GetObjectType())
+        Return _obj
+    End Function
 End Class
 
 Public Class Table3Implementation

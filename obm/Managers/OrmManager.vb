@@ -1876,6 +1876,10 @@ l1:
             Throw New ArgumentNullException("obj parameter cannot be nothing")
         End If
 
+        If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+            Return False
+        End If
+
         Return _RemoveObjectFromCache(obj)
     End Function
 
@@ -1897,10 +1901,6 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.GetSyncRoot
-                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                    Return False
-                End If
-
                 If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
                     Return False
                 End If

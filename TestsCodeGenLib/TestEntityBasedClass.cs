@@ -17,28 +17,28 @@ namespace TestsCodeGenLib
 	public class TestEntityBasedClass
 	{
 
-		[TestMethod]
-		public void TestEntityBasedClassWithClass()
-		{
-			OrmObjectsDef odef;
-			using (Stream stream = GetSampleFileStream("EntityBasedClassFiles.EntityBasedClassSample.class.xml"))
-			{
-				using (XmlReader reader = XmlReader.Create(stream))
-				{
-					odef = OrmObjectsDef.LoadFromXml(reader);
-				}
-			}
-			OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
-			settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
-			CodeDomProvider prov = new Microsoft.CSharp.CSharpCodeProvider();
+        //[TestMethod]
+        //public void TestEntityBasedClassWithClass()
+        //{
+        //    OrmObjectsDef odef;
+        //    using (Stream stream = GetSampleFileStream("EntityBasedClassFiles.EntityBasedClassSample.class.xml"))
+        //    {
+        //        using (XmlReader reader = XmlReader.Create(stream))
+        //        {
+        //            odef = OrmObjectsDef.LoadFromXml(reader);
+        //        }
+        //    }
+        //    OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
+        //    settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
+        //    CodeDomProvider prov = new Microsoft.CSharp.CSharpCodeProvider();
 
-			CompileCode(odef, prov, settings);
+        //    CompileCode(odef, prov, settings);
 
-			prov = new Microsoft.VisualBasic.VBCodeProvider();
-			settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
+        //    prov = new Microsoft.VisualBasic.VBCodeProvider();
+        //    settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
 
-			CompileCode(odef, prov, settings);
-		}
+        //    CompileCode(odef, prov, settings);
+        //}
 
 		private void CompileCode(OrmObjectsDef odef, CodeDomProvider prov, OrmCodeDomGeneratorSettings settings)
 		{

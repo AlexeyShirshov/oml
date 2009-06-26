@@ -16,7 +16,7 @@ Namespace Entities.Meta
             _table = _cols(0).Table
         End Sub
 
-        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal schema As String, ByVal cols As ICollection(Of EntityPropertyAttribute), ByVal pk As String)
+        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal schema As String, ByVal cols As ICollection(Of EntityPropertyAttribute))
             'If String.IsNullOrEmpty(pk) Then
             '    Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
             'End If
@@ -40,11 +40,11 @@ Namespace Entities.Meta
                 End If
 
                 If String.IsNullOrEmpty(c.Column) Then
-                    If c.PropertyAlias = OrmBaseT.PKName Then
-                        c.Column = pk
-                    Else
-                        Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.PropertyAlias, t))
-                    End If
+                    'If c.PropertyAlias = OrmBaseT.PKName Then
+                    '    c.Column = pk
+                    'Else
+                    Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.PropertyAlias, t))
+                    'End If
                 End If
 
                 'Dim tbl As SourceFragment = Nothing

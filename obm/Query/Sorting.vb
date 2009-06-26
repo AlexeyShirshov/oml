@@ -588,7 +588,7 @@ Namespace Query
                             Dim xc As IComparable = TryCast(xo, IComparable)
                             Dim yc As IComparable = TryCast(yo, IComparable)
                             If xc Is Nothing OrElse yc Is Nothing Then
-                                Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString(x.GetMappingEngine, Nothing) & " is not supported IComparable")
+                                Throw New InvalidOperationException("Value " & s.SortBy & " in type " & s.ObjectSource.ToStaticString(x.GetMappingEngine, Nothing) & " is not supported IComparable")
                             End If
                             p = xc.CompareTo(yc) * k
                             If p <> 0 Then

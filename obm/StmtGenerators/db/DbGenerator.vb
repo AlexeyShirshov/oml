@@ -598,7 +598,7 @@ l1:
                             Dim clm As String = mpe.GetColumnNameByPropertyAlias(os, c.PropertyAlias, False, Nothing)
                             Dim s As String = "@pk_" & clm
                             Dim dt As String = "int"
-                            If pi IsNot Nothing AndAlso Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
+                            If pi IsNot Nothing Then 'AndAlso Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
                                 dt = GetDBType(mpe, type, os, c, pi.PropertyType)
                             End If
                             ins_cmd.Append(DeclareVariable(s, dt))

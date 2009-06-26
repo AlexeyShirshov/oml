@@ -4,8 +4,8 @@ Imports Worm.Entities.Meta
 
 <Entity(GetType(Table4Implementation), "1"), Entity(GetType(Table4Implementation2), "2")> _
 Public Class Table4
-    Inherits OrmBaseT(Of Table4)
-    Implements IOrmEditable(Of Table4), IOptimizedValues
+    Inherits KeyEntity
+    Implements IOptimizedValues
 
     Private _col As Nullable(Of Boolean)
     Private _g As Guid
@@ -15,31 +15,37 @@ Public Class Table4
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable4(CType(from, Table4), CType([to], Table4))
-    'End Sub
+    Private _id As Integer
 
-    Protected Sub CopyTable4(ByVal [from] As Table4, ByVal [to] As Table4) Implements IOrmEditable(Of Table4).CopyBody
-        With [from]
-            [to]._col = ._col
-            [to]._g = ._g
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
+
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Table4)
+            CType([to], Table4)._col = ._col
+            CType([to], Table4)._g = ._g
+            CType([to], Table4)._id = ._id
         End With
     End Sub
-
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotSupportedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotSupportedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table4(Identifier, OrmCache, OrmSchema)
-    'End Function
 
     Public Overridable Sub SetValue( _
         ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized

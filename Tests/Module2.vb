@@ -157,7 +157,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 500
-    Private Const threadCount As Integer = 2
+    Private Const threadCount As Integer = 4
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -250,7 +250,9 @@ Module Module2
             End Using
             If i Mod 10 = 0 Then
                 Console.WriteLine(String.Format("thread: {0} load: {1}", o, i))
-                Threading.Thread.Sleep(50)
+            End If
+            If i Mod 5 = 0 Then
+                Threading.Thread.Sleep(100)
             End If
         Next
     End Sub
@@ -281,7 +283,9 @@ Module Module2
             End Using
             If i Mod 10 = 0 Then
                 Console.WriteLine(String.Format("thread: {0} unload: {1}", o, i))
-                Threading.Thread.Sleep(50)
+            End If
+            If i Mod 5 = 0 Then
+                Threading.Thread.Sleep(100)
             End If
         Next
     End Sub
@@ -465,7 +469,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount * 2
+        For i As Integer = 0 To CInt(iterCount * 1.5)
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
@@ -499,7 +503,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To iterCount * 2
+        For i As Integer = 0 To CInt(iterCount * 1.5)
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
