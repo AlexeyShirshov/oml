@@ -5,8 +5,7 @@ Imports Worm.Criteria.Joins
 
 <Entity(GetType(CompositeSchema), "1")> _
 Public Class Composite
-    Inherits OrmBaseT(Of Composite)
-    Implements IOrmEditable(Of Composite)
+    Inherits KeyEntity
 
     Private _m As String
     Private _m2 As String
@@ -16,8 +15,29 @@ Public Class Composite
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
+
+    Private _id As Integer
+
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
+
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Message() As String
@@ -47,10 +67,11 @@ Public Class Composite
         End Set
     End Property
 
-    Public Sub CopyBody2(ByVal from As Composite, ByVal [to] As Composite) Implements IOrmEditable(Of Composite).CopyBody
-        With [from]
-            [to]._m = ._m
-            [to]._m2 = ._m2
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Composite)
+            CType([to], Composite)._id = ._id
+            CType([to], Composite)._m = ._m
+            CType([to], Composite)._m2 = ._m2
         End With
     End Sub
 End Class

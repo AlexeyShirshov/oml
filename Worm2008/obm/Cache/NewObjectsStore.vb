@@ -80,9 +80,9 @@ Namespace Cache
         Protected Overridable Function GetPKValue(ByVal objectType As Type, ByVal propertyAlias As String, _
             ByVal propertyType As Type, ByVal declaringType As Type) As Object
 
-            If declaringType.Name = GetType(OrmBaseT(Of )).Name AndAlso propertyAlias = OrmBaseT.PKName Then
-                Return GetNext()
-            End If
+            'If declaringType.Name = GetType(OrmBaseT(Of )).Name AndAlso propertyAlias = OrmBaseT.PKName Then
+            '    Return GetNext()
+            'End If
 
             If propertyType Is GetType(Integer) Then
                 Return GetNext()

@@ -220,14 +220,14 @@ Namespace Entities.Meta
             _v = version
         End Sub
 
-        Public Property PrimaryKey() As String
-            Get
-                Return _pk
-            End Get
-            Set(ByVal value As String)
-                _pk = value
-            End Set
-        End Property
+        'Public Property PrimaryKey() As String
+        '    Get
+        '        Return _pk
+        '    End Get
+        '    Set(ByVal value As String)
+        '        _pk = value
+        '    End Set
+        'End Property
 
         Public ReadOnly Property Type() As Type
             Get

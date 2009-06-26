@@ -159,7 +159,7 @@ Namespace Entities
     End Interface
 
     Public Interface IPropertyConverter
-        Function CreateObject(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
+        Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
     End Interface
 
     Public Interface IDBValueConverter

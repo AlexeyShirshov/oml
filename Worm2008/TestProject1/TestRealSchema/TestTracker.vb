@@ -32,7 +32,7 @@ Public Class TestTracker
     Public Function GetIdentity(ByVal t As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return New PKDesc() {New PKDesc(OrmBaseT.PKName, i)}
+        Return New PKDesc() {New PKDesc("ID", i)}
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew

@@ -216,7 +216,7 @@ Public Class ObjectMappingEngine
             If column Is Nothing Then
                 Dim propertyAlias As String = pi.Name
                 If propertyMap IsNot Nothing Then
-                    If propertyMap.ContainsKey(propertyAlias) AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
+                    If propertyMap.ContainsKey(propertyAlias) Then 'AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
                         column = New EntityPropertyAttribute(mc._newattributes) With { _
                             .Column = mc.ColumnExpression, _
@@ -1619,7 +1619,7 @@ Public Class ObjectMappingEngine
                                 l.Add(c)
                             Next
 
-                            schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l, ea.PrimaryKey)
+                            schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l)
                         End If
 
                     Else
@@ -1681,7 +1681,7 @@ Public Class ObjectMappingEngine
                                     l.Add(c)
                                 Next
 
-                                schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l, ea.PrimaryKey)
+                                schema = New SimpleObjectSchema(tp, ea.TableName, ea.TableSchema, l)
                             End If
 
                         Else
@@ -1750,7 +1750,7 @@ Public Class ObjectMappingEngine
                                     l.Add(c)
                                 Next
 
-                                schema = New SimpleObjectSchema(tp, ea1.TableName, ea1.TableSchema, l, ea1.PrimaryKey)
+                                schema = New SimpleObjectSchema(tp, ea1.TableName, ea1.TableSchema, l)
                             End If
 
                         Else
@@ -1824,7 +1824,7 @@ Public Class ObjectMappingEngine
                                         l.Add(c)
                                     Next
 
-                                    schema = New SimpleObjectSchema(tp, ea2.TableName, ea2.TableSchema, l, ea2.PrimaryKey)
+                                    schema = New SimpleObjectSchema(tp, ea2.TableName, ea2.TableSchema, l)
                                 End If
 
                             Else

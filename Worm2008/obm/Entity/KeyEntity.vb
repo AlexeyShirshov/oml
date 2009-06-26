@@ -159,7 +159,8 @@ Namespace Entities
             Public Function FindDistinct(Of T As {New, IKeyEntity})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Using mc As IGetManager = GetMgr
                     Dim rel As M2MRelationDesc = mc.Manager.MappingEngine.GetM2MRelation(GetType(T), _o.GetType, direct)
-                    Dim crit As PredicateLink = New PropertyPredicate(New EntityUnion(_o.GetType), OrmBaseT.PKName).eq(_o).[and](CType(criteria, PredicateLink))
+                    Dim pk As String = mc.Manager.MappingEngine.GetPrimaryKeys(_o.GetType, Nothing)(0).PropertyAlias
+                    Dim crit As PredicateLink = New PropertyPredicate(New EntityUnion(_o.GetType), pk).eq(_o).[and](CType(criteria, PredicateLink))
                     Return mc.Manager.FindDistinct(Of T)(rel, crit, sort, withLoad)
                 End Using
             End Function
@@ -688,6 +689,12 @@ Namespace Entities
             MyBase.PKLoaded(pkCount)
         End Sub
 
+
+        Public Overrides ReadOnly Property UniqueString() As String
+            Get
+                Return "PK:" & Identifier.ToString
+            End Get
+        End Property
 #Region " Relations "
         Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
             Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
@@ -1219,145 +1226,145 @@ Namespace Entities
         NotLoaded
     End Enum
 
-    Public Module OrmBaseT
-        Public Const PKName As String = "ID"
-    End Module
+    '    Public Module OrmBaseT
+    '        Public Const PKName As String = "ID"
+    '    End Module
 
-    <Serializable()> _
-    Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
-        Inherits KeyEntity
-        Implements IComparable(Of T), IPropertyConverter, IComparable
+    '    <Serializable()> _
+    '    Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
+    '        Inherits KeyEntity
+    '        Implements IComparable(Of T), IPropertyConverter, IComparable
 
-        Private _id As Object
+    '        Private _id As Object
 
-        Protected Sub New()
+    '        Protected Sub New()
 
-        End Sub
+    '        End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
-            MyBase.New()
-            MyBase.Init(id, cache, schema)
-            'SetObjectStateClear(Orm.ObjectState.Created)
-            'Throw New NotSupportedException
-        End Sub
+    '        Protected Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+    '            MyBase.New()
+    '            MyBase.Init(id, cache, schema)
+    '            'SetObjectStateClear(Orm.ObjectState.Created)
+    '            'Throw New NotSupportedException
+    '        End Sub
 
-        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
-            MyBase.Init(id, cache, schema)
-        End Sub
+    '        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
+    '            MyBase.Init(id, cache, schema)
+    '        End Sub
 
-        Protected Overrides Sub Init()
-            MyBase.Init()
-        End Sub
-        'Protected Overridable Function GetNew() As T
-        '    Return New T()
-        'End Function
+    '        Protected Overrides Sub Init()
+    '            MyBase.Init()
+    '        End Sub
+    '        'Protected Overridable Function GetNew() As T
+    '        '    Return New T()
+    '        'End Function
 
-        Public Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
-            If other Is Nothing Then
-                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
-                Return 1
-            End If
-            Return Math.Sign(ID - other.ID)
-            'Return Math.Sign(Identifier - other.Identifier)
-        End Function
+    '        Public Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
+    '            If other Is Nothing Then
+    '                'Throw New MediaObjectModelException(ObjName & "other parameter cannot be nothing")
+    '                Return 1
+    '            End If
+    '            Return Math.Sign(ID - other.ID)
+    '            'Return Math.Sign(Identifier - other.Identifier)
+    '        End Function
 
-        Public ReadOnly Property ID() As Integer 'Implements IOrmProxy(Of T).ID
-            Get
-                Return CInt(Identifier)
-            End Get
-        End Property
+    '        Public ReadOnly Property ID() As Integer 'Implements IOrmProxy(Of T).ID
+    '            Get
+    '                Return CInt(Identifier)
+    '            End Get
+    '        End Property
 
-        ''' <summary>
-        ''' Идентификатор объекта
-        ''' </summary>
-        ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
-        <EntityPropertyAttribute(Propertyalias:=OrmBaseT.PKName, Behavior:=Field2DbRelations.PrimaryKey)> _
-        Public Overrides Property Identifier() As Object
-            Get
-                'Using SyncHelper(True)
-                Return _id
-                'End Using
-            End Get
-            Set(ByVal value As Object)
-                'Using SyncHelper(False)
-                'If _id <> value Then
-                'If _state = Orm.ObjectState.Created Then
-                '    CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
-                'End If
-                _id = value
-                If Not CType(Me, _ICachedEntity).IsPKLoaded Then
-                    PKLoaded(1)
-                    Dim schema As ObjectMappingEngine = GetMappingEngine()
-                    If schema IsNot Nothing Then
-                        CType(Me, _ICachedEntity).SetLoaded(GetPKValues()(0).PropertyAlias, True, True, schema)
-                    End If
-                End If
-                'Debug.Assert(_id.Equals(value))
-                'End If
-                'End Using
-            End Set
-        End Property
+    '        ''' <summary>
+    '        ''' Идентификатор объекта
+    '        ''' </summary>
+    '        ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
+    '        <EntityPropertyAttribute(Propertyalias:=OrmBaseT.PKName, Behavior:=Field2DbRelations.PrimaryKey)> _
+    '        Public Overrides Property Identifier() As Object
+    '            Get
+    '                'Using SyncHelper(True)
+    '                Return _id
+    '                'End Using
+    '            End Get
+    '            Set(ByVal value As Object)
+    '                'Using SyncHelper(False)
+    '                'If _id <> value Then
+    '                'If _state = Orm.ObjectState.Created Then
+    '                '    CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
+    '                'End If
+    '                _id = value
+    '                If Not CType(Me, _ICachedEntity).IsPKLoaded Then
+    '                    PKLoaded(1)
+    '                    Dim schema As ObjectMappingEngine = GetMappingEngine()
+    '                    If schema IsNot Nothing Then
+    '                        CType(Me, _ICachedEntity).SetLoaded(GetPKValues()(0).PropertyAlias, True, True, schema)
+    '                    End If
+    '                End If
+    '                'Debug.Assert(_id.Equals(value))
+    '                'End If
+    '                'End Using
+    '            End Set
+    '        End Property
 
-        Public Overrides Function GetPKValues() As PKDesc()
-            Return New PKDesc() {New PKDesc(OrmBaseT.PKName, _id)}
-        End Function
+    '        Public Overrides Function GetPKValues() As PKDesc()
+    '            Return New PKDesc() {New PKDesc(OrmBaseT.PKName, _id)}
+    '        End Function
 
-        Protected Overrides Sub SetPK(ByVal pk() As PKDesc, ByVal schema As ObjectMappingEngine)
-            _id = pk(0).Value
-        End Sub
+    '        Protected Overrides Sub SetPK(ByVal pk() As PKDesc, ByVal schema As ObjectMappingEngine)
+    '            _id = pk(0).Value
+    '        End Sub
 
-        Protected Overrides Sub CopyBody(ByVal from As _IEntity, ByVal [to] As _IEntity)
-            Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
-            If editable IsNot Nothing Then
-                editable.CopyBody(CType(from, T), CType([to], T))
-            Else
-                MyBase.CopyBody(from, [to])
-            End If
-        End Sub
+    '        Protected Overrides Sub CopyBody(ByVal from As _IEntity, ByVal [to] As _IEntity)
+    '            Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
+    '            If editable IsNot Nothing Then
+    '                editable.CopyBody(CType(from, T), CType([to], T))
+    '            Else
+    '                MyBase.CopyBody(from, [to])
+    '            End If
+    '        End Sub
 
-        'Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
-        '    MyBase.SetValue(pi, c, Nothing, value)
-        'End Sub
+    '        'Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+    '        '    MyBase.SetValue(pi, c, Nothing, value)
+    '        'End Sub
 
-        Public Overridable Overloads Function CreateObject(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity Implements IPropertyConverter.CreateObject
-            Return Nothing
-        End Function
+    '        Public Overridable Overloads Function CreateObject(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity Implements IPropertyConverter.CreateObject
+    '            Return Nothing
+    '        End Function
 
-        Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-            If propertyAlias = OrmBaseT.PKName Then
-                Return True
-            Else
-                Return MyBase.IsPropertyLoaded(propertyAlias)
-            End If
-        End Function
+    '        Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
+    '            If propertyAlias = OrmBaseT.PKName Then
+    '                Return True
+    '            Else
+    '                Return MyBase.IsPropertyLoaded(propertyAlias)
+    '            End If
+    '        End Function
 
-#Region " Operators "
+    '#Region " Operators "
 
-        Public Shared Operator <(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then
-                    Return False
-                End If
-                Return True
-            End If
-            Return obj1.CompareTo(CType(obj2, T)) < 0
-        End Operator
+    '        Public Shared Operator <(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
+    '            If obj1 Is Nothing Then
+    '                If obj2 Is Nothing Then
+    '                    Return False
+    '                End If
+    '                Return True
+    '            End If
+    '            Return obj1.CompareTo(CType(obj2, T)) < 0
+    '        End Operator
 
-        Public Shared Operator >(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
-            If obj1 Is Nothing Then
-                If obj2 Is Nothing Then
-                    Return False
-                End If
-                Return False
-            End If
-            Return obj1.CompareTo(CType(obj2, T)) > 0
-        End Operator
+    '        Public Shared Operator >(ByVal obj1 As OrmBaseT(Of T), ByVal obj2 As OrmBaseT(Of T)) As Boolean
+    '            If obj1 Is Nothing Then
+    '                If obj2 Is Nothing Then
+    '                    Return False
+    '                End If
+    '                Return False
+    '            End If
+    '            Return obj1.CompareTo(CType(obj2, T)) > 0
+    '        End Operator
 
-#End Region
+    '#End Region
 
-        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
-            Return CompareTo(TryCast(obj, T))
-        End Function
-    End Class
+    '        Protected Function _CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
+    '            Return CompareTo(TryCast(obj, T))
+    '        End Function
+    '    End Class
 
 End Namespace

@@ -1074,15 +1074,17 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim tt2 As Type = GetType(Table2)
 
-            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(tt2).prop("Table1").exists( _
-                GetType(Table1)), Nothing, False)
+            'Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(tt2).prop("Table1").exists( _
+            '    GetType(Table1)), Nothing, False)
 
-            Assert.AreEqual(2, t.Count)
+            'Assert.AreEqual(2, t.Count)
 
-            t = mgr.Find(Of Table2)(New Ctor(tt2).prop("Table1").not_exists( _
-                GetType(Table1)), Nothing, False)
+            't = mgr.Find(Of Table2)(New Ctor(tt2).prop("Table1").not_exists( _
+            '    GetType(Table1)), Nothing, False)
 
-            Assert.AreEqual(0, t.Count)
+            'Assert.AreEqual(0, t.Count)
+
+            Dim t As ICollection(Of Table2) = Nothing
 
             Dim c As New Condition.ConditionConstructor
             c.AddFilter(New JoinFilter(tt2, "Table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal))

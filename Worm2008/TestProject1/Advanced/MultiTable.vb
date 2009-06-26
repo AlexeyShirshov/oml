@@ -13,7 +13,7 @@ Imports Worm
 <Entity(GetType(MultiTableEn), "en")> _
 <Entity(GetType(MultiTableRu), "ru")> _
 Public Class MultiTable
-    Inherits OrmBaseT(Of MultiTable)
+    Inherits KeyEntity
 
     Private _title As String
 
@@ -28,6 +28,27 @@ Public Class MultiTable
             Using Write("Msg")
                 _title = value
             End Using
+        End Set
+    End Property
+
+    Private _id As Integer
+
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
+
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
         End Set
     End Property
 End Class

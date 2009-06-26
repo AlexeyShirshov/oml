@@ -1979,7 +1979,7 @@ l1:
                         Dim f As IPropertyConverter = TryCast(obj, IPropertyConverter)
                         If f IsNot Nothing Then
                             For Each p As Pair(Of String, Object) In fac
-                                Dim e As _IEntity = f.CreateObject(Me, p.First, p.Second)
+                                Dim e As _IEntity = f.CreateContainingEntity(Me, p.First, p.Second)
                                 If e IsNot Nothing Then
                                     e.SetMgrString(IdentityString)
                                     If obj.CreateManager IsNot Nothing Then
@@ -2438,7 +2438,7 @@ l1:
                     Dim f As IPropertyConverter = TryCast(obj, IPropertyConverter)
                     If f IsNot Nothing Then
                         For Each p As Pair(Of String, Object) In fac
-                            Dim e As _IEntity = f.CreateObject(Me, p.First, p.Second)
+                            Dim e As _IEntity = f.CreateContainingEntity(Me, p.First, p.Second)
                             If e IsNot Nothing Then
                                 e.SetMgrString(IdentityString)
                                 RaiseObjectLoaded(e)

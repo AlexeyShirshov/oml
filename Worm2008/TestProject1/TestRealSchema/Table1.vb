@@ -24,8 +24,8 @@ End Class
 
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
-    Inherits OrmBaseT(Of Table1)
-    Implements IOrmEditable(Of Table1), IOptimizedValues
+    Inherits KeyEntity
+    Implements IOptimizedValues, IComparable
 
     Private _name As String
     Private _code As Nullable(Of Integer)
@@ -33,38 +33,49 @@ Public Class Table1
     Private _e2 As Nullable(Of Enum1)
     Private _dt As DateTime
     Private _cust As Integer
+    Private _id As Integer
 
     Public Sub New()
         MyBase.New()
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+        Init(id, cache, schema)
     End Sub
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Return New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type)
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type), Global.System.Collections.Generic.IComparer(Of T))
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable1(ByVal [from] As Table1, ByVal [to] As Table1) Implements IOrmEditable(Of Table1).CopyBody
-        With [from]
-            [to]._code = ._code
-            [to]._dt = ._dt
-            [to]._e = ._e
-            [to]._e2 = ._e2
-            [to]._name = ._name
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType(from, Table1)
+            CType([to], Table1)._id = ._id
+            CType([to], Table1)._code = ._code
+            CType([to], Table1)._dt = ._dt
+            CType([to], Table1)._e = ._e
+            CType([to], Table1)._e2 = ._e2
+            CType([to], Table1)._name = ._name
         End With
     End Sub
+
+    Public Function CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
+        Return _id.CompareTo(CType(obj, Table1)._id)
+    End Function
 
     Public Shared ReadOnly Property Table2Relation() As RelationDesc
         Get
@@ -107,6 +118,8 @@ Public Class Table1
         ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
         If fieldName = "ddd" Then
             Return Name
+        ElseIf fieldName = "ID" Then
+            Return _id
         Else
             Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
             'Throw New NotSupportedException(fieldName)

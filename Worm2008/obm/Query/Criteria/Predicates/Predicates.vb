@@ -275,25 +275,25 @@ Namespace Criteria
             Return GetLink(CreateFilter(New SubQueryCmd(cmd), FilterOperation.NotIn))
         End Function
 
-        Public Function exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
-            'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
-            'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.Exists))
-            Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.Exists))
-        End Function
+        'Public Function exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
+        '    'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
+        '    'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.Exists))
+        '    Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.Exists))
+        'End Function
 
-        Public Function not_exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
-            'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
-            'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.NotExists))
-            Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.NotExists))
-        End Function
+        'Public Function not_exists(ByVal t As Type, ByVal joinField As String) As PredicateLink
+        '    'Dim j As New JoinFilter(ObjectSource, Field, t, joinField, FilterOperation.Equal)
+        '    'Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.NotExists))
+        '    Return GetLink(cjf(t, joinField, FilterOperation.Equal, FilterOperation.NotExists))
+        'End Function
 
-        Public Function exists(ByVal t As Type) As PredicateLink
-            Return exists(t, Entities.OrmBaseT.PKName)
-        End Function
+        'Public Function exists(ByVal t As Type) As PredicateLink
+        '    Return exists(t, Entities.OrmBaseT.PKName)
+        'End Function
 
-        Public Function not_exists(ByVal t As Type) As PredicateLink
-            Return not_exists(t, Entities.OrmBaseT.PKName)
-        End Function
+        'Public Function not_exists(ByVal t As Type) As PredicateLink
+        '    Return not_exists(t, Entities.OrmBaseT.PKName)
+        'End Function
 
         Public Function exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
             Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, f.Filter), FilterOperation.Exists))

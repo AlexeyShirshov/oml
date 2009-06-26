@@ -303,7 +303,18 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        MappingEngine.SetPropertyValue(obj, c.PropertyAlias, nodes.Current.Value, oschema)
+                        Dim pi As Reflection.PropertyInfo = Nothing
+
+                        For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type, oschema)
+                            c = CType(de.Key, EntityPropertyAttribute)
+                            If c.PropertyAlias = c.PropertyAlias Then
+                                pi = CType(de.Value, Reflection.PropertyInfo)
+                                Exit For
+                            End If
+                        Next
+
+                        ObjectMappingEngine.SetValue(pi.PropertyType, MappingEngine, Cache, nodes.Current.Value, obj, pi, c.PropertyAlias, Nothing, GetContextInfo)
+                        'MappingEngine.SetPropertyValue(obj, c.PropertyAlias, nodes.Current.Value, oschema)
                         sn = True
                         cnt += 1
                     Loop
