@@ -13,8 +13,9 @@ Module Module1
     ''' <remarks>The function creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
     Function GetDBManager() As OrmDBManager
         Return New OrmDBManager(New OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, _
-             My.Settings.connectionString.Replace("|DataDirectory|\", _
-           IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\"))))
+            "Server=.\sqlexpress;AttachDBFileName='" & _
+            IO.Path.GetFullPath(String.Format(My.Settings.pathToDatabase, Environment.CurrentDirectory)) & _
+            "';User Instance=true;Integrated security=true;")
     End Function
 
     Sub Main()

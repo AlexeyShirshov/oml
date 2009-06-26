@@ -110,9 +110,9 @@ End Using
 			Return New test2.Albums.AlbumsAlias
 		End Function
 		
-		Public Shared Function GetAlias(ByVal objectAlias As Worm.Query.EntityAlias) As Albums.AlbumsProperties
-			Return New test2.Albums.AlbumsProperties(objectAlias)
-		End Function
+        Public Shared Function GetAlias(ByVal objectAlias As Worm.Query.QueryAlias) As Albums.AlbumsProperties
+            Return New test2.Albums.AlbumsProperties(objectAlias)
+        End Function
 		#End Region
 		
 		#Region "Base type related members"
@@ -153,7 +153,7 @@ End Using
 			If test2.Albums.Properties.Release_dt.Equals(propertyAlias) Then
 				Return Me._release_dt
 			End If
-			Return Me.MappingEngine.GetPropertyValue(Me, propertyAlias)
+            Return Me.GetMappingEngine.GetPropertyValue(Me, propertyAlias)
 		End Function
 		
         Protected Overrides Sub SetPK(ByVal pks() As Worm.Entities.Meta.PKDesc, ByVal mpe As Worm.ObjectMappingEngine)
@@ -332,7 +332,7 @@ End Using
 		End Class
 		
 		Public Class AlbumsAlias
-			Inherits Worm.Query.EntityAlias
+            Inherits Worm.Query.QueryAlias
 			
 			#Region "Constructors"
 			Public Sub New()
@@ -364,19 +364,19 @@ End Using
 		Public Class AlbumsProperties
 			
 			#Region "Private Fields"
-			Private _objectAlias As Worm.Query.EntityAlias
+            Private _objectAlias As Worm.Query.QueryAlias
 			#End Region
 			
-Public Shared Widening Operator CType(ByVal entityAlias As Albums.AlbumsProperties) As Worm.Query.EntityAlias
-    Return entityAlias._objectAlias
-End Operator
+            Public Shared Widening Operator CType(ByVal entityAlias As Albums.AlbumsProperties) As Worm.Query.QueryAlias
+                Return entityAlias._objectAlias
+            End Operator
 
 			
 			#Region "Constructors"
-			Public Sub New(ByVal objectAlias As Worm.Query.EntityAlias)
-				MyBase.New
-				Me._objectAlias = objectAlias
-			End Sub
+            Public Sub New(ByVal objectAlias As Worm.Query.QueryAlias)
+                MyBase.New()
+                Me._objectAlias = objectAlias
+            End Sub
 			#End Region
 			
 			#Region "Properties"
@@ -399,6 +399,6 @@ End Operator
 			End Property
 			#End Region
 		End Class
-		#End Region
+#End Region
 	End Class
 End Namespace

@@ -20,14 +20,14 @@ namespace test
             Init(id, cache, schema);
 		}
 
-        [EntityProperty]
+        [EntityProperty("name")]
 		public virtual string Name
 		{
 			get { using (Read("Name")) { return _name; } }
 			set { using (Write("Name")) { _name = value; } }
 		}
 
-        [EntityProperty]
+        [EntityProperty("release_dt")]
 		public virtual DateTime? Release
 		{
 			get { using (Read("Release")) { return _release; } }

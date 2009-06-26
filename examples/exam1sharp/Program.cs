@@ -16,10 +16,14 @@ namespace exam1sharp
         /// Create database manager - the gateway to database
         /// </summary>
         /// <returns></returns>
-        /// <remarks>The function creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
+        /// <remarks>Thefunction creates instance of OrmDBManager class and pass to ctor new Cache, new database schema with version 1 and connection string</remarks>
         static OrmDBManager GetDBManager()
         {
-            return new OrmDBManager(new OrmCache(), new ObjectMappingEngine("1"), new SQLGenerator(), new Properties.Settings().connectionString);
+            return new OrmDBManager(new OrmCache(), new ObjectMappingEngine("1"), new SQLGenerator(), 
+                @"Server=.\sqlexpress;AttachDBFileName='" +
+                System.IO.Path.GetFullPath(string.Format(exam1sharp.Properties.Settings.Default.pathToDatabase, Environment.CurrentDirectory))+
+                @"';User Instance=true;Integrated security=true;"
+                );
         }
 
         static void Main2(string[] args)
@@ -249,7 +253,7 @@ namespace exam1sharp
             }
         }
 
-        static void Main13(string[] args)
+        static void Main(string[] args)
         {
             int iterCount = 1000;
             DateTime start = DateTime.Now;

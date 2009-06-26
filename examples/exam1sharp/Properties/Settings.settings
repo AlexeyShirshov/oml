@@ -2,8 +2,8 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="exam1sharp.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="connectionString" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Server=.\sqlexpress;AttachDBFileName="D:\Work\Worm\examples\database\test.mdf";User Instance=true;Integrated security=true;</Value>
+    <Setting Name="pathToDatabase" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">{0}\..\..\..\database\test.mdf</Value>
     </Setting>
     <Setting Name="connString" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Server=.\sqlexpress;Initial Catalog=AdventureWorks;Integrated security=true;</Value>
