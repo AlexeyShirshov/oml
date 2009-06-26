@@ -4,7 +4,7 @@
 By user 'alex' at 07.04.2009 11:26:09.
 
 -->
-<oos:OrmObjects defaultNamespace="test2" schemaVersion="1" xmlns:oos="http://www.xmedia.ru/OrmObjectsSchema.xsd">
+<oos:OrmObjects defaultNamespace="test2" schemaVersion="1" xmlns:oos="http://wise-orm.com/OrmObjectsSchema.xsd">
   <oos:SourceFragments>
     <oos:SourceFragment id="tbldboAlbums" name="Albums" selector="dbo" />
   </oos:SourceFragments>

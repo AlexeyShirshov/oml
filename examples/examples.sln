@@ -13,6 +13,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6B8E7782-5803-4FDB-9BAA-69FE0DE29759}"
 	ProjectSection(SolutionItems) = preProject
 		albums.xml = albums.xml
+		generateADW.cmd = generateADW.cmd
+		generateClasses.cmd = generateClasses.cmd
 	EndProjectSection
 EndProject
 Global

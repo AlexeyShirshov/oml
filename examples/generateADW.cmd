@@ -1,0 +1,1 @@
+..\Worm2008\XmlSchemaGen\bin\Debug\Worm.CodeGen.XmlGenerator.exe -O=AdventureWorks.xml -E -D=AdventureWorks -ES -S=.\sqlexpress
