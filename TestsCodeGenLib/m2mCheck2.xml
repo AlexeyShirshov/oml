@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<OrmObjects xmlns="http://wise-orm.com/OrmObjectsSchema.xsd" defaultNamespace="test" xmlns:xi="http://www.w3.org/2001/XInclude">
+<WXMLModel xmlns="http://wise-orm.com/WXMLSchema.xsd" defaultNamespace="test" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<Includes>
 		<!--<xi:include parse="xml" href="tables.xml" />
 		<xi:include parse="xml" href="tablessub.xml" />-->
@@ -76,4 +76,4 @@
     <SourceFragment id="tbl2" name="tbl2" />
     <SourceFragment id="tbl12" name="tbl12" />
 	</SourceFragments>
-</OrmObjects>
+</WXMLModel>

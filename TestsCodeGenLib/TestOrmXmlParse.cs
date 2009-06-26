@@ -77,7 +77,7 @@ namespace TestsCodeGenLib
 
             parser.FillFileDescriptions();
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             Assert.AreEqual<string>("XMedia.Framework.Media.Objects", ormObjectDef.Namespace);
@@ -99,7 +99,7 @@ namespace TestsCodeGenLib
 
             parser.FillSourceFragments();
 
-        	OrmObjectsDef ormObjectDef = parser.OrmObjectsDef;
+        	WXMLModel ormObjectDef = parser.OrmObjectsDef;
 
             Assert.AreEqual<int>(6, ormObjectDef.SourceFragments.Count);
             Assert.IsTrue(ormObjectDef.SourceFragments.Exists(
@@ -129,7 +129,7 @@ namespace TestsCodeGenLib
             parser.FillSourceFragments();
             parser.FindEntities();
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             Assert.AreEqual<int>(5, ormObjectDef.Entities.Count());
@@ -157,7 +157,7 @@ namespace TestsCodeGenLib
             parser.FillImports();
             parser.FillTypes();
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
             Assert.AreEqual<int>(11, ormObjectDef.Types.Count);
 
@@ -181,7 +181,7 @@ namespace TestsCodeGenLib
             parser.FindEntities();
 
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity = ormObjectDef.Entities
@@ -212,7 +212,7 @@ namespace TestsCodeGenLib
             parser.FillTypes();
             
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity = ormObjectDef.Entities
@@ -299,7 +299,7 @@ namespace TestsCodeGenLib
             parser.FillTypes();
 
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity = ormObjectDef.Entities
@@ -347,7 +347,7 @@ namespace TestsCodeGenLib
             parser.FillTypes();
 
 
-            OrmObjectsDef ormObjectDef;
+            WXMLModel ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
 
             EntityDescription entity;
@@ -395,7 +395,7 @@ namespace TestsCodeGenLib
 
             parser.FillRelations();
 
-            OrmObjectsDef ormObjectsDef;
+            WXMLModel ormObjectsDef;
             ormObjectsDef = parser.OrmObjectsDef;
 
             Assert.AreEqual<int>(5, ormObjectsDef.Relations.Count);

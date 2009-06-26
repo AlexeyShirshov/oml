@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema
-		id="OrmObjectsSchema"
-		targetNamespace="http://wise-orm.com/OrmObjectsSchema.xsd"
+		id="WXMLSchema"
+		targetNamespace="http://wise-orm.com/WXMLSchema.xsd"
 		elementFormDefault="qualified"
-		xmlns="http://wise-orm.com/OrmObjectsSchema.xsd"
+		xmlns="http://wise-orm.com/WXMLSchema.xsd"
 		xmlns:xs="http://www.w3.org/2001/XMLSchema"
-		xmlns:NS="http://wise-orm.com/OrmObjectsSchema.xsd"
+		xmlns:NS="http://wise-orm.com/WXMLSchema.xsd"
 
 		version="1.0">
   <xs:complexType name="Entity_t">
@@ -618,7 +618,7 @@
       <xs:documentation>Набор ссылок на документы для импорта</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="OrmObjects" minOccurs="0" maxOccurs="unbounded" type="OrmObjects_t">
+      <xs:element name="WXMLModel" minOccurs="0" maxOccurs="unbounded" type="OrmObjects_t">
       </xs:element>
       <!--<xs:element minOccurs="0" maxOccurs="unbounded" ref="xi:include"/>-->
     </xs:sequence>
@@ -726,16 +726,16 @@
       <xs:pattern value="[A-Za-z0-9_]{1,}" />
     </xs:restriction>
   </xs:simpleType>
-  <xs:element name="OrmObjects" type="OrmObjects_t">
+  <xs:element name="WXMLModel" type="OrmObjects_t">
     <xs:annotation>
       <xs:documentation>Entities schema</xs:documentation>
     </xs:annotation>
     <xs:key name="EntityId">
-      <xs:selector xpath="NS:Entities/NS:Entity | ./NS:Includes/NS:OrmObjects/NS:Entities/NS:Entity" />
+      <xs:selector xpath="NS:Entities/NS:Entity | ./NS:Includes/NS:WXMLModel/NS:Entities/NS:Entity" />
       <xs:field xpath="@id" />
     </xs:key>
     <xs:key name="SourceFragmentId">
-      <xs:selector xpath="NS:SourceFragments/NS:SourceFragment | ./NS:Includes/NS:OrmObjects/NS:SourceFragments/NS:SourceFragment" />
+      <xs:selector xpath="NS:SourceFragments/NS:SourceFragment | ./NS:Includes/NS:WXMLModel/NS:SourceFragments/NS:SourceFragment" />
       <xs:field xpath="@id" />
     </xs:key>
     <!--<xs:key name="TableName">
@@ -743,7 +743,7 @@
       <xs:field xpath="." />
     </xs:key>-->
     <xs:key name="TypeId">
-      <xs:selector xpath="NS:Types/NS:Type | ./NS:Includes/NS:OrmObjects/NS:Types/NS:Type" />
+      <xs:selector xpath="NS:Types/NS:Type | ./NS:Includes/NS:WXMLModel/NS:Types/NS:Type" />
       <xs:field xpath="@id" />
     </xs:key>
   </xs:element>

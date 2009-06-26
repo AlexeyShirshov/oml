@@ -15,8 +15,8 @@
     <Name>Documentation</Name>
     <!-- SHFB properties -->
     <OutputPath>.\Help\</OutputPath>
-    <HtmlHelpName>Documentation</HtmlHelpName>
-    <HelpFileFormat>Website</HelpFileFormat>
+    <HtmlHelpName>WormReference</HtmlHelpName>
+    <HelpFileFormat>Help1xAndWebsite</HelpFileFormat>
     <ProjectSummary>Библиотека объектного мапинга данных.</ProjectSummary>
     <Language>ru-RU</Language>
     <NamingMethod>MemberName</NamingMethod>
@@ -27,18 +27,19 @@
     <FeedbackEMailAddress>contact%40wise-orm.com</FeedbackEMailAddress>
     <NamespaceSummaries>
       <NamespaceSummaryItem name="Worm" isDocumented="True" xmlns="">Пространство имен типов, реализующих механизмы выборки данных</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Cache" isDocumented="True" xmlns="">Пространство имен типов, отвечающих за хранение данных в памяти</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Collections" isDocumented="True" xmlns="">Коллекции и словари, используемые для хранения и манипуляции данными</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Configuration" isDocumented="True" xmlns="">Классы для конфигурационной секции приложения</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Criteria" isDocumented="True" xmlns="">Пространство имен типов, служащих для формирования условий выборки данных. Непосредствено пространство имен содерджит абстрактные типы, формирующие фильтр</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Criteria.Conditions" isDocumented="True" xmlns="">Пространство имен типов, "собирающих/объединяющих" фильтры в сложные условия</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Criteria.Core" isDocumented="True" xmlns="">Пространство имен фильтров</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Criteria.Joins" isDocumented="True" xmlns="">Пространство имен типов, реализующих джоины и условия джоинов</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Criteria.Values" isDocumented="True" xmlns="">Пространство имен занчений фильтров</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Database" isDocumented="True" xmlns="">Пространство имен типов, реализующих работу с реляционными базами данных</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Database.Storedprocs" isDocumented="True" xmlns="">Пространство имен типов, реализующих доступ к хранимым процедурам</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Web" isDocumented="True" xmlns="">Реализация провайдеров данных для ASP.NET и специальных классов для веба</NamespaceSummaryItem>
-<NamespaceSummaryItem name="Worm.Xml" isDocumented="True" xmlns="">Пространство имен файлов, реализующих работу с XML</NamespaceSummaryItem></NamespaceSummaries>
+      <NamespaceSummaryItem name="Worm.Cache" isDocumented="True" xmlns="">Пространство имен типов, отвечающих за хранение данных в памяти</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Collections" isDocumented="True" xmlns="">Коллекции и словари, используемые для хранения и манипуляции данными</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Configuration" isDocumented="True" xmlns="">Классы для конфигурационной секции приложения</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Criteria" isDocumented="True" xmlns="">Пространство имен типов, служащих для формирования условий выборки данных. Непосредствено пространство имен содерджит абстрактные типы, формирующие фильтр</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Criteria.Conditions" isDocumented="True" xmlns="">Пространство имен типов, "собирающих/объединяющих" фильтры в сложные условия</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Criteria.Core" isDocumented="True" xmlns="">Пространство имен фильтров</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Criteria.Joins" isDocumented="True" xmlns="">Пространство имен типов, реализующих джоины и условия джоинов</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Criteria.Values" isDocumented="True" xmlns="">Пространство имен занчений фильтров</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Database" isDocumented="True" xmlns="">Пространство имен типов, реализующих работу с реляционными базами данных</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Database.Storedprocs" isDocumented="True" xmlns="">Пространство имен типов, реализующих доступ к хранимым процедурам</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Web" isDocumented="True" xmlns="">Реализация провайдеров данных для ASP.NET и специальных классов для веба</NamespaceSummaryItem>
+      <NamespaceSummaryItem name="Worm.Xml" isDocumented="True" xmlns="">Пространство имен файлов, реализующих работу с XML</NamespaceSummaryItem>
+    </NamespaceSummaries>
     <ContentPlacement>BelowNamespaces</ContentPlacement>
     <RootNamespaceContainer>True</RootNamespaceContainer>
     <RootNamespaceTitle>Worm Class library</RootNamespaceTitle>

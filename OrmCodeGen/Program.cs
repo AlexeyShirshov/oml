@@ -24,7 +24,7 @@ namespace Worm.CodeGen.CodeGenerator
 
             string outputLanguage;
             string outputFolder;
-            OrmObjectsDef ormObjectsDef;
+            WXMLModel ormObjectsDef;
             string inputFilename;
             CodeDomProvider codeDomProvider;
             bool split, separateFolder;
@@ -188,7 +188,7 @@ namespace Worm.CodeGen.CodeGenerator
                 Console.Write("Parsing file '{0}'...   ", inputFilename);
                 using (XmlReader rdr = XmlReader.Create(inputFilename))
                 {
-                    ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                    ormObjectsDef = WXMLModel.LoadFromXml(rdr, new XmlUrlResolver());
                 }
                 Console.WriteLine("done!");
                 if(validateOnly)
@@ -216,7 +216,7 @@ namespace Worm.CodeGen.CodeGenerator
                 }
             }
 
-            var gen = new OrmCodeDomGenerator(ormObjectsDef, settings);
+            var gen = new WXMLModelToCodeDomConverter(ormObjectsDef, settings);
 
             
 			//settings.Split = split;
@@ -255,9 +255,9 @@ namespace Worm.CodeGen.CodeGenerator
                     skipEntities, processEntities, settings, testRun, gen);
         }
 
-        private static void GenerateMultipleFilesOutput(string outputFolder, OrmObjectsDef ormObjectsDef, 
+        private static void GenerateMultipleFilesOutput(string outputFolder, WXMLModel ormObjectsDef, 
             CodeDomProvider codeDomProvider, bool separateFolder, string[] skipEntities, string[] processEntities, 
-            OrmCodeDomGeneratorSettings settings, bool testRun, OrmCodeDomGenerator gen)
+            OrmCodeDomGeneratorSettings settings, bool testRun, WXMLModelToCodeDomConverter gen)
         {
             List<string> errorList = new List<string>();
             int totalEntities = 0;

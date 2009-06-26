@@ -6,7 +6,7 @@ using LinqToCodedom.Generator;
 
 namespace Worm.CodeGen.Core
 {
-    public partial class OrmCodeDomGenerator
+    public partial class WXMLModelToCodeDomConverter
     {
         public static class Delegates
         {

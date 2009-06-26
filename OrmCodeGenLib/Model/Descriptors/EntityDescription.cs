@@ -14,23 +14,23 @@ namespace Worm.CodeGen.Core.Descriptors
         private readonly List<SourceFragmentRefDescription> _sourceFragments;
         private readonly List<PropertyDescription> _properties;
         private readonly List<PropertyDescription> _suppressedProperties;
-        private readonly OrmObjectsDef _ormObjectsDef;
+        private readonly WXMLModel _ormObjectsDef;
         private EntityDescription _baseEntity;
 
         #endregion Private Fields
 
-        public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef)
+        public EntityDescription(string id, string name, string nameSpace, string description, WXMLModel ormObjectsDef)
             : this(id, name, nameSpace, description, ormObjectsDef, null)
         {
         }
 
-        public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity)
+        public EntityDescription(string id, string name, string nameSpace, string description, WXMLModel ormObjectsDef, EntityDescription baseEntity)
             : this(id, name, nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.ForcePartial)
         {
 
         }
 
-        public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity, EntityBehaviuor behaviour)
+        public EntityDescription(string id, string name, string nameSpace, string description, WXMLModel ormObjectsDef, EntityDescription baseEntity, EntityBehaviuor behaviour)
         {
             _id = id;
             _name = name;
@@ -51,7 +51,7 @@ namespace Worm.CodeGen.Core.Descriptors
             {
                 if (_decl == null)
                 {
-                    _decl = Worm.CodeGen.Core.OrmCodeDomGenerator.s_ctrl.Current.GetEntityDeclaration(this);
+                    _decl = Worm.CodeGen.Core.WXMLModelToCodeDomConverter.s_ctrl.Current.GetEntityDeclaration(this);
                 }
                 return _decl;
             }
@@ -97,7 +97,7 @@ namespace Worm.CodeGen.Core.Descriptors
             get { return _properties.FindAll(p=>!p.Disabled); }
         }
 
-        public OrmObjectsDef OrmObjectsDef
+        public WXMLModel OrmObjectsDef
         {
             get { return _ormObjectsDef; }
         }

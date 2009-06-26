@@ -65,10 +65,10 @@ internal class WormCodeGenCore_OrmXmlGeneratorAccessor : BaseAccessor {
         }
     }
 
-    internal global::Worm.CodeGen.Core.OrmObjectsDef _ormObjectsDef
+    internal global::Worm.CodeGen.Core.WXMLModel _ormObjectsDef
     {
         get {
-            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
+            global::Worm.CodeGen.Core.WXMLModel ret = ((global::Worm.CodeGen.Core.WXMLModel)(m_privateObject.GetField("_ormObjectsDef")));
             return ret;
         }
         set {
@@ -96,19 +96,19 @@ internal class WormCodeGenCore_OrmXmlGeneratorAccessor : BaseAccessor {
         }
     }
     
-    internal static object CreatePrivate(global::Worm.CodeGen.Core.OrmObjectsDef ormObjectsDef) {
+    internal static object CreatePrivate(global::Worm.CodeGen.Core.WXMLModel ormObjectsDef) {
         object[] args = new object[] {
                 ormObjectsDef};
         Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlGenerator", new System.Type[] {
-                    typeof(global::Worm.CodeGen.Core.OrmObjectsDef)}, args);
+                    typeof(global::Worm.CodeGen.Core.WXMLModel)}, args);
         return priv_obj.Target;
     }
     
-    internal static global::System.Xml.XmlDocument Generate(global::Worm.CodeGen.Core.OrmObjectsDef schema) {
+    internal static global::System.Xml.XmlDocument Generate(global::Worm.CodeGen.Core.WXMLModel schema) {
         object[] args = new object[] {
                 schema};
         global::System.Xml.XmlDocument ret = ((global::System.Xml.XmlDocument)(m_privateType.InvokeStatic("Generate", new System.Type[] {
-                    typeof(global::Worm.CodeGen.Core.OrmObjectsDef)}, args)));
+                    typeof(global::Worm.CodeGen.Core.WXMLModel)}, args)));
         return ret;
     }
     
@@ -182,10 +182,10 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
         }
     }
 
-    internal global::Worm.CodeGen.Core.OrmObjectsDef _ormObjectsDef
+    internal global::Worm.CodeGen.Core.WXMLModel _ormObjectsDef
     {
         get {
-            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
+            global::Worm.CodeGen.Core.WXMLModel ret = ((global::Worm.CodeGen.Core.WXMLModel)(m_privateObject.GetField("_ormObjectsDef")));
             return ret;
         }
         set {
@@ -233,10 +233,10 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
         }
     }
 
-    internal global::Worm.CodeGen.Core.OrmObjectsDef OrmObjectsDef
+    internal global::Worm.CodeGen.Core.WXMLModel OrmObjectsDef
     {
         get {
-            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetProperty("OrmObjectsDef")));
+            global::Worm.CodeGen.Core.WXMLModel ret = ((global::Worm.CodeGen.Core.WXMLModel)(m_privateObject.GetProperty("OrmObjectsDef")));
             return ret;
         }
     }
@@ -267,21 +267,21 @@ internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
         return priv_obj.Target;
     }
     
-    internal static global::Worm.CodeGen.Core.OrmObjectsDef Parse(global::System.Xml.XmlReader reader, global::System.Xml.XmlResolver xmlResolver) {
+    internal static global::Worm.CodeGen.Core.WXMLModel Parse(global::System.Xml.XmlReader reader, global::System.Xml.XmlResolver xmlResolver) {
         object[] args = new object[] {
                 reader,
                 xmlResolver};
-        global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateType.InvokeStatic("Parse", new System.Type[] {
+        global::Worm.CodeGen.Core.WXMLModel ret = ((global::Worm.CodeGen.Core.WXMLModel)(m_privateType.InvokeStatic("Parse", new System.Type[] {
                     typeof(global::System.Xml.XmlReader),
                     typeof(global::System.Xml.XmlResolver)}, args)));
         return ret;
     }
     
-    internal static global::Worm.CodeGen.Core.OrmObjectsDef LoadXmlDocument(global::System.Xml.XmlDocument document, bool skipValidation) {
+    internal static global::Worm.CodeGen.Core.WXMLModel LoadXmlDocument(global::System.Xml.XmlDocument document, bool skipValidation) {
         object[] args = new object[] {
                 document,
                 skipValidation};
-        global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateType.InvokeStatic("LoadXmlDocument", new System.Type[] {
+        global::Worm.CodeGen.Core.WXMLModel ret = ((global::Worm.CodeGen.Core.WXMLModel)(m_privateType.InvokeStatic("LoadXmlDocument", new System.Type[] {
                     typeof(global::System.Xml.XmlDocument),
                     typeof(bool)}, args)));
         return ret;

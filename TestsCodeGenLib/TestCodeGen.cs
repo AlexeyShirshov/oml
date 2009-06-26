@@ -205,12 +205,12 @@ namespace TestsCodeGenLib
 
         private static void CompileCode(CodeDomProvider prov, OrmCodeDomGeneratorSettings settings, XmlReader reader)
         {
-            OrmObjectsDef odef = null;
+            WXMLModel odef = null;
             using (reader)
             {
-                odef = OrmObjectsDef.LoadFromXml(reader);
+                odef = WXMLModel.LoadFromXml(reader);
             }
-            OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
+            WXMLModelToCodeDomConverter gen = new WXMLModelToCodeDomConverter(odef, settings);
             Dictionary<string,Worm.CodeGen.Core.CodeDomExtensions.CodeCompileFileUnit> dic =
                 gen.GetFullDom(typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(prov.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
             

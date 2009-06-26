@@ -9,10 +9,10 @@ using System.Linq;
 namespace Worm.CodeGen.Core
 {
 	[Serializable]
-    public class OrmObjectsDef
+    public class WXMLModel
     {
         public const string NS_PREFIX = "oos";
-        public const string NS_URI = "http://wise-orm.com/OrmObjectsSchema.xsd";
+        public const string NS_URI = "http://wise-orm.com/WXMLSchema.xsd";
 
         #region Private Fields
 
@@ -33,7 +33,7 @@ namespace Worm.CodeGen.Core
 
 	    #endregion Private Fields
 
-        public OrmObjectsDef()
+        public WXMLModel()
         {
             _entities = new List<EntityDescription>();
             _relations = new List<RelationDescriptionBase>();
@@ -169,7 +169,7 @@ namespace Worm.CodeGen.Core
 	    public string FileName { get; set; }
 
 
-	    public OrmObjectsDef BaseSchema { get; protected internal set; }
+	    public WXMLModel BaseSchema { get; protected internal set; }
 
 	    public TypeDescription EntityBaseType
 		{
@@ -235,7 +235,7 @@ namespace Worm.CodeGen.Core
                 .SingleOrDefault(match => match.Identifier == entityId);
             
             if(entity == null && Includes.Count != 0)
-                foreach (OrmObjectsDef objectsDef in Includes)
+                foreach (WXMLModel objectsDef in Includes)
                 {
                     entity = objectsDef.GetEntity(entityId);
                     if (entity != null)
@@ -255,7 +255,7 @@ namespace Worm.CodeGen.Core
         {
             var table = SourceFragments.Find(match => match.Identifier == tableId);
             if(table == null && Includes.Count > 0)
-                foreach (OrmObjectsDef objectsDef in Includes)
+                foreach (WXMLModel objectsDef in Includes)
                 {
                     table = objectsDef.GetSourceFragment(tableId, false);
                     if (table != null)
@@ -273,7 +273,7 @@ namespace Worm.CodeGen.Core
             {
                 type = Types.Find(delegate(TypeDescription match) { return match.Identifier == typeId; });
                 if (type == null && Includes.Count != 0)
-                    foreach (OrmObjectsDef objectsDef in Includes)
+                    foreach (WXMLModel objectsDef in Includes)
                     {
                         type = objectsDef.GetType(typeId, false);
                         if (type != null)
@@ -345,14 +345,14 @@ namespace Worm.CodeGen.Core
             );
         }
 
-        public static OrmObjectsDef LoadFromXml(XmlReader reader)
+        public static WXMLModel LoadFromXml(XmlReader reader)
         {
             return LoadFromXml(reader, null);
         }
 
-        public static OrmObjectsDef LoadFromXml(XmlReader reader, XmlResolver xmlResolver)
+        public static WXMLModel LoadFromXml(XmlReader reader, XmlResolver xmlResolver)
         {
-            OrmObjectsDef odef = OrmXmlParser.Parse(reader, xmlResolver);
+            WXMLModel odef = WXMLModelReader.Parse(reader, xmlResolver);
             odef.CreateSystemComments();
             return odef;
         }
@@ -361,7 +361,7 @@ namespace Worm.CodeGen.Core
         {
             CreateSystemComments();
 
-            return OrmXmlGenerator.Generate(this, settings);
+            return WXMLModelWriter.Generate(this, settings);
         }
 
         private void CreateSystemComments()
@@ -381,18 +381,18 @@ namespace Worm.CodeGen.Core
 
         #endregion Methods
 
-        public class IncludesCollection : IEnumerable<OrmObjectsDef>
+        public class IncludesCollection : IEnumerable<WXMLModel>
         {
-            private readonly List<OrmObjectsDef> m_list;
-            private readonly OrmObjectsDef _baseObjectsDef;
+            private readonly List<WXMLModel> m_list;
+            private readonly WXMLModel _baseObjectsDef;
 
-            public IncludesCollection(OrmObjectsDef baseObjectsDef)
+            public IncludesCollection(WXMLModel baseObjectsDef)
             {
-                m_list = new List<OrmObjectsDef>();
+                m_list = new List<WXMLModel>();
                 _baseObjectsDef = baseObjectsDef;
             }
 
-            public void Add(OrmObjectsDef objectsDef)
+            public void Add(WXMLModel objectsDef)
             {
                 if (IsSchemaPresentInTree(objectsDef))
                     throw new ArgumentException(
@@ -401,7 +401,7 @@ namespace Worm.CodeGen.Core
                 m_list.Add(objectsDef);
             }
 
-            public void Remove(OrmObjectsDef objectsDef)
+            public void Remove(WXMLModel objectsDef)
             {
                 objectsDef.BaseSchema = null;
                 m_list.Remove(objectsDef);
@@ -420,7 +420,7 @@ namespace Worm.CodeGen.Core
                 }
             }
 
-            public OrmObjectsDef this[int index]
+            public WXMLModel this[int index]
             {
                 get
                 {
@@ -433,16 +433,16 @@ namespace Worm.CodeGen.Core
                 }
             }
 
-            public int IndexOf(OrmObjectsDef objectsDef)
+            public int IndexOf(WXMLModel objectsDef)
             {
                 return m_list.IndexOf(objectsDef);
             }
 
-            protected bool IsSchemaPresentInTree(OrmObjectsDef objectsDef)
+            protected bool IsSchemaPresentInTree(WXMLModel objectsDef)
             {
                 if (m_list.Contains(objectsDef))
                     return true;
-                foreach (OrmObjectsDef ormObjectsDef in m_list)
+                foreach (WXMLModel ormObjectsDef in m_list)
                 {
                     return ormObjectsDef.Includes.IsSchemaPresentInTree(objectsDef);
                 }
@@ -454,7 +454,7 @@ namespace Worm.CodeGen.Core
 
             #region IEnumerable<OrmObjectsDef> Members
 
-            public IEnumerator<OrmObjectsDef> GetEnumerator()
+            public IEnumerator<WXMLModel> GetEnumerator()
             {
                 return m_list.GetEnumerator();
             }

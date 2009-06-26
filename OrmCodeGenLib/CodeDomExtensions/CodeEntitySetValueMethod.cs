@@ -37,7 +37,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 				if (property.Disabled)
 					continue;
 
-				OrmCodeDomGenerator.Delegates.UpdateSetValueMethodMethod(property, this);
+				WXMLModelToCodeDomConverter.Delegates.UpdateSetValueMethodMethod(property, this);
 			}
 
 			if (entity.BaseEntity != null)

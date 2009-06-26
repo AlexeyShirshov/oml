@@ -40,7 +40,7 @@ namespace TestsCodeGenLib
             using (XmlReader rdr = XmlReader.Create(stream))
             {
 
-                Worm.CodeGen.Core.OrmObjectsDef schemaDef = OrmObjectsDef.LoadFromXml(rdr, new TestXmlUrlResolver());
+                Worm.CodeGen.Core.WXMLModel schemaDef = WXMLModel.LoadFromXml(rdr, new TestXmlUrlResolver());
                 ormXmlDocumentSet = schemaDef.GetOrmXmlDocumentSet(new OrmXmlGeneratorSettings());
 
             }

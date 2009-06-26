@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<OrmObjects xmlns="http://wise-orm.com/OrmObjectsSchema.xsd" defaultNamespace="test" xmlns:xi="http://www.w3.org/2001/XInclude">
+<WXMLModel xmlns="http://wise-orm.com/WXMLSchema.xsd" defaultNamespace="test" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<Entities>
 		<Entity id="e1" name="E1" namespace="NS1" makeInterface="true">
 			<SourceFragments>
@@ -32,4 +32,4 @@
 	<SourceFragments>
 		<SourceFragment id="tbl1" name="tbl1" />
 	</SourceFragments>
-</OrmObjects>
+</WXMLModel>

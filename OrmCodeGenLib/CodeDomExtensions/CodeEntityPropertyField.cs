@@ -12,7 +12,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 		{
 			Type = property.PropertyType;
 			Name = OrmCodeGenNameHelper.GetPrivateMemberName(property.PropertyName);
-			Attributes = OrmCodeDomGenerator.GetMemberAttribute(property.FieldAccessLevel);
+			Attributes = WXMLModelToCodeDomConverter.GetMemberAttribute(property.FieldAccessLevel);
 		}
 	}
 }

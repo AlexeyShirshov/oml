@@ -117,27 +117,27 @@ namespace Worm.CodeGen.XmlGenerator
 			string namesp = string.Empty;
 			param.TryGetParam("N", out namesp);
 
-			string u = null;
+            string u = "true";
 			if (!param.TryGetParam("Y", out u))
 				u = "false";
 			bool unify = bool.Parse(u);
 
-            string hi = null;
+            string hi = "true";
             if (!param.TryGetParam("H", out hi))
                 hi = "false";
             bool hie = bool.Parse(hi);
 
-            string tr = null;
+            string tr = "true";
             if (!param.TryGetParam("T", out tr))
                 tr = "false";
             bool transform = bool.Parse(tr);
 
-            string es = null;
+            string es = "true";
             if (!param.TryGetParam("ES", out tr))
                 es = "false";
             bool escape = bool.Parse(es);
 
-            Generator g = new Generator(server, m, db, i, user, psw, transform);
+            WXMLModelGenerator g = new WXMLModelGenerator(server, m, db, i, user, psw, transform);
 
 			g.MakeWork(schemas, namelike, file, merge, dr, namesp, hie?relation1to1.Hierarchy:unify?relation1to1.Unify:relation1to1.Default, escape);
 
@@ -163,7 +163,7 @@ namespace Worm.CodeGen.XmlGenerator
 			Console.WriteLine("  -Y\t\t-  Unify entyties with the same PK(1-1 relation). Example: -Y.");
             Console.WriteLine("  -H\t\t-  Make hierarchy from 1-1 relations. Example: -H.");
             Console.WriteLine("  -T\t\t-  Transform property names. Example: -T.");
-            Console.WriteLine("  -ES\t\t-  Escape names. Example: -T.");
+            Console.WriteLine("  -ES\t\t-  Escape names. Example: -ES.");
 		}
 	}
 }

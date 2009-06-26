@@ -7,31 +7,31 @@ using System.Linq;
 
 namespace Worm.CodeGen.Core
 {
-    internal class OrmXmlGenerator
+    internal class WXMLModelWriter
     {
         private readonly OrmXmlDocumentSet _ormXmlDocumentSet;
         private XmlDocument _ormXmlDocumentMain;
-        private readonly OrmObjectsDef _ormObjectsDef;
+        private readonly WXMLModel _ormObjectsDef;
 
         private readonly XmlNamespaceManager _nsMgr;
         private readonly XmlNameTable _nametable;
 
         private readonly OrmXmlGeneratorSettings _settings;
 
-        internal OrmXmlGenerator(OrmObjectsDef ormObjectsDef, OrmXmlGeneratorSettings settings)
+        internal WXMLModelWriter(WXMLModel ormObjectsDef, OrmXmlGeneratorSettings settings)
         {
             _ormObjectsDef = ormObjectsDef;
             _nametable = new NameTable();
             _nsMgr = new XmlNamespaceManager(_nametable);
-            _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);
+            _nsMgr.AddNamespace(WXMLModel.NS_PREFIX, WXMLModel.NS_URI);
             _ormXmlDocumentSet = new OrmXmlDocumentSet();
             _settings = settings;
         }
 
-        internal static OrmXmlDocumentSet Generate(OrmObjectsDef schema, OrmXmlGeneratorSettings settings)
+        internal static OrmXmlDocumentSet Generate(WXMLModel schema, OrmXmlGeneratorSettings settings)
         {
-            OrmXmlGenerator generator;
-            generator = new OrmXmlGenerator(schema, settings);
+            WXMLModelWriter generator;
+            generator = new WXMLModelWriter(schema, settings);
 
             generator.GenerateXmlDocumentInternal();
 
@@ -84,7 +84,7 @@ namespace Worm.CodeGen.Core
                 return;
             XmlNode importsNode = CreateElement("Includes");
             _ormXmlDocumentMain.DocumentElement.AppendChild(importsNode);
-            foreach (OrmObjectsDef objectsDef in _ormObjectsDef.Includes)
+            foreach (WXMLModel objectsDef in _ormObjectsDef.Includes)
             {
                 OrmXmlGeneratorSettings settings = (OrmXmlGeneratorSettings)_settings.Clone();
                     //settings.DefaultMainFileName = _settings.DefaultIncludeFileName + _ormObjectsDef.Includes.IndexOf(objectsDef);
@@ -121,7 +121,7 @@ namespace Worm.CodeGen.Core
             _ormXmlDocumentMain = new XmlDocument(_nametable);
             XmlDeclaration declaration = _ormXmlDocumentMain.CreateXmlDeclaration("1.0", Encoding.UTF8.WebName, null);
             _ormXmlDocumentMain.AppendChild(declaration);
-            XmlElement root = CreateElement("OrmObjects");
+            XmlElement root = CreateElement("WXMLModel");
             _ormXmlDocumentMain.AppendChild(root);
             string filename = GetFilename(_ormObjectsDef, _settings);
             OrmXmlDocument doc = new OrmXmlDocument(filename, _ormXmlDocumentMain);
@@ -129,14 +129,14 @@ namespace Worm.CodeGen.Core
           
         }
 
-        private string GetFilename(OrmObjectsDef objectsDef, OrmXmlGeneratorSettings settings)
+        private string GetFilename(WXMLModel objectsDef, OrmXmlGeneratorSettings settings)
         {
             return string.IsNullOrEmpty(objectsDef.FileName)
                        ? settings.DefaultMainFileName
                        : objectsDef.FileName;
         }
 
-        private string GetIncludeFileName(OrmObjectsDef objectsDef, OrmObjectsDef incldeObjectsDef, OrmXmlGeneratorSettings settings)
+        private string GetIncludeFileName(WXMLModel objectsDef, WXMLModel incldeObjectsDef, OrmXmlGeneratorSettings settings)
         {
             if (string.IsNullOrEmpty(incldeObjectsDef.FileName))
             {
@@ -493,7 +493,7 @@ namespace Worm.CodeGen.Core
 
         private XmlElement CreateElement(string name)
         {
-            return _ormXmlDocumentMain.CreateElement(OrmObjectsDef.NS_PREFIX, name, OrmObjectsDef.NS_URI);
+            return _ormXmlDocumentMain.CreateElement(WXMLModel.NS_PREFIX, name, WXMLModel.NS_URI);
         }
 
         private void FillFileDescriptions()

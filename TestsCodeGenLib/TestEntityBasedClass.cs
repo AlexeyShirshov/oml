@@ -40,9 +40,9 @@ namespace TestsCodeGenLib
         //    CompileCode(odef, prov, settings);
         //}
 
-		private void CompileCode(OrmObjectsDef odef, CodeDomProvider prov, OrmCodeDomGeneratorSettings settings)
+		private void CompileCode(WXMLModel odef, CodeDomProvider prov, OrmCodeDomGeneratorSettings settings)
 		{
-			OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
+			WXMLModelToCodeDomConverter gen = new WXMLModelToCodeDomConverter(odef, settings);
             Dictionary<string, Worm.CodeGen.Core.CodeDomExtensions.CodeCompileFileUnit> dic =
                 gen.GetFullDom(typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(prov.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
 

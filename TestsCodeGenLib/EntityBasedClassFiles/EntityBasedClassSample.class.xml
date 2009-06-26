@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<oos:OrmObjects xmlns:oos="http://wise-orm.com/OrmObjectsSchema.xsd" defaultNamespace="OrmCodeGenTests" entityBaseType="tBase">
+<oos:WXMLModel xmlns:oos="http://wise-orm.com/WXMLSchema.xsd" defaultNamespace="OrmCodeGenTests" entityBaseType="tBase">
 	<oos:Types>
 		<oos:Type id="tBase">
 			<oos:UserType  name="OrmCodeGenTests.TestOrmBase"/>
@@ -21,4 +21,4 @@
 			</oos:Properties>
 		</oos:Entity>
 	</oos:Entities>
-</oos:OrmObjects>
+</oos:WXMLModel>

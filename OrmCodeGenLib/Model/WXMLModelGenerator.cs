@@ -74,7 +74,7 @@ namespace Worm.CodeGen.XmlGenerator
         Hierarchy
     }
 
-    public class Generator
+    public class WXMLModelGenerator
     {
         private string _server;
         private string _m;
@@ -85,7 +85,7 @@ namespace Worm.CodeGen.XmlGenerator
         private bool _transform;
         private Dictionary<string, object> _ents = new Dictionary<string, object>();
 
-        public Generator(string server, string m, string db, bool i, string user, string psw, bool transformPropertyName)
+        public WXMLModelGenerator(string server, string m, string db, bool i, string user, string psw, bool transformPropertyName)
         {
             _server = server;
             _m = m;
@@ -99,7 +99,7 @@ namespace Worm.CodeGen.XmlGenerator
         public void MakeWork(string schemas, string namelike, string file, string merge,
             bool dr, string name_space, relation1to1 rb, bool escape)
         {
-            Dictionary<Column, Column> columns = new Dictionary<Column, Column>();
+            Dictionary<DatabaseColumn, DatabaseColumn> columns = new Dictionary<DatabaseColumn, DatabaseColumn>();
             List<Pair<string>> defferedCols = new List<Pair<string>>();
 
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
@@ -172,7 +172,7 @@ namespace Worm.CodeGen.XmlGenerator
                     {
                         while (reader.Read())
                         {
-                            Column c = Column.Create(reader);
+                            DatabaseColumn c = DatabaseColumn.Create(reader);
                             if (defferedCols.Find((kv) => kv.First == c.FullTableName) == null)
                             {
                                 try
@@ -187,7 +187,7 @@ namespace Worm.CodeGen.XmlGenerator
                                         if (rb == relation1to1.Unify)
                                         {
                                             defferedCols.Add(new Pair<string>(c.FullTableName, columns[c].FKName));
-                                            foreach (Column clm in new List<Column>(columns.Keys))
+                                            foreach (DatabaseColumn clm in new List<DatabaseColumn>(columns.Keys))
                                             {
                                                 if (clm.FullTableName == c.FullTableName)
                                                     columns.Remove(clm);
@@ -203,7 +203,7 @@ namespace Worm.CodeGen.XmlGenerator
                                         if (rb == relation1to1.Unify)
                                         {
                                             defferedCols.Add(new Pair<string>(c.FullTableName, c.FKName));
-                                            foreach (Column clm in new List<Column>(columns.Keys))
+                                            foreach (DatabaseColumn clm in new List<DatabaseColumn>(columns.Keys))
                                             {
                                                 if (clm.FullTableName == c.FullTableName)
                                                     columns.Remove(clm);
@@ -244,21 +244,21 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        protected void ProcessColumns(Dictionary<Column, Column> columns, string file, string merge,
+        protected void ProcessColumns(Dictionary<DatabaseColumn, DatabaseColumn> columns, string file, string merge,
             bool dropColumns, string name_space, List<Pair<string>> defferedCols, bool escape, relation1to1 rb)
         {
-            OrmObjectsDef odef = null;
+            WXMLModel odef = null;
 
             if (File.Exists(file))
             {
                 if (merge == "error")
                     throw new InvalidOperationException("The file " + file + " is already exists.");
 
-                odef = OrmObjectsDef.LoadFromXml(new System.Xml.XmlTextReader(file));
+                odef = WXMLModel.LoadFromXml(new System.Xml.XmlTextReader(file));
             }
             else
             {
-                odef = new OrmObjectsDef();
+                odef = new WXMLModel();
                 odef.Namespace = name_space;
                 odef.SchemaVersion = "1";
                 if (!Path.IsPathRooted(file))
@@ -266,9 +266,9 @@ namespace Worm.CodeGen.XmlGenerator
                 //File.Create(file);
             }
 
-            List<Pair<Column, PropertyDescription>> notFound = new List<Pair<Column, PropertyDescription>>();
+            List<Pair<DatabaseColumn, PropertyDescription>> notFound = new List<Pair<DatabaseColumn, PropertyDescription>>();
 
-            foreach (Column c in columns.Keys)
+            foreach (DatabaseColumn c in columns.Keys)
             {
                 if (c.GetTableColumns(columns.Keys).Count() == 2 &&
                     c.GetTableColumns(columns.Keys).All(clm => clm.IsPK && clm.IsFK))
@@ -276,8 +276,8 @@ namespace Worm.CodeGen.XmlGenerator
 
                 bool ent, col;
                 EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent, escape);
-                Pair<Column, PropertyDescription> p = null;
-                PropertyDescription pd = AppendColumn(columns, c, e, out col, escape, (clm)=>p = new Pair<Column,PropertyDescription>(clm, null), defferedCols, rb);
+                Pair<DatabaseColumn, PropertyDescription> p = null;
+                PropertyDescription pd = AppendColumn(columns, c, e, out col, escape, (clm)=>p = new Pair<DatabaseColumn,PropertyDescription>(clm, null), defferedCols, rb);
                 if (p != null)
                 {
                     p.Second = pd;
@@ -311,7 +311,7 @@ namespace Worm.CodeGen.XmlGenerator
                     foreach (PropertyDescription pd in ed.Properties)
                     {
                         string[] ss = ed.SourceFragments[0].Name.Split('.');
-                        Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
+                        DatabaseColumn c = new DatabaseColumn(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
                             pd.FieldName.Trim(new char[] { '[', ']' }), false, null, false, 1);
                         if (!columns.ContainsKey(c))
                         {
@@ -381,7 +381,7 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        protected void ProcessM2M(Dictionary<Column, Column> columns, OrmObjectsDef odef, bool escape,
+        protected void ProcessM2M(Dictionary<DatabaseColumn, DatabaseColumn> columns, WXMLModel odef, bool escape,
             Dictionary<string, EntityDescription> dic)
         {
             List<Pair<string>> tables = new List<Pair<string>>();
@@ -584,7 +584,7 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        private static void NormalizeRelationAccessors(OrmObjectsDef odef, RelationDescriptionBase rdb,
+        private static void NormalizeRelationAccessors(WXMLModel odef, RelationDescriptionBase rdb,
             SelfRelationTarget rdbRight, EntityDescription rdbEntity)
         {
             var q1 =
@@ -626,19 +626,36 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c,
-            EntityDescription e, out bool created, bool escape, Action<Column> notFound, 
+        protected PropertyDescription AppendColumn(Dictionary<DatabaseColumn, DatabaseColumn> columns, DatabaseColumn c,
+            EntityDescription e, out bool created, bool escape, Action<DatabaseColumn> notFound, 
             List<Pair<string>> defferedCols, relation1to1 rb)
         {
-            OrmObjectsDef odef = e.OrmObjectsDef;
+            WXMLModel odef = e.OrmObjectsDef;
             created = false;
-            PropertyDescription pe = e.Properties.SingleOrDefault((PropertyDescription pd)=>
+            PropertyDescription pe = null;
+
+            try
             {
-                if (pd.FieldName == c.ColumnName || pd.FieldName.TrimEnd(']').TrimStart('[') == c.ColumnName)
-                    return true;
-                else
-                    return false;
-            });
+                pe = e.Properties.SingleOrDefault((PropertyDescription pd) =>
+                {
+                    if (pd.FieldName == c.ColumnName || pd.FieldName.TrimEnd(']').TrimStart('[') == c.ColumnName)
+                        return true;
+                    else
+                        return false;
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                pe = e.Properties.SingleOrDefault((PropertyDescription pd) =>
+                {
+                    if ((pd.FieldName == c.ColumnName || pd.FieldName.TrimEnd(']').TrimStart('[') == c.ColumnName)
+                        && !pd.PropertyType.IsEntityType)
+                        return true;
+                    else
+                        return false;
+                });
+                //throw new ApplicationException(string.Format("Entity {0} has multiple {1} columns", e.Name, c.ColumnName), ex);
+            }
 
             if (pe == null)
             {
@@ -702,11 +719,11 @@ namespace Worm.CodeGen.XmlGenerator
             else
             {
                 string[] attrs = null;
-                IsPrimaryKey(c, out attrs);
+                bool pk = IsPrimaryKey(c, out attrs);
 
                 pe.Attributes = Merge(pe.Attributes, attrs);
 
-                if (!pe.PropertyType.IsUserType)
+                if (!pe.PropertyType.IsUserType && !pk)
                     pe.PropertyType = GetType(c, columns, odef, escape, null, defferedCols);
 
                 pe.DbTypeName = c.DbType;
@@ -763,9 +780,9 @@ namespace Worm.CodeGen.XmlGenerator
                 return columnName;
         }
 
-        protected Dictionary<string, EntityDescription> Process1to1Relations(Dictionary<Column, Column> columns,
-            List<Pair<string>> defferedCols, OrmObjectsDef odef, bool escape,
-            List<Pair<Column, PropertyDescription>> notFound, relation1to1 rb)
+        protected Dictionary<string, EntityDescription> Process1to1Relations(Dictionary<DatabaseColumn, DatabaseColumn> columns,
+            List<Pair<string>> defferedCols, WXMLModel odef, bool escape,
+            List<Pair<DatabaseColumn, PropertyDescription>> notFound, relation1to1 rb)
         {
             List<Pair<string>> defferedCols2 = new List<Pair<string>>();
             Dictionary<string, EntityDescription> dic = new Dictionary<string, EntityDescription>();
@@ -796,8 +813,8 @@ namespace Worm.CodeGen.XmlGenerator
                             t.Conditions.Add(new SourceFragmentRefDescription.Condition(
                                 ed.PkProperty.FieldName, columnName));
                         }
-                        Column c = new Column(t.Selector, t.Name, columnName, false, null, false, 1);
-                        foreach (Pair<Column, PropertyDescription> p2 in notFound.FindAll((ff) => ff.First.Equals(c)))
+                        DatabaseColumn c = new DatabaseColumn(t.Selector, t.Name, columnName, false, null, false, 1);
+                        foreach (Pair<DatabaseColumn, PropertyDescription> p2 in notFound.FindAll((ff) => ff.First.Equals(c)))
                         {
                             p2.Second.PropertyType = td;
                         }
@@ -809,7 +826,7 @@ namespace Worm.CodeGen.XmlGenerator
             return dic;
         }
 
-        private static SourceFragmentDescription GetSourceFragment(OrmObjectsDef odef, string schema, string table, bool escape)
+        private static SourceFragmentDescription GetSourceFragment(WXMLModel odef, string schema, string table, bool escape)
         {
             string id = "tbl" + schema + table;
             var t = odef.GetSourceFragment(id);
@@ -829,8 +846,8 @@ namespace Worm.CodeGen.XmlGenerator
             return t;
         }
 
-        protected PropertyDescription AppendColumns(Dictionary<Column, Column> columns, EntityDescription ed,
-            string schema, string table, string constraint, bool escape, List<Pair<Column,PropertyDescription>> notFound,
+        protected PropertyDescription AppendColumns(Dictionary<DatabaseColumn, DatabaseColumn> columns, EntityDescription ed,
+            string schema, string table, string constraint, bool escape, List<Pair<DatabaseColumn,PropertyDescription>> notFound,
             List<Pair<string>> defferedCols, relation1to1 rb)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
@@ -879,13 +896,13 @@ namespace Worm.CodeGen.XmlGenerator
                     {
                         while (reader.Read())
                         {
-                            Column c = Column.Create(reader);
+                            DatabaseColumn c = DatabaseColumn.Create(reader);
                             if (!columns.ContainsKey(c))
                             {
                                 columns.Add(c, c);
                                 bool cr;
-                                Pair<Column, PropertyDescription> pfd = null;
-                                PropertyDescription pd = AppendColumn(columns, c, ed, out cr, escape, (clm) => pfd = new Pair<Column, PropertyDescription>(clm, null), defferedCols, rb);
+                                Pair<DatabaseColumn, PropertyDescription> pfd = null;
+                                PropertyDescription pd = AppendColumn(columns, c, ed, out cr, escape, (clm) => pfd = new Pair<DatabaseColumn, PropertyDescription>(clm, null), defferedCols, rb);
                                 if (pfd != null)
                                 {
                                     pfd.Second = pd;
@@ -903,8 +920,8 @@ namespace Worm.CodeGen.XmlGenerator
             return null;
         }
 
-        protected TypeDescription GetType(Column c, IDictionary<Column, Column> columns,
-            OrmObjectsDef odef, bool escape, Action<Column> notFound, List<Pair<string>> defferedCols)
+        protected TypeDescription GetType(DatabaseColumn c, IDictionary<DatabaseColumn, DatabaseColumn> columns,
+            WXMLModel odef, bool escape, Action<DatabaseColumn> notFound, List<Pair<string>> defferedCols)
         {
             TypeDescription t = null;
 
@@ -919,8 +936,8 @@ namespace Worm.CodeGen.XmlGenerator
             return t;
         }
 
-        protected TypeDescription GetRelatedType(Column col, IDictionary<Column, Column> columns,
-            OrmObjectsDef odef, bool escape, Action<Column> notFound, List<Pair<string>> defferedCols)
+        protected TypeDescription GetRelatedType(DatabaseColumn col, IDictionary<DatabaseColumn, DatabaseColumn> columns,
+            WXMLModel odef, bool escape, Action<DatabaseColumn> notFound, List<Pair<string>> defferedCols)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
@@ -942,7 +959,7 @@ namespace Worm.CodeGen.XmlGenerator
                     {
                         while (reader.Read())
                         {
-                            Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
+                            DatabaseColumn c = new DatabaseColumn(reader.GetString(reader.GetOrdinal("table_schema")),
                                 reader.GetString(reader.GetOrdinal("table_name")),
                                 reader.GetString(reader.GetOrdinal("column_name")), false, null, false, 1);
                             if (columns.ContainsKey(c))
@@ -993,8 +1010,8 @@ namespace Worm.CodeGen.XmlGenerator
             return null;
         }
 
-        protected TypeDescription GetRelatedType(string constraint, IDictionary<Column, Column> columns,
-            OrmObjectsDef odef, bool escape, List<Pair<string>> defferedCols, ref string clm)
+        protected TypeDescription GetRelatedType(string constraint, IDictionary<DatabaseColumn, DatabaseColumn> columns,
+            WXMLModel odef, bool escape, List<Pair<string>> defferedCols, ref string clm)
         {
             using (DbConnection conn = GetDBConn(_server, _m, _db, _i, _user, _psw))
             {
@@ -1018,7 +1035,7 @@ namespace Worm.CodeGen.XmlGenerator
                     {
                         while (reader.Read())
                         {
-                            Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
+                            DatabaseColumn c = new DatabaseColumn(reader.GetString(reader.GetOrdinal("table_schema")),
                                 reader.GetString(reader.GetOrdinal("table_name")),
                                 reader.GetString(reader.GetOrdinal("column_name")), false, null, false, 1);
                             clm = reader.GetString(reader.GetOrdinal("clm"));
@@ -1092,7 +1109,7 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        private static EntityDescription GetEntity(OrmObjectsDef odef, string schema,
+        private static EntityDescription GetEntity(WXMLModel odef, string schema,
             string tableName, out bool created, bool escape)
         {
             created = false;
@@ -1119,7 +1136,7 @@ namespace Worm.CodeGen.XmlGenerator
             return s.Substring(0, 1).ToUpper() + s.Substring(1);
         }
 
-        private static bool IsPrimaryKey(Column c, out string[] attrs)
+        private static bool IsPrimaryKey(DatabaseColumn c, out string[] attrs)
         {
             attrs = new string[] { };
             if (c.IsPK)
@@ -1132,7 +1149,7 @@ namespace Worm.CodeGen.XmlGenerator
             }
             return false;
         }
-        private static TypeDescription GetClrType(string dbType, bool nullable, OrmObjectsDef odef)
+        private static TypeDescription GetClrType(string dbType, bool nullable, WXMLModel odef)
         {
             TypeDescription t = null;
             string id = null;

@@ -4,14 +4,14 @@ using System.Text;
 using System.Data.Common;
 using System.Linq;
 
-namespace Worm.CodeGen.XmlGenerator
+namespace Worm.CodeGen.Core
 {
-    public class Constraint
+    public class DatabaseConstraint
     {
         private string _constraintType;
         private string _constraintName;
 
-        public Constraint(string constraintType, string constraintName)
+        public DatabaseConstraint(string constraintType, string constraintName)
         {
             _constraintType = constraintType;
             _constraintName = constraintName;
@@ -29,7 +29,7 @@ namespace Worm.CodeGen.XmlGenerator
 
     }
 
-    public class Column
+    public class DatabaseColumn
     {
         private string _schema;
         private string _table;
@@ -41,13 +41,13 @@ namespace Worm.CodeGen.XmlGenerator
         private int _pkCnt;
         private int? _sz;
 
-        private List<Constraint> _constraints = new List<Constraint>();
+        private List<DatabaseConstraint> _constraints = new List<DatabaseConstraint>();
 
-        protected Column()
+        protected DatabaseColumn()
         {
         }
 
-        public Column(string schema, string table, string column,
+        public DatabaseColumn(string schema, string table, string column,
             bool isNullable, string type, bool identity, int pkCnt)
         {
             _schema = schema;
@@ -63,10 +63,10 @@ namespace Worm.CodeGen.XmlGenerator
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as Column);
+            return Equals(obj as DatabaseColumn);
         }
 
-        public bool Equals(Column obj)
+        public bool Equals(DatabaseColumn obj)
         {
             if (obj == null)
                 return false;
@@ -131,7 +131,7 @@ namespace Worm.CodeGen.XmlGenerator
             get { return _pkCnt; }
         }
 
-        public List<Constraint> Constraints
+        public List<DatabaseConstraint> Constraints
         {
             get { return _constraints; }
         }
@@ -160,16 +160,16 @@ namespace Worm.CodeGen.XmlGenerator
             }
         }
 
-        public IEnumerable<Column> GetTableColumns(IEnumerable<Column> columns)
+        public IEnumerable<DatabaseColumn> GetTableColumns(IEnumerable<DatabaseColumn> columns)
         {
             return from k in columns
                    where k.Table == Table && k.Schema == Schema
                    select k;
         }
 
-        public static Column Create(DbDataReader reader)
+        public static DatabaseColumn Create(DbDataReader reader)
         {
-            Column c = new Column();
+            DatabaseColumn c = new DatabaseColumn();
 
             c._schema = reader.GetString(reader.GetOrdinal("table_schema"));
             c._table = reader.GetString(reader.GetOrdinal("table_name"));
@@ -187,7 +187,7 @@ namespace Worm.CodeGen.XmlGenerator
 
             if (!reader.IsDBNull(ct))
             {
-                c.Constraints.Add(new Constraint(reader.GetString(ct), reader.GetString(cn)));
+                c.Constraints.Add(new DatabaseConstraint(reader.GetString(ct), reader.GetString(cn)));
             }
 
             c._identity = Convert.ToBoolean(reader.GetInt32(reader.GetOrdinal("identity")));

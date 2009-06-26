@@ -23,10 +23,10 @@ namespace Worm.CodeGen.VSTool
 
     class Enumer : IEnumerable<Pair>
     {
-        private OrmObjectsDef _ormObjectsDef;
+        private WXMLModel _ormObjectsDef;
         private List<Pair> _units;
 
-        public Enumer(OrmObjectsDef ormObjectsDef, string ext)
+        public Enumer(WXMLModel ormObjectsDef, string ext)
         {
             _ormObjectsDef = ormObjectsDef;
 
@@ -54,7 +54,7 @@ namespace Worm.CodeGen.VSTool
             //settings.Split = false;
 
             //ormObjectsDef.GenerateSchemaOnly
-            OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
+            WXMLModelToCodeDomConverter generator = new WXMLModelToCodeDomConverter(ormObjectsDef, settings);
 
             if (ormObjectsDef.GenerateSingleFile)
             {
@@ -158,14 +158,14 @@ namespace Worm.CodeGen.VSTool
             try
             {
                 //Validate the XML file against the schema
-                OrmObjectsDef ormObjectsDef;
+                WXMLModel ormObjectsDef;
                 using (StringReader contentReader = new StringReader(inputFileContent))
                 {
                     try
                     {
                         using (XmlReader rdr = XmlReader.Create(contentReader))
                         {
-                            ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                            ormObjectsDef = WXMLModel.LoadFromXml(rdr, new XmlUrlResolver());
                         }
                     }
                     catch (Exception e)
