@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<OrmObjects xmlns="http://wise-orm.com/OrmObjectsSchema.xsd">
+<WXMLModel xmlns="http://wise-orm.com/WXMLSchema.xsd">
 	<Types>
 		<Type id="tInt32">
 			<ClrType name="System.Int32"/>
@@ -8,4 +8,4 @@
 			<ClrType name="System.DateTime"/>
 		</Type>
 	</Types>
-</OrmObjects>
+</WXMLModel>

@@ -120,7 +120,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 };
 
                 if (!string.IsNullOrEmpty(link.AccessorDescription))
-                    OrmCodeDomGenerator.SetMemberDescription(memberProperty, link.AccessorDescription);
+                    WXMLModelToCodeDomConverter.SetMemberDescription(memberProperty, link.AccessorDescription);
 
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
@@ -140,7 +140,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
                 Members.Add(memberProperty);
 
-                OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
+                WXMLModelToCodeDomConverter.RaisePropertyCreated(null, this, memberProperty, null);
             }
 
             #endregion
@@ -197,7 +197,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     if (!string.IsNullOrEmpty(relation.Direct.AccessorDescription))
-                        OrmCodeDomGenerator.SetMemberDescription(memberProperty, relation.Direct.AccessorDescription);
+                        WXMLModelToCodeDomConverter.SetMemberDescription(memberProperty, relation.Direct.AccessorDescription);
 
                     memberProperty.GetStatements.Add(
                         new CodeMethodReturnStatement(
@@ -217,7 +217,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
                     Members.Add(memberProperty);
 
-                    OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
+                    WXMLModelToCodeDomConverter.RaisePropertyCreated(null, this, memberProperty, null);
                 }
 
                 accessorName = relation.Reverse.AccessorName;
@@ -267,7 +267,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     };
 
                     if (!string.IsNullOrEmpty(relation.Reverse.AccessorDescription))
-                        OrmCodeDomGenerator.SetMemberDescription(memberProperty, relation.Reverse.AccessorDescription);
+                        WXMLModelToCodeDomConverter.SetMemberDescription(memberProperty, relation.Reverse.AccessorDescription);
 
                     memberProperty.GetStatements.Add(
                         new CodeMethodReturnStatement(
@@ -287,7 +287,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
                     Members.Add(memberProperty);
 
-                    OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
+                    WXMLModelToCodeDomConverter.RaisePropertyCreated(null, this, memberProperty, null);
                 }
             }
             
@@ -418,7 +418,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                  };
 
                 if (!string.IsNullOrEmpty(entityRelation.AccessorDescription))
-                    OrmCodeDomGenerator.SetMemberDescription(memberProperty, entityRelation.AccessorDescription);
+                    WXMLModelToCodeDomConverter.SetMemberDescription(memberProperty, entityRelation.AccessorDescription);
 
                 memberProperty.GetStatements.Add(
                     new CodeMethodReturnStatement(
@@ -437,7 +437,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 );
                 Members.Add(memberProperty);
                 
-                OrmCodeDomGenerator.RaisePropertyCreated(null, this, memberProperty, null);
+                WXMLModelToCodeDomConverter.RaisePropertyCreated(null, this, memberProperty, null);
             }
         }
 

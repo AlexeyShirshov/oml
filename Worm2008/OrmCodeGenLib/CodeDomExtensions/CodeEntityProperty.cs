@@ -16,7 +16,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			HasGet = true;
 			HasSet = true;
 			Name = property.PropertyName;
-			Attributes = OrmCodeDomGenerator.GetMemberAttribute(property.PropertyAccessLevel);
+			Attributes = WXMLModelToCodeDomConverter.GetMemberAttribute(property.PropertyAccessLevel);
 			if (property.Group != null && property.Group.Hide)
 				Attributes = MemberAttributes.Family;
 
@@ -154,7 +154,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 
 			CustomAttributes.Add(declaration);
 
-			OrmCodeDomGenerator.SetMemberDescription(this, property.Description);	
+			WXMLModelToCodeDomConverter.SetMemberDescription(this, property.Description);	
 		}
 	}
 }

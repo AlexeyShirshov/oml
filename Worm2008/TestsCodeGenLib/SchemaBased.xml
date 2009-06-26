@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<oos:OrmObjects defaultNamespace="XMedia.Framework.Media.Objects" schemaVersion="1" xmlns:oos="http://wise-orm.com/OrmObjectsSchema.xsd">
+<oos:WXMLModel defaultNamespace="XMedia.Framework.Media.Objects" schemaVersion="1" xmlns:oos="http://wise-orm.com/WXMLSchema.xsd">
 	<oos:SourceFragments>
 		<oos:SourceFragment id="tblAlbums" name="albums" selector="dbo" />
 		<oos:SourceFragment id="tblArtists" name="artists" selector="dbo" />
@@ -126,4 +126,4 @@
 		<oos:Reverse fieldName="artist_id" cascadeDelete="false" accessorName="Band"/>
 	  </oos:SelfRelation>
 	</oos:EntityRelations>
-</oos:OrmObjects>
+</oos:WXMLModel>

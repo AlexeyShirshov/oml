@@ -7,49 +7,49 @@ using Worm.CodeGen.Core.Descriptors;
 
 namespace Worm.CodeGen.Core
 {
-    internal class OrmXmlParser
+    internal class WXMLModelReader
     {
         private const string SCHEMA_NAME = "OrmObjectsSchema";
 
         private readonly List<string> _validationResult;
         private readonly XmlReader _reader;
         private XmlDocument _ormXmlDocument;
-        private readonly OrmObjectsDef _ormObjectsDef;
+        private readonly WXMLModel _ormObjectsDef;
 
         private readonly XmlNamespaceManager _nsMgr;
         private readonly XmlNameTable _nametable;
 
         private readonly XmlResolver _xmlResolver;
 
-        internal protected OrmXmlParser(XmlReader reader) : this(reader, null)
+        internal protected WXMLModelReader(XmlReader reader) : this(reader, null)
         {
             
         }
 
-        internal protected OrmXmlParser(XmlReader reader, XmlResolver xmlResolver)
+        internal protected WXMLModelReader(XmlReader reader, XmlResolver xmlResolver)
         {
             _validationResult = new List<string>();
             _reader = reader;
-            _ormObjectsDef = new OrmObjectsDef();
+            _ormObjectsDef = new WXMLModel();
             _nametable = new NameTable();
             _nsMgr = new XmlNamespaceManager(_nametable);
-            _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);
+            _nsMgr.AddNamespace(WXMLModel.NS_PREFIX, WXMLModel.NS_URI);
             _xmlResolver = xmlResolver;
         }
 
-        internal protected OrmXmlParser(XmlDocument document)
+        internal protected WXMLModelReader(XmlDocument document)
         {
-            _ormObjectsDef = new OrmObjectsDef();
+            _ormObjectsDef = new WXMLModel();
             _ormXmlDocument = document;
             _nametable = document.NameTable;
             _nsMgr = new XmlNamespaceManager(_nametable);
-            _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);            
+            _nsMgr.AddNamespace(WXMLModel.NS_PREFIX, WXMLModel.NS_URI);            
         }
 
-        internal protected static OrmObjectsDef Parse(XmlReader reader, XmlResolver xmlResolver)
+        internal protected static WXMLModel Parse(XmlReader reader, XmlResolver xmlResolver)
         {
-            OrmXmlParser parser;
-            parser = new OrmXmlParser(reader, xmlResolver);
+            WXMLModelReader parser;
+            parser = new WXMLModelReader(reader, xmlResolver);
 
             parser.Read();
 
@@ -58,11 +58,11 @@ namespace Worm.CodeGen.Core
             return parser._ormObjectsDef;
         }
 
-        internal protected static OrmObjectsDef LoadXmlDocument(XmlDocument document, bool skipValidation)
+        internal protected static WXMLModel LoadXmlDocument(XmlDocument document, bool skipValidation)
         {
-            OrmXmlParser parser;
+            WXMLModelReader parser;
             if (skipValidation)
-                parser = new OrmXmlParser(document);
+                parser = new WXMLModelReader(document);
             else
             {
                 using (MemoryStream ms = new MemoryStream())
@@ -74,7 +74,7 @@ namespace Worm.CodeGen.Core
                     ms.Position = 0;
                     using (XmlReader xrd = XmlReader.Create(ms))
                     {
-                        parser = new OrmXmlParser(xrd, null);
+                        parser = new WXMLModelReader(xrd, null);
                         parser.Read();
                     }
                 }
@@ -105,7 +105,7 @@ namespace Worm.CodeGen.Core
         private void FillLinqSettings()
         {
             var settingsNode =
-                (XmlElement)_ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Linq", OrmObjectsDef.NS_PREFIX),_nsMgr);
+                (XmlElement)_ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Linq", WXMLModel.NS_PREFIX),_nsMgr);
 
             if (settingsNode == null)
                 return;
@@ -131,11 +131,11 @@ namespace Worm.CodeGen.Core
             XmlNodeList importNodes;
             importNodes =
                 _ormXmlDocument.DocumentElement.SelectNodes(
-                    string.Format("{0}:Includes/{0}:OrmObjects", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                    string.Format("{0}:Includes/{0}:WXMLModel", WXMLModel.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode importNode in importNodes)
             {
-                OrmObjectsDef import;
+                WXMLModel import;
 
                 XmlDocument tempDoc = new XmlDocument();
                 XmlNode importedNode = tempDoc.ImportNode(importNode, true);
@@ -149,7 +149,7 @@ namespace Worm.CodeGen.Core
         internal protected void FillTypes()
         {
             XmlNodeList typeNodes;
-            typeNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:Types/{0}:Type", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            typeNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:Types/{0}:Type", WXMLModel.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode typeNode in typeNodes)
             {
@@ -196,7 +196,7 @@ namespace Worm.CodeGen.Core
             {
                 XmlNode entityNode =
                     _ormXmlDocument.DocumentElement.SelectSingleNode(
-                        string.Format("{0}:Entities/{0}:Entity[@id='{1}']", Worm.CodeGen.Core.OrmObjectsDef.NS_PREFIX,
+                        string.Format("{0}:Entities/{0}:Entity[@id='{1}']", Worm.CodeGen.Core.WXMLModel.NS_PREFIX,
                                       entity.Identifier), _nsMgr);
 
                 XmlElement entityElement = (XmlElement)entityNode;
@@ -223,11 +223,11 @@ namespace Worm.CodeGen.Core
                 throw new ArgumentNullException("entity");
 
             XmlNode entityNode;
-            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", WXMLModel.NS_PREFIX, entity.Identifier), _nsMgr);
 
             XmlNodeList relationsList;
             relationsList = entityNode.SelectNodes(
-                string.Format("{0}:Relations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                string.Format("{0}:Relations/{0}:Relation", WXMLModel.NS_PREFIX), _nsMgr);
 
             foreach(XmlElement relationNode in relationsList)
             {
@@ -269,10 +269,10 @@ namespace Worm.CodeGen.Core
                 throw new ArgumentNullException("entity");
 
             XmlNode entityNode;
-            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", WXMLModel.NS_PREFIX, entity.Identifier), _nsMgr);
 
             XmlNodeList propertiesList;
-            propertiesList = entityNode.SelectNodes(string.Format("{0}:SuppressedProperties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            propertiesList = entityNode.SelectNodes(string.Format("{0}:SuppressedProperties/{0}:Property", WXMLModel.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode propertyNode in propertiesList)
             {
@@ -324,7 +324,7 @@ namespace Worm.CodeGen.Core
         internal protected void FindEntities()
         {
             XmlNodeList entitiesList;
-            entitiesList = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:Entities/{0}:Entity", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            entitiesList = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:Entities/{0}:Entity", WXMLModel.NS_PREFIX), _nsMgr);
 
             EntityDescription entity;
 
@@ -378,15 +378,15 @@ namespace Worm.CodeGen.Core
                 throw new ArgumentNullException("entity");
 
             XmlNode entityNode;
-            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", WXMLModel.NS_PREFIX, entity.Identifier), _nsMgr);
 
             XmlNodeList propertiesList;
-            propertiesList = entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            propertiesList = entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Property", WXMLModel.NS_PREFIX), _nsMgr);
 
             FillEntityProperties(entity, propertiesList, null);
 
             XmlNodeList groupsNodeList =
-                entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Group", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Group", WXMLModel.NS_PREFIX), _nsMgr);
             foreach (XmlElement groupNode in groupsNodeList)
             {
                 string hideValue = groupNode.GetAttribute("hide");
@@ -396,7 +396,7 @@ namespace Worm.CodeGen.Core
                                               Name = groupNode.GetAttribute("name"),
                                               Hide =  hide
                                           };
-                propertiesList = groupNode.SelectNodes(string.Format("{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                propertiesList = groupNode.SelectNodes(string.Format("{0}:Property", WXMLModel.NS_PREFIX), _nsMgr);
                 FillEntityProperties(entity, propertiesList, group);
             }
         }
@@ -492,12 +492,12 @@ namespace Worm.CodeGen.Core
         {
             XmlNodeList relationNodes;
 			#region Relations
-			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:Relation", WXMLModel.NS_PREFIX), _nsMgr);
 
 			foreach (XmlNode relationNode in relationNodes)
 			{
-				XmlNode leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", OrmObjectsDef.NS_PREFIX), _nsMgr);
-				XmlNode rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", OrmObjectsDef.NS_PREFIX), _nsMgr);
+				XmlNode leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", WXMLModel.NS_PREFIX), _nsMgr);
+				XmlNode rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", WXMLModel.NS_PREFIX), _nsMgr);
 
 				XmlElement relationElement = (XmlElement)relationNode;
 				string relationTableId = relationElement.GetAttribute("table");
@@ -562,7 +562,7 @@ namespace Worm.CodeGen.Core
 				_ormObjectsDef.Relations.Add(relation);
 
 			    XmlNodeList constantsNodeList =
-			        relationNode.SelectNodes(string.Format("{0}:Constants/{0}:Constant", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			        relationNode.SelectNodes(string.Format("{0}:Constants/{0}:Constant", WXMLModel.NS_PREFIX), _nsMgr);
 
 			    foreach (XmlElement constantNode in constantsNodeList)
 			    {
@@ -583,12 +583,12 @@ namespace Worm.CodeGen.Core
 			} 
 			#endregion
 			#region SelfRelations
-			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:SelfRelation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:SelfRelation", WXMLModel.NS_PREFIX), _nsMgr);
 
 			foreach (XmlNode relationNode in relationNodes)
 			{
-				XmlNode directTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Direct", OrmObjectsDef.NS_PREFIX), _nsMgr);
-				XmlNode reverseTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Reverse", OrmObjectsDef.NS_PREFIX), _nsMgr);
+				XmlNode directTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Direct", WXMLModel.NS_PREFIX), _nsMgr);
+				XmlNode reverseTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Reverse", WXMLModel.NS_PREFIX), _nsMgr);
 
 				XmlElement relationElement = (XmlElement)relationNode;
 				string relationTableId = relationElement.GetAttribute("table");
@@ -653,7 +653,7 @@ namespace Worm.CodeGen.Core
 
 		internal protected void FillSourceFragments()
 		{
-			var sourceFragmentNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			var sourceFragmentNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", WXMLModel.NS_PREFIX), _nsMgr);
 
 			foreach (XmlNode tableNode in sourceFragmentNodes)
 			{
@@ -676,9 +676,9 @@ namespace Worm.CodeGen.Core
 
             entity.SourceFragments.Clear();
 
-            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", WXMLModel.NS_PREFIX, entity.Identifier), _nsMgr);
 
-            tableNodes = entityNode.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            tableNodes = entityNode.SelectNodes(string.Format("{0}:SourceFragments/{0}:SourceFragment", WXMLModel.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode tableNode in tableNodes)
             {
@@ -698,7 +698,7 @@ namespace Worm.CodeGen.Core
                     if (string.IsNullOrEmpty(jt))
                         jt = "inner";
                     tableRef.JoinType = (SourceFragmentRefDescription.JoinTypeEnum)Enum.Parse(typeof(SourceFragmentRefDescription.JoinTypeEnum), jt);
-                    var joinNodes = tableElement.SelectNodes(string.Format("{0}:join", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                    var joinNodes = tableElement.SelectNodes(string.Format("{0}:join", WXMLModel.NS_PREFIX), _nsMgr);
                     foreach (XmlElement joinNode in joinNodes)
                     {
                         tableRef.Conditions.Add(new SourceFragmentRefDescription.Condition(
@@ -711,7 +711,7 @@ namespace Worm.CodeGen.Core
                 entity.SourceFragments.Add(tableRef);
             }
 
-            XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", OrmObjectsDef.NS_PREFIX), _nsMgr);
+            XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:SourceFragments", WXMLModel.NS_PREFIX), _nsMgr);
             string inheritsTablesValue = ((XmlElement)tablesNode).GetAttribute("inheritsBase");
             entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
         }
@@ -787,7 +787,7 @@ namespace Worm.CodeGen.Core
             }
         }
 
-        internal protected OrmObjectsDef OrmObjectsDef
+        internal protected WXMLModel OrmObjectsDef
         {
             get { return _ormObjectsDef; }
         }

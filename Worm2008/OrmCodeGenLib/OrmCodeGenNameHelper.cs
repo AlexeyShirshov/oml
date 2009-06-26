@@ -8,7 +8,7 @@ namespace Worm.CodeGen.Core
     public static class OrmCodeGenNameHelper
     {
 
-        public static event OrmCodeDomGenerator.GetSettingsDelegate OrmCodeDomGeneratorSettingsRequied;
+        public static event WXMLModelToCodeDomConverter.GetSettingsDelegate OrmCodeDomGeneratorSettingsRequied;
 
         public static string GetPrivateMemberName(string name)
         {

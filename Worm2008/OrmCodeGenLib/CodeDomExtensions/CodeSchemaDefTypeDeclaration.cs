@@ -102,7 +102,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
             Members.Add(forTablesLockField);
             // тело
             method.Statements.Add(
-                OrmCodeDomGenerator.CodePatternDoubleCheckLock(
+                WXMLModelToCodeDomConverter.CodePatternDoubleCheckLock(
                     new CodeFieldReferenceExpression(
                         new CodeThisReferenceExpression(),
                         "_forTablesLock"
@@ -373,7 +373,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     )
                 );
             method.Statements.Add(
-                OrmCodeDomGenerator.CodePatternDoubleCheckLock(
+                WXMLModelToCodeDomConverter.CodePatternDoubleCheckLock(
                     new CodeFieldReferenceExpression(
                         new CodeThisReferenceExpression(),
                         "_forIdxLock"
@@ -495,7 +495,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 prop.Attributes = MemberAttributes.Public;
                 prop.HasSet = false;
                 prop.GetStatements.Add(
-                    OrmCodeDomGenerator.CodePatternDoubleCheckLock(
+                    WXMLModelToCodeDomConverter.CodePatternDoubleCheckLock(
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), lockField.Name),
                         new CodeBinaryOperatorExpression(
                             new CodeFieldReferenceExpression(
@@ -659,7 +659,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                     statements.Add(statemet);
                 }
                 method.Statements.Add(
-                    OrmCodeDomGenerator.CodePatternDoubleCheckLock(
+                    WXMLModelToCodeDomConverter.CodePatternDoubleCheckLock(
                         new CodeFieldReferenceExpression(
                             new CodeThisReferenceExpression(),
                             "_forM2MRelationsLock"
@@ -1034,7 +1034,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 statements.Add(statemet);
             }
             method.Statements.Add(
-                OrmCodeDomGenerator.CodePatternDoubleCheckLock(
+                WXMLModelToCodeDomConverter.CodePatternDoubleCheckLock(
                     new CodeFieldReferenceExpression(
                         new CodeThisReferenceExpression(),
                         lockObj.Name

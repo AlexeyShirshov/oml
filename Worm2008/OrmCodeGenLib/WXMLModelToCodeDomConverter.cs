@@ -17,7 +17,7 @@ using LinqToCodedom.CodeDomPatterns;
 namespace Worm.CodeGen.Core
 {
 
-    public partial class OrmCodeDomGenerator
+    public partial class WXMLModelToCodeDomConverter
     {
         #region Events
 
@@ -138,12 +138,12 @@ namespace Worm.CodeGen.Core
 
         protected internal class EntityGeneratorController : IDisposable
         {
-            public OrmCodeDomGenerator Current { get; private set; }
-            public EntityGeneratorController(OrmCodeDomGenerator gen)
+            public WXMLModelToCodeDomConverter Current { get; private set; }
+            public EntityGeneratorController(WXMLModelToCodeDomConverter gen)
             {
                 Current = gen;
-                if (OrmCodeDomGenerator.s_ctrl == null)
-                    OrmCodeDomGenerator.s_ctrl = this;
+                if (WXMLModelToCodeDomConverter.s_ctrl == null)
+                    WXMLModelToCodeDomConverter.s_ctrl = this;
             }
 
             public System.ComponentModel.EventHandlerList EventDelegates = new System.ComponentModel.EventHandlerList();
@@ -167,12 +167,12 @@ namespace Worm.CodeGen.Core
             #endregion
         }
 
-        private readonly OrmObjectsDef _ormObjectsDefinition;
+        private readonly WXMLModel _ormObjectsDefinition;
         private readonly OrmCodeDomGeneratorSettings _ormCodeDomGeneratorSettings;
 
         public delegate OrmCodeDomGeneratorSettings GetSettingsDelegate();
 
-        public OrmCodeDomGenerator(OrmObjectsDef ormObjectsDefinition, OrmCodeDomGeneratorSettings settings)
+        public WXMLModelToCodeDomConverter(WXMLModel ormObjectsDefinition, OrmCodeDomGeneratorSettings settings)
         {
             _ormObjectsDefinition = ormObjectsDefinition;
             _ormCodeDomGeneratorSettings = settings;
