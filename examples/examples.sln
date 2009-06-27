@@ -17,6 +17,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		generateClasses.cmd = generateClasses.cmd
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Binaries", "Binaries", "{F0ABA7FC-CF9A-4152-8C2E-87C156712C78}"
+	ProjectSection(SolutionItems) = preProject
+		Binaries\CoreFramework.dll = Binaries\CoreFramework.dll
+		Binaries\CoreFramework.pdb = Binaries\CoreFramework.pdb
+		Binaries\Worm.Orm.dll = Binaries\Worm.Orm.dll
+		Binaries\Worm.Orm.pdb = Binaries\Worm.Orm.pdb
+		Binaries\Worm.Orm.xml = Binaries\Worm.Orm.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 3

@@ -54,14 +54,14 @@
   <ItemGroup>
     <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Worm2008\Binaries\CoreFramework.dll</HintPath>
+      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Worm.Orm, Version=2.3.3419.16855, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
+    <Reference Include="Worm.Orm, Version=2.3.3397.37731, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Worm2008\obm\bin\Debug\Worm.Orm.dll</HintPath>
+      <HintPath>..\Binaries\Worm.Orm.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
