@@ -531,41 +531,44 @@ namespace Worm.CodeGen.XmlGenerator
                         else
                         {
                             RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetSourceFragment(odef, p.First, p.Second, escape), ued);
-                            if (odef.HasSimilarRelationM2M(newRel))
+                            if (!odef.Relations.OfType<RelationDescription>().Any(m => m.Equals(newRel)))
                             {
-                                if (string.IsNullOrEmpty(newRel.Left.AccessorName) ||
-                                    string.IsNullOrEmpty(newRel.Right.AccessorName))
+                                if (odef.HasSimilarRelationM2M(newRel))
                                 {
-                                    var lst = from r in odef.Relations.OfType<RelationDescription>()
-                                              where
-                                                !ReferenceEquals(r.Left, newRel.Left) &&
-                                                !ReferenceEquals(r.Right, newRel.Right) &&
-                                                (
-                                                    ((r.Left.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
-                                                        && (r.Right.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Left.AccessorName))) ||
-                                                    ((r.Left.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
-                                                        && (r.Right.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Left.AccessorName)))
-                                                )
-                                              select r;
-
-                                    if (lst.Count() > 0)
+                                    if (string.IsNullOrEmpty(newRel.Left.AccessorName) ||
+                                        string.IsNullOrEmpty(newRel.Right.AccessorName))
                                     {
-                                        foreach (RelationDescription r in lst)
-                                        {
-                                            if (string.IsNullOrEmpty(r.Left.AccessorName))
-                                                r.Left.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Right.Entity.Name;
-                                            if (string.IsNullOrEmpty(r.Right.AccessorName))
-                                                r.Right.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Left.Entity.Name;
-                                        }
+                                        var lst = from r in odef.Relations.OfType<RelationDescription>()
+                                                  where
+                                                    !ReferenceEquals(r.Left, newRel.Left) &&
+                                                    !ReferenceEquals(r.Right, newRel.Right) &&
+                                                    (
+                                                        ((r.Left.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
+                                                            && (r.Right.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Left.AccessorName))) ||
+                                                        ((r.Left.Entity == newRel.Right.Entity && string.IsNullOrEmpty(r.Right.AccessorName))
+                                                            && (r.Right.Entity == newRel.Left.Entity && string.IsNullOrEmpty(r.Left.AccessorName)))
+                                                    )
+                                                  select r;
 
-                                        if (string.IsNullOrEmpty(newRel.Left.AccessorName))
-                                            newRel.Left.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Right.Entity.Name;
-                                        if (string.IsNullOrEmpty(newRel.Right.AccessorName))
-                                            newRel.Right.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Left.Entity.Name;
+                                        if (lst.Count() > 0)
+                                        {
+                                            foreach (RelationDescription r in lst)
+                                            {
+                                                if (string.IsNullOrEmpty(r.Left.AccessorName))
+                                                    r.Left.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Right.Entity.Name;
+                                                if (string.IsNullOrEmpty(r.Right.AccessorName))
+                                                    r.Right.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Left.Entity.Name;
+                                            }
+
+                                            if (string.IsNullOrEmpty(newRel.Left.AccessorName))
+                                                newRel.Left.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Right.Entity.Name;
+                                            if (string.IsNullOrEmpty(newRel.Right.AccessorName))
+                                                newRel.Right.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Left.Entity.Name;
+                                        }
                                     }
-                                }                                
+                                }
+                                odef.Relations.Add(newRel);
                             }
-                            odef.Relations.Add(newRel);
                         }
                     }
                 }

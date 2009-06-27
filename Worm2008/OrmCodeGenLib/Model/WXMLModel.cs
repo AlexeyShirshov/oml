@@ -338,10 +338,10 @@ namespace Worm.CodeGen.Core
 
         public bool HasSimilarRelationM2M(RelationDescription relation)
         {
-            return _relations.AsEnumerable().OfType<RelationDescription>().Any((RelationDescription match)=>
+            return _relations.OfType<RelationDescription>().Any((RelationDescription match)=>
                 relation != match && (
-                (match.Left.Entity == relation.Left.Entity && match.Right.Entity == relation.Right.Entity) ||
-                (match.Left.Entity == relation.Right.Entity && match.Right.Entity == relation.Left.Entity))
+                (match.Left.Entity.Identifier == relation.Left.Entity.Identifier && match.Right.Entity.Identifier == relation.Right.Entity.Identifier) ||
+                (match.Left.Entity.Identifier == relation.Right.Entity.Identifier && match.Right.Entity.Identifier == relation.Left.Entity.Identifier))
             );
         }
 

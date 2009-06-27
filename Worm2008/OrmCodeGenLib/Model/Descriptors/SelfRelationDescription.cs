@@ -13,6 +13,24 @@ namespace Worm.CodeGen.Core.Descriptors
         private readonly SelfRelationTarget _right;
         private readonly List<RelationConstantDescriptor> _constants;
 
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj as RelationDescriptionBase);
+        }
+
+        public bool Equals(RelationDescriptionBase obj)
+        {
+            if (obj == null)
+                return false;
+
+            return _table.Identifier == obj._table.Identifier && _left == obj._left && _right == obj._right;
+        }
+
+        public override int GetHashCode()
+        {
+            return _table.GetHashCode() ^ _left.GetHashCode() ^ _right.GetHashCode();
+        }
+
         public SourceFragmentDescription SourceFragment
         {
             get { return _table; }
