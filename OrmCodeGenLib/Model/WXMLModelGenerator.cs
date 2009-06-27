@@ -553,15 +553,15 @@ namespace Worm.CodeGen.XmlGenerator
                                         foreach (RelationDescription r in lst)
                                         {
                                             if (string.IsNullOrEmpty(r.Left.AccessorName))
-                                                r.Left.AccessorName = r.SourceFragment.Name + r.Right.Entity.Name;
+                                                r.Left.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Right.Entity.Name;
                                             if (string.IsNullOrEmpty(r.Right.AccessorName))
-                                                r.Right.AccessorName = r.SourceFragment.Name + r.Left.Entity.Name;
+                                                r.Right.AccessorName = r.SourceFragment.Name.TrimEnd(']').TrimStart('[') + r.Left.Entity.Name;
                                         }
 
                                         if (string.IsNullOrEmpty(newRel.Left.AccessorName))
-                                            newRel.Left.AccessorName = newRel.SourceFragment.Name + newRel.Right.Entity.Name;
+                                            newRel.Left.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Right.Entity.Name;
                                         if (string.IsNullOrEmpty(newRel.Right.AccessorName))
-                                            newRel.Right.AccessorName = newRel.SourceFragment.Name + newRel.Left.Entity.Name;
+                                            newRel.Right.AccessorName = newRel.SourceFragment.Name.TrimEnd(']').TrimStart('[') + newRel.Left.Entity.Name;
                                     }
                                 }                                
                             }
