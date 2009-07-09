@@ -9,6 +9,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria
 Imports Worm.Criteria.Conditions
 Imports Worm.Query
+Imports Worm.Expressions2
 
 'Namespace Schema
 
@@ -496,7 +497,7 @@ Public Class ObjectMappingEngine
     Private Function GetM2MRel(ByVal mr() As M2MRelationDesc, ByVal subtype As Type, ByVal key As String) As M2MRelationDesc
         'If String.IsNullOrEmpty(key) Then key = M2MRelationDesc.DirKey
         For Each r As M2MRelationDesc In mr
-            If r.Entity.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.key) = M2MRelationDesc.IsDirect(key)) Then
+            If r.Entity.GetRealType(Me) Is subtype AndAlso (String.Equals(r.Key, key) OrElse M2MRelationDesc.IsDirect(r.Key) = M2MRelationDesc.IsDirect(key)) Then
                 Return r
             End If
         Next
@@ -783,28 +784,6 @@ Public Class ObjectMappingEngine
         Catch ex As Exception
             Throw New ObjectMappingException("Unknown field name: " & propertAlias, ex)
         End Try
-    End Function
-    'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
-    '    Get
-    '        If type Is Nothing Then
-    '            Throw New ArgumentNullException("type parameter cannot be nothing")
-    '        End If
-
-    '        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
-
-    '        Return schema.IsExternalSort(sort)
-    '    End Get
-    'End Property
-
-    Public Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, _
-        ByVal sort As Sort, ByVal objs As IList(Of T)) As ReadOnlyObjectList(Of T)
-        Return sort.ExternalSort(Of T)(mgr, Me, objs)
-        'Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
-        'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
-        'If s Is Nothing Then
-        '    Throw New OrmSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
-        'End If
-        'Return s.ExternalSort(Of T)(sort, objs)
     End Function
 
     Public Function GetJoinSelectMapping(ByVal t As Type, ByVal subType As Type) As System.Data.Common.DataTableMapping
@@ -1272,14 +1251,14 @@ Public Class ObjectMappingEngine
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal t As Type) As SelectExpression
         Dim se As New SelectExpression(t, c.PropertyAlias)
-        se.Column = c.Column
+        'se.Column = c.Column
         se.Attributes = c.Behavior
         Return se
     End Function
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As EntityUnion) As SelectExpression
         Dim se As New SelectExpression(os, c.PropertyAlias)
-        se.Column = c.Column
+        'se.Column = c.Column
         se.Attributes = c.Behavior
         Return se
     End Function

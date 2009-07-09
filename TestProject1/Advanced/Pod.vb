@@ -201,7 +201,7 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID")). _
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID")). _
             OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
@@ -262,7 +262,7 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
@@ -286,7 +286,7 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(mpe, c)))
 
-        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
         Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()
@@ -298,7 +298,7 @@ Imports Worm
         Dim q2 As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(mpe, c)))
 
-        q2.Select(FCtor.column(t, "code", "Code").column(t, "name").column(t, "id", "ID", Field2DbRelations.PK)). _
+        q2.Select(FCtor.column(t, "code").into("Code").column(t, "name").column(t, "id").into("ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls2), "Code")).From(t)
 
         Dim l2 As IList(Of cls2) = q2.ToPOCOList(Of cls2)()
@@ -313,7 +313,7 @@ Imports Worm
         Dim q3 As New QueryCmd(New CreateManager(Function() _
            TestManagerRS.CreateManagerShared(mpe, c)))
 
-        q3.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)) _
+        q3.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)) _
             .Where(Ctor.column(t, "id").greater_than(0)) _
             .OrderBy(SCtor.prop(GetType(cls), "Code")).From(t)
 
@@ -337,7 +337,7 @@ Imports Worm
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"))))
 
-        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(cls), "Code"))
 
         Dim l As IList(Of cls) = q.ToPOCOList(Of cls)()

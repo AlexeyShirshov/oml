@@ -145,6 +145,12 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        ''' <summary>
+        ''' Column alias
+        ''' </summary>
+        ''' <value></value>
+        ''' <returns>Column alias</returns>
+        ''' <remarks></remarks>
         Public Property ColumnName() As String
             Get
                 Return _columnName

@@ -8,6 +8,7 @@ Imports Worm.Entities
 Imports Worm.Database.Storedprocs
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports Worm.Expressions2
 
 <TestClass()> _
 Public Class TestProcs
@@ -17,7 +18,7 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
-            Dim t1 As Table1 = mgr.Find(Of Table1)(1)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             Assert.AreEqual(1, l.Count)
             Assert.AreEqual(t1, l(0).First)
             Assert.AreEqual(3, l(0).Second)
@@ -27,7 +28,7 @@ Public Class TestProcs
             Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
             r1.Title = "913nv"
             r1.Table1 = t1
-            r1.Table3 = mgr.Find(Of Table33)(2)
+            r1.Table3 = New QueryCmd().GetByID(Of Table33)(2, mgr)
             mgr.BeginTransaction()
             Try
                 r1.SaveChanges(True)
@@ -49,15 +50,15 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
-            Dim t1 As Table1 = mgr.Find(Of Table1)(1)
-            Dim t2 As Table1 = mgr.Find(Of Table1)(2)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            Dim t2 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
             Assert.AreEqual(1, l.Count)
             Assert.AreEqual(t1, l(0).First)
             Assert.AreEqual(3, l(0).Second)
 
             l = p.GetResult(mgr)
 
-            Dim r1 As Tables1to3 = mgr.Find(Of Tables1to3)(1)
+            Dim r1 As Tables1to3 = New QueryCmd().GetByID(Of Tables1to3)(1, mgr)
             r1.Table1 = t2
             mgr.BeginTransaction()
             Try
@@ -115,7 +116,7 @@ Public Class TestProcs
             Assert.AreEqual("first", s)
             Assert.AreEqual("first", NonQueryStoredProcBase.Exec(Of String)(mgr, "dbo.p4", "n", "i", 1))
 
-            Dim t As Table1 = mgr.Find(Of Table1)(1)
+            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             t.Name = "alex"
             mgr.BeginTransaction()
             Try

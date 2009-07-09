@@ -5,6 +5,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.OrmManager
 Imports Worm.Cache
+Imports Worm.Expressions2
 
 Namespace Query.Database
 
@@ -92,9 +93,9 @@ Namespace Query.Database
                     r = ExecStmtObject(cmd)
                 End Using
 
-                If Sort IsNot Nothing AndAlso Sort.IsExternal Then
-                    r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
-                End If
+                'If Sort IsNot Nothing AndAlso Sort.IsExternal Then
+                '    r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
+                'End If
 
                 Return r
             End Function
@@ -364,18 +365,18 @@ Namespace Query.Database
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As UpdatableCachedItem
                 Dim t As Type = _q.GetSelectedType(MappingEngine)
-                Dim sortex As IOrmSorting2 = Nothing
-                If t IsNot Nothing Then
-                    sortex = TryCast(_mgr.MappingEngine.GetEntitySchema(t, False), IOrmSorting2)
-                End If
+                'Dim sortex As IOrmSorting2 = Nothing
+                'If t IsNot Nothing Then
+                '    sortex = TryCast(_mgr.MappingEngine.GetEntitySchema(t, False), IOrmSorting2)
+                'End If
 
                 Dim s As Date = Nothing
-                If sortex IsNot Nothing Then
-                    Dim ts As TimeSpan = sortex.SortExpiration(Sort)
-                    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
-                        s = Now.Add(ts)
-                    End If
-                End If
+                'If sortex IsNot Nothing Then
+                '    Dim ts As TimeSpan = sortex.SortExpiration(Sort)
+                '    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
+                '        s = Now.Add(ts)
+                '    End If
+                'End If
                 'Dim f As IFilter = Nothing
                 'If _q.Filter IsNot Nothing Then f = _q.Filter.Filter
                 'If _f.Length > 0 Then

@@ -377,24 +377,12 @@ Namespace Entities
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As M2MRelation
-            Return CType(obj.GetRelation(Relation), M2MRelation)
+            Return CType(obj.GetRelation(Host.GetType), M2MRelation)
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of Relation)
             Return Host.GetAllRelation
         End Function
-
-        'Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As List(Of EditableListBase)
-        '    Throw New NotSupportedException
-        '    'Dim l As New List(Of EditableListBase)
-        '    'For Each o As IOrmBase In Main.Find(SubType).ToList(mgr)
-        '    '    Dim el As EditableListBase = mgr.Cache.GetM2M(o, MainType, _key)
-        '    '    If el IsNot Nothing Then
-        '    '        l.Add(el)
-        '    '    End If
-        '    'Next
-        '    'Return l
-        'End Function
 
         Protected Overridable Sub AcceptDual(ByVal mgr As OrmManager)
             For Each el As M2MRelation In GetRevert(mgr)

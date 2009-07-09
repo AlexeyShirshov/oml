@@ -103,7 +103,7 @@ Public Class TestTracker
             _new_objects.Clear()
             mgr.Cache.NewObjectManager = Me
 
-            Dim tt As Table1 = mgr.Find(Of Table1)(1)
+            Dim tt As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             mgr.BeginTransaction()
             Try
                 Using tracker As New ModificationsTracker
@@ -141,7 +141,7 @@ Public Class TestTracker
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = Me
 
-            Dim tt As Table1 = mgr.Find(Of Table1)(1)
+            Dim tt As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             mgr.BeginTransaction()
             Try
                 Using tracker As New ModificationsTracker
@@ -170,12 +170,18 @@ Public Class TestTracker
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             mgr.Cache.NewObjectManager = Me
 
-            Dim tt As Table1 = mgr.Find(Of Table1)(1)
-            Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
+            Dim tt As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            Dim tt2 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
 
-            mgr.Find(Of Table1)(10)
-            mgr.Find(Of Table1)(New Ctor(GetType(Table1)).prop("Code").eq(100), Nothing, True)
-            mgr.Find(Of Table1)(New Ctor(GetType(Table1)).prop("DT").eq(Now), Nothing, True)
+            Dim o As Object = New QueryCmd() _
+                .Where(New Ctor(GetType(Table1)).prop("Code").eq(100)) _
+                .SelectEntity(GetType(Table1), True) _
+                .ToList(Of Table1)(mgr)
+
+            o = New QueryCmd() _
+                .Where(New Ctor(GetType(Table1)).prop("DT").eq(Now)) _
+                .SelectEntity(GetType(Table1), True) _
+                .ToList(Of Table1)(mgr)
 
             mgr.BeginTransaction()
             Try
@@ -202,7 +208,7 @@ Public Class TestTracker
     <TestMethod()> _
     Public Sub TestRecover()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim tt As Table2 = mgr.Find(Of Table2)(1)
+            Dim tt As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             Assert.AreEqual(Of Decimal)(1, tt.Money)
 
             mgr.BeginTransaction()
@@ -233,7 +239,7 @@ Public Class TestTracker
 
                     tt = tracker.CreateNewObject(Of Table2)()
                     tt.Money = 200
-                    tt.Tbl = mgr.Find(Of Table1)(2)
+                    tt.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
 
                     tracker.AcceptModifications()
                 End Using

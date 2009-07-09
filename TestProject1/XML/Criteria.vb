@@ -51,8 +51,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestQuery()
         Using mgr As OrmManager = CreateManager()
-            Dim col As ICollection(Of Entity4) = mgr.Find(Of Entity4)( _
-                Ctor.prop(New EntityUnion(GetType(Entity4)), "Title").eq("first"))
+            Dim col As ICollection(Of Entity4) = New QueryCmd().Where(Ctor.prop(New EntityUnion(GetType(Entity4)), "Title").eq("first")).ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(1, col.Count)
 

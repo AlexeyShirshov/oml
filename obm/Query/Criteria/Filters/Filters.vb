@@ -4,6 +4,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Entities
 Imports Worm.Expressions
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Namespace Criteria.Core
 
@@ -182,7 +183,7 @@ Namespace Criteria.Core
                 If Template.ObjectSource.IsQuery Then
                     tbl = Template.ObjectSource.ObjectAlias.Tbl
                     Dim q As QueryCmd = Template.ObjectSource.ObjectAlias.Query
-                    map = New MapField2Column(Template.PropertyAlias, q.FindColumn(schema, Template.PropertyAlias), tbl)
+                    map = New MapField2Column(Template.PropertyAlias, executor.FindColumn(schema, Template.PropertyAlias), tbl)
                 Else
                     Try
                         If executor Is Nothing Then
@@ -519,8 +520,8 @@ Namespace Criteria.Core
         Private _str As String
 
         Public Sub New(ByVal format As String, ByVal value As IFilterValue, _
-                       ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As IFilterValue)
-            MyBase.New(value, New CustomValue(oper, format, values))
+                       ByVal oper As Worm.Criteria.FilterOperation, ByVal exp As IExpression)
+            MyBase.New(value, New CustomValue(oper, format, exp))
             '_t = table
             '_field = field
             '_format = format
@@ -819,17 +820,17 @@ Namespace Criteria.Core
     Public Class AggFilter
         Inherits FilterBase
 
-        Private _agg As AggregateBase
+        Private _exp As AggregateExpression
         Private _fo As FilterOperation
 
-        Public Sub New(ByVal agg As AggregateBase, ByVal fo As FilterOperation, ByVal val As IFilterValue)
+        Public Sub New(ByVal exp As AggregateExpression, ByVal fo As FilterOperation, ByVal val As IFilterValue)
             MyBase.New(val)
-            _agg = agg
+            _exp = exp
             _fo = fo
         End Sub
 
         Protected Overrides Function _Clone() As Object 'Implements System.ICloneable.Clone
-            Return New AggFilter(_agg, _fo, Value)
+            Return New AggFilter(_exp, _fo, Value)
         End Function
 
         'Public Overloads Function Clone() As IFilter Implements IFilter.Clone
@@ -851,7 +852,7 @@ Namespace Criteria.Core
         Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String 'Implements IFilter.MakeQueryStmt
 
-            Return _agg.MakeStmt(schema, fromClause, stmt, pname, almgr, filterInfo, False, executor) & stmt.Oper2String(_fo) & Value.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+            Return _exp.MakeStatement(schema, fromClause, stmt, pname, almgr, filterInfo, MakeStatementMode.None, executor) & stmt.Oper2String(_fo) & Value.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
         End Function
 
         'Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
@@ -868,15 +869,15 @@ Namespace Criteria.Core
         'End Property
 
         Protected Overrides Function _ToString() As String 'Implements Values.IQueryElement._ToString
-            Return _agg._ToString & TemplateBase.OperToStringInternal(_fo)
+            Return _exp.GetDynamicString & TemplateBase.OperToStringInternal(_fo)
         End Function
 
         Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String 'Implements Values.IQueryElement.GetStaticString
-            Return _agg.GetStaticString(mpe, contextFilter) & TemplateBase.OperToStringInternal(_fo)
+            Return _exp.GetStaticString(mpe, contextFilter) & TemplateBase.OperToStringInternal(_fo)
         End Function
 
         Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
-            _agg.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            _exp.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             MyBase.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
     End Class

@@ -6,12 +6,13 @@ Imports Worm.Query.Sorting
 Imports System.Collections.ObjectModel
 Imports Worm.Query
 
+#If kdkdkdk Then
 Namespace Entities
 
     Public Interface ISelectExpressionFormater
-        Sub Format(ByVal se As SelectExpression, ByVal sb As StringBuilder, ByVal executor As IExecutionContext, ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, _
+        Sub Format(ByVal se As SelectExpressionOld, ByVal sb As StringBuilder, ByVal executor As IExecutionContext, ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, _
                    ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
-                   ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
+                   ByVal context As Object, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpressionOld), _
                    ByVal defaultTable As QueryCmd.FromClauseDef, ByVal inSelect As Boolean)
 
     End Interface
@@ -47,9 +48,9 @@ Namespace Database
             _s = s
         End Sub
 
-        Public Sub Format(ByVal se As SelectExpression, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
+        Public Sub Format(ByVal se As SelectExpressionOld, ByVal sb As System.Text.StringBuilder, ByVal executor As IExecutionContext, _
                           ByVal cols As StringBuilder, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
-                          ByVal context As Object, ByVal selList As ReadOnlyCollection(Of SelectExpression), _
+                          ByVal context As Object, ByVal selList As ReadOnlyCollection(Of SelectExpressionOld), _
                           ByVal defaultTable As QueryCmd.FromClauseDef, ByVal inSelect As Boolean) Implements Entities.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
             If s IsNot Nothing Then
@@ -183,7 +184,7 @@ Namespace Database
 l1:
                                         Dim clm As String = ns.SortBy
                                         If selList IsNot Nothing Then
-                                            For Each p As SelectExpression In selList
+                                            For Each p As SelectExpressionOld In selList
                                                 If p.PropertyAlias = clm Then
                                                     clm = If(String.IsNullOrEmpty(p.ColumnAlias), p.Column, p.ColumnAlias)
                                                     Exit For
@@ -415,3 +416,5 @@ l2:
         End Sub
     End Class
 End Namespace
+
+#End If

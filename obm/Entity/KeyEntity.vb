@@ -699,7 +699,10 @@ Namespace Entities
         Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
             Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
             For Each rl As Relation In _relations
-                For Each e As ICachedEntity In GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
+                For Each e As ICachedEntity In rl.Added 'GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
+                    l.Add(e)
+                Next
+                For Each e As ICachedEntity In rl.Deleted
                     l.Add(e)
                 Next
             Next
@@ -918,7 +921,7 @@ Namespace Entities
                 If Not el.Deleted.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
                         Dim ke As IKeyEntity = CType(obj, IKeyEntity)
-                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, key)), M2MRelation)
+                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Deleted.Contains(Me) Then
                                 If el.Added.Contains(obj) Then
@@ -1022,6 +1025,18 @@ Namespace Entities
                 For Each rl As Relation In _relations
                     If rl.Relation.Equals(desc) Then
                         Return rl
+                    ElseIf M2MRelationDesc.CompareKeys(rl.Relation.Key, desc.Key) Then
+                        If rl.Relation.Type IsNot Nothing Then
+                            If desc.Entity.GetRealType(GetMappingEngine) Is rl.Relation.Type Then
+                                rl.Relation = desc
+                                Return rl
+                            End If
+                        ElseIf Not String.IsNullOrEmpty(rl.Relation.EntityName) Then
+                            If rl.Relation.Entity.GetRealType(GetMappingEngine) Is desc.Type Then
+                                rl.Relation = desc
+                                Return rl
+                            End If
+                        End If
                     End If
                 Next
                 Dim nrl As Relation = Nothing

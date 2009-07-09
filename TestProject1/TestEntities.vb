@@ -9,6 +9,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Public Interface IEnt
     Inherits _IKeyEntity
@@ -424,7 +425,7 @@ End Class
 
 Public Class EntitySchema4v1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmSorting2, IOrmSorting, ISchemaWithM2M
+    Implements IOrmSorting, ISchemaWithM2M
 
     Private _idx As OrmObjectIndex
     'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent2")}
@@ -467,15 +468,15 @@ Public Class EntitySchema4v1Implementation
         Return _rels
     End Function
 
-    Public Function CreateSortComparer(ByVal s As Sort) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
-        If s.SortBy = "Title" Then
+    Public Function CreateSortComparer(ByVal s As SortExpression) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Title" Then
             Return New Comparer(Entity4Sort.Name, s.Order)
         End If
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
-        If s.SortBy = "Title" Then
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As SortExpression) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Title" Then
             Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing
@@ -495,9 +496,9 @@ Public Class EntitySchema4v1Implementation
         Private _s As Entity4Sort
         Private _st As Integer = -1
 
-        Public Sub New(ByVal s As Entity4Sort, ByVal st As SortType)
+        Public Sub New(ByVal s As Entity4Sort, ByVal st As SortExpression.SortType)
             _s = s
-            If st = SortType.Asc Then
+            If st = SortExpression.SortType.Asc Then
                 _st = 1
             End If
         End Sub
@@ -526,11 +527,6 @@ Public Class EntitySchema4v1Implementation
         End Function
     End Class
 
-    Public ReadOnly Property SortExpiration(ByVal s As Sort) As System.TimeSpan Implements IOrmSorting2.SortExpiration
-        Get
-            Return TimeSpan.MaxValue
-        End Get
-    End Property
 End Class
 
 Public Class EntitySchema4v2Implementation

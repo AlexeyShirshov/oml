@@ -65,7 +65,7 @@ Imports Worm.Query
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "-@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "-@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 
@@ -87,7 +87,7 @@ Imports Worm.Query
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "+@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "+@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 
@@ -109,7 +109,7 @@ Imports Worm.Query
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "*@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "*@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 
@@ -131,7 +131,7 @@ Imports Worm.Query
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "/@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+        Assert.AreEqual("(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "/@p1)", a.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 
@@ -155,7 +155,7 @@ Imports Worm.Query
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("((" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "%@p1) = @p2)", a2.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+        Assert.AreEqual("((" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & "%@p1) = @p2)", a2.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 
@@ -188,7 +188,7 @@ Imports Worm.Query
         Dim str As String = mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression
 
         Assert.AreEqual("(((" & al & "." & str & "%@p1) = @p2) and (s >= @p3))", _
-            a4.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, False, Nothing))
+            a4.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
 
     End Sub
 

@@ -6,6 +6,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports Worm.Query.QueryCmd
 Imports Worm.Cache
+Imports Worm.Expressions2
 
 'Imports Worm.Database.Sorting
 
@@ -610,32 +611,37 @@ Namespace Query.Database
             Dim b As Boolean
             Dim cols As New StringBuilder
             Dim colsa As New StringBuilder
-            For Each p As SelectExpression In selList
-                Dim colsa_ As StringBuilder = Nothing
-                If (p.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    colsa_ = colsa
-                End If
-                p.AddAlias = True
-                s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
-                    filterInfo, Nothing, query.FromClause, True)
-                cols.Append(", ")
-                If colsa_ IsNot Nothing Then
-                    colsa_.Append(",")
-                End If
-            Next
+            'For Each p As SelectExpression In selList
+            '    Dim colsa_ As StringBuilder = Nothing
+            '    If (p.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+            '        colsa_ = colsa
+            '    End If
+            '    p.AddAlias = True
+            '    s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
+            '        filterInfo, Nothing, query.FromClause, True)
+            '    cols.Append(", ")
+            '    If colsa_ IsNot Nothing Then
+            '        colsa_.Append(",")
+            '    End If
+            'Next
+            Dim be As BinaryExpressionBase = BinaryExpressionBase.CreateFromEnumerable(selList)
+            If be IsNot Nothing Then
+                cols.Append(be.MakeStatement(mpe, query.FromClause, s, _
+                       params, almgr, filterInfo, MakeStatementMode.SelectWithoutTables, query))
+            End If
             If cols.Length > 0 Then
-                cols.Length -= 2
+                'cols.Length -= 2
                 b = True
             End If
-            If colsa.Length = 0 Then
-                For Each p As SelectExpression In selList
-                    Dim cols_ As New StringBuilder
-                    s.CreateSelectExpressionFormater().Format(p, cols_, query, colsa, mpe, almgr, params, _
-                        filterInfo, Nothing, query.FromClause, True)
-                    colsa.Append(",")
-                    Exit For
-                Next
-            End If
+            'If colsa.Length = 0 Then
+            '    For Each p As SelectExpression In selList
+            '        Dim cols_ As New StringBuilder
+            '        s.CreateSelectExpressionFormater().Format(p, cols_, query, colsa, mpe, almgr, params, _
+            '            filterInfo, Nothing, query.FromClause, True)
+            '        colsa.Append(",")
+            '        Exit For
+            '    Next
+            'End If
             If colsa.Length > 0 Then
                 colsa.Length -= 1
             End If
@@ -653,7 +659,7 @@ Namespace Query.Database
                     Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
                 End If
                 sb.Append(",row_number() over (")
-                If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
+                If query.Sort IsNot Nothing Then
                     sb.Append(RowNumberOrder)
                     'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
                 Else
@@ -674,10 +680,11 @@ Namespace Query.Database
             'End If
 
             For Each p As SelectExpression In selList
-                If Not String.IsNullOrEmpty(p._tempMark) Then
-                    s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
-                        filterInfo, Nothing, query.FromClause, True)
-                End If
+                'If Not String.IsNullOrEmpty(p._tempMark) Then
+                '    s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
+                '        filterInfo, Nothing, query.FromClause, True)
+                'End If
+                p.MakeStatement(mpe, query.FromClause, s, params, almgr, filterInfo, MakeStatementMode.Replace, query)
             Next
         End Sub
 
@@ -1201,44 +1208,23 @@ l1:
         Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
             If query.Group IsNot Nothing Then
-                sb.Append(" group by ")
-                For Each g As SelectExpression In query.Group
-                    'If g.Table IsNot Nothing Then
-                    '    sb.Append(almgr.GetAlias(g.Table, Nothing)).Append(s.Selector).Append(g.Column)
-                    'Else
-                    '    If Not String.IsNullOrEmpty(g.Computed) Then
-                    '        sb.Append(String.Format(g.Computed, ObjectMappingEngine.ExtractValues(mpe, s, almgr, g.Values).ToArray))
-                    '    Else
-                    '        Dim t As Type = g.ObjectSource.GetRealType(mpe)
-                    '        Dim schema As IEntitySchema = mpe.GetObjectSchema(t)
-                    '        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-                    '        Dim map As MapField2Column = Nothing
-                    '        If cm.TryGetValue(g.PropertyAlias, map) Then
-                    '            sb.Append(almgr.GetAlias(map._tableName, g.ObjectSource)).Append(s.Selector).Append(map._columnName)
-                    '        Else
-                    '            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", g.PropertyAlias, g.ObjectSource.ToStaticString))
-                    '        End If
-                    '    End If
-                    'End If
-                    s.CreateSelectExpressionFormater().Format(g, sb, query, Nothing, mpe, almgr, Nothing, _
-                        Nothing, query.SelectList, query.FromClause, False)
-                    sb.Append(",")
-                Next
-                sb.Length -= 1
+                sb.Append(" ").Append(query.Group.MakeStatement(mpe, query.FromClause, s, Nothing, almgr, Nothing, MakeStatementMode.None, query))
             End If
         End Sub
 
         Protected Shared Sub FormOrderBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
-            If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
-                s.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.FromClause, False)
+            If query.Sort IsNot Nothing Then
+                's.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.FromClause, False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
                 'If adv IsNot Nothing Then
                 '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
                 'Else
                 '    s.AppendOrder(t, query.propSort, almgr, sb, True, query.SelectList, query.Table)
                 'End If
+                sb.Append(" order by ").Append(BinaryExpressionBase.CreateFromEnumerable(query.Sort).MakeStatement( _
+                    mpe, query.FromClause, s, params, almgr, filterInfo, MakeStatementMode.None, query))
             End If
         End Sub
 

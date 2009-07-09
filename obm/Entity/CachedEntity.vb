@@ -1833,15 +1833,15 @@ l1:
 
         Protected Overridable Function GetRelatedChangedObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
-            'For Each kv As DictionaryEntry In MappingEngine.GetProperties(Me.GetType)
-            '    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-            '    If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-            '        Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
-            '        If o IsNot Nothing AndAlso o.HasChanges Then
-            '            l.Add(o)
-            '        End If
-            '    End If
-            'Next
+            For Each kv As DictionaryEntry In GetMappingEngine.GetProperties(Me.GetType)
+                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
+                    Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
+                    If o IsNot Nothing AndAlso o.HasChanges Then
+                        l.Add(o)
+                    End If
+                End If
+            Next
             Return l
         End Function
 

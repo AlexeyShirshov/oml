@@ -3,6 +3,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports Worm.Query.Sorting
 Imports Worm.Entities
+Imports Worm.Expressions2
 
 Friend Interface IListEdit
     Inherits IReadOnlyList, ICloneable
@@ -211,7 +212,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     End Function
 
     Public Overrides Function Clone() As Object
-        Return New ReadOnlyEntityList(Of T)(_rt, _l)
+        Return New ReadOnlyList(Of T)(_rt, _l)
     End Function
 
     Public Overrides ReadOnly Property RealType() As System.Type
@@ -323,6 +324,9 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
                 Dim o As T = Me(i)
                 If mpe Is Nothing Then
                     mpe = o.GetMappingEngine
+                    If mpe Is Nothing AndAlso OrmManager.CurrentManager IsNot Nothing Then
+                        mpe = OrmManager.CurrentManager.MappingEngine
+                    End If
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
                 For j As Integer = 0 To parentPropertyAliases.Length - 1
@@ -459,7 +463,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End If
     End Function
 
-    Public Function ApplySort(ByVal s As Sort) As ICollection(Of T)
+    Public Function ApplySort(ByVal s As OrderByClause) As ICollection(Of T)
         Return OrmManager.ApplySort(Of T)(Me, s)
     End Function
 

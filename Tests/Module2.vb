@@ -233,13 +233,14 @@ Module Module2
                         GetMinMax(mgr, min, max)
                         Dim l As New List(Of Object)
                         Do
-                            Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                            Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                             If t IsNot Nothing AndAlso r.NextDouble > 0.5 Then
                                 l.Add(t.Identifier)
                                 cnt += 1
                             End If
                         Loop While cnt < 10
-                        mgr.LoadObjectsIds(Of TestEditTable)(l)
+                        Dim q As New QueryCmd
+                        q.GetByIds(Of TestEditTable)(l)
                         done = True
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
@@ -267,7 +268,7 @@ Module Module2
                         Dim min As Integer, max As Integer, cnt As Integer
                         GetMinMax(mgr, min, max)
                         Do
-                            Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                            Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                             If t IsNot Nothing AndAlso r.NextDouble > 0.5 Then
                                 mgr.RemoveObjectFromCache(t)
                                 cnt += 1
@@ -309,7 +310,7 @@ Module Module2
                     Try
                         Dim min As Integer, max As Integer
                         GetMinMax(mgr, min, max)
-                        Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                        Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                         If t IsNot Nothing Then
                             Using sw As New IO.StringWriter
                                 Dim ls As New TextWriterTraceListener(sw)
@@ -421,7 +422,7 @@ Module Module2
                         GetMinMax(mgr, min, max)
                         Using st As New ModificationsTracker(mgr)
                             Do
-                                Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                                Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                                 If t IsNot Nothing Then
                                     Using t.BeginAlter
                                         If t.InternalProperties.CanEdit Then
@@ -476,10 +477,11 @@ Module Module2
                     Dim done As Boolean
                     Do
                         Try
+                            Dim q As New QueryCmd
                             If r.NextDouble > 0.5 Then
-                                mgr.FindTop(Of TestEditTable)(100, Nothing, Nothing, False)
+                                q.Top(100).ToList(Of TestEditTable)(mgr)
                             Else
-                                mgr.FindTop(Of TestEditTable)(100, Nothing, Nothing, True)
+                                q.Top(100).SelectEntity(GetType(TestEditTable), True).ToList(Of TestEditTable)(mgr)
                             End If
                             done = True
                             Threading.Thread.Sleep(0)
@@ -510,10 +512,11 @@ Module Module2
                     Dim done As Boolean
                     Do
                         Try
+                            Dim q As New QueryCmd
                             If r.NextDouble > 0.5 Then
-                                mgr.Find(Of TestEditTable)(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, False)
+                                q.Where(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%")).ToList(Of TestEditTable)(mgr)
                             Else
-                                mgr.Find(Of TestEditTable)(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%"), Nothing, True)
+                                q.SelectEntity(GetType(TestEditTable), True).Where(Ctor.prop(GetType(TestEditTable), "Name").[like]("e%")).ToList(Of TestEditTable)(mgr)
                             End If
                             done = True
                             Threading.Thread.Sleep(0)

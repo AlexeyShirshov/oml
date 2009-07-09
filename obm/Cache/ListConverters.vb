@@ -7,6 +7,7 @@ Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports System.Collections.ObjectModel
+Imports Worm.Expressions2
 
 Namespace Cache
 
@@ -26,7 +27,7 @@ Namespace Cache
         Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
         Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
-        Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
+        Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As OrderByClause) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity, ByVal mc As OrmManager)
         Sub Clear(ByVal weak_list As Object, ByVal mgr As OrmManager)
@@ -125,9 +126,8 @@ Namespace Cache
         End Function
 
         Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal o As ICachedEntity, _
-            ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
+            ByVal sort As OrderByClause) As Boolean Implements IListObjectConverter.Add
             Dim l As IListEdit = CType(weak_list, IListEdit)
-            Dim st As IOrmSorting = Nothing
             Dim obj As ICachedEntity = o
             If l.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
@@ -145,15 +145,8 @@ Namespace Cache
             If sort Is Nothing Then
                 l.Add(obj)
                 Return True
-            ElseIf OrmManager.CanSortOnClient(obj.GetType, l, sort, st) Then
-                Dim c As IComparer = Nothing
-                If st IsNot Nothing Then
-                    c = st.CreateSortComparer(sort)
-                Else
-                    c = New OrmComparer(Of _IEntity)(obj.GetType, sort)
-                    'Dim ct As Type = GetType(OrmComparer(Of ))
-                    'ct = ct.MakeGenericType(New Type() {})
-                End If
+            ElseIf OrmManager.CanSortOnClient(obj.GetType, l, sort) Then
+                Dim c As IComparer = New EntityComparer(sort)
                 If c IsNot Nothing Then
                     Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)
                     If pos < 0 Then
@@ -338,7 +331,7 @@ Namespace Cache
         End Function
 
         Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal o As ICachedEntity, _
-            ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
+            ByVal sort As OrderByClause) As Boolean Implements IListObjectConverter.Add
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
 
@@ -361,14 +354,8 @@ Namespace Cache
             Else
                 Dim arr As ArrayList = Nothing
                 If lo.CanSort(mc, arr, sort) Then
-                    Dim schema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                    Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
-                    Dim c As IComparer = Nothing
-                    If st IsNot Nothing Then
-                        c = st.CreateSortComparer(sort)
-                    Else
-                        c = New OrmComparer(Of _IEntity)(obj.GetType, sort)
-                    End If
+                    'Dim schema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
+                    Dim c As IComparer = New EntityComparer(sort)
                     If c IsNot Nothing Then
                         Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
                         If pos < 0 Then

@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Entities
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Namespace Criteria.Values
 
@@ -43,10 +44,10 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Private _v() As IFilterValue
-        Public ReadOnly Property Values() As IFilterValue()
+        Private _exp As IExpression
+        Public ReadOnly Property Values() As IExpression
             Get
-                Return _v
+                Return _exp
             End Get
         End Property
 
@@ -57,29 +58,29 @@ Namespace Criteria.Values
             _filter = True
         End Sub
 
-        Public Sub New(ByVal format As String, ByVal ParamArray values() As IFilterValue)
+        Public Sub New(ByVal format As String, ByVal values As IExpression)
             _f = format
-            _v = values
+            _exp = values
             _filter = True
         End Sub
 
-        Public Sub New(ByVal format As String, ByVal ParamArray values() As SelectExpression)
-            _f = format
-            _v = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
-            _filter = True
-        End Sub
+        'Public Sub New(ByVal format As String, ByVal ParamArray values() As SelectExpressionOld)
+        '    _f = format
+        '    _v = Array.ConvertAll(values, Function(se As SelectExpressionOld) New SelectExpressionValue(se))
+        '    _filter = True
+        'End Sub
 
-        Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values() As IFilterValue)
+        Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values As IExpression)
             MyBase.New(oper)
             _f = format
-            _v = values
+            _exp = values
         End Sub
 
         Public Overrides Function _ToString() As String Implements IQueryElement._ToString
-            If _v IsNot Nothing Then
+            If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IFilterValue In _v
-                    l.Add(v._ToString)
+                For Each v As IExpression In _exp.GetExpressions
+                    l.Add(v.GetDynamicString)
                 Next
                 If _filter Then
                     Return String.Format(_f, l.ToArray)
@@ -107,25 +108,26 @@ Namespace Criteria.Values
             'Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
             'Return String.Format(_f, values.ToArray)
-            If _v IsNot Nothing Then
-                Dim l As New List(Of String)
-                For Each v As IFilterValue In _v
-                    If TypeOf v Is SelectExpressionValue Then
-                        CType(v, SelectExpressionValue).AddAlias = False
-                    End If
-                    Dim s As String = v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
-                    l.Add(s)
-                Next
-                Return String.Format(_f, l.ToArray)
+            If _exp IsNot Nothing Then
+                'Dim l As New List(Of String)
+                'For Each v As IFilterValue In _v
+                '    'If TypeOf v Is SelectExpressionValue Then
+                '    '    CType(v, SelectExpressionValue).AddAlias = False
+                '    'End If
+                '    Dim s As String = v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
+                '    l.Add(s)
+                'Next
+                'Return String.Format(_f, l.ToArray)
+                Return String.Format(_f, _exp.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, MakeStatementMode.None, executor))
             Else
                 Return _f
             End If
         End Function
 
         Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            If _v IsNot Nothing Then
+            If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IFilterValue In _v
+                For Each v As IExpression In _exp.GetExpressions
                     l.Add(v.GetStaticString(mpe, contextFilter))
                 Next
                 If _filter Then
@@ -143,10 +145,8 @@ Namespace Criteria.Values
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            If _v IsNot Nothing Then
-                For Each v As IFilterValue In _v
-                    v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-                Next
+            If _exp IsNot Nothing Then
+                _exp.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
 
@@ -209,145 +209,145 @@ Namespace Criteria.Values
         End Property
     End Class
 
-    <Serializable()> _
-    Public Class SelectExpressionValue
-        Implements IFilterValue
+    '<Serializable()> _
+    'Public Class SelectExpressionValue
+    '    Implements IFilterValue
 
-        Private _p As SelectExpression
+    '    Private _p As SelectExpressionOld
 
-        Public Sub New(ByVal propertyAlias As String)
-            _p = New SelectExpression(CType(Nothing, EntityUnion), propertyAlias)
-        End Sub
+    '    Public Sub New(ByVal propertyAlias As String)
+    '        _p = New SelectExpressionOld(CType(Nothing, EntityUnion), propertyAlias)
+    '    End Sub
 
-        Public Sub New(ByVal p As SelectExpression)
-            _p = p
-        End Sub
+    '    Public Sub New(ByVal p As SelectExpressionOld)
+    '        _p = p
+    '    End Sub
 
-        Public Sub New(ByVal op As ObjectProperty)
-            _p = New SelectExpression(op)
-        End Sub
+    '    Public Sub New(ByVal op As ObjectProperty)
+    '        _p = New SelectExpressionOld(op)
+    '    End Sub
 
-        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
-            _p = New SelectExpression(t, propertyAlias)
-        End Sub
+    '    Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+    '        _p = New SelectExpressionOld(t, propertyAlias)
+    '    End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
-            _p = New SelectExpression(entityName, propertyAlias)
-        End Sub
+    '    Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+    '        _p = New SelectExpressionOld(entityName, propertyAlias)
+    '    End Sub
 
-        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
-            _p = New SelectExpression(os, propertyAlias)
-        End Sub
+    '    Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String)
+    '        _p = New SelectExpressionOld(os, propertyAlias)
+    '    End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal column As String)
-            _p = New SelectExpression(table, column)
-        End Sub
+    '    Public Sub New(ByVal table As SourceFragment, ByVal column As String)
+    '        _p = New SelectExpressionOld(table, column)
+    '    End Sub
 
-        Public ReadOnly Property Expression() As SelectExpression
-            Get
-                Return _p
-            End Get
-        End Property
+    '    Public ReadOnly Property Expression() As SelectExpressionOld
+    '        Get
+    '            Return _p
+    '        End Get
+    '    End Property
 
-        Public Function _ToString() As String Implements IFilterValue._ToString
-            Return _p._ToString
-        End Function
+    '    Public Function _ToString() As String Implements IFilterValue._ToString
+    '        Return _p.GetDynamicString
+    '    End Function
 
-        Public Property AddAlias() As Boolean
-            Get
-                Return _p.AddAlias
-            End Get
-            Set(ByVal value As Boolean)
-                _p.AddAlias = value
-            End Set
-        End Property
+    '    'Public Property AddAlias() As Boolean
+    '    '    Get
+    '    '        Return _p.AddAlias
+    '    '    End Get
+    '    '    Set(ByVal value As Boolean)
+    '    '        _p.AddAlias = value
+    '    '    End Set
+    '    'End Property
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
-                          ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
-            'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+    '    Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+    '                      ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
+    '                      ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
+    '        'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
-            'If almgr IsNot Nothing Then
-            '    tableAliases = almgr.Aliases
-            'End If
+    '        'If almgr IsNot Nothing Then
+    '        '    tableAliases = almgr.Aliases
+    '        'End If
 
-            If schema Is Nothing Then
-                Throw New ArgumentNullException("schema")
-            End If
+    '        If schema Is Nothing Then
+    '            Throw New ArgumentNullException("schema")
+    '        End If
 
-            'Dim d As String = schema.Delimiter
-            'If Not inSelect Then
-            '    d = stmt.Selector
-            'End If
+    '        'Dim d As String = schema.Delimiter
+    '        'If Not inSelect Then
+    '        '    d = stmt.Selector
+    '        'End If
 
-            Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
-            Dim sb As New StringBuilder
-            f.Format(_p, sb, executor, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, fromClause, inSelect)
-            Return sb.ToString
+    '        'Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
+    '        Dim sb As New StringBuilder
+    '        'f.Format(_p, sb, executor, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, fromClause, inSelect)
+    '        Return sb.ToString
 
-            'If _p.IsCustom Then
-            '    Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
-            '    Dim sb As New StringBuilder
-            '    f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
-            '    Return sb.ToString
-            'ElseIf _p.Table Is Nothing Then
+    '        'If _p.IsCustom Then
+    '        '    Dim f As ISelectExpressionFormater = stmt.CreateSelectExpressionFormater
+    '        '    Dim sb As New StringBuilder
+    '        '    f.Format(_p, sb, Nothing, schema, almgr, paramMgr, filterInfo, Nothing, Nothing, Nothing, inSelect)
+    '        '    Return sb.ToString
+    '        'ElseIf _p.Table Is Nothing Then
 
-            '    Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
+    '        '    Dim oschema As IEntitySchema = schema.GetEntitySchema(_p.ObjectSource.GetRealType(schema))
 
-            '    Dim map As MapField2Column = Nothing
-            '    Try
-            '        map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
-            '    Catch ex As KeyNotFoundException
-            '        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString(schema, filterInfo) & schema.Delimiter & _p.PropertyAlias, ex))
-            '    End Try
+    '        '    Dim map As MapField2Column = Nothing
+    '        '    Try
+    '        '        map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
+    '        '    Catch ex As KeyNotFoundException
+    '        '        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.ObjectSource.ToStaticString(schema, filterInfo) & schema.Delimiter & _p.PropertyAlias, ex))
+    '        '    End Try
 
-            '    Dim [alias] As String = String.Empty
+    '        '    Dim [alias] As String = String.Empty
 
-            '    If almgr IsNot Nothing Then
-            '        'Debug.Assert(tableAliases.ContainsKey(map.Table), "There is not alias for table " & map._tableName.RawName)
-            '        If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
-            '            [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & d
-            '        Else
-            '            [alias] = map._tableName.UniqueName(_p.ObjectSource) & d
-            '        End If
-            '        'Try
-            '        '    [alias] = tableAliases(map._tableName) & schema.Selector
-            '        'Catch ex As KeyNotFoundException
-            '        '    Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
-            '        'End Try
-            '    End If
+    '        '    If almgr IsNot Nothing Then
+    '        '        'Debug.Assert(tableAliases.ContainsKey(map.Table), "There is not alias for table " & map._tableName.RawName)
+    '        '        If almgr.ContainsKey(map._tableName, _p.ObjectSource) Then
+    '        '            [alias] = almgr.GetAlias(map._tableName, _p.ObjectSource) & d
+    '        '        Else
+    '        '            [alias] = map._tableName.UniqueName(_p.ObjectSource) & d
+    '        '        End If
+    '        '        'Try
+    '        '        '    [alias] = tableAliases(map._tableName) & schema.Selector
+    '        '        'Catch ex As KeyNotFoundException
+    '        '        '    Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+    '        '        'End Try
+    '        '    End If
 
-            '    Return [alias] & map._columnName
-            'Else
-            '    Dim [alias] As String = String.Empty
+    '        '    Return [alias] & map._columnName
+    '        'Else
+    '        '    Dim [alias] As String = String.Empty
 
-            '    If almgr IsNot Nothing Then
-            '        'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-            '        Try
-            '            [alias] = almgr.GetAlias(_p.Table, Nothing) & d
-            '        Catch ex As KeyNotFoundException
-            '            Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
-            '        End Try
-            '    End If
+    '        '    If almgr IsNot Nothing Then
+    '        '        'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+    '        '        Try
+    '        '            [alias] = almgr.GetAlias(_p.Table, Nothing) & d
+    '        '        Catch ex As KeyNotFoundException
+    '        '            Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
+    '        '        End Try
+    '        '    End If
 
-            '    Return [alias] & _p.Column
-            'End If
-        End Function
+    '        '    Return [alias] & _p.Column
+    '        'End If
+    '    End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return _p.GetStaticString(mpe, contextFilter)
-        End Function
+    '    Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+    '        Return _p.GetStaticString(mpe, contextFilter)
+    '    End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            _p.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-        End Sub
+    '    Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+    '        _p.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+    '    End Sub
 
-        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
-            Get
-                Return True
-            End Get
-        End Property
-    End Class
+    '    Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+    '        Get
+    '            Return True
+    '        End Get
+    '    End Property
+    'End Class
 
     <Serializable()> _
     Public Class ScalarValue

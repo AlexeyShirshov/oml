@@ -171,8 +171,8 @@ Imports Worm
                 Dim t1to3 As Tables1to3 = Nothing
                 Using mt As New Worm.Database.ModificationsTracker(mgr)
                     t1to3 = New Tables1to3 With { _
-                        .Table1 = mgr.Find(Of Table1)(2), _
-                        .Table3 = mgr.Find(Of Table33)(1), _
+                        .Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr), _
+                        .Table3 = New QueryCmd().GetByID(Of Table33)(1, mgr), _
                         .Title = "dfasdf" _
                     }
 

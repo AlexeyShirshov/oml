@@ -8,6 +8,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm.Expressions2
 
 <TestClass()> Public Class TestCriteria
 
@@ -128,24 +129,25 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestSort()
         Dim t As Type = GetType(Type)
-        Dim s As Sort = SCtor.prop(t, "sdgfn").asc
-        Assert.AreEqual("sdgfn", s.SortBy)
-        Assert.AreEqual(SortType.Asc, s.Order)
+        Dim mpe As New ObjectMappingEngine
 
-        Dim s2 As Sort = SCtor.prop(t, "sdgfn").desc
-        Assert.AreEqual("sdgfn", s2.SortBy)
-        Assert.AreEqual(SortType.Desc, s2.Order)
+        Dim s As SortExpression = SCtor.prop(t, "sdgfn").asc
+        Assert.AreEqual("sdgfn", s.GetStaticString(mpe, Nothing))
+        Assert.AreEqual(SortExpression.SortType.Asc, s.Order)
 
-        Dim s3 As Sort = SCtor.prop(t, "sdgfn").Order(False)
-        Assert.AreEqual("sdgfn", s3.SortBy)
-        Assert.AreEqual(SortType.Desc, s3.Order)
+        Dim s2 As SortExpression = SCtor.prop(t, "sdgfn").desc
+        Assert.AreEqual("sdgfn", s2.GetDynamicString)
+        Assert.AreEqual(SortExpression.SortType.Desc, s2.Order)
 
-        Dim s4 As Sort = SCtor.prop(t, "sdgfn").Order(True)
-        Assert.AreEqual("sdgfn", s4.SortBy)
-        Assert.AreEqual(SortType.Asc, s4.Order)
+        Dim s3 As SortExpression = SCtor.prop(t, "sdgfn").Order(False)
+        Assert.AreEqual("sdgfn", CType(s3.Operand, EntityExpression).ObjectProperty.PropertyAlias)
+        Assert.AreEqual(SortExpression.SortType.Desc, s3.Order)
 
-        Dim s5 As Sort = SCtor.prop(t, "sdgfn").Order("desc")
-        Assert.AreEqual("sdgfn", s5.SortBy)
-        Assert.AreEqual(SortType.Desc, s5.Order)
+        Dim s4 As SortExpression = SCtor.prop(t, "sdgfn").Order(True)
+        Assert.AreEqual(SortExpression.SortType.Asc, s4.Order)
+
+        Dim s5 As SortExpression = SCtor.prop(t, "sdgfn").Order("desc")
+        Assert.AreEqual(t, CType(s3.Operand, EntityExpression).ObjectProperty.Entity.GetRealType(mpe))
+        Assert.AreEqual(SortExpression.SortType.Desc, s5.Order)
     End Sub
 End Class

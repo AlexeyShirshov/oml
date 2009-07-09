@@ -5,6 +5,7 @@ Imports Worm.OrmManager
 Imports Worm.Criteria.Joins
 Imports Worm.Query.Sorting
 Imports Worm.Cache
+Imports Worm.Expressions2
 
 Namespace Query
     Public MustInherit Class CacheItemBaseProvider
@@ -29,6 +30,7 @@ Namespace Query
         Protected _id As String
         Protected _sync As String
         Protected _dic As IDictionary
+        Protected _stmt As String
 
 #Region " Cache "
         Private _dp() As Cache.IDependentTypes
@@ -77,14 +79,15 @@ Namespace Query
         Public Sub CreateDepends(ByVal ce As CachedItemBase) Implements OrmManager.ICacheItemProvoderBase.CreateDepends
             Dim uce As UpdatableCachedItem = TryCast(ce, UpdatableCachedItem)
             'If uce IsNot Nothing AndAlso _q.propSort IsNot Nothing Then
-            If _q.Sort IsNot Nothing Then
-                Dim srt As Sort = _q.Sort
-                If srt.Query IsNot Nothing Then
-                    ce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
-                Else
-                    ce.Sort = srt
-                End If
-            End If
+            'If _q.Sort IsNot Nothing Then
+            '    Dim srt As Sort = _q.Sort
+            '    If srt.Query IsNot Nothing Then
+            '        ce.Sort = Sort.GetOnlyKey(_mgr.MappingEngine, _mgr.GetContextInfo)
+            '    Else
+            '        ce.Sort = srt
+            '    End If
+            'End If
+            ce.Sort = _q.Sort
 
             Dim cache As Cache.OrmCache = TryCast(Me.Cache, Cache.OrmCache)
 
@@ -146,16 +149,17 @@ Namespace Query
                     Dim selectTypes As ICollection(Of Type) = Nothing
                     Dim hasSelectTypes As Boolean = q.GetSelectedTypes(MappingEngine, selectTypes)
 
-                    'If _f IsNot Nothing AndAlso _f.Length > i Then
-                    'Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
-                    Dim vf As IValuableFilter = TryCast(_q._f, IValuableFilter)
-                    If vf IsNot Nothing Then
-                        Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
-                        If v IsNot Nothing Then
-                            cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
-                        End If
+                    If _q._f IsNot Nothing Then
+                        For Each ff As IFilter In _q._f.GetAllFilters
+                            Dim vf As IValuableFilter = TryCast(ff, IValuableFilter)
+                            If vf IsNot Nothing Then
+                                Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
+                                If v IsNot Nothing Then
+                                    cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
+                                End If
+                            End If
+                        Next
                     End If
-                    'End If
 
                     'Dim ef As IEntityFilter = Nothing
                     'If _f IsNot Nothing AndAlso _f.Length > i Then
@@ -168,7 +172,7 @@ Namespace Query
                         'If _f IsNot Nothing AndAlso _f.Length > i Then
                         Dim fl As IFilter = _q._f
                         Dim added As Boolean = False
-                        Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate
+                        Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate(MappingEngine)
                         If hasSelectTypes AndAlso evalSort Then
                             added = cache.validate_AddCalculatedType(selectTypes, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
                             If uce IsNot Nothing Then
@@ -252,32 +256,35 @@ Namespace Query
                         End If
                     End If
 
-                    For Each s As Sort In New Sort.Iterator(q.Sort)
-                        If Not String.IsNullOrEmpty(s.SortBy) Then
-                            Dim t As Type = Nothing
-                            If s.ObjectSource IsNot Nothing Then
-                                t = s.ObjectSource.GetRealType(MappingEngine)
-                            End If
+                    If q.Sort IsNot Nothing Then
+                        For Each s As SortExpression In q.Sort
+                            For Each exp As IExpression In s.GetExpressions
+                                Dim ee As EntityExpression = TryCast(exp, EntityExpression)
+                                If ee IsNot Nothing Then
+                                    Dim t As Type = ee.ObjectProperty.Entity.GetRealType(MappingEngine)
 
-                            If t Is Nothing Then
-                                If hasSelectTypes Then
+                                    If t Is Nothing Then
+                                        If hasSelectTypes Then
+                                            cache.validate_UpdateType(selectTypes, _key, _id)
+                                            'notPreciseDependsU = True
+                                        End If
+                                    Else
+                                        Dim p As New Pair(Of String, Type)(ee.ObjectProperty.PropertyAlias, t)
+                                        cache.validate_AddDependentSortField(p, _key, _id)
+                                    End If
+                                ElseIf hasSelectTypes Then
                                     cache.validate_UpdateType(selectTypes, _key, _id)
                                     'notPreciseDependsU = True
                                 End If
-                            Else
-                                Dim p As New Pair(Of String, Type)(s.SortBy, t)
-                                cache.validate_AddDependentSortField(p, _key, _id)
-                            End If
-                        ElseIf hasSelectTypes Then
-                            cache.validate_UpdateType(selectTypes, _key, _id)
-                            'notPreciseDependsU = True
-                        End If
-                    Next
+                            Next
+                        Next
+                    End If
 
                     If q.Group IsNot Nothing Then
-                        For Each g As Grouping In q.Group
-                            If Not String.IsNullOrEmpty(g.PropertyAlias) AndAlso g.ObjectSource IsNot Nothing Then
-                                Dim p As New Pair(Of String, Type)(g.PropertyAlias, g.ObjectSource.GetRealType(MappingEngine))
+                        For Each exp As IExpression In q.Group.GetExpressions
+                            Dim ee As EntityExpression = TryCast(exp, EntityExpression)
+                            If ee IsNot Nothing Then
+                                Dim p As New Pair(Of String, Type)(ee.ObjectProperty.PropertyAlias, ee.ObjectProperty.Entity.GetRealType(MappingEngine))
                                 cache.validate_AddDependentGroupField(p, _key, _id)
                             ElseIf hasSelectTypes Then
                                 cache.validate_UpdateType(selectTypes, _key, _id)
@@ -319,7 +326,48 @@ Namespace Query
         End Property
 
         Public MustOverride Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+
+        Public Overridable Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+            _mgr = mgr
+            _q = q
+            _dic = Nothing
+
+            Dim fromKey As String = Nothing
+            'If _q.Table IsNot Nothing Then
+            '    fromKey = _q.Table.RawName
+            'ElseIf _q.FromClause IsNot Nothing AndAlso _q.FromClause.AnyQuery IsNot Nothing Then
+            '    fromKey = _q.FromClause.AnyQuery.ToStaticString(mgr.MappingEngine)
+            'Else
+            '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
+            'End If
+
+            _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextInfo)
+
+            If _dic Is Nothing Then
+                _dic = GetExternalDic(_key)
+                If _dic IsNot Nothing Then
+                    _key = Nothing
+                End If
+            End If
+
+            If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
+                _id = QueryCmd.GetDynamicKey(_q)
+                _sync = _id & _mgr.GetStaticKey()
+            End If
+
+            ResetDic()
+            ResetStmt()
+        End Sub
+
+        Public Sub ResetStmt()
+            _stmt = Nothing
+        End Sub
+
+        Public Overridable Sub ResetDic()
+            If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
+                _dic = _mgr.GetDic(_mgr.Cache, _key)
+            End If
+        End Sub
 
         Protected Function GetExternalDic(ByVal key As String) As IDictionary
             Dim args As New QueryCmd.ExternalDictionaryEventArgs(key)
@@ -416,13 +464,13 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property Sort() As Sort Implements OrmManager.ICacheItemProvoderBase.Sort
+        Public ReadOnly Property Sort() As OrderByClause Implements OrmManager.ICacheItemProvoderBase.Sort
             Get
                 Return _q.Sort
             End Get
         End Property
 
-        Public ReadOnly Property Group() As ObjectModel.ReadOnlyCollection(Of Grouping)
+        Public ReadOnly Property Group() As GroupExpression
             Get
                 Return _q.Group
             End Get

@@ -95,131 +95,131 @@ Namespace Query
         Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
     End Class
 
-    <Serializable()> _
-    Public Class [Aggregate]
-        Inherits AggregateBase
+    '<Serializable()> _
+    'Public Class [Aggregate]
+    '    Inherits AggregateBase
 
-        Private _oper As UnaryExp
+    '    Private _oper As UnaryExp
 
-        Public Sub New(ByVal agFunc As AggregateFunction)
-            MyClass.New(agFunc, New UnaryExp(New LiteralValue("*")))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction)
+    '        MyClass.New(agFunc, New UnaryExp(New LiteralValue("*")))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty)
-            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(op)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty)
+    '        MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(op)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty, ByVal [alias] As String)
-            MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(op)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal op As ObjectProperty, ByVal [alias] As String)
+    '        MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(op)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, propertyAlias)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal propertyAlias As String)
+    '        MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, propertyAlias)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal entityName As String, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(entityName, propertyAlias)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal entityName As String, ByVal propertyAlias As String)
+    '        MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(entityName, propertyAlias)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As EntityUnion, ByVal propertyAlias As String)
-            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(os, propertyAlias)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal os As EntityUnion, ByVal propertyAlias As String)
+    '        MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(os, propertyAlias)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String)
-            MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, column)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String)
+    '        MyClass.New(agFunc, New UnaryExp(New SelectExpressionValue(t, column)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String, ByVal [alias] As String)
-            MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(t, column)))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As SourceFragment, ByVal column As String, ByVal [alias] As String)
+    '        MyClass.New(agFunc, [alias], New UnaryExp(New SelectExpressionValue(t, column)))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)
-            MyClass.New(agFunc, [alias], New UnaryExp(New LiteralValue("*")))
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)
+    '        MyClass.New(agFunc, [alias], New UnaryExp(New LiteralValue("*")))
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal operation As UnaryExp)
-            MyClass.New(agFunc, Nothing, operation)
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal operation As UnaryExp)
+    '        MyClass.New(agFunc, Nothing, operation)
+    '    End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, _
-                       ByVal operation As UnaryExp)
-            MyBase.New(agFunc, [alias])
-            _oper = operation
-        End Sub
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, _
+    '                   ByVal operation As UnaryExp)
+    '        MyBase.New(agFunc, [alias])
+    '        _oper = operation
+    '    End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
-            Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.MakeStmt(schema, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor))
-            If Not String.IsNullOrEmpty([Alias]) AndAlso inSelect Then
-                s = s & " " & [Alias]
-            End If
-            Return s
-        End Function
+    '    Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+    '        Dim s As String = FormatFunc(AggFunc, String.Empty)
+    '        s = String.Format(s, _oper.MakeStmt(schema, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor))
+    '        If Not String.IsNullOrEmpty([Alias]) AndAlso inSelect Then
+    '            s = s & " " & [Alias]
+    '        End If
+    '        Return s
+    '    End Function
 
-        Public ReadOnly Property Expression() As UnaryExp
-            Get
-                Return _oper
-            End Get
-        End Property
+    '    Public ReadOnly Property Expression() As UnaryExp
+    '        Get
+    '            Return _oper
+    '        End Get
+    '    End Property
 
-        Public Shared Function FormatFunc(ByVal AggFunc As AggregateFunction, ByVal d As String) As String
-            Dim s As String = Nothing
-            Select Case AggFunc
-                Case AggregateFunction.Max
-                    s = "max(" & d & "{0})"
-                Case AggregateFunction.Min
-                    s = "min(" & d & "{0})"
-                Case AggregateFunction.Average
-                    s = "avg(" & d & "{0})"
-                Case AggregateFunction.Count
-                    s = "count(" & d & "{0})"
-                Case AggregateFunction.BigCount
-                    s = "count_big(" & d & "{0})"
-                Case AggregateFunction.Sum
-                    s = "sum(" & d & "{0})"
-                Case Else
-                    Throw New NotImplementedException(AggFunc.ToString)
-            End Select
-            Return s
-        End Function
+    '    Public Shared Function FormatFunc(ByVal AggFunc As AggregateFunction, ByVal d As String) As String
+    '        Dim s As String = Nothing
+    '        Select Case AggFunc
+    '            Case AggregateFunction.Max
+    '                s = "max(" & d & "{0})"
+    '            Case AggregateFunction.Min
+    '                s = "min(" & d & "{0})"
+    '            Case AggregateFunction.Average
+    '                s = "avg(" & d & "{0})"
+    '            Case AggregateFunction.Count
+    '                s = "count(" & d & "{0})"
+    '            Case AggregateFunction.BigCount
+    '                s = "count_big(" & d & "{0})"
+    '            Case AggregateFunction.Sum
+    '                s = "sum(" & d & "{0})"
+    '            Case Else
+    '                Throw New NotImplementedException(AggFunc.ToString)
+    '        End Select
+    '        Return s
+    '    End Function
 
-        Public Overrides Function ToString() As String
-            Throw New NotSupportedException
-        End Function
+    '    Public Overrides Function ToString() As String
+    '        Throw New NotSupportedException
+    '    End Function
 
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, Aggregate))
-        End Function
+    '    Public Overrides Function Equals(ByVal obj As Object) As Boolean
+    '        Return Equals(TryCast(obj, Aggregate))
+    '    End Function
 
-        Public Overloads Function Equals(ByVal obj As Aggregate) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return MyBase.Equals(obj) AndAlso _oper.Equals(obj._oper)
-        End Function
+    '    Public Overloads Function Equals(ByVal obj As Aggregate) As Boolean
+    '        If obj Is Nothing Then
+    '            Return False
+    '        End If
+    '        Return MyBase.Equals(obj) AndAlso _oper.Equals(obj._oper)
+    '    End Function
 
-        Public Overrides Function GetHashCode() As Integer
-            Return ToString.GetHashCode()
-        End Function
+    '    Public Overrides Function GetHashCode() As Integer
+    '        Return ToString.GetHashCode()
+    '    End Function
 
-        Public Overrides Function _ToString() As String
-            Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper._ToString)
-            Return s
-        End Function
+    '    Public Overrides Function _ToString() As String
+    '        Dim s As String = FormatFunc(AggFunc, String.Empty)
+    '        s = String.Format(s, _oper._ToString)
+    '        Return s
+    '    End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.ToStaticString(mpe, contextFilter))
-            Return s
-        End Function
+    '    Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+    '        Dim s As String = FormatFunc(AggFunc, String.Empty)
+    '        s = String.Format(s, _oper.ToStaticString(mpe, contextFilter))
+    '        Return s
+    '    End Function
 
-        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
-            If _oper IsNot Nothing Then
-                _oper.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-            End If
-        End Sub
-    End Class
+    '    Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
+    '        If _oper IsNot Nothing Then
+    '            _oper.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+    '        End If
+    '    End Sub
+    'End Class
 
     Public Class CustomFuncAggregate
         Inherits AggregateBase

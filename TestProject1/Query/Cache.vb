@@ -209,7 +209,7 @@ Imports System.Collections.ObjectModel
                 Using s As New ModificationsTracker(mgr)
                     Dim t1 As Table2 = s.CreateNewObject(Of Table2)()
                     t1.Money = 1
-                    t1.Tbl = mgr.Find(Of Table1)(2)
+                    t1.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
                     s.AcceptModifications()
                 End Using
 

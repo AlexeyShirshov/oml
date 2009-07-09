@@ -330,7 +330,7 @@ Imports Worm.Criteria
                 Using s As New ModificationsTracker(mgr)
                     Dim t1 As Table2 = s.CreateNewObject(Of Table2)()
                     t1.Money = 1
-                    t1.Tbl = mgr.Find(Of Table1)(2)
+                    t1.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
                     s.AcceptModifications()
                 End Using
 
@@ -427,8 +427,8 @@ Imports Worm.Criteria
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr").count("cnt")). _
-                GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
+                Select(FCtor.prop(GetType(Table1), "EnumStr").count().into("cnt")). _
+                GroupBy(GCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
 
@@ -456,8 +456,8 @@ Imports Worm.Criteria
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().From(GetType(Table1)). _
-                Select(FCtor.prop(GetType(Table1), "EnumStr").count("cnt")). _
-                GroupBy(FCtor.prop(GetType(Table1), "EnumStr"))
+                Select(FCtor.prop(GetType(Table1), "EnumStr").count().into("cnt")). _
+                GroupBy(GCtor.prop(GetType(Table1), "EnumStr"))
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
 

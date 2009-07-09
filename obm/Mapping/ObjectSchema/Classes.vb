@@ -1,6 +1,7 @@
 ﻿Imports Worm.Query
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
+Imports Worm.Expressions2
 
 Namespace Entities.Meta
 
@@ -318,7 +319,7 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
-                    se.AddRange(FCtor.prop(op).GetAllProperties)
+                    se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
 
@@ -448,7 +449,7 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
-                    se.AddRange(FCtor.prop(op).GetAllProperties)
+                    se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
 

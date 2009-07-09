@@ -90,6 +90,7 @@ Namespace Xml
             End Get
         End Property
 
+#If Not ExcludeFindMethods Then
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, _
             ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
@@ -142,7 +143,6 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IKeyEntity})( _
             ByVal aspect As Entities.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.QueryJoin, _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of EntityPropertyAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
@@ -157,6 +157,8 @@ Namespace Xml
 
             Throw New NotImplementedException
         End Function
+
+#End If
 
 #If OLDM2M Then
         Protected Overloads Overrides Function GetObjects(Of T As {New, IKeyEntity})( _
@@ -198,14 +200,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        'Protected Overrides Function MakeJoin(ByVal type2join As System.Type, ByVal selectType As System.Type, ByVal field As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Worm.Criteria.Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
-        '    Throw New NotImplementedException
-        'End Function
-
-        'Protected Overrides Function MakeM2MJoin(ByVal m2m As Orm.Meta.M2MRelation, ByVal type2join As System.Type) As Worm.Criteria.Joins.QueryJoin()
-        '    Throw New NotImplementedException
-        'End Function
-
+#If Not ExcludeFindMethods Then
         Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
@@ -213,6 +208,7 @@ Namespace Xml
         Protected Overrides Function SearchEx(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Entities.Meta.IFtsStringFormatter) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
+#End If
 
 #End Region
 

@@ -23,7 +23,7 @@ Public Class TestDistinct
 
             Dim joins() As QueryJoin = New QueryJoin() {join}
 
-            Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(Nothing, joins, Nothing, Nothing, True)
+            Dim c As ICollection(Of Table1) = New QueryCmd().Join(joins).SelectEntity(GetType(Table1), True).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(3, c.Count)
             Assert.IsTrue(CType(c, IList(Of Table1))(0).InternalProperties.IsLoaded)
@@ -50,12 +50,12 @@ Public Class TestDistinct
 
             Dim joins() As QueryJoin = New QueryJoin() {join}
 
-            Dim c As ICollection(Of Table2) = mgr.FindWithJoins(Of Table2)(Nothing, joins, Nothing, Nothing, True)
+            Dim c As ICollection(Of Table2) = New QueryCmd().Join(joins).SelectEntity(GetType(Table2), True).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, c.Count)
             Assert.IsTrue(CType(c, IList(Of Table2))(0).InternalProperties.IsLoaded)
 
-            c = mgr.FindWithJoins(Of Table2)(New TopAspect(1), joins, Nothing, Nothing, True)
+            c = New QueryCmd().Join(joins).SelectEntity(GetType(Table2), True).Top(1).ToList(Of Table2)(mgr)
             Assert.AreEqual(1, c.Count)
         End Using
     End Sub
@@ -65,8 +65,8 @@ Public Class TestDistinct
         Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
-
-            Dim c As ICollection(Of Table2) = mgr.FindJoin(Of Table2)(tt, "Table1", Nothing, Nothing, True)
+            Dim r As New RelationDescEx(New EntityUnion(GetType(Table2)), New RelationDesc(New EntityUnion(tt), "Table1"))
+            Dim c As ICollection(Of Table2) = New QueryCmd().Join(r).SelectEntity(GetType(Table2), True).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, c.Count)
             Assert.IsTrue(CType(c, IList(Of Table2))(0).InternalProperties.IsLoaded)
@@ -79,54 +79,54 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Ctor.prop(tt, "Code").not_eq(2), Nothing, True)
+            Dim c As ICollection(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(Ctor.prop(tt, "Code").not_eq(2)).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(0, c.Count)
         End Using
     End Sub
 
-    <TestMethod()> _
-    Public Sub TestSelect2()
-        Dim s As New Worm.ObjectMappingEngine("1")
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
-            Dim t As Type = s.GetTypeByEntityName("Table3")
-            Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
-                t, True), Nothing, Nothing, True)
+    '<TestMethod()> _
+    'Public Sub TestSelect2()
+    '    Dim s As New Worm.ObjectMappingEngine("1")
+    '    Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
+    '        Dim t As Type = s.GetTypeByEntityName("Table3")
+    '        Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
+    '            t, True), Nothing, Nothing, True)
 
-            Assert.AreEqual(1, c.Count)
-        End Using
-    End Sub
+    '        Assert.AreEqual(1, c.Count)
+    '    End Using
+    'End Sub
 
-    <TestMethod()> _
-    Public Sub TestSelect3()
-        Dim s As New Worm.ObjectMappingEngine("1")
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
-            'Dim tbl As String = "dbo.tables1to3relation"
-            Dim t As Type = s.GetTypeByEntityName("Table3")
-            Dim f As Worm.Criteria.PredicateLink = New Ctor(t).prop("Code").less_than_eq(10)
-            'Dim join As New OrmJoin(tbl, JoinType.Join, f)
+    '<TestMethod()> _
+    'Public Sub TestSelect3()
+    '    Dim s As New Worm.ObjectMappingEngine("1")
+    '    Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
+    '        'Dim tbl As String = "dbo.tables1to3relation"
+    '        Dim t As Type = s.GetTypeByEntityName("Table3")
+    '        Dim f As Worm.Criteria.PredicateLink = New Ctor(t).prop("Code").less_than_eq(10)
+    '        'Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
-            'Dim f2 As New OrmFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
-            'Dim join2 As New OrmJoin(tbl, JoinType.Join, f)
+    '        'Dim f2 As New OrmFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
+    '        'Dim join2 As New OrmJoin(tbl, JoinType.Join, f)
 
 
-            Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), t, True), f, Nothing, True)
+    '        Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), t, True), f, Nothing, True)
 
-            Assert.AreEqual(1, c.Count)
-        End Using
-    End Sub
+    '        Assert.AreEqual(1, c.Count)
+    '    End Using
+    'End Sub
 
-    <TestMethod()> _
-    Public Sub TestSelect4()
-        Dim s As New Worm.ObjectMappingEngine("1")
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
-            Dim t As Type = s.GetTypeByEntityName("Table3")
-            Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
-                t, True), Nothing, Nothing, False)
+    '<TestMethod()> _
+    'Public Sub TestSelect4()
+    '    Dim s As New Worm.ObjectMappingEngine("1")
+    '    Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
+    '        Dim t As Type = s.GetTypeByEntityName("Table3")
+    '        Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
+    '            t, True), Nothing, Nothing, False)
 
-            Assert.AreEqual(1, c.Count)
-        End Using
-    End Sub
+    '        Assert.AreEqual(1, c.Count)
+    '    End Using
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestSelect5()
@@ -138,7 +138,7 @@ Public Class TestDistinct
 
             Dim joins() As QueryJoin = New QueryJoin() {join}
 
-            Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(New Query.DistinctAspect(), joins, Nothing, Nothing, False)
+            Dim c As ICollection(Of Table1) = New QueryCmd().Distinct(True).Join(joins).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(1, c.Count)
             Assert.IsFalse(CType(c, IList(Of Table1))(0).InternalProperties.IsLoaded)

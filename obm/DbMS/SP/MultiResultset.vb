@@ -5,6 +5,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Namespace Database.Storedprocs
 

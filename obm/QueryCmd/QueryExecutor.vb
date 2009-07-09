@@ -2,6 +2,7 @@
 Imports System.Collections.Generic
 Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports Worm.Expressions2
 
 Namespace Query
     Public MustInherit Class QueryExecutor

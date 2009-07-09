@@ -9,6 +9,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Database
 Imports Worm
+Imports Worm.Query
 
 <Entity(GetType(MultiTableEn), "en")> _
 <Entity(GetType(MultiTableRu), "ru")> _
@@ -127,14 +128,14 @@ Public Class TestMultiTable
         Dim m2 As MultiTable = Nothing
         Dim t As Table3 = Nothing
         Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("en"))
-            m2 = mgr.Find(Of MultiTable)(1)
-            t = mgr.Find(Of Table3)(1)
+            m2 = New QueryCmd().GetByID(Of MultiTable)(1, mgr)
+            t = New QueryCmd().GetByID(Of Table3)(1, mgr)
         End Using
 
         Dim m1 As MultiTable = Nothing
         Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("ru"))
-            m1 = mgr.Find(Of MultiTable)(1)
-            Assert.AreSame(t, mgr.Find(Of Table3)(1))
+            m1 = New QueryCmd().GetByID(Of MultiTable)(1, mgr)
+            Assert.AreSame(t, New QueryCmd().GetByID(Of Table3)(1, mgr))
         End Using
 
         Assert.AreEqual("привет", m1.Msg)

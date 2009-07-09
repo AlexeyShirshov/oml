@@ -1,16 +1,15 @@
 Imports Worm
 Imports System.Collections.Generic
 Imports Worm.Entities
-'Imports Worm.Database.Criteria.Core
 Imports Worm.Query.Sorting
 Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Criteria.Values
-Imports Worm.Entities.Query
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 
 Namespace Database
+#If Not ExcludeFindMethods Then
 
     Partial Public Class OrmReadOnlyDBManager
 
@@ -572,5 +571,7 @@ Namespace Database
             'End Function
         End Class
     End Class
+
+#End If
 
 End Namespace

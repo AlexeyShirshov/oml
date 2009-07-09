@@ -3,6 +3,7 @@ Imports Worm.Query.Sorting
 Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Entities.Meta
+Imports Worm.Expressions2
 
 Namespace Cache
 
@@ -11,7 +12,7 @@ Namespace Cache
         Protected Friend _expires As Date
         Protected _execTime As TimeSpan
         Protected _fetchTime As TimeSpan
-        Protected _sort As Sort
+        Protected _sort As OrderByClause
 
         Private _col As ICollection
 
@@ -140,16 +141,18 @@ Namespace Cache
             End Get
         End Property
 
-        Public Property Sort() As Sort
+        Public Property Sort() As OrderByClause
             Get
                 Return _sort
             End Get
-            Friend Set(ByVal value As Sort)
-                If value IsNot Nothing Then
-                    _sort = CType(value.Clone, Sort)
-                Else
-                    _sort = Nothing
-                End If
+            Friend Set(ByVal value As OrderByClause)
+                'If value IsNot Nothing Then
+                '    _sort = New SortExpression(value.Length - 1) {}
+                '    Array.Copy(value, _sort, value.Length)
+                'Else
+                '    _sort = Nothing
+                'End If
+                _sort = value
             End Set
         End Property
     End Class
@@ -302,17 +305,35 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function SortEquals(ByVal sort As Sort, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
+        Public Function SortEquals(ByVal sort As OrderByClause, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
+            'If _sort Is Nothing Then
+            '    If sort Is Nothing Then
+            '        Return True
+            '    Else
+            '        Return False
+            '    End If
+            'ElseIf _sort.Key <> 0 Then
+            '    Return _sort.Key = sort.GetOnlyKey(schema, contextFilter).Key
+            'Else
+            '    Return _sort.Equals(sort)
+            'End If
             If _sort Is Nothing Then
                 If sort Is Nothing Then
                     Return True
                 Else
                     Return False
                 End If
-            ElseIf _sort.Key <> 0 Then
-                Return _sort.Key = sort.GetOnlyKey(schema, contextFilter).Key
             Else
-                Return _sort.Equals(sort)
+                If sort Is Nothing OrElse _sort.Count <> sort.Count Then
+                    Return False
+                Else
+                    For i As Integer = 0 To _sort.Count - 1
+                        If Not _sort(i).Equals(sort(i)) Then
+                            Return False
+                        End If
+                    Next
+                    Return True
+                End If
             End If
         End Function
 

@@ -27,16 +27,8 @@
   <Class Name="Worm.Expressions2.EntityExpression" Collapsed="true">
     <Position X="0.5" Y="5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAgABAQAAAgAAAEAQACAAAEAAQAAAhAAAgABA=</HashCode>
+      <HashCode>AAAAAAAAgABAQAAAgAAAMAQACAAAEAAQAAAhAAAgABA=</HashCode>
       <FileName>Query\Expressions\EntityExpression.vb</FileName>
-    </TypeIdentifier>
-    <Lollipop Position="0.2" />
-  </Class>
-  <Class Name="Worm.Expressions2.GroupExpressions" Collapsed="true">
-    <Position X="0.5" Y="1.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAgAAAQAQAgAAAAAQACAAAAAAQAAAhAAAAQAA=</HashCode>
-      <FileName>Query\Expressions\SelectExpressions.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
@@ -116,6 +108,14 @@
     <TypeIdentifier>
       <HashCode>AAgAAAAAgABEQAAAgAAAEAQQCAEAAAAQAAAhAAAAAAA=</HashCode>
       <FileName>Query\Expressions\TableExpression.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Expressions2.GroupExpression" Collapsed="true">
+    <Position X="0.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAQAQAgAAAAAQACAAAAAAQAAAhAAAAQAA=</HashCode>
+      <FileName>Query\Expressions\SelectExpressions.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
