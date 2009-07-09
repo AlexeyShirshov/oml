@@ -64,6 +64,18 @@ Namespace Expressions2
             End If
         End Function
 
+        Public Shared Function CreateFromEnumerable(ByVal e As IEnumerable) As BinaryExpressionBase
+            Dim b As BinaryExpressionBase = Nothing
+            For Each exp As IExpression In e
+                If b Is Nothing Then
+                    b = New BinaryExpressionBase(exp)
+                Else
+                    b = New BinaryExpressionBase(b, exp)
+                End If
+            Next
+            Return b
+        End Function
+
         Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
             Dim s As String = BinaryType & "(" & Left.GetDynamicString
             If Right IsNot Nothing Then
@@ -105,16 +117,16 @@ Namespace Expressions2
             Return New BinaryExpressionBase(Left, Right)
         End Function
 
-        Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Dim sb As New StringBuilder
             If _parentheses Then
-                sb.Append("(" ) 
+                sb.Append("(")
             End If
 
-            sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+            sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor))
 
             If Right IsNot Nothing Then
-                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor))
             End If
 
             If _parentheses Then
@@ -160,8 +172,10 @@ Namespace Expressions2
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Dim l As New List(Of IExpression)
             l.Add(Me)
-            l.AddRange(Value.First.GetExpressions)
-            l.AddRange(Value.Second.GetExpressions)
+            l.AddRange(Left.GetExpressions)
+            If Right IsNot Nothing Then
+                l.AddRange(Right.GetExpressions)
+            End If
             Return l.ToArray
         End Function
 
@@ -185,7 +199,7 @@ Namespace Expressions2
             If f Is Nothing Then
                 Return False
             End If
-            Return BinaryType = f.BinaryType AndAlso Value.First.Equals(f.Value.First) AndAlso Value.Second.Equals(Value.Second)
+            Return BinaryType = f.BinaryType AndAlso Left.Equals(f.Left) AndAlso Object.Equals(Right, f.Right)
         End Function
 
         Public Property Left() As IExpression
@@ -316,13 +330,13 @@ Namespace Expressions2
             Return l
         End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String
+        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
             If Right Is Nothing Then
-                Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor)
+                Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
             End If
-            Return "(" & Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & _
+            Return "(" & Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
                 stmt.BinaryOperator2String(_oper) & _
-                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & ")"
+                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
         End Function
 
         'Public Overrides Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression
@@ -448,8 +462,8 @@ Namespace Expressions2
             Return b
         End Function
 
-        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, _
-                                       ByVal oschema As Entities.Meta.IEntitySchema, ByRef v As Object) As Boolean Implements IEvaluable.Eval
+        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema, _
+            ByRef v As Object) As Boolean Implements IEvaluable.Eval
 
             If _oper > BinaryOperationType.Or AndAlso _oper <= BinaryOperationType.RightShift Then
                 Dim l As Object = Nothing, r As Object = Nothing
@@ -482,21 +496,31 @@ Namespace Expressions2
         End Function
 
         Public Overloads Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean Implements IEvaluable.CanEval
-            If _oper = BinaryOperationType.Equal Then
-                Dim e As Boolean? = CanEval(TryCast(Left, IEntityPropertyExpression), TryCast(Right, IParameterExpression))
+            'If _oper = BinaryOperationType.Equal Then
+            '    Dim e As Boolean? = CanEval(TryCast(Left, IEntityPropertyExpression), TryCast(Right, IParameterExpression))
 
-                If Not e.HasValue Then
-                    e = CanEval(TryCast(Right, IEntityPropertyExpression), TryCast(Left, IParameterExpression))
+            '    If Not e.HasValue Then
+            '        e = CanEval(TryCast(Right, IEntityPropertyExpression), TryCast(Left, IParameterExpression))
+            '    End If
+
+            '    Return e.HasValue AndAlso e.Value
+            'ElseIf _oper = BinaryOperationType.And Then
+            '    Dim l As IEvaluable = TryCast(Left, IEvaluable)
+            '    Dim r As IEvaluable = TryCast(Right, IEvaluable)
+
+            '    Return l IsNot Nothing AndAlso r IsNot Nothing AndAlso l.CanEval(mpe) AndAlso r.CanEval(mpe)
+            'End If
+
+            'Return False
+            If _oper > BinaryOperationType.Or AndAlso _oper <= BinaryOperationType.RightShift Then
+                If Helper.CanEval(Left, mpe) Then
+                    If Right IsNot Nothing Then
+                        Return Helper.CanEval(Right, mpe)
+                    Else
+                        Return True
+                    End If
                 End If
-
-                Return e.HasValue AndAlso e.Value
-            ElseIf _oper = BinaryOperationType.And Then
-                Dim l As IEvaluable = TryCast(Left, IEvaluable)
-                Dim r As IEvaluable = TryCast(Right, IEvaluable)
-
-                Return l IsNot Nothing AndAlso r IsNot Nothing AndAlso l.CanEval(mpe) AndAlso r.CanEval(mpe)
             End If
-
             Return False
         End Function
 
@@ -531,10 +555,10 @@ Namespace Expressions2
         '    Throw New NotImplementedException
         'End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String
-            Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor) & _
+        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+            Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
                 " and " & _
-                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor)
+                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
         End Function
 
         Protected Overrides ReadOnly Property BinaryType() As String

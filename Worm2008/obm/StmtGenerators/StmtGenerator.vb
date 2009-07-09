@@ -21,14 +21,16 @@ Public MustInherit Class StmtGenerator
     Public MustOverride Function Comment(ByVal s As String) As String
     Public MustOverride ReadOnly Property PlanHint() As String
 
+#If Not ExcludeFindMethods Then
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Entities.Query.TopAspect
-    Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Entities.Query.TopAspect
+    Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As SortExpression) As Worm.Entities.Query.TopAspect
+#End If
 
     Public MustOverride Function GetTableName(ByVal t As SourceFragment) As String
 
     Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
 
-    Public MustOverride Function CreateSelectExpressionFormater() As ISelectExpressionFormater
+    'Public MustOverride Function CreateSelectExpressionFormater() As ISelectExpressionFormater
 
     Public MustOverride Function BinaryOperator2String(ByVal oper As BinaryOperationType) As String
     Public MustOverride Function UnaryOperator2String(ByVal oper As UnaryOperationType) As String
@@ -46,7 +48,7 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Function FormatGroupBy(ByVal t As GroupExpression.SummaryValues, ByVal fields As String, ByVal custom As String) As String
     Public MustOverride Function FormatOrderBy(ByVal t As SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
-    Public MustOverride Function FormatAggregate(ByVal t As AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+    Public MustOverride Function FormatAggregate(ByVal t As AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String, ByVal distinct As Boolean) As String
 
     Public MustOverride ReadOnly Property SupportParams() As Boolean
 

@@ -46,6 +46,17 @@ Namespace Expressions2
         [Not]
     End Enum
 
+    <Flags()> _
+    Public Enum MakeStatementMode
+        None = 0
+        [Select] = 1
+        AddColumnAlias = 2
+        WithoutTables = 4
+        Replace = 8
+
+        SelectWithoutTables = [Select] Or WithoutTables Or AddColumnAlias
+    End Enum
+
     Public Interface IQueryElement
         Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
         Function GetDynamicString() As String
@@ -69,7 +80,7 @@ Namespace Expressions2
         Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                           ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, _
-                          ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+                          ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As IExecutionContext) As String
         ReadOnly Property ShouldUse() As Boolean
         Function GetExpressions() As IExpression()
     End Interface
@@ -149,5 +160,11 @@ Namespace Expressions2
         Function Eval(ByVal mpe As ObjectMappingEngine, _
             ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema, ByRef v As Object) As Boolean
         Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean
+    End Interface
+
+    Public Interface IUnaryExpression
+        Inherits IComplexExpression
+
+        Property Operand() As IExpression
     End Interface
 End Namespace

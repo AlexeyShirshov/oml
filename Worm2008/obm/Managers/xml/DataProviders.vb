@@ -8,7 +8,10 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria.Conditions
 
 Namespace Xml
-    Partial Public Class QueryManager
+
+#If Not ExcludeFindMethods Then
+
+Partial Public Class QueryManager
 
         Protected MustInherit Class BaseDataProvider(Of T As {New, IKeyEntity})
             Inherits CustDelegate(Of T)
@@ -227,4 +230,7 @@ Namespace Xml
         End Class
 
     End Class
+
+#End If
+
 End Namespace

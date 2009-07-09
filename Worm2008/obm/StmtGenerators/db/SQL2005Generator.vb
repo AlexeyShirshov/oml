@@ -193,11 +193,11 @@ Namespace Database
             End If
         End Function
 
-        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String, ByVal distinct As Boolean) As String
             If t = Expressions2.AggregateExpression.AggregateFunction.Custom Then
                 Return custom & "(" & fields & ")"
             Else
-                Return MyBase.FormatAggregate(t, fields, custom)
+                Return MyBase.FormatAggregate(t, fields, custom, distinct)
             End If
         End Function
 

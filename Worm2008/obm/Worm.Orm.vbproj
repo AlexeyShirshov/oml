@@ -38,7 +38,7 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisRules>-Microsoft.Design#CA1012;-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1010;-Microsoft.Design#CA1011;-Microsoft.Design#CA1009;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Design#CA1034;-Microsoft.Design#CA1024;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1800;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002;-Microsoft.Security#CA2104</CodeAnalysisRules>
     <UseVSHostingProcess>true</UseVSHostingProcess>
-    <DefineConstants>OLDM2M = True,ExcludeFindMethods = False</DefineConstants>
+    <DefineConstants>ExcludeFindMethods</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -153,6 +153,9 @@
     <Compile Include="QueryCmd\RelationCmd.vb" />
     <Compile Include="QueryCmd\xml\CacheItemPropviders.vb" />
     <Compile Include="QueryCmd\xml\XmlQueryExecutor.vb" />
+    <Compile Include="Query\Builders\ExpressionBuilder.vb" />
+    <Compile Include="Query\Builders\GroupBuilder.vb" />
+    <Compile Include="Query\Builders\SelectBuilder.vb" />
     <Compile Include="Query\Builders\SortBuilder.vb" />
     <Compile Include="Query\Criteria\Filters\Abstract.vb" />
     <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
@@ -171,7 +174,6 @@
     <Compile Include="Managers\db\Saver.vb" />
     <Compile Include="QueryCmd\CacheItemBaseProvider.vb" />
     <Compile Include="QueryCmd\classes.vb" />
-    <Compile Include="Query\Builders\SelectListBuilder.vb" />
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Expressions\AggregateExpression.vb" />
     <Compile Include="Query\Expressions\BinaryExpression.vb" />
@@ -179,6 +181,7 @@
     <Compile Include="Query\Expressions\Interfaces.vb" />
     <Compile Include="Query\Expressions\ParameterExpression.vb" />
     <Compile Include="Query\Expressions\Primitive.vb" />
+    <Compile Include="Query\Expressions\SelectedFieldExpression.vb" />
     <Compile Include="Query\Expressions\SelectExpressions.vb" />
     <Compile Include="Query\Expressions\TableExpression.vb" />
     <Compile Include="Query\Grouping.vb" />

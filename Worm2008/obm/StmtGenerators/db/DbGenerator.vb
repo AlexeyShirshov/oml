@@ -6,13 +6,13 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Criteria.Values
 Imports dc = Worm.Criteria.Core
-Imports Worm.Entities.Query
 Imports Worm.Query.Sorting
 Imports Worm.Cache
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Namespace Database
 
@@ -501,6 +501,15 @@ l1:
 
                 Return ins_cmd.ToString
             End Using
+        End Function
+
+        Public Shared Function NeedJoin(ByVal schema As IEntitySchema) As Boolean
+            Dim r As Boolean = False
+            Dim j As IJoinBehavior = TryCast(schema, IJoinBehavior)
+            If j IsNot Nothing Then
+                r = j.AlwaysJoinMainTable
+            End If
+            Return r
         End Function
 
         ''' <summary>
@@ -1445,6 +1454,87 @@ l2:
             Return del_cmd.ToString
         End Function
 
+        Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
+            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
+            ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String, _
+            ByVal filterInfo As Object, ByVal arr As Generic.IList(Of EntityPropertyAttribute)) As String
+
+            If original_type Is Nothing Then
+                Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
+            End If
+
+            If almgr Is Nothing Then
+                Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
+            End If
+
+            Dim schema As IEntitySchema = mpe.GetEntitySchema(original_type)
+
+            Return SelectWithJoin(mpe, original_type, mpe.GetTables(schema), almgr, params, joins, wideLoad, Nothing, additionalColumns, arr, schema, filterInfo)
+        End Function
+
+        Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal tables() As SourceFragment, _
+            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
+            ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String, _
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
+
+            Dim selectcmd As New StringBuilder
+            'Dim maintable As String = tables(0)
+            selectcmd.Append("select ")
+
+            If original_type IsNot Nothing Then
+                If wideLoad Then
+                    Dim columns As String = mpe.GetSelectColumnList(original_type, mpe, arr, schema, Nothing)
+                    If Not String.IsNullOrEmpty(columns) Then
+                        selectcmd.Append(columns)
+                        If Not String.IsNullOrEmpty(additionalColumns) Then
+                            selectcmd.Append(",").Append(additionalColumns)
+                        End If
+                    Else
+
+                    End If
+                Else
+                    mpe.GetPKList(original_type, mpe, schema, selectcmd, Nothing)
+                End If
+            Else
+                selectcmd.Append("*")
+            End If
+
+            selectcmd.Append(" from ")
+            Dim unions() As String = Nothing
+            If original_type IsNot Nothing Then
+                unions = ObjectMappingEngine.GetUnions(original_type)
+            End If
+            'Dim pmgr As ParamMgr = params 'New ParamMgr()
+
+            If unions Is Nothing Then
+                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, _
+                           TryCast(schema, IMultiTableObjectSchema), original_type)
+                If joins IsNot Nothing Then
+                    For i As Integer = 0 To joins.Length - 1
+                        Dim join As QueryJoin = CType(joins(i), QueryJoin)
+
+                        If Not QueryJoin.IsEmpty(join) Then
+                            'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                            join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
+                        End If
+                    Next
+                End If
+            Else
+                Throw New NotImplementedException
+            End If
+
+            Return selectcmd.ToString
+        End Function
+
+        Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
+            ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
+            ByVal arr As Generic.IList(Of EntityPropertyAttribute), _
+             ByVal additionalColumns As String, ByVal filterInfo As Object) As String
+            Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
+        End Function
+
+#If Not ExcludeFindMethods Then
+
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal tables() As SourceFragment, _
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
@@ -1585,13 +1675,6 @@ l2:
         End Function
 
         Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-            ByVal arr As Generic.IList(Of EntityPropertyAttribute), _
-             ByVal additionalColumns As String, ByVal filterInfo As Object) As String
-            Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
-        End Function
-
-        Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal queryAspect() As QueryAspect, _
             ByVal arr As Generic.IList(Of EntityPropertyAttribute), _
              ByVal additionalColumns As String, ByVal filterInfo As Object) As String
@@ -1602,161 +1685,7 @@ l2:
             Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, False, Nothing, Nothing, filterInfo, Nothing)
         End Function
 
-        'Public Overridable Function [Select](ByVal original_type As Type, _
-        '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-        '    Optional ByVal arr As Generic.IList(Of EntityPropertyAttribute) = Nothing, _
-        '    Optional ByVal additionalColumns As String = Nothing) As String
-
-        '    If original_type Is Nothing Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
-        '    End If
-
-        '    If almgr.IsEmpty Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
-        '    End If
-
-        '    Dim columns As String = GetSelectColumnList(original_type, arr)
-        '    'Dim select_artist As String = "select" & original_type.ToString & columns
-        '    'Dim cmd As String = CStr(map(select_artist))
-
-        '    'If cmd Is Nothing Then
-        '    'Using SyncHelper.AcquireDynamicLock(select_artist)
-        '    'cmd = CStr(map(select_artist))
-        '    'If cmd Is Nothing Then
-        '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As SourceFragment = GetTables(original_type)
-        '    'Dim maintable As String = tables(0)
-        '    selectcmd.Append("select ").Append(columns)
-        '    If Not String.IsNullOrEmpty(additionalColumns) Then
-        '        selectcmd.Append(",").Append(additionalColumns)
-        '    End If
-        '    selectcmd.Append(" from ")
-        '    Dim unions() As String = GetUnions(original_type)
-        '    Dim pmgr As ParamMgr = params 'New ParamMgr()
-
-        '    If unions Is Nothing Then
-        '        selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, pmgr)
-        '    Else
-        '        Throw New NotImplementedException
-        '        'If tables.Length > 1 Then
-        '        '    Throw New DBSchemaException("Unions doesnot supports joins")
-        '        'End If
-
-        '        'selectcmd.Replace(tables(0) & ".", "t1.")
-        '        'selectcmd.Append("(").Append(vbCrLf)
-        '        'selectcmd.Append("select ").Append(GetSelectColumnList(original_type))
-        '        'selectcmd.Append(" from ").Append(tables(0)).Append(vbCrLf)
-        '        'For Each u As String In unions
-        '        '    selectcmd.Append("union all").Append(vbCrLf)
-        '        '    selectcmd.Append("select ").Append(GetSelectColumnList(original_type, u))
-        '        '    selectcmd.Append(" from ").Append(u).Append(vbCrLf)
-        '        'Next
-        '        'selectcmd.Append(") t1") '.Append(type.Name)
-        '    End If
-        '    Return selectcmd.ToString
-        '    'cmd = selectcmd.ToString
-        '    'map.Add(select_artist, cmd)
-        '    'params = pmgr.Params
-        '    'End If
-        '    'End Using
-        '    'End If
-
-        '    'Return cmd
-        'End Function
-
-        'Public Overridable Function SelectID(ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr) As String
-        '    'Dim select_artist As String = "selectid" & original_type.ToString
-        '    'Dim cmd As String = CStr(map(select_artist))
-
-        '    'If cmd Is Nothing Then
-        '    'Using SyncHelper.AcquireDynamicLock(select_artist)
-        '    'cmd = CStr(map(select_artist))
-        '    'If cmd Is Nothing Then
-        '    Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
-        '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As SourceFragment = GetTables(schema)
-        '    'Dim maintable As SourceFragment = tables(0)
-        '    selectcmd.Append("select ")
-        '    GetPKList(schema, selectcmd)
-
-        '    'Dim talias As String = almgr.AddTable(maintable)
-
-        '    'selectcmd = selectcmd.Replace(maintable, talias)
-        '    selectcmd.Append(" from ")
-        '    Dim unions() As String = GetUnions(original_type)
-        '    If unions Is Nothing Then
-        '        'selectcmd.Append(maintable)
-        '        'selectcmd.Append(" ").Append(talias)
-        '        selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, params, schema)
-        '    Else
-        '        Throw New NotImplementedException
-        '        'If tables.Length > 1 Then
-        '        '    Throw New DBSchemaException("Unions doesnot supports joins")
-        '        'End If
-
-        '        'selectcmd.Replace(tables(0) & ".", "t1.")
-        '        'selectcmd.Append("(").Append(vbCrLf)
-        '        'selectcmd.Append("select ")
-        '        'GetPKList(original_type, selectcmd)
-        '        'selectcmd.Append(" from ").Append(tables(0)).Append(vbCrLf)
-        '        'For Each u As String In unions
-        '        '    selectcmd.Append("union all").Append(vbCrLf)
-        '        '    selectcmd.Append("select ")
-        '        '    GetPKList(original_type, selectcmd, u)
-        '        '    selectcmd.Append(" from ").Append(u).Append(vbCrLf)
-        '        'Next
-        '        'selectcmd.Append(") t1") '.Append(type.Name)
-        '    End If
-        '    Return selectcmd.ToString
-        '    'cmd = selectcmd.ToString
-        '    'map.Add(select_artist, cmd)
-        '    'End If
-        '    'End Using
-        '    'End If
-        '    'Return cmd
-        'End Function
-
-        'Public Overridable Function SelectTop(ByVal top As Integer, ByVal original_type As Type, _
-        '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-        '    Optional ByVal arr As Generic.ICollection(Of EntityPropertyAttribute) = Nothing) As String
-
-        '    If original_type Is Nothing Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
-        '    End If
-
-        '    If almgr.IsEmpty Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
-        '    End If
-
-        '    Dim columns As String = GetSelectColumnList(original_type, arr)
-        '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As SourceFragment = GetTables(original_type)
-        '    selectcmd.Append("select ").Append(TopStatement(top)).Append(columns)
-        '    selectcmd.Append(" from ")
-        '    Dim pmgr As ParamMgr = params 'New ParamMgr()
-        '    selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, pmgr)
-        '    Return selectcmd.ToString
-        'End Function
-
-        'Public Overridable Function SelectIDTop(ByVal top As Integer, ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr) As String
-        '    If original_type Is Nothing Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
-        '    End If
-
-        '    If almgr.IsEmpty Then
-        '        Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
-        '    End If
-
-        '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As SourceFragment = GetTables(original_type)
-        '    'Dim maintable As SourceFragment = tables(0)
-        '    selectcmd.Append("select ").Append(TopStatement(top))
-        '    GetPKList(original_type, selectcmd)
-
-        '    selectcmd.Append(" from ")
-        '    selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, params)
-        '    Return selectcmd.ToString
-        'End Function
+#End If
 
         ''' <summary>
         ''' Добавление джоинов для типа, когда основная таблица может не линковаться
@@ -1999,151 +1928,13 @@ l2:
             Return False
         End Function
 
-        'Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
+        'Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As OrderByClause, ByVal almgr As IPrepareTable, _
         '    ByVal sb As StringBuilder, ByVal appendOrder As Boolean, _
-        '    ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), _
-        '    ByVal defaultTable As SourceFragment, ByVal defaultObjectSchema As IEntitySchema)
-        Public Sub AppendOrder(ByVal mpe As ObjectMappingEngine, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, _
-            ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression))
+        '    ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpressionOld))
+        '    sb.Append(BinaryExpressionBase.CreateFromEnumerable(sort).MakeStatement(mpe, Nothing, Me, Nothing, almgr, Nothing, MakeStatementMode.None, Nothing))
+        'End Sub
 
-            If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
-                If appendOrder Then
-                    sb.Append(" order by ")
-                End If
-                Dim pos As Integer = sb.Length
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If ns.IsExternal Then
-                        Throw New ObjectMappingException("External sort must be alone")
-                    End If
-
-                    'If ns.IsAny Then
-                    '    Throw New DBSchemaException("Any sort must be alone")
-                    'End If
-
-                    'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
-                    'If s Is Nothing Then
-
-                    'End If
-                    'Dim sort_field As String = schema.MapSort2FieldName(sort)
-                    'If String.IsNullOrEmpty(sort_field) Then
-                    '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
-                    'End If
-
-                    Dim sb2 As New StringBuilder
-                    If ns.IsCustom Then
-                        'Dim s As String = ns.CustomSortExpression
-                        'For Each map In cm
-                        '    Dim pos2 As Integer = s.IndexOf("{" & map._fieldName & "}", StringComparison.InvariantCultureIgnoreCase)
-                        '    If pos2 <> -1 Then
-                        '        s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
-                        '    End If
-                        'Next
-                        If ns.Values IsNot Nothing Then
-                            'sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(mpe, Me, almgr)))
-                            sb2.Append(ns.Custom.GetParam(mpe, Nothing, Me, Nothing, almgr, Nothing, Nothing, False, Nothing))
-                        Else
-                            sb2.Append(ns.CustomSortExpression)
-                        End If
-                        If ns.Order = SortType.Desc Then
-                            sb2.Append(" desc")
-                        End If
-                    Else
-                        Dim st As Type = Nothing
-                        If ns.ObjectSource IsNot Nothing Then
-                            st = ns.ObjectSource.GetRealType(mpe)
-                        End If
-
-                        If st IsNot Nothing Then
-                            Dim schema As IEntitySchema = CType(mpe.GetEntitySchema(st, False), IEntitySchema)
-
-                            'If schema Is Nothing Then
-                            '    schema = defaultObjectSchema
-                            'End If
-
-                            If schema Is Nothing Then
-                                Throw New SQLGeneratorException(String.Format("Object schema for field {0} of type {1} is not defined", ns.SortBy, st))
-                            End If
-
-                            Dim map As MapField2Column = Nothing
-                            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-
-                            If cm.TryGetValue(ns.SortBy, map) Then
-                                Dim t As SourceFragment = map.Table
-                                'If t Is Nothing Then
-                                '    t = defaultTable
-                                'End If
-                                If t Is Nothing Then
-                                    Throw New SQLGeneratorException(String.Format("Table for field {0} of type {1} is not defined", ns.SortBy, st))
-                                End If
-
-                                sb2.Append(almgr.GetAlias(t, ns.ObjectSource)).Append(Selector).Append(map.ColumnExpression)
-                                If ns.Order = SortType.Desc Then
-                                    sb2.Append(" desc")
-                                End If
-                            Else
-                                Throw New SQLGeneratorException(String.Format("Field {0} of type {1} is not defined", ns.SortBy, st))
-                            End If
-                        Else
-l1:
-                            Dim clm As String = ns.SortBy
-                            Dim tbl As SourceFragment = ns.Table
-                            If selList IsNot Nothing Then
-                                For Each p As SelectExpression In selList
-                                    If p.PropertyAlias = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
-                                        If p.Table Is Nothing AndAlso tbl Is Nothing Then
-                                            clm = p.Column
-                                            'tbl = defaultTable
-                                            Exit For
-                                            'ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
-                                            '    clm = p.Column
-                                            '    tbl = defaultTable
-                                            '    Exit For
-                                        ElseIf tbl IsNot Nothing AndAlso p.Table.RawName = tbl.RawName Then
-                                            clm = p.Column
-                                            Exit For
-                                        End If
-                                    End If
-                                Next
-                                'ElseIf tbl Is Nothing Then
-                                '    tbl = defaultTable
-                            End If
-
-                            sb2.Append(almgr.GetAlias(tbl, Nothing)).Append(Selector).Append(clm)
-                            If ns.Order = SortType.Desc Then
-                                sb2.Append(" desc")
-                            End If
-                        End If
-
-                    End If
-                    sb2.Append(",")
-                    sb.Insert(pos, sb2.ToString)
-
-                Next
-                sb.Length -= 1
-            End If
-        End Sub
-
-        'Public Overridable Function AppendWhere(ByVal t As Type, ByVal filters() As IOrmFilter, _
-        '    ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, _
-        '    ByVal pmgr As ParamMgr, ByVal queryLength As Integer, ByVal startfilter As Integer) As Integer
-
-        '    Dim schema As IOrmObjectSchema = GetObjectSchema(t)
-        '    Dim f As OrmFilter = schema.GetFilter(filter_info)
-        '    If f IsNot Nothing Then
-        '        sb.Append(" where ").Append(f.MakeSQLStmt(Me, almgr.Aliases, pmgr))
-        '    Else
-        '        sb.Append(" where ")
-        '    End If
-        '    Dim i As Integer = startfilter
-        '    Do
-        '        Dim fl As IOrmFilter = filters(i)
-        '        sb.Append("(").Append(fl.MakeSQLStmt(Me, almgr.Aliases, pmgr)).Append(") and ")
-        '        i += 1
-        '    Loop While sb.Length < queryLength
-        '    sb.Length -= 4
-        '    Return i
-        'End Function
+#If Not ExcludeFindMethods Then
 
         Public Function SelectM2M(ByVal mpe As ObjectMappingEngine, ByVal selectedType As Type, ByVal filteredType As Type, ByVal aspects() As QueryAspect, _
             ByVal appendMainTable As Boolean, ByVal appJoins As Boolean, ByVal filterInfo As Object, _
@@ -2222,15 +2013,6 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Shared Function NeedJoin(ByVal schema As IEntitySchema) As Boolean
-            Dim r As Boolean = False
-            Dim j As IJoinBehavior = TryCast(schema, IJoinBehavior)
-            If j IsNot Nothing Then
-                r = j.AlwaysJoinMainTable
-            End If
-            Return r
-        End Function
-
         Public Function SelectM2M(ByVal mpe As ObjectMappingEngine, ByVal almgr As AliasMgr, ByVal obj As IKeyEntity, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
             ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As String) As String
@@ -2291,10 +2073,10 @@ l1:
 
         Public Function MakeSearchStatement(ByVal mpe As ObjectMappingEngine, ByVal searchType As Type, ByVal selectType As Type, _
             ByVal fts As IFtsStringFormatter, ByVal fields As ICollection(Of Pair(Of String, Type)), _
-            ByVal sectionName As String, ByVal joins As ICollection(Of Worm.Criteria.Joins.QueryJoin), ByVal sort_type As SortType, _
+            ByVal sectionName As String, ByVal joins As ICollection(Of Worm.Criteria.Joins.QueryJoin), ByVal sort_type As SortExpression.SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
             ByVal top As Integer, ByVal table As String, _
-            ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
+            ByVal sort As SortExpression(), ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
             ByVal selSchema As IEntitySchema, ByVal searchSchema As IEntitySchema) As String
 
             'If searchType IsNot selectType AndAlso join.IsEmpty Then
@@ -2470,78 +2252,7 @@ l1:
             Return sb.ToString
         End Function
 
-        'Public Function MakeSearchFreetextStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
-        '    ByVal sectionName As String, ByVal join As QueryJoin, ByVal sort_type As SortType, _
-        '    ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
-
-        '    Dim value As String = Configuration.SearchSection.GetValueForFreeText(t, tokens, sectionName)
-        '    If String.IsNullOrEmpty(value) Then
-        '        Return Nothing
-        '    End If
-
-        '    Dim almgr As AliasMgr = AliasMgr.Create
-        '    Dim ft As New SourceFragment("freetexttable")
-        '    Dim [alias] As String = almgr.AddTable(ft)
-        '    Dim pname As String = params.CreateParam(value)
-        '    'cols = New Generic.List(Of EntityPropertyAttribute)
-        '    Dim sb As New StringBuilder, columns As New StringBuilder
-        '    Dim tbl As SourceFragment = GetTables(t)(0)
-        '    Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
-        '    sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
-        '    Dim appendMain As Boolean = False
-        '    Dim main_table As SourceFragment = GetTables(t)(0)
-        '    Dim ins_idx As Integer = sb.Length
-        '    If fields IsNot Nothing AndAlso fields.Length > 0 Then
-        '        appendMain = True
-        '        For Each field As String In fields
-        '            columns.Append(",").Append(main_table).Append(".")
-        '            columns.Append(GetColumnNameByFieldNameInternal(t, field, False))
-        '        Next
-        '    End If
-        '    sb.Append(" from freetexttable(")
-        '    sb.Append(tbl).Append(",")
-        '    If queryFields Is Nothing OrElse queryFields.Length = 0 Then
-        '        sb.Append("*")
-        '    Else
-        '        sb.Append("(")
-        '        For Each f As String In queryFields
-        '            sb.Append(f)
-        '        Next
-        '        sb.Append(")")
-        '    End If
-        '    sb.Append(",")
-        '    sb.Append(pname).Append(",500) ").Append([alias])
-        '    If Not appendMain Then
-        '        appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing
-        '    End If
-        '    AppendJoins(t, almgr, GetTables(t), sb, params, ft, "[key]", appendMain)
-        '    If appendMain Then
-        '        Dim mainAlias As String = almgr.Aliases(main_table)
-        '        sb.Insert(ins_idx, columns.Replace(main_table.TableName, mainAlias).ToString)
-        '    End If
-
-        '    If Not join.IsEmpty Then
-        '        Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
-        '        Dim r2 As TableFilter = Nothing
-        '        For Each f As IFilter In join.Condition.GetAllFilters
-        '            Dim filt As ITemplateFilter = TryCast(f, ITemplateFilter)
-        '            If filt IsNot Nothing AndAlso filt.Template.Equals(r.Template) Then
-        '                r2 = New TableFilter(ft, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
-        '                join.ReplaceFilter(r, r2)
-        '                Exit For
-        '            End If
-        '        Next
-
-        '        If r2 Is Nothing Then
-        '            Throw New DBSchemaException("Invalid join")
-        '        End If
-
-        '        sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-        '    End If
-        '    AppendWhere(t, Nothing, almgr, sb, filter_info, params)
-        '    sb.Append(" order by rank ").Append(sort_type.ToString)
-        '    Return sb.ToString
-        'End Function
+#End If
 
         Protected Function CreateFullJoinsClone(ByVal joins() As Worm.Criteria.Joins.QueryJoin) As Worm.Criteria.Joins.QueryJoin()
             If joins IsNot Nothing Then
@@ -2815,13 +2526,16 @@ l1:
         '    Return New Criteria.CriteriaLink(Me, CType(con, Condition.ConditionConstructor))
         'End Function
 
+#If Not ExcludeFindMethods Then
         Public Overrides Function CreateTopAspect(ByVal top As Integer) As Entities.Query.TopAspect
             Return New TopAspect(top)
         End Function
 
-        Public Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sort) As Entities.Query.TopAspect
+        Public Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As SortExpression) As Entities.Query.TopAspect
             Return New TopAspect(top, sort)
         End Function
+
+#End If
 
         Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment) As String
             If Not String.IsNullOrEmpty(t.Schema) Then
@@ -2843,9 +2557,9 @@ l1:
         '    Return New CustomFilter(format, value, oper, values)
         'End Function
 
-        Public Overrides Function CreateSelectExpressionFormater() As Entities.ISelectExpressionFormater
-            Return New SelectExpressionFormater(Me)
-        End Function
+        'Public Overrides Function CreateSelectExpressionFormater() As Entities.ISelectExpressionFormater
+        '    Return New SelectExpressionFormater(Me)
+        'End Function
 
         Public Overrides Function Oper2String(ByVal oper As Worm.Criteria.FilterOperation) As String
             Select Case oper
@@ -3032,7 +2746,10 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String, ByVal distinct As Boolean) As String
+            If distinct Then
+                fields = " distinct " & fields
+            End If
             Select Case t
                 Case Expressions2.AggregateExpression.AggregateFunction.Max
                     Return "max(" & fields & ")"

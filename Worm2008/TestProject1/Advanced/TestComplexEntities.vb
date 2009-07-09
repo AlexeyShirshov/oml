@@ -13,7 +13,7 @@ Imports Worm.Criteria
     <TestMethod()> _
     Public Sub TestGuid()
         Using mgr As OrmManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
-            Dim o As GuidPK = mgr.Find(Of GuidPK)(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"))
+            Dim o As GuidPK = New QueryCmd().GetByID(Of GuidPK)(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"), mgr)
 
             Assert.IsNotNull(o)
 

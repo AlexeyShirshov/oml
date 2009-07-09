@@ -5,6 +5,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Query
 Imports System.Collections.Generic
 Imports Worm.Criteria.Values
+Imports Worm.Expressions2
 
 Namespace Criteria
 
@@ -290,16 +291,16 @@ Namespace Criteria
             Return Me
         End Function
 
-        Public Function [and](ByVal custom As String, ByVal values() As SelectExpression) As PredicateBase
-            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
+        'Public Function [and](ByVal custom As String, ByVal values() As SelectExpressionOld) As PredicateBase
+        '    Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
+        'End Function
+
+        Public Function [and](ByVal custom As String, ByVal exp As IGetExpression) As PredicateBase
+            Return New CustomPredicate(custom, exp, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
         End Function
 
-        Public Function [and](ByVal custom As String, ByVal ParamArray values() As IFilterValue) As PredicateBase
-            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
-        End Function
-
-        Public Function [or](ByVal custom As String, ByVal ParamArray values() As IFilterValue) As PredicateBase
-            Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
+        Public Function [or](ByVal custom As String, ByVal exp As IGetExpression) As PredicateBase
+            Return New CustomPredicate(custom, exp, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
         End Function
 
         'Public Function CustomAnd(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField

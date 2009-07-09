@@ -25,6 +25,10 @@ Namespace Expressions2
             _op = New ObjectProperty(entityName, propertyAlias)
         End Sub
 
+        Public Sub New(ByVal propertyAlias As String, ByVal ea As QueryAlias)
+            _op = New ObjectProperty(ea, propertyAlias)
+        End Sub
+
         Public Function Clone() As Object Implements System.ICloneable.Clone
             Return New EntityExpression(_op).SetEntity(_eu)
         End Function
@@ -62,37 +66,48 @@ Namespace Expressions2
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, _
+            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim map As MapField2Column = Nothing
             Dim tbl As SourceFragment = Nothing
             Dim [alias] As String = String.Empty
 
-            Try
-                Dim t As Type = _op.Entity.GetRealType(mpe)
-                Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
-                If executor Is Nothing Then
-                    map = oschema.GetFieldColumnMap(_op.PropertyAlias)
-                Else
-                    map = executor.GetFieldColumnMap(oschema, t)(_op.PropertyAlias)
+            If _op.Entity.IsQuery Then
+                tbl = _op.Entity.ObjectAlias.Tbl
+                If tbl Is Nothing Then
+                    tbl = New SourceFragment
+                    _op.Entity.ObjectAlias.Tbl = tbl
                 End If
-                tbl = map.Table
-            Catch ex As KeyNotFoundException
-                Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe, contextFilter) & "." & _op.PropertyAlias, ex))
-            End Try
+                map = New MapField2Column(_op.PropertyAlias, executor.FindColumn(mpe, _op.PropertyAlias), tbl)
+            Else
+                Try
+                    Dim t As Type = _op.Entity.GetRealType(mpe)
+                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
+                    If executor Is Nothing Then
+                        map = oschema.GetFieldColumnMap(_op.PropertyAlias)
+                    Else
+                        map = executor.GetFieldColumnMap(oschema, t)(_op.PropertyAlias)
+                    End If
+                    tbl = map.Table
+                Catch ex As KeyNotFoundException
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe, contextFilter) & "." & _op.PropertyAlias, ex))
+                End Try
+            End If
 
-            If almgr IsNot Nothing Then
+            If almgr IsNot Nothing AndAlso (stmtMode And MakeStatementMode.WithoutTables) <> MakeStatementMode.WithoutTables Then
                 Try
                     [alias] = almgr.GetAlias(tbl, _op.Entity) & stmt.Selector
                 Catch ex As KeyNotFoundException
                     Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
                 End Try
+            Else
+                [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter
             End If
 
             Dim s As String = [alias] & map.ColumnExpression
 
-            If Not String.IsNullOrEmpty(map.ColumnName) Then
+            If Not String.IsNullOrEmpty(map.ColumnName) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
                 Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
                 RaiseEvent FormatBehaviour(Me, args)
 

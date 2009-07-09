@@ -1,5 +1,6 @@
 ﻿Imports Worm.Entities
 Imports Worm.Query.Sorting
+Imports Worm.Expressions2
 
 <Serializable()> _
 Public NotInheritable Class OrmManagerException
@@ -233,6 +234,7 @@ Public Class CreateManager
     End Function
 End Class
 
+#If Not ExcludeFindMethods Then
 Namespace Entities.Query
 
     Public MustInherit Class QueryAspect
@@ -281,14 +283,14 @@ Namespace Entities.Query
         Inherits QueryAspect
 
         Private _top As Integer
-        Private _sort As Sort
+        Private _sort() As SortExpression
 
         Public Sub New(ByVal top As Integer)
             MyBase.New(AspectType.Columns)
             _top = top
         End Sub
 
-        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
+        Public Sub New(ByVal top As Integer, ByVal sort() As SortExpression)
             MyBase.New(AspectType.Columns)
             _top = top
             _sort = sort
@@ -300,7 +302,7 @@ Namespace Entities.Query
 
         Public Overrides Function GetStaticKey() As String
             If _sort IsNot Nothing Then
-                Return "-top-" & _sort._ToString
+                Return "-top-" & BinaryExpressionBase.CreateFromEnumerable(_sort).GetStaticString(Nothing, Nothing)
             End If
             Return "-top-"
         End Function
@@ -322,7 +324,7 @@ Namespace Database
             MyBase.New(top)
         End Sub
 
-        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
+        Public Sub New(ByVal top As Integer, ByVal sort As SortExpression)
             MyBase.New(top, sort)
         End Sub
 
@@ -332,3 +334,5 @@ Namespace Database
     End Class
 
 End Namespace
+
+#End If

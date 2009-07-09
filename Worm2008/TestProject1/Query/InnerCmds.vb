@@ -111,7 +111,7 @@ Imports Worm.Entities
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.From( _
-            inner.Select(FCtor.prop(GetType(Table1), "Code", "ID"))). _
+            inner.Select(FCtor.prop(GetType(Table1), "Code").into("ID"))). _
         ToList(Of Table1)()
 
         Assert.AreEqual(2, r.Count)
@@ -173,7 +173,7 @@ Imports Worm.Entities
         Dim q As New QueryCmd(Function() _
                     TestManager.CreateManager(New ObjectMappingEngine("1")))
 
-        q.Select(FCtor.prop(GetType(Entity), "ID").column(inner, "Title"))
+        q.Select(FCtor.prop(GetType(Entity), "ID").query(inner).into("Title"))
 
         Dim l As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
 

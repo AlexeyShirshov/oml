@@ -4,9 +4,9 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
-Imports Worm.Entities.Query
 Imports Worm.Query.Sorting
 Imports Worm.Query
+Imports Worm.Expressions2
 
 #Const TraceCreation = False
 
@@ -761,7 +761,7 @@ Namespace Cache
         End Sub
 #End If
         Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, _
-            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As OrderByClause, ByVal g As GroupExpression) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
@@ -833,21 +833,22 @@ Namespace Cache
                     Next
                 End If
 
-                For Each sort As Sorting.Sort In New Sorting.Sort.Iterator(s)
-                    If Not String.IsNullOrEmpty(sort.SortBy) Then
-                        Dim t As Type = s.ObjectSource.GetRealType(schema)
+                For Each sort As SortExpression In s
+                    For Each ee As IEntityPropertyExpression In GetEntityExpressions(sort)
+                        Dim t As Type = ee.ObjectProperty.Entity.GetRealType(schema)
                         Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(t, fields) Then
-                            If fields.Contains(sort.SortBy) Then
-                                If _sortedFields.Remove(t, sort.SortBy, Me) Then
-                                    _filteredFields.Remove(t, sort.SortBy, Me)
-                                    ResetFieldDepends(New Pair(Of String, Type)(sort.SortBy, t))
-                                    RemoveUpdatedFields(t, sort.SortBy)
+                            Dim prop As String = ee.ObjectProperty.PropertyAlias
+                            If fields.Contains(prop) Then
+                                If _sortedFields.Remove(t, prop, Me) Then
+                                    _filteredFields.Remove(t, prop, Me)
+                                    ResetFieldDepends(New Pair(Of String, Type)(prop, t))
+                                    RemoveUpdatedFields(t, prop)
                                     Return False
                                 End If
                             End If
                         End If
-                    End If
+                    Next
                 Next
             End If
 

@@ -6,6 +6,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Values
 Imports System.Collections.Generic
+Imports Worm.Expressions2
 
 Namespace Query
     Public Class RelationCmd
@@ -391,11 +392,11 @@ Namespace Query
                 Dim addf As IFilter = Nothing
 
                 If m2m Then
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(m2mtype)
+                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(m2mType)
 
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = Nothing
-                    If hostType Is m2mtype Then
+                    If hostType Is m2mType Then
                         filtered_r = mpe.GetM2MRelation(oschema, hostType, M2MRelationDesc.GetRevKey(m2mKey))
                     Else
                         filtered_r = mpe.GetM2MRelation(oschema, hostType, m2mKey)
@@ -404,13 +405,13 @@ Namespace Query
                     If filtered_r Is Nothing Then
                         Dim en As String = mpe.GetEntityNameByType(hostType)
                         If String.IsNullOrEmpty(en) Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
+                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mType.Name))
                         End If
 
-                        filtered_r = mpe.GetM2MRelation(m2mtype, mpe.GetTypeByEntityName(en), m2mKey)
+                        filtered_r = mpe.GetM2MRelation(m2mType, mpe.GetTypeByEntityName(en), m2mKey)
 
                         If filtered_r Is Nothing Then
-                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mtype.Name))
+                            Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", hostType.Name, m2mType.Name))
                         End If
                     End If
 
@@ -429,7 +430,7 @@ Namespace Query
                         'table = CType(table.Clone, SourceFragment)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, _
-                            m2mEU, mpe.GetPrimaryKeys(m2mtype)(0).PropertyAlias, _fo)
+                            m2mEU, mpe.GetPrimaryKeys(m2mType)(0).PropertyAlias, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         jn.ObjectSource = selected_r.Entity
                         _js.Insert(0, jn)
@@ -439,7 +440,7 @@ Namespace Query
                         tu = m2mEU
 
                         If _WithLoad(m2mEU, mpe) Then
-                            _sl.AddRange(mpe.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            _sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         ElseIf SelectedEntities IsNot Nothing Then
                             GoTo l1
                         Else
@@ -459,10 +460,12 @@ l1:
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
-                                Dim se As New SelectExpression(table, selected_r.Column, pk.PropertyAlias)
-                                se.Attributes = Field2DbRelations.PK
-                                se.ObjectSource = ideu
-                                _sl.Add(se)
+                                Dim te As New TableExpression(table, selected_r.Column)
+                                te.SetEntity(ideu)
+                                _sl.Add(New SelectExpression(te) With { _
+                                    .Attributes = Field2DbRelations.PK, _
+                                    .IntoPropertyAlias = pk.PropertyAlias _
+                                })
                             End If
                         End If
 
@@ -509,7 +512,7 @@ l1:
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(m2mEU, mpe) Then
-                            _sl.AddRange(mpe.GetSortedFieldList(m2mtype).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            _sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
                             'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
                             'Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
@@ -622,6 +625,8 @@ l1:
                     Else
                         newRel = New Relation(_rel.Host, needReplace)
                     End If
+                    newRel.Added.AddRange(_rel.Added)
+                    newRel.Deleted.AddRange(_rel.Deleted)
                     _rel = m2mObject.NormalizeRelation(_rel, newRel, schema)
                 End If
             End If
@@ -776,10 +781,22 @@ l1:
 
         Public Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
             Relation.Host.Remove(o, key)
+            If Not IsM2M Then
+                Using gm As IGetManager = o.GetMgr
+                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                    mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                End Using
+            End If
         End Sub
 
         Public Sub Remove(ByVal o As ICachedEntity)
             Relation.Host.Remove(o)
+            If Not IsM2M Then
+                Using gm As IGetManager = o.GetMgr
+                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                    mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                End Using
+            End If
         End Sub
 
         Public Sub RemoveAll()
@@ -858,7 +875,7 @@ l1:
                 toAdd = New ReadOnlyObjectList(Of T)(toAdd.ApplyFilter(Filter))
 
                 If Sort IsNot Nothing Then
-                    Dim c As Sorting.OrmComparer(Of T) = Sort.CreateComparer(Of T)(newRes.RealType)
+                    Dim c As New Sorting.EntityComparer(Of T)(Sort)
                     For Each o As IEntity In toAdd
                         Dim pos As Integer = CType(newRes, ReadOnlyObjectList(Of T)).List.BinarySearch(CType(o, T), c)
                         If pos < 0 Then

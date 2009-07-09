@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Query.Sorting
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Public Enum Enum1 As Byte
     first = 1
@@ -292,19 +293,19 @@ Public Class Table1Implementation
     '    _objectType = type
     'End Sub
 
-    Public Function CreateSortComparer(ByVal s As Sort) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
-        If s.SortBy = "DT" Then
+    Public Function CreateSortComparer(ByVal s As SortExpression) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "DT" Then
             Return New Comparer(Table1Sort.DateTime, s.Order)
-        ElseIf s.SortBy = "Enum" Then
+        ElseIf CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Enum" Then
             Return New Comparer(Table1Sort.Enum, s.Order)
         End If
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
-        If s.SortBy = "DT" Then
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As SortExpression) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "DT" Then
             Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
-        ElseIf s.SortBy = "Enum" Then
+        ElseIf CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Enum" Then
             Return CType(New Comparer(Table1Sort.Enum, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing
@@ -325,9 +326,9 @@ Public Class Table1Implementation
         Private _s As Table1Sort
         Private _st As Integer = -1
 
-        Public Sub New(ByVal s As Table1Sort, ByVal st As SortType)
+        Public Sub New(ByVal s As Table1Sort, ByVal st As SortExpression.SortType)
             _s = s
-            If st = SortType.Asc Then
+            If st = SortExpression.SortType.Asc Then
                 _st = 1
             End If
         End Sub

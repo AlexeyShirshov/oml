@@ -1,4 +1,5 @@
 ﻿Imports Worm.Database
+Imports Worm.Query
 
 Module TestLocks
     Sub main()
@@ -9,9 +10,9 @@ Module TestLocks
             GetMinMax(mgr, min, max)
             Using st As New ModificationsTracker(mgr)
                 Do
-                    Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                    Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                     Do While t Is Nothing
-                        t = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                        t = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
                     Loop
                     t.Name = Guid.NewGuid.ToString
                 Loop While st.Saver.AffectedObjects.Count < 2

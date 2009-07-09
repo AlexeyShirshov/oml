@@ -152,8 +152,8 @@ Module Module1
     Sub withoutload()
         Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
-                Dim c As Worm.ReadOnlyList(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, False)
-                mc.LoadObjects(c)
+                Dim c As Worm.ReadOnlyList(Of TestProject1.Entity2) = New QueryCmd().Top(100).ToOrmList(Of TestProject1.Entity2)(mc)
+                c.LoadObjects()
             Next
         End Using
     End Sub
@@ -161,7 +161,7 @@ Module Module1
     Sub withload()
         Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
-                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, True)
+                Dim c As Generic.ICollection(Of TestProject1.Entity2) = New QueryCmd().Top(100).SelectEntity(GetType(TestProject1.Entity2), True).ToList(Of TestProject1.Entity2)(mc)
             Next
         End Using
     End Sub

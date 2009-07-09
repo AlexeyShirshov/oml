@@ -5,6 +5,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports System.Collections.ObjectModel
 Imports Worm.Query.QueryCmd
+Imports Worm.Expressions2
 
 Namespace Query.Database
 
@@ -13,7 +14,6 @@ Namespace Query.Database
         Public Class BaseProvider
             Inherits CacheItemBaseProvider
 
-            Private _stmt As String
             Protected _params As ParamMgr
             Protected _almgr As IPrepareTable
             Private _cmdType As System.Data.CommandType
@@ -43,7 +43,7 @@ Namespace Query.Database
             End Sub
 
             Public Sub New(ByVal mgr As OrmManager, ByVal q As QueryCmd)
-                _oldct = New Dictionary(Of EntityUnion, EntityUnion)(q._CreateTypes)
+                _oldct = New Dictionary(Of EntityUnion, EntityUnion)(q._createTypes)
                 If q.SelectClause IsNot Nothing AndAlso q.SelectClause.SelectTypes IsNot Nothing Then
                     _types = New ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(q.SelectClause.SelectTypes)
                 End If
@@ -67,47 +67,47 @@ Namespace Query.Database
                 End Using
             End Function
 
-            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
-                _mgr = mgr
-                _q = q
-                _dic = Nothing
+            'Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)
+            '    _mgr = mgr
+            '    _q = q
+            '    _dic = Nothing
 
-                Dim fromKey As String = Nothing
-                'If _q.Table IsNot Nothing Then
-                '    fromKey = _q.Table.RawName
-                'ElseIf _q.FromClause IsNot Nothing AndAlso _q.FromClause.AnyQuery IsNot Nothing Then
-                '    fromKey = _q.FromClause.AnyQuery.ToStaticString(mgr.MappingEngine)
-                'Else
-                '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
-                'End If
+            '    Dim fromKey As String = Nothing
+            '    'If _q.Table IsNot Nothing Then
+            '    '    fromKey = _q.Table.RawName
+            '    'ElseIf _q.FromClause IsNot Nothing AndAlso _q.FromClause.AnyQuery IsNot Nothing Then
+            '    '    fromKey = _q.FromClause.AnyQuery.ToStaticString(mgr.MappingEngine)
+            '    'Else
+            '    '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
+            '    'End If
 
-                _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextInfo)
+            '    _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextInfo)
 
-                If _dic Is Nothing Then
-                    _dic = GetExternalDic(_key)
-                    If _dic IsNot Nothing Then
-                        _key = Nothing
-                    End If
-                End If
+            '    If _dic Is Nothing Then
+            '        _dic = GetExternalDic(_key)
+            '        If _dic IsNot Nothing Then
+            '            _key = Nothing
+            '        End If
+            '    End If
 
-                If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
-                    _id = QueryCmd.GetDynamicKey(_q)
-                    _sync = _id & _mgr.GetStaticKey()
-                End If
+            '    If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
+            '        _id = QueryCmd.GetDynamicKey(_q)
+            '        _sync = _id & _mgr.GetStaticKey()
+            '    End If
 
-                ResetDic()
-                ResetStmt()
-            End Sub
+            '    ResetDic()
+            '    ResetStmt()
+            'End Sub
 
-            Public Sub ResetStmt()
-                _stmt = Nothing
-            End Sub
+            'Public Sub ResetStmt()
+            '    _stmt = Nothing
+            'End Sub
 
-            Public Overridable Sub ResetDic()
-                If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
-                    _dic = _mgr.GetDic(_mgr.Cache, _key)
-                End If
-            End Sub
+            'Public Overridable Sub ResetDic()
+            '    If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
+            '        _dic = _mgr.GetDic(_mgr.Cache, _key)
+            '    End If
+            'End Sub
 
             Protected Overridable Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand)
                 'Dim mgr As OrmReadOnlyDBManager = _mgr

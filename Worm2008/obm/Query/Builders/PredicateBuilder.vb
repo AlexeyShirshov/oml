@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria
 Imports Worm.Entities.Meta
+Imports Worm.Expressions2
 
 Namespace Query
 
@@ -176,88 +177,88 @@ Namespace Query
             Return New PredicateLink(New Condition.ConditionConstructor).and_not_exists(cmd)
         End Function
 
-        Public Shared Function custom(ByVal format As String, ByVal ParamArray values() As Values.IFilterValue) As PredicateBase
-            Return New CustomPredicate(format, values)
+        Public Shared Function custom(ByVal format As String, ByVal exp As IGetExpression) As PredicateBase
+            Return New CustomPredicate(format, exp)
         End Function
 
-        Public Shared Function custom(ByVal format As String, ByVal values() As SelectExpression) As PredicateBase
-            Return New CustomPredicate(format, values)
-        End Function
+        'Public Shared Function custom(ByVal format As String, ByVal values() As SelectExpressionOld) As PredicateBase
+        '    Return New CustomPredicate(format, values)
+        'End Function
 
         Public Shared Function count() As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Count))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Count))
         End Function
 
         Public Shared Function max(ByVal p As ObjectProperty) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, p))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New EntityExpression(p)))
         End Function
 
         Public Shared Function max(ByVal t As Type, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, t, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New EntityExpression(propertyAlias, t)))
         End Function
 
         Public Shared Function max(ByVal en As String, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, en, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New EntityExpression(propertyAlias, en)))
         End Function
 
         Public Shared Function max(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, New ObjectProperty([alias], propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New EntityExpression(New ObjectProperty([alias], propertyAlias))))
         End Function
 
         Public Shared Function max(ByVal eu As EntityUnion, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, New ObjectProperty(eu, propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New EntityExpression(New ObjectProperty(eu, propertyAlias))))
         End Function
 
         Public Shared Function max(ByVal t As SourceFragment, ByVal column As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Max, t, column))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Max, New TableExpression(t, column)))
         End Function
 
         Public Shared Function min(ByVal p As ObjectProperty) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, p))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New EntityExpression(p)))
         End Function
 
         Public Shared Function min(ByVal t As Type, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, t, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New EntityExpression(propertyAlias, t)))
         End Function
 
         Public Shared Function min(ByVal en As String, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, en, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New EntityExpression(propertyAlias, en)))
         End Function
 
         Public Shared Function min(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, New ObjectProperty([alias], propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New EntityExpression(New ObjectProperty([alias], propertyAlias))))
         End Function
 
         Public Shared Function min(ByVal eu As EntityUnion, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, New ObjectProperty(eu, propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New EntityExpression(New ObjectProperty(eu, propertyAlias))))
         End Function
 
         Public Shared Function min(ByVal t As SourceFragment, ByVal column As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Min, t, column))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Min, New TableExpression(t, column)))
         End Function
 
         Public Shared Function sum(ByVal p As ObjectProperty) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, p))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New EntityExpression(p)))
         End Function
 
         Public Shared Function sum(ByVal t As Type, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, t, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New EntityExpression(propertyAlias, t)))
         End Function
 
         Public Shared Function sum(ByVal en As String, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, en, propertyAlias))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New EntityExpression(propertyAlias, en)))
         End Function
 
         Public Shared Function sum(ByVal [alias] As QueryAlias, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, New ObjectProperty([alias], propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New EntityExpression(New ObjectProperty([alias], propertyAlias))))
         End Function
 
         Public Shared Function sum(ByVal eu As EntityUnion, ByVal propertyAlias As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, New ObjectProperty(eu, propertyAlias)))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New EntityExpression(New ObjectProperty(eu, propertyAlias))))
         End Function
 
         Public Shared Function sum(ByVal t As SourceFragment, ByVal column As String) As PredicateBase
-            Return New AggPredicate(New Aggregate(AggregateFunction.Sum, t, column))
+            Return New AggPredicate(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, New TableExpression(t, column)))
         End Function
 
         Public Function column(ByVal columnName As String) As ColumnPredicate

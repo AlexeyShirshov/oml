@@ -6,6 +6,7 @@ Imports Worm.Entities
 Imports Worm.Query.Sorting
 Imports Worm.Criteria.Joins
 Imports Worm.Cache
+Imports Worm.Expressions2
 
 Namespace Entities.Meta
 
@@ -54,15 +55,13 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IOrmSorting
-        'ReadOnly Property IsExternalSort(ByVal s As Sort) As Boolean
-        'Function ExternalSort(Of T As {OrmBase, New})(ByVal s As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
-        Function CreateSortComparer(ByVal s As Sort) As IComparer
-        Function CreateSortComparer(Of T As {_IEntity})(ByVal s As Sort) As Generic.IComparer(Of T)
+        Function CreateSortComparer(ByVal s As SortExpression) As IComparer
+        Function CreateSortComparer(Of T As {_IEntity})(ByVal s As SortExpression) As Generic.IComparer(Of T)
     End Interface
 
-    Public Interface IOrmSorting2
-        ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
-    End Interface
+    'Public Interface IOrmSorting2
+    '    ReadOnly Property SortExpiration(ByVal s As SortExpression) As TimeSpan
+    'End Interface
 
     Public Interface IMultiTableObjectSchema
         Inherits IEntitySchema

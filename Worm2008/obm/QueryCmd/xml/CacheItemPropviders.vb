@@ -24,11 +24,7 @@ Namespace Query.Xml
                 Dim xpath As String = Nothing
                 dbm.LoadMultipleObjects(Of CreateType)(xpath, values)
 
-                If Sort IsNot Nothing AndAlso Sort.IsExternal Then
-                    r = CType(dbm.MappingEngine.ExternalSort(Of ReturnType)(dbm, Sort, values), ReadOnlyObjectList(Of ReturnType))
-                Else
-                    r = New ReadOnlyObjectList(Of ReturnType)(values)
-                End If
+                r = New ReadOnlyObjectList(Of ReturnType)(values)
 
                 Return r
             End Function

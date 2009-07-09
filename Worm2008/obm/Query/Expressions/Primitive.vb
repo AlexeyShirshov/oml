@@ -1,18 +1,17 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports Worm.Query
 
 Namespace Expressions2
 
     <Serializable()> _
-    Public Class UnaryExpression
-        Implements IComplexExpression, IEvaluable
+    Public MustInherit Class UnaryExpressionBase
+        Implements IUnaryExpression
 
-        Private _oper As UnaryOperationType
         Private _v As IExpression
 
-        Public Sub New(ByVal oper As UnaryOperationType, ByVal operand As IExpression)
-            _oper = oper
+        Public Sub New(ByVal operand As IExpression)
             _v = operand
         End Sub
 
@@ -28,46 +27,19 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overloads Function Equals(ByVal f As IQueryElement) As Boolean Implements IQueryElement.Equals
-            Return Equals(TryCast(f, UnaryExpression))
+        Public MustOverride Overloads Function Equals(ByVal f As IQueryElement) As Boolean Implements IQueryElement.Equals
+
+        Public Overridable Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
+            Return _v.GetDynamicString
         End Function
 
-        Public Overloads Function Equals(ByVal f As UnaryExpression) As Boolean
-            If f Is Nothing Then
-                Return False
-            End If
-            Return _oper = f._oper AndAlso _v.Equals(f._v)
-        End Function
-
-        Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
-            Return OperationType2String(_oper) & _v.GetDynamicString
-        End Function
-
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return OperationType2String(_oper) & _v.GetStaticString(mpe, contextFilter)
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            Return _v.GetStaticString(mpe, contextFilter)
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
-
-        Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New UnaryExpression(_oper, CloneExpression(_v))
-        End Function
-
-        'Public Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression Implements IComplexExpression.RemoveExpression
-        '    If Equals(f) Then
-        '        Return Nothing
-        '    End If
-        '    Dim e As IComplexExpression = TryCast(_v, IComplexExpression)
-        '    If e IsNot Nothing Then
-        '        Dim v As IExpression = e.RemoveExpression(f)
-        '        If v IsNot _v Then
-        '            Return New UnaryExpression(_oper, v)
-        '        End If
-        '    End If
-        '    Return Me
-        'End Function
 
         Public Function ReplaceExpression(ByVal replacement As IExpression, ByVal replacer As IExpression) As IComplexExpression Implements IComplexExpression.ReplaceExpression
             If Equals(replacement) Then
@@ -78,10 +50,10 @@ Namespace Expressions2
             If e IsNot Nothing Then
                 Dim v As IComplexExpression = e.ReplaceExpression(replacement, replacer)
                 If v IsNot _v Then
-                    Return New UnaryExpression(_oper, v)
+                    Return Clone(v)
                 End If
             ElseIf _v.Equals(replacement) Then
-                Return New UnaryExpression(_oper, replacer)
+                Return Clone(replacer)
             End If
             Return Me
         End Function
@@ -93,21 +65,68 @@ Namespace Expressions2
             Return l.ToArray
         End Function
 
-        Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
-            Return stmt.UnaryOperator2String(_oper) & _v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, inSelect, executor)
+        Public Overridable Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            Return _v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, stmtMode, executor)
         End Function
 
-        'Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As Entities.Meta.IEntitySchema, ByVal obj As Entities.ICachedEntity) As String Implements IHashable.MakeDynamicString
-        '    Return EmptyHash
-        'End Function
+        Public Property Operand() As IExpression Implements IUnaryExpression.Operand
+            Get
+                Return _v
+            End Get
+            Set(ByVal value As IExpression)
+                _v = value
+            End Set
+        End Property
 
-        'Public Function Test(ByVal schema As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As Entities.Meta.IEntitySchema) As IParameterExpression.EvalResult Implements IHashable.Test
-        '    Throw New NotSupportedException
-        'End Function
+        Public Function Clone() As Object Implements System.ICloneable.Clone
+            Return Clone(CloneExpression(_v))
+        End Function
 
-        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As Entities.Meta.IEntitySchema, ByRef v As Object) As Boolean Implements IEvaluable.Eval
+        Protected MustOverride Function Clone(ByVal operand As IExpression) As IUnaryExpression
+    End Class
+
+    <Serializable()> _
+    Public Class UnaryExpression
+        Inherits UnaryExpressionBase
+        Implements IUnaryExpression, IEvaluable
+
+        Private _oper As UnaryOperationType
+
+        Public Sub New(ByVal oper As UnaryOperationType, ByVal operand As IExpression)
+            MyBase.New(operand)
+            _oper = oper
+        End Sub
+
+        Public Overrides Function Equals(ByVal f As IQueryElement) As Boolean
+            Return Equals(TryCast(f, UnaryExpression))
+        End Function
+
+        Public Overloads Function Equals(ByVal f As UnaryExpression) As Boolean
+            If f Is Nothing Then
+                Return False
+            End If
+            Return _oper = f._oper AndAlso Operand.Equals(f.Operand)
+        End Function
+
+        Public Overrides Function GetDynamicString() As String
+            Return OperationType2String(_oper) & MyBase.GetDynamicString
+        End Function
+
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Return OperationType2String(_oper) & MyBase.GetStaticString(mpe, contextFilter)
+        End Function
+
+        Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
+            Return New UnaryExpression(_oper, operand)
+        End Function
+
+        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+            Return stmt.UnaryOperator2String(_oper) & MyBase.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, stmtMode, executor)
+        End Function
+
+        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema, ByRef v As Object) As Boolean Implements IEvaluable.Eval
             Dim val As Object = Nothing
-            If GetValue(mpe, obj, oschema, _v, val) Then
+            If GetValue(mpe, obj, oschema, Operand, val) Then
                 Select Case _oper
                     Case UnaryOperationType.Negate
                         If IsNumeric(val) Then
@@ -128,12 +147,6 @@ Namespace Expressions2
             End If
             Return False
         End Function
-
-        Public ReadOnly Property Operand() As IExpression
-            Get
-                Return _v
-            End Get
-        End Property
 
         Public Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean Implements IEvaluable.CanEval
             'Dim val As Object = Nothing
@@ -177,7 +190,7 @@ Namespace Expressions2
             Return New IExpression() {Me}
         End Function
 
-        Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Return _literalValue
         End Function
 
@@ -241,11 +254,15 @@ Namespace Expressions2
 
         Private _q As Query.QueryCmd
 
+        Public Sub New(ByVal q As Query.QueryCmd)
+            _q = q
+        End Sub
+
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
 
-        Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Dim sb As New StringBuilder
             sb.Append("(")
             sb.Append(stmt.MakeQueryStatement(schema, fromClause, contextFilter, _q, paramMgr, almgr))
@@ -302,6 +319,11 @@ Namespace Expressions2
             _v = v
         End Sub
 
+        Public Sub New(ByVal format As String, ByVal ParamArray v() As IGetExpression)
+            _f = format
+            _v = Array.ConvertAll(v, Function(p) p.Expression)
+        End Sub
+
         Private _f As String
         Public ReadOnly Property Format() As String
             Get
@@ -319,16 +341,20 @@ Namespace Expressions2
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Dim l As New List(Of IExpression)
             l.Add(Me)
-            l.AddRange(Values)
+            If _v IsNot Nothing Then
+                For Each e As IExpression In Values
+                    l.AddRange(e.GetExpressions)
+                Next
+            End If
             Return l.ToArray
         End Function
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
-            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             If _v IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In _v
-                    l.Add(v.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, inSelect, executor))
+                    l.Add(v.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode And Not MakeStatementMode.AddColumnAlias, executor))
                 Next
                 Return String.Format(_f, l.ToArray)
             Else
@@ -385,9 +411,11 @@ Namespace Expressions2
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            For Each e As IExpression In Values
-                e.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
-            Next
+            If _v IsNot Nothing Then
+                For Each e As IExpression In Values
+                    e.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
+                Next
+            End If
         End Sub
     End Class
 
@@ -400,6 +428,35 @@ Namespace Expressions2
                 Return CType(c.Clone, IExpression)
             End If
             Return exp
+        End Function
+
+        Public Function GetSelectedEntities(ByVal exp As IExpression) As ICollection(Of SelectUnion)
+            Dim l As New List(Of SelectUnion)
+            For Each e As Expressions2.IExpression In exp.GetExpressions
+                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(e, Expressions2.IEntityPropertyExpression)
+                If ee IsNot Nothing Then
+                    l.Add(New SelectUnion(ee.ObjectProperty.Entity))
+                Else
+                    Dim te As Expressions2.TableExpression = TryCast(e, Expressions2.TableExpression)
+                    If te IsNot Nothing Then
+                        l.Add(New SelectUnion(te.SourceFragment))
+                    End If
+                End If
+            Next
+
+            Return l
+        End Function
+
+        Public Function GetEntityExpressions(ByVal exp As IExpression) As ICollection(Of IEntityPropertyExpression)
+            Dim l As New List(Of IEntityPropertyExpression)
+            For Each e As Expressions2.IExpression In exp.GetExpressions
+                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(e, Expressions2.IEntityPropertyExpression)
+                If ee IsNot Nothing Then
+                    l.Add(ee)
+                End If
+            Next
+
+            Return l
         End Function
 
         Public Function OperationType2String(ByVal oper As UnaryOperationType) As String
@@ -634,7 +691,7 @@ Namespace Expressions2
                         Return IParameterExpression.EvalResult.NotFound
                     End If
                 Case Else
-                        r = IParameterExpression.EvalResult.Unknown
+                    r = IParameterExpression.EvalResult.Unknown
             End Select
 
             Return r
@@ -727,7 +784,24 @@ Namespace Expressions2
                     Dim cexp As IEvaluable = TryCast(exp, IEvaluable)
                     If cexp IsNot Nothing Then
                         Return cexp.Eval(mpe, obj, oschema, v)
+                    Else
+                        Throw New NotSupportedException(String.Format("Expression {0} is not evaluable", exp.GetStaticString(mpe, Nothing)))
                     End If
+                End If
+            End If
+        End Function
+
+        Public Function CanEval(ByVal exp As IExpression, ByVal mpe As ObjectMappingEngine) As Boolean
+            Dim eexp As IEntityPropertyExpression = TryCast(exp, IEntityPropertyExpression)
+            If eexp IsNot Nothing Then
+                Return True
+            Else
+                Dim pexp As IParameterExpression = TryCast(exp, IParameterExpression)
+                If pexp IsNot Nothing Then
+                    Return True
+                Else
+                    Dim l As IEvaluable = TryCast(exp, IEvaluable)
+                    Return l IsNot Nothing AndAlso l.CanEval(mpe)
                 End If
             End If
         End Function

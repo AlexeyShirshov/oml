@@ -268,7 +268,7 @@ Imports Worm.Criteria
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(mpe, c)))
 
-        q.Select(FCtor.column(t, "code", "Code").column(t, "name", "Title").column(t, "id", "ID", Field2DbRelations.PK)). _
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)). _
             OrderBy(SCtor.prop(GetType(Pod.cls), "Code")).From(t)
 
         Dim l As IList(Of Pod.cls) = q.ToPOCOList(Of Pod.cls)()

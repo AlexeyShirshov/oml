@@ -1,4 +1,6 @@
-﻿Imports System
+﻿Option Infer On
+
+Imports System
 Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
@@ -16,6 +18,7 @@ Imports Worm.Criteria
 Imports Worm.Criteria.Joins
 Imports System.Runtime.Serialization.Formatters.Binary
 Imports System.ComponentModel
+Imports Worm.Expressions2
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -278,7 +281,7 @@ Imports System.ComponentModel
 
         Dim t As Type = GetType(Table1)
 
-        q.Select(FCtor.prop(t, "EnumStr")).GroupBy(FCtor.prop(t, "EnumStr")) _
+        q.Select(FCtor.prop(t, "EnumStr")).GroupBy(GCtor.prop(t, "EnumStr")) _
             .Having(Ctor.count().eq(2))
 
         Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList
@@ -436,8 +439,8 @@ Imports System.ComponentModel
             'q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
             'Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
 
-            q.Select(FCtor.column(t, "code", "Code").count("cnt")). _
-                GroupBy(FCtor.column(t, "code")). _
+            q.Select(FCtor.column(t, "code").into("Code").count().into("cnt")). _
+                GroupBy(GCtor.column(t, "code")). _
                 OrderBy(SCtor.count().desc)
 
             'Assert.IsNull(q.SelectedType)
@@ -844,7 +847,7 @@ Imports System.ComponentModel
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache)))
         q.From(t)
-        q.Select(FCtor.column(t, "code", "Code", Field2DbRelations.PK).column(t, "name", "Title"))
+        q.Select(FCtor.column(t, "code").into("Code", Field2DbRelations.PK).column(t, "name").into("Title"))
 
         Dim r As ReadOnlyEntityList(Of AnonymousCachedEntity) = q.ToEntityList(Of AnonymousCachedEntity)()
 
@@ -991,7 +994,7 @@ Imports System.ComponentModel
 
         Dim t As New SourceFragment("dbo", "table1")
 
-        q.From(t).Select(FCtor.column(t, "id", "ID")).Into(GetType(Table1))
+        q.From(t).Select(FCtor.column(t, "id").into("ID")).Into(GetType(Table1))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
@@ -1008,7 +1011,7 @@ Imports System.ComponentModel
 
         Dim t As New SourceFragment("dbo", "table1")
 
-        q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)).column(t, "enum", "ID", GetType(Table2)))
+        q.From(t).Select(FCtor.column(t, "id").into(GetType(Table1), "ID").column(t, "enum").into(GetType(Table2), "ID"))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 
@@ -1025,8 +1028,8 @@ Imports System.ComponentModel
 
         Dim t As New SourceFragment("dbo", "table1")
 
-        q.From(t).Select(FCtor.column(t, "id", "ID", GetType(Table1)). _
-            custom("ID", GetType(Table2), "case when {0} = 2 then 1 else {0} end", FCtor.column(t, "enum")))
+        q.From(t).Select(FCtor.column(t, "id").into(GetType(Table1), "ID"). _
+            custom("case when {0} = 2 then 1 else {0} end", FCtor.column(t, "enum")).into(GetType(Table2), "ID"))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 
@@ -1154,6 +1157,77 @@ Imports System.ComponentModel
     End Sub
 
     <TestMethod()> _
+    Public Sub TestGetByIds1()
+        Dim c As New ReadonlyCache
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim ids() As Object = {1, 2, 3}
+
+        Dim t = q.GetByIds(Of Table1)(ids)
+
+        Assert.IsNotNull(t)
+        Assert.AreEqual(3, t.Count)
+        Assert.IsTrue(TypeOf t(0) Is Table1)
+
+        For Each obj In t
+            Assert.IsFalse(obj.InternalProperties.IsLoaded)
+        Next
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGetByIds2()
+        Dim c As New ReadonlyCache
+        Dim q As New QueryCmd()
+
+        Dim ids() As Object = {1, 2, 3}
+        Dim list = q.GetByIds(Of Table1)(ids, True, TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Assert.IsNotNull(list)
+        Assert.AreEqual(3, list.Count)
+        Assert.IsTrue(TypeOf list(0) Is Table1)
+
+        For Each obj In list
+            Assert.IsTrue(obj.InternalProperties.IsLoaded)
+        Next
+    End Sub
+
+    <TestMethod()> _
+   Public Sub TestGetByIds3()
+        Dim c As New ReadonlyCache
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim ids() As Object = {-34322, -24243, 3}
+        Dim list = q.GetByIds(Of Table1)(ids, True)
+
+        Assert.IsNotNull(list)
+        Assert.AreEqual(1, list.Count)
+    End Sub
+
+    <TestMethod()> _
+   Public Sub TestGetByIds4()
+        Dim c As New ReadonlyCache
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim ids() As Object = {-34322, -24243}
+        Dim list = q.GetByIds(Of Table1)(ids)
+
+        Assert.IsNotNull(list)
+        Assert.AreEqual(2, list.Count)
+    End Sub
+
+    <TestMethod()> _
+  Public Sub TestGetByIds5()
+        Dim c As New ReadonlyCache
+        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        Dim ids() As Object = {1, 2, 3}
+        Dim list = q.GetByIds(Of Table1)(ids)
+
+        Assert.IsNotNull(list)
+        Dim code = list(0).Code
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestInSubQuery()
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -1234,7 +1308,7 @@ Imports System.ComponentModel
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
         Dim r As ReadOnlyObjectList(Of AnonymousEntity) = q _
-            .Select(FCtor.prop(GetType(Entity2), "ID").custom("a", "1")) _
+            .Select(FCtor.prop(GetType(Entity2), "ID").custom("1").into("a")) _
             .OrderBy(SCtor.custom("1")) _
             .ToAnonymList
 

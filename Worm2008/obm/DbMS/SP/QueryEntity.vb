@@ -5,6 +5,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports Worm.Expressions2
 
 Namespace Database.Storedprocs
 
@@ -49,11 +50,13 @@ Namespace Database.Storedprocs
             Dim cols As List(Of SelectExpression) = GetColumns()
             If cols Is Nothing OrElse cols.Count = 0 Then
                 cols = New List(Of SelectExpression)
-                Dim pk As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
-                Dim se As New SelectExpression(GetType(T), pk(0).PropertyAlias)
-                se.Column = pk(0).Column
-                se.Attributes = pk(0).Behavior
-                cols.Add(se)
+                Dim pks As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
+                For Each pk As EntityPropertyAttribute In pks
+                    Dim exp As New TableExpression(pk.Column)
+                    Dim se As New SelectExpression(exp, pk.PropertyAlias, GetType(T))
+                    se.Attributes = pk.Behavior
+                    cols.Add(se)
+                Next
             End If
             mgr.LoadMultipleObjects(Of T)(cmd, rr, cols)
             Dim l As IListEdit = OrmManager._CreateReadOnlyList(GetType(T), rr)

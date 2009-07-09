@@ -6,6 +6,7 @@ Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports Worm.Query
 
 <TestClass()> Public Class OrmSchemaTest
 
@@ -53,35 +54,35 @@ Imports Worm.Entities
         Assert.AreEqual(2, s3.GetTables(t).Length)
     End Sub
 
-    <TestMethod()> _
-    Public Sub TestSelectID()
-        Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
-        Dim o As New Entity(10, Nothing, schemaV1)
-        Dim t As Type = GetType(Entity)
+    '<TestMethod()> _
+    'Public Sub TestSelectID()
+    '    Dim schemaV1 As New Worm.ObjectMappingEngine("1")
+    '    Dim gen As New SQLGenerator
+    '    Dim o As New Entity(10, Nothing, schemaV1)
+    '    Dim t As Type = GetType(Entity)
 
-        Assert.AreEqual(1, schemaV1.GetTables(t).Length)
+    '    Assert.AreEqual(1, schemaV1.GetTables(t).Length)
 
-        Dim almgr As AliasMgr = AliasMgr.Create
-        Dim params As New ParamMgr(gen, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1", gen.SelectID(schemaV1, t, almgr, params, Nothing))
+    '    Dim almgr As AliasMgr = AliasMgr.Create
+    '    Dim params As New ParamMgr(gen, "p")
+    '    Assert.AreEqual("select t1.id from dbo.ent1 t1", gen.SelectID(schemaV1, t, almgr, params, Nothing))
 
 
-        Dim schemaV2 As New Worm.ObjectMappingEngine("2")
-        almgr = AliasMgr.Create
-        Dim params2 As New ParamMgr(gen, "p")
+    '    Dim schemaV2 As New Worm.ObjectMappingEngine("2")
+    '    almgr = AliasMgr.Create
+    '    Dim params2 As New ParamMgr(gen, "p")
 
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
+    '    Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
 
-        t = GetType(Entity2)
+    '    t = GetType(Entity2)
 
-        almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV1, t, almgr, params, Nothing))
+    '    almgr = AliasMgr.Create
+    '    Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", gen.SelectID(schemaV1, t, almgr, params, Nothing))
 
-        almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
+    '    almgr = AliasMgr.Create
+    '    Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", gen.SelectID(schemaV2, t, almgr, params2, Nothing))
 
-    End Sub
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestInsert()
@@ -483,7 +484,7 @@ End Class
     Public Sub TestSelect()
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQLGenerator
-        gen.Select(schema, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
+        gen.Select(schema, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -525,9 +526,9 @@ End Class
     <TestMethod()> _
     Public Sub TestEquality()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-            Dim e As Entity = mgr.Find(Of Entity)(1)
-            Dim e2 As Entity = mgr.Find(Of Entity)(2)
-            Dim e3 As Entity4 = mgr.Find(Of Entity4)(1)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, mgr)
+            Dim e2 As Entity = New QueryCmd().GetByID(Of Entity)(2, mgr)
+            Dim e3 As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, mgr)
 
             'Assert.IsTrue(e2 > e)
             Assert.IsFalse(e2 = e)

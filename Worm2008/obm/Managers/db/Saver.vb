@@ -703,6 +703,11 @@ l1:
             _cm = getMgr
         End Sub
 
+        Public Sub New(ByVal getMgr As CreateManagerDelegate)
+            MyClass.New(CType(getMgr(), OrmReadOnlyDBManager), True)
+            _cm = New CreateManager(getMgr)
+        End Sub
+
         Public Sub New(ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine)
             MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
             _cm = getMgr

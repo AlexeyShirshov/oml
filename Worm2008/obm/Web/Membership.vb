@@ -676,7 +676,7 @@ Namespace Web
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(GetField("Email")).eq(email))
             If users.Count <> 1 Then
-                Return Nothing
+                Throw New InvalidOperationException(String.Format("The number of users with {0} email is {1}", email, users.Count))
             End If
             Dim u As IKeyEntity = CType(users(0), IKeyEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _
@@ -692,7 +692,7 @@ Namespace Web
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
             If users.Count <> 1 Then
-                Return Nothing
+                Throw New InvalidOperationException(String.Format("The number of users with {0} username is {1}", username, users.Count))
             End If
             Dim u As IKeyEntity = CType(users(0), IKeyEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _

@@ -37,7 +37,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t1 As Table1 = mgr.Find(Of Table1)(1)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
 
             Assert.IsTrue(t1.InternalProperties.IsLoaded)
 
@@ -53,17 +53,17 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Assert.IsFalse(t2.Tbl.InternalProperties.IsLoaded)
 
-            Dim t1 As Table1 = mgr.Find(Of Table1)(1)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             Assert.IsFalse(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(t1, t2.Tbl)
 
             Dim t3 As ICollection(Of Table2) = Nothing
             'Try
-            t3 = mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(t1), Nothing, False)
+            t3 = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(t1)).ToList(Of Table2)(mgr)
             '    Assert.Fail()
             'Catch ex As ArgumentException
             'Catch
@@ -85,7 +85,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, True)
+            Dim t3 As ICollection(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -102,7 +102,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, False)
+            Dim t3 As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -110,7 +110,7 @@ Public Class TestSchema
                 Assert.IsFalse(t2.InternalProperties.IsLoaded)
             Next
 
-            For Each t2 As Table2 In mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, True)
+            For Each t2 As Table2 In New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
                 Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
         End Using
@@ -123,9 +123,9 @@ Public Class TestSchema
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
-            mgr.LoadObjects(col)
+            col.LoadObjects()
 
-            col = mgr.LoadObjectsIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20})
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True, mgr)
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -144,7 +144,7 @@ Public Class TestSchema
                 If Not l.Contains(j) Then l.Add(j)
             Next
 
-            Dim uol As ICollection(Of Table1) = mgr.LoadObjectsIds(Of Table1)(l.ToArray)
+            Dim uol As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(l.ToArray, True, mgr)
         End Using
     End Sub
 
@@ -160,7 +160,7 @@ Public Class TestSchema
             col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.EntityPropertyAttribute)(New Meta.EntityPropertyAttribute() {ea}))
             Assert.AreEqual(0, col.Count)
 
-            col = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True)
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True, mgr)
 
             Assert.AreEqual(2, col.Count)
 
@@ -180,12 +180,14 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), SCtor.prop(GetType(Table1), "DT").asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim t2 As IList(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
+                .OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = CType(mgr.Find(Of Table2)(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), SCtor.prop(GetType(Table2), "DTs").desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            t2 = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
+                .OrderBy(SCtor.prop(GetType(Table2), "DTs").desc).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(4, t2(0).Identifier)
             Assert.AreEqual(1, t2(1).Identifier)
@@ -197,14 +199,14 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").asc, False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = New QueryCmd().Top(10).OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
             Assert.IsFalse(t2(1).InternalProperties.IsLoaded)
 
-            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").desc, False), IList(Of Table1))
+            t2 = New QueryCmd().Top(10).OrderBy(SCtor.prop(GetType(Table1), "DT").desc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
@@ -218,7 +220,7 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, SCtor.prop(GetType(Table1), "DT").asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = New QueryCmd().SelectEntity(GetType(Table1), True).Top(10).OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -232,8 +234,8 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, SCtor.prop(GetType(Table1), "DT").asc, True), IList(Of Table1))
-            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, SCtor.prop(GetType(Table1), "Title").asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = New QueryCmd().SelectEntity(GetType(Table1), True).Top(2).OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table1)(mgr)
+            Dim t1 As IList(Of Table1) = New QueryCmd().SelectEntity(GetType(Table1), True).Top(2).OrderBy(SCtor.prop(GetType(Table1), "Title").asc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
@@ -253,18 +255,16 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t1 As IList(Of Table1) = CType( _
-                mgr.Find(Of Table1)( _
-                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.prop(GetType(Table1), "EnumStr").asc, False), IList(Of Table1))
+            Dim t1 As IList(Of Table1) = New QueryCmd().Where( _
+                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
+                    .OrderBy(SCtor.prop(GetType(Table1), "EnumStr").asc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
 
-            Dim t2 As IList(Of Table1) = CType( _
-                mgr.Find(Of Table1)( _
-                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.prop(GetType(Table1), "EnumStr").prop("Enum").desc, False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = New QueryCmd().Where( _
+                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
+                    .OrderBy(SCtor.prop(GetType(Table1), "EnumStr").prop("Enum").desc).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)
@@ -276,19 +276,17 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t1 As IList(Of Table1) = CType( _
-                mgr.Find(Of Table1)( _
-                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.custom("{0} asc", FCtor.prop(GetType(Table1), "EnumStr")), False), IList(Of Table1))
+            Dim t1 As IList(Of Table1) = New QueryCmd().Where( _
+                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
+                    .OrderBy(SCtor.custom("{0} asc", FCtor.prop(GetType(Table1), "EnumStr"))).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
 
-            Dim t2 As IList(Of Table1) = CType( _
-                mgr.Find(Of Table1)( _
-                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec"), _
-                    SCtor.custom("{0}", FCtor.prop(GetType(Table1), "EnumStr")). _
-                    custom("{0} desc", FCtor.prop(GetType(Table1), "Enum")), False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = New QueryCmd().Where( _
+                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
+                    .OrderBy(SCtor.custom("{0}", FCtor.prop(GetType(Table1), "EnumStr")). _
+                    custom("{0} desc", FCtor.prop(GetType(Table1), "Enum"))).ToList(Of Table1)(mgr)
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)

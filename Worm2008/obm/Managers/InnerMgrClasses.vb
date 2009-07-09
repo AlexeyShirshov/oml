@@ -4,6 +4,7 @@ Imports Worm.Cache
 Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
+Imports Worm.Expressions2
 
 Partial Public Class OrmManager
 #If OLDM2M Then
@@ -273,7 +274,7 @@ Partial Public Class OrmManager
         Property Created() As Boolean
         Property Renew() As Boolean
         ReadOnly Property SmartSort() As Boolean
-        ReadOnly Property Sort() As Sort
+        ReadOnly Property Sort() As OrderByClause
         'ReadOnly Property SortType() As SortType
         ReadOnly Property Filter() As IFilter
         Sub CreateDepends(ByVal ce As CachedItemBase)
@@ -285,58 +286,58 @@ Partial Public Class OrmManager
         Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As UpdatableCachedItem
     End Interface
 
-    Public Class PagerSwitcher
-        Implements IDisposable
+    'Public Class PagerSwitcher
+    '    Implements IDisposable
 
-        Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _oldStart As Integer
-        Private _oldLength As Integer
-        Private _mgr As OrmManager
-        Private _p As Query.IPager
+    '    Private _disposedValue As Boolean = False        ' To detect redundant calls
+    '    Private _oldStart As Integer
+    '    Private _oldLength As Integer
+    '    Private _mgr As OrmManager
+    '    Private _p As Query.IPager
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
-            _mgr = mgr
-            _oldStart = mgr._start
-            mgr._start = start
-            _oldLength = mgr._length
-            mgr._length = length
-        End Sub
+    '    Public Sub New(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
+    '        _mgr = mgr
+    '        _oldStart = mgr._start
+    '        mgr._start = start
+    '        _oldLength = mgr._length
+    '        mgr._length = length
+    '    End Sub
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal pager As Query.IPager)
-            _mgr = mgr
-            _p = pager
-            AddHandler mgr.DataAvailable, AddressOf OnDataAvailable
-        End Sub
+    '    Public Sub New(ByVal mgr As OrmManager, ByVal pager As Query.IPager)
+    '        _mgr = mgr
+    '        _p = pager
+    '        AddHandler mgr.DataAvailable, AddressOf OnDataAvailable
+    '    End Sub
 
-        Public Sub New(ByVal start As Integer, ByVal length As Integer)
-            MyClass.new(OrmManager.CurrentManager, start, length)
-        End Sub
+    '    Public Sub New(ByVal start As Integer, ByVal length As Integer)
+    '        MyClass.new(OrmManager.CurrentManager, start, length)
+    '    End Sub
 
-        Protected Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As ExecutionResult)
-            _p.SetTotalCount(er.RowCount)
-            _oldStart = mgr._start
-            mgr._start = _p.GetCurrentPageOffset
-            _oldLength = mgr._length
-            mgr._length = _p.GetPageSize
-        End Sub
+    '    Protected Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As ExecutionResult)
+    '        _p.SetTotalCount(er.RowCount)
+    '        _oldStart = mgr._start
+    '        mgr._start = _p.GetCurrentPageOffset
+    '        _oldLength = mgr._length
+    '        mgr._length = _p.GetPageSize
+    '    End Sub
 
-        ' IDisposable
-        Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-            If Not Me._disposedValue Then
-                _mgr._length = _oldLength
-                _mgr._start = _oldStart
-                RemoveHandler _mgr.DataAvailable, AddressOf OnDataAvailable
-            End If
-            Me._disposedValue = True
-        End Sub
+    '    ' IDisposable
+    '    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+    '        If Not Me._disposedValue Then
+    '            _mgr._length = _oldLength
+    '            _mgr._start = _oldStart
+    '            RemoveHandler _mgr.DataAvailable, AddressOf OnDataAvailable
+    '        End If
+    '        Me._disposedValue = True
+    '    End Sub
 
-        Public Sub Dispose() Implements IDisposable.Dispose
-            ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-            Dispose(True)
-            GC.SuppressFinalize(Me)
-        End Sub
+    '    Public Sub Dispose() Implements IDisposable.Dispose
+    '        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+    '        Dispose(True)
+    '        GC.SuppressFinalize(Me)
+    '    End Sub
 
-    End Class
+    'End Class
 
     Public Class ApplyCriteria
         Implements IDisposable
@@ -426,7 +427,7 @@ Partial Public Class OrmManager
         Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
         Public MustOverride Sub CreateDepends()
         Public MustOverride ReadOnly Property Filter() As IFilter Implements ICacheItemProvoderBase.Filter
-        Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase.Sort
+        Public MustOverride ReadOnly Property Sort() As OrderByClause Implements ICacheItemProvoderBase.Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As UpdatableCachedItem
 

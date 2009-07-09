@@ -7,6 +7,7 @@ Imports Worm.Criteria
 Imports System.Collections.Generic
 Imports Worm.Query
 Imports Worm.Entities.Meta
+Imports Worm.Expressions2
 
 Namespace Criteria
 
@@ -160,12 +161,12 @@ Namespace Criteria
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
-        Public Function greater_than_eq(ByVal format As String, ByVal ParamArray params() As IFilterValue) As PredicateLink
-            Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.GreaterEqualThan))
+        Public Function greater_than_eq(ByVal format As String, ByVal exp As IExpression) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format, exp), FilterOperation.GreaterEqualThan))
         End Function
 
-        Public Function less_than_eq(ByVal format As String, ByVal ParamArray params() As IFilterValue) As PredicateLink
-            Return GetLink(CreateFilter(New CustomValue(format, params), FilterOperation.LessEqualThan))
+        Public Function less_than_eq(ByVal format As String, ByVal exp As IExpression) As PredicateLink
+            Return GetLink(CreateFilter(New CustomValue(format, exp), FilterOperation.LessEqualThan))
         End Function
 
         Public Function greater_than_eq(ByVal format As String) As PredicateLink
@@ -493,32 +494,32 @@ Namespace Criteria
         Inherits PredicateBase
 
         Private _format As String
-        Private _values() As IFilterValue
+        Private _exp As IExpression
 
-        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As IFilterValue)
+        Protected Friend Sub New(ByVal format As String, ByVal exp As IExpression)
             MyBase.New(Nothing, Nothing)
             _format = format
-            _values = values
+            _exp = exp
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal ParamArray values() As SelectExpression)
+        Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression)
             MyBase.New(Nothing, Nothing)
             _format = format
-            _values = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
+            _exp = exp.Expression
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal values() As IFilterValue, _
+        Protected Friend Sub New(ByVal format As String, ByVal exp As IExpression, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             _format = format
-            _values = values
+            _exp = exp
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal values() As SelectExpression, _
+        Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             _format = format
-            _values = Array.ConvertAll(values, Function(se As SelectExpression) New SelectExpressionValue(se))
+            _exp = exp.Expression
         End Sub
 
         'Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
@@ -543,7 +544,7 @@ Namespace Criteria
 
         Protected Overrides Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As Worm.Criteria.Core.IFilter
             'If String.IsNullOrEmpty(_format) Then
-            Return New CustomFilter(_format, v, oper, _values)
+            Return New CustomFilter(_format, v, oper, _exp)
             'Else
             'Return New CustomFilter(Type, Field, _format, v, oper)
             'End If
@@ -558,7 +559,7 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Dim j As New JoinFilter(op, New CustomValue(fo, _format, _values), fo)
+            Dim j As New JoinFilter(op, New CustomValue(fo, _format, _exp), fo)
             Return j
         End Function
 
@@ -659,10 +660,10 @@ Namespace Criteria
     Public Class AggPredicate
         Inherits PredicateBase
 
-        Private _agg As AggregateBase
+        Private _exp As AggregateExpression
 
-        Public Sub New(ByVal agg As AggregateBase)
-            _agg = agg
+        Public Sub New(ByVal exp As AggregateExpression)
+            _exp = exp
         End Sub
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
@@ -670,7 +671,7 @@ Namespace Criteria
         End Sub
 
         Protected Overrides Function CreateFilter(ByVal v As Values.IFilterValue, ByVal oper As FilterOperation) As Core.IFilter
-            Return New AggFilter(_agg, oper, v)
+            Return New AggFilter(_exp, oper, v)
         End Function
 
         Protected Overloads Overrides Function CreateJoinFilter(ByVal t As Entities.Meta.SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter

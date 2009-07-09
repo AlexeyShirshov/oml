@@ -192,7 +192,7 @@ namespace TestsCodeGenLib
             CodeDomProvider prov = new Microsoft.CSharp.CSharpCodeProvider();
             OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
             settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
-
+            settings.RemoveOldM2M = true;
 			//settings.Split = false;
             CompileCode(prov, settings, XmlReader.Create(stream));
 
@@ -329,6 +329,7 @@ namespace TestsCodeGenLib
 
             OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
             settings.LanguageSpecificHacks = LanguageSpecificHacks.VisualBasic;
+            settings.RemoveOldM2M = true;
 
 			//settings.Split = false;
             CompileCode(prov, settings, XmlReader.Create(stream));

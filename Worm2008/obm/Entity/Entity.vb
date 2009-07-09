@@ -302,7 +302,7 @@ Namespace Entities
             _mgrStr = str
         End Sub
 
-        Protected Property SpecificMappingEngine() As ObjectMappingEngine Implements _IEntity.SpecificMappingEngine
+        Public Property SpecificMappingEngine() As ObjectMappingEngine Implements _IEntity.SpecificMappingEngine
             Get
                 Return _schema
             End Get

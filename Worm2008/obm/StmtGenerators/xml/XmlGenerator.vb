@@ -5,52 +5,13 @@ Imports Worm
 Imports Worm.Entities
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
+Imports Worm.Expressions2
 
 Namespace Xml
     Public Class XPathGenerator
         Inherits StmtGenerator
 
-        'Public Sub New(ByVal version As String)
-        '    MyBase.New(version)
-        'End Sub
-
-        'Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
-        '    MyBase.New(version, resolveEntity)
-        'End Sub
-
-        'Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
-        '    MyBase.New(version, resolveName)
-        'End Sub
-
-        'Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
-        '    MyBase.New(version, resolveEntity, resolveName)
-        'End Sub
-
-        'Public Overrides Function CreateConditionCtor() As Condition.ConditionConstructor
-        '    Return New Condition.ConditionConstructor
-        'End Function
-
-        'Public Overloads Overrides Function CreateCriteria(ByVal os As ObjectSource) As Worm.Criteria.ICtor
-        '    Return New Criteria.Ctor(os)
-        'End Function
-
-        'Public Overloads Overrides Function CreateCriteria(ByVal os As ObjectSource, ByVal fieldName As String) As Worm.Criteria.CriteriaField
-        '    Return New Criteria.Ctor(os).Field(fieldName)
-        'End Function
-
-        'Public Overloads Overrides Function CreateCriteria(ByVal table As Entities.Meta.SourceFragment) As Worm.Criteria.ICtor
-        '    Throw New NotImplementedException
-        'End Function
-
-        'Public Overloads Overrides Function CreateCriteria(ByVal table As Entities.Meta.SourceFragment, ByVal columnName As String) As Worm.Criteria.CriteriaColumn
-        '    Throw New NotImplementedException
-        'End Function
-
-
-        'Public Overrides Function CreateCriteriaLink(ByVal con As Condition.ConditionConstructor) As Worm.Criteria.CriteriaLink
-        '    Return New Criteria.XmlCriteriaLink(con)
-        'End Function
-
+#If Not ExcludeFindMethods Then
         Public Overloads Overrides Function CreateTopAspect(ByVal top As Integer) As Entities.Query.TopAspect
             Throw New NotImplementedException
         End Function
@@ -59,7 +20,9 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Friend Sub AppendOrder(ByVal t As Type, ByVal s As Sort, ByVal sb As StringBuilder)
+#End If
+
+        Protected Friend Sub AppendOrder(ByVal t As Type, ByVal s As OrderByClause, ByVal sb As StringBuilder)
             Throw New NotImplementedException
         End Sub
 
@@ -122,9 +85,9 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Public Overrides Function CreateSelectExpressionFormater() As Entities.ISelectExpressionFormater
-            Throw New NotImplementedException
-        End Function
+        'Public Overrides Function CreateSelectExpressionFormater() As Entities.ISelectExpressionFormater
+        '    Throw New NotImplementedException
+        'End Function
 
         Public Overrides Function TopStatement(ByVal top As Integer) As String
             Throw New NotImplementedException
@@ -232,7 +195,7 @@ Namespace Xml
             Throw New NotSupportedException
         End Function
 
-        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String) As String
+        Public Overrides Function FormatAggregate(ByVal t As Expressions2.AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String, ByVal distinct As Boolean) As String
             Throw New NotSupportedException
         End Function
     End Class

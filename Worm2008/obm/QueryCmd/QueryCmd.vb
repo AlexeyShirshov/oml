@@ -11,6 +11,7 @@ Imports Worm.Misc
 Imports System.Collections.ObjectModel
 Imports Worm.Cache
 Imports System.ComponentModel
+Imports Worm.Expressions2
 
 Namespace Query
 
@@ -330,8 +331,8 @@ Namespace Query
 
         Friend _sel As SelectClauseDef
         Protected _filter As IGetFilter
-        Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
-        Protected _order As Sort
+        Protected _group As GroupExpression
+        Protected _order As OrderByClause
         'Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
         'Protected Friend _load As Boolean
         Protected _top As Top
@@ -691,20 +692,21 @@ Namespace Query
             _sl.Add(se)
             If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
                 If String.IsNullOrEmpty(se.IntoPropertyAlias) Then
-                    Dim t As Type = Nothing
-                    If se.ObjectProperty.Entity IsNot Nothing Then
-                        t = se.ObjectProperty.Entity.GetRealType(mpe)
-                    End If
-                    If t Is Nothing Then
-                        se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
-                    End If
+                    'Dim t As Type = Nothing
+                    'If se.ObjectProperty.Entity IsNot Nothing Then
+                    '    t = se.ObjectProperty.Entity.GetRealType(mpe)
+                    'End If
+                    'If t Is Nothing Then
+                    '    se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
+                    'End If
+                    se.ColumnAlias = "[cl" & _sl.Count & "]"
                 Else
                     se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
                 End If
             End If
-            If String.IsNullOrEmpty(se.GetIntoPropertyAlias) AndAlso Not String.IsNullOrEmpty(se.Column) Then
-                se.IntoPropertyAlias = se.Column
-            End If
+            'If String.IsNullOrEmpty(se.GetIntoPropertyAlias) AndAlso Not String.IsNullOrEmpty(se.Column) Then
+            '    se.IntoPropertyAlias = se.Column
+            'End If
         End Sub
 
         Protected Sub PrepareSelectList(ByVal executor As IExecutor, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean, ByVal mpe As ObjectMappingEngine, _
@@ -734,13 +736,13 @@ Namespace Query
                     CheckFrom(se)
                 Next
             Else
-                If IsFTS AndAlso GetSelectedTypes(mpe).Count > 1 Then
+                If IsFTS AndAlso GetSelectedTypesCount(mpe) > 1 Then
                     _appendMain = True
                 End If
 
                 For Each se As SelectExpression In SelectList
                     se.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
-                    Dim os As EntityUnion = If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
+                    Dim os As EntityUnion = se.GetIntoEntityUnion
                     If os IsNot Nothing Then
                         If Not _types.ContainsKey(os) Then
                             Dim t As Type = os.GetRealType(mpe)
@@ -768,7 +770,7 @@ Namespace Query
                                             If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                                 Dim find As Boolean
                                                 For Each fld As SelectExpression In col
-                                                    If fld.PropertyAlias = pk.PropertyAlias Then
+                                                    If fld.GetIntoPropertyAlias = pk.PropertyAlias Then
                                                         find = True
                                                         Exit For
                                                     End If
@@ -792,26 +794,25 @@ Namespace Query
                                             Dim found As Boolean = False
                                             For Each ss() As String In sss
                                                 For Each pr As String In ss
-                                                    If se.PropertyAlias = pr Then
+                                                    If se.GetIntoPropertyAlias = pr Then
                                                         found = True
-                                                        GoTo l2
+                                                        GoTo exitLoop
                                                     End If
                                                 Next
                                             Next
-l2:
+exitLoop:
                                             If Not found Then
                                                 CopySE(se, mpe)
                                             End If
                                         Next
-                                    Else
                                         GoTo l1
                                     End If
-                                Else
-l1:
-                                    For Each se As SelectExpression In col
-                                        CopySE(se, mpe)
-                                    Next
                                 End If
+
+                                For Each se As SelectExpression In col
+                                    CopySE(se, mpe)
+                                Next
+l1:
                             End If
                         End If
                     Next
@@ -822,28 +823,31 @@ l1:
                         Next
                     Else
                         For Each se As SelectExpression In SelectList
-                            If se.IsCustom OrElse se.Aggregate IsNot Nothing OrElse se.PropType = PropType.TableColumn Then
-                                CopySE(se, mpe)
-                            End If
+                            If Not _sl.Contains(se) Then CopySE(se, mpe)
                         Next
                     End If
 
                     If AutoJoins Then
                         Dim selOS As EntityUnion = GetSelectedOS()
                         Dim t As Type = selOS.GetRealType(mpe)
-                        Dim selSchema As IEntitySchema = mpe.GetEntitySchema(t)
+                        Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
                         For Each se As SelectExpression In SelectList
-                            If se.ObjectSource IsNot Nothing Then
-                                If Not HasInQuery(se.ObjectSource) Then
-                                    mpe.AppendJoin(selOS, t, selSchema, _
-                                        se.ObjectSource, se.ObjectSource.GetRealType(mpe), mpe.GetEntitySchema(se.ObjectSource.GetRealType(mpe)), _
-                                        f, _js, filterInfo, JoinType.Join)
+                            Dim en As IEnumerable(Of SelectUnion) = GetSelectedEntities(se)
+                            For Each su As SelectUnion In en
+                                Dim os As EntityUnion = su.EntityUnion
+                                If os IsNot Nothing Then
+                                    If Not HasInQuery(os) Then
+                                        Dim jt As Type = os.GetRealType(mpe)
+                                        mpe.AppendJoin(selOS, t, selSchema, _
+                                            os, jt, _types(se.GetIntoEntityUnion), _
+                                            f, _js, filterInfo, JoinType.Join)
+                                    End If
+                                Else
+                                    If Not HasInQuery(su.SourceFragment) Then
+                                        Throw New NotSupportedException("Cannot auto join " & se.GetDynamicString)
+                                    End If
                                 End If
-                            ElseIf se.Table IsNot Nothing Then
-                                Throw New NotImplementedException
-                            Else
-                                Throw New NotImplementedException
-                            End If
+                            Next
                         Next
                     End If
                 Else
@@ -967,7 +971,7 @@ l1:
                                         Dim pit As Type = pi.PropertyType
                                         Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                         If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                            Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.PropertyAlias = ep.PropertyAlias)
+                                            Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.GetIntoPropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
                                                 hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, selex)
                                             End If
@@ -979,12 +983,12 @@ l1:
                                                     'Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                                     If p.Second.Contains(ep.PropertyAlias) Then
                                                         hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
-                                                        If Not hasCmplx AndAlso Not _sl.Exists(Function(se) se.PropertyAlias = ep.PropertyAlias) Then
+                                                        If Not hasCmplx AndAlso Not _sl.Exists(Function(se) se.GetIntoPropertyAlias = ep.PropertyAlias) Then
                                                             _sl.Add(New SelectExpression(de.Key, ep.PropertyAlias) With { _
-                                                                .Attributes = ep.Behavior, _
-                                                                .Column = ep.Column, _
-                                                                .ColumnAlias = ep.ColumnName _
+                                                                .Attributes = ep.Behavior _
                                                             })
+                                                            '.Column = ep.Column, _
+                                                            '.ColumnAlias = ep.ColumnName _
                                                         End If
                                                     End If
                                                 End If
@@ -1074,9 +1078,9 @@ l1:
             Dim eu As EntityUnion = Nothing
             Dim p As Pair(Of String, EntityUnion) = Nothing
             Dim hasCmplx As Boolean = False
-            If Not eudic.TryGetValue(selex.PropertyAlias & "$" & pit.ToString, p) Then
+            If Not eudic.TryGetValue(selex.GetIntoPropertyAlias & "$" & pit.ToString, p) Then
                 eu = New EntityUnion(New QueryAlias(pit))
-                eudic(selex.PropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.PropertyAlias, eu)
+                eudic(selex.GetIntoPropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.GetIntoPropertyAlias, eu)
             Else
                 eu = p.Second
             End If
@@ -1101,7 +1105,7 @@ l1:
 
         Public Sub Prepare(ByVal executor As IExecutor, _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
-            ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Worm.Criteria.Values.IQueryElement.Prepare
 
             _sl = New List(Of SelectExpression)
             _types = New Dictionary(Of EntityUnion, IEntitySchema)
@@ -1125,15 +1129,18 @@ l1:
                 f = Filter.Filter()
             End If
 
-            For Each s As Sort In New Sort.Iterator(_order)
-                s.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-                If s.ObjectSource IsNot Nothing Then
-                    'Dim tp As Type = s.ObjectSource.GetRealType(schema)
-                    If Not _stypes.ContainsKey(s.ObjectSource) Then
-                        _stypes.Add(s.ObjectSource, Nothing)
-                    End If
-                End If
-            Next
+            If _order IsNot Nothing Then
+                For Each s As SortExpression In _order
+                    s.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                    For Each su As SelectUnion In GetSelectedEntities(s)
+                        If su.EntityUnion IsNot Nothing Then
+                            If Not _stypes.ContainsKey(su.EntityUnion) Then
+                                _stypes.Add(su.EntityUnion, Nothing)
+                            End If
+                        End If
+                    Next
+                Next
+            End If
 
             If f IsNot Nothing Then
                 For Each fl As IFilter In f.GetAllFilters
@@ -1198,30 +1205,19 @@ l1:
 
         Private Sub CheckFrom(ByVal se As SelectExpression)
             If _from Is Nothing Then
-                If se.Aggregate IsNot Nothing Then
-                    Dim a As Aggregate = TryCast(se.Aggregate, [Aggregate])
-                    If a IsNot Nothing Then
-                        Dim ep As SelectExpressionValue = TryCast(a.Expression.Value, SelectExpressionValue)
-                        If ep IsNot Nothing Then
-                            If ep.Expression.ObjectSource IsNot Nothing Then
-                                _from = New FromClauseDef(ep.Expression.ObjectSource)
-                            ElseIf ep.Expression.Table IsNot Nothing Then
-                                _from = New FromClauseDef(ep.Expression.Table)
-                            Else
-                                Throw New NotSupportedException
-                            End If
-                        End If
+                For Each su As SelectUnion In GetSelectedEntities(se)
+                    If su.EntityUnion IsNot Nothing Then
+                        _from = New FromClauseDef(su.EntityUnion)
+                    Else
+                        _from = New FromClauseDef(su.SourceFragment)
                     End If
-                ElseIf se.Table IsNot Nothing Then
-                    _from = New FromClauseDef(se.Table)
-                ElseIf se.ObjectSource IsNot Nothing Then
-                    _from = New FromClauseDef(se.ObjectSource)
-                End If
+                    Exit For
+                Next
             End If
         End Sub
 
         Protected Function HasInQuery(ByVal os As EntityUnion) As Boolean
-            If FromClause IsNot Nothing AndAlso FromClause.ObjectSource.Equals(os) Then
+            If FromClause IsNot Nothing AndAlso FromClause.ObjectSource IsNot Nothing AndAlso FromClause.ObjectSource.Equals(os) Then
                 Return True
             End If
             Return HasInQueryJS(os)
@@ -1240,6 +1236,18 @@ l1:
                     End If
                 Next
             End If
+            Return False
+        End Function
+
+        Protected Function HasInQuery(ByVal tbl As SourceFragment) As Boolean
+            If FromClause IsNot Nothing AndAlso FromClause.Table Is tbl Then
+                Return True
+            End If
+            For Each j As QueryJoin In _js
+                If tbl Is j.Table Then
+                    Return True
+                End If
+            Next
             Return False
         End Function
 
@@ -1268,7 +1276,7 @@ l1:
                         For Each ss() As String In sss
                             For Each pr As String In ss
                                 Dim pr2 As String = pr
-                                Dim idx As Integer = l.FindIndex(Function(pa As SelectExpression) pa.PropertyAlias = pr2)
+                                Dim idx As Integer = l.FindIndex(Function(pa As SelectExpression) pa.GetIntoPropertyAlias = pr2)
                                 If idx >= 0 Then
                                     l.RemoveAt(idx)
                                 End If
@@ -1279,15 +1287,15 @@ l1:
                 Dim pod As Boolean = _poco IsNot Nothing AndAlso _poco.Contains(t)
                 Dim hasPK As Boolean = cl.Find(Function(se) (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK) IsNot Nothing
                 For Each se As SelectExpression In l
-                    se.ObjectProperty = New ObjectProperty(tp.First, se.PropertyAlias)
+                    'se.ObjectProperty = New ObjectProperty(tp.First, se.GetIntoPropertyAlias)
                     If pod Then
-                        se.IntoPropertyAlias = t.Name & "-" & se.PropertyAlias
+                        se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
                         If Not String.IsNullOrEmpty(pref) Then
                             se.IntoPropertyAlias = "%" & pref & "-" & se.IntoPropertyAlias
                         End If
                     End If
                     cl.Add(se)
-                    Dim m As MapField2Column = oschema.GetFieldColumnMap(se.PropertyAlias)
+                    Dim m As MapField2Column = oschema.GetFieldColumnMap(se.GetIntoPropertyAlias)
                     se.Attributes = se.Attributes Or m._newattributes
                     If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(schema) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK
@@ -1298,7 +1306,7 @@ l1:
                 For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
                     Dim se As New SelectExpression(os, c.PropertyAlias)
                     se.Attributes = c.Behavior
-                    se.Column = c.Column
+                    'se.Column = c.Column
                     cl.Add(se)
                 Next
                 '    Else
@@ -1494,11 +1502,11 @@ l1:
                 Dim it As IList = SelectList
                 If _types.Count < 2 Then
                     Dim l As New List(Of SelectExpression)(SelectList)
-                    l.Sort(Function(s1 As SelectExpression, s2 As SelectExpression) s1._ToString.CompareTo(s2._ToString))
+                    l.Sort(Function(s1 As SelectExpression, s2 As SelectExpression) s1.GetDynamicString.CompareTo(s2.GetDynamicString))
                     it = l
                 End If
                 For Each c As SelectExpression In it
-                    If Not GetStaticKeyFromProp(sb, cb, c, mpe) Then
+                    If Not GetStaticKeyFromProp(sb, cb, c, mpe, fi) Then
                         Return False
                     End If
                 Next
@@ -1511,12 +1519,7 @@ l1:
             End If
 
             If _group IsNot Nothing Then
-                For Each g As Grouping In _group
-                    If Not GetStaticKeyFromProp(sb, cb, g, mpe) Then
-                        Return False
-                    End If
-                    sb.Append("$")
-                Next
+                sb.Append(_group.GetStaticString(mpe, fi)).Append("$")
             End If
 
             If _having IsNot Nothing Then
@@ -1525,11 +1528,8 @@ l1:
 
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing OrElse cb <> Cache.CacheListBehavior.CacheAll Then
-                    For Each n As Sort In New Sort.Iterator(_order)
-                        If Not GetStaticKeyFromProp(sb, cb, n, mpe) Then
-                            Return False
-                        End If
-                        sb.Append(n._ToString)
+                    For Each n As SortExpression In Sort
+                        sb.Append(n.GetStaticString(mpe, fi))
                     Next
                     sb.Append("$")
                 End If
@@ -1538,22 +1538,23 @@ l1:
             Return True
         End Function
 
-        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine) As Boolean
-            If c.IsCustom OrElse c.Query IsNot Nothing Then
-                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
-                If Not Cache.IsCalculated(dp) Then
-                    Select Case cb
-                        Case Cache.CacheListBehavior.CacheAll
-                            'do nothing
-                            'Case Cache.CacheListBehavior.CacheOrThrowException
-                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
-                            Return False
-                        Case Else
-                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
-                    End Select
-                End If
-            End If
-            sb.Append(c._ToString)
+        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, _
+            ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
+            'If c.IsCustom OrElse c.Query IsNot Nothing Then
+            '    Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
+            '    If Not Cache.IsCalculated(dp) Then
+            '        Select Case cb
+            '            Case Cache.CacheListBehavior.CacheAll
+            '                'do nothing
+            '                'Case Cache.CacheListBehavior.CacheOrThrowException
+            '            Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
+            '                Return False
+            '            Case Else
+            '                Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+            '        End Select
+            '    End If
+            'End If
+            sb.Append(c.GetStaticString(mpe, contextFilter))
             Return True
         End Function
 
@@ -1670,10 +1671,11 @@ l1:
             Dim os As EntityUnion = GetRealSelectedOS()
             If os Is Nothing AndAlso SelectList IsNot Nothing Then
                 For Each s As SelectExpression In SelectList
-                    If s.ObjectSource IsNot Nothing Then
-                        os = s.ObjectSource
-                        Exit For
-                    End If
+                    For Each su As SelectUnion In GetSelectedEntities(s)
+                        If su.EntityUnion IsNot Nothing Then
+                            Return su.EntityUnion
+                        End If
+                    Next
                 Next
             End If
             Return os
@@ -1715,22 +1717,21 @@ l1:
                 Next
             ElseIf SelectList IsNot Nothing Then
                 For Each s As SelectExpression In SelectList
-                    If s.ObjectProperty.Entity Is Nothing Then
-                        '_dic.Clear()
-                        'ts.Clear()
-                        'Exit For
-                    Else
-                        Dim t As Type = s.ObjectSource.GetRealType(mpe)
-                        If t Is Nothing OrElse GetType(AnonymousEntity).IsAssignableFrom(t) Then
-                            '_dic.Clear()
-                            ts.Clear()
-                            Exit For
-                            'ElseIf Not _dic.ContainsKey(s.ObjectProperty.ObjectSource) Then
-                            '    _dic.Add(s.ObjectProperty.ObjectSource, Nothing)
-                        ElseIf Not ts.Contains(t) Then
-                            ts.Add(t)
+                    For Each su As SelectUnion In GetSelectedEntities(s)
+                        Dim os As EntityUnion = su.EntityUnion
+                        If os IsNot Nothing Then
+                            Dim t As Type = os.GetRealType(mpe)
+                            If t Is Nothing OrElse GetType(AnonymousEntity).IsAssignableFrom(t) Then
+                                '_dic.Clear()
+                                ts.Clear()
+                                Exit For
+                                'ElseIf Not _dic.ContainsKey(s.ObjectProperty.ObjectSource) Then
+                                '    _dic.Add(s.ObjectProperty.ObjectSource, Nothing)
+                            ElseIf Not ts.Contains(t) Then
+                                ts.Add(t)
+                            End If
                         End If
-                    End If
+                    Next
                 Next
             End If
 
@@ -2009,11 +2010,11 @@ l1:
             End Set
         End Property
 
-        Public Property Group() As ObjectModel.ReadOnlyCollection(Of Grouping)
+        Public Property Group() As GroupExpression
             Get
                 Return _group
             End Get
-            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Grouping))
+            Set(ByVal value As GroupExpression)
                 _group = value
                 RenewMark()
             End Set
@@ -2054,27 +2055,24 @@ l1:
         Protected Function GetSelectList(ByVal os As EntityUnion) As ICollection(Of SelectExpression)
             Dim l As New List(Of SelectExpression)
             For Each se As SelectExpression In SelectList
-                Dim os_ As EntityUnion = se.ObjectSource 'If(se.Into IsNot Nothing, se.Into, se.ObjectSource)
-                If se.Into Is Nothing AndAlso os.Equals(os_) Then
+                If os.Equals(se.GetIntoEntityUnion) Then
                     l.Add(se)
                 End If
             Next
             Return l
         End Function
 
-        Protected Function GetSelectedTypes(ByVal mpe As ObjectMappingEngine) As IList(Of Type)
-            Dim l As New List(Of Type)
+        Protected Function GetSelectedTypesCount(ByVal mpe As ObjectMappingEngine) As Integer
+            Dim l As New List(Of EntityUnion)
             If SelectList IsNot Nothing Then
                 For Each se As SelectExpression In SelectList
-                    If se.ObjectSource IsNot Nothing Then
-                        Dim t As Type = se.ObjectSource.GetRealType(mpe)
-                        If Not l.Contains(t) Then
-                            l.Add(t)
-                        End If
+                    Dim eu As EntityUnion = se.GetIntoEntityUnion
+                    If eu IsNot Nothing AndAlso Not l.Contains(eu) Then
+                        l.Add(eu)
                     End If
                 Next
             End If
-            Return l
+            Return l.Count
         End Function
 
         Public Property SelectList() As ObjectModel.ReadOnlyCollection(Of SelectExpression)
@@ -2089,11 +2087,11 @@ l1:
             End Set
         End Property
 
-        Public Property Sort() As Sort
+        Public Property Sort() As OrderByClause
             Get
                 Return _order
             End Get
-            Set(ByVal value As Sort)
+            Set(ByVal value As OrderByClause)
                 _order = value
                 RenewMark()
                 'AddHandler value.OnChange, AddressOf OnSortChanged
@@ -2221,7 +2219,7 @@ l1:
             Return Me
         End Function
 
-        Public Function OrderBy(ByVal value As Sort) As QueryCmd
+        Public Function OrderBy(ByVal value As OrderByClause) As QueryCmd
             Sort = value
             Return Me
         End Function
@@ -2514,6 +2512,11 @@ l1:
             Return Me
         End Function
 
+        Public Function [Select](ByVal fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)) As QueryCmd
+            SelectList = fields
+            Return Me
+        End Function
+
         Friend Sub SelectInt(ByVal t As Type, ByVal mpe As ObjectMappingEngine)
             If _filter IsNot Nothing Then
                 For Each f As IFilter In _filter.Filter.GetAllFilters
@@ -2605,8 +2608,8 @@ l1:
             Return Me
         End Function
 
-        Public Function GroupBy(ByVal fields() As Grouping) As QueryCmd
-            Group = New ObjectModel.ReadOnlyCollection(Of Grouping)(fields)
+        Public Function GroupBy(ByVal group As GroupExpression) As QueryCmd
+            Me.Group = group
             Return Me
         End Function
 
@@ -3092,7 +3095,7 @@ l1:
 #End Region
 
         Public Overridable Function Count(ByVal mgr As OrmManager) As Integer
-            Dim s As Sort = _order
+            Dim s As OrderByClause = _order
             Dim p As Paging = _clientPage
             Dim pp As IPager = _pager
             Dim rf As TableFilter = _rn
@@ -3829,24 +3832,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)(mgr)
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)(mgr)
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)(mgr)
                 Finally
                     _top = oldT
                     _order = sort
@@ -3863,24 +3862,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)(getMgr)
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)(getMgr)
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)(getMgr)
                 Finally
                     _top = oldT
                     _order = sort
@@ -3897,24 +3892,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)()
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)()
+                    l = OrderBy(New OrderByClause(sort)).Top(1).ToList(Of T)()
                 Finally
                     _top = oldT
                     _order = sort
@@ -3933,24 +3924,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)(mgr)
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)(mgr)
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)(mgr)
                 Finally
                     _top = oldT
                     _order = sort
@@ -3967,24 +3954,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)(getMgr)
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)(getMgr)
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)(getMgr)
                 Finally
                     _top = oldT
                     _order = sort
@@ -4001,24 +3984,20 @@ l1:
             If Sort Is Nothing Then
                 l = ToList(Of T)()
             Else
-                Dim sort As Sort = Me.Sort
-                Dim newSort As Sort = Nothing
-                For Each ns As Sort In New Sort.Iterator(sort)
-                    If newSort Is Nothing Then
-                        newSort = ns
-                    Else
-                        newSort.Previous = ns
-                        newSort = ns
+                Dim sort As OrderByClause = Me.Sort
+                Dim newSort As New List(Of SortExpression)
+                For Each ns As SortExpression In sort
+                    Dim cln As SortExpression = CType(ns.Clone, SortExpression)
+                    newSort.Add(cln)
+                    Dim newOrder As SortExpression.SortType = SortExpression.SortType.Asc
+                    If cln.Order = SortExpression.SortType.Asc Then
+                        newOrder = SortExpression.SortType.Desc
                     End If
-                    Dim newOrder As SortType = SortType.Asc
-                    If newSort.Order = SortType.Asc Then
-                        newOrder = SortType.Desc
-                    End If
-                    newSort.Order = newOrder
+                    cln.Order = newOrder
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(newSort).Top(1).ToList(Of T)()
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)()
                 Finally
                     _top = oldT
                     _order = sort
@@ -4233,23 +4212,42 @@ l1:
             Return CType(_Clone(), QueryCmd)
         End Function
 
-        Friend Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
+        Private Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
 
             For Each se As SelectExpression In _sl
                 'If se.PropType = PropType.ObjectProperty Then
-                If se.IntoPropertyAlias = p Then
-                    Return If(String.IsNullOrEmpty(se.ColumnAlias), se.Column, se.ColumnAlias)
-                Else
-                    If se.PropertyAlias = p Then
-                        Dim t As Type = se.ObjectSource.GetRealType(mpe)
-                        If t Is Nothing Then
-                            Return _from.AnyQuery.FindColumn(mpe, p)
-                        Else
-                            Dim oschema As IEntitySchema = GetEntitySchema(mpe, t)
-                            Dim map As MapField2Column = GetFieldColumnMap(oschema, t)(se.PropertyAlias)
-                            Return map.ColumnExpression 'mpe.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
+                If se.GetIntoPropertyAlias = p Then
+                    If Not String.IsNullOrEmpty(se.ColumnAlias) Then
+                        Return se.ColumnAlias
+                    Else
+                        Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
+                        If col.Count <> 1 Then
+                            Throw New QueryCmdException("", Me)
                         End If
+                        For Each su As SelectUnion In col
+                            If su.EntityUnion IsNot Nothing Then
+                                Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
+                                If Not String.IsNullOrEmpty(map.ColumnName) Then
+                                    Return map.ColumnName
+                                Else
+                                    Return map.ColumnExpression
+                                End If
+                            Else
+                                Throw New QueryCmdException("", Me)
+                            End If
+                        Next
                     End If
+                    'Else
+                    '    If se.PropertyAlias = p Then
+                    '        Dim t As Type = se.ObjectSource.GetRealType(mpe)
+                    '        If t Is Nothing Then
+                    '            Return _from.AnyQuery.FindColumn(mpe, p)
+                    '        Else
+                    '            Dim oschema As IEntitySchema = GetEntitySchema(mpe, t)
+                    '            Dim map As MapField2Column = GetFieldColumnMap(oschema, t)(se.PropertyAlias)
+                    '            Return map.ColumnExpression 'mpe.GetColumnNameByPropertyAlias(oschema, se.PropertyAlias, False, se.ObjectSource)
+                    '        End If
+                    '    End If
                 End If
                 'Else
                 '    If se.Column = p Then
@@ -4306,29 +4304,22 @@ l1:
             End If
 
             If _order IsNot Nothing Then
-                For Each s As Sort In New Sort.Iterator(_order)
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, s)
-                    If Cache.IsCalculated(fdp) Then
-                        If singleType Then
-                            dp.AddBoth(types)
+                For Each ns As SortExpression In Sort
+                    For Each s As SelectUnion In GetSelectedEntities(ns)
+                        If s.EntityUnion IsNot Nothing Then
+                            dp.AddBoth(s.EntityUnion.GetRealType(mpe))
                         End If
-                        dp.Merge(fdp)
-                        'Else
-                        '    Return fdp
-                    End If
+                    Next
                 Next
             End If
 
             If SelectList IsNot Nothing Then
-                For Each f As SelectExpression In SelectList
-                    If f.PropType = PropType.Subquery Then
-                        Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
-                        If Cache.IsCalculated(fdp) Then
-                            dp.Merge(fdp)
-                            'Else
-                            '    Return fdp
+                For Each se As SelectExpression In SelectList
+                    For Each s As SelectUnion In GetSelectedEntities(se)
+                        If s.EntityUnion IsNot Nothing Then
+                            dp.AddBoth(s.EntityUnion.GetRealType(mpe))
                         End If
-                    End If
+                    Next
                 Next
             End If
             Return dp.Get
@@ -4582,6 +4573,10 @@ l1:
             Return GetByID(Of T)(id, False)
         End Function
 
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
+            Return GetByID(Of T)(id, False, mgr)
+        End Function
+
         Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
@@ -4654,49 +4649,67 @@ l1:
             Return CType(o, T)
         End Function
 
+        Friend Sub ConvertIdsToObjects(Of T As {New, IKeyEntity})(ByVal rt As Type, ByVal list As IListEdit, _
+            ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
+            For Each id As Object In ids
+                Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id, True)
+
+                If obj IsNot Nothing Then
+                    list.Add(obj)
+                ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
+                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), T)
+                    If obj IsNot Nothing Then list.Add(obj)
+                End If
+            Next
+        End Sub
+
+        Friend Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit, _
+            ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
+            For Each id As Object In ids
+                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
+
+                If obj IsNot Nothing Then
+                    list.Add(obj)
+                ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
+                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), IKeyEntity)
+                    If obj IsNot Nothing Then list.Add(obj)
+                End If
+            Next
+        End Sub
+
         Public Function [GetByIds](Of T As {New, IKeyEntity})( _
-                    ByVal ids As ICollection(Of Object), _
+                    ByVal ids As IEnumerable(Of Object), _
                     ByVal ensureLoaded As Boolean, _
                     ByVal mgr As OrmManager) As ReadOnlyList(Of T)
 
-            If mgr Is Nothing Then Throw New QueryCmdException("Manager is required", Me)
+            If mgr Is Nothing Then Throw New ArgumentNullException("Manager is required")
 
             Dim tp As Type = GetRealType(Of T)(mgr)
-            Dim list As IListEdit = New ReadOnlyList(Of T)
-
+            Dim ro As New ReadOnlyList(Of T)
+            Dim list As IListEdit = ro
 
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
                     mgr.SetSchema(SpecificMappingEngine)
                 End If
+
                 Try
                     If GetType(T) IsNot tp Then
-                        If ensureLoaded Then
-                            For Each id As Object In ids
-                                Dim obj As T = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
-                                If obj IsNot Nothing Then list.Add(obj)
-                            Next
+                        If Not ensureLoaded Then
+                            ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                         Else
-                            For Each id As Object In ids
-                                Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
-                                If obj IsNot Nothing Then list.Add(obj)
-                            Next
+                            ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                            ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
                         End If
                     Else
-                        If ensureLoaded Then
-                            For Each id As Object In ids
-                                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                                If obj IsNot Nothing Then list.Add(obj)
-                            Next
+                        If Not ensureLoaded Then
+                            ConvertIdsToObjects(tp, list, ids, mgr)
                         Else
-                            For Each id As Object In ids
-                                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                                If obj IsNot Nothing Then list.Add(obj)
-                            Next
+                            ConvertIdsToObjects(tp, list, ids, mgr)
+                            ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
                         End If
                     End If
-
 
                     For Each o As IKeyEntity In list
                         If o IsNot Nothing Then
@@ -4708,14 +4721,12 @@ l1:
                             End If
                         End If
                     Next
-
-
                 Finally
                     mgr.SetSchema(oldSch)
                 End Try
             End Using
 
-            Return CType(list, ReadOnlyList(Of T))
+            Return ro
         End Function
 
         Public Function [GetByIds](Of T As {New, IKeyEntity})( _
@@ -4747,8 +4758,6 @@ l1:
 
             Return tp
         End Function
-
-
 
         Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean) As T
             If _getMgr IsNot Nothing Then
@@ -4814,14 +4823,14 @@ l1:
             Dim root As DicIndexT(Of T) = last
             Dim first As Boolean = True
 
-            Dim pn As String = SelectList(0).IntoPropertyAlias
-            If String.IsNullOrEmpty(pn) Then
-                pn = SelectList(0).PropertyAlias
-            End If
-            Dim cn As String = SelectList(1).IntoPropertyAlias
-            If String.IsNullOrEmpty(cn) Then
-                cn = SelectList(1).PropertyAlias
-            End If
+            Dim pn As String = SelectList(0).GetIntoPropertyAlias
+            'If String.IsNullOrEmpty(pn) Then
+            '    pn = SelectList(0).PropertyAlias
+            'End If
+            Dim cn As String = SelectList(1).GetIntoPropertyAlias
+            'If String.IsNullOrEmpty(cn) Then
+            '    cn = SelectList(1).PropertyAlias
+            'End If
 
             For Each a As AnonymousEntity In ToAnonymList(mgr)
                 OrmManager.BuildDic(Of DicIndexT(Of T), T)(CStr(a(pn)), CInt(a(cn)), level, root, last, first, firstPropertyAlias, secondPropertyAlias)
@@ -4880,8 +4889,7 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
-
-            If _group Is Nothing OrElse _group.Count = 0 Then
+            If _group Is Nothing Then
                 Dim tt As Type = GetType(T)
                 If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                     tt = _from.ObjectSource.GetRealType(mgr.MappingEngine)
@@ -4897,23 +4905,18 @@ l1:
                 End If
             End If
 
-            If _group(0).Values Is Nothing OrElse _group(0).Values.Length = 0 Then
-                Throw New InvalidOperationException("Group is not custom")
-            End If
-
             Dim n As String = Nothing
-            Dim se As SelectExpressionValue = TryCast(_group(0).Values(0), SelectExpressionValue)
-            If se Is Nothing Then
-                'Dim ev As EntityValue = TryCast(_group(0).Values(0), EntityValue)
-                'If ev Is Nothing Then
-                Throw New InvalidOperationException("Group is not object property reference")
-                'End If
-                'n = ev
-            Else
-                If se.Expression.PropType <> PropType.ObjectProperty Then
-                    Throw New InvalidOperationException("Group is not object property reference")
+
+            For Each e As Expressions2.IExpression In _group.GetExpressions
+                Dim se As EntityExpression = TryCast(e, EntityExpression)
+                If se IsNot Nothing Then
+                    n = se.ObjectProperty.PropertyAlias
+                    Exit For
                 End If
-                n = se.Expression.ObjectProperty.PropertyAlias
+            Next
+
+            If String.IsNullOrEmpty(n) Then
+                Throw New QueryCmdException("Cannot get property alias from group expression: " & _group.GetDynamicString, Me)
             End If
 
             Return BuildDic(Of T)(mgr, n, Nothing, level)
@@ -4923,14 +4926,9 @@ l1:
             Dim tt As Type = GetType(T)
             Dim c As New QueryCmd.svct(Me)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
-                Dim g As ObjectModel.ReadOnlyCollection(Of Grouping) = Nothing
-                If _group IsNot Nothing Then
-                    g = New ObjectModel.ReadOnlyCollection(Of Grouping)(_group)
-                End If
-                Dim srt As Sort = Nothing
-                If _order IsNot Nothing Then
-                    srt = _order
-                End If
+                Dim g As GroupExpression = _group
+
+                Dim srt As OrderByClause = _order
 
                 Dim so As EntityUnion = GetSelectedOS()
 
@@ -4946,15 +4944,17 @@ l1:
 
                 Dim s As SelectExpression = Nothing
                 If so IsNot Nothing Then
-                    s = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(so, propertyAlias))
+                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(so, propertyAlias)).into("Pref")
                 Else
-                    s = FCtor.custom("Pref", String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias))
+                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias)).into("Pref")
                 End If
 
                 Try
-                    [Select](FCtor.Exp(s).count("Count")) _
-                        .GroupBy(FCtor.Exp(s)) _
-                        .OrderBy(SCtor.count().desc)
+                    [Select](FCtor _
+                             .Exp(s) _
+                             .count().into("Count")) _
+                    .GroupBy(GCtor.Exp(s)) _
+                    .OrderBy(SCtor.count().desc)
 
                     Return BuildDictionary(Of T)(mgr, level)
                 Finally
@@ -4979,10 +4979,10 @@ l1:
                     selEU = New EntityUnion(tt)
                 End If
 
-                Dim s1 As SelectExpression = FCtor.custom("Pref", _
-                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, firstPropertyAlias))
-                Dim s2 As SelectExpression = FCtor.custom("Pref", _
-                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, secondPropertyAlias))
+                Dim s1 As SelectExpression = FCtor.custom( _
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, firstPropertyAlias)).into("Pref")
+                Dim s2 As SelectExpression = FCtor.custom( _
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, secondPropertyAlias)).into("Pref")
 
                 'Dim c As New QueryCmd.svct(Me)
                 'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
@@ -5017,18 +5017,18 @@ l1:
                 Dim q As New QueryCmd(_getMgr)
                 q.SpecificMappingEngine = SpecificMappingEngine
                 q.From(CType(Clone(), QueryCmd) _
-                     .[Select](FCtor.Exp(s1).count("Count")) _
+                     .[Select](FCtor.Exp(s1).count().into("Count")) _
                      .From(f) _
-                     .GroupBy(FCtor.Exp(s1)) _
+                     .GroupBy(GCtor.Exp(s1)) _
                      .UnionAll( _
                      CType(Clone(), QueryCmd) _
-                     .[Select](FCtor.Exp(s2).count("Count")) _
+                     .[Select](FCtor.Exp(s2).count().into("Count")) _
                      .From(f) _
-                     .GroupBy(FCtor.Exp(s2)) _
+                     .GroupBy(GCtor.Exp(s2)) _
                      ) _
                 ) _
-                .Select(FCtor.prop("Pref").sum("Count", "Count")) _
-                .GroupBy(FCtor.prop("Pref")) _
+                .Select(FCtor.prop("Pref").sum("Count").into("Count")) _
+                .GroupBy(GCtor.prop("Pref")) _
                 .OrderBy(SCtor.prop("Pref").desc)
 
                 Return q.BuildDic(Of T)(mgr, firstPropertyAlias, secondPropertyAlias, level)

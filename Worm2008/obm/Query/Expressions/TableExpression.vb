@@ -11,28 +11,38 @@ Namespace Expressions2
         Private _col As String
         Private _eu As EntityUnion
 
+        Public Sub New(ByVal col As String)
+            _col = col
+        End Sub
+
+        Public Sub New(ByVal t As SourceFragment, ByVal col As String)
+            _sf = t
+            _col = col
+        End Sub
+
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal inSelect As Boolean, _
+            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
-            Dim map As New MapField2Column(String.Empty, _col, _sf)
             Dim [alias] As String = String.Empty
 
-            If almgr IsNot Nothing Then
-                Debug.Assert(almgr.ContainsKey(map.Table, _eu), "There is not alias for table " & map.Table.RawName)
+            If almgr IsNot Nothing AndAlso (stmtMode And MakeStatementMode.WithoutTables) <> MakeStatementMode.WithoutTables Then
+                Debug.Assert(almgr.ContainsKey(_sf, _eu), "There is not alias for table " & _sf.RawName)
                 Try
-                    [alias] = almgr.GetAlias(map.Table, _eu) & stmt.Selector
+                    [alias] = almgr.GetAlias(_sf, _eu) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
+                    Throw New ObjectMappingException("There is not alias for table " & _sf.RawName, ex)
                 End Try
+            Else
+                [alias] = _sf.UniqueName(_eu) & mpe.Delimiter
             End If
 
-            Return [alias] & map.ColumnExpression
+            Return [alias] & _col
         End Function
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse
