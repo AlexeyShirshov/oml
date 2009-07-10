@@ -784,7 +784,11 @@ l1:
             If Not IsM2M Then
                 Using gm As IGetManager = o.GetMgr
                     Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                    mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                    Try
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                    Catch ex As InvalidCastException
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
+                    End Try
                 End Using
             End If
         End Sub
@@ -794,7 +798,11 @@ l1:
             If Not IsM2M Then
                 Using gm As IGetManager = o.GetMgr
                     Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                    mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                    Try
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                    Catch ex As InvalidCastException
+                        mpe.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
+                    End Try
                 End Using
             End If
         End Sub
