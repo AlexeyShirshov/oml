@@ -699,8 +699,13 @@ Namespace Entities
         Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
             Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
             For Each rl As Relation In _relations
-                For Each e As ICachedEntity In rl.Added 'GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
+                For Each e As ICachedEntity In rl.Added
                     l.Add(e)
+                Next
+                For Each e As ICachedEntity In GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
+                    If e.HasChanges AndAlso Not l.Contains(e) Then
+                        l.Add(e)
+                    End If
                 Next
                 For Each e As ICachedEntity In rl.Deleted
                     l.Add(e)
