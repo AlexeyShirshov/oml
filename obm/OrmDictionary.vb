@@ -391,7 +391,19 @@ Namespace Misc
                 End If
             End If
 
-            Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)()
+            If _getMgr Is Nothing Then
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)(mgr)
+                Else
+                    Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
+                End If
+            Else
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)()
+                Else
+                    Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)()
+                End If
+            End If
         End Function
 
         Protected Overridable Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
@@ -408,12 +420,24 @@ Namespace Misc
             End If
 
             If strong Then
-                cmd.Where(Ctor.prop(tt, propertyAlias).eq(Name).and(_cmd.Filter))
+                cmd.Where(Ctor.prop(tt, propertyAlias).eq(Name))
             Else
-                cmd.Where(Ctor.prop(tt, propertyAlias).like(Name & "%").and(_cmd.Filter))
+                cmd.Where(Ctor.prop(tt, propertyAlias).like(Name & "%"))
             End If
 
-            Return cmd.Join(_cmd.Joins).ToObjectList(Of T)()
+            If _getMgr Is Nothing Then
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)(mgr)
+                Else
+                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
+                End If
+            Else
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)()
+                Else
+                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)()
+                End If
+            End If
         End Function
 
         Public Overloads ReadOnly Property Parent() As DicIndexT(Of T)

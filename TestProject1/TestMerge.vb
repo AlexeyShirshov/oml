@@ -107,27 +107,27 @@ Imports Worm.Entities.Meta
         End Using
     End Sub
 
-    <TestMethod()> _
-    Public Sub RealMergeTest2()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Worm.ObjectMappingEngine("1"))
-            Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
+    '<TestMethod()> _
+    'Public Sub RealMergeTest2()
+    '    Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Worm.ObjectMappingEngine("1"))
+    '        Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
-            Dim l As New List(Of Object)
-            Dim i As Integer = 0
-            Do
-                l.Add(i)
-                l.Add(i + 1)
-                l.Add(i + 2)
-                i += 5
-            Loop While i < 1000
-            Do
-                i += New Random(Environment.TickCount).Next(1, 5)
-                l.Add(i)
-            Loop While i < 10000
-            'Dim almgr As Worm.Orm.AliasMgr = Worm.Orm.AliasMgr.Create
-            'Dim params As New Worm.Orm.ParamMgr(CType(mgr.DatabaseSchema, Orm.DbSchema), "p")
-            'almgr.AddTable(mgr.DatabaseSchema.GetTables(GetType(Entity))(0))
-            pa.GetObjects(GetType(Entity), l, Nothing, False, "ID", False)
-        End Using
-    End Sub
+    '        Dim l As New List(Of Object)
+    '        Dim i As Integer = 0
+    '        Do
+    '            l.Add(i)
+    '            l.Add(i + 1)
+    '            l.Add(i + 2)
+    '            i += 5
+    '        Loop While i < 1000
+    '        Do
+    '            i += New Random(Environment.TickCount).Next(1, 5)
+    '            l.Add(i)
+    '        Loop While i < 10000
+    '        'Dim almgr As Worm.Orm.AliasMgr = Worm.Orm.AliasMgr.Create
+    '        'Dim params As New Worm.Orm.ParamMgr(CType(mgr.DatabaseSchema, Orm.DbSchema), "p")
+    '        'almgr.AddTable(mgr.DatabaseSchema.GetTables(GetType(Entity))(0))
+    '        pa.GetObjects(GetType(Entity), l, Nothing, False, "ID", False)
+    '    End Using
+    'End Sub
 End Class

@@ -466,7 +466,7 @@ Imports Worm
             Assert.AreEqual(12, c.Count)
 
             c2 = e.GetCmd(GetType(Entity4)).WithLoad(True).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
-            Assert.AreEqual(10, c2.Count)
+            Assert.AreEqual(11, c2.Count)
 
             mgr.BeginTransaction()
             Try
@@ -737,7 +737,7 @@ Imports Worm
 
             mgr.BeginTransaction()
             Try
-                e2.GetCmd(GetType(Entity)).RemoveAll()
+                e2.GetCmd(GetType(Entity)).RemoveAll(mgr)
 
                 e2.SaveChanges(True)
 
@@ -812,7 +812,7 @@ Imports Worm
             Assert.IsTrue(c.Contains(e2))
 
             e2.Delete()
-            e2.GetCmd(GetType(Entity)).RemoveAll()
+            e2.GetCmd(GetType(Entity)).RemoveAll(mgr)
 
             mgr.BeginTransaction()
             Try
@@ -1235,11 +1235,17 @@ Imports Worm
     <TestMethod()> _
     Public Sub TestDistinct()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-            Dim r As Worm.ReadOnlyList(Of Entity) = New QueryCmd().Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")).ToOrmList(Of Entity)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+
+            Dim r As Worm.ReadOnlyList(Of Entity) = q.Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")).ToOrmList(Of Entity)(mgr)
 
             Assert.AreEqual(8, r.Count)
 
-            r = New QueryCmd().Distinct(True).Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")).ToOrmList(Of Entity)(mgr)
+            q = New QueryCmd()
+            q.AutoJoins = True
+
+            r = q.Distinct(True).Where(Ctor.prop(GetType(Entity4), "Title").[like]("b%")).ToOrmList(Of Entity)(mgr)
 
             Assert.AreEqual(5, r.Count)
         End Using
@@ -1247,7 +1253,10 @@ Imports Worm
 
     <TestMethod()> Public Sub TestM2MSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-            Dim r As Worm.ReadOnlyList(Of Entity) = New QueryCmd().Where(Ctor.prop(GetType(Entity), "ID").less_than(3)).OrderBy(SCtor.prop(GetType(Entity4), "Title")).ToOrmList(Of Entity)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+
+            Dim r As Worm.ReadOnlyList(Of Entity) = q.Where(Ctor.prop(GetType(Entity), "ID").less_than(3)).OrderBy(SCtor.prop(GetType(Entity4), "Title")).ToOrmList(Of Entity)(mgr)
 
             Assert.AreEqual(15, r.Count)
 

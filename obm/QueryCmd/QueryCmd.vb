@@ -453,7 +453,7 @@ Namespace Query
                     Dim ef As OrmFilterTemplate = TryCast(tmf.Template, OrmFilterTemplate)
                     fr = New FieldReference(ef.ObjectSource, ef.PropertyAlias)
                 End If
-                Dim col As ICollection = CType(tmf.Value, InValue).Value
+                Dim col As IEnumerable = CType(tmf.Value, InValue).Value
                 If Not TypeOf col Is List(Of Object) Then
                     Dim l As New List(Of Object)
                     For Each oo As Object In col
@@ -1287,15 +1287,15 @@ l1:
                 Dim pod As Boolean = _poco IsNot Nothing AndAlso _poco.Contains(t)
                 Dim hasPK As Boolean = cl.Find(Function(se) (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK) IsNot Nothing
                 For Each se As SelectExpression In l
-                    'se.ObjectProperty = New ObjectProperty(tp.First, se.GetIntoPropertyAlias)
+                    Dim prop As String = se.GetIntoPropertyAlias
                     If pod Then
-                        se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
+                        se.IntoPropertyAlias = t.Name & "-" & prop
                         If Not String.IsNullOrEmpty(pref) Then
                             se.IntoPropertyAlias = "%" & pref & "-" & se.IntoPropertyAlias
                         End If
                     End If
                     cl.Add(se)
-                    Dim m As MapField2Column = oschema.GetFieldColumnMap(se.GetIntoPropertyAlias)
+                    Dim m As MapField2Column = oschema.GetFieldColumnMap(prop)
                     se.Attributes = se.Attributes Or m._newattributes
                     If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(schema) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK

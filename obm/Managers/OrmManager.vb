@@ -3541,10 +3541,10 @@ l1:
     Protected Friend MustOverride ReadOnly Property Exec() As TimeSpan
     Protected Friend MustOverride ReadOnly Property Fecth() As TimeSpan
 
-#End Region
-
     Protected MustOverride Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin) As DicIndex(Of T)
     Protected MustOverride Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+
+#End Region
 
     Protected Friend Function LoadObjectsInternal(Of T As {IKeyEntity, New})( _
             ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _

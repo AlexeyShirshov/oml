@@ -137,10 +137,14 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+            Dim c As ICollection(Of Table2) = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
-            c = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first").[and]("Code").eq(2)).ToList(Of Table2)(mgr)
+            q = New QueryCmd()
+            q.AutoJoins = True
+            c = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first").[and]("Code").eq(2)).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
             Dim t2 As New Table2(tm.GetIdentity(), mgr.Cache, mgr.MappingEngine)
@@ -149,7 +153,9 @@ Public Class TestJoinsRS
             mgr.BeginTransaction()
             Try
                 t2.SaveChanges(True)
-                c = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+                q = New QueryCmd()
+                q.AutoJoins = True
+                c = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
                 Assert.AreEqual(3, c.Count)
             Finally
                 mgr.Rollback()
@@ -162,7 +168,9 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+            Dim c As ICollection(Of Table2) = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
@@ -177,7 +185,10 @@ Public Class TestJoinsRS
             Try
                 t1.SaveChanges(True)
                 t2.SaveChanges(True)
-                c = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+                q = New QueryCmd()
+                q.AutoJoins = True
+
+                c = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
                 Assert.AreEqual(2, c.Count)
             Finally
                 mgr.Rollback()
@@ -190,7 +201,10 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+
+            Dim c As ICollection(Of Table2) = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
             Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
@@ -200,7 +214,9 @@ Public Class TestJoinsRS
             mgr.BeginTransaction()
             Try
                 t1.SaveChanges(True)
-                c = New QueryCmd().Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
+                q = New QueryCmd()
+                q.AutoJoins = True
+                c = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
                 Assert.AreEqual(0, c.Count)
             Finally
                 mgr.Rollback()

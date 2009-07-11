@@ -864,10 +864,7 @@ l1:
 
         Protected Friend Overrides Function ModifyResult(Of T As Entities._IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
             If Relation.HasChanges Then
-                Dim toRem As New ReadOnlyObjectList(Of T)
-                For Each e As _IEntity In Relation.Deleted
-                    toRem.List.Add(CType(e, T))
-                Next
+                Dim toRem As New ReadOnlyObjectList(Of T)(Relation.Deleted.ConvertAll(Function(e) CType(e, T)))
 
                 Dim newRes As IListEdit = CType(result.Clone, IListEdit)
 
@@ -875,10 +872,7 @@ l1:
                     newRes.Remove(o)
                 Next
 
-                Dim toAdd As New ReadOnlyObjectList(Of T)
-                For Each e As _IEntity In Relation.Added
-                    toAdd.List.Add(CType(e, T))
-                Next
+                Dim toAdd As New ReadOnlyObjectList(Of T)(Relation.Added.ConvertAll(Function(e) CType(e, T)))
 
                 toAdd = New ReadOnlyObjectList(Of T)(toAdd.ApplyFilter(Filter))
 
@@ -889,7 +883,8 @@ l1:
                         If pos < 0 Then
                             newRes.Insert(Not pos, o)
                         Else
-                            Throw New QueryCmdException("Object in added list already in query", Me)
+                            newRes.Insert(pos, o)
+                            'Throw New QueryCmdException("Object in added list already in query", Me)
                         End If
                     Next
                     If TopParam IsNot Nothing Then

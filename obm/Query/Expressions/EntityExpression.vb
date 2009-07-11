@@ -83,10 +83,13 @@ Namespace Expressions2
             Else
                 Try
                     Dim t As Type = _op.Entity.GetRealType(mpe)
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
+                    Dim oschema As IEntitySchema = Nothing
+
                     If executor Is Nothing Then
+                        oschema = mpe.GetEntitySchema(t)
                         map = oschema.GetFieldColumnMap(_op.PropertyAlias)
                     Else
+                        oschema = executor.GetEntitySchema(mpe, t)
                         map = executor.GetFieldColumnMap(oschema, t)(_op.PropertyAlias)
                     End If
                     tbl = map.Table

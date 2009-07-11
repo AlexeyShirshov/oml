@@ -79,7 +79,9 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
-            Dim c As ICollection(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(Ctor.prop(tt, "Code").not_eq(2)).ToList(Of Table2)(mgr)
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+            Dim c As ICollection(Of Table2) = q.SelectEntity(GetType(Table2), True).Where(Ctor.prop(tt, "Code").not_eq(2)).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(0, c.Count)
         End Using
