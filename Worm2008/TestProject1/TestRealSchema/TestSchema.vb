@@ -180,7 +180,9 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
+            Dim q As New QueryCmd()
+            q.AutoJoins = True
+            Dim t2 As IList(Of Table2) = q.SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
                 .OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)

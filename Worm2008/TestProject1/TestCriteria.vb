@@ -132,11 +132,11 @@ Imports Worm.Expressions2
         Dim mpe As New ObjectMappingEngine
 
         Dim s As SortExpression = SCtor.prop(t, "sdgfn").asc
-        Assert.AreEqual("sdgfn", s.GetStaticString(mpe, Nothing))
+        Assert.AreEqual("$System.Type$sdgfn", s.GetStaticString(mpe, Nothing))
         Assert.AreEqual(SortExpression.SortType.Asc, s.Order)
 
         Dim s2 As SortExpression = SCtor.prop(t, "sdgfn").desc
-        Assert.AreEqual("sdgfn", s2.GetDynamicString)
+        Assert.AreEqual("$System.Type$sdgfn", s2.GetDynamicString)
         Assert.AreEqual(SortExpression.SortType.Desc, s2.Order)
 
         Dim s3 As SortExpression = SCtor.prop(t, "sdgfn").Order(False)

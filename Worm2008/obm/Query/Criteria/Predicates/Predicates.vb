@@ -232,11 +232,11 @@ Namespace Criteria
             Return GetLink(CreateFilter(New InValue(arr), FilterOperation.NotIn))
         End Function
 
-        Public Overloads Function [in](ByVal arr As ICollection) As PredicateLink
+        Public Overloads Function [in](ByVal arr As IEnumerable) As PredicateLink
             Return GetLink(CreateFilter(New InValue(arr), FilterOperation.In))
         End Function
 
-        Public Overloads Function not_in(ByVal arr As ICollection) As PredicateLink
+        Public Overloads Function not_in(ByVal arr As IEnumerable) As PredicateLink
             Return GetLink(CreateFilter(New InValue(arr), FilterOperation.NotIn))
         End Function
 

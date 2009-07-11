@@ -161,8 +161,8 @@ Imports Worm.Query
         Dim b As New BinaryExpressionBase(New BinaryExpressionBase(g, g2), g3)
 
         Assert.AreEqual(b.Expression, b)
-        Assert.AreEqual("Comma(Comma(Average$$TestProject1.Entity2$Str,Max$$TestProject1.Entity2$ID),Min$$TestProject1.Entity2$Str)", b.GetDynamicString)
-        Assert.AreEqual("Comma(Comma(Average$$TestProject1.Entity2$Str,Max$$TestProject1.Entity2$ID),Min$$TestProject1.Entity2$Str)", b.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Comma(Comma(Average$False$TestProject1.Entity2$Str,Max$False$TestProject1.Entity2$ID),Min$False$TestProject1.Entity2$Str)", b.GetDynamicString)
+        Assert.AreEqual("Comma(Comma(Average$False$TestProject1.Entity2$Str,Max$False$TestProject1.Entity2$ID),Min$False$TestProject1.Entity2$Str)", b.GetStaticString(mpe, contextFilter))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))

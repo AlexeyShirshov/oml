@@ -769,11 +769,11 @@ Namespace Criteria.Values
         Private _l As New List(Of String)
         Private _str As String
 
-        Public Sub New(ByVal value As ICollection)
+        Public Sub New(ByVal value As IEnumerable)
             MyBase.New(value)
         End Sub
 
-        Public Sub New(ByVal value As ICollection, ByVal caseSensitive As Boolean)
+        Public Sub New(ByVal value As IEnumerable, ByVal caseSensitive As Boolean)
             MyBase.New(value, caseSensitive)
         End Sub
 
@@ -825,9 +825,9 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Shadows ReadOnly Property Value() As ICollection
+        Public Shadows ReadOnly Property Value() As IEnumerable
             Get
-                Return CType(MyBase.Value, Global.System.Collections.ICollection)
+                Return CType(MyBase.Value, IEnumerable)
             End Get
         End Property
 
@@ -870,7 +870,12 @@ Namespace Criteria.Values
 
         Public Overrides ReadOnly Property ShouldUse() As Boolean
             Get
-                Return Value IsNot Nothing AndAlso Value.Count > 0
+                If Value IsNot Nothing Then
+                    For Each s As Object In Value
+                        Return True
+                    Next
+                End If
+                Return False
             End Get
         End Property
     End Class
