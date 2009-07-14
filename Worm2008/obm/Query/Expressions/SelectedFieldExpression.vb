@@ -407,6 +407,7 @@ Namespace Expressions2
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim al As String = String.Empty
+
             If fromClause IsNot Nothing Then
                 Dim tbl As SourceFragment = fromClause.Table
                 Dim os As EntityUnion = Nothing
@@ -414,7 +415,12 @@ Namespace Expressions2
                     tbl = fromClause.QueryEU.ObjectAlias.Tbl
                     os = fromClause.QueryEU
                 End If
-                al = almgr.GetAlias(tbl, os)
+
+                If (stmtMode And MakeStatementMode.WithoutTables) = 0 Then
+                    al = tbl.UniqueName(os)
+                Else
+                    al = almgr.GetAlias(tbl, os)
+                End If
             End If
 
             If (stmtMode Or MakeStatementMode.Select) = MakeStatementMode.Select Then

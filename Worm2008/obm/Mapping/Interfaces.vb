@@ -42,14 +42,14 @@ Public Interface IPrepareTable
     ''' <remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
     Function AddTable(ByRef table As SourceFragment, ByVal os As EntityUnion) As String
     Function AddTable(ByRef table As SourceFragment, ByVal os As EntityUnion, ByVal pmgr As ICreateParam) As String
-    ''' <summary>
-    ''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
-    ''' </summary>
-    ''' <param name="schema">Схема</param>
-    ''' <param name="table">Таблица</param>
-    ''' <param name="sb">StringBuilder</param>
-    ''' <remarks></remarks>
-    Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As SourceFragment, ByVal os As EntityUnion, ByVal sb As StringBuilder)
+    '''' <summary>
+    '''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
+    '''' </summary>
+    '''' <param name="schema">Схема</param>
+    '''' <param name="table">Таблица</param>
+    '''' <param name="sb">StringBuilder</param>
+    '''' <remarks></remarks>
+    'Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As SourceFragment, ByVal os As EntityUnion, ByVal sb As StringBuilder)
     Function GetAlias(ByVal table As SourceFragment, ByVal os As EntityUnion) As String
     Function ContainsKey(ByVal table As SourceFragment, ByVal os As EntityUnion) As Boolean
 End Interface

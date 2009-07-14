@@ -486,6 +486,132 @@ Namespace Entities.Meta
             Return l
         End Function
 
+        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IEnumerable(Of T), _
+            ByVal loadWithObjects As Boolean, ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+            Dim lookups As New Dictionary(Of IKeyEntity, IList)
+            Dim newc As New List(Of IKeyEntity)
+            Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
+            Dim rcmd As RelationCmd = Nothing
+            Dim rt As Type = Nothing
+
+            For Each o As IKeyEntity In objs
+
+                If rt Is Nothing Then
+                    rt = o.GetType
+                End If
+                If o.ObjectState <> ObjectState.Created Then
+                    Dim ncmd As RelationCmd = CreateCmd(o)
+
+                    If ncmd.IsInCache(mgr) Then
+                        lookups.Add(o, ncmd.ToList(mgr))
+                        hasInCache.Add(o, Nothing)
+                    Else
+                        newc.Add(o)
+                    End If
+                    If rcmd Is Nothing Then
+                        rcmd = ncmd
+                        Dim retType As Type = rcmd.RelationDesc.Entity.GetRealType(mgr.MappingEngine)
+                        If Not GetType(ReturnType).IsAssignableFrom(retType) Then
+                            If GetType(T).IsAssignableFrom(retType) Then
+                                Dim re As ReadOnlyList(Of T) = TryCast(objs, ReadOnlyList(Of T))
+                                If re Is Nothing Then
+                                    re = New ReadOnlyList(Of T)(objs)
+                                End If
+                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(Column)
+                                rv.LoadObjects(mgr)
+                                Return rv
+                            Else
+                                Throw New ArgumentException("Generic params is not correspond to QueryCmd")
+                            End If
+                        End If
+                    End If
+                End If
+            Next
+
+            If rcmd Is Nothing Then
+                Return New ReadOnlyList(Of ReturnType)
+            Else
+                rcmd = CType(rcmd.Clone, RelationCmd)
+            End If
+
+            Dim ids As New List(Of Object)
+            For Each o As IKeyEntity In newc
+                ids.Add(o.Identifier)
+            Next
+
+            Dim c As New cls(ids)
+            AddHandler rcmd.OnModifyFilter, AddressOf c.OnModifyFilter
+            rcmd.RenewMark()
+
+            If rcmd.IsM2M Then
+                If loadWithObjects Then
+                    rcmd.WithLoad(True)
+                End If
+
+                rcmd.QueryWithHost = True
+
+                Dim r As ReadonlyMatrix = rcmd.ToMatrix(mgr)
+
+                For Each row As ObjectModel.ReadOnlyCollection(Of _IEntity) In r
+                    Dim key As IKeyEntity = CType(row(1), IKeyEntity)
+                    Dim val As ReturnType = CType(row(0), ReturnType)
+
+                    Dim ll As IList = Nothing
+                    If Not lookups.TryGetValue(key, ll) Then
+                        ll = New ReadOnlyList(Of ReturnType)
+                        lookups.Add(key, ll)
+                    End If
+                    CType(ll, IListEdit).Add(val)
+                Next
+            Else
+                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.Column)
+                Dim rtt As Type = Nothing
+                Dim oschema As IEntitySchema = Nothing
+
+                rtt = op.Entity.GetRealType(mgr.MappingEngine)
+                oschema = mgr.MappingEngine.GetEntitySchema(rtt)
+
+                If loadWithObjects Then
+                    rcmd.WithLoad(True)
+                Else
+                    Dim se As List(Of SelectExpression) = mgr.MappingEngine.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    se.Add(FCtor.prop(op))
+                    rcmd.Select(se.ToArray)
+                End If
+
+                Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)(mgr)
+
+                For Each o As ReturnType In r
+                    Dim key As IKeyEntity = CType(mgr.MappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim ll As IList = Nothing
+                    If Not lookups.TryGetValue(key, ll) Then
+                        ll = New ReadOnlyList(Of ReturnType)
+                        lookups.Add(key, ll)
+                    End If
+                    CType(ll, IListEdit).Add(o)
+                Next
+            End If
+
+            Dim l As New ReadOnlyList(Of ReturnType)
+
+            For Each o As IKeyEntity In objs
+                Dim v As IList = Nothing
+                If lookups.TryGetValue(o, v) Then
+                    For Each oo As IEntity In v
+                        CType(l, IListEdit).Add(oo)
+                    Next
+                Else
+                    v = New ReadOnlyList(Of ReturnType)
+                End If
+                Dim ncmd As RelationCmd = CreateCmd(o)
+                If Not hasInCache.ContainsKey(o) Then
+                    ncmd.SetCache(mgr, v)
+                End If
+            Next
+
+            Return l
+        End Function
+
         Public Overridable Function CreateCmd(ByVal o As IKeyEntity) As RelationCmd
             Return o.GetCmd(Me)
         End Function

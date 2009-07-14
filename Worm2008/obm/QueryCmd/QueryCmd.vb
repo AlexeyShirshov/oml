@@ -2227,7 +2227,7 @@ l1:
         Public Function WhereAdd(ByVal filter As IGetFilter) As QueryCmd
             If Me.Filter Is Nothing Then
                 Me.Filter = filter
-            Else
+            ElseIf filter IsNot Nothing Then
                 Me.Filter = Ctor.Filter(filter).and(Me.Filter)
             End If
             Return Me

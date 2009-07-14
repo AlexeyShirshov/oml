@@ -90,16 +90,24 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         End If
     End Function
 
-    'Public Overrides Function LoadObjects(ByVal fields() As String, ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
-    '    If _l.Count > 0 Then
-    '        Dim o As T = _l(0)
-    '        Using mc As IGetManager = o.GetMgr()
-    '            Return mc.Manager.LoadObjects(Of T)(Me, fields, start, length)
-    '        End Using
-    '    Else
-    '        Return Me
-    '    End If
-    'End Function
+    Public Overloads Function LoadObjects(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return mgr.LoadObjects(_rt, Me)
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return mgr.LoadObjects(_rt, Me, start, length)
+        Else
+            Return Me
+        End If
+    End Function
+
 
     Public Overrides Function Distinct() As ReadOnlyEntityList(Of T)
         Return DistinctEntity()
@@ -117,6 +125,10 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
 
     Public Function LoadChildren(Of ReturnType As Entities._IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
         Return rd.Load(Of T, ReturnType)(Me, loadWithObjects)
+    End Function
+
+    Public Function LoadChildren(Of ReturnType As Entities._IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean, ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+        Return rd.Load(Of T, ReturnType)(Me, loadWithObjects, mgr)
     End Function
 
 #If OLDM2M Then

@@ -743,7 +743,7 @@ l1:
                     'End If
 
                     If sel_columns.Count > 0 Then
-                        sel_columns.Sort()
+                        'sel_columns.Sort()
 
                         ins_cmd.Append(EndLine)
                         If SupportIf() Then
@@ -752,28 +752,29 @@ l1:
 
                         Dim selSb As New StringBuilder
                         selSb.Append("select ")
-                        Dim com As Boolean = False
-                        For Each c As EntityPropertyAttribute In sel_columns
-                            If com Then
-                                selSb.Append(", ")
-                            Else
-                                com = True
-                            End If
-                            If unions IsNot Nothing Then
-                                Throw New NotImplementedException
-                                'ins_cmd.Append(GetColumnNameByFieldName(type, c.FieldName, pk_table))
-                                'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) = Field2DbRelations.PrimaryKey Then
-                                '    ins_cmd.Append("+").Append(GetUnionScope(type, pk_table).First)
-                                'End If
-                            Else
-                                selSb.Append(mpe.GetColumnNameByPropertyAlias(os, c.PropertyAlias, Nothing))
-                            End If
-                        Next
+                        'Dim com As Boolean = False
+                        'For Each c As EntityPropertyAttribute In sel_columns
+                        '    If com Then
+                        '        selSb.Append(", ")
+                        '    Else
+                        '        com = True
+                        '    End If
+                        '    If unions IsNot Nothing Then
+                        '        Throw New NotImplementedException
+                        '        'ins_cmd.Append(GetColumnNameByFieldName(type, c.FieldName, pk_table))
+                        '        'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) = Field2DbRelations.PrimaryKey Then
+                        '        '    ins_cmd.Append("+").Append(GetUnionScope(type, pk_table).First)
+                        '        'End If
+                        '    Else
+                        '        selSb.Append(mpe.GetColumnNameByPropertyAlias(os, c.PropertyAlias, Nothing))
+                        '    End If
+                        'Next
 
                         Dim almgr As AliasMgr = AliasMgr.Create
                         almgr.AddTable(pk_table, "t1")
+                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(sel_columns.ConvertAll(Function(d) New EntityExpression(d.PropertyAlias, type))).MakeStatement(mpe, Nothing, Me, params, almgr, Nothing, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
                         selSb.Append(" from ").Append(GetTableName(pk_table)).Append(" t1 where ")
-                        almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
+                        'almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
                         ins_cmd.Append(selSb.ToString)
 
                         If unions IsNot Nothing Then
@@ -1478,28 +1479,6 @@ l2:
             ByVal arr As Generic.IList(Of EntityPropertyAttribute), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
 
             Dim selectcmd As New StringBuilder
-            'Dim maintable As String = tables(0)
-            selectcmd.Append("select ")
-
-            If original_type IsNot Nothing Then
-                If wideLoad Then
-                    Dim columns As String = mpe.GetSelectColumnList(original_type, mpe, arr, schema, Nothing)
-                    If Not String.IsNullOrEmpty(columns) Then
-                        selectcmd.Append(columns)
-                        If Not String.IsNullOrEmpty(additionalColumns) Then
-                            selectcmd.Append(",").Append(additionalColumns)
-                        End If
-                    Else
-
-                    End If
-                Else
-                    mpe.GetPKList(original_type, mpe, schema, selectcmd, Nothing)
-                End If
-            Else
-                selectcmd.Append("*")
-            End If
-
-            selectcmd.Append(" from ")
             Dim unions() As String = Nothing
             If original_type IsNot Nothing Then
                 unions = ObjectMappingEngine.GetUnions(original_type)
@@ -1523,7 +1502,41 @@ l2:
                 Throw New NotImplementedException
             End If
 
-            Return selectcmd.ToString
+            Dim selSb As New StringBuilder
+            selSb.Append("select ")
+
+            If original_type IsNot Nothing Then
+                If wideLoad Then
+                    'Dim columns As String = mpe.GetSelectColumnList(original_type, mpe, arr, schema, Nothing)
+                    'If Not String.IsNullOrEmpty(columns) Then
+                    '    selSb.Append(columns)
+                    '    If Not String.IsNullOrEmpty(additionalColumns) Then
+                    '        selSb.Append(",").Append(additionalColumns)
+                    '    End If
+                    'Else
+
+                    'End If
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(ConvertAll(arr, Function(s) New EntityExpression(s.PropertyAlias, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
+                Else
+                    'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(Array.ConvertAll(mpe.GetPrimaryKeysName(original_type, mpe, True, schema, Nothing), Function(s) New EntityExpression(s, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
+                End If
+            Else
+                selSb.Append("*")
+            End If
+
+            selSb.Append(" from ")
+            Return selectcmd.Insert(0, selSb.ToString).ToString
+        End Function
+
+        Protected Delegate Function ConvertDelegate(Of T, T2)(ByVal source As T) As T2
+
+        Protected Function ConvertAll(Of T, T2)(ByVal arr As IList(Of T), ByVal func As ConvertDelegate(Of T, T2)) As IList(Of T2)
+            Dim l As New List(Of T2)
+            For Each k As T In arr
+                l.Add(func(k))
+            Next
+            Return l
         End Function
 
         Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
@@ -1812,7 +1825,7 @@ l2:
                 If almgr.ContainsKey(tbl, Nothing) Then
                     'Dim [alias] As String = almgr.Aliases(tbl)
                     'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
-                    almgr.Replace(mpe, Me, tbl, Nothing, selectcmd)
+                    'almgr.Replace(mpe, Me, tbl, Nothing, selectcmd)
                 End If
                 'End If
             Next
@@ -1854,7 +1867,7 @@ l2:
                 End If
 
                 'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
-                almgr.Replace(mpe, Me, tbl, Nothing, selectcmd)
+                'almgr.Replace(mpe, Me, tbl, Nothing, selectcmd)
 
                 If i = 0 Then
                     selectcmd.Append(GetTableName(tbl_real)).Append(" ").Append([alias])

@@ -101,11 +101,11 @@ Namespace Expressions2
         End Function
 
         Public Overrides Function GetDynamicString() As String
-            Return _collation & "$" & MyBase.GetDynamicString
+            Return _order.ToString & "$" & _collation & "$" & MyBase.GetDynamicString
         End Function
 
         Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return _collation & "$" & MyBase.GetStaticString(mpe, contextFilter)
+            Return _order.ToString & "$" & _collation & "$" & MyBase.GetStaticString(mpe, contextFilter)
         End Function
 
         'Public ReadOnly Property CanEvaluate() As Boolean
