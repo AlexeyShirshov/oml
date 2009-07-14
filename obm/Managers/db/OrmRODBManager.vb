@@ -1244,23 +1244,11 @@ l1:
                     Dim sb As New StringBuilder
 
                     If selDic.Count > 1 Then
-                        sb.Append("select ")
                         Dim ctx As New ExecutorCtx
                         For Each lt As KeyValuePair(Of EntityUnion, trip) In selDic
                             Dim tt As Type = lt.Key.GetRealType(MappingEngine)
-                            'For Each p As SelectExpression In lt.Value.Cols
-                            '    StmtGenerator.CreateSelectExpressionFormater() _
-                            '        .Format(p, sb, New ExecutorCtx(tt, lt.Value.Schema), Nothing, MappingEngine, almgr, params, _
-                            '            GetContextInfo, Nothing, Nothing, True)
-                            '    sb.Append(", ")
-                            'Next
-                            sb.Append(BinaryExpressionBase.CreateFromEnumerable(lt.Value.Cols).MakeStatement( _
-                                 MappingEngine, Nothing, StmtGenerator, params, almgr, GetContextInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, _
-                                 New ExecutorCtx(tt, lt.Value.Schema)))
                             ctx.Dic(tt) = lt.Value.Schema
                         Next
-                        sb.Length -= 2
-                        sb.Append(" from ")
 
                         Dim from As New QueryCmd.FromClauseDef(selOS)
 
@@ -1274,6 +1262,18 @@ l1:
                             oschema, js, almgr, sb, SQLGenerator, ctx, Nothing, from, prd, original_type)
 
                         c.AddFilter(prd.Filter)
+                        Dim selSb As New StringBuilder
+                        selSb.Append("select ")
+                        For Each lt As KeyValuePair(Of EntityUnion, trip) In selDic
+                            Dim tt As Type = lt.Key.GetRealType(MappingEngine)
+                            selSb.Append(BinaryExpressionBase.CreateFromEnumerable(lt.Value.Cols).MakeStatement( _
+                                 MappingEngine, Nothing, StmtGenerator, params, almgr, GetContextInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, _
+                                 New ExecutorCtx(tt, lt.Value.Schema)))
+                            selSb.Append(",")
+                        Next
+                        selSb.Length -= 1
+                        selSb.Append(" from ")
+                        sb.Insert(0, selSb.ToString)
 
                         SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, GetContextInfo, params)
 

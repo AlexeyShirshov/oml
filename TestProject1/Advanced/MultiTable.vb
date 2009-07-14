@@ -128,7 +128,7 @@ Public Class TestMultiTable
         Dim m2 As MultiTable = Nothing
         Dim t As Table3 = Nothing
         Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("en"))
-            m2 = New QueryCmd().GetByID(Of MultiTable)(1, mgr)
+            m2 = New QueryCmd().GetByID(Of MultiTable)(1, True, mgr)
             t = New QueryCmd().GetByID(Of Table3)(1, mgr)
         End Using
 

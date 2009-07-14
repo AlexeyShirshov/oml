@@ -1178,8 +1178,8 @@ Imports Worm
 
             Dim rel As Meta.M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
-            rel.Load(Of Entity, Entity4)(col, False)
-            rel.Load(Of Entity, Entity4)(col, False)
+            rel.Load(Of Entity, Entity4)(col, False, mgr)
+            rel.Load(Of Entity, Entity4)(col, False, mgr)
 
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
@@ -1192,7 +1192,7 @@ Imports Worm
             e2.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
 
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
-            rel.Load(Of Entity, Entity4)(col, False)
+            rel.Load(Of Entity, Entity4)(col, False, mgr)
 
         End Using
     End Sub
@@ -1203,7 +1203,7 @@ Imports Worm
             Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, False, mgr)
             Dim col4 As New List(Of Entity4)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
-            rel.Load(Of Entity, Entity4)(col, False)
+            rel.Load(Of Entity, Entity4)(col, False, mgr)
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), col4)
             Assert.AreEqual(15, col4.Count)
 

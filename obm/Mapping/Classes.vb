@@ -420,13 +420,13 @@ Namespace Entities.Meta
         '    End Get
         'End Property
 
-        Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
-            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
-                sb.Replace(table.UniqueName(Nothing) & schema.Delimiter, _defaultAliases(table) & gen.Selector)
-            Else
-                sb.Replace(table.UniqueName(os) & schema.Delimiter, _objectAlises(os.ObjectAlias)(table) & gen.Selector)
-            End If
-        End Sub
+        'Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal gen As StmtGenerator, ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+        '    If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+        '        sb.Replace(table.UniqueName(Nothing) & schema.Delimiter, _defaultAliases(table) & gen.Selector)
+        '    Else
+        '        sb.Replace(table.UniqueName(os) & schema.Delimiter, _objectAlises(os.ObjectAlias)(table) & gen.Selector)
+        '    End If
+        'End Sub
 
         Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As String Implements IPrepareTable.GetAlias
             If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then

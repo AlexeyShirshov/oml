@@ -9,6 +9,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Criteria.Joins
 Imports Worm.Query
+Imports Worm
 
 <TestClass()> _
 Public Class TestDistinct
@@ -66,10 +67,13 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
             Dim r As New RelationDescEx(New EntityUnion(GetType(Table2)), New RelationDesc(New EntityUnion(tt), "Table1"))
-            Dim c As ICollection(Of Table2) = New QueryCmd().Join(r).SelectEntity(GetType(Table2), True).ToList(Of Table2)(mgr)
+            Dim c As ReadOnlyEntityList(Of Table2) = New QueryCmd() _
+                .SelectEntity(GetType(Table2), True) _
+                .Join(r) _
+                .ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, c.Count)
-            Assert.IsTrue(CType(c, IList(Of Table2))(0).InternalProperties.IsLoaded)
+            Assert.IsTrue(c(0).InternalProperties.IsLoaded)
         End Using
     End Sub
 

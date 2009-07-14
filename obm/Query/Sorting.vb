@@ -493,7 +493,7 @@ Namespace Query
             Public Delegate Function GetObjectDelegate(ByVal x As _IEntity, ByVal t As Type) As _IEntity
 
             Private _s As OrderByClause
-            Private _t As Type
+            'Private _t As Type
             Private _getobj As GetObjectDelegate
 
             'Public Sub New(ByVal t As Type, ByVal s As OrderByClause)
@@ -531,16 +531,11 @@ Namespace Query
                     End If
                 End If
 
-                'Dim tos As IEntitySchema = x.GetMappingEngine.GetEntitySchema(_t)
+                Dim tos As IEntitySchema = x.GetMappingEngine.GetEntitySchema(x.GetType)
                 For Each s As SortExpression In _s
-                    Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
-                    If ee Is Nothing Then
-                        Throw New NotSupportedException(String.Format("Expression type {0} is not supported", s.Operand.GetType))
-                    End If
 
-                    Dim ss As IEntitySchema = x.GetMappingEngine.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(x.GetMappingEngine))
-                    Dim xo As Object = GetValue(x, s, ss)
-                    Dim yo As Object = GetValue(y, s, ss)
+                    Dim xo As Object = GetValue(x, s, mpe, tos)
+                    Dim yo As Object = GetValue(y, s, mpe, tos)
                     Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
                     If pr2 IsNot Nothing Then
                         Dim c As IComparer = pr2.Second.CreateSortComparer(s)
@@ -553,6 +548,11 @@ Namespace Query
                             End If
                         Else
                             Dim pr As Pair(Of _IEntity, IOrmSorting) = TryCast(xo, Pair(Of _IEntity, IOrmSorting))
+                            Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
+                            If ee Is Nothing Then
+                                Throw New NotSupportedException(String.Format("Expression type {0} is not supported", s.Operand.GetType))
+                            End If
+                            Dim ss As IEntitySchema = mpe.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(mpe))
                             xo = x.GetMappingEngine.GetPropertyValue(pr.First, ee.ObjectProperty.PropertyAlias, ss)
                             yo = x.GetMappingEngine.GetPropertyValue(pr2.First, ee.ObjectProperty.PropertyAlias, ss)
                         End If
@@ -576,7 +576,7 @@ Namespace Query
                             Dim xc As IComparable = TryCast(xo, IComparable)
                             Dim yc As IComparable = TryCast(yo, IComparable)
                             If xc Is Nothing OrElse yc Is Nothing Then
-                                Throw New InvalidOperationException("Value " & ee.ObjectProperty.PropertyAlias & " in type " & s.GetStaticString(x.GetMappingEngine, Nothing) & " is not supported IComparable")
+                                Throw New InvalidOperationException("Expression " & s.GetDynamicString & " is not supported IComparable")
                             End If
                             p = xc.CompareTo(yc) * k
                             If p <> 0 Then
@@ -588,25 +588,24 @@ Namespace Query
                 Return p
             End Function
 
-            Private Function GetValue(ByVal xo As _IEntity, ByVal s As SortExpression, ByVal oschema As IEntitySchema) As Object
-                Dim schema As ObjectMappingEngine = xo.GetMappingEngine
+            Private Function GetValue(ByVal xo As _IEntity, ByVal s As SortExpression, _
+                ByVal mpe As ObjectMappingEngine, ByVal tos As IEntitySchema) As Object
                 Dim ee As EntityExpression = CType(s.Operand, EntityExpression)
-                Dim st As Type = ee.ObjectProperty.Entity.GetRealType(schema)
-                If st IsNot Nothing AndAlso _t IsNot st Then
+                Dim st As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
+                If xo.GetType IsNot st Then
                     If _getobj IsNot Nothing Then
                         xo = _getobj(xo, st)
                     Else
-                        xo = schema.GetJoinObj(oschema, xo, st)
+                        xo = mpe.GetJoinObj(tos, xo, st)
                     End If
-                    Dim os As IEntitySchema = schema.GetEntitySchema(st)
-                    Dim ss As IOrmSorting = TryCast(os, IOrmSorting)
+                    Dim ss As IOrmSorting = TryCast(tos, IOrmSorting)
                     If ss IsNot Nothing Then
                         Return New Pair(Of _IEntity, IOrmSorting)(xo, ss)
                     Else
-                        Return schema.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, oschema)
+                        Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
                     End If
                 End If
-                Return schema.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, oschema)
+                Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
             End Function
 
             Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare

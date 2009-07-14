@@ -627,7 +627,7 @@ Namespace Query.Database
             Dim be As BinaryExpressionBase = BinaryExpressionBase.CreateFromEnumerable(selList)
             If be IsNot Nothing Then
                 cols.Append(be.MakeStatement(mpe, query.FromClause, s, _
-                       params, almgr, filterInfo, MakeStatementMode.SelectWithoutTables, query))
+                       params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, query))
             End If
             If cols.Length > 0 Then
                 'cols.Length -= 2
@@ -811,7 +811,7 @@ l1:
                 End If
             End If
             'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
-            almgr.Replace(mpe, s, pkTable, osrc_, sb)
+            'almgr.Replace(mpe, s, pkTable, osrc_, sb)
             'Dim appendMain As Boolean
 
             Dim selectType As Type = Nothing
@@ -929,7 +929,8 @@ l1:
                             almgr.AddTable(tables(j), osrc, params)
                         End If
                         sb.Append(s.EndLine)
-                        almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_, sb), osrc_, sb)
+                        join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_, sb)
+                        'almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, from, s, q, filterInfo, almgr, params, osrc_, sb), osrc_, sb)
                     End If
                 Next
             End If
@@ -1098,7 +1099,8 @@ l1:
 
                         If join.ObjectSource IsNot Nothing AndAlso join.ObjectSource.IsQuery Then
                             sb.Append(s.EndLine)
-                            almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
+                            join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb)
+                            'almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
                         ElseIf needAppend Then
                             Dim mts As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                             If mts Is Nothing OrElse join.JoinType = JoinType.Join Then
@@ -1172,7 +1174,8 @@ l1:
                         End If
                     Else
                         sb.Append(s.EndLine)
-                        almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
+                        join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb)
+                        'almgr.Replace(mpe, s, join.MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, Nothing, sb), join.ObjectSource, sb)
                     End If
                 End If
             Next
@@ -1249,7 +1252,7 @@ l1:
             sb.Append(MakeQueryStatement(mpe, filterInfo, schema, query, params))
             sb.Append(") ").Append(al)
 
-            almgr.Replace(mpe, schema, t, eu, sb)
+            'almgr.Replace(mpe, schema, t, eu, sb)
         End Sub
 
         Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
@@ -1382,26 +1385,7 @@ l1:
                 os = query.GetEntitySchema(mpe, selType)
             End If
 
-            'Dim defaultTbl As SourceFragment = Nothing
-            'If query.Table IsNot Nothing Then
-            '    defaultTbl = query.FromClause.Table
-            'Else
-            '    defaultTbl = QueryCmd.InnerTbl
-            'End If
-
-            sb.Append("select ")
-
-            If query.IsDistinct Then
-                sb.Append("distinct ")
-            End If
-
-            If query.TopParam IsNot Nothing Then
-                sb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
-            End If
-
-            FormSelectList(mpe, query, sb, s, os, selType, almgr, filterInfo, params, query._sl)
-
-            sb.Append(" from ")
+            Dim sbStart As Integer = sb.Length
 
             Dim p As New Criteria.PredicateLink
             Dim newPK As Pair(Of SourceFragment, String) = Nothing
@@ -1417,7 +1401,22 @@ l1:
 
             FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, query, newPK, query.FromClause, p, query.GetSelectedType(mpe))
 
-            ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
+            'ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
+            Dim selSb As New StringBuilder
+            selSb.Append("select ")
+
+            If query.IsDistinct Then
+                selSb.Append("distinct ")
+            End If
+
+            If query.TopParam IsNot Nothing Then
+                selSb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
+            End If
+
+            FormSelectList(mpe, query, selSb, s, os, selType, almgr, filterInfo, params, query._sl)
+
+            selSb.Append(" from ")
+            sb.Insert(sbStart, selSb.ToString)
 
             FormWhere(mpe, s, os, p.and(query._f).Filter, almgr, sb, filterInfo, params, query)
 

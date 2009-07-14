@@ -599,8 +599,7 @@ Public Class TestManagerRS
             Assert.AreEqual(2, t1.Count)
 
             Dim t1s As ReadOnlyList(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
-            t1s.LoadParentEntities("Table1")
-            Dim t10s As ICollection(Of Table10) = t1s.SelectEntity(Of Table10)("Table1")
+            Dim t10s As ReadOnlyList(Of Table10) = t1s.LoadChildren(Of Table10)(New RelationDesc(New EntityUnion(GetType(Table10)), "Table1"), True, mgr)
             Assert.AreEqual(3, t10s.Count)
 
             Dim t2 As ICollection(Of Table10) = New QueryCmd().SelectEntity(GetType(Table10), WithLoad).Where(New Ctor(GetType(Table10)).prop("Table1").eq(tt2)).ToList(Of Table10)(mgr)
@@ -653,7 +652,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Table1), GetType(Table33), True)
-            rel.Load(Of Table1, Table33)(t1s, False)
+            rel.Load(Of Table1, Table33)(t1s, False, mgr)
             'mgr.LoadObjects(Of Table33)(rel, Nothing, CType(t1s, System.Collections.ICollection), Nothing)
 
             Dim tt1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
@@ -1238,7 +1237,7 @@ Public Class TestManagerRS
                 .Distinct(True) _
                 .Where(Ctor.prop(GetType(Table1_x), "ID").eq(1)) _
                 .OrderBy(SCtor.prop(GetType(Table1_x), "Title")) _
-                .SelectEntity(GetType(Table1), True) _
+                .SelectEntity(GetType(Table1_x), True) _
                 .ToOrmList(Of Table1_x)(mgr)
             Assert.AreEqual(1, r.Count)
 
