@@ -698,7 +698,7 @@ Namespace Entities
 #Region " Relations "
         Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
             Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
-            For Each rl As Relation In _relations
+            For Each rl As Relation In _relations.ToArray
                 For Each e As ICachedEntity In rl.Added
                     l.Add(e)
                 Next

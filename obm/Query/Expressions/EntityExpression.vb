@@ -99,6 +99,7 @@ Namespace Expressions2
             End If
 
             If almgr IsNot Nothing AndAlso (stmtMode And MakeStatementMode.WithoutTables) <> MakeStatementMode.WithoutTables Then
+                Debug.Assert(almgr.ContainsKey(tbl, _op.Entity))
                 Try
                     [alias] = almgr.GetAlias(tbl, _op.Entity) & stmt.Selector
                 Catch ex As KeyNotFoundException

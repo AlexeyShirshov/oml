@@ -244,7 +244,12 @@ Namespace Expressions2
                     c.Add(New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes) With {.ColumnName = s.ColumnAlias})
                 Else
                     Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
-                    c.Add(New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                    If ee IsNot Nothing Then
+                        c.Add(New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                    Else
+                        Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
+                        c.Add(New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                    End If
                 End If
             Next
             Return c
@@ -325,6 +330,11 @@ Namespace Expressions2
                 Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
                 If ee IsNot Nothing Then
                     propertyAlias = ee.ObjectProperty.PropertyAlias
+                Else
+                    Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
+                    If pe IsNot Nothing Then
+                        propertyAlias = pe.PropertyAlias
+                    End If
                 End If
             End If
             If String.IsNullOrEmpty(propertyAlias) Then
@@ -356,7 +366,7 @@ Namespace Expressions2
             ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As IExecutionContext) As String Implements Expressions2.IExpression.MakeStatement
 
-            If Not String.IsNullOrEmpty(_falias) Then
+            If Not String.IsNullOrEmpty(_falias) AndAlso ((stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias) Then
                 Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode And Not MakeStatementMode.AddColumnAlias, executor) & " as " & _falias
             Else
                 Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
@@ -412,22 +422,26 @@ Namespace Expressions2
                 Dim tbl As SourceFragment = fromClause.Table
                 Dim os As EntityUnion = Nothing
                 If tbl Is Nothing Then
-                    tbl = fromClause.QueryEU.ObjectAlias.Tbl
+                    Dim oal As QueryAlias = fromClause.QueryEU.ObjectAlias
+                    If oal Is Nothing Then
+                        Throw New InvalidOperationException(String.Format("PropertyAliasExpression with {0} property must be used for referencing inner query fields. Now it references to {1}", _pa, fromClause.QueryEU._ToString))
+                    End If
+                    tbl = oal.Tbl
                     os = fromClause.QueryEU
                 End If
 
-                If (stmtMode And MakeStatementMode.WithoutTables) = 0 Then
-                    al = tbl.UniqueName(os)
-                Else
-                    al = almgr.GetAlias(tbl, os)
-                End If
+                'If (stmtMode And MakeStatementMode.WithoutTables) = 0 Then
+                '    al = tbl.UniqueName(os)
+                'Else
+                al = almgr.GetAlias(tbl, os)
+                'End If
             End If
 
-            If (stmtMode Or MakeStatementMode.Select) = MakeStatementMode.Select Then
-                Return al & mpe.Delimiter & executor.FindColumn(mpe, _pa)
-            Else
-                Return al & stmt.Selector & executor.FindColumn(mpe, _pa)
-            End If
+            'If (stmtMode Or MakeStatementMode.Select) = MakeStatementMode.Select Then
+            '    Return al & mpe.Delimiter & executor.FindColumn(mpe, _pa)
+            'Else
+            Return al & stmt.Selector & executor.FindColumn(mpe, _pa)
+            'End If
         End Function
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse
@@ -465,5 +479,14 @@ Namespace Expressions2
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
+
+        Public Property PropertyAlias() As String
+            Get
+                Return _pa
+            End Get
+            Set(ByVal value As String)
+                _pa = value
+            End Set
+        End Property
     End Class
 End Namespace

@@ -38,11 +38,11 @@ Imports Worm.Query
         t = GetType(Entity2)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(s, t, almgr, params, Nothing, Nothing, Nothing))
+        Assert.AreEqual("select t1.id,t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(s, t, almgr, params, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, s.GetTables(t).Length)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(s2, t, almgr, params2, Nothing, Nothing, Nothing))
+        Assert.AreEqual("select t1.id,t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(s2, t, almgr, params2, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, s2.GetTables(t).Length)
 
         Dim schemaV3 As New SQLGenerator

@@ -627,7 +627,7 @@ Namespace Query.Database
             Dim be As BinaryExpressionBase = BinaryExpressionBase.CreateFromEnumerable(selList)
             If be IsNot Nothing Then
                 cols.Append(be.MakeStatement(mpe, query.FromClause, s, _
-                       params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, query))
+                       params, almgr, filterInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, query))
             End If
             If cols.Length > 0 Then
                 'cols.Length -= 2

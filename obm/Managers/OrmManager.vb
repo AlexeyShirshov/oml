@@ -3291,15 +3291,18 @@ l1:
 #End If
 
                                 If r.ConnectedType Is Nothing Then
+                                    Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
                                     If r.DeleteCascade Then
 #If OLDM2M Then
                                         M2MDelete(orm, r.Entity.GetRealType(MappingEngine), r.Key)
 #End If
-                                        Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
+
                                         If cmd IsNot Nothing Then
                                             cmd.RemoveAll(Me)
                                             toDel.Add(CType(cmd.Relation, M2MRelation))
                                         End If
+                                    ElseIf cmd IsNot Nothing AndAlso cmd.Relation.HasDeleted Then
+                                        toDel.Add(CType(cmd.Relation, M2MRelation))
                                     End If
 #If OLDM2M Then
                                     acs = M2MSave(orm, r.Entity.GetRealType(MappingEngine), r.Key)

@@ -602,7 +602,7 @@ Namespace Query
                     If ss IsNot Nothing Then
                         Return New Pair(Of _IEntity, IOrmSorting)(xo, ss)
                     Else
-                        Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
+                        Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, mpe.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(mpe)))
                     End If
                 End If
                 Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
