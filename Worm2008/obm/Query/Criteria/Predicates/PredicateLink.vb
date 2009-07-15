@@ -319,13 +319,13 @@ Namespace Criteria
             Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).not_exists(t, joinFilter.Filter)
         End Function
 
-        Public Function and_exists(ByVal t As Type, ByVal joinFilter As IGetFilter, ByVal joins() As QueryJoin) As PredicateLink
-            Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).exists(t, joinFilter.Filter, joins)
-        End Function
+        'Public Function and_exists(ByVal t As Type, ByVal joinFilter As IGetFilter, ByVal joins() As QueryJoin) As PredicateLink
+        '    Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).exists(t, joinFilter.Filter, joins)
+        'End Function
 
-        Public Function and_not_exists(ByVal t As Type, ByVal joinFilter As IGetFilter, ByVal joins() As QueryJoin) As PredicateLink
-            Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).not_exists(t, joinFilter.Filter, joins)
-        End Function
+        'Public Function and_not_exists(ByVal t As Type, ByVal joinFilter As IGetFilter, ByVal joins() As QueryJoin) As PredicateLink
+        '    Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).not_exists(t, joinFilter.Filter, joins)
+        'End Function
 
         'Public Function AndExistsM2M(ByVal t As Type, ByVal t2 As Type, ByVal filter As IGetFilter, ByVal mpe As ObjectMappingEngine) As PredicateLink
         '    Dim t12t2 As Entities.Meta.M2MRelation = mpe.GetM2MRelation(t, t2, True)

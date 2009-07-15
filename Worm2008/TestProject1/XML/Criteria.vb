@@ -49,13 +49,13 @@ Imports Worm.Query
     '
 #End Region
 
-    <TestMethod()> Public Sub TestQuery()
+    <TestMethod(), ExpectedException(GetType(NotImplementedException))> Public Sub TestQuery()
         Using mgr As OrmManager = CreateManager()
-            Dim col As ICollection(Of Entity4) = New QueryCmd().Where(Ctor.prop(New EntityUnion(GetType(Entity4)), "Title").eq("first")).ToList(Of Entity4)(mgr)
+            Dim col As ReadOnlyEntityList(Of Entity4) = New QueryCmd().Where(Ctor.prop(New EntityUnion(GetType(Entity4)), "Title").eq("first")).ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(1, col.Count)
 
-            Dim e As Entity4 = CType(col, IList(Of Entity4))(0)
+            Dim e As Entity4 = col(0)
             Assert.AreEqual("first", e.Title)
             Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
 

@@ -763,7 +763,7 @@ Imports Worm.Expressions2
 
             Dim q As New QueryCmd
 
-            q.Where(Ctor.prop(tt2, "Table1").not_exists(GetType(Table1), _
+            q.Where(Ctor.not_exists(GetType(Table1), _
                 Ctor.prop(GetType(Table1), "Code").eq(45). _
                 [and]( _
                     Ctor.prop(tt2, "Table1").eq(GetType(Table1), "Enum") _

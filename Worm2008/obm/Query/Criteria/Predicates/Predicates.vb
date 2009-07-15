@@ -82,7 +82,7 @@ Namespace Criteria
 
         Protected Function cjf(ByVal t As Type, ByVal joinPropertyAlias As String, ByVal jfo As FilterOperation, ByVal fo As FilterOperation) As IFilter
             Dim j As IFilter = CreateJoinFilter(New ObjectProperty(t, joinPropertyAlias), jfo)
-            Return New NonTemplateUnaryFilter(New SubQuery(t, j), fo)
+            Return New NonTemplateUnaryFilter(New SubQueryCmd(New QueryCmd().SelectEntity(t).From(t).Where(j)), fo)
         End Function
 
         Public Function eq(ByVal value As IFilterValue) As PredicateLink
@@ -253,19 +253,19 @@ Namespace Criteria
         End Function
 
         Public Overloads Function [in](ByVal t As Type) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing), FilterOperation.In))
+            Return GetLink(CreateFilter(New SubQueryCmd(New QueryCmd().SelectEntity(t).From(t)), FilterOperation.In))
         End Function
 
         Public Overloads Function not_in(ByVal t As Type) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing), FilterOperation.NotIn))
+            Return GetLink(CreateFilter(New SubQueryCmd(New QueryCmd().SelectEntity(t).From(t)), FilterOperation.NotIn))
         End Function
 
         Public Overloads Function [in](ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing, propertyAlias), FilterOperation.In))
+            Return GetLink(CreateFilter(New SubQueryCmd(New QueryCmd().Select(FCtor.prop(t, propertyAlias)).From(t)), FilterOperation.In))
         End Function
 
         Public Overloads Function not_in(ByVal t As Type, ByVal propertyAlias As String) As PredicateLink
-            Return GetLink(CreateFilter(New SubQuery(t, Nothing, propertyAlias), FilterOperation.NotIn))
+            Return GetLink(CreateFilter(New SubQueryCmd(New QueryCmd().Select(FCtor.prop(t, propertyAlias)).From(t)), FilterOperation.NotIn))
         End Function
 
         Public Overloads Function [in](ByVal cmd As QueryCmd) As PredicateLink
@@ -296,14 +296,6 @@ Namespace Criteria
         '    Return not_exists(t, Entities.OrmBaseT.PKName)
         'End Function
 
-        Public Function exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
-            Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, f.Filter), FilterOperation.Exists))
-        End Function
-
-        Public Function not_exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
-            Return GetLink(New NonTemplateUnaryFilter(New SubQuery(t, f.Filter), FilterOperation.NotExists))
-        End Function
-
         Public Function exists(ByVal cmd As Query.QueryCmd) As PredicateLink
             Return GetLink(New NonTemplateUnaryFilter(New SubQueryCmd(cmd), FilterOperation.Exists))
         End Function
@@ -312,17 +304,25 @@ Namespace Criteria
             Return GetLink(New NonTemplateUnaryFilter(New SubQueryCmd(cmd), FilterOperation.NotExists))
         End Function
 
-        Public Function exists(ByVal t As Type, ByVal joinFilter As IFilter, ByVal joins() As QueryJoin) As PredicateLink
-            Dim sq As New SubQuery(t, joinFilter)
-            sq.Joins = joins
-            Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.Exists)), PredicateLink)
+        Public Function exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
+            Return exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
         End Function
 
-        Public Function not_exists(ByVal t As Type, ByVal joinFilter As IFilter, ByVal joins() As QueryJoin) As PredicateLink
-            Dim sq As New SubQuery(t, joinFilter)
-            sq.Joins = joins
-            Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.NotExists)), PredicateLink)
+        Public Function not_exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
+            Return not_exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
         End Function
+
+        'Public Function exists(ByVal t As Type, ByVal joinFilter As IFilter, ByVal joins() As QueryJoin) As PredicateLink
+        '    Dim sq As New SubQuery(t, joinFilter)
+        '    sq.Joins = joins
+        '    Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.Exists)), PredicateLink)
+        'End Function
+
+        'Public Function not_exists(ByVal t As Type, ByVal joinFilter As IFilter, ByVal joins() As QueryJoin) As PredicateLink
+        '    Dim sq As New SubQuery(t, joinFilter)
+        '    sq.Joins = joins
+        '    Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.NotExists)), PredicateLink)
+        'End Function
     End Class
 
     Public Class PropertyPredicate

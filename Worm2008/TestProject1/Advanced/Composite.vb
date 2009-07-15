@@ -148,27 +148,6 @@ Public Class CompositeEditableSchema
         Return _idx
     End Function
 
-    'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableWithM2MSchema.GetJoins
-    '    Return Nothing
-    'End Function
-
-    'Public Function GetTables() As SourceFragment() Implements IMultiTableWithM2MSchema.GetTables
-    '    Return _tables
-    'End Function
-
-    'Public Function GetM2MRelations() As Worm.Entities.Meta.M2MRelationDesc() Implements Worm.Entities.Meta.ISchemaWithM2M.GetM2MRelations
-    '    Return Nothing
-    'End Function
-
-    'Public Function GetSuppressedFields() As String() Implements Worm.Entities.Meta.IEntitySchema.GetSuppressedFields
-    '    Return Nothing
-    'End Function
-
-    'Public Function ChangeValueType(ByVal c As Worm.Entities.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Entities.Meta.IEntitySchem.ChangeValueType
-    '    newvalue = value
-    '    Return False
-    'End Function
-
     Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
         Get
             Return _tables(0)

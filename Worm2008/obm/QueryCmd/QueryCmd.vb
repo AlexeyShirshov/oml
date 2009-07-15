@@ -112,10 +112,10 @@ Namespace Query
                         End If
                         Return _qeu
                     End If
-                    If ObjectSource IsNot Nothing AndAlso ObjectSource.AnyType Is Nothing AndAlso String.IsNullOrEmpty(ObjectSource.AnyEntityName) Then
-                        Return ObjectSource
-                    End If
-                    Return Nothing
+                    'If ObjectSource IsNot Nothing AndAlso ObjectSource.AnyType Is Nothing AndAlso String.IsNullOrEmpty(ObjectSource.AnyEntityName) Then
+                    '    Return ObjectSource
+                    'End If
+                    Return ObjectSource
                 End Get
             End Property
 
@@ -704,9 +704,9 @@ Namespace Query
                     se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
                 End If
             End If
-            'If String.IsNullOrEmpty(se.GetIntoPropertyAlias) AndAlso Not String.IsNullOrEmpty(se.Column) Then
-            '    se.IntoPropertyAlias = se.Column
-            'End If
+            If TypeOf se.Operand Is PropertyAliasExpression AndAlso String.IsNullOrEmpty(se.GetIntoPropertyAlias) Then
+                se.IntoPropertyAlias = CType(se.Operand, PropertyAliasExpression).PropertyAlias
+            End If
         End Sub
 
         Protected Sub PrepareSelectList(ByVal executor As IExecutor, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean, ByVal mpe As ObjectMappingEngine, _
@@ -4221,9 +4221,9 @@ l1:
                         Return se.ColumnAlias
                     Else
                         Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
-                        If col.Count <> 1 Then
-                            Throw New QueryCmdException("", Me)
-                        End If
+                        'If col.Count <> 1 Then
+                        '    Throw New QueryCmdException("", Me)
+                        'End If
                         For Each su As SelectUnion In col
                             If su.EntityUnion IsNot Nothing Then
                                 Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
@@ -4232,8 +4232,8 @@ l1:
                                 Else
                                     Return map.ColumnExpression
                                 End If
-                            Else
-                                Throw New QueryCmdException("", Me)
+                                'Else
+                                '    Throw New QueryCmdException("", Me)
                             End If
                         Next
                     End If
@@ -4256,7 +4256,11 @@ l1:
                 'End If
             Next
 
-            Return Nothing
+            If _from.AnyQuery Is Nothing Then
+                Throw New QueryCmdException("Couldn't find column for property " & p, Me)
+            Else
+                Return _from.AnyQuery.FindColumn(mpe, p)
+            End If
         End Function
 
         Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get

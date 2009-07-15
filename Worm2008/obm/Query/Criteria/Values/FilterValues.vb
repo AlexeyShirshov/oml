@@ -984,174 +984,174 @@ Namespace Criteria.Values
         End Property
     End Class
 
-    <Serializable()> _
-    Public Class SubQuery
-        Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
-        Cache.IQueryDependentTypes
+    '    <Serializable()> _
+    '    Public Class SubQuery
+    '        Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+    '        Cache.IQueryDependentTypes
 
-        Private _t As Type
-        Private _tbl As SourceFragment
-        Private _f As IFilter
-        Private _field As String
-        Private _joins() As Worm.Criteria.Joins.QueryJoin
+    '        Private _t As Type
+    '        Private _tbl As SourceFragment
+    '        Private _f As IFilter
+    '        Private _field As String
+    '        Private _joins() As Worm.Criteria.Joins.QueryJoin
 
-        Public Sub New(ByVal t As Type, ByVal f As IFilter)
-            _t = t
-            _f = f
-        End Sub
+    '        Public Sub New(ByVal t As Type, ByVal f As IFilter)
+    '            _t = t
+    '            _f = f
+    '        End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal f As IFilter)
-            _tbl = table
-            _f = f
-        End Sub
+    '        Public Sub New(ByVal table As SourceFragment, ByVal f As IFilter)
+    '            _tbl = table
+    '            _f = f
+    '        End Sub
 
-        Public Sub New(ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
-            '_tbl = CType(OrmManager.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
-            _t = t
-            _f = f
-            _field = field
-        End Sub
+    '        Public Sub New(ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
+    '            '_tbl = CType(OrmManager.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
+    '            _t = t
+    '            _f = f
+    '            _field = field
+    '        End Sub
 
-#Region " Properties "
+    '#Region " Properties "
 
-        Public Property Joins() As Worm.Criteria.Joins.QueryJoin()
-            Get
-                Return _joins
-            End Get
-            Set(ByVal value As Worm.Criteria.Joins.QueryJoin())
-                _joins = value
-            End Set
-        End Property
+    '        Public Property Joins() As Worm.Criteria.Joins.QueryJoin()
+    '            Get
+    '                Return _joins
+    '            End Get
+    '            Set(ByVal value As Worm.Criteria.Joins.QueryJoin())
+    '                _joins = value
+    '            End Set
+    '        End Property
 
-        Public ReadOnly Property Filter() As IFilter
-            Get
-                Return _f
-            End Get
-        End Property
+    '        Public ReadOnly Property Filter() As IFilter
+    '            Get
+    '                Return _f
+    '            End Get
+    '        End Property
 
-        Public ReadOnly Property Table() As SourceFragment
-            Get
-                Return _tbl
-            End Get
-        End Property
+    '        Public ReadOnly Property Table() As SourceFragment
+    '            Get
+    '                Return _tbl
+    '            End Get
+    '        End Property
 
-        Public ReadOnly Property Type() As Type
-            Get
-                Return _t
-            End Get
-        End Property
+    '        Public ReadOnly Property Type() As Type
+    '            Get
+    '                Return _t
+    '            End Get
+    '        End Property
 
-#End Region
+    '#End Region
 
-        Public Overridable Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
-            Dim r As String = Nothing
-            If _t IsNot Nothing Then
-                r = _t.ToString()
-            Else
-                r = _tbl.RawName
-            End If
-            If _joins IsNot Nothing Then
-                r &= "$"
-                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
-                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
-                        r &= join._ToString
-                    End If
-                Next
-            End If
-            If _f IsNot Nothing Then
-                r &= "$" & _f._ToString
-            End If
-            If Not String.IsNullOrEmpty(_field) Then
-                r &= "$" & _field
-            End If
-            Return r
-        End Function
+    '        Public Overridable Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
+    '            Dim r As String = Nothing
+    '            If _t IsNot Nothing Then
+    '                r = _t.ToString()
+    '            Else
+    '                r = _tbl.RawName
+    '            End If
+    '            If _joins IsNot Nothing Then
+    '                r &= "$"
+    '                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
+    '                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
+    '                        r &= join._ToString
+    '                    End If
+    '                Next
+    '            End If
+    '            If _f IsNot Nothing Then
+    '                r &= "$" & _f._ToString
+    '            End If
+    '            If Not String.IsNullOrEmpty(_field) Then
+    '                r &= "$" & _field
+    '            End If
+    '            Return r
+    '        End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
-                      ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                      ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
-            Dim sb As New StringBuilder
-            'Dim dbschema As DbSchema = CType(schema, DbSchema)
-            sb.Append("(")
+    '        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+    '                      ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
+    '                      ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+    '            Dim sb As New StringBuilder
+    '            'Dim dbschema As DbSchema = CType(schema, DbSchema)
+    '            sb.Append("(")
 
-            'If _stmtGen Is Nothing Then
-            '    _stmtGen = TryCast(schema, SQLGenerator)
-            'End If
+    '            'If _stmtGen Is Nothing Then
+    '            '    _stmtGen = TryCast(schema, SQLGenerator)
+    '            'End If
 
-            stmt.FormStmt(schema, fromClause, filterInfo, paramMgr, almgr, sb, _t, _tbl, _joins, _field, _f)
+    '            stmt.FormStmt(schema, fromClause, filterInfo, paramMgr, almgr, sb, _t, _tbl, _joins, _field, _f)
 
-            sb.Append(")")
+    '            sb.Append(")")
 
-            Return sb.ToString
-        End Function
+    '            Return sb.ToString
+    '        End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-            Dim r As String = Nothing
-            If _t IsNot Nothing Then
-                r = _t.ToString()
-            Else
-                r = _tbl.RawName
-            End If
-            If _joins IsNot Nothing Then
-                r &= "$"
-                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
-                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
-                        r &= join.GetStaticString(mpe, contextFilter)
-                    End If
-                Next
-            End If
-            If _f IsNot Nothing Then
-                r &= "$" & _f.GetStaticString(mpe, contextFilter)
-            End If
-            If Not String.IsNullOrEmpty(_field) Then
-                r &= "$" & _field
-            End If
-            Return r
-        End Function
+    '        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+    '            Dim r As String = Nothing
+    '            If _t IsNot Nothing Then
+    '                r = _t.ToString()
+    '            Else
+    '                r = _tbl.RawName
+    '            End If
+    '            If _joins IsNot Nothing Then
+    '                r &= "$"
+    '                For Each join As Worm.Criteria.Joins.QueryJoin In _joins
+    '                    If Not Worm.Criteria.Joins.QueryJoin.IsEmpty(join) Then
+    '                        r &= join.GetStaticString(mpe, contextFilter)
+    '                    End If
+    '                Next
+    '            End If
+    '            If _f IsNot Nothing Then
+    '                r &= "$" & _f.GetStaticString(mpe, contextFilter)
+    '            End If
+    '            If Not String.IsNullOrEmpty(_field) Then
+    '                r &= "$" & _field
+    '            End If
+    '            Return r
+    '        End Function
 
-        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-            'If _t Is Nothing Then
-            '    Return New Cache.EmptyDependentTypes
-            'End If
+    '        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+    '            'If _t Is Nothing Then
+    '            '    Return New Cache.EmptyDependentTypes
+    '            'End If
 
-            Dim dp As New Cache.DependentTypes
-            If _joins IsNot Nothing Then
-                For Each j As Worm.Criteria.Joins.QueryJoin In _joins
-                    Dim t As Type = j.ObjectSource.GetRealType(mpe)
-                    'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
-                    '    t = mpe.GetTypeByEntityName(j.EntityName)
-                    'End If
-                    'If t Is Nothing Then
-                    '    Return New Cache.EmptyDependentTypes
-                    'End If
-                    dp.AddBoth(t)
-                Next
-            End If
+    '            Dim dp As New Cache.DependentTypes
+    '            If _joins IsNot Nothing Then
+    '                For Each j As Worm.Criteria.Joins.QueryJoin In _joins
+    '                    Dim t As Type = j.ObjectSource.GetRealType(mpe)
+    '                    'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+    '                    '    t = mpe.GetTypeByEntityName(j.EntityName)
+    '                    'End If
+    '                    'If t Is Nothing Then
+    '                    '    Return New Cache.EmptyDependentTypes
+    '                    'End If
+    '                    dp.AddBoth(t)
+    '                Next
+    '            End If
 
-            If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
-                For Each f As IFilter In _f.Filter.GetAllFilters
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
-                    If Cache.IsCalculated(fdp) Then
-                        dp.Merge(fdp)
-                        'Else
-                        '    Return fdp
-                    End If
-                Next
-            End If
+    '            If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
+    '                For Each f As IFilter In _f.Filter.GetAllFilters
+    '                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
+    '                    If Cache.IsCalculated(fdp) Then
+    '                        dp.Merge(fdp)
+    '                        'Else
+    '                        '    Return fdp
+    '                    End If
+    '                Next
+    '            End If
 
-            Return dp.Get
-        End Function
+    '            Return dp.Get
+    '        End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            'do nothing
-        End Sub
+    '        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+    '            'do nothing
+    '        End Sub
 
-        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
-            Get
-                Return True
-            End Get
-        End Property
-    End Class
+    '        Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse
+    '            Get
+    '                Return True
+    '            End Get
+    '        End Property
+    '    End Class
 
     <Serializable()> _
     Public Class SubQueryCmd
@@ -1198,7 +1198,6 @@ Namespace Criteria.Values
             'End If
 
             'QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
-
             sb.Append(stmt.MakeQueryStatement(schema, fromClause, filterInfo, _q, paramMgr, almgr))
             'End Using
 
@@ -1225,6 +1224,7 @@ Namespace Criteria.Values
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            _q.AutoFields = False
             _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
         End Sub
 

@@ -772,7 +772,7 @@ l1:
 
                         Dim almgr As AliasMgr = AliasMgr.Create
                         almgr.AddTable(pk_table, "t1")
-                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(sel_columns.ConvertAll(Function(d) New EntityExpression(d.PropertyAlias, type))).MakeStatement(mpe, Nothing, Me, params, almgr, Nothing, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
+                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(sel_columns.ConvertAll(Function(d) New EntityExpression(d.PropertyAlias, type))).MakeStatement(mpe, Nothing, Me, params, almgr, Nothing, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(type, os)))
                         selSb.Append(" from ").Append(GetTableName(pk_table)).Append(" t1 where ")
                         'almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
                         ins_cmd.Append(selSb.ToString)
@@ -1516,6 +1516,7 @@ l2:
                     'Else
 
                     'End If
+                    If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
                     selSb.Append(BinaryExpressionBase.CreateFromEnumerable(ConvertAll(arr, Function(s) New EntityExpression(s.PropertyAlias, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)

@@ -741,7 +741,7 @@ Imports Worm
 
                 e2.SaveChanges(True)
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(10, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(10, True, mgr)
 
                 Assert.IsNull(e2)
             Finally
@@ -764,7 +764,7 @@ Imports Worm
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e2))
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(11, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(11, True, mgr)
 
                 Assert.IsNull(e2)
             Finally

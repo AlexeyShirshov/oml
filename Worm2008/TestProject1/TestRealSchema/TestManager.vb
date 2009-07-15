@@ -854,7 +854,7 @@ Public Class TestManagerRS
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
 
-                e = New QueryCmd().GetByID(Of Composite)(1, mgr)
+                e = New QueryCmd().GetByID(Of Composite)(1, True, mgr)
 
                 Assert.IsNull(e)
             Finally

@@ -264,9 +264,10 @@ Public Class TestSchema
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
 
-            Dim t2 As IList(Of Table1) = New QueryCmd().Where( _
-                    Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
-                    .OrderBy(SCtor.prop(GetType(Table1), "EnumStr").prop("Enum").desc).ToList(Of Table1)(mgr)
+            Dim t2 As IList(Of Table1) = New QueryCmd() _
+                .Where(Ctor.prop(GetType(Table1), "EnumStr").eq("sec")) _
+                .OrderBy(SCtor.prop(GetType(Table1), "EnumStr").prop(GetType(Table1), "Enum").desc) _
+                .ToList(Of Table1)(mgr)
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)
