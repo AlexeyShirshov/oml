@@ -958,12 +958,12 @@ Public Class TestManagerRS
             'Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             'Assert.AreEqual(1, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop("ID"))
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID"))
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop("ID").desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID").desc)
             Assert.AreEqual(2, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(1, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
