@@ -1517,10 +1517,10 @@ l2:
 
                     'End If
                     If arr Is Nothing Then arr = mpe.GetSortedFieldList(original_type, schema)
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(ConvertAll(arr, Function(s) New EntityExpression(s.PropertyAlias, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(ConvertAll(arr, Function(s) New EntityExpression(s.PropertyAlias, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(Array.ConvertAll(mpe.GetPrimaryKeysName(original_type, mpe, True, schema, Nothing), Function(s) New EntityExpression(s, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, Nothing))
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(Array.ConvertAll(mpe.GetPrimaryKeysName(original_type, mpe, True, schema, Nothing), Function(s) New EntityExpression(s, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 End If
             Else
                 selSb.Append("*")

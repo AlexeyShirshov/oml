@@ -175,7 +175,7 @@ Public Class TestSchema
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(SQLGeneratorException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestOrderWrong()
         Dim schema As New Worm.ObjectMappingEngine("1")
 

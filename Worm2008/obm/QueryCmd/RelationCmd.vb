@@ -464,7 +464,8 @@ l1:
                                 te.SetEntity(ideu)
                                 _sl.Add(New SelectExpression(te) With { _
                                     .Attributes = Field2DbRelations.PK, _
-                                    .IntoPropertyAlias = pk.PropertyAlias _
+                                    .IntoPropertyAlias = pk.PropertyAlias, _
+                                    .Into = m2mEU _
                                 })
                             End If
                         End If
