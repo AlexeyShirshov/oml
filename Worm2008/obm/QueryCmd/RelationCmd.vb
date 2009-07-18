@@ -748,25 +748,25 @@ l1:
             End If
         End Sub
 
-        Public Sub Add(ByVal o As ICachedEntity, ByVal key As String)
-            If o IsNot Nothing Then
-                Relation.Host.Add(o, key)
-                If Not IsM2M Then
-                    Using gm As IGetManager = o.GetMgr
-                        Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                        Try
-                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
-                        Catch ex As InvalidCastException
-                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
-                        End Try
-                    End Using
-                End If
-            End If
-        End Sub
+        'Public Sub Add(ByVal o As ICachedEntity, ByVal key As String)
+        '    If o IsNot Nothing Then
+        '        Relation.Host.Add(o, key)
+        '        If Not IsM2M Then
+        '            Using gm As IGetManager = o.GetMgr
+        '                Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+        '                Try
+        '                    mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+        '                Catch ex As InvalidCastException
+        '                    mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
+        '                End Try
+        '            End Using
+        '        End If
+        '    End If
+        'End Sub
 
         Public Sub Add(ByVal o As ICachedEntity)
             If o IsNot Nothing Then
-                Relation.Host.Add(o)
+                Relation.Host.Add(o, Relation.Key)
                 If Not IsM2M Then
                     Using gm As IGetManager = o.GetMgr
                         Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
@@ -780,22 +780,22 @@ l1:
             End If
         End Sub
 
-        Public Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
-            Relation.Host.Remove(o, key)
-            If Not IsM2M Then
-                Using gm As IGetManager = o.GetMgr
-                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
-                    Try
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
-                    Catch ex As InvalidCastException
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
-                    End Try
-                End Using
-            End If
-        End Sub
+        'Public Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
+        '    Relation.Host.Remove(o, key)
+        '    If Not IsM2M Then
+        '        Using gm As IGetManager = o.GetMgr
+        '            Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+        '            Try
+        '                mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+        '            Catch ex As InvalidCastException
+        '                mpe.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
+        '            End Try
+        '        End Using
+        '    End If
+        'End Sub
 
         Public Sub Remove(ByVal o As ICachedEntity)
-            Relation.Host.Remove(o)
+            Relation.Host.Remove(o, Relation.Key)
             If Not IsM2M Then
                 Using gm As IGetManager = o.GetMgr
                     Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine

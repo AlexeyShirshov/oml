@@ -48,16 +48,16 @@ Imports Worm.Criteria.Joins
     '
 #End Region
 
-    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
-    Public Sub TestFilterWrong()
-        Dim t1 As New QueryAlias(GetType(Table1))
+    '<TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
+    'Public Sub TestFilterWrong()
+    '    Dim t1 As New QueryAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    '    Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1.EntityType).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
+    '    q.From(t1.EntityType).Where(Ctor.prop(t1, "Enum").eq(2)).Select(FCtor.count)
 
-        Assert.AreEqual(2, q.SingleSimple(Of Integer))
-    End Sub
+    '    Assert.AreEqual(2, q.SingleSimple(Of Integer))
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestFilter()
@@ -70,16 +70,16 @@ Imports Worm.Criteria.Joins
         Assert.AreEqual(1, q.SingleSimple(Of Integer))
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
-    Public Sub TestFilterWrong2()
-        Dim t1 As New QueryAlias(GetType(Table1))
+    '<TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
+    'Public Sub TestFilterWrong2()
+    '    Dim t1 As New QueryAlias(GetType(Table1))
 
-        Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    '    Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        q.From(t1).Where(Ctor.prop(GetType(Table1), "Enum").eq(2)).Select(FCtor.count)
+    '    q.From(t1).Where(Ctor.prop(GetType(Table1), "Enum").eq(2)).Select(FCtor.count)
 
-        Assert.AreEqual(1, q.SingleSimple(Of Integer))
-    End Sub
+    '    Assert.AreEqual(1, q.SingleSimple(Of Integer))
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestSort()

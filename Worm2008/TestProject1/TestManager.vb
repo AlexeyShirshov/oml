@@ -115,7 +115,7 @@ Imports Worm
     Public Sub TestEditConcurent()
         Dim c As New OrmCache
         Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
-            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, mgr)
+            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, True, mgr)
             Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
             Assert.IsTrue(o.InternalProperties.IsLoaded)
         End Using
@@ -334,7 +334,7 @@ Imports Worm
             Assert.AreEqual(10, c.Count)
 
             c2 = e.GetCmd(GetType(Entity4)).WithLoad(True).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
-            Assert.AreEqual(10, c2.Count)
+            Assert.AreEqual(9, c2.Count)
 
             c3 = e2.GetCmd(GetType(Entity)).ToList(Of Entity)(mgr)
             Assert.AreEqual(0, c3.Count)
@@ -502,9 +502,9 @@ Imports Worm
             Assert.AreEqual(12, c.Count)
 
             c2 = e.GetCmd(GetType(Entity4)).WithLoad(True).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
-            Assert.AreEqual(10, c2.Count)
+            Assert.AreEqual(11, c2.Count)
 
-            e.GetCmd(GetType(Entity4)).Reject()
+            e.GetCmd(GetType(Entity4)).Reject(mgr)
 
             c = e.GetCmd(GetType(Entity4)).WithLoad(True).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
             Assert.AreEqual(11, c.Count)
@@ -530,7 +530,7 @@ Imports Worm
             e.GetCmd(GetType(Entity4)).Add(e2)
 
             c2 = e.GetCmd(GetType(Entity4)).WithLoad(True).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
-            Assert.AreEqual(10, c2.Count)
+            Assert.AreEqual(11, c2.Count)
 
             mgr.BeginTransaction()
             Try
@@ -624,6 +624,9 @@ Imports Worm
 
             Dim c As ICollection(Of Entity4) = e.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.AreEqual(0, c.Count)
+
+            'Dim c2 As ICollection(Of Entity) = e2.GetCmd(GetType(Entity)).ToList(Of Entity)(mgr)
+            'Assert.AreEqual(5, c2.Count)
 
             e.GetCmd(GetType(Entity4)).Add(e2)
 
@@ -888,11 +891,11 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = New QueryCmd().GetByID(Of Entity5)(1, mgr)
 
-            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
 
             Assert.AreEqual(1, c.Count)
 
-            c = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
+            c = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
 
             Assert.AreEqual(2, c.Count)
         End Using
@@ -903,7 +906,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = New QueryCmd().GetByID(Of Entity5)(2, mgr)
 
-            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
 
             Assert.AreEqual(2, c.Count)
 
@@ -919,7 +922,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = New QueryCmd().GetByID(Of Entity5)(3, mgr)
 
-            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+            Dim c As ICollection(Of Entity5) = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
 
             Assert.AreEqual(1, c.Count)
 
@@ -929,7 +932,7 @@ Imports Worm
             'Dim e2 As TestProject1.Entity5 = mgr.Find(Of Entity5)(2)
             'Assert.IsTrue(l.Contains(e2))
 
-            c = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
+            c = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
             Assert.AreEqual(2, c.Count)
 
             l = CType(c, IList(Of Entity5))
@@ -939,21 +942,24 @@ Imports Worm
             Assert.IsTrue(l.Contains(e2))
             Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
-            c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
+            c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
             Assert.AreEqual(0, c.Count)
 
-            c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+            c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
             Assert.AreEqual(2, c.Count)
 
             mgr.BeginTransaction()
             Try
-                e2.GetCmd(GetType(Entity5)).Add(e, M2MRelationDesc.RevKey)
+                e2.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).Add(e)
                 Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
-                c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
+                c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
                 Assert.AreEqual(1, c.Count)
 
-                c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+                c = e2.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
+                Assert.AreEqual(2, c.Count)
+
+                c = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
                 Assert.AreEqual(2, c.Count)
 
                 c = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
@@ -962,7 +968,7 @@ Imports Worm
                 e2.SaveChanges(True)
                 Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
-                c = e.GetCmd(GetType(Entity5), M2MRelationDesc.DirKey).ToList(Of Entity5)(mgr)
+                c = e.GetCmd(GetType(Entity5), M2MRelationDesc.RevKey).ToList(Of Entity5)(mgr)
                 Assert.AreEqual(2, c.Count)
             Finally
                 mgr.Rollback()
@@ -1019,7 +1025,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, True, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
@@ -1057,7 +1063,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.Cache.NewObjectManager = Me
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, True, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID

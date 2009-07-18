@@ -52,18 +52,18 @@ Imports System.Text
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing, Nothing, New StringBuilder)
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
-    Public Sub TestMakeSQLStmt4()
-        Dim t As New SourceFragment("table1")
-        Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
+    '<TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
+    'Public Sub TestMakeSQLStmt4()
+    '    Dim t As New SourceFragment("table1")
+    '    Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim almgr As AliasMgr = AliasMgr.Create
-        almgr.AddTable(t, Nothing)
-        Dim gen As New SQLGenerator
-        Dim pmgr As New ParamMgr(gen, "p")
-        j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, New StringBuilder)
-    End Sub
+    '    Dim schema As New Worm.ObjectMappingEngine("1")
+    '    Dim almgr As AliasMgr = AliasMgr.Create
+    '    almgr.AddTable(t, Nothing)
+    '    Dim gen As New SQLGenerator
+    '    Dim pmgr As New ParamMgr(gen, "p")
+    '    j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, New StringBuilder)
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt5()

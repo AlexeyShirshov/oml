@@ -37,7 +37,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
 
             Assert.IsTrue(t1.InternalProperties.IsLoaded)
 
@@ -53,11 +53,11 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
+            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, True, mgr)
             Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Assert.IsFalse(t2.Tbl.InternalProperties.IsLoaded)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
             Assert.IsFalse(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(t1, t2.Tbl)
 
