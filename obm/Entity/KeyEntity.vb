@@ -436,8 +436,11 @@ Namespace Entities
                 If el Is Nothing Then Continue For
                 SyncLock "1efb139gf8bh"
                     For Each o As _IKeyEntity In el.Added
-                        'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
+                        Dim otherKey As String = el.Key
+                        If Me.GetType Is o.GetType Then
+                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        End If
+                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         m.Added.Remove(Me)
                         m._savedIds.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
@@ -452,8 +455,11 @@ Namespace Entities
                     el.Added.Clear()
 
                     For Each o As _IKeyEntity In el.Deleted
-                        'Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
+                        Dim otherKey As String = el.Key
+                        If Me.GetType Is o.GetType Then
+                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        End If
+                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         m.Deleted.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
@@ -722,6 +728,16 @@ Namespace Entities
                             Return rl
                         ElseIf Relation.MetaEquals(rl, oldRel, schema) Then
                             _relations.Remove(rl)
+                            For Each o As ICachedEntity In rl.Added
+                                If Not newRel.Added.Contains(o) Then
+                                    newRel.Added.Add(o)
+                                End If
+                            Next
+                            For Each o As ICachedEntity In rl.Deleted
+                                If Not newRel.Deleted.Contains(o) Then
+                                    newRel.Deleted.Add(o)
+                                End If
+                            Next
                             _relations.Add(newRel)
                             Return newRel
                         End If
@@ -815,31 +831,6 @@ Namespace Entities
             Return CType(CreateRelCmd(desc).SelectEntity(desc.Entity), RelationCmd)
         End Function
 
-        'Protected Function GetM2M(ByVal t As Type, ByVal key As String) As M2MRelation 'Implements _IOrmBase.GetM2M
-        '    Dim el As M2MRelation = Nothing
-        '    Using GetSyncRoot()
-        '        For Each rl As Relation In _relations
-        '            Dim e As M2MRelation = TryCast(rl, M2MRelation)
-        '            If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
-        '                If e.Relation.Type Is Nothing Then
-        '                    If e.Relation.EntityName = MappingEngine.GetEntityNameByType(t) Then
-        '                        el = e
-        '                        Exit For
-        '                    End If
-        '                ElseIf e.Relation.Type Is t Then
-        '                    el = e
-        '                    Exit For
-        '                End If
-        '            End If
-        '        Next
-        '        If el Is Nothing Then
-        '            el = New M2MRelation(Me, t, key)
-        '            _relations.Add(el)
-        '        End If
-        '    End Using
-        '    Return el
-        'End Function
-
         Protected Sub _Add(ByVal obj As ICachedEntity) Implements IRelations.Add
             _Add(obj, Nothing)
         End Sub
@@ -850,7 +841,11 @@ Namespace Entities
                 If Not el.Added.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
                         Dim ke As IKeyEntity = CType(obj, IKeyEntity)
-                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
+                        Dim otherKey As String = el.Key
+                        If Me.GetType Is ke.GetType Then
+                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        End If
+                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Added.Contains(Me) Then
                                 If el.Deleted.Contains(obj) Then
@@ -926,7 +921,11 @@ Namespace Entities
                 If Not el.Deleted.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
                         Dim ke As IKeyEntity = CType(obj, IKeyEntity)
-                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, el.Key)), M2MRelation)
+                        Dim otherKey As String = el.Key
+                        If Me.GetType Is ke.GetType Then
+                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        End If
+                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Deleted.Contains(Me) Then
                                 If el.Added.Contains(obj) Then

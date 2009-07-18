@@ -46,11 +46,11 @@ Namespace Entities
                 Dim e1 As EntityUnion = r1.Relation.Entity
                 Dim e2 As EntityUnion = r2.Relation.Entity
                 If Not String.IsNullOrEmpty(e1.EntityName) AndAlso Not String.IsNullOrEmpty(e2.EntityName) Then
-                    Return e1.EntityName = e2.EntityName
+                    Return e1.EntityName = e2.EntityName AndAlso M2MRelationDesc.CompareKeys(r1.Key, r2.Key)
                 ElseIf e1.EntityType IsNot Nothing AndAlso e2.EntityType IsNot Nothing Then
-                    Return e1.EntityType Is e2.EntityType
+                    Return e1.EntityType Is e2.EntityType AndAlso M2MRelationDesc.CompareKeys(r1.Key, r2.Key)
                 Else
-                    Return e1.GetRealType(schema) Is e2.GetRealType(schema)
+                    Return e1.GetRealType(schema) Is e2.GetRealType(schema) AndAlso M2MRelationDesc.CompareKeys(r1.Key, r2.Key)
                 End If
             End If
 
