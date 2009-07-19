@@ -156,7 +156,7 @@ Namespace Expressions2
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            'do nothing
+            _op.Entity.Prepare(executor, schema, contextFilter, stmt, isAnonym)
         End Sub
 
         Public Property ObjectProperty() As Query.ObjectProperty Implements IEntityPropertyExpression.ObjectProperty

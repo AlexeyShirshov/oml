@@ -117,7 +117,7 @@ Public Class TestMultiTable
     End Function
 
     Protected Function GetSchema(ByVal version As String) As ObjectMappingEngine
-        Return New ObjectMappingEngine(version, AddressOf ResolveVersion, Nothing)
+        Return New ObjectMappingEngine(version, AddressOf ResolveVersion)
     End Function
 
     <TestMethod()> _

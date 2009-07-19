@@ -111,8 +111,11 @@ Imports Worm.Entities.Meta
 
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New ObjectMappingEngine("1"))))
-        q.Join(JCtor.join("Table3").onM2M(GetType(Table1)))
-        q.Where(Ctor.prop("Table3", "Code").eq(2)).From(tbl)
+
+        q _
+            .From(tbl) _
+            .Join(JCtor.join("Table3").onM2M(GetType(Table1))) _
+            .Where(Ctor.prop("Table3", "Code").eq(2))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecutionResult.CacheHit)

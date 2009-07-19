@@ -52,43 +52,24 @@ Public NotInheritable Class ObjectMappingException
     End Sub
 End Class
 
-'''' <summary>
-'''' Интерфейс расширяющий схему для работы с объдинениями (joins)
-'''' </summary>
-'''' <remarks></remarks>
-'Public Interface ISchemaWithJoins
-'    'Function GetSharedTable(ByVal tableName As String) As SourceFragment
-'    'Function GetTables(ByVal type As Type) As SourceFragment()
-'    ''' <summary>
-'    ''' Метод используется для получения объекта типа <see cref="QueryJoin" /> для определеной таблицы определеного типа
-'    ''' </summary>
-'    ''' <param name="type">Тип объекта</param>
-'    ''' <param name="left">Левая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
-'    ''' <param name="right">Правая таблица. Какая либо из списка <see cref="IMultiTableObjectSchema.GetTables"/></param>
-'    ''' <param name="filterInfo">Произвольный объект, используемый реализацией. Передается из <see cref="OrmManager.GetFilterInfo" /></param>
-'    ''' <returns>Объекта типа <see cref="QueryJoin" /></returns>
-'    ''' <remarks>Используется для генерации запросов</remarks>
-'    Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As QueryJoin
-'End Interface
-
 ''' <summary>
 ''' Класс хранения и управления схемами объектов <see cref="IEntitySchema"/>
 ''' </summary>
 ''' <remarks>Класс управляет версиями схем объектов, предоставляет удобные обертки для методов
 ''' <see cref="IEntitySchema"/> через тип объекта.</remarks>
 Public Class ObjectMappingEngine
-    'Implements ISchemaWithJoins
 
-    Public Delegate Function ResolveEntity(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
-    Public Delegate Function ResolveEntityName(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
+    Public Delegate Function ResolveSchemaForSingleType(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
+    Public Delegate Function ResolveEntityNameForHierarchy(ByVal currentVersion As String, ByVal existingType As Type, ByVal existingTypeEntityAttribute As EntityAttribute, _
+                                               ByVal type2add As Type, ByVal type2addEntityAttribute As EntityAttribute) As EntityAttribute
 
     Private _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
     Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected _joins As IDictionary = Hashtable.Synchronized(New Hashtable)
     Private _version As String
-    Private _mapv As ResolveEntity
-    Private _mapn As ResolveEntityName
+    Private _mapv As ResolveSchemaForSingleType
+    Private _mapn As ResolveEntityNameForHierarchy
 
     Public ReadOnly Mark As Guid = Guid.NewGuid
 
@@ -102,20 +83,20 @@ Public Class ObjectMappingEngine
         _version = version
     End Sub
 
-    Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
+    Public Sub New(ByVal version As String, ByVal resolveSchema As ResolveSchemaForSingleType)
         _version = version
-        _mapv = resolveEntity
+        _mapv = resolveSchema
     End Sub
 
-    Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
+    Public Sub New(ByVal version As String, ByVal resolveEntityName As ResolveEntityNameForHierarchy)
         _version = version
-        _mapn = resolveName
+        _mapn = resolveEntityName
     End Sub
 
-    Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
+    Public Sub New(ByVal version As String, ByVal resolveSchema As ResolveSchemaForSingleType, ByVal resolveEntityName As ResolveEntityNameForHierarchy)
         _version = version
-        _mapv = resolveEntity
-        _mapn = resolveName
+        _mapv = resolveSchema
+        _mapn = resolveEntityName
     End Sub
 
 #Region " reflection "
@@ -1747,15 +1728,26 @@ Public Class ObjectMappingEngine
 
                         If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea1.EntityName) Then
                             If names.Contains(ea1.EntityName) Then
-                                Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea1.EntityName), Pair(Of Type, EntityAttribute))
-                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> mpe._version AndAlso mpe._mapn IsNot Nothing) Then
-                                    Dim e As EntityAttribute = Nothing
-                                    If mpe._mapn IsNot Nothing Then
-                                        e = mpe._mapn(mpe._version, New EntityAttribute() {ea1, tt.Second}, tp)
+                                Dim currentType As Pair(Of Type, EntityAttribute) = CType(names(ea1.EntityName), Pair(Of Type, EntityAttribute))
+                                Dim e As EntityAttribute = Nothing
+                                If currentType.Second.Version = mpe._version Then
+                                    If ea1.Version = mpe._version Then
+                                        If currentType.First.IsAssignableFrom(tp) Then
+                                            e = ea1
+                                        ElseIf mpe._mapn IsNot Nothing Then
+                                            e = mpe._mapn(mpe._version, currentType.First, currentType.Second, tp, ea1)
+                                        End If
                                     End If
-                                    If e IsNot tt.Second Then
-                                        names(ea1.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea1)
+                                Else
+                                    If ea1.Version = mpe._version OrElse currentType.First.IsAssignableFrom(tp) Then
+                                        e = ea1
+                                    ElseIf mpe._mapn IsNot Nothing Then
+                                        e = mpe._mapn(mpe._version, currentType.First, currentType.Second, tp, ea1)
                                     End If
+                                End If
+
+                                If e IsNot currentType.Second Then
+                                    names(ea1.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea1)
                                 End If
                             Else
                                 names.Add(ea1.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea1))
@@ -1821,14 +1813,21 @@ Public Class ObjectMappingEngine
 
                             If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
                                 If names.Contains(ea2.EntityName) Then
-                                    Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
-                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> mpe._version AndAlso mpe._mapn IsNot Nothing) Then
-                                        Dim e As EntityAttribute = Nothing
-                                        If mpe._mapn IsNot Nothing Then
-                                            e = mpe._mapn(mpe._version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                    Dim currentType As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
+                                    Dim e As EntityAttribute = Nothing
+                                    If currentType.Second.Version = mpe._version Then
+                                        If ea2.Version = mpe._version Then
+                                            If currentType.First.IsAssignableFrom(tp) Then
+                                                e = ea2
+                                            ElseIf mpe._mapn IsNot Nothing Then
+                                                e = mpe._mapn(mpe._version, currentType.First, currentType.Second, tp, ea2)
+                                            End If
                                         End If
-                                        If e IsNot tt.Second Then
-                                            names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
+                                    Else
+                                        If ea2.Version = mpe._version OrElse currentType.First.IsAssignableFrom(tp) Then
+                                            e = ea2
+                                        ElseIf mpe._mapn IsNot Nothing Then
+                                            e = mpe._mapn(mpe._version, currentType.First, currentType.Second, tp, ea2)
                                         End If
                                     End If
                                 Else
@@ -2364,7 +2363,7 @@ Public Class ObjectMappingEngine
                 If m2m IsNot Nothing Then
                     jft = JoinFieldType.M2M
                 Else
-                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Specify joins explicit", selectType, type2join))
                 End If
             Else
                 jft = JoinFieldType.Reverse

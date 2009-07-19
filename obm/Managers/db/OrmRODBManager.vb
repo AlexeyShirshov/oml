@@ -1253,13 +1253,13 @@ l1:
                         Dim from As New QueryCmd.FromClauseDef(selOS)
 
                         Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, GetContextInfo, params, almgr, _
-                            sb, SQLGenerator, oschema, selOS, Nothing, from, _
+                            sb, SQLGenerator, selOS, Nothing, ctx, from, _
                             True, Nothing, Nothing)
 
                         Dim prd As New Criteria.PredicateLink
 
                         Query.Database.DbQueryExecutor.FormJoins(MappingEngine, GetContextInfo, Nothing, params, _
-                            oschema, js, almgr, sb, SQLGenerator, ctx, Nothing, from, prd, original_type)
+                            from, js, almgr, sb, SQLGenerator, ctx, Nothing, prd, selOS)
 
                         c.AddFilter(prd.Filter)
                         Dim selSb As New StringBuilder

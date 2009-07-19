@@ -3825,11 +3825,21 @@ l1:
                             End If
 
                             If String.IsNullOrEmpty(field) Then
+                                field = schema.GetJoinFieldNameByType(sortType, selectType, schema.GetEntitySchema(sortType))
+
+                                If Not String.IsNullOrEmpty(field) Then
+                                    types.Add(sortType)
+                                    l.Add(MakeJoin(schema, selectOS, selectType, se.EntityUnion, field, FilterOperation.Equal, JoinType.Join, True))
+                                    Continue For
+                                End If
+                            End If
+
+                            If String.IsNullOrEmpty(field) Then
                                 Dim m2m As M2MRelationDesc = schema.GetM2MRelation(sortType, selectType, True)
                                 If m2m IsNot Nothing Then
                                     l.AddRange(MakeM2MJoin(schema, m2m, sortType))
                                 Else
-                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Specify joins explicity", selectType, sortType))
                                 End If
                             End If
 

@@ -927,7 +927,7 @@ Imports Worm.Expressions2
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        q.SelectEntity("Table3")
+        'q.From("Table3")
 
         Dim t As Type = GetType(Table3)
         q.Select(FCtor.prop(t, "Code"))
