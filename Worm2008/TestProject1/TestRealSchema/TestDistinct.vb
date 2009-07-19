@@ -66,10 +66,10 @@ Public Class TestDistinct
         Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
-            Dim r As New RelationDescEx(New EntityUnion(GetType(Table2)), New RelationDesc(New EntityUnion(tt), "Table1"))
+            'Dim r As New RelationDescEx(New EntityUnion(tt), Table1.Table2Relation)
             Dim c As ReadOnlyEntityList(Of Table2) = New QueryCmd() _
                 .SelectEntity(GetType(Table2), True) _
-                .Join(r) _
+                .Join(JCtor.join(tt).on(tt, "ID").eq(GetType(Table2), "Table1")) _
                 .ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, c.Count)

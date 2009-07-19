@@ -604,7 +604,7 @@ Namespace Query.Database
         'End Sub
 
         Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal selectedType As Type, _
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal selList As IEnumerable(Of SelectExpression))
 
@@ -695,9 +695,9 @@ Namespace Query.Database
             ByVal selectType As Type) As Boolean
 
             Dim searcht As Type = If(st.Entity Is Nothing, selectType, st.Entity.GetRealType(mpe))
-            If os Is Nothing Then
-                os = mpe.GetEntitySchema(searcht)
-            End If
+            'If os Is Nothing Then
+            '    os = mpe.GetEntitySchema(searcht)
+            'End If
 
             Dim searchTable As SourceFragment = os.Table
             If st.QueryFields IsNot Nothing AndAlso st.QueryFields.Length = 1 Then
@@ -758,7 +758,7 @@ l1:
 
         Public Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
-            ByVal os As IEntitySchema, ByVal osrc As EntityUnion, ByVal q As QueryCmd, _
+            ByVal osrc As EntityUnion, ByVal q As QueryCmd, ByVal execCtx As IExecutionContext, _
             ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
             ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
 
@@ -770,18 +770,32 @@ l1:
                 osrc_ = osrc
             End If
 
+            Debug.Assert(from IsNot Nothing, "From clause must be specified")
+
             Dim fromOS As IEntitySchema = Nothing
             Dim pkTable As SourceFragment = Nothing
-            If from Is Nothing OrElse from.Table Is Nothing Then
-                If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
-                    If q IsNot Nothing Then
-                        fromOS = q.GetEntitySchema(mpe, from.ObjectSource.GetRealType(mpe))
-                    Else
-                        fromOS = mpe.GetEntitySchema(from.ObjectSource.GetRealType(mpe))
+            Dim fe As EntityUnion = from.GetFromEntity
+            If from.Table Is Nothing Then
+                'If from IsNot Nothing AndAlso from.ObjectSource IsNot Nothing Then
+                '    If q IsNot Nothing Then
+                '        fromOS = q.GetEntitySchema(mpe, from.ObjectSource.GetRealType(mpe))
+                '    Else
+                '        fromOS = mpe.GetEntitySchema(from.ObjectSource.GetRealType(mpe))
+                '    End If
+                'Else
+                '    fromOS = os
+                'End If
+                If q IsNot Nothing Then
+                    If Not q._types.TryGetValue(fe, fromOS) Then
+                        'Debug.Assert(from IsNot Nothing, String.Format("From entity {0} must be in _types", from.GetFromEntity.GetRealType(mpe)))
+                        fromOS = q.GetEntitySchema(mpe, fe.GetRealType(mpe))
                     End If
+                ElseIf execCtx IsNot Nothing Then
+                    fromOS = execCtx.GetEntitySchema(mpe, fe.GetRealType(mpe))
                 Else
-                    fromOS = os
+                    fromOS = mpe.GetEntitySchema(fe.GetRealType(mpe))
                 End If
+
                 Dim mts As IMultiTableObjectSchema = TryCast(fromOS, IMultiTableObjectSchema)
                 If mts Is Nothing Then
                     tables = New SourceFragment() {fromOS.Table}
@@ -793,6 +807,24 @@ l1:
             Else
                 pkTable = from.Table
                 tables = New SourceFragment() {from.Table}
+
+                Dim selOS As EntityUnion = fe
+                If selOS Is Nothing AndAlso q IsNot Nothing Then
+                    selOS = q.GetSelectedOS
+                End If
+
+                If selOS IsNot Nothing Then
+                    If q IsNot Nothing Then
+                        If Not q._types.TryGetValue(selOS, fromOS) Then
+                            'Debug.Assert(from IsNot Nothing, String.Format("From entity {0} must be in _types", from.GetFromEntity.GetRealType(mpe)))
+                            fromOS = q.GetEntitySchema(mpe, selOS.GetRealType(mpe))
+                        End If
+                    ElseIf execCtx IsNot Nothing Then
+                        fromOS = execCtx.GetEntitySchema(mpe, fe.GetRealType(mpe))
+                    Else
+                        fromOS = mpe.GetEntitySchema(selOS.GetRealType(mpe))
+                    End If
+                End If
             End If
 
             'If tables.Length = 0 OrElse tables(0) Is Nothing Then
@@ -821,7 +853,7 @@ l1:
 
             Dim st As SearchFragment = TryCast(tbl_real, SearchFragment)
             If st IsNot Nothing Then
-                appendMain = FormatSearchTable(mpe, sb, st, s, os, params, selectType) OrElse appendMain
+                appendMain = FormatSearchTable(mpe, sb, st, s, fromOS, params, selectType) OrElse appendMain
             Else
                 sb.Append(s.GetTableName(tbl_real))
             End If
@@ -841,17 +873,19 @@ l1:
                     eus = st.Entity
                 End If
 
-                If os Is Nothing Then
-                    os = mpe.GetEntitySchema(stt)
+                'If os Is Nothing Then
+                '    os = mpe.GetEntitySchema(stt)
+                'End If
+
+                If appendMain Is Nothing OrElse Not appendMain.Value Then
+                    Dim jb As IJoinBehavior = TryCast(fromOS, IJoinBehavior)
+
+                    If jb IsNot Nothing AndAlso jb.AlwaysJoinMainTable Then
+                        appendMain = True
+                    End If
                 End If
 
-                Dim jb As IJoinBehavior = TryCast(os, IJoinBehavior)
-
-                If jb IsNot Nothing AndAlso jb.AlwaysJoinMainTable Then
-                    appendMain = True
-                End If
-
-                Dim cs As IContextObjectSchema = TryCast(os, IContextObjectSchema)
+                Dim cs As IContextObjectSchema = TryCast(fromOS, IContextObjectSchema)
                 Dim ctxF As IFilter = Nothing
                 If cs IsNot Nothing Then
                     ctxF = cs.GetContextFilter(filterInfo)
@@ -888,8 +922,8 @@ l1:
                         appendMain = True
                     ElseIf q._stypes.ContainsKey(eus) Then
                         appendMain = True
-                    ElseIf q._types.ContainsKey(eus) Then
-                        appendMain = True
+                        'ElseIf q._types.ContainsKey(eus) Then
+                        '    appendMain = True
                     End If
                 End If
 
@@ -900,7 +934,7 @@ l1:
 
                     'sb.Append(s.EndLine).Append(j.MakeSQLStmt(mpe, s, filterInfo, almgr, params, osrc_))
 
-                    Dim jf As New JoinFilter(tbl_real, s.FTSKey, stt, mpe.GetPrimaryKeys(stt, os)(0).PropertyAlias, _
+                    Dim jf As New JoinFilter(tbl_real, s.FTSKey, stt, mpe.GetPrimaryKeys(stt, fromOS)(0).PropertyAlias, _
                                        Criteria.FilterOperation.Equal)
 
                     If ctxF IsNot Nothing Then
@@ -909,7 +943,7 @@ l1:
 
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
-                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, os, eus, q, Nothing, False, _
+                    FormTypeTables(mpe, filterInfo, params, almgr, sb, s, eus, q, execCtx, New QueryCmd.FromClauseDef(eus), False, _
                         Function() " on " & jf.MakeQueryStmt(mpe, from, s, q, filterInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
@@ -939,11 +973,16 @@ l1:
         End Function
 
         Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
-            ByVal params As ICreateParam, ByVal selSchema As IEntitySchema, _
+            ByVal params As ICreateParam, ByVal from As FromClauseDef, _
             ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal exec As IExecutionContext, _
-            ByVal pk As Pair(Of SourceFragment, String), ByVal from As FromClauseDef, _
-            ByVal predi As Criteria.PredicateLink, ByVal selectedType As Type)
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal execCtx As IExecutionContext, _
+            ByVal pk As Pair(Of SourceFragment, String), _
+            ByVal predi As Criteria.PredicateLink, ByVal selOS As EntityUnion)
+
+            Dim selectOS As EntityUnion = Nothing
+            Dim selectedType As Type = Nothing
+            Dim selSchema As IEntitySchema = Nothing
+            Dim setted As Boolean
 
             For i As Integer = 0 To j.Count - 1
                 Dim join As QueryJoin = CType(j(i), QueryJoin)
@@ -958,10 +997,23 @@ l1:
                     'almgr.AddTable(tbl, CType(Nothing, ParamMgr))
 
                     If pk IsNot Nothing AndAlso join.Condition IsNot Nothing Then
-                        Dim pkname As String = Nothing
-                        If selectedType IsNot Nothing Then
-                            pkname = mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
+                        If Not setted Then
+                            selectOS = from.GetFromEntity
+                            If selectOS Is Nothing Then
+                                selectOS = selOS
+                            End If
+
+                            selectedType = selectOS.GetRealType(mpe)
+                            If query Is Nothing OrElse Not query._types.TryGetValue(selectOS, selSchema) Then
+                                selSchema = mpe.GetEntitySchema(selectedType)
+                            End If
+                            setted = True
                         End If
+
+                        Dim pkname As String = Nothing
+                        'If selectedType IsNot Nothing Then
+                        pkname = mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
+                        'End If
                         join.InjectJoinFilter(mpe, selectedType, pkname, pk.First, pk.Second)
                     End If
 
@@ -1001,10 +1053,10 @@ l1:
                         '    oschema = query.GetEntitySchema(t)
                         'End If
                         Dim oschema As IEntitySchema = Nothing
-                        If exec Is Nothing Then
+                        If execCtx Is Nothing Then
                             oschema = mpe.GetEntitySchema(t)
                         Else
-                            oschema = exec.GetEntitySchema(mpe, t)
+                            oschema = execCtx.GetEntitySchema(mpe, t)
                         End If
 
                         Dim needAppend As Boolean = True
@@ -1114,9 +1166,9 @@ l1:
                                     End If
                                 End If
 
-                                Dim f As QueryCmd.FromClauseDef = Nothing 'New QueryCmd.FromClause(join.ObjectSource)
-                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, oschema, join.ObjectSource, query, f, Nothing, _
-                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, from, s, exec, filterInfo, almgr, params), predi)
+                                Dim f As QueryCmd.FromClauseDef = New QueryCmd.FromClauseDef(join.ObjectSource)
+                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, join.ObjectSource, query, execCtx, f, Nothing, _
+                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, from, s, execCtx, filterInfo, almgr, params), predi)
                             Else
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
@@ -1327,11 +1379,14 @@ l1:
             End If
         End Sub
 
-        Public Shared Function FormWhere(ByVal mpe As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
+        Public Shared Function FormWhere(ByVal mpe As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
             ByVal query As QueryCmd) As Boolean
 
-            Dim os As EntityUnion = query.GetSelectedOS
+            Dim os As EntityUnion = query.FromClause.GetFromEntity
+            If os Is Nothing Then
+                os = query.GetSelectedOS
+            End If
 
             Dim con As New Criteria.Conditions.Condition.ConditionConstructor
             con.AddFilter(filter)
@@ -1341,8 +1396,13 @@ l1:
             '    con.AddFilter(schema.GetFilter(filter_info))
             'End If
 
-            If schema IsNot Nothing AndAlso (os Is Nothing OrElse Not os.IsQuery) Then
-                Dim cs As IContextObjectSchema = TryCast(schema, IContextObjectSchema)
+            If os IsNot Nothing AndAlso Not os.IsQuery Then
+                Dim osSchema As IEntitySchema = Nothing
+                If Not query._types.TryGetValue(os, osSchema) Then
+                    osSchema = query.GetEntitySchema(mpe, os.GetRealType(mpe))
+                End If
+
+                Dim cs As IContextObjectSchema = TryCast(osSchema, IContextObjectSchema)
                 If cs IsNot Nothing Then
                     Dim f As IFilter = cs.GetContextFilter(filter_info)
                     If f IsNot Nothing Then
@@ -1374,16 +1434,16 @@ l1:
             ByVal query As QueryCmd, ByVal s As SQLGenerator, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
 
-            Dim os As IEntitySchema = Nothing
-            Dim selType As Type = query.GetSelectedType(mpe)
+            'Dim os As IEntitySchema = Nothing
+            'Dim selType As Type = query.GetSelectedType(mpe)
 
-            If selType IsNot Nothing Then
-                'os = mpe.GetEntitySchema(selType, False)
-                'If os Is Nothing Then
-                '    os = query.GetEntitySchema(selType)
-                'End If
-                os = query.GetEntitySchema(mpe, selType)
-            End If
+            'If selType IsNot Nothing Then
+            '    'os = mpe.GetEntitySchema(selType, False)
+            '    'If os Is Nothing Then
+            '    '    os = query.GetEntitySchema(selType)
+            '    'End If
+            '    os = query.GetEntitySchema(mpe, selType)
+            'End If
 
             Dim sbStart As Integer = sb.Length
 
@@ -1395,11 +1455,11 @@ l1:
                                         params, query.FromClause.QueryEU, sb, almgr)
             Else
                 newPK = FormTypeTables( _
-                    mpe, filterInfo, params, almgr, sb, s, os, query.GetSelectedOS, query, _
+                    mpe, filterInfo, params, almgr, sb, s, query.GetSelectedOS, query, query, _
                     query.FromClause, query.AppendMain, Nothing, p)
             End If
 
-            FormJoins(mpe, filterInfo, query, params, os, query._js, almgr, sb, s, query, newPK, query.FromClause, p, query.GetSelectedType(mpe))
+            FormJoins(mpe, filterInfo, query, params, query.FromClause, query._js, almgr, sb, s, query, newPK, p, query.GetSelectedOS)
 
             'ReplaceSelectList(mpe, query, sb, s, os, almgr, filterInfo, params, query._sl)
             Dim selSb As New StringBuilder
@@ -1413,12 +1473,12 @@ l1:
                 selSb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
             End If
 
-            FormSelectList(mpe, query, selSb, s, os, selType, almgr, filterInfo, params, query._sl)
+            FormSelectList(mpe, query, selSb, s, almgr, filterInfo, params, query._sl)
 
             selSb.Append(" from ")
             sb.Insert(sbStart, selSb.ToString)
 
-            FormWhere(mpe, s, os, p.and(query._f).Filter, almgr, sb, filterInfo, params, query)
+            FormWhere(mpe, s, p.and(query._f).Filter, almgr, sb, filterInfo, params, query)
 
             FormGroupBy(mpe, query, almgr, sb, s)
 

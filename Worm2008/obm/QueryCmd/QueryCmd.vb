@@ -119,6 +119,14 @@ Namespace Query
                 End Get
             End Property
 
+            Public Function GetFromEntity() As EntityUnion
+                Dim eu As EntityUnion = QueryEU
+                If eu Is Nothing AndAlso GetType(SearchFragment).IsAssignableFrom(Table.GetType) Then
+                    eu = CType(Table, SearchFragment).Entity
+                End If
+                Return eu
+            End Function
+
             Public ReadOnly Property AnyQuery() As QueryCmd
                 Get
                     If Query IsNot Nothing Then
@@ -713,26 +721,29 @@ Namespace Query
                                         ByRef f As IFilter, ByVal filterInfo As Object)
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
+                    se.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
                     CopySE(se, mpe)
+                    Dim t As Type = Nothing
+                    Dim into As EntityUnion = se.GetIntoEntityUnion
+                    If into IsNot Nothing Then
+                        t = into.GetRealType(mpe)
+                        If Not _types.ContainsKey(into) Then
+                            _types.Add(into, mpe.GetEntitySchema(t))
+                        End If
+                    End If
+
                     If _poco IsNot Nothing Then
-                        Dim t As Type = Nothing
-                        If se.Into Is Nothing Then
+                        If t Is Nothing Then
                             For Each tp As Type In _poco.Keys
                                 t = tp
                                 Exit For
                             Next
-                        Else
-                            t = se.Into.GetRealType(mpe)
                         End If
                         'If GetType(AnonymousCachedEntity).IsAssignableFrom(t) Then
                         'Else
                         se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
                         'End If
                     End If
-                Next
-                For Each se As SelectExpression In SelectList
-                    se.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
-                    If _from IsNot Nothing Then Exit For
                     CheckFrom(se)
                 Next
             Else
@@ -745,8 +756,7 @@ Namespace Query
                     Dim os As EntityUnion = se.GetIntoEntityUnion
                     If os IsNot Nothing Then
                         If Not _types.ContainsKey(os) Then
-                            Dim t As Type = os.GetRealType(mpe)
-                            _types.Add(os, mpe.GetEntitySchema(t))
+                            _types.Add(os, mpe.GetEntitySchema(os.GetRealType(mpe)))
                         End If
                     End If
                     CheckFrom(se)
@@ -764,7 +774,8 @@ Namespace Query
                             If col.Count > 0 Then
                                 If AutoFields AndAlso _outer Is Nothing Then
                                     Dim createType As EntityUnion = Nothing
-                                    If Not _createTypes.TryGetValue(de.Key, createType) OrElse (GetType(AnonymousEntity) IsNot createType.GetRealType(mpe) AndAlso t Is createType.GetRealType(mpe)) Then
+                                    If Not _createTypes.TryGetValue(de.Key, createType) Then
+l2:
                                         For Each dice As DictionaryEntry In dic
                                             Dim pk As EntityPropertyAttribute = CType(dice.Key, EntityPropertyAttribute)
                                             If (pk.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -784,6 +795,11 @@ Namespace Query
                                                 End If
                                             End If
                                         Next
+                                    Else
+                                        Dim ct As Type = createType.GetRealType(mpe)
+                                        If GetType(AnonymousEntity) IsNot ct AndAlso (t Is ct OrElse EntityUnion.EntityNameEquals(mpe, createType, de.Key)) Then
+                                            GoTo l2
+                                        End If
                                     End If
                                 End If
                                 Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
@@ -859,7 +875,7 @@ l1:
         End Sub
 
         Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal selectOS As EntityUnion, _
             ByVal isAnonym As Boolean)
 
@@ -868,7 +884,7 @@ l1:
                 If anq IsNot Nothing Then
                     Try
                         anq._outer = Me
-                        Prepare(anq, executor, schema, filterInfo, stmt)
+                        Prepare(anq, executor, mpe, filterInfo, stmt)
                     Finally
                         anq._outer = Nothing
                     End Try
@@ -878,23 +894,23 @@ l1:
             Dim eudic As New Dictionary(Of String, Pair(Of String, EntityUnion))
 
             If SelectList IsNot Nothing Then
-                PrepareSelectList(executor, stmt, isAnonym, schema, f, filterInfo)
+                PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
             Else
                 If IsFTS Then
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
                         Dim os As EntityUnion = tp.First
-                        Dim rt As Type = tp.First.GetRealType(schema)
-                        Dim oschema As IEntitySchema = schema.GetEntitySchema(rt)
-                        If _WithLoad(tp, schema) Then
+                        Dim rt As Type = tp.First.GetRealType(mpe)
+                        Dim oschema As IEntitySchema = mpe.GetEntitySchema(rt)
+                        If _WithLoad(tp, mpe) Then
                             _appendMain = True
-                            _sl.AddRange(schema.GetSortedFieldList(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                            _sl.AddRange(mpe.GetSortedFieldList(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                         Else
                             Dim ctx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
                             If ctx IsNot Nothing Then
                                 Dim cf As IFilter = ctx.GetContextFilter(filterInfo)
                                 If cf IsNot Nothing Then
                                     _appendMain = True
-                                    _sl.AddRange(schema.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                                    _sl.AddRange(mpe.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                                     Continue For
                                 End If
                             End If
@@ -902,15 +918,18 @@ l1:
                             Dim jb As IJoinBehavior = TryCast(oschema, IJoinBehavior)
                             If jb IsNot Nothing AndAlso jb.AlwaysJoinMainTable Then
                                 _appendMain = True
-                                _sl.AddRange(schema.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                                _sl.AddRange(mpe.GetPrimaryKeys(rt, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
                                 Continue For
                             End If
 
-                            Dim pk As String = schema.GetPrimaryKeys(rt, oschema)(0).PropertyAlias
+                            Dim pk As String = mpe.GetPrimaryKeys(rt, oschema)(0).PropertyAlias
                             Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
                             se.Into = os
                             se.Attributes = Field2DbRelations.PK
                             _sl.Add(se)
+                        End If
+                        If Not _types.ContainsKey(tp.First) Then
+                            _types.Add(tp.First, oschema)
                         End If
                     Next
                 Else
@@ -924,7 +943,7 @@ l1:
                             If SelectedEntities.Count > 1 Then
                                 Throw New NotSupportedException
                             Else
-                                AddTypeFields(schema, _sl, SelectedEntities(0), _from.QueryEU, Nothing, isAnonym)
+                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym)
                             End If
                         Else
                             Dim selTypes As ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)) = SelectedEntities
@@ -942,7 +961,7 @@ l1:
                                         p = d.Value
                                     End If
                                 Next
-                                AddTypeFields(schema, _sl, tp, Nothing, If(p IsNot Nothing, p.First, Nothing), isAnonym)
+                                AddTypeFields(mpe, _sl, tp, Nothing, isAnonym)
                                 'If tp.Second Then
                                 '    Throw New NotImplementedException
                                 'Else
@@ -962,27 +981,27 @@ l1:
                             End If
 
                             For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
-                                Dim t As Type = de.Key.GetRealType(schema)
+                                Dim t As Type = de.Key.GetRealType(mpe)
                                 If Not _pdic.ContainsKey(t) Then
                                     'If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) Then
                                     Dim hasCmplx As Boolean = False
-                                    For Each tde As DictionaryEntry In schema.GetRefProperties(t, de.Value)
+                                    For Each tde As DictionaryEntry In mpe.GetRefProperties(t, de.Value)
                                         Dim pi As Reflection.PropertyInfo = CType(tde.Value, PropertyInfo)
                                         Dim pit As Type = pi.PropertyType
                                         Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                         If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                                             Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.GetIntoPropertyAlias = ep.PropertyAlias)
                                             If selex IsNot Nothing Then
-                                                hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, selex)
+                                                hasCmplx = _PrepareExtracted(mpe, filterInfo, f, eudic, de, t, pit, ep, selex)
                                             End If
                                         Else
-                                            If t Is selTypes(0).First.GetRealType(schema) Then
+                                            If t Is selTypes(0).First.GetRealType(mpe) Then
                                                 Dim p As Pair(Of Type, List(Of String)) = Nothing
                                                 _includeFields.TryGetValue("^this", p)
                                                 If p IsNot Nothing Then
                                                     'Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                                     If p.Second.Contains(ep.PropertyAlias) Then
-                                                        hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
+                                                        hasCmplx = _PrepareExtracted(mpe, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
                                                         If Not hasCmplx AndAlso Not _sl.Exists(Function(se) se.GetIntoPropertyAlias = ep.PropertyAlias) Then
                                                             _sl.Add(New SelectExpression(de.Key, ep.PropertyAlias) With { _
                                                                 .Attributes = ep.Behavior _
@@ -1006,7 +1025,7 @@ l1:
                                                     _includeFields.TryGetValue(prop, ip)
                                                     If ip IsNot Nothing Then
                                                         If ip.Second.Contains(ep.PropertyAlias) Then
-                                                            hasCmplx = _PrepareExtracted(schema, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
+                                                            hasCmplx = _PrepareExtracted(mpe, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
                                                         End If
                                                     End If
                                                 End If
@@ -1020,7 +1039,7 @@ l1:
                                         GoTo l1
                                     End If
                                     'End If
-                                    _pdic.Add(t, schema.GetProperties(t, de.Value))
+                                    _pdic.Add(t, mpe.GetProperties(t, de.Value))
                                 End If
                             Next
                         End If
@@ -1037,7 +1056,7 @@ l1:
                         '    '    Throw New NotSupportedException
                         'Else
                         If _from Is Nothing Then
-                            Dim s As IEntitySchema = GetSchemaForSelectType(schema)
+                            Dim s As IEntitySchema = GetSchemaForSelectType(mpe)
                             If s IsNot Nothing Then
                                 _from = New FromClauseDef(s.Table)
                             End If
@@ -1054,13 +1073,31 @@ l1:
                     End If
                 End If
 
+                Dim fromEU As EntityUnion = _from.GetFromEntity
+                If fromEU IsNot Nothing Then
+                    If Not _types.ContainsKey(fromEU) Then
+                        _types.Add(fromEU, mpe.GetEntitySchema(fromEU.GetRealType(mpe)))
+                    End If
+                End If
+
                 If AutoJoins Then
-                    Dim t As Type = selectOS.GetRealType(schema)
-                    Dim selSchema As IEntitySchema = _types(selectOS) 'schema.GetEntitySchema(t)
+                    Dim t As Type = Nothing
+                    Dim selSchema As IEntitySchema = Nothing
+                    Dim tos As EntityUnion = fromEU
+                    If tos Is Nothing Then
+                        tos = selectOS
+                    End If
+                    t = tos.GetRealType(mpe)
+                    selSchema = _types(tos)
+
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If Not HasInQuery(tp.First) Then
-                            schema.AppendJoin(selectOS, t, selSchema, _
-                                tp.First, tp.First.GetRealType(schema), schema.GetEntitySchema(tp.First.GetRealType(schema)), _
+                        If tp.First IsNot tos AndAlso Not HasInQuery(tp.First) Then
+                            If Not _appendMain AndAlso IsFTS Then
+                                _appendMain = True
+                            End If
+
+                            mpe.AppendJoin(tos, t, selSchema, _
+                                tp.First, tp.First.GetRealType(mpe), mpe.GetEntitySchema(tp.First.GetRealType(mpe)), _
                                 f, _js, filterInfo, JoinType.Join)
                         End If
                     Next
@@ -1229,13 +1266,13 @@ l1:
                     Return True
                 End If
             Next
-            If SelectedEntities IsNot Nothing Then
-                For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                    If os.Equals(tp.First) AndAlso (FromClause Is Nothing OrElse Not FromClause.ObjectSource.Equals(os)) Then
-                        Return True
-                    End If
-                Next
-            End If
+            'If SelectedEntities IsNot Nothing Then
+            '    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
+            '        If os.Equals(tp.First) AndAlso (FromClause Is Nothing OrElse FromClause.ObjectSource Is Nothing OrElse Not FromClause.ObjectSource.Equals(os)) Then
+            '            Return True
+            '        End If
+            '    Next
+            'End If
             Return False
         End Function
 
@@ -1252,15 +1289,9 @@ l1:
         End Function
 
         Protected Sub AddTypeFields(ByVal schema As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
-            ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal os As EntityUnion, ByVal pref As String, ByVal isAnonym As Boolean)
+            ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal pref As String, ByVal isAnonym As Boolean)
             Dim t As Type = tp.First.GetRealType(schema)
-            If os Is Nothing Then
-                os = tp.First
-            End If
-            'Dim oschema As IEntitySchema = schema.GetEntitySchema(t, False)
-            'If oschema Is Nothing Then
-            '    oschema = GetEntitySchema(t)
-            'End If
+
             Dim oschema As IEntitySchema = GetEntitySchema(schema, t)
 
             If oschema Is Nothing Then
@@ -1268,7 +1299,19 @@ l1:
             End If
 
             If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) OrElse _WithLoad(tp, schema) Then
-                Dim l As New List(Of SelectExpression)(schema.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, os)))
+                Dim l As New List(Of SelectExpression)
+                If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
+                    l.AddRange(schema.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) _
+                        New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                            .Into = tp.First, _
+                            .Attributes = c.Behavior, _
+                            .IntoPropertyAlias = c.PropertyAlias _
+                        } _
+                    ))
+                Else
+                    l.AddRange(schema.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
+                End If
+
                 Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
                 If df IsNot Nothing Then
                     Dim sss()() As String = df.GetDefferedLoadPropertiesGroups
@@ -1302,20 +1345,25 @@ l1:
                     End If
                 Next
             Else
-                'If Need2MainType(os) Then
-                For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
-                    Dim se As New SelectExpression(os, c.PropertyAlias)
-                    se.Attributes = c.Behavior
-                    'se.Column = c.Column
-                    cl.Add(se)
-                Next
-                '    Else
-
-                'End If
+                If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
+                    For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
+                        Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                            .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
+                        }
+                        se.Attributes = c.Behavior
+                        cl.Add(se)
+                    Next
+                Else
+                    For Each c As EntityPropertyAttribute In schema.GetPrimaryKeys(t, oschema)
+                        Dim se As New SelectExpression(tp.First, c.PropertyAlias)
+                        se.Attributes = c.Behavior
+                        cl.Add(se)
+                    Next
+                End If
             End If
 
-            If Not _types.ContainsKey(os) Then
-                _types.Add(os, oschema)
+            If Not _types.ContainsKey(tp.First) Then
+                _types.Add(tp.First, oschema)
             End If
         End Sub
 

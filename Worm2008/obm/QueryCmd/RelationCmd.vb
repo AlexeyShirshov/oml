@@ -456,7 +456,7 @@ l1:
                         Else
                             If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(m2mEU) Then
                                 'se.ObjectSource = SelectTypes(0).First
-                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, Nothing, isAnonym)
+                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)

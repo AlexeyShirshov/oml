@@ -45,26 +45,26 @@ Imports Worm.Entities
     '
 #End Region
 
-    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> Public Sub TestInner()
+    '<TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestInner()
 
-        Dim inner As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    '    Dim inner As New QueryCmd(Function() _
+    '        TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        inner.SelectEntity(GetType(Table1))
+    '    inner.SelectEntity(GetType(Table1))
 
-        Dim q As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
+    '    Dim q As New QueryCmd(Function() _
+    '        TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).SelectEntity(GetType(Table1), True).ToList(Of Table1)()
+    '    Dim r As ReadOnlyEntityList(Of Table1) = q.From(inner).SelectEntity(GetType(Table1), True).ToList(Of Table1)()
 
-        Assert.AreEqual(3, r.Count)
+    '    Assert.AreEqual(3, r.Count)
 
-        For Each t As Table1 In r
-            Assert.IsTrue(t.InternalProperties.IsLoaded)
-        Next
-    End Sub
+    '    For Each t As Table1 In r
+    '        Assert.IsTrue(t.InternalProperties.IsLoaded)
+    '    Next
+    'End Sub
 
-    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> Public Sub TestInnerWrongLoad()
+    <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestInnerWrongLoad()
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -127,7 +127,7 @@ Imports Worm.Entities
 
         Dim inner As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
-        inner.SelectEntity(GetType(Table1))
+        'inner.SelectEntity(GetType(Table1))
 
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
@@ -241,7 +241,7 @@ Imports Worm.Entities
             TestManager.CreateManager(New ObjectMappingEngine("1")))
 
         q.Select(FCtor.prop(GetType(Entity), "ID").prop(al, "Title")) _
-            .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(New ObjectProperty(al, "ID")))
+            .Join(JCtor.join(al).on(GetType(Entity), "ID").eq(al, "ID"))
 
         Dim r As ReadOnlyObjectList(Of Entities.AnonymousEntity) = q.ToAnonymList
 
