@@ -173,7 +173,7 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(11, l.Count)
 
-            q.Sort = SCtor.custom("cnt").desc
+            q.Sort = SCtor.count().desc
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)

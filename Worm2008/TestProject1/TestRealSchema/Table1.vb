@@ -401,12 +401,12 @@ Public Class Table1Search
         Return New String() {"EnumStr", "Title"}
     End Function
 
-    Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements IFullTextSupport.GetQueryFields
-        If CStr(contextKey) = "sf" Then
-            Return New String() {"Title"}
-        End If
-        Return Nothing
-    End Function
+    'Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements IFullTextSupport.GetQueryFields
+    '    If CStr(contextKey) = "sf" Then
+    '        Return New String() {"Title"}
+    '    End If
+    '    Return Nothing
+    'End Function
 
     Public Overrides Function GetJoinField(ByVal t As System.Type) As String
         Return String.Empty

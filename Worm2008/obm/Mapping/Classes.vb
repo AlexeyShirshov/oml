@@ -108,7 +108,7 @@ Namespace Entities.Meta
         Private _top As Integer = Integer.MinValue
         Private _f As IFtsStringFormatter
         Private _searchSection As String
-        Private _context As Object
+        'Private _context As Object
 
 #Region " Ctors "
 
@@ -281,14 +281,14 @@ Namespace Entities.Meta
         End Sub
 #End Region
 
-        Public Property Context() As Object
-            Get
-                Return _context
-            End Get
-            Set(ByVal value As Object)
-                _context = value
-            End Set
-        End Property
+        'Public Property Context() As Object
+        '    Get
+        '        Return _context
+        '    End Get
+        '    Set(ByVal value As Object)
+        '        _context = value
+        '    End Set
+        'End Property
 
         Public Property SearchSection() As String
             Get
@@ -349,8 +349,7 @@ Namespace Entities.Meta
         End Function
 
         Public Function GetFtsString(ByVal ifts As IFullTextSupport, ByVal searcht As Type) As String
-            Return Formatter.GetFtsString(SearchSection, Context, _
-                ifts, searcht, GetSearchTableName)
+            Return Formatter.GetFtsString(SearchSection, ifts, searcht, GetSearchTableName)
         End Function
     End Class
 
@@ -452,7 +451,7 @@ Namespace Entities.Meta
     Public Class FtsDefaultFormatter
         Implements IFtsStringFormatter
 
-        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IFullTextSupport, ByVal contextKey As Object) As String
+        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IFullTextSupport) As String
 
         Private Class FProxy
 
@@ -463,7 +462,7 @@ Namespace Entities.Meta
             End Sub
 
             Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
-                ByVal f As IFullTextSupport, ByVal contextkey As Object) As String
+                ByVal f As IFullTextSupport) As String
                 Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
             End Function
         End Class
@@ -482,18 +481,18 @@ Namespace Entities.Meta
             _del = del
         End Sub
 
-        Public Function GetFtsString(ByVal section As String, ByVal contextKey As Object, _
+        Public Function GetFtsString(ByVal section As String, _
             ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormatter.GetFtsString
             If _del Is Nothing Then
                 If ftsString = "freetexttable" Then
-                    Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
+                    Return New FProxy(type2search).GetValue(_toks, section, f)
                 ElseIf ftsString = "containstable" Then
-                    Return Configuration.SearchSection.GetValueForContains(_toks, section, f, contextKey)
+                    Return Configuration.SearchSection.GetValueForContains(_toks, section, f)
                 Else
                     Throw New NotSupportedException
                 End If
             Else
-                Return _del(_toks, section, f, contextKey)
+                Return _del(_toks, section, f)
             End If
         End Function
 

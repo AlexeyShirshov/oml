@@ -116,7 +116,7 @@ Namespace Entities.Meta
     'End Interface
 
     Public Interface IFullTextSupport
-        Function GetQueryFields(ByVal contextKey As Object) As String()
+        'Function GetQueryFields(ByVal contextKey As Object) As String()
         Function GetIndexedFields() As String()
         ReadOnly Property ApplayAsterisk() As Boolean
     End Interface
@@ -125,7 +125,7 @@ Namespace Entities.Meta
         Inherits IFullTextSupport
 
         ReadOnly Property UseFreeText() As Boolean
-        Sub MakeSearchString(ByVal contextKey As Object, ByVal tokens() As String, ByVal sb As StringBuilder)
+        Sub MakeSearchString(ByVal tokens() As String, ByVal sb As StringBuilder)
     End Interface
 
     Public Interface ISupportAlphabet
@@ -148,7 +148,7 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IFtsStringFormatter
-        Function GetFtsString(ByVal section As String, ByVal contextKey As Object, ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
+        Function GetFtsString(ByVal section As String, ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
         Function GetTokens() As String()
     End Interface
 

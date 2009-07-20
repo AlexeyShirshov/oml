@@ -3953,7 +3953,7 @@ l1:
                 Next
                 Dim oldT As Top = TopParam
                 Try
-                    l = OrderBy(New OrderByClause(sort)).Top(1).ToList(Of T)()
+                    l = OrderBy(New OrderByClause(newSort)).Top(1).ToList(Of T)()
                 Finally
                     _top = oldT
                     _order = sort

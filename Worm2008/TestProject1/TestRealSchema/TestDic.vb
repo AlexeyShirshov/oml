@@ -46,7 +46,7 @@ Public Class TestDic
         Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
-            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+            Dim idx As DicIndexT(Of Table1) = New QueryCmd().BuildDictionary(Of Table1)(mgr, 1)
 
             Assert.AreEqual(3, idx.TotalCount)
 
@@ -63,7 +63,7 @@ Public Class TestDic
         Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
-            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+            Dim idx As DicIndexT(Of Table1) = New QueryCmd().BuildDictionary(Of Table1)(mgr, 1)
 
             Assert.AreEqual(6, idx.TotalCount)
 
@@ -80,7 +80,7 @@ Public Class TestDic
         Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
-            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+            Dim idx As DicIndexT(Of Table1) = New QueryCmd().BuildDictionary(Of Table1)(mgr, 1)
 
             Assert.AreEqual(6, idx.TotalCount)
 
@@ -97,7 +97,7 @@ Public Class TestDic
         Dim s As New Worm.ObjectMappingEngine("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
-            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+            Dim idx As DicIndexT(Of Table1) = New QueryCmd().BuildDictionary(Of Table1)(mgr, 1)
 
             Assert.AreEqual(3, idx.TotalCount)
 
@@ -114,7 +114,7 @@ Public Class TestDic
         Dim s As New Worm.ObjectMappingEngine("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
-            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+            Dim idx As DicIndexT(Of Table1) = New QueryCmd().BuildDictionary(Of Table1)(mgr, 1)
 
             Assert.AreEqual(6, idx.TotalCount)
 
