@@ -844,7 +844,7 @@ Imports Worm
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
                 Assert.AreEqual(ObjectState.Deleted, e.InternalProperties.ObjectState)
 
-                e = New QueryCmd().GetByID(Of Entity2)(10, mgr)
+                e = New QueryCmd().GetByID(Of Entity2)(10, True, mgr)
 
                 Assert.IsNull(e)
             Finally
@@ -1207,11 +1207,9 @@ Imports Worm
     Public Sub TestLoadM2M2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, False, mgr)
-            Dim col4 As New List(Of Entity4)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
-            rel.Load(Of Entity, Entity4)(col, False, mgr)
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), col4)
-            Assert.AreEqual(15, col4.Count)
+            Assert.AreEqual(15, rel.Load(Of Entity, Entity4)(col, False, mgr).Count)
 
             Dim e1 As Entity = New QueryCmd().GetByID(Of Entity)(1, mgr)
             Dim e2 As Entity = New QueryCmd().GetByID(Of Entity)(2, mgr)

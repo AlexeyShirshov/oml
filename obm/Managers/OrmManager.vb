@@ -3421,8 +3421,8 @@ l1:
                                         M2MSave(orm, el)
                                         'elb.Saved = True
                                         elb._savedIds.AddRange(el.Added)
-                                        hasNew = hasNew OrElse elb.HasNew
                                     End If
+                                    hasNew = hasNew OrElse elb.HasNew
                                 End If
                             Next
                         End If
@@ -3544,8 +3544,10 @@ l1:
     Protected Friend MustOverride ReadOnly Property Exec() As TimeSpan
     Protected Friend MustOverride ReadOnly Property Fecth() As TimeSpan
 
+#If Not ExcludeFindMethods Then
     Protected MustOverride Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin) As DicIndex(Of T)
     Protected MustOverride Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+#End If
 
 #End Region
 
@@ -3578,6 +3580,7 @@ l1:
         End If
     End Sub
 
+#If Not ExcludeFindMethods Then
     Public Function BuildObjDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal criteria As IGetFilter, ByVal join() As QueryJoin) As DicIndex(Of T)
         Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)).f)
     End Function
@@ -3667,6 +3670,8 @@ l1:
 
         Return roots
     End Function
+
+#End If
 
     Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, _IEntity})(ByVal name As String, ByVal cnt As Integer, _
         ByVal level As Integer, ByVal root As T, ByRef last As T, _

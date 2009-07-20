@@ -273,7 +273,7 @@ Namespace Misc
             Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, Nothing, cmd)
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
@@ -478,6 +478,10 @@ Namespace Misc
             Return FindElements(icm)
         End Function
 
+        Public Overloads Function FindElements(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, False, Nothing)
+        End Function
+
         Public Function FindElementsLoadOnlyNames() As ReadOnlyObjectList(Of T)
             Dim icm As ICreateManager = _cmd.CreateManager
             If icm Is Nothing Then
@@ -487,25 +491,33 @@ Namespace Misc
             Return FindElementsLoadOnlyNames(icm)
         End Function
 
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, False, sort)
+        End Function
+
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
             Using mgr As OrmManager = getMgr.CreateManager
-                Return FindElementsInternal(mgr, False, sort)
+                Return FindElements(mgr, False, sort)
             End Using
         End Function
 
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
             Using mgr As OrmManager = getMgr.CreateManager
-                Return FindElementsInternal(mgr, False, Nothing)
+                Return FindElements(mgr, False, Nothing)
             End Using
         End Function
 
         Public Function FindElementsLoadOnlyNames(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
             Using mgr As OrmManager = getMgr.CreateManager
-                Return FindElementsInternal(mgr, True, Nothing)
+                Return FindElements(mgr, True, Nothing)
             End Using
+        End Function
+
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, True, Nothing)
         End Function
     End Class
 
@@ -555,15 +567,15 @@ Namespace Misc
         End Sub
 
         Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As OrderByClause) As ReadOnlyList(Of T)
-            Return CType(FindElementsInternal(mgr, False, sort), Global.Worm.ReadOnlyList(Of T))
+            Return CType(FindElements(mgr, False, sort), Global.Worm.ReadOnlyList(Of T))
         End Function
 
         Public Overloads Function FindElements(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
-            Return CType(FindElementsInternal(mgr, False, Nothing), Global.Worm.ReadOnlyList(Of T))
+            Return CType(FindElements(mgr, False, Nothing), Global.Worm.ReadOnlyList(Of T))
         End Function
 
         Public Overloads Function FindElementsLoadOnlyNames(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
-            Return CType(FindElementsInternal(mgr, True, Nothing), Global.Worm.ReadOnlyList(Of T))
+            Return CType(FindElements(mgr, True, Nothing), Global.Worm.ReadOnlyList(Of T))
         End Function
 
 #If Not ExcludeFindMethods Then

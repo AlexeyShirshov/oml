@@ -38,7 +38,7 @@ Public Class TestSearch
             'For Each t As Table1 In c
             '    Assert.AreEqual(2, t.Identifier)
             'Next
-            Dim sf As New SearchFragment("sec") With {.Context = "sf"}
+            Dim sf As New SearchFragment("sec", "Title")
             c = New QueryCmd().From(sf).ToList(Of Table1)(mgr)
             Assert.AreEqual(1, c.Count)
         End Using
@@ -94,7 +94,11 @@ Public Class TestSearch
     Public Sub TestPageSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Worm.ObjectMappingEngine("1"))
             'Using New Worm.OrmManager.PagerSwitcher(mgr, 0, 1)
-            Dim c As ICollection(Of Table1) = New QueryCmd().FromSearch("sec").OrderBy(SCtor.prop(GetType(Table1), "DT")).ToList(Of Table1)(mgr)
+            Dim c As ICollection(Of Table1) = New QueryCmd() _
+                .FromSearch("sec") _
+                .OrderBy(SCtor.prop(GetType(Table1), "DT")) _
+                .Paging(0, 1) _
+                .ToList(Of Table1)(mgr)
 
             Assert.AreEqual(1, c.Count)
             'End Using
@@ -145,7 +149,7 @@ Public Class TestSearch
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(NotImplementedException))> _
+    <TestMethod()> _
     Public Sub TestM2MSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText( _
             New Worm.ObjectMappingEngine("Search", Function(currentVersion As String, entities() As EntityAttribute, objType As Type) Array.Find(entities, Function(ea As EntityAttribute) ea.Version = "1")))
@@ -153,7 +157,7 @@ Public Class TestSearch
             Dim t3 As Table3 = New QueryCmd().GetByID(Of Table3)(1, mgr)
             Dim col As Worm.ReadOnlyList(Of Table1) = t3.GetCmd(GetType(Table1)).ToOrmList(Of Table1)(mgr)
 
-            Assert.AreEqual(2, col.Count)
+            Assert.AreEqual(1, col.Count)
 
             col = t3.GetCmd(GetType(Table1)).FromSearch("first").ToOrmList(Of Table1)(mgr)
 

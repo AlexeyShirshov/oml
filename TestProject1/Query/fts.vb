@@ -117,7 +117,7 @@ Imports Worm.Entities.Meta
             .Join(JCtor.join("Table3").onM2M(GetType(Table1))) _
             .Where(Ctor.prop("Table3", "Code").eq(2))
 
-        Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        Assert.AreEqual(2, q.ToList(Of Table1)().Count)
         Assert.IsFalse(q.LastExecutionResult.CacheHit)
     End Sub
 

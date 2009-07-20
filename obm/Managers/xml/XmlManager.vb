@@ -70,14 +70,6 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.QueryJoin) As Misc.DicIndex(Of T)
-            Throw New NotImplementedException
-        End Function
-
-        Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.QueryJoin, ByVal firstField As String, ByVal secondField As String) As Misc.DicIndex(Of T)
-            Throw New NotImplementedException
-        End Function
-
         Protected Friend Overrides ReadOnly Property Exec() As System.TimeSpan
             Get
 

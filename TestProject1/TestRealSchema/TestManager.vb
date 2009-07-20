@@ -508,7 +508,7 @@ Public Class TestManagerRS
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
+    <TestMethod()> _
     Public Sub TestComplexM2M4()
         Dim schema As Worm.ObjectMappingEngine = GetSchema("1")
 
@@ -575,7 +575,7 @@ Public Class TestManagerRS
             Dim tt2 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
 
             Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
-            Dim t10s As ICollection(Of Table10) = New QueryCmd().Select(FCtor.prop(GetType(Table10), "Table1")).Where(Ctor.prop(GetType(Table10), "ID").in(t1s)).ToList(Of Table10)(mgr)
+            Dim t10s As ICollection(Of Table10) = New QueryCmd().Select(FCtor.prop(GetType(Table10), "Table1")).Where(Ctor.prop(GetType(Table10), "Table1").in(t1s)).ToList(Of Table10)(mgr)
 
             Assert.AreEqual(3, t10s.Count)
 
@@ -739,7 +739,7 @@ Public Class TestManagerRS
             Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
             Assert.IsNotNull(t1)
 
-            t1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            t1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
             Assert.IsNull(t1)
         End Using
     End Sub
@@ -1296,7 +1296,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadNonCached()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
+            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
             Assert.IsNotNull(t)
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))

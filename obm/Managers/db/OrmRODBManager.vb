@@ -3631,6 +3631,8 @@ l2:
             Return cnt < _length
         End Function
 
+#If Not ExcludeFindMethods Then
+
         Protected Overrides Function BuildDictionary(Of T As {New, IKeyEntity})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As QueryJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(SQLGenerator, "p")
@@ -3699,6 +3701,8 @@ l2:
             'Return CType(arr1.ToArray(tt), MediaIndex(Of T)())
             Return root
         End Function
+
+#End If
 
         Public Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
             Throw New NotImplementedException()
