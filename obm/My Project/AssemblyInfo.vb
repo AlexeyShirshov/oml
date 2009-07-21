@@ -10,10 +10,10 @@ Imports System.Runtime
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Worm.Orm")> 
+<Assembly: AssemblyTitle("Worm")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("")> 
+<Assembly: AssemblyProduct("Web object-relational mapping framework")> 
 <Assembly: AssemblyCopyright("Copyright ©  2005")> 
 <Assembly: AssemblyTrademark("")> 
 
@@ -33,8 +33,8 @@ Imports System.Runtime
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
 
-<Assembly: AssemblyVersion("1.0.*")> 
-<Assembly: AssemblyFileVersion("1.0.0.0")> 
+<Assembly: AssemblyVersion("2.3.*")> 
+<Assembly: AssemblyFileVersion("2.3.0.0")> 
 
 <Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
 <Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)> 

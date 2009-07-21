@@ -1,15 +1,32 @@
-Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Entities.Meta
+Imports Worm.Cache
+Imports Worm.Query.Sorting
+Imports Worm.Query
+Imports Worm.Expressions2
 
 Public Enum Enum1 As Byte
     first = 1
     sec = 2
 End Enum
 
+Public Class [Table1_x]
+    Inherits Table1
+
+    Public Overrides Property Name() As String
+        Get
+            Return MyBase.Name
+        End Get
+        Set(ByVal value As String)
+            MyBase.Name = value
+        End Set
+    End Property
+End Class
+
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
-    Inherits OrmBaseT(Of Table1)
-    Implements IOrmEditable(Of Table1)
+    Inherits KeyEntity
+    Implements IOptimizedValues, IComparable
 
     Private _name As String
     Private _code As Nullable(Of Integer)
@@ -17,49 +34,65 @@ Public Class Table1
     Private _e2 As Nullable(Of Enum1)
     Private _dt As DateTime
     Private _cust As Integer
+    Private _id As Integer
 
     Public Sub New()
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Return New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type)
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type), Global.System.Collections.Generic.IComparer(Of T))
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable1(ByVal [from] As Table1, ByVal [to] As Table1) Implements Worm.Orm.IOrmEditable(Of Table1).CopyBody
-        With [from]
-            [to]._code = ._code
-            [to]._dt = ._dt
-            [to]._e = ._e
-            [to]._e2 = ._e2
-            [to]._name = ._name
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType(from, Table1)
+            CType([to], Table1)._id = ._id
+            CType([to], Table1)._code = ._code
+            CType([to], Table1)._dt = ._dt
+            CType([to], Table1)._e = ._e
+            CType([to], Table1)._e2 = ._e2
+            CType([to], Table1)._name = ._name
         End With
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable1(CType(from, Table1), CType([to], Table1))
-    'End Sub
+    Public Function CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
+        Return _id.CompareTo(CType(obj, Table1)._id)
+    End Function
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table1(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Public Shared ReadOnly Property Table2Relation() As RelationDesc
+        Get
+            Return New RelationDesc(New EntityUnion(GetType(Table2)), "Table1")
+        End Get
+    End Property
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
-        Select Case c.FieldName
+    Public ReadOnly Property Table2s() As RelationCmd
+        Get
+            Return GetCmd(Table2Relation)
+        End Get
+    End Property
+
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+        Select Case fieldName
             Case "Title"
                 Name = CStr(value)
             Case "Enum"
@@ -74,84 +107,92 @@ Public Class Table1
                 _cust = CInt(value)
             Case "ddd"
                 Name = CStr(value)
+            Case "ID"
+                Identifier = value
             Case Else
-                MyBase.SetValue(pi, c, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    Public Overrides Function GetValue(ByVal propAlias As String) As Object
-        If propAlias = "ddd" Then
+    Public Overridable Overloads Function GetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
+        If fieldName = "ddd" Then
             Return Name
+        ElseIf fieldName = "ID" Then
+            Return _id
         Else
-            Return MyBase.GetValue(propAlias)
+            Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
+            'Throw New NotSupportedException(fieldName)
+            'Return MyBase.GetValue(pi, fieldName, oschema)
         End If
     End Function
 
-    <Column("Title")> _
-    Public Property Name() As String
+    <EntityProperty(PropertyAlias:="Title")> _
+    Public Overridable Property Name() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
     End Property
 
-    <Column("Enum")> _
+    <EntityPropertyAttribute(PropertyAlias:="Enum")> _
     Public Property [Enum]() As Nullable(Of Enum1)
         Get
-            Using SyncHelper(True, "Enum")
+            Using Read("Enum")
                 Return _e
             End Using
         End Get
         Set(ByVal value As Nullable(Of Enum1))
-            Using SyncHelper(False, "Enum")
+            Using Write("Enum")
                 _e = value
             End Using
         End Set
     End Property
 
-    <Column("EnumStr")> _
+    <EntityPropertyAttribute(PropertyAlias:="EnumStr")> _
     Public Property EnumStr() As Nullable(Of Enum1)
         Get
-            Using SyncHelper(True, "EnumStr")
+            Using Read("EnumStr")
                 Return _e2
             End Using
         End Get
         Set(ByVal value As Nullable(Of Enum1))
-            Using SyncHelper(False, "EnumStr")
+            Using Write("EnumStr")
                 _e2 = value
             End Using
         End Set
     End Property
 
-    <Column("Code")> _
+    <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Nullable(Of Integer)
         Get
-            Using SyncHelper(True, "Code")
+            Using Read("Code")
                 Return _code
             End Using
         End Get
         Set(ByVal value As Nullable(Of Integer))
-            Using SyncHelper(False, "Code")
+            Using Write("Code")
                 _code = value
             End Using
         End Set
     End Property
 
-    <Column("DT")> _
+    <EntityPropertyAttribute(PropertyAlias:="DT")> _
     Public Property CreatedAt() As Date
         Get
-            Using SyncHelper(True, "DT")
+            Using Read("DT")
                 Return _dt
             End Using
         End Get
         Set(ByVal value As Date)
-            Using SyncHelper(False, "DT")
+            Using Write("DT")
                 _dt = value
             End Using
         End Set
@@ -166,19 +207,23 @@ End Class
 
 Public Class Table1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmDictionary, IOrmSchemaInit, IOrmSorting, IJoinBehavior
+    Implements ISupportAlphabet, ISchemaInit, IOrmSorting, IJoinBehavior, ISchemaWithM2M
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     'Private _schema As OrmSchemaBase
-    Private _tables() As OrmTable = {New OrmTable("dbo.Table1")}
-    Private _rels() As M2MRelation
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table1")}
+    Private _rels() As M2MRelationDesc
 
     Public Enum Tables
         Main
     End Enum
 
-    Public Overrides Function ChangeValueType(ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        If c.FieldName = "EnumStr" Then
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table1")
+    End Sub
+
+    Public Overrides Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        If c.PropertyAlias = "EnumStr" Then
             If TypeOf value Is Enum1 Then
                 newvalue = value.ToString
                 Return True
@@ -188,23 +233,23 @@ Public Class Table1Implementation
         End If
     End Function
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Enum", "enum", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("EnumStr", "enum_str", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Code", "code", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("DT", "dt", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
+            idx.Add(New MapField2Column("Enum", "enum", Table))
+            idx.Add(New MapField2Column("EnumStr", "enum_str", Table))
+            idx.Add(New MapField2Column("Code", "code", Table))
+            idx.Add(New MapField2Column("DT", "dt", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
     '    Select Case CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort)
@@ -217,7 +262,7 @@ Public Class Table1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         Dim t As Type = _schema.GetTypeByEntityName("Table3")
         If t Is Nothing Then
             Throw New InvalidOperationException("Cannot get type Table3")
@@ -225,49 +270,50 @@ Public Class Table1Implementation
         End If
 
         If _rels Is Nothing Then
-            _rels = New M2MRelation() { _
-                New Orm.M2MRelation(t, TablesImplementation._tables(0), "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
-                New Orm.M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
-                New Orm.M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
+            Dim t1to3 As SourceFragment = _schema.GetTables(GetType(Tables1to3))(0)
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
+                New M2MRelationDesc(_objectType, _schema.GetTables(GetType(Tables1to1))(0), "table1", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey, GetType(Tables1to1)), _
+                New M2MRelationDesc(_objectType, _schema.GetTables(GetType(Tables1to1))(0), "table1_back", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, GetType(Tables1to1)) _
             }
         End If
         Return _rels
     End Function
 
-    Public Overridable Function GetFirstDicField() As String Implements Worm.Orm.IOrmDictionary.GetFirstDicField
+    Public Overridable Function GetFirstDicField() As String Implements ISupportAlphabet.GetFirstDicField
         Return "Title"
     End Function
 
-    Public Overridable Function GetSecondDicField() As String Implements Worm.Orm.IOrmDictionary.GetSecondDicField
+    Public Overridable Function GetSecondDicField() As String Implements ISupportAlphabet.GetSecondDicField
         Return Nothing
     End Function
 
-    'Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal type As Type) Implements Worm.Orm.IOrmSchemaInit.GetSchema
+    'Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal type As Type) Implements Worm.Orm.ISchemaInit.GetSchema
     '    _schema = schema
     '    _objectType = type
     'End Sub
 
-    Public Function CreateSortComparer(ByVal s As Worm.Orm.Sort) As System.Collections.IComparer Implements Worm.Orm.IOrmSorting.CreateSortComparer
-        If s.FieldName = "DT" Then
+    Public Function CreateSortComparer(ByVal s As SortExpression) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "DT" Then
             Return New Comparer(Table1Sort.DateTime, s.Order)
-        ElseIf s.FieldName = "Enum" Then
+        ElseIf CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Enum" Then
             Return New Comparer(Table1Sort.Enum, s.Order)
         End If
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort) As System.Collections.Generic.IComparer(Of T) Implements Worm.Orm.IOrmSorting.CreateSortComparer
-        If s.FieldName = "DT" Then
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As SortExpression) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "DT" Then
             Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
-        ElseIf s.FieldName = "Enum" Then
+        ElseIf CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Enum" Then
             Return CType(New Comparer(Table1Sort.Enum, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing
     End Function
 
-    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort, ByVal objs As System.Collections.Generic.ICollection(Of T)) As System.Collections.Generic.ICollection(Of T) Implements Worm.Orm.IOrmSorting.ExternalSort
-        Throw New NotSupportedException
-    End Function
+    'Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
+    '    Throw New NotSupportedException
+    'End Function
 
     Public Enum Table1Sort
         DateTime
@@ -280,9 +326,9 @@ Public Class Table1Implementation
         Private _s As Table1Sort
         Private _st As Integer = -1
 
-        Public Sub New(ByVal s As Table1Sort, ByVal st As SortType)
+        Public Sub New(ByVal s As Table1Sort, ByVal st As SortExpression.SortType)
             _s = s
-            If st = SortType.Asc Then
+            If st = SortExpression.SortType.Asc Then
                 _st = 1
             End If
         End Sub
@@ -325,15 +371,17 @@ Public Class Table1Implementation
         End Function
     End Class
 
-    Public ReadOnly Property AlwaysJoinMainTable() As Boolean Implements Worm.Orm.IJoinBehavior.AlwaysJoinMainTable
+    Public ReadOnly Property AlwaysJoinMainTable() As Boolean Implements IJoinBehavior.AlwaysJoinMainTable
         Get
             Return False
         End Get
     End Property
 
-    Public Overridable Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
+    Public Overridable Function GetJoinField(ByVal t As System.Type) As String Implements IJoinBehavior.GetJoinField
         If t Is GetType(Table2) Then
-            Return "ID"
+            'Return "ID"
+            'Return "Table1"
+            'Throw New NotImplementedException
         End If
         Return Nothing
     End Function
@@ -341,24 +389,24 @@ End Class
 
 Public Class Table1Search
     Inherits Table1Implementation
-    Implements IOrmFullTextSupport
+    Implements IFullTextSupport
 
-    Public ReadOnly Property ApplayAsterisk() As Boolean Implements Worm.Orm.IOrmFullTextSupport.ApplayAsterisk
+    Public ReadOnly Property ApplayAsterisk() As Boolean Implements IFullTextSupport.ApplayAsterisk
         Get
             Return True
         End Get
     End Property
 
-    Public Function GetIndexedFields() As String() Implements Worm.Orm.IOrmFullTextSupport.GetIndexedFields
+    Public Function GetIndexedFields() As String() Implements IFullTextSupport.GetIndexedFields
         Return New String() {"EnumStr", "Title"}
     End Function
 
-    Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements Worm.Orm.IOrmFullTextSupport.GetQueryFields
-        If CStr(contextKey) = "sf" Then
-            Return New String() {"Title"}
-        End If
-        Return Nothing
-    End Function
+    'Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements IFullTextSupport.GetQueryFields
+    '    If CStr(contextKey) = "sf" Then
+    '        Return New String() {"Title"}
+    '    End If
+    '    Return Nothing
+    'End Function
 
     Public Overrides Function GetJoinField(ByVal t As System.Type) As String
         Return String.Empty
@@ -368,20 +416,23 @@ End Class
 Public Class Table12Implementation
     Inherits Table1Implementation
 
-    Private _tables() As OrmTable = {New table1func("table1func")}
+    'Private _tables() As SourceFragment = {New table1func("table1func")}
+    Public Sub New()
+        _tbl = New table1func("table1func")
+    End Sub
 
     'Implements IOrmTableFunction
 
-    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    'Public Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As Worm.Orm.ParamMgr) As SourceFragment Implements Worm.Orm.IOrmTableFunction.GetFunction
     '    If table.Equals(GetTables()(Tables.Main)) Then
-    '        Return New OrmTable("dbo.table1func()")
+    '        Return New SourceFragment("dbo.table1func()")
     '    End If
     '    Return Nothing
     'End Function
 
-    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     Public Overrides Function GetSecondDicField() As String
         Return "EnumStr"
@@ -391,43 +442,46 @@ End Class
 Public Class Table13Implementation
     Inherits Table1Implementation
 
-    Private _tables() As OrmTable = {New table2func("table2func")}
+    'Private _tables() As SourceFragment = {New table2func("table2func")}
+    Public Sub New()
+        _tbl = New table2func("table2func")
+    End Sub
 
-    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Implements IOrmTableFunction
 
-    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    'Public Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As Worm.Orm.ParamMgr) As SourceFragment Implements Worm.Orm.IOrmTableFunction.GetFunction
     '    If table.Equals(GetTables()(Tables.Main)) Then
-    '        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
+    '        Return New SourceFragment("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     '    End If
     '    Return Nothing
     'End Function
 End Class
 
 Public Class table1func
-    Inherits OrmTable
+    Inherits SourceFragment
 
     Public Sub New(ByVal tableName As String)
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
-        Return New OrmTable("dbo.table1func()")
+    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As SourceFragment
+        Return New SourceFragment("dbo.table1func()")
     End Function
 
 End Class
 
 Public Class table2func
-    Inherits OrmTable
+    Inherits SourceFragment
 
     Public Sub New(ByVal tableName As String)
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
-        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
+    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As SourceFragment
+        Return New SourceFragment("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     End Function
 End Class

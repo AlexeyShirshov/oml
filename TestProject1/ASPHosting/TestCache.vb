@@ -34,24 +34,28 @@ Public Class TestCache
             h.ProcessRequest("ASPHosting/Web/testhttpcache.aspx", "add", sw)
             sw.Flush()
             Debug.WriteLine(sw.GetStringBuilder.ToString)
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
 
         Using sw As New StringWriter()
             h.ProcessRequest("ASPHosting/Web/testhttpcache.aspx", "remove", sw)
             sw.Flush()
             Debug.WriteLine(sw.GetStringBuilder.ToString)
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
 
         Using sw As New StringWriter()
             h.ProcessRequest("ASPHosting/Web/testhttpcache.aspx", "remove2", sw)
             sw.Flush()
             Debug.WriteLine(sw.GetStringBuilder.ToString)
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
 
         Using sw As New StringWriter()
             h.ProcessRequest("ASPHosting/Web/testhttpcache.aspx", "getvalues", sw)
             sw.Flush()
             Debug.WriteLine(sw.GetStringBuilder.ToString)
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
 
         Using sw As New StringWriter()
@@ -112,6 +116,60 @@ Public Class TestCache
             If Write2Console Then
                 Debug.WriteLine(sw.GetStringBuilder.ToString)
             End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test objects ok"))
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestExpire()
+        Dim h As ASPNETHosting.ASPNetHost = GetHost()
+        Using sw As New StringWriter()
+            h.ProcessRequest("ASPHosting/Web/testhttpdic.aspx", String.Empty, sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("cnt = 0"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("created = True"))
+
+            System.Threading.Thread.Sleep(1000 * 60 * 2)
+
+            sw.GetStringBuilder.Length = 0
+            h.ProcessRequest("ASPHosting/Web/testhttpdic.aspx", "second", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("cnt = 2"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("created = False"))
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestWebCache()
+        Dim h As ASPNETHosting.ASPNetHost = GetHost()
+        Using sw As New StringWriter()
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", String.Empty, sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+
+            sw.GetStringBuilder.Length = 0
+
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", "resetCmd", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+
+            sw.GetStringBuilder.Length = 0
+
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", "reset", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
     End Sub
 

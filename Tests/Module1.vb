@@ -1,3 +1,8 @@
+Imports Worm.Database
+Imports Worm.Cache
+Imports Worm.Criteria
+Imports Worm.Query
+
 Module Module1
 
     Class testctx
@@ -45,22 +50,30 @@ Module Module1
     End Class
 
     Sub main()
-        Using mgr As Worm.Orm.OrmReadOnlyDBManager = New Worm.Orm.OrmDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
-            For i As Integer = 0 To 10000
-                mgr.Find(Of TestProject1.Table1)(Worm.Orm.Criteria.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
-                If i Mod 1000 = 0 Then
-                    Console.WriteLine(i / 1000)
-                End If
-            Next
-            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
-            t.CreatedAt = Now
-            mgr.BeginTransaction()
-            Try
-                t.Save(True)
-            Finally
-                mgr.Rollback()
-            End Try
-        End Using
+        'Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
+        '    For i As Integer = 0 To 10000
+        '        mgr.Find(Of TestProject1.Table1)(Ctor.prop(GetType(TestProject1.Table1), "ID").eq(i + 1000), Nothing, False)
+        '        If i Mod 1000 = 0 Then
+        '            Console.WriteLine(i / 1000)
+        '        End If
+        '    Next
+        '    Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.MappingEngine)
+        '    t.CreatedAt = Now
+        '    mgr.BeginTransaction()
+        '    Try
+        '        t.SaveChanges(True)
+        '    Finally
+        '        mgr.Rollback()
+        '    End Try
+        'End Using
+
+        Dim l As New List(Of WeakEntityReference)
+        For i As Integer = 0 To 500000
+            l.Add(New WeakEntityReference(New TestProject1.Table1))
+            If (i Mod 100) = 0 Then
+                Console.WriteLine(i)
+            End If
+        Next
     End Sub
 
     Sub Main4()
@@ -137,18 +150,18 @@ Module Module1
     End Sub
 
     Sub withoutload()
-        Using mc As Worm.Orm.OrmManagerBase = TestProject1.TestManager.CreateManager(New Worm.Orm.DbSchema("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
-                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, False)
-                mc.LoadObjects(c)
+                Dim c As Worm.ReadOnlyList(Of TestProject1.Entity2) = New QueryCmd().Top(100).ToOrmList(Of TestProject1.Entity2)(mc)
+                c.LoadObjects()
             Next
         End Using
     End Sub
 
     Sub withload()
-        Using mc As Worm.Orm.OrmManagerBase = TestProject1.TestManager.CreateManager(New Worm.Orm.DbSchema("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
             For i As Integer = 0 To 100
-                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, True)
+                Dim c As Generic.ICollection(Of TestProject1.Entity2) = New QueryCmd().Top(100).SelectEntity(GetType(TestProject1.Entity2), True).ToList(Of TestProject1.Entity2)(mc)
             Next
         End Using
     End Sub

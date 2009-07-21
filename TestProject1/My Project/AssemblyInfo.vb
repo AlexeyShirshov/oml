@@ -10,9 +10,9 @@ Imports System.Runtime.InteropServices
 
 <Assembly: AssemblyTitle("TestProject1")> 
 <Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("XMedia")> 
-<Assembly: AssemblyProduct("TestProject1")> 
-<Assembly: AssemblyCopyright("Copyright © XMedia 2007")> 
+<Assembly: AssemblyCompany("")> 
+<Assembly: AssemblyProduct("Web object-relational mapping framework test project")> 
+<Assembly: AssemblyCopyright(ight © XMedia 2007")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: CLSCompliant(False)> 

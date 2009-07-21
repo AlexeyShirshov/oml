@@ -4,27 +4,27 @@ using System.Text;
 using Microsoft.CSharp;
 using Microsoft.VisualBasic;
 using System.CodeDom;
-using OrmCodeGenLib;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core;
+using Worm.CodeGen.Core.Descriptors;
 using System.Xml;
 using System.CodeDom.Compiler;
 using System.IO;
+using System.Linq;
 
-
-namespace OrmCodeGen
+namespace Worm.CodeGen.CodeGenerator
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("OrmObjects CodeGen utility.");
+            Console.WriteLine("Worm code generator utility.");
             Console.WriteLine();
 
 			CommandLine.Utility.Arguments cmdLine = new CommandLine.Utility.Arguments(args);
 
             string outputLanguage;
             string outputFolder;
-            OrmObjectsDef ormObjectsDef;
+            WXMLModel ormObjectsDef;
             string inputFilename;
             CodeDomProvider codeDomProvider;
             bool split, separateFolder;
@@ -52,6 +52,10 @@ namespace OrmCodeGen
                 Console.WriteLine("  -cnS\t- class name suffix (null by default)");
                 Console.WriteLine("  -fnP\t- file name prefix (null by default)");
                 Console.WriteLine("  -fnS\t- file name suffix (null by default)");
+                Console.WriteLine("  -propsT\t- use type instead of entity name in props (false by default)");
+                Console.WriteLine("  -rm\t- remove old m2m methods (false by default)");
+                Console.WriteLine("  -of\t- generate one file (false by default)");
+                //Console.WriteLine("  -so\t- generate entity schema only (false by default)");
                 return;
             }
 
@@ -142,17 +146,38 @@ namespace OrmCodeGen
                 settings.ClassNameSuffix = cmdLine["cnS"];
             }
 
+            if (cmdLine["propsT"] != null)
+            {
+                settings.UseTypeInProps = true;
+            }
+
+            if (cmdLine["rm"] != null)
+            {
+                settings.RemoveOldM2M = true;
+            }
+
+            //if (cmdLine["os"] != null)
+            //{
+            //    settings.OnlySchema = true;
+            //}
+
+            bool oneFile = false;
+            if (cmdLine["of"] != null)
+            {
+                oneFile = true;
+            }
+
             if(!System.IO.File.Exists(inputFilename))
             {
-                Console.WriteLine("Error: source file not found.");
+                Console.WriteLine("Error: source file {0} not found.", inputFilename);
                 return;
             }
 
-            if (!System.IO.Directory.Exists(outputFolder))
-            {
-                Console.WriteLine("Error: output folder not found.");
-                return;
-            }
+            //if (!System.IO.Directory.Exists(outputFolder))
+            //{
+            //    Console.WriteLine("Error: output folder not found.");
+            //    return;
+            //}
             if(string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
                 outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
             else
@@ -163,7 +188,7 @@ namespace OrmCodeGen
                 Console.Write("Parsing file '{0}'...   ", inputFilename);
                 using (XmlReader rdr = XmlReader.Create(inputFilename))
                 {
-                    ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                    ormObjectsDef = WXMLModel.LoadFromXml(rdr, new XmlUrlResolver());
                 }
                 Console.WriteLine("done!");
                 if(validateOnly)
@@ -191,48 +216,77 @@ namespace OrmCodeGen
                 }
             }
 
-            OrmCodeDomGenerator gen = new OrmCodeDomGenerator(ormObjectsDef);
+            var gen = new WXMLModelToCodeDomConverter(ormObjectsDef, settings);
 
             
-            settings.Split = split;
+			//settings.Split = split;
             settings.LanguageSpecificHacks = languageHacks;
 
             Console.WriteLine("Generation entities from file '{0}' using these settings:", inputFilename);
-            Console.WriteLine("  Output folder: {0}", outputFolder);
+            Console.WriteLine("  Output folder: {0}", System.IO.Path.GetFullPath(outputFolder));
             Console.WriteLine("  Language: {0}", outputLanguage.ToLower());
             Console.WriteLine("  Split files: {0}", split);
             Console.WriteLine("  Skip entities: {0}", string.Join(" ", skipEntities));
             Console.WriteLine("  Process entities: {0}", string.Join(" ", processEntities));
 
-            
+
+            if (oneFile)
+            {
+                string privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
+
+                CodeCompileUnit unit = gen.GetFullSingleUnit(typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(codeDomProvider.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
+
+                if (!System.IO.Directory.Exists(privateFolder))
+                    System.IO.Directory.CreateDirectory(privateFolder);
+
+                string outputFileName = System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() +
+                        System.IO.Path.GetFileNameWithoutExtension(inputFilename));
+                
+                GenerateCode(codeDomProvider, unit, outputFileName, testRun);
+
+                Console.WriteLine();
+
+                Console.WriteLine("Result:");
+
+                Console.WriteLine("\t{0} single generated.");
+            }
+            else
+                GenerateMultipleFilesOutput(outputFolder, ormObjectsDef, codeDomProvider, separateFolder, 
+                    skipEntities, processEntities, settings, testRun, gen);
+        }
+
+        private static void GenerateMultipleFilesOutput(string outputFolder, WXMLModel ormObjectsDef, 
+            CodeDomProvider codeDomProvider, bool separateFolder, string[] skipEntities, string[] processEntities, 
+            OrmCodeDomGeneratorSettings settings, bool testRun, WXMLModelToCodeDomConverter gen)
+        {
             List<string> errorList = new List<string>();
             int totalEntities = 0;
             int totalFiles = 0;
             foreach (EntityDescription entity in ormObjectsDef.Entities)
             {
-                bool skip = false;
-                if (processEntities.Length != 0)
-                {
-                    skip = true;
-                    foreach (string processEntityId in processEntities)
-                    {
-                        if (processEntityId == entity.Identifier)
-                        {
-                            skip = false;
-                            break;
-                        }
-                    }
-                }
-                foreach (string skipEntityId in skipEntities)
-                {
-                    if (skipEntityId == entity.Identifier)
-                    {
-                        skip = true;
-                        break;
-                    }
-                }
+                //bool skip = false;
+                //if (processEntities.Length != 0)
+                //{
+                //    skip = true;
+                //    foreach (string processEntityId in processEntities)
+                //    {
+                //        if (processEntityId == entity.Identifier)
+                //        {
+                //            skip = false;
+                //            break;
+                //        }
+                //    }
+                //}
+                //foreach (string skipEntityId in skipEntities)
+                //{
+                //    if (skipEntityId == entity.Identifier)
+                //    {
+                //        skip = true;
+                //        break;
+                //    }
+                //}
 
-                if (skip)
+                if (skipEntities.Contains(entity.Identifier) || processEntities.Contains(entity.Identifier))
                     continue;
 
                 string privateFolder;
@@ -240,21 +294,20 @@ namespace OrmCodeGen
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString() + entity.Name + System.IO.Path.DirectorySeparatorChar;
                 else
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
-                
-                Dictionary<string, CodeCompileUnit> unitsDic;
 
-                unitsDic = gen.GetEntityDom(entity.Identifier, settings);
+                var units = gen.GetEntityCompileUnits(entity.Identifier, typeof(Microsoft.VisualBasic.VBCodeProvider).IsAssignableFrom(codeDomProvider.GetType()) ? LinqToCodedom.CodeDomGenerator.Language.VB : LinqToCodedom.CodeDomGenerator.Language.CSharp);
 
                 Console.Write(".");
 
                 if (!System.IO.Directory.Exists(privateFolder))
                     System.IO.Directory.CreateDirectory(privateFolder);
-                foreach (string name in unitsDic.Keys)
+
+                foreach (var unit in units)
                 {
                     Console.Write(".");
                     try
                     {
-                        GenerateCode(codeDomProvider, unitsDic[name], System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() + name), testRun);
+                        GenerateCode(codeDomProvider, unit, System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() + unit.Filename), testRun);
                         Console.Write(".");
                         totalFiles++;
                     }
@@ -262,10 +315,30 @@ namespace OrmCodeGen
                     {
                         Console.Write(".");
                         errorList.Add(
-                            string.Format("Entity: {0}; file: {1}; message: {2}", entity.Identifier, name, exc.Message));
+                            string.Format("Entity: {0}; file: {1}; message: {2}", entity.Identifier, unit.Filename, exc.Message));
                     }
                 }
                 totalEntities++;
+            }
+
+            try
+            {
+                var ctx = gen.GetLinqContext();
+                if (ctx != null)
+                {
+                    GenerateCode(codeDomProvider, ctx,
+                                 System.IO.Path.GetFullPath(outputFolder +
+                                                            System.IO.Path.DirectorySeparatorChar.ToString() +
+                                                            ctx.Filename), testRun);
+                    Console.Write(".");
+                    totalFiles++;
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.Write(".");
+                errorList.Add(
+                    string.Format("Linq context file failed to generate: {0}", exc.Message));
             }
 
             Console.WriteLine();
@@ -274,7 +347,7 @@ namespace OrmCodeGen
             Console.WriteLine("\t {0} entities processed", totalEntities);
             Console.WriteLine("\t {0} files generated", totalFiles);
             Console.WriteLine("\t {0} errors encountered", errorList.Count);
-            if(errorList.Count != 0)
+            if (errorList.Count != 0)
             {
                 Console.WriteLine("Errors:");
                 foreach (string s in errorList)

@@ -1,5 +1,5 @@
+<%@ Page ValidateRequest="false" %>
 <%@ Assembly Name="Worm.Orm" %>
-<%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
@@ -19,7 +19,7 @@
         'End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
-
+            Dim s As String = Encoding.UTF8.GetString(Request.BinaryRead(Request.TotalBytes))
         End Sub
 </script>
 </head>

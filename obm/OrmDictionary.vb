@@ -1,9 +1,18 @@
 Imports System.Runtime.CompilerServices
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Joins
+Imports Worm.Entities.Meta
+Imports Worm.Criteria.Conditions
+Imports Worm.Query
+Imports Worm.Criteria
+Imports Worm.Query.Sorting
+Imports Worm.Expressions2
 
-Namespace Orm
+Namespace Misc
 
-    Public Class myCultureComparer
+    <Serializable()> _
+    Class myCultureComparer
         Implements IEqualityComparer
 
         Dim myComparer As CaseInsensitiveComparer
@@ -29,7 +38,7 @@ Namespace Orm
         End Function
     End Class
 
-
+    <Serializable()> _
     Public Class DicIndexBase
 
         Private _max As Integer = 1
@@ -46,10 +55,8 @@ Namespace Orm
 
         Private dic As IDictionary
         Private dic_id As IDictionary
-        Protected childs As ArrayList
-        Protected _filter As IFilter
-        Protected _root As DicIndexBase
-        Protected _join As OrmJoin
+        Protected _childs As ArrayList
+        Private _root As DicIndexBase
         'Protected _complex As Boolean
 
         'Protected Friend Property Complex() As Boolean
@@ -60,6 +67,9 @@ Namespace Orm
         '        _complex = value
         '    End Set
         'End Property
+
+        Protected Friend Sub New()
+        End Sub
 
         Public Sub New(ByVal name As String, ByVal parent As DicIndexBase, ByVal count As Integer)
             _name = name
@@ -73,7 +83,7 @@ Namespace Orm
 
         Public ReadOnly Property IsLeaf() As Boolean
             Get
-                Return childs Is Nothing
+                Return _childs Is Nothing
             End Get
         End Property
 
@@ -84,17 +94,17 @@ Namespace Orm
 
         Public ReadOnly Property ChildIndexes() As DicIndexBase()
             Get
-                If childs Is Nothing Then Return Nothing
-                Return CType(childs.ToArray(GetType(DicIndexBase)), DicIndexBase())
+                If _childs Is Nothing Then Return Nothing
+                Return CType(_childs.ToArray(GetType(DicIndexBase)), DicIndexBase())
             End Get
         End Property
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
         Public Sub AddChild(ByVal child As DicIndexBase)
-            If childs Is Nothing Then
-                childs = New ArrayList
+            If _childs Is Nothing Then
+                _childs = New ArrayList
             End If
-            childs.Add(child)
+            _childs.Add(child)
         End Sub
 
         Public ReadOnly Property Name() As String
@@ -124,8 +134,8 @@ Namespace Orm
             Get
                 Dim count As Integer = 0
                 If Not IsLeaf Then
-                    Debug.Assert(childs IsNot Nothing)
-                    For Each mi As DicIndexBase In childs
+                    Debug.Assert(_childs IsNot Nothing)
+                    For Each mi As DicIndexBase In _childs
                         If mi.IsLeaf Then
                             count += mi.Count
                         Else
@@ -188,15 +198,6 @@ Namespace Orm
         '    End If
         'End Function
 
-        Public Property Filter() As IFilter
-            Get
-                Return _filter
-            End Get
-            Protected Friend Set(ByVal value As IFilter)
-                _filter = value
-            End Set
-        End Property
-
         Public Property Root() As DicIndexBase
             Get
                 Return _root
@@ -206,141 +207,436 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property Join() As OrmJoin
-            Get
-                Return _join
-            End Get
-            Protected Friend Set(ByVal value As OrmJoin)
-                _join = value
-            End Set
-        End Property
+        Friend Shared Sub Init(ByVal d As DicIndexBase, ByVal name As String, ByVal parent As DicIndexBase, ByVal count As Integer)
+            d._name = name
+            d._parent = parent
+            d._count = count
+        End Sub
     End Class
 
-    Public Class DicIndex(Of T As {New, OrmBase})
+    <Serializable()> _
+    Public Class DicIndexT(Of T As {New, _IEntity})
         Inherits DicIndexBase
 
-        Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer)
-            MyBase.new(name, parent, count)
+        Private _firstField As String
+        Private _secField As String
+        Private _cmd As QueryCmd
+        Private _getMgr As ICreateManager
+
+        Public Sub New()
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
-            Return FindElementsInternal(mgr, False)
+        Protected Sub New(ByVal name As String, ByVal parent As DicIndexT(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String)
+            MyBase.new(name, parent, count)
+            _firstField = firstField
+            _secField = secField
+        End Sub
+
+        Public Sub New(ByVal name As String, ByVal parent As DicIndexT(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String, ByVal cmd As QueryCmd)
+            MyClass.new(name, parent, count, firstField, secField)
+            _cmd = cmd
+        End Sub
+
+        Friend Shared Shadows Sub Init(ByVal d As DicIndexT(Of T), ByVal name As String, ByVal parent As DicIndexT(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String, ByVal cmd As QueryCmd)
+            DicIndexBase.Init(d, name, parent, count)
+            d._firstField = firstField
+            d._secField = secField
+            d._cmd = cmd
+        End Sub
+
+        Public ReadOnly Property FirstField() As String
+            Get
+                Return _firstField
+            End Get
+        End Property
+
+        Public ReadOnly Property SecondField() As String
+            Get
+                Return _secField
+            End Get
+        End Property
+
+        Public ReadOnly Property Cmd() As QueryCmd
+            Get
+                Return _cmd
+            End Get
+        End Property
+
+        Public Shared Function CreateRoot(ByVal firstField As String, ByVal secondField As String, ByVal cmd As QueryCmd) As DicIndexT(Of T)
+            Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, secondField, cmd)
         End Function
 
-        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
-            Return FindElementsInternal(mgr, True)
+        Public Shared Function CreateRoot(ByVal firstField As String, ByVal cmd As QueryCmd) As DicIndexT(Of T)
+            Return New DicIndexT(Of T)("ROOT", Nothing, 0, firstField, Nothing, cmd)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
-            Dim col As Generic.ICollection(Of T)
-            If strong Then
-                If loadName Then
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, New String() {field})
-                Else
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, False)
-                End If
-            Else
-                If loadName Then
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, New String() {field})
-                Else
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, False)
-                End If
-            End If
-            Return col
-        End Function
-
-        Protected Function FindElementsInternal(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean) As Generic.ICollection(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
             Dim tt As Type = GetType(T)
-            Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(tt)
-            Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
-            Dim b As Boolean = False
-            If odic IsNot Nothing AndAlso Not String.IsNullOrEmpty(odic.GetSecondDicField) Then
-                b = True
-            End If
-
-            Dim col As Generic.ICollection(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetFirstDicField)
-
-            If b Then
-                Dim col2 As Generic.ICollection(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetSecondDicField)
-                If col.Count = 0 Then
-                    col = col2
-                Else
-                    Dim c As New System.Collections.SortedList
-                    Dim fname As String = odic.GetFirstDicField
-                    Dim sname As String = odic.GetSecondDicField
-                    Dim add As New Hashtable
-                    For Each ar As T In col2
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname))
-                        Dim fv As String = CStr(ar.GetValue(sname, oschema))
-                        Dim ar2 As T = CType(c(fv), T)
-                        If ar2 IsNot Nothing Then
-                            If ar2 = ar Then
-                                Throw New InvalidOperationException("Duplicate object " & fv)
-                            Else
-                                'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
-                                Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                                If addt Is Nothing Then
-                                    addt = New Generic.List(Of T)
-                                    add.Add(fv, addt)
-                                End If
-                                addt.Add(ar)
-                                Continue For
-                            End If
-                        End If
-                        c.Add(fv, ar)
-                    Next
-                    For Each ar As T In col
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
-                        Dim ar2 As T = CType(c(fv), T)
-                        If ar2 IsNot Nothing Then
-                            If ar2 = ar Then
-                                Continue For
-                            Else
-                                'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
-                                Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                                If addt Is Nothing Then
-                                    addt = New Generic.List(Of T)
-                                    add.Add(fv, addt)
-                                End If
-                                If addt.IndexOf(ar) < 0 Then addt.Add(ar)
-                                Continue For
-                            End If
-                        End If
-                        c.Add(fv, ar)
-                    Next
-                    Dim result As New Generic.List(Of T)
-                    For Each ar As T In c.Values
-                        result.Add(ar)
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
-                        Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                        If addt IsNot Nothing Then
-                            result.AddRange(addt)
-                        End If
-                    Next
-                    col = result
+            Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
+            Dim odic As ISupportAlphabet = TryCast(oschema, ISupportAlphabet)
+            Dim firstField As String = Me.FirstField
+            Dim secField As String = SecondField
+            If odic IsNot Nothing Then
+                If String.IsNullOrEmpty(firstField) Then
+                    firstField = odic.GetFirstDicField
+                End If
+                If String.IsNullOrEmpty(secField) Then
+                    secField = odic.GetSecondDicField
                 End If
             End If
 
-            Return col
+            If sort Is Nothing Then
+                loadName = Not String.IsNullOrEmpty(secField)
+
+                Dim col As ReadOnlyObjectList(Of T) = FindObjects(mgr, loadName, strong, tt, firstField)
+
+                If Not String.IsNullOrEmpty(secField) Then
+                    Dim col2 As ReadOnlyObjectList(Of T) = FindObjects(mgr, loadName, strong, tt, secField)
+                    If col.Count = 0 Then
+                        col = col2
+                    Else
+                        Dim c As New System.Collections.SortedList
+                        Dim fname As String = firstField
+                        Dim sname As String = secField
+                        Dim add As New Hashtable
+                        For Each ar As T In col2
+                            If col.Contains(ar) Then Continue For
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, sname, oschema, Nothing))
+                            Dim ar2 As T = CType(c(fv), T)
+                            If ar2 IsNot Nothing Then
+                                If Object.Equals(ar2, ar) Then
+                                    Throw New InvalidOperationException("Duplicate object " & fv)
+                                Else
+                                    'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
+                                    Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                                    If addt Is Nothing Then
+                                        addt = New Generic.List(Of T)
+                                        add.Add(fv, addt)
+                                    End If
+                                    addt.Add(ar)
+                                    Continue For
+                                End If
+                            End If
+                            c.Add(fv, ar)
+                        Next
+                        For Each ar As T In col
+                            'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
+                            Dim ar2 As T = CType(c(fv), T)
+                            If ar2 IsNot Nothing Then
+                                If Object.Equals(ar2, ar) Then
+                                    Continue For
+                                Else
+                                    'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
+                                    Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                                    If addt Is Nothing Then
+                                        addt = New Generic.List(Of T)
+                                        add.Add(fv, addt)
+                                    End If
+                                    If addt.IndexOf(ar) < 0 Then addt.Add(ar)
+                                    Continue For
+                                End If
+                            End If
+                            c.Add(fv, ar)
+                        Next
+                        Dim result As ReadOnlyObjectList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T)), ReadOnlyObjectList(Of T))
+                        For Each ar As T In c.Values
+                            CType(result, IListEdit).Add(ar)
+                            'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
+                            Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                            If addt IsNot Nothing Then
+                                For Each kl As T In addt
+                                    CType(result, IListEdit).Add(kl)
+                                Next
+                            End If
+                        Next
+                        col = result
+                    End If
+                End If
+
+                Return col
+            Else
+                Return FindObjects(mgr, strong, tt, firstField, secField, sort)
+            End If
         End Function
 
-        Public Overloads ReadOnly Property Parent() As DicIndex(Of T)
+        Protected Overridable Function FindObjects(ByVal mgr As OrmManager, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal firstPropertyAlias As String, _
+            ByVal secPropertyAlias As String, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+
+            Dim cmd As New QueryCmd(_getMgr)
+
+            Dim pp As PredicateLink = Nothing
+
+            cmd.SelectEntity(tt).OrderBy(sort)
+
+            If strong Then
+                pp = Ctor.prop(tt, firstPropertyAlias).eq(Name)
+
+                If Not String.IsNullOrEmpty(secPropertyAlias) Then
+                    pp.or(tt, secPropertyAlias).eq(Name)
+                End If
+            Else
+                pp = Ctor.prop(tt, firstPropertyAlias).like(Name & "%")
+
+                If Not String.IsNullOrEmpty(secPropertyAlias) Then
+                    pp.or(tt, secPropertyAlias).like(Name & "%")
+                End If
+            End If
+
+            If _getMgr Is Nothing Then
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)(mgr)
+                Else
+                    Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
+                End If
+            Else
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)()
+                Else
+                    Return cmd.Where(pp.and(_cmd.Filter)).Join(_cmd.Joins).ToObjectList(Of T)()
+                End If
+            End If
+        End Function
+
+        Protected Overridable Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal propertyAlias As String) As ReadOnlyObjectList(Of T)
+
+            Dim cmd As New QueryCmd(_getMgr)
+
+            Dim pp As PredicateLink = Nothing
+
+            If loadName Then
+                cmd.Select(FCtor.prop(tt, propertyAlias))
+            Else
+                cmd.SelectEntity(tt)
+            End If
+
+            If strong Then
+                cmd.Where(Ctor.prop(tt, propertyAlias).eq(Name))
+            Else
+                cmd.Where(Ctor.prop(tt, propertyAlias).like(Name & "%"))
+            End If
+
+            If _getMgr Is Nothing Then
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)(mgr)
+                Else
+                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
+                End If
+            Else
+                If _cmd Is Nothing Then
+                    Return cmd.ToObjectList(Of T)()
+                Else
+                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)()
+                End If
+            End If
+        End Function
+
+        Public Overloads ReadOnly Property Parent() As DicIndexT(Of T)
             Get
-                Return CType(MyBase.Parent, DicIndex(Of T))
+                Return CType(MyBase.Parent, DicIndexT(Of T))
+            End Get
+        End Property
+
+        Public Overloads ReadOnly Property ChildIndexes() As DicIndexT(Of T)()
+            Get
+                If _childs Is Nothing Then
+                    Return New DicIndexT(Of T)() {}
+                Else
+                    Return CType(_childs.ToArray(GetType(DicIndexT(Of T))), DicIndexT(Of T)())
+                End If
+            End Get
+        End Property
+
+        Public Shadows Function FindById(ByVal id As Integer) As DicIndexT(Of T)
+            Return CType(MyBase.FindById(id), DicIndexT(Of T))
+        End Function
+
+        Public Overloads Function FindElements(ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+            Dim icm As ICreateManager = _cmd.CreateManager
+            If icm Is Nothing Then
+                Throw New ArgumentException("OrmManager required")
+            End If
+
+            Return FindElements(icm, sort)
+        End Function
+
+        Public Overloads Function FindElements() As ReadOnlyObjectList(Of T)
+            Dim icm As ICreateManager = _cmd.CreateManager
+            If icm Is Nothing Then
+                Throw New ArgumentException("OrmManager required")
+            End If
+
+            Return FindElements(icm)
+        End Function
+
+        Public Overloads Function FindElements(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, False, Nothing)
+        End Function
+
+        Public Function FindElementsLoadOnlyNames() As ReadOnlyObjectList(Of T)
+            Dim icm As ICreateManager = _cmd.CreateManager
+            If icm Is Nothing Then
+                Throw New ArgumentException("OrmManager required")
+            End If
+
+            Return FindElementsLoadOnlyNames(icm)
+        End Function
+
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, False, sort)
+        End Function
+
+        Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
+            _getMgr = getMgr
+            Using mgr As OrmManager = getMgr.CreateManager
+                Return FindElements(mgr, False, sort)
+            End Using
+        End Function
+
+        Public Overloads Function FindElements(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
+            _getMgr = getMgr
+            Using mgr As OrmManager = getMgr.CreateManager
+                Return FindElements(mgr, False, Nothing)
+            End Using
+        End Function
+
+        Public Function FindElementsLoadOnlyNames(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
+            _getMgr = getMgr
+            Using mgr As OrmManager = getMgr.CreateManager
+                Return FindElements(mgr, True, Nothing)
+            End Using
+        End Function
+
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            Return FindElements(mgr, True, Nothing)
+        End Function
+    End Class
+
+    <Serializable()> _
+    Public Class DicIndex(Of T As {New, IKeyEntity})
+        Inherits DicIndexT(Of T)
+
+        Protected _filter As IFilter
+        Protected _joins() As QueryJoin
+
+        Public Property Filter() As IFilter
+            Get
+                Return _filter
+            End Get
+            Protected Friend Set(ByVal value As IFilter)
+                _filter = value
+            End Set
+        End Property
+
+        Public Property Join() As QueryJoin()
+            Get
+                Return _joins
+            End Get
+            Protected Friend Set(ByVal value() As QueryJoin)
+                _joins = value
+            End Set
+        End Property
+
+        Protected Overloads ReadOnly Property Root() As DicIndex(Of T)
+            Get
+                Return CType(MyBase.Root, DicIndex(Of T))
             End Get
         End Property
 
         Public Overloads ReadOnly Property ChildIndexes() As DicIndex(Of T)()
             Get
-                Return CType(childs.ToArray(GetType(DicIndex(Of T))), DicIndex(Of T)())
+                Return CType(_childs.ToArray(GetType(DicIndex(Of T))), DicIndex(Of T)())
             End Get
         End Property
 
+        Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String)
+            MyBase.New(name, parent, count, firstField, secField)
+        End Sub
+
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As OrderByClause) As ReadOnlyList(Of T)
+            Return CType(FindElements(mgr, False, sort), Global.Worm.ReadOnlyList(Of T))
+        End Function
+
+        Public Overloads Function FindElements(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+            Return CType(FindElements(mgr, False, Nothing), Global.Worm.ReadOnlyList(Of T))
+        End Function
+
+        Public Overloads Function FindElementsLoadOnlyNames(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+            Return CType(FindElements(mgr, True, Nothing), Global.Worm.ReadOnlyList(Of T))
+        End Function
+
+#If Not ExcludeFindMethods Then
+        Protected Overrides Function FindObjects(ByVal mgr As OrmManager, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Sort) As ReadOnlyObjectList(Of T)
+
+            If String.IsNullOrEmpty(field) Then
+                Throw New ArgumentNullException("field")
+            End If
+
+            Dim s As ObjectMappingEngine = mgr.MappingEngine
+            Dim cr As Criteria.PredicateLink = Nothing
+            If strong Then
+                cr = New Ctor(New EntityUnion(tt)).prop(field).eq(Name)
+                If Not String.IsNullOrEmpty(sec) Then
+                    cr.[or](tt, sec).eq(Name)
+                End If
+            Else
+                cr = New Ctor(New EntityUnion(tt)).prop(field).[like](Name & "%")
+                If Not String.IsNullOrEmpty(sec) Then
+                    cr.[or](tt, sec).[like](Name & "%")
+                End If
+            End If
+            cr.and(Root.Filter)
+            Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, cr, sort, False)
+        End Function
+
+        Protected Overrides Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyObjectList(Of T)
+            If String.IsNullOrEmpty(field) Then
+                Throw New ArgumentNullException("field")
+            End If
+
+            Dim col As ReadOnlyList(Of T)
+            Dim s As ObjectMappingEngine = mgr.MappingEngine
+            Dim con As New Condition.ConditionConstructor
+            con.AddFilter(Root.Filter)
+
+            If strong Then
+                con.AddFilter(New Ctor(New EntityUnion(tt)).prop(field).eq(Name).Filter())
+            Else
+                con.AddFilter(New Ctor(New EntityUnion(tt)).prop(field).[like](Name & "%").Filter())
+            End If
+
+            If loadName Then
+                col = mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, Nothing, True, New String() {field})
+            Else
+                col = mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, Nothing, False)
+            End If
+
+            Return col
+        End Function
+#End If
+
+        Public Shared Shadows Function CreateRoot(ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+            Return New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secondField)
+        End Function
+
+        Public Shared Shadows Function CreateRoot(ByVal firstField As String) As DicIndex(Of T)
+            Return New DicIndex(Of T)("ROOT", Nothing, 0, firstField, Nothing)
+        End Function
     End Class
 
 End Namespace

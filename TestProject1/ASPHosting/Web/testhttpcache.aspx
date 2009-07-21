@@ -1,5 +1,5 @@
 <%@ Assembly Name="Worm.Orm" %>
-<%@ Import Namespace="Worm.Orm" %>
+<%@ Import Namespace="Worm.Cache" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
@@ -16,7 +16,7 @@
             'Next
             
             If Request.QueryString.ToString = "add" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
 
                 sb.Append("first = " & c("first")).AppendLine()
@@ -31,7 +31,7 @@
                     sb.Append("<br/>")
                 Next
             ElseIf Request.QueryString.ToString = "remove" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
 
                 sb.Append("cache has key first = " & c.ContainsKey("first")).AppendLine()
@@ -46,7 +46,7 @@
                 
                 sb.Append("cache has key first = " & c.ContainsKey("first"))
             ElseIf Request.QueryString.ToString = "remove2" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
 
                 sb.Append("cache has key first = " & c.ContainsKey("first")).AppendLine()
@@ -59,7 +59,7 @@
                 
                 sb.Append("cache has key first = " & c.ContainsKey("first"))
             ElseIf Request.QueryString.ToString = "getvalues" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
                 c.Add("second", 10)
                 c.Add("third", 100)
@@ -69,14 +69,14 @@
                     sb.Append("<br/>")
                 Next
             ElseIf Request.QueryString.ToString = "getnonexistent" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
                 c.Add("second", 10)
                 c.Add("third", 100)
                 
                 Dim k As Integer = c("lonasdg")
             ElseIf Request.QueryString.ToString = "getnonexistent2" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
                 c.Add("second", 10)
                 c.Add("third", 100)
@@ -86,7 +86,7 @@
                 i = -19
                 sb.Append("second exists ").Append(c.TryGetValue("lkasdfnv", i)).Append(" equals ").Append(i)
             ElseIf Request.QueryString.ToString = "readd" Then
-                Dim c As New HttpCacheDictionary(Of Integer)
+                Dim c As New WebCacheDictionary(Of Integer)
                 c.Add("first", 10)
                 
                 c.AddItem(New Generic.KeyValuePair(Of String, Integer)("first", 100))
@@ -102,6 +102,6 @@
 </script>
 </head>
 <body>
-    <pre runat="server" id="pre"></pre>
+    <pre runat="server" id="pre"></pre>test is ok
 </body>
 </html>

@@ -1,93 +1,112 @@
-Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
+Imports Worm.Entities.Meta
+Imports Worm.Cache
 
 <Entity(GetType(Table10Implementation), "1")> _
 Public Class Table10
-    Inherits OrmBaseT(Of Table10)
-    Implements IOrmEditable(Of Table10)
+    Inherits KeyEntity
+    Implements IOptimizedValues
+
     Private _tbl1 As Table1
 
     Public Sub New()
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable2(CType([from], Table10), CType([to], Table10))
-    'End Sub
+    Private _id As Integer
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table2(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable2(ByVal [from] As Table10, ByVal [to] As Table10) Implements IOrmEditable(Of Table10).CopyBody
-        With [from]
-            [to]._tbl1 = ._tbl1
-        End With
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        CType([to], Table10)._tbl1 = _tbl1
+        CType([to], Table10)._id = _id
     End Sub
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
-        Select Case c.FieldName
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+        Select Case fieldName
             Case "Table1"
                 Tbl = CType(value, Table1)
             Case Else
-                MyBase.SetValue(pi, c, value)
+                SetValueReflection(fieldName, value, oschema)
+                'Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    <Column("Table1")> _
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Table1"
+                Return _tbl1
+            Case Else
+                Return GetValueReflection(propertyAlias, schema)
+                'Throw New NotSupportedException(propertyAlias)
+        End Select
+    End Function
+
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Tbl() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _tbl1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _tbl1 = value
             End Using
         End Set
     End Property
+
+   
 End Class
 
 Public Class Table10Implementation
     Inherits ObjectSchemaBaseImplementation
 
-    Private _idx As Orm.OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.Table10")}
+    Private _idx As OrmObjectIndex
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table10")}
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table10")
+    End Sub
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Table1", "table1_id", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Table1", "table1_id", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 End Class

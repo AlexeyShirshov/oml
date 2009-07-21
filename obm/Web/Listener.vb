@@ -129,7 +129,7 @@ Namespace Web
         End Function
 
         Private Function GetStream() As ReferencedStream
-            Dim num As Integer = 0
+            Dim num As Integer = _curFileNum
             Dim stream2 As ReferencedStream = Nothing
             Dim fullPath As String = Path.GetFullPath((Me.LogFileName & ".log"))
             Do While ((stream2 Is Nothing) AndAlso (num < &H7FFFFFFF))
@@ -142,42 +142,46 @@ Namespace Web
                 Dim key As String = path.ToUpper(CultureInfo.InvariantCulture)
                 Dim streams As Dictionary(Of String, ReferencedStream) = m_Streams
                 SyncLock streams
-                    If m_Streams.ContainsKey(key) Then
-                        stream2 = m_Streams.Item(key)
-                        If Not stream2.IsInUse Then
-                            m_Streams.Remove(key)
-                            stream2 = Nothing
-                        Else
-                            If Me.Append Then
-                                Dim k As New FileIOPermission(FileIOPermissionAccess.Write, path)
-                                k.Demand()
-                                stream2.AddReference()
-                                Me.m_FullFileName = path
-                                Return stream2
-                            End If
-                            num += 1
-                            stream2 = Nothing
-                            Continue Do
-                        End If
-                    End If
-                    Dim fileEncoding As Encoding = Me.Encoding
                     Try
-                        If Me.Append Then
-                            fileEncoding = Me.GetFileEncoding(path)
-                            If (fileEncoding Is Nothing) Then
-                                fileEncoding = Me.Encoding
+                        If m_Streams.ContainsKey(key) Then
+                            stream2 = m_Streams.Item(key)
+                            If Not stream2.IsInUse Then
+                                m_Streams.Remove(key)
+                                stream2 = Nothing
+                            Else
+                                If Me.Append Then
+                                    Dim k As New FileIOPermission(FileIOPermissionAccess.Write, path)
+                                    k.Demand()
+                                    stream2.AddReference()
+                                    Me.m_FullFileName = path
+                                    Return stream2
+                                End If
+                                num += 1
+                                stream2 = Nothing
+                                Continue Do
                             End If
                         End If
-                        Dim stream As New StreamWriter(path, Me.Append, fileEncoding)
-                        stream2 = New ReferencedStream(stream)
-                        stream2.AddReference()
-                        m_Streams.Add(key, stream2)
-                        Me.m_FullFileName = path
-                        Return stream2
-                    Catch exception As IOException
+                        Dim fileEncoding As Encoding = Me.Encoding
+                        Try
+                            If Me.Append Then
+                                fileEncoding = Me.GetFileEncoding(path)
+                                If (fileEncoding Is Nothing) Then
+                                    fileEncoding = Me.Encoding
+                                End If
+                            End If
+                            Dim stream As New StreamWriter(path, Me.Append, fileEncoding)
+                            stream2 = New ReferencedStream(stream)
+                            stream2.AddReference()
+                            m_Streams.Add(key, stream2)
+                            Me.m_FullFileName = path
+                            Return stream2
+                        Catch exception As IOException
+                        End Try
+                        num += 1
+                        Continue Do
+                    Finally
+                        _curFileNum = num
                     End Try
-                    num += 1
-                    Continue Do
                 End SyncLock
             Loop
             'Throw ExceptionUtils.GetInvalidOperationException("ApplicationLog_ExhaustedPossibleStreamNames", New String() {fullPath})
@@ -200,12 +204,12 @@ Namespace Web
         End Sub
 
         Private Function ResourcesAvailable(ByVal newEntrySize As Long) As Boolean
-            If ((Me.ListenerStream.FileSize + newEntrySize) > Me.MaxFileSize) Then
-                If (Me.DiskSpaceExhaustedBehavior = DiskSpaceExhaustedOption.ThrowException) Then
-                    Throw New InvalidOperationException(Utils.GetResourceString("ApplicationLog_FileExceedsMaximumSize"))
-                End If
-                Return False
-            End If
+            'If ((Me.ListenerStream.FileSize + newEntrySize) > Me.MaxFileSize) Then
+            '    If (Me.DiskSpaceExhaustedBehavior = DiskSpaceExhaustedOption.ThrowException) Then
+            '        Throw New InvalidOperationException(Utils.GetResourceString("ApplicationLog_FileExceedsMaximumSize"))
+            '    End If
+            '    Return False
+            'End If
             If ((Me.GetFreeDiskSpace - newEntrySize) >= Me.ReserveDiskSpace) Then
                 Return True
             End If
@@ -329,12 +333,21 @@ Namespace Web
             Return (DateTime.Compare(Me.m_FirstDayOfWeek.Date, GetFirstDayOfWeek(DateAndTime.Now.Date)) <> 0)
         End Function
 
+        Protected Sub CheckStream(ByVal size As Long)
+            If (ListenerStream.FileSize + size) > MaxFileSize Then
+                _curFileNum += 1
+                m_Stream.CloseStream()
+                m_Stream = Nothing
+            End If
+        End Sub
+
         <HostProtection(SecurityAction.LinkDemand, Synchronization:=True)> _
         Public Overrides Sub Write(ByVal message As String)
             Try
                 Me.HandleDateChange()
                 Dim newEntrySize As Long = Me.Encoding.GetByteCount(message)
                 If Me.ResourcesAvailable(newEntrySize) Then
+                    CheckStream(newEntrySize)
                     Me.ListenerStream.Write(message)
                     If Me.AutoFlush Then
                         Me.ListenerStream.Flush()
@@ -352,6 +365,7 @@ Namespace Web
                 Me.HandleDateChange()
                 Dim newEntrySize As Long = Me.Encoding.GetByteCount((message & ChrW(13) & ChrW(10)))
                 If Me.ResourcesAvailable(newEntrySize) Then
+                    CheckStream(newEntrySize)
                     Me.ListenerStream.WriteLine(message)
                     If Me.AutoFlush Then
                         Me.ListenerStream.Flush()
@@ -720,6 +734,7 @@ Namespace Web
         Private Const RESERVEDISKSPACE_INDEX As Integer = 11
         Private Const STACK_DELIMITER As String = ", "
 
+        Private _curFileNum As Integer
         ' Nested Types
         Public Class ReferencedStream
             Implements IDisposable

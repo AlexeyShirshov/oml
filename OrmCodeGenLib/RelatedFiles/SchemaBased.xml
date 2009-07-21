@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<oos:OrmObjects xmlns:oos="http://www.xmedia.ru/OrmObjectsSchema.xsd" namespace="XMedia.Framework.Media.Objects" schemaVersion="1">
+<oos:WXMLModel xmlns:oos="http://www.wise-orm.com/WXMLSchema.xsd" namespace="XMedia.Framework.Media.Objects" schemaVersion="1">
 	<oos:Entities>
 		<oos:Entity id="eArtist" name="Artist">
 			<oos:Tables>
@@ -59,4 +59,4 @@
 			<oos:ClrType name="System.String"/>
 		</oos:Type>
 	</oos:Types>
-</oos:OrmObjects>
+</oos:WXMLModel>

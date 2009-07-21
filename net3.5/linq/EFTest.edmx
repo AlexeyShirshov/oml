@@ -1,0 +1,403 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="wormtestModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2005" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2006/04/edm/ssdl">
+        <EntityContainer Name="wormtestModelStoreContainer">
+          <EntitySet Name="Table" EntityType="wormtestModel.Store.Table" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Table1" EntityType="wormtestModel.Store.Table1" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Table10" EntityType="wormtestModel.Store.Table10" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Table2" EntityType="wormtestModel.Store.Table2" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Table3" EntityType="wormtestModel.Store.Table3" store:Type="Tables" Schema="dbo" />
+          <EntitySet Name="Tables1to3Relation" EntityType="wormtestModel.Store.Tables1to3Relation" store:Type="Tables" Schema="dbo" />
+          <AssociationSet Name="FK_Table_Table2" Association="wormtestModel.Store.FK_Table_Table2">
+            <End Role="Table2" EntitySet="Table2" />
+            <End Role="Table" EntitySet="Table" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Table10_Table1" Association="wormtestModel.Store.FK_Table10_Table1">
+            <End Role="Table1" EntitySet="Table1" />
+            <End Role="Table10" EntitySet="Table10" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Table2_Table2" Association="wormtestModel.Store.FK_Table2_Table2">
+            <End Role="Table1" EntitySet="Table1" />
+            <End Role="Table2" EntitySet="Table2" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tables1to3Relation_Table1" Association="wormtestModel.Store.FK_Tables1to3Relation_Table1">
+            <End Role="Table1" EntitySet="Table1" />
+            <End Role="Tables1to3Relation" EntitySet="Tables1to3Relation" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tables1to3Relation_Table3" Association="wormtestModel.Store.FK_Tables1to3Relation_Table3">
+            <End Role="Table3" EntitySet="Table3" />
+            <End Role="Tables1to3Relation" EntitySet="Tables1to3Relation" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="Table">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" />
+          <Property Name="col" Type="bit" />
+          <Property Name="uq" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Table1">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="name" Type="varchar" MaxLength="50" />
+          <Property Name="code" Type="int" />
+          <Property Name="enum" Type="tinyint" />
+          <Property Name="enum_str" Type="varchar" MaxLength="50" />
+          <Property Name="dt" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Table10">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="table1_id" Type="int" />
+        </EntityType>
+        <EntityType Name="Table2">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="table1_id" Type="int" />
+          <Property Name="blob" Type="varbinary(max)" />
+          <Property Name="m" Type="money" />
+          <Property Name="dt2" Type="datetime" />
+        </EntityType>
+        <EntityType Name="Table3">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="ref_id" Type="int" Nullable="false" />
+          <Property Name="code" Type="tinyint" Nullable="false" />
+          <Property Name="v" Type="timestamp" Nullable="false" StoreGeneratedPattern="Computed" />
+          <Property Name="x" Type="xml" />
+        </EntityType>
+        <EntityType Name="Tables1to3Relation">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="name" Type="varchar" MaxLength="50" />
+          <Property Name="table1" Type="int" Nullable="false" />
+          <Property Name="table3" Type="int" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_Table_Table2">
+          <End Role="Table2" Type="wormtestModel.Store.Table2" Multiplicity="1" />
+          <End Role="Table" Type="wormtestModel.Store.Table" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="Table2">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Table">
+              <PropertyRef Name="id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Table10_Table1">
+          <End Role="Table1" Type="wormtestModel.Store.Table1" Multiplicity="0..1" />
+          <End Role="Table10" Type="wormtestModel.Store.Table10" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Table1">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Table10">
+              <PropertyRef Name="table1_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Table2_Table2">
+          <End Role="Table1" Type="wormtestModel.Store.Table1" Multiplicity="0..1" />
+          <End Role="Table2" Type="wormtestModel.Store.Table2" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Table1">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Table2">
+              <PropertyRef Name="table1_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tables1to3Relation_Table1">
+          <End Role="Table1" Type="wormtestModel.Store.Table1" Multiplicity="1" />
+          <End Role="Tables1to3Relation" Type="wormtestModel.Store.Tables1to3Relation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Table1">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Tables1to3Relation">
+              <PropertyRef Name="table1" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Tables1to3Relation_Table3">
+          <End Role="Table3" Type="wormtestModel.Store.Table3" Multiplicity="1" />
+          <End Role="Tables1to3Relation" Type="wormtestModel.Store.Tables1to3Relation" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Table3">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Tables1to3Relation">
+              <PropertyRef Name="table3" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="wormtestModel" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2006/04/edm">
+        <EntityContainer Name="wormtestEntities">
+          <EntitySet Name="efTable1Set" EntityType="wormtestModel.efTable1" />
+          <EntitySet Name="efTable10Set" EntityType="wormtestModel.efTable10" />
+          <EntitySet Name="efTable2Set" EntityType="wormtestModel.efTable2" />
+          <EntitySet Name="efTable3Set" EntityType="wormtestModel.efTable3" />
+          <EntitySet Name="efTables1to3RelationSet" EntityType="wormtestModel.efTables1to3Relation" />
+          <AssociationSet Name="FK_Table10_Table1" Association="wormtestModel.FK_Table10_Table1">
+            <End Role="Table1" EntitySet="efTable1Set" />
+            <End Role="Table10" EntitySet="efTable10Set" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Table2_Table2" Association="wormtestModel.FK_Table2_Table2">
+            <End Role="Table1" EntitySet="efTable1Set" />
+            <End Role="Table2" EntitySet="efTable2Set" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tables1to3Relation_Table1" Association="wormtestModel.FK_Tables1to3Relation_Table1">
+            <End Role="Table1" EntitySet="efTable1Set" />
+            <End Role="Tables1to3Relation" EntitySet="efTables1to3RelationSet" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Tables1to3Relation_Table3" Association="wormtestModel.FK_Tables1to3Relation_Table3">
+            <End Role="Table3" EntitySet="efTable3Set" />
+            <End Role="Tables1to3Relation" EntitySet="efTables1to3RelationSet" />
+          </AssociationSet>
+          <EntitySet Name="efTableSet" EntityType="wormtestModel.efTable" />
+          <AssociationSet Name="FK_Table_Table2" Association="wormtestModel.FK_Table_Table2">
+            <End Role="Table2" EntitySet="efTable2Set" />
+            <End Role="Table" EntitySet="efTableSet" /></AssociationSet></EntityContainer>
+        <EntityType Name="efTable1">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="name" Type="String" MaxLength="50" Unicode="false" FixedLength="false" />
+          <Property Name="code" Type="Int32" />
+          <Property Name="enum" Type="Byte" />
+          <Property Name="enum_str" Type="String" MaxLength="50" Unicode="false" FixedLength="false" />
+          <Property Name="dt" Type="DateTime" Nullable="false" />
+          <NavigationProperty Name="Table10" Relationship="wormtestModel.FK_Table10_Table1" FromRole="Table1" ToRole="Table10" />
+          <NavigationProperty Name="Table2" Relationship="wormtestModel.FK_Table2_Table2" FromRole="Table1" ToRole="Table2" />
+          <NavigationProperty Name="Tables1to3Relation" Relationship="wormtestModel.FK_Tables1to3Relation_Table1" FromRole="Table1" ToRole="Tables1to3Relation" />
+        </EntityType>
+        <EntityType Name="efTable10">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Table1" Relationship="wormtestModel.FK_Table10_Table1" FromRole="Table10" ToRole="Table1" />
+        </EntityType>
+        <EntityType Name="efTable2">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="blob" Type="Binary" MaxLength="Max" FixedLength="false" />
+          <Property Name="m" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="dt2" Type="DateTime" />
+          <NavigationProperty Name="Table1" Relationship="wormtestModel.FK_Table2_Table2" FromRole="Table2" ToRole="Table1" />
+          <NavigationProperty Name="Table" Relationship="wormtestModel.FK_Table_Table2" FromRole="Table2" ToRole="Table" /></EntityType>
+        <EntityType Name="efTable3">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="ref_id" Type="Int32" Nullable="false" />
+          <Property Name="code" Type="Byte" Nullable="false" />
+          <Property Name="v" Type="Binary" Nullable="false" MaxLength="8" FixedLength="true" />
+          <Property Name="x" Type="String" MaxLength="Max" Unicode="true" FixedLength="false" />
+          <NavigationProperty Name="Tables1to3Relation" Relationship="wormtestModel.FK_Tables1to3Relation_Table3" FromRole="Table3" ToRole="Tables1to3Relation" />
+        </EntityType>
+        <EntityType Name="efTables1to3Relation">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="name" Type="String" MaxLength="50" Unicode="false" FixedLength="false" />
+          <NavigationProperty Name="Table1" Relationship="wormtestModel.FK_Tables1to3Relation_Table1" FromRole="Tables1to3Relation" ToRole="Table1" />
+          <NavigationProperty Name="Table3" Relationship="wormtestModel.FK_Tables1to3Relation_Table3" FromRole="Tables1to3Relation" ToRole="Table3" />
+        </EntityType>
+        <Association Name="FK_Table10_Table1">
+          <End Role="Table1" Type="wormtestModel.efTable1" Multiplicity="0..1" />
+          <End Role="Table10" Type="wormtestModel.efTable10" Multiplicity="*" />
+        </Association>
+        <Association Name="FK_Table2_Table2">
+          <End Role="Table1" Type="wormtestModel.efTable1" Multiplicity="0..1" />
+          <End Role="Table2" Type="wormtestModel.efTable2" Multiplicity="*" />
+        </Association>
+        <Association Name="FK_Tables1to3Relation_Table1">
+          <End Role="Table1" Type="wormtestModel.efTable1" Multiplicity="1" />
+          <End Role="Tables1to3Relation" Type="wormtestModel.efTables1to3Relation" Multiplicity="*" />
+        </Association>
+        <Association Name="FK_Tables1to3Relation_Table3">
+          <End Role="Table3" Type="wormtestModel.efTable3" Multiplicity="1" />
+          <End Role="Tables1to3Relation" Type="wormtestModel.efTables1to3Relation" Multiplicity="*" />
+        </Association>
+        <EntityType Name="efTable">
+          <Key>
+            <PropertyRef Name="id" /></Key>
+          <Property Name="id" Type="Int32" Nullable="false" />
+          <Property Name="col" Type="Boolean" Nullable="true" />
+          <Property Name="uq" Type="Guid" Nullable="false" />
+          <NavigationProperty Name="Table2" Relationship="wormtestModel.FK_Table_Table2" FromRole="Table" ToRole="Table2" /></EntityType>
+        <Association Name="FK_Table_Table2">
+          <End Type="wormtestModel.efTable2" Role="Table2" Multiplicity="1" />
+          <End Type="wormtestModel.efTable" Role="Table" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="Table2">
+              <PropertyRef Name="id" /></Principal>
+            <Dependent Role="Table">
+              <PropertyRef Name="id" /></Dependent></ReferentialConstraint></Association></Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="urn:schemas-microsoft-com:windows:storage:mapping:CS">
+        <EntityContainerMapping StorageEntityContainer="wormtestModelStoreContainer" CdmEntityContainer="wormtestEntities">
+          <EntitySetMapping Name="efTable1Set">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTable1)">
+              <MappingFragment StoreEntitySet="Table1">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="code" ColumnName="code" />
+                <ScalarProperty Name="enum" ColumnName="enum" />
+                <ScalarProperty Name="enum_str" ColumnName="enum_str" />
+                <ScalarProperty Name="dt" ColumnName="dt" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="efTable10Set">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTable10)">
+              <MappingFragment StoreEntitySet="Table10">
+                <ScalarProperty Name="id" ColumnName="id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="efTable2Set">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTable2)">
+              <MappingFragment StoreEntitySet="Table2">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="blob" ColumnName="blob" />
+                <ScalarProperty Name="m" ColumnName="m" />
+                <ScalarProperty Name="dt2" ColumnName="dt2" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="efTable3Set">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTable3)">
+              <MappingFragment StoreEntitySet="Table3">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="ref_id" ColumnName="ref_id" />
+                <ScalarProperty Name="code" ColumnName="code" />
+                <ScalarProperty Name="v" ColumnName="v" />
+                <ScalarProperty Name="x" ColumnName="x" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="efTables1to3RelationSet">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTables1to3Relation)">
+              <MappingFragment StoreEntitySet="Tables1to3Relation">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="name" ColumnName="name" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="FK_Table10_Table1" TypeName="wormtestModel.FK_Table10_Table1" StoreEntitySet="Table10">
+            <EndProperty Name="Table1">
+              <ScalarProperty Name="id" ColumnName="table1_id" />
+            </EndProperty>
+            <EndProperty Name="Table10">
+              <ScalarProperty Name="id" ColumnName="id" />
+            </EndProperty>
+            <Condition ColumnName="table1_id" IsNull="false" />
+          </AssociationSetMapping>
+          <AssociationSetMapping Name="FK_Table2_Table2" TypeName="wormtestModel.FK_Table2_Table2" StoreEntitySet="Table2">
+            <EndProperty Name="Table1">
+              <ScalarProperty Name="id" ColumnName="table1_id" />
+            </EndProperty>
+            <EndProperty Name="Table2">
+              <ScalarProperty Name="id" ColumnName="id" />
+            </EndProperty>
+            <Condition ColumnName="table1_id" IsNull="false" />
+          </AssociationSetMapping>
+          <AssociationSetMapping Name="FK_Tables1to3Relation_Table1" TypeName="wormtestModel.FK_Tables1to3Relation_Table1" StoreEntitySet="Tables1to3Relation">
+            <EndProperty Name="Table1">
+              <ScalarProperty Name="id" ColumnName="table1" />
+            </EndProperty>
+            <EndProperty Name="Tables1to3Relation">
+              <ScalarProperty Name="id" ColumnName="id" />
+            </EndProperty>
+          </AssociationSetMapping>
+          <AssociationSetMapping Name="FK_Tables1to3Relation_Table3" TypeName="wormtestModel.FK_Tables1to3Relation_Table3" StoreEntitySet="Tables1to3Relation">
+            <EndProperty Name="Table3">
+              <ScalarProperty Name="id" ColumnName="table3" />
+            </EndProperty>
+            <EndProperty Name="Tables1to3Relation">
+              <ScalarProperty Name="id" ColumnName="id" />
+            </EndProperty>
+          </AssociationSetMapping>
+          <EntitySetMapping Name="efTableSet">
+            <EntityTypeMapping TypeName="IsTypeOf(wormtestModel.efTable)">
+              <MappingFragment StoreEntitySet="Table">
+                <ScalarProperty Name="uq" ColumnName="uq" />
+                <ScalarProperty Name="col" ColumnName="col" />
+                <ScalarProperty Name="id" ColumnName="id" /></MappingFragment></EntityTypeMapping></EntitySetMapping>
+          <AssociationSetMapping Name="FK_Table_Table2" TypeName="wormtestModel.FK_Table_Table2" StoreEntitySet="Table">
+            <EndProperty Name="Table">
+              <ScalarProperty Name="id" ColumnName="id" /></EndProperty>
+            <EndProperty Name="Table2">
+              <ScalarProperty Name="id" ColumnName="id" /></EndProperty></AssociationSetMapping></EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2007/06/edmx">
+    <edmx:Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </edmx:Connection>
+    <edmx:Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+      </DesignerInfoPropertySet>
+    </edmx:Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram Name="EFTest">
+        <EntityTypeShape EntityType="wormtestModel.efTable1" Width="1.5" PointX="0.75" PointY="4.5" Height="2.4140429687499996" IsExpanded="true" />
+        <EntityTypeShape EntityType="wormtestModel.efTable10" Width="1.5" PointX="3" PointY="3.875" Height="1.2636116536458335" IsExpanded="true" />
+        <EntityTypeShape EntityType="wormtestModel.efTable2" Width="1.5" PointX="3" PointY="8.125" Height="1.7566536458333335" IsExpanded="true" />
+        <EntityTypeShape EntityType="wormtestModel.efTable3" Width="1.5" PointX="3.75" PointY="0.75" Height="1.9210009765625" IsExpanded="true" />
+        <EntityTypeShape EntityType="wormtestModel.efTables1to3Relation" Width="1.5" PointX="6" PointY="4.875" Height="1.5923063151041657" IsExpanded="true" />
+        <AssociationConnector Association="wormtestModel.FK_Table10_Table1" ManuallyRouted="false">
+          <ConnectorPoint PointX="2.25" PointY="4.8193058268229167" />
+          <ConnectorPoint PointX="3" PointY="4.8193058268229167" /></AssociationConnector>
+        <AssociationConnector Association="wormtestModel.FK_Table2_Table2" ManuallyRouted="false">
+          <ConnectorPoint PointX="1.5" PointY="6.91404296875" />
+          <ConnectorPoint PointX="1.5" PointY="9.08550048828125" />
+          <ConnectorPoint PointX="3" PointY="9.08550048828125" /></AssociationConnector>
+        <AssociationConnector Association="wormtestModel.FK_Tables1to3Relation_Table1" ManuallyRouted="false">
+          <ConnectorPoint PointX="2.25" PointY="5.834208984375" />
+          <ConnectorPoint PointX="6" PointY="5.834208984375" /></AssociationConnector>
+        <AssociationConnector Association="wormtestModel.FK_Tables1to3Relation_Table3" ManuallyRouted="false">
+          <ConnectorPoint PointX="4.90625" PointY="2.6710009765625" />
+          <ConnectorPoint PointX="4.90625" PointY="5.4864078190104166" />
+          <ConnectorPoint PointX="6" PointY="5.4864078190104166" /></AssociationConnector>
+        <EntityTypeShape EntityType="wormtestModel.efTable" Width="1.5" PointX="5.25" PointY="8.25" Height="1.5923063151041674" />
+        <AssociationConnector Association="wormtestModel.FK_Table_Table2" >
+          <ConnectorPoint PointX="4.5" PointY="9.0461531575520837" />
+          <ConnectorPoint PointX="5.25" PointY="9.0461531575520837" /></AssociationConnector></Diagram></edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

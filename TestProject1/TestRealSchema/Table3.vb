@@ -1,54 +1,54 @@
-Imports Worm
-Imports Worm.Orm
+Imports Worm.Cache
+Imports Worm.Entities.Meta
+Imports Worm.Entities
+
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
-    Inherits OrmBaseT(Of Table3)
-    Implements IOrmEditable(Of Table3)
+    Inherits KeyEntity
+    Implements IOptimizedValues, IPropertyConverter
 
-    Private _obj As OrmBase
+    Private _obj As IKeyEntity
     Private _code As Byte
     Private _trigger As Boolean
     Private _id As Integer
     Private _v As Byte()
-    Private _x As Xml.XmlDocument
+    Private _x As System.Xml.XmlDocument
 
     Public Sub New()
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyTable3(CType([from], Table3), CType([to], Table3))
-    'End Sub
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Table3(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyTable3(ByVal [from] As Table3, ByVal [to] As Table3) Implements IOrmEditable(Of Table3).CopyBody
-        With [from]
-            [to]._obj = ._obj
-            [to]._code = ._code
-            [to]._v = ._v
-            [to]._x = ._x
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Table3)
+            CType([to], Table3)._id = ._id
+            CType([to], Table3)._obj = ._obj
+            CType([to], Table3)._code = ._code
+            CType([to], Table3)._v = ._v
+            CType([to], Table3)._x = ._x
         End With
     End Sub
 
@@ -62,85 +62,108 @@ Public Class Table3
         End If
     End Function
 
-    Public Overrides Sub CreateObject(ByVal fieldName As String, ByVal value As Object)
-        _id = CInt(value)
-        If _code = 0 Then
-            _trigger = True
-        Else
-            _obj = OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
-        End If
-    End Sub
+    'Public Overrides Function CreateObject(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
+    '    _id = CInt(value)
+    '    If _code = 0 Then
+    '        _trigger = True
+    '        Return Nothing
+    '    Else
+    '        _obj = mgr.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
+    '        Return _obj
+    '    End If
+    'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
-        Select Case c.FieldName
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+        Select Case fieldName
             Case "Ref"
-                RefObject = CType(value, OrmBase)
+                RefObject = CType(value, KeyEntity)
             Case "Code"
                 Code = CByte(value)
             Case "Version"
                 Version = CType(value, Byte())
             Case "XML"
                 Xml = CType(value, System.Xml.XmlDocument)
+            Case "ID"
+                Identifier = value
             Case Else
-                MyBase.SetValue(pi, c, value)
+                Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    <Column("Ref", Field2DbRelations.Factory)> _
-    Public Property RefObject() As OrmBase
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "Ref"
+                Return _obj
+            Case "Code"
+                Return _code
+            Case "Version"
+                Return _v
+            Case "XML"
+                Return _x
+            Case Else
+                Return GetValueReflection(propertyAlias, schema)
+                'Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
+
+    <EntityPropertyAttribute(PropertyAlias:="Ref", behavior:=Field2DbRelations.Factory)> _
+    Public Property RefObject() As IKeyEntity
         Get
-            Using SyncHelper(True, "Ref")
+            Using Read("Ref")
                 Return _obj
             End Using
         End Get
-        Set(ByVal value As OrmBase)
-            Using SyncHelper(False, "Ref")
+        Set(ByVal value As IKeyEntity)
+            Using Write("Ref")
                 _obj = value
             End Using
         End Set
     End Property
 
-    <Column("Code")> _
+    <EntityPropertyAttribute(PropertyAlias:="Code")> _
     Public Property Code() As Byte
         Get
-            Using SyncHelper(True, "Code")
+            Using Read("Code")
                 Return _code
             End Using
         End Get
         Set(ByVal value As Byte)
-            Using SyncHelper(False, "Code")
+            Using Write("Code")
                 _code = value
                 If _trigger Then
                     _trigger = False
-                    _obj = OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
+                    _obj = Worm.OrmManager.CurrentManager.GetKeyEntityFromCacheOrCreate(_id, GetObjectType())
                 End If
             End Using
         End Set
     End Property
 
-    <Column("Version", Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Public Property Version() As Byte()
         Get
-            Using SyncHelper(True, "Version")
+            Using Read("Version")
                 Return _v
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Version")
+            Using Write("Version")
                 _v = value
             End Using
         End Set
     End Property
 
-    <Column("XML")> _
-    Public Property Xml() As Xml.XmlDocument
+    <EntityPropertyAttribute(PropertyAlias:="XML")> _
+    Public Property Xml() As System.Xml.XmlDocument
         Get
-            Using SyncHelper(True, "XML")
+            Using Read("XML")
                 Return _x
             End Using
         End Get
-        Set(ByVal value As Xml.XmlDocument)
-            Using SyncHelper(False, "XML")
+        Set(ByVal value As System.Xml.XmlDocument)
+            Using Write("XML")
                 _x = value
                 If value IsNot Nothing Then
                     AddHandler _x.NodeChanging, AddressOf NodeChanged
@@ -151,47 +174,58 @@ Public Class Table3
         End Set
     End Property
 
-    Protected Sub NodeChanged(ByVal sender As Object, ByVal e As Xml.XmlNodeChangedEventArgs)
-        PrepareUpdate()
+    Protected Sub NodeChanged(ByVal sender As Object, ByVal e As System.Xml.XmlNodeChangedEventArgs)
+        StartUpdate()
     End Sub
+
+    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IPropertyConverter.CreateContainingEntity
+        _obj = mgr.GetKeyEntityFromCacheOrCreate(CInt(value), GetObjectType())
+        Return _obj
+    End Function
 End Class
 
 Public Class Table3Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
 
-    Private _idx As Orm.OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.Table3")}
-    Private _rels() As M2MRelation
+    Private _idx As OrmObjectIndex
+    'Private _tables() As SourceFragment = {New SourceFragment("dbo.Table3")}
+    Private _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.Table3")
+    End Sub
+
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Ref", "ref_id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Code", "code", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Version", "v", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("XML", "x", GetTables()(tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Ref", "ref_id", Table))
+            idx.Add(New MapField2Column("Code", "code", Table))
+            idx.Add(New MapField2Column("Version", "v", Table))
+            idx.Add(New MapField2Column("XML", "x", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() { _
-                New Orm.M2MRelation(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Table1), _schema.GetTables(GetType(Tables1to3))(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
             }
         End If
         Return _rels
     End Function
+
 End Class
 
 Public Class Table33
@@ -201,7 +235,7 @@ Public Class Table33
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 

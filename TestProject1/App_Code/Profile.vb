@@ -1,23 +1,35 @@
 Imports System.Web
 Imports Worm.Web
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Collections.Generic
 Imports System.Collections
+Imports Worm.Entities.Meta
+Imports Worm.Cache
+Imports Worm.Database
+Imports Worm
+Imports Worm.Criteria
+Imports Worm.Query
+
+#Const UseUserInstance = True
 
 Public Class GetMgr
-    Implements IGetDBMgr
+    Implements Worm.ICreateManager
 
-    Public Function GetMgr() As Worm.Orm.OrmDBManager Implements Worm.Web.IGetDBMgr.GetMgr
-        'Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
-        Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
+    Public Function GetMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
+#If UseUserInstance Then
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
+#End If
     End Function
 
     Protected ReadOnly Property OrmCache() As OrmCache
         Get
-            Dim c As OrmCache = CType(HttpContext.Current.Application("ccc"), Worm.Orm.OrmCache)
+            Dim c As OrmCache = CType(HttpContext.Current.Application("ccc"), OrmCache)
             If c Is Nothing Then
                 'Diagnostics.Debug.WriteLine("create cache")
-                c = New Worm.Orm.OrmCache
+                c = New OrmCache
                 HttpContext.Current.Application("ccc") = c
             End If
             Return c
@@ -33,36 +45,38 @@ Public Class MyProfile
     '    MyBase.New(getMgr)
     'End Sub
 
-    Protected Overrides Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.OrmBase, ByVal cascade As Boolean)
-        If cascade Then
-            Throw New NotSupportedException("Cascade delete is not supported")
-        End If
-        u.Delete()
-        u.Save(True)
-    End Sub
+    'Protected Overrides Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.IOrmBase, ByVal cascade As Boolean)
+    '    If cascade Then
+    '        Throw New NotSupportedException("Cascade delete is not supported")
+    '    End If
+    '    Using mt As New ModificationsTracker(mgr)
+    '        CType(u, ICachedEntity).Delete()
+    '        mt.AcceptModifications()
+    '    End Using
+    'End Sub
 
-    Protected Overrides Sub DeleteProfile(ByVal mgr As Worm.Orm.OrmDBManager, ByVal u As Worm.Orm.OrmBase)
-        Throw New NotImplementedException
-    End Sub
+    'Protected Overrides Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.IOrmBase)
+    '    Throw New NotImplementedException
+    'End Sub
 
-    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Orm.CriteriaLink) As System.Collections.IList
-        Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
-    End Function
+    'Protected Overrides Function FindUsers(ByVal mgr As OrmManager, ByVal f As Worm.Criteria.CriteriaLink) As System.Collections.IList
+    '    Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
+    'End Function
 
     'Protected Overrides Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As System.Collections.IList
     '    Return CType(mgr.FindTop(Of MyUser)(top, Nothing, Nothing, SortType.Asc, False), System.Collections.IList)
     'End Function
 
-    Protected Overrides Function GetNow() As Date
-        Return Now
-    End Function
+    'Protected Overrides Function GetNow() As Date
+    '    Return Now
+    'End Function
 
-    Protected Overrides Function GetUserByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Orm.OrmBase
+    Protected Overrides Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
         Dim t As Type = GetUserType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New Criteria(t).Field(_userNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(New Ctor(t).prop(UserNameField).eq(name).[and]("IsAnonymous").eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -70,35 +84,37 @@ Public Class MyProfile
                 Throw New ArgumentException("User with a name " & name & " is not found")
             Else
                 If createIfNotExist Then
-                    Dim u As New MyUser(-100, mgr.Cache, mgr.ObjectSchema)
-                    u.LastActivity = GetNow()
-                    u.IsAnonymous = True
-                    u.UserName = name
-                    u.Email = name
-                    u.Save(True)
-                    Return u
+                    Using mt As New ModificationsTracker(CreateManager)
+                        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
+                        u.LastActivity = GetNow()
+                        u.IsAnonymous = True
+                        u.UserName = name
+                        u.Email = name
+                        mt.AcceptModifications()
+                        Return u
+                    End Using
                 Else
                     Return Nothing
                 End If
             End If
         End If
-        Return CType(col(0), OrmBase)
+        Return CType(col(0), IKeyEntity)
     End Function
 
     Protected Overrides Function GetUserType() As System.Type
         Return GetType(MyUser)
     End Function
 
-    Protected Overrides Function CreateDBMgr(ByVal type As String) As IGetDBMgr
-        Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), IGetDBMgr)
+    Protected Overrides Function CreateDBMgr(ByVal type As String) As ICreateManager
+        Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), ICreateManager)
     End Function
 
     Protected Overrides Function GetAnonymousCookieName() As String
         Return ".TESTPROJECTANONYMCOOKIE"
     End Function
 
-    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String) As Worm.Orm.OrmBase
-        Dim u As New MyUser(-100, mgr.Cache, mgr.ObjectSchema)
+    Protected Overrides Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
+        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
         u.UserName = name
         Return u
     End Function
@@ -106,8 +122,7 @@ End Class
 
 <Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
-    Inherits OrmBaseT(Of MyUser)
-    Implements IOrmEditable(Of MyUser)
+    Inherits KeyEntity
 
     Private _lastActivity As Date
     Private _isAnonymous As Boolean
@@ -124,176 +139,178 @@ Public Class MyUser
         'MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
-        MyBase.New(id, cache, schema)
-    End Sub
+    Private _id As Integer
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyUser(CType(from, MyUser), CType([to], MyUser))
-    'End Sub
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    Protected Sub CopyUser(ByVal from As MyUser, ByVal [to] As MyUser) Implements IOrmEditable(Of MyUser).CopyBody
-        With from
-            [to]._lastActivity = ._lastActivity
-            [to]._field = ._field
-            [to]._isAnonymous = ._isAnonymous
-            [to]._username = ._username
-            [to]._psw = ._psw
-            [to]._email = ._email
-            [to]._failcnt = ._failcnt
-            [to]._faildt = ._faildt
-            [to]._islocked = ._islocked
-            [to]._lastlocked = ._lastlocked
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType(from, MyUser)
+            CType([to], MyUser)._id = ._id
+            CType([to], MyUser)._lastActivity = ._lastActivity
+            CType([to], MyUser)._field = ._field
+            CType([to], MyUser)._isAnonymous = ._isAnonymous
+            CType([to], MyUser)._username = ._username
+            CType([to], MyUser)._psw = ._psw
+            CType([to], MyUser)._email = ._email
+            CType([to], MyUser)._failcnt = ._failcnt
+            CType([to], MyUser)._faildt = ._faildt
+            CType([to], MyUser)._islocked = ._islocked
+            CType([to], MyUser)._lastlocked = ._lastlocked
         End With
     End Sub
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New MyUser(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    <Column("LastActivity")> _
+    <EntityPropertyAttribute(PropertyAlias:="LastActivity")> _
     Public Property LastActivity() As Date
         Get
-            Using SyncHelper(True, "LastActivity")
+            Using Read("LastActivity")
                 Return _lastActivity
             End Using
         End Get
         Set(ByVal value As Date)
-            Using SyncHelper(False, "LastActivity")
+            Using Write("LastActivity")
                 _lastActivity = value
             End Using
         End Set
     End Property
 
-    <Column("IsAnonymous")> _
+    <EntityPropertyAttribute(PropertyAlias:="IsAnonymous")> _
     Public Property IsAnonymous() As Boolean
         Get
-            Using SyncHelper(True, "IsAnonymous")
+            Using Read("IsAnonymous")
                 Return _isAnonymous
             End Using
         End Get
         Set(ByVal value As Boolean)
-            Using SyncHelper(False, "IsAnonymous")
+            Using Write("IsAnonymous")
                 _isAnonymous = value
             End Using
         End Set
     End Property
 
-    <Column("UserName")> _
+    <EntityPropertyAttribute(PropertyAlias:="UserName")> _
     Public Property UserName() As String
         Get
-            Using SyncHelper(True, "UserName")
+            Using Read("UserName")
                 Return _username
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "UserName")
+            Using Write("UserName")
                 _username = value
             End Using
         End Set
     End Property
 
-    <Column("Field")> _
+    <EntityPropertyAttribute(PropertyAlias:="Field")> _
     Public Property Field() As String
         Get
-            Using SyncHelper(True, "Field")
+            Using Read("Field")
                 Return _field
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Field")
+            Using Write("Field")
                 _field = value
             End Using
         End Set
     End Property
 
-    <Column("Password")> _
+    <EntityPropertyAttribute(PropertyAlias:="Password")> _
     Public Property Password() As Byte()
         Get
-            Using SyncHelper(True, "Password")
+            Using Read("Password")
                 Return _psw
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Password")
+            Using Write("Password")
                 _psw = value
             End Using
         End Set
     End Property
 
-    <Column("Email")> _
+    <EntityPropertyAttribute(PropertyAlias:="Email")> _
     Public Property Email() As String
         Get
-            Using SyncHelper(True, "Email")
+            Using Read("Email")
                 Return _email
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Email")
+            Using Write("Email")
                 _email = value
             End Using
         End Set
     End Property
 
-    <Column("FailedPasswordAttemtCount")> _
+    <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtCount")> _
     Public Property FailedPswAttemtCount() As Integer
         Get
-            Using SyncHelper(True, "FailedPasswordAttemtCount")
+            Using Read("FailedPasswordAttemtCount")
                 Return _failcnt
             End Using
         End Get
         Set(ByVal value As Integer)
-            Using SyncHelper(False, "FailedPasswordAttemtCount")
+            Using Write("FailedPasswordAttemtCount")
                 _failcnt = value
             End Using
         End Set
     End Property
 
-    <Column("FailedPasswordAttemtStart")> _
+    <EntityPropertyAttribute(PropertyAlias:="FailedPasswordAttemtStart")> _
     Public Property FailedPswAttemtDate() As Nullable(Of Date)
         Get
-            Using SyncHelper(True, "FailedPasswordAttemtStart")
+            Using Read("FailedPasswordAttemtStart")
                 Return _faildt
             End Using
         End Get
         Set(ByVal value As Nullable(Of Date))
-            Using SyncHelper(False, "FailedPasswordAttemtStart")
+            Using Write("FailedPasswordAttemtStart")
                 _faildt = value
             End Using
         End Set
     End Property
 
-    <Column("IsLocked")> _
+    <EntityPropertyAttribute(PropertyAlias:="IsLocked")> _
     Public Property IsLocked() As Boolean
         Get
-            Using SyncHelper(True, "IsLocked")
+            Using Read("IsLocked")
                 Return _islocked
             End Using
         End Get
         Set(ByVal value As Boolean)
-            Using SyncHelper(False, "IsLocked")
+            Using Write("IsLocked")
                 _islocked = value
             End Using
         End Set
     End Property
 
-    <Column("LastLockedAt")> _
+    <EntityPropertyAttribute(PropertyAlias:="LastLockedAt")> _
     Public Property LastLockedAt() As Nullable(Of Date)
         Get
-            Using SyncHelper(True, "LastLockedAt")
+            Using Read("LastLockedAt")
                 Return _lastlocked
             End Using
         End Get
         Set(ByVal value As Nullable(Of Date))
-            Using SyncHelper(False, "LastLockedAt")
+            Using Write("LastLockedAt")
                 _lastlocked = value
             End Using
         End Set
@@ -302,36 +319,40 @@ End Class
 
 Public Class MyUserDef
     Inherits ObjectSchemaBaseImplementationWeb
+    Implements ISchemaWithM2M
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.users")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Private _tbls() As OrmTable = {New OrmTable("dbo.users")}
+    'Private _tbls() As SourceFragment = {New SourceFragment("dbo.users")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("LastActivity", "last_activity", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("UserName", "username", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Field", "field", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Password", "password", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Email", "email", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("IsLocked", "islocked", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("LastLockedAt", "lastlocked", GetTables()(Tables.Main)))
+        idx.Add(New MapField2Column("LastActivity", "last_activity", Table))
+        idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", Table))
+        idx.Add(New MapField2Column("UserName", "username", Table))
+        idx.Add(New MapField2Column("ID", "id", Table))
+        idx.Add(New MapField2Column("Field", "field", Table))
+        idx.Add(New MapField2Column("Password", "password", Table))
+        idx.Add(New MapField2Column("Email", "email", Table))
+        idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", Table))
+        idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", Table))
+        idx.Add(New MapField2Column("IsLocked", "islocked", Table))
+        idx.Add(New MapField2Column("LastLockedAt", "lastlocked", Table))
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
-        Return _tbls
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tbls
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
-        Return New M2MRelation() { _
-                New M2MRelation(GetType(MyRole), _schema.GetSharedTable("dbo.UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
+        Return New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(MyRole), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 
@@ -339,8 +360,7 @@ End Class
 
 <Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
-    Inherits OrmBaseT(Of MyRole)
-    Implements IOrmEditable(Of MyRole)
+    Inherits KeyEntity
 
     Private _role As String
 
@@ -348,41 +368,41 @@ Public Class MyRole
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Private _id As Integer
+
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
+
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        CType([to], MyRole)._role = _role
+        CType([to], MyRole)._id = _id
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyRole(CType(from, MyRole), CType([to], MyRole))
-    'End Sub
-
-    Protected Sub CopyRole(ByVal from As MyRole, ByVal [to] As MyRole) Implements IOrmEditable(Of MyRole).CopyBody
-        With from
-            [to]._role = ._role
-        End With
-    End Sub
-
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New MyRole(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    <Column("Name")> _
+    <EntityPropertyAttribute(PropertyAlias:="Name")> _
     Public Property RoleName() As String
         Get
-            Using SyncHelper(True, "Name")
+            Using Read("Name")
                 Return _role
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Name")
+            Using Write("Name")
                 _role = value
             End Using
         End Set
@@ -392,27 +412,31 @@ End Class
 
 Public Class MyRoleDef
     Inherits ObjectSchemaBaseImplementationWeb
+    Implements ISchemaWithM2M
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.roles")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Private _tbls() As OrmTable = {New OrmTable("dbo.roles")}
+    'Private _tbls() As SourceFragment = {New SourceFragment("dbo.roles")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
-        idx.Add(New MapField2Column("Name", "roleName", GetTables()(Tables.Main)))
+        idx.Add(New MapField2Column("ID", "id", Table))
+        idx.Add(New MapField2Column("Name", "roleName", Table))
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
-        Return _tbls
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tbls
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
-        Return New M2MRelation() { _
-                New M2MRelation(GetType(MyUser), _schema.GetSharedTable("dbo.UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
+        Return New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(MyUser), _schema.GetSharedSourceFragment("dbo", "UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 

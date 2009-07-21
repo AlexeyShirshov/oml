@@ -1,173 +1,283 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Orm", "obm\Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestProject1", "TestProject1\TestProject1.vbproj", "{9D39DD33-0A52-460D-A5E2-8576E46B334F}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 10
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E64006B-2B21-4A31-85D8-C669B9C4E7B3}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(SolutionItems) = preProject
 		ReadMe.txt = ReadMe.txt
 		TestRunConfig1.testrunconfig = TestRunConfig1.testrunconfig
-		Worm1.vsmdi = Worm1.vsmdi
+		worm1.vsmdi = worm1.vsmdi
 	EndProjectSection
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tests", "Tests\Tests.vbproj", "{8E02FB04-15DE-416A-9468-0C99CC1DBE65}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test projects", "Test projects", "{8C1323A6-F732-41FE-ABFB-E484363505C7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net3.5", "net3.5", "{1284C3C7-8A34-4C94-9A82-7DA6B87DC070}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Help", "Help", "{559EB33E-8BA0-4E0B-8E3B-31E11DB5D5E3}"
+	ProjectSection(SolutionItems) = preProject
+		Help\url.js = Help\url.js
+		Help\worm.shfbproj = Help\worm.shfbproj
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Binaries", "Binaries", "{DDEDC24E-8B2F-4495-A3C0-79F779A0EC93}"
+	ProjectSection(SolutionItems) = preProject
+		Binaries\CoreFramework.dll = Binaries\CoreFramework.dll
+		Binaries\CoreFramework.pdb = Binaries\CoreFramework.pdb
+		Binaries\LinqToCodedom.dll = Binaries\LinqToCodedom.dll
+		Binaries\LinqToCodedom.pdb = Binaries\LinqToCodedom.pdb
+		Binaries\Mvp.Xml.dll = Binaries\Mvp.Xml.dll
+		Binaries\Mvp.Xml.xml = Binaries\Mvp.Xml.xml
+	EndProjectSection
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Worm.Orm", "obm\Worm.Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "UnitTesting", "TestProject1\UnitTesting.vbproj", "{9D39DD33-0A52-460D-A5E2-8576E46B334F}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ConsoleTests", "Tests\ConsoleTests.vbproj", "{8E02FB04-15DE-416A-9468-0C99CC1DBE65}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ASPNETHosting", "ASPNETHosting\ASPNETHosting.vbproj", "{7D8F3864-281D-495E-B0E4-5731FC31D007}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGen", "OrmCodeGen\OrmCodeGen.csproj", "{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.CodeGenerator", "OrmCodeGen\Worm.CodeGen.CodeGenerator.csproj", "{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGenLib", "OrmCodeGenLib\OrmCodeGenLib.csproj", "{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.Core", "OrmCodeGenLib\Worm.CodeGen.Core.csproj", "{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlSchemaGen", "XmlSchemaGen\XmlSchemaGen.csproj", "{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.XmlGenerator", "XmlSchemaGen\Worm.CodeGen.XmlGenerator.csproj", "{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeGenTesting", "TestsCodeGenLib\CodeGenTesting.csproj", "{FD0ADB48-33C6-4399-9943-6ACAB857CF53}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "test", "net3.5\linq\test.vbproj", "{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestLinq", "net3.5\TestLinq\TestLinq.vbproj", "{0D88361E-442C-409C-AAC7-4878E72199CB}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Worm.Linq", "net3.5\linqprovider\Worm.Linq.vbproj", "{C479F776-A580-4451-813F-2D151635996D}"
 EndProject
 Global
-	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
-		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
-	EndGlobalSection
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 8
+		SccNumberOfProjects = 12
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs03.codeplex.com/
 		SccLocalPath0 = .
-		SccProjectUniqueName1 = obm\\Orm.vbproj
-		SccProjectName1 = obm
-		SccLocalPath1 = obm
-		SccProjectUniqueName2 = TestProject1\\TestProject1.vbproj
-		SccProjectName2 = TestProject1
-		SccLocalPath2 = TestProject1
-		SccProjectUniqueName3 = Tests\\Tests.vbproj
-		SccProjectName3 = Tests
-		SccLocalPath3 = Tests
-		SccProjectUniqueName4 = ASPNETHosting\\ASPNETHosting.vbproj
-		SccProjectName4 = ASPNETHosting
-		SccLocalPath4 = ASPNETHosting
-		SccProjectUniqueName5 = OrmCodeGen\\OrmCodeGen.csproj
-		SccProjectName5 = OrmCodeGen
-		SccLocalPath5 = OrmCodeGen
-		SccProjectUniqueName6 = OrmCodeGenLib\\OrmCodeGenLib.csproj
-		SccProjectName6 = OrmCodeGenLib
-		SccLocalPath6 = OrmCodeGenLib
-		SccProjectUniqueName7 = XmlSchemaGen\\XmlSchemaGen.csproj
-		SccProjectName7 = XmlSchemaGen
-		SccLocalPath7 = XmlSchemaGen
+		SccProjectUniqueName1 = ASPNETHosting\\ASPNETHosting.vbproj
+		SccProjectTopLevelParentUniqueName1 = Worm.sln
+		SccProjectName1 = ASPNETHosting
+		SccLocalPath1 = ASPNETHosting
+		SccProjectUniqueName2 = OrmCodeGenLib\\Worm.CodeGen.Core.csproj
+		SccProjectName2 = OrmCodeGenLib
+		SccLocalPath2 = OrmCodeGenLib
+		SccProjectUniqueName3 = XmlSchemaGen\\Worm.CodeGen.XmlGenerator.csproj
+		SccProjectName3 = XmlSchemaGen
+		SccLocalPath3 = XmlSchemaGen
+		SccProjectUniqueName4 = OrmCodeGen\\Worm.CodeGen.CodeGenerator.csproj
+		SccProjectName4 = OrmCodeGen
+		SccLocalPath4 = OrmCodeGen
+		SccProjectUniqueName5 = obm\\Worm.Orm.vbproj
+		SccProjectName5 = obm
+		SccLocalPath5 = obm
+		SccProjectUniqueName6 = TestProject1\\UnitTesting.vbproj
+		SccProjectTopLevelParentUniqueName6 = Worm.sln
+		SccProjectName6 = TestProject1
+		SccLocalPath6 = TestProject1
+		SccProjectUniqueName7 = TestsCodeGenLib\\CodeGenTesting.csproj
+		SccProjectTopLevelParentUniqueName7 = Worm.sln
+		SccProjectName7 = TestsCodeGenLib
+		SccLocalPath7 = TestsCodeGenLib
+		SccProjectUniqueName8 = Tests\\ConsoleTests.vbproj
+		SccProjectTopLevelParentUniqueName8 = Worm.sln
+		SccProjectName8 = Tests
+		SccLocalPath8 = Tests
+		SccProjectUniqueName9 = net3.5\\linq\\test.vbproj
+		SccProjectTopLevelParentUniqueName9 = Worm.sln
+		SccProjectName9 = net3.5/linq
+		SccLocalPath9 = net3.5\\linq
+		SccProjectUniqueName10 = net3.5\\TestLinq\\TestLinq.vbproj
+		SccProjectTopLevelParentUniqueName10 = Worm.sln
+		SccProjectName10 = net3.5/TestLinq
+		SccLocalPath10 = net3.5\\TestLinq
+		SccProjectUniqueName11 = net3.5\\linqprovider\\Worm.Linq.vbproj
+		SccProjectTopLevelParentUniqueName11 = Worm.sln
+		SccProjectName11 = net3.5/linqprovider
+		SccLocalPath11 = net3.5\\linqprovider
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Worm1.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug AddIn|Any CPU = Debug AddIn|Any CPU
 		Debug_Trace|Any CPU = Debug_Trace|Any CPU
 		Debug|Any CPU = Debug|Any CPU
+		DebugNonUserInstance|Any CPU = DebugNonUserInstance|Any CPU
 		Release|Any CPU = Release|Any CPU
 		Signed Debug|Any CPU = Signed Debug|Any CPU
 		Unsigned Release|Any CPU = Unsigned Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Signed Debug|Any CPU.ActiveCfg = Signed Debug|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Signed Debug|Any CPU.Build.0 = Signed Debug|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Unsigned Release|Any CPU.ActiveCfg = Unsigned Release|Any CPU
 		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Unsigned Release|Any CPU.Build.0 = Unsigned Release|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.DebugNonUserInstance|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.DebugNonUserInstance|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.DebugNonUserInstance|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.DebugNonUserInstance|Any CPU.Build.0 = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D88361E-442C-409C-AAC7-4878E72199CB}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.DebugNonUserInstance|Any CPU.ActiveCfg = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.DebugNonUserInstance|Any CPU.Build.0 = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C479F776-A580-4451-813F-2D151635996D}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
+		{7D8F3864-281D-495E-B0E4-5731FC31D007} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
+		{FD0ADB48-33C6-4399-9943-6ACAB857CF53} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
+		{0D88361E-442C-409C-AAC7-4878E72199CB} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
+		{C479F776-A580-4451-813F-2D151635996D} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
 	EndGlobalSection
 EndGlobal

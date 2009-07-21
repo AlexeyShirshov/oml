@@ -1,11 +1,11 @@
-Imports Worm
-Imports Worm.Orm
-Imports CoreFramework.Structures
+Imports Worm.Entities
+Imports Worm.Cache
+Imports Worm.Entities.Meta
 
 <Entity(GetType(Tables1to1.TablesImplementation), "1")> _
 Public Class Tables1to1
-    Inherits OrmBaseT(Of Tables1to1)
-    Implements IOrmEditable(Of Tables1to1)
+    Inherits KeyEntity
+    Implements IOptimizedValues
 
     Private _table1 As Table1
     Private _table1back As Table1
@@ -15,36 +15,43 @@ Public Class Tables1to1
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyRelation(CType(from, Tables1to3), CType([to], Tables1to3))
-    'End Sub
+    Private _id As Integer
 
-    Protected Sub CopyRelation(ByVal [from] As Tables1to1, ByVal [to] As Tables1to1) Implements IOrmEditable(Of Tables1to1).CopyBody
-        With [from]
-            [to]._table1 = ._table1
-            [to]._table1back = ._table1back
-            [to]._k = ._k
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
+
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
+
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Tables1to1)
+            CType([to], Tables1to1)._id = ._id
+            CType([to], Tables1to1)._table1 = ._table1
+            CType([to], Tables1to1)._table1back = ._table1back
+            CType([to], Tables1to1)._k = ._k
         End With
     End Sub
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotSupportedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotSupportedException
-    'End Function
-
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Tables1to3(Identifier, OrmCache, OrmSchema)
-    'End Function
-
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
-        Select Case c.FieldName
+    Public Overridable Sub SetValue( _
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+        Select Case fieldName
             Case "K"
                 K = CStr(value)
             Case "Table1"
@@ -52,47 +59,65 @@ Public Class Tables1to1
             Case "Table1Back"
                 Table1Back = CType(value, TestProject1.Table1)
             Case Else
-                MyBase.SetValue(pi, c, value)
+                SetValueReflection(fieldName, value, oschema)
+                'Throw New NotSupportedException(fieldName)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    <Column("K")> _
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Select Case propertyAlias
+            Case "K"
+                Return _k
+            Case "Table1"
+                Return _table1
+            Case "Table1Back"
+                Return _table1back
+            Case "ID"
+                Return Identifier
+            Case Else
+                Throw New NotSupportedException(propertyAlias)
+                'MyBase.SetValue(pi, fieldName, oschema, value)
+        End Select
+    End Function
+
+    <EntityPropertyAttribute(PropertyAlias:="K")> _
     Public Property K() As String
         Get
-            Using SyncHelper(True, "K")
+            Using Read("K")
                 Return _k
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "K")
+            Using Write("K")
                 _k = value
             End Using
         End Set
     End Property
 
-    <Column("Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
     Public Property Table1() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _table1
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _table1 = value
             End Using
         End Set
     End Property
 
-    <Column("Table1Back")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1Back")> _
     Public Property Table1Back() As Table1
         Get
-            Using SyncHelper(True, "Table1")
+            Using Read("Table1")
                 Return _table1back
             End Using
         End Get
         Set(ByVal value As Table1)
-            Using SyncHelper(False, "Table1")
+            Using Write("Table1")
                 _table1back = value
             End Using
         End Set
@@ -102,34 +127,38 @@ Public Class Tables1to1
         Inherits ObjectSchemaBaseImplementation
         Implements IRelation
 
-        Private _idx As Orm.OrmObjectIndex
-        Public Shared _tables() As OrmTable = {New OrmTable("dbo.Table1to1")}
+        Private _idx As OrmObjectIndex
+        'Public Shared _tables() As SourceFragment = {New SourceFragment("dbo.Table1to1")}
 
-        Public Enum Tables
-            Main
-        End Enum
+        Public Sub New()
+            _tbl = New SourceFragment("dbo.Table1to1")
+        End Sub
 
-        Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+        'Public Enum Tables
+        '    Main
+        'End Enum
+
+        Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
             If _idx Is Nothing Then
-                Dim idx As New Orm.OrmObjectIndex
-                idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-                idx.Add(New Orm.MapField2Column("K", "k", GetTables()(Tables.Main)))
-                idx.Add(New Orm.MapField2Column("Table1", "table1", GetTables()(Tables.Main)))
-                idx.Add(New Orm.MapField2Column("Table1Back", "table1_back", GetTables()(Tables.Main)))
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("K", "k", Table))
+                idx.Add(New MapField2Column("Table1", "table1", Table))
+                idx.Add(New MapField2Column("Table1Back", "table1_back", Table))
                 _idx = idx
             End If
             Return _idx
         End Function
 
-        Public Overrides Function GetTables() As OrmTable()
-            Return _tables
-        End Function
+        'Public Overrides Function GetTables() As SourceFragment()
+        '    Return _tables
+        'End Function
 
-        Public Function GetFirstType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetFirstType
+        Public Function GetFirstType() As IRelation.RelationDesc Implements IRelation.GetFirstType
             Return New IRelation.RelationDesc("Table1", GetType(Table1), False)
         End Function
 
-        Public Function GetSecondType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetSecondType
+        Public Function GetSecondType() As IRelation.RelationDesc Implements IRelation.GetSecondType
             Return New IRelation.RelationDesc("Table1Back", GetType(Table1), True)
         End Function
 

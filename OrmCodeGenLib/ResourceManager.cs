@@ -4,7 +4,7 @@ using System.Text;
 using System.Xml.Schema;
 using System.Xml;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     internal class ResourceManager
     {

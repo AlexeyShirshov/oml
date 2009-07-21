@@ -1,73 +1,107 @@
 Imports System.Collections.Generic
-Imports Worm
+Imports Worm.Entities
+Imports Worm.Database
+Imports Worm.Cache
+Imports Worm.Entities.Meta
+Imports Worm.Criteria.Values
+Imports Worm.Query.Sorting
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Joins
+Imports Worm.Query
+Imports Worm.Expressions2
 
-<Orm.Entity(GetType(EntitySchema1v1Implementation), "1"), _
-Orm.Entity(GetType(EntitySchema1v2Implementation), "2"), _
-Orm.Entity(GetType(EntitySchema1v3Implementation), "3")> _
+Public Interface IEnt
+    Inherits _IKeyEntity
+
+End Interface
+
+<Serializable()> _
+<Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")> _
 Public Class Entity
-    Inherits Orm.OrmBaseT(Of Entity)
+    Inherits KeyEntity
+    Implements IEnt
 
     Public Sub New()
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Private _id As Integer
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
+    Private _char As String
+    <EntityProperty(PropertyAlias:="Char")> _
+    Public Property [Char]() As String
+        Get
+            Using Read("Char")
+                Return _char
+            End Using
+        End Get
+        Set(ByVal value As String)
+            Using Write("Char")
+                _char = value
+            End Using
+        End Set
+    End Property
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-
-    'End Sub
 End Class
 
 Public MustInherit Class ObjectSchemaBaseImplementation
-    Implements Orm.IOrmObjectSchema, Orm.IOrmSchemaInit
+    Implements IEntitySchemaBase, ISchemaInit
 
-    Protected _schema As Orm.OrmSchemaBase
+    Protected _schema As Worm.ObjectMappingEngine
     Protected _objectType As Type
+    Protected _tbl As SourceFragment
 
-    Public Overridable Function ChangeValueType(ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Orm.IOrmObjectSchema.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ChangeValueType
         newvalue = value
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
-        Return Nothing
-    End Function
+    'Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetContextFilter
+    '    Return Nothing
+    'End Function
 
-    Public Overridable Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin Implements Worm.Orm.IOrmObjectSchema.GetJoins
-        Return Nothing
-    End Function
+    'Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IOrmObjectSchema.GetJoins
+    '    Return Nothing
+    'End Function
 
-    Public Overridable Function GetSuppressedColumns() As Worm.Orm.ColumnAttribute() Implements Worm.Orm.IOrmObjectSchema.GetSuppressedColumns
-        Return New Orm.ColumnAttribute() {}
+    Public Overridable Function GetSuppressedFields() As String() Implements IEntitySchemaBase.GetSuppressedFields
+        Return New String() {}
     End Function
 
     'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
     '    Return Nothing
     'End Function
 
-    Public MustOverride Function GetTables() As Orm.OrmTable() Implements Worm.Orm.IOrmObjectSchema.GetTables
+    'Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
 
-    Public MustOverride Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column) Implements Worm.Orm.IOrmObjectSchema.GetFieldColumnMap
+    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.GetFieldColumnMap
 
     'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
     '    Return objs
@@ -79,81 +113,118 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    End Get
     'End Property
 
-    Public Overridable Function GetM2MRelations() As Worm.Orm.M2MRelation() Implements Worm.Orm.IOrmObjectSchema.GetM2MRelations
-        Return New Orm.M2MRelation() {}
-    End Function
+    'Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements IOrmObjectSchema.GetM2MRelations
+    '    Return New M2MRelationDesc() {}
+    'End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal t As System.Type) Implements Worm.Orm.IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.GetSchema
         _schema = schema
         _objectType = t
     End Sub
+
+    Public Overridable ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
+        Get
+            Return _tbl
+        End Get
+    End Property
 End Class
 
 Public Class EntitySchema1v1Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
 
-    Private _idx As Orm.OrmObjectIndex
-    Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent1")}
-    Protected _rels() As Orm.M2MRelation
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent1")
+    End Sub
 
-    Public Enum Tables
-        Main
-    End Enum
+    Private _idx As OrmObjectIndex
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1")}
+    Protected _rels() As M2MRelationDesc
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    'Public Enum Tables
+    '    Main
+    'End Enum
+
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() { _
-                New Orm.M2MRelation(GetType(Entity4), New Orm.OrmTable("dbo.[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity4), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent2_id", False, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey, Nothing) _
                 }
         End If
         Return _rels
     End Function
+
 End Class
 
 Public Class EntitySchema1v2Implementation
     Inherits EntitySchema1v1Implementation
+    Implements IMultiTableObjectSchema
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
+    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1"), New SourceFragment("dbo.t1")}
+
+    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
+        ElseIf left.Equals(GetTables()(Tables2.Second)) AndAlso right.Equals(GetTables()(Tables2.Main)) Then
+            Return JCtor.join(left).on(left, "id").eq(right, "i")
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of Orm.OrmTable)(MyBase.GetTables())
-            s.Add(New Orm.OrmTable("dbo.t1"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
+        'If _tables.Length = 1 Then
+        '    Dim s As New List(Of SourceFragment)(MyBase.GetTables())
+        '    s.Add(New SourceFragment("dbo.t1"))
+        '    _tables = s.ToArray
+        'End If
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() { _
-                New Orm.M2MRelation(GetType(Entity4), New Orm.OrmTable("dbo.[1to2]"), "ent2_id", True, New System.Data.Common.DataTableMapping) _
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity4), New SourceFragment("dbo.[1to2]"), "ent2_id", True, New System.Data.Common.DataTableMapping) _
                 }
         End If
         Return _rels
+    End Function
+
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
+
+End Class
+
+Public Class EntitySchema1v4Implementation
+    Inherits EntitySchema1v2Implementation
+
+    Private _idx As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+        If _idx Is Nothing Then
+            _idx = MyBase.GetFieldColumnMap()
+            _idx.Add(New MapField2Column("Char", "s", GetTables()(Tables2.Second)))
+        End If
+        Return _idx
     End Function
 
 End Class
@@ -161,19 +232,21 @@ End Class
 Public Class EntitySchema1v3Implementation
     Inherits EntitySchema1v2Implementation
 
-    Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
+    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Dim orc As New Worm.Orm.Condition.ConditionConstructor
-            orc.AddFilter(New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
-            orc.AddFilter(New Orm.TableFilter(right, "s", New Orm.ScalarValue("a"), Orm.FilterOperation.Equal))
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, orc.Condition)
+            Dim orc As New Condition.ConditionConstructor
+            orc.AddFilter(New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
+            orc.AddFilter(New TableFilter(right, "s", New ScalarValue("a"), Worm.Criteria.FilterOperation.Equal))
+            Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, CType(orc.Condition, IFilter))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
 
 End Class
 
-<Orm.Entity(GetType(EntitySchema2v1Implementation), "1"), Orm.Entity(GetType(EntitySchema2v2Implementation), "2")> _
+<Entity(GetType(EntitySchema2v1Implementation), "1"), _
+Entity(GetType(EntitySchema2v11Implementation), "1.1"), _
+Entity(GetType(EntitySchema2v2Implementation), "2")> _
 Public Class Entity2
     Inherits Entity
 
@@ -183,24 +256,24 @@ Public Class Entity2
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
-    Public Overrides Function Clone() As Object
-        Dim e As New Entity2(Identifier, OrmCache, OrmSchema)
-        Return e
-    End Function
+    'Public Overrides Function Clone() As Object
+    '    Dim e As New Entity2(Identifier, InternalProperties.OrmCache, OrmSchema)
+    '    Return e
+    'End Function
 
-    <Orm.Column("Str")> _
+    <EntityPropertyAttribute(PropertyAlias:="Str")> _
     Public Property Str() As String
         Get
-            Using SyncHelper(True, "Str")
+            Using Read("Str")
                 Return _s
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Str")
+            Using Write("Str")
                 _s = value
             End Using
         End Set
@@ -212,11 +285,11 @@ Public Class EntitySchema2v1Implementation
 
     Private _coladded As Boolean = False
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
-        Dim idx As Orm.Collections.IndexedCollection(Of String, Orm.MapField2Column) = MyBase.GetFieldColumnMap()
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.GetFieldColumnMap()
         If Not _coladded Then
             Try
-                idx.Add(New Orm.MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
             Catch ex As ArgumentException
                 'just eat
                 'Diagnostics.Debug.WriteLine("duplicate add")
@@ -227,37 +300,45 @@ Public Class EntitySchema2v1Implementation
     End Function
 End Class
 
+Public Class EntitySchema2v11Implementation
+    Inherits EntitySchema2v1Implementation
+    Implements IDefferedLoading
+
+    Public Function GetDefferedLoadPropertiesGroups() As String()() Implements Worm.Entities.Meta.IDefferedLoading.GetDefferedLoadPropertiesGroups
+        Return New String()() { _
+            New String() {"Str"} _
+        }
+    End Function
+End Class
+
 Public Class EntitySchema2v2Implementation
     Inherits EntitySchema1v1Implementation
+    Implements IMultiTableObjectSchema
 
     Private _coladded As Boolean = False
+    Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent1"), New SourceFragment("dbo.t2")}
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of Orm.OrmTable)(MyBase.GetTables())
-            s.Add(New Orm.OrmTable("dbo.t2"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
         Return _tables
     End Function
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
-        Dim idx As Orm.Collections.IndexedCollection(Of String, Orm.MapField2Column) = MyBase.GetFieldColumnMap()
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.GetFieldColumnMap()
         If Not _coladded Then
             Try
-                idx.Add(New Orm.MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
             Catch ex As ArgumentException
                 'just eat
                 'Diagnostics.Debug.WriteLine("duplicate add")
@@ -266,20 +347,28 @@ Public Class EntitySchema2v2Implementation
         End If
         Return idx
     End Function
+
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class
 
 Public Class Entity3
     Inherits Entity
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.DbSchema)
-        MyBase.New(id, cache, schema)
-    End Sub
+    'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator)
+    '    MyBase.New(id, cache, schema)
+    'End Sub
 End Class
 
-<Orm.Entity(GetType(EntitySchema4v1Implementation), "1"), Orm.Entity(GetType(EntitySchema4v2Implementation), "2")> _
+<Serializable()> _
+<Entity(GetType(EntitySchema4v1Implementation), "1"), _
+Entity(GetType(EntitySchema4v1Implementation), "joins"), _
+Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
-    Inherits Orm.OrmBaseT(Of Entity4)
-    Implements Orm.IOrmEditable(Of Entity4)
+    Inherits KeyEntity
 
     Private _name As String
 
@@ -287,47 +376,46 @@ Public Class Entity4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity4(Identifier, OrmCache, OrmSchema)
-    'End Function
+    Private _id As Integer
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyEntity4(CType(from, Entity4), CType([to], Entity4))
-    'End Sub
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    Protected Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4) Implements Orm.IOrmEditable(Of Entity4).CopyBody
-        With [from]
-            [to]._name = ._name
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Entity4)
+            CType([to], Entity4)._name = ._name
+            CType([to], Entity4)._id = ._id
         End With
     End Sub
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Return New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType)
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType), Global.System.Collections.Generic.IComparer(Of T))
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    <Orm.Column("Title")> _
+    <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
@@ -337,29 +425,32 @@ End Class
 
 Public Class EntitySchema4v1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements Orm.IOrmSortingEx
+    Implements IOrmSorting, ISchemaWithM2M
 
-    Private _idx As Orm.OrmObjectIndex
-    Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent2")}
-    Protected _rels() As Orm.M2MRelation
+    Private _idx As OrmObjectIndex
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent2")}
+    Protected _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent2")
+    End Sub
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
     'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
     '    Select Case CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort)
@@ -370,30 +461,30 @@ Public Class EntitySchema4v1Implementation
     '    End Select
     'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overridable Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() {New Orm.M2MRelation(GetType(Entity), New Orm.OrmTable("dbo.[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
+            _rels = New M2MRelationDesc() {New M2MRelationDesc(GetType(Entity), _schema.GetSharedSourceFragment("dbo", "[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
         End If
         Return _rels
     End Function
 
-    Public Function CreateSortComparer(ByVal s As Worm.Orm.Sort) As System.Collections.IComparer Implements Worm.Orm.IOrmSorting.CreateSortComparer
-        If s.FieldName = "Title" Then
+    Public Function CreateSortComparer(ByVal s As SortExpression) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Title" Then
             Return New Comparer(Entity4Sort.Name, s.Order)
         End If
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort) As System.Collections.Generic.IComparer(Of T) Implements Worm.Orm.IOrmSorting.CreateSortComparer
-        If s.FieldName = "Title" Then
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As SortExpression) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+        If CType(s.Operand, EntityExpression).ObjectProperty.PropertyAlias = "Title" Then
             Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing
     End Function
 
-    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort, ByVal objs As System.Collections.Generic.ICollection(Of T)) As System.Collections.Generic.ICollection(Of T) Implements Worm.Orm.IOrmSorting.ExternalSort
-        Throw New NotSupportedException
-    End Function
+    'Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
+    '    Throw New NotSupportedException
+    'End Function
 
     Public Enum Entity4Sort
         Name
@@ -405,9 +496,9 @@ Public Class EntitySchema4v1Implementation
         Private _s As Entity4Sort
         Private _st As Integer = -1
 
-        Public Sub New(ByVal s As Entity4Sort, ByVal st As Orm.SortType)
+        Public Sub New(ByVal s As Entity4Sort, ByVal st As SortExpression.SortType)
             _s = s
-            If st = Orm.SortType.Asc Then
+            If st = SortExpression.SortType.Asc Then
                 _st = 1
             End If
         End Sub
@@ -436,127 +527,132 @@ Public Class EntitySchema4v1Implementation
         End Function
     End Class
 
-    Public ReadOnly Property SortExpiration(ByVal s As Orm.Sort) As System.TimeSpan Implements Worm.Orm.IOrmSortingEx.SortExpiration
-        Get
-            Return TimeSpan.MaxValue
-        End Get
-    End Property
 End Class
 
 Public Class EntitySchema4v2Implementation
     Inherits EntitySchema4v1Implementation
+    Implements IMultiTableObjectSchema, IContextObjectSchema
 
     Public Enum Tables2
         Main
         Second
     End Enum
 
-    Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
+    Protected _tables() As SourceFragment
+
+    Public Sub New()
+        _tables = New SourceFragment() {New SourceFragment("dbo.ent2"), New SourceFragment("dbo.t1")}
+    End Sub
+
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New QueryJoin(right, Worm.Criteria.Joins.JoinType.Join, New JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
-        Return MyBase.GetJoins(left, right)
+        Throw New NotSupportedException()
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        If _tables.Length = 1 Then
-            Dim s As New List(Of Orm.OrmTable)(MyBase.GetTables())
-            s.Add(New Orm.OrmTable("dbo.t1"))
-            _tables = s.ToArray
-        End If
+    Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
+        'If _tables.Length = 1 Then
+        '    Dim s As New List(Of SourceFragment)(MyBase.GetTables())
+        '    s.Add(New SourceFragment("dbo.t1"))
+        '    _tables = s.ToArray
+        'End If
         Return _tables
     End Function
 
-    Public Overrides Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter
+    Public Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IContextObjectSchema.GetContextFilter
         If filter_info Is Nothing Then
             Return Nothing
         End If
 
         If filter_info.GetType IsNot GetType(String) Then
-            Throw New Orm.OrmObjectException("Invalid filter_info type " & filter_info.GetType.Name)
+            Throw New OrmObjectException("Invalid filter_info type " & filter_info.GetType.Name)
         End If
 
-        Return New Orm.TableFilter(GetTables()(Tables2.Main), "s", New Orm.ScalarValue(filter_info), Orm.FilterOperation.Equal)
+        Return New TableFilter(GetTables()(Tables2.Main), "s", New ScalarValue(filter_info), Worm.Criteria.FilterOperation.Equal)
     End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelationDesc()
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() {New Orm.M2MRelation(GetType(Entity), New Orm.OrmTable("dbo.[1to2]"), "ent1_id", True, New System.Data.Common.DataTableMapping)}
+            _rels = New M2MRelationDesc() {New M2MRelationDesc(GetType(Entity), New SourceFragment("dbo.[1to2]"), "ent1_id", True, New System.Data.Common.DataTableMapping)}
         End If
         Return _rels
     End Function
 
+    Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class
 
-<Orm.Entity(GetType(EntitySchema5v1Implementation), "1")> _
+<Entity(GetType(EntitySchema5v1Implementation), "1")> _
 Public Class Entity5
-    Inherits Orm.OrmBaseT(Of Entity5)
-    Implements Orm.IOrmEditable(Of Entity5)
+    Inherits KeyEntity
 
     Private _name As String
-    Private _upd() As Byte
+    Private _mark() As Byte
+    Private _id As Integer
 
     Public Sub New()
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
+        Init(id, cache, schema)
     End Sub
 
-    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-    '    Return New Entity5(Identifier, OrmCache, OrmSchema)
-    'End Function
+    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    Public Property ID() As Integer
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Integer)
+            _id = value
+        End Set
+    End Property
 
-    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-    '    CopyEntity5(CType([from], Entity5), CType([to], Entity5))
-    'End Sub
+    Public Overrides Property Identifier() As Object
+        Get
+            Return _id
+        End Get
+        Set(ByVal value As Object)
+            _id = CInt(value)
+        End Set
+    End Property
 
-    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-    '    Throw New NotImplementedException
-    'End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    Protected Sub CopyEntity5(ByVal [from] As Entity5, ByVal [to] As Entity5) Implements Orm.IOrmEditable(Of Entity5).CopyBody
-        With [from]
-            [to]._name = ._name
-            [to]._upd = ._upd
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+        With CType([from], Entity5)
+            CType([to], Entity5)._name = ._name
+            CType([to], Entity5)._mark = ._mark
+            CType([to], Entity5)._id = ._id
         End With
     End Sub
 
-    <Orm.Column("Title")> _
+    <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
         Get
-            Using SyncHelper(True, "Title")
+            Using Read("Title")
                 Return _name
             End Using
         End Get
         Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
+            Using Write("Title")
                 _name = value
             End Using
         End Set
     End Property
 
-    <Orm.Column("Version", Orm.Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
     Protected Property Version() As Byte()
         Get
-            Using SyncHelper(True, "Title")
-                Return _upd
+            Using Read("Title")
+                Return _mark
             End Using
         End Get
         Set(ByVal value As Byte())
-            Using SyncHelper(False, "Title")
-                _upd = value
+            Using Write("Title")
+                _mark = value
             End Using
         End Set
     End Property
@@ -565,38 +661,44 @@ End Class
 
 Public Class EntitySchema5v1Implementation
     Inherits ObjectSchemaBaseImplementation
+    Implements ISchemaWithM2M
 
-    Private _idx As Orm.OrmObjectIndex
-    Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent3")}
-    Protected _rels() As Orm.M2MRelation
+    Private _idx As OrmObjectIndex
+    'Protected _tables() As SourceFragment = {New SourceFragment("dbo.ent3")}
+    Protected _rels() As M2MRelationDesc
 
-    Public Enum Tables
-        Main
-    End Enum
+    'Public Enum Tables
+    '    Main
+    'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Sub New()
+        _tbl = New SourceFragment("dbo.ent3")
+    End Sub
+
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Version", "version", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", Table))
+            idx.Add(New MapField2Column("Title", "name", Table))
+            idx.Add(New MapField2Column("Version", "version", Table))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        Return _tables
-    End Function
+    'Public Overrides Function GetTables() As SourceFragment()
+    '    Return _tables
+    'End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Function GetM2MRelations() As M2MRelationDesc() Implements ISchemaWithM2M.GetM2MRelations
         If _rels Is Nothing Then
-            Dim t As New Orm.OrmTable("dbo.[3to3]")
-            _rels = New Orm.M2MRelation() { _
-                New Orm.M2MRelation(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, True), _
-                New Orm.M2MRelation(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, False) _
+            Dim t As New SourceFragment("dbo.[3to3]")
+            _rels = New M2MRelationDesc() { _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id2", True, New System.Data.Common.DataTableMapping, M2MRelationDesc.DirKey), _
+                New M2MRelationDesc(GetType(Entity5), t, "ent3_id1", True, New System.Data.Common.DataTableMapping, M2MRelationDesc.RevKey) _
             }
         End If
         Return _rels
     End Function
+
 End Class

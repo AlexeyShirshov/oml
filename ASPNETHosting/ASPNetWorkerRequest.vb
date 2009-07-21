@@ -7,6 +7,8 @@ Public Class ASPNetWorkerRequest
 
     Private Shared _page As FieldInfo
     Private Shared _pathInfo As FieldInfo
+    Private _post() As Byte
+    Private Const PostMime As String = "application/x-www-form-urlencoded"
 
     Shared Sub New()
         _page = GetType(SimpleWorkerRequest).GetField("_page", BindingFlags.Instance Or BindingFlags.NonPublic)
@@ -34,4 +36,41 @@ Public Class ASPNetWorkerRequest
         End If
     End Sub
 
+
+    Public Overrides Function GetHttpVerbName() As String
+        If _post Is Nothing Then
+            Return MyBase.GetHttpVerbName()
+        Else
+            Return "POST"
+        End If
+    End Function
+
+    Public Overrides Function GetKnownRequestHeader(ByVal index As Integer) As String
+        If index = HttpWorkerRequest.HeaderContentLength Then
+            If _post IsNot Nothing Then
+                Return _post.Length.ToString
+            End If
+        ElseIf index = HttpWorkerRequest.HeaderContentType Then
+            If _post IsNot Nothing Then
+                Return PostMime
+            End If
+        End If
+        Return MyBase.GetKnownRequestHeader(index)
+    End Function
+
+    Public Overrides Function GetPreloadedEntityBody() As Byte()
+        If _post IsNot Nothing Then
+            Return _post
+        End If
+        Return MyBase.GetPreloadedEntityBody()
+    End Function
+
+    Friend Property PostData() As Byte()
+        Get
+            Return _post
+        End Get
+        Set(ByVal value As Byte())
+            _post = value
+        End Set
+    End Property
 End Class

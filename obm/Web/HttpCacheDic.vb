@@ -2,23 +2,38 @@ Imports System.Collections
 Imports System.Collections.Generic
 Imports System.Web
 Imports System.Runtime.CompilerServices
+Imports Worm.Entities
 
-Namespace Orm
+Namespace Cache
 
-    Public Class HttpCacheDictionary(Of TValue)
+    Friend Module DicKeys
+        Private _cnt As Integer = 1
+
+        Public Function [Get]() As Integer
+            SyncLock GetType(DicKeys)
+                Dim old As Integer = _cnt
+                _cnt += 1
+                Return old
+            End SyncLock
+        End Function
+    End Module
+
+    <Serializable()> _
+    Public Class WebCacheDictionary(Of TValue)
         Implements System.Collections.Generic.IDictionary(Of String, TValue), IDictionary
 
         Private _keys As New Generic.List(Of String)
         Private _abs_expiration As Date
         Private _sld_expiration As TimeSpan
         Private _priority As Caching.CacheItemPriority
+        <NonSerialized()> _
         Private _dep As Caching.CacheDependency
         Private _remove_del As Caching.CacheItemRemovedCallback
-        Private _name As String = Guid.NewGuid.ToString
+        Private _name2 As String
 
         Public Sub New()
-            _abs_expiration = Cache.NoAbsoluteExpiration
-            _sld_expiration = Cache.NoSlidingExpiration
+            _abs_expiration = Caching.Cache.NoAbsoluteExpiration
+            _sld_expiration = Caching.Cache.NoSlidingExpiration
             _priority = Caching.CacheItemPriority.Default
         End Sub
 
@@ -29,6 +44,19 @@ Namespace Orm
             _priority = priority
             _dep = dependency
         End Sub
+
+        Protected ReadOnly Property _name() As String
+            Get
+                If String.IsNullOrEmpty(_name2) Then
+                    SyncLock GetType(WebCacheDictionary(Of ))
+                        If String.IsNullOrEmpty(_name2) Then
+                            _name2 = "Worm.Cache." & DicKeys.Get
+                        End If
+                    End SyncLock
+                End If
+                Return _name2
+            End Get
+        End Property
 
         Protected Function GetKey(ByVal key As String) As String
             'Return _name & ":" & (key Or (_code And Not _mask)).ToString
@@ -131,7 +159,7 @@ Namespace Orm
         Private Shared Sub AddKey(ByRef keys As Generic.List(Of String), ByVal key As String)
             Dim idx As Integer = keys.BinarySearch(key)
             If idx >= 0 Then
-                Throw New ArgumentOutOfRangeException("Key already presents in list.")
+                Throw New ArgumentOutOfRangeException(String.Format("Key {0} already presents in list.", key))
             Else
                 keys.Insert(Not idx, key)
             End If
@@ -158,6 +186,22 @@ Namespace Orm
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
         Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of String, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of String, TValue)).Add
+            'If IsNothing(item) Then
+            '    Throw New ArgumentNullException("item")
+            'End If
+
+            'Dim realKey As String = GetKey(item.Key)
+            'Dim o As Object = Cache.Add(realKey, item.Value, _dep, _abs_expiration, _sld_expiration, _
+            '    _priority, AddressOf CacheItemRemovedCallback1)
+            'If IsNothing(o) Then
+            '    AddKey(_keys, realKey)
+            'Else
+            '    Throw New ArgumentException("The key is already in collection: " & item.Key)
+            'End If
+            AddItem(item, False)
+        End Sub
+
+        Protected Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of String, TValue), ByVal asSet As Boolean)
             If IsNothing(item) Then
                 Throw New ArgumentNullException("item")
             End If
@@ -165,10 +209,19 @@ Namespace Orm
             Dim realKey As String = GetKey(item.Key)
             Dim o As Object = Cache.Add(realKey, item.Value, _dep, _abs_expiration, _sld_expiration, _
                 _priority, AddressOf CacheItemRemovedCallback1)
-            If IsNothing(o) Then
-                AddKey(_keys, realKey)
+            If Not asSet Then
+                If IsNothing(o) Then
+                    AddKey(_keys, realKey)
+                Else
+                    Throw New ArgumentException("The key is already in collection: " & item.Key)
+                End If
             Else
-                Throw New ArgumentException("The key is already in collection: " & item.Key)
+                Dim idx As Integer = _keys.BinarySearch(realKey)
+                If idx >= 0 Then
+                    _keys(idx) = realKey
+                Else
+                    _keys.Insert(Not idx, realKey)
+                End If
             End If
         End Sub
 
@@ -248,7 +301,16 @@ Namespace Orm
                 Throw New ArgumentNullException("key")
             End If
 
-            Return Cache(GetKey(key)) IsNot Nothing
+            Dim realKey As String = GetKey(key)
+            Dim exists As Boolean = Cache(realKey) IsNot Nothing
+            'System.Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
+            If Not exists Then
+                Dim pos As Integer = _keys.BinarySearch(realKey)
+                If pos >= 0 Then
+                    _keys.RemoveAt(pos)
+                End If
+            End If
+            Return exists
         End Function
 
         Default Public Property Item(ByVal key As String) As TValue Implements System.Collections.Generic.IDictionary(Of String, TValue).Item
@@ -271,11 +333,12 @@ Namespace Orm
                     Throw New ArgumentNullException("key")
                 End If
 
-                Dim realKey As String = GetKey(key)
-                If Not ContainsKey(realKey) Then
-                    AddKey(_keys, realKey)
-                End If
-                Cache(realKey) = value
+                'Dim realKey As String = GetKey(key)
+                'If Not ContainsKey(realKey) Then
+                AddItem(New KeyValuePair(Of String, TValue)(key, value), True)
+                'Else
+                'Cache(realKey) = value
+                'End If
             End Set
         End Property
 
@@ -425,7 +488,7 @@ Namespace Orm
         End Property
     End Class
 
-    Public Class DictionatyCachePolicy
+    Public Class WebCacheDictionaryPolicy
         Public AbsoluteExpiration As Date
         Public SlidingExpiration As TimeSpan
         Public Priority As Caching.CacheItemPriority
@@ -435,8 +498,8 @@ Namespace Orm
 
         End Sub
 
-        Public Shared Function CreateDefault() As DictionatyCachePolicy
-            Dim dp As New DictionatyCachePolicy
+        Public Shared Function CreateDefault() As WebCacheDictionaryPolicy
+            Dim dp As New WebCacheDictionaryPolicy
             With dp
                 .AbsoluteExpiration = Caching.Cache.NoAbsoluteExpiration
                 .SlidingExpiration = Caching.Cache.NoSlidingExpiration
@@ -447,39 +510,42 @@ Namespace Orm
         End Function
     End Class
 
-    Public Class OrmDictionary(Of TValue As OrmBase)
-        Implements IDictionary(Of Integer, TValue), IDictionary
+    <Serializable()> _
+    Public Class WebCacheEntityDictionary(Of TValue As ICachedEntity)
+        Implements IDictionary(Of Object, TValue), IDictionary
 
         'Private _mask As Integer
         'Private _code As Integer
-        Private _dic As HttpCacheDictionary(Of TValue)
-        Private _mc As OrmCacheBase
+        Private _dic As WebCacheDictionary(Of TValue)
+
+        <NonSerialized()> _
+        Private _mc As CacheBase
         'Private _name As String = Guid.NewGuid.ToString
 
-        Public Sub New(ByVal mediaCache As OrmCacheBase)
+        Public Sub New(ByVal mediaCache As OrmCache)
             '_mask = mask
             '_code = code
-            _dic = New HttpCacheDictionary(Of TValue)
+            _dic = New WebCacheDictionary(Of TValue)
             _mc = mediaCache
 
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
         End Sub
 
-        Public Sub New(ByVal mediaCache As OrmCacheBase, _
+        Public Sub New(ByVal mediaCache As CacheBase, _
             ByVal absolute_expiration As Date, ByVal sliding_expiration As TimeSpan, _
             ByVal priority As Caching.CacheItemPriority, ByVal dependency As Caching.CacheDependency)
 
             '_mask = mask
             '_code = code
-            _dic = New HttpCacheDictionary(Of TValue)(absolute_expiration, sliding_expiration, priority, dependency)
+            _dic = New WebCacheDictionary(Of TValue)(absolute_expiration, sliding_expiration, priority, dependency)
             _mc = mediaCache
 
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
         End Sub
 
-        Protected Function GetKey(ByVal key As Integer) As String
-            Return key.ToString
-        End Function
+        'Protected Function GetKey(ByVal key As Object) As String
+        '    Return key.ToString
+        'End Function
 
         Protected Function GetKey(ByVal key As Object) As String
             Return key.ToString
@@ -489,7 +555,7 @@ Namespace Orm
             Return CInt(key)
         End Function
 
-        Protected Function GetPair(ByVal item As KeyValuePair(Of Integer, TValue)) As KeyValuePair(Of String, TValue)
+        Protected Function GetPair(ByVal item As KeyValuePair(Of Object, TValue)) As KeyValuePair(Of String, TValue)
             If IsNothing(item) Then
                 Throw New ArgumentNullException("item")
             End If
@@ -499,7 +565,7 @@ Namespace Orm
 
         Protected Overridable Sub CacheItemRemovedCallback1(ByVal key As String, ByVal value As Object, _
             ByVal reason As Caching.CacheItemRemovedReason)
-            _mc.RegisterRemoval(CType(value, OrmBase))
+            _mc.RegisterRemoval(CType(value, _ICachedEntity), Nothing, Nothing)
         End Sub
 
         Protected ReadOnly Property collection() As ICollection(Of KeyValuePair(Of String, TValue))
@@ -514,47 +580,47 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Add
+        Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Add
             collection.Add(GetPair(item))
         End Sub
 
-        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Clear
+        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Clear
             collection.Clear()
         End Sub
 
-        Public Function ContainsItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Contains
+        Public Function ContainsItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Contains
             collection.Contains(GetPair(item))
         End Function
 
-        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Integer, TValue), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).CopyTo
+        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Object, TValue), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).CopyTo
             Throw New NotImplementedException()
         End Sub
 
-        Protected ReadOnly Property Count1() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Count
+        Protected ReadOnly Property Count1() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Count
             Get
                 Return collection.Count
             End Get
         End Property
 
-        Protected ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).IsReadOnly
+        Protected ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).IsReadOnly
             Get
                 Return collection.IsReadOnly
             End Get
         End Property
 
-        Public Function RemoveItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Remove
+        Public Function RemoveItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Remove
             Return collection.Remove(GetPair(item))
         End Function
 
-        Public Sub Add(ByVal key As Integer, ByVal value As TValue) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Add
+        Public Sub Add(ByVal key As Object, ByVal value As TValue) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Add
             _dic.Add(GetKey(key), value)
         End Sub
 
-        Public Function ContainsKey(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).ContainsKey
+        Public Function ContainsKey(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).ContainsKey
             Return _dic.ContainsKey(GetKey(key))
         End Function
 
-        Default Public Property Item(ByVal key As Integer) As TValue Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Item
+        Default Public Property Item(ByVal key As Object) As TValue Implements System.Collections.Generic.IDictionary(Of Object, TValue).Item
             Get
                 Return _dic.Item(GetKey(key))
             End Get
@@ -563,9 +629,9 @@ Namespace Orm
             End Set
         End Property
 
-        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Integer) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Keys
+        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Object) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Keys
             Get
-                Dim l As New Generic.List(Of Integer)
+                Dim l As New Generic.List(Of Object)
                 For Each k As String In _dic.Keys
                     l.Add(GetID(k))
                 Next
@@ -573,21 +639,21 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function Remove(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Remove
+        Public Function Remove(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).Remove
             Return _dic.Remove(GetKey(key))
         End Function
 
-        Public Function TryGetValue(ByVal key As Integer, ByRef value As TValue) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).TryGetValue
+        Public Function TryGetValue(ByVal key As Object, ByRef value As TValue) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).TryGetValue
             Return _dic.TryGetValue(GetKey(key), value)
         End Function
 
-        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TValue) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Values
+        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TValue) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Values
             Get
                 Return _dic.Values
             End Get
         End Property
 
-        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).GetEnumerator
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).GetEnumerator
             Throw New NotImplementedException
         End Function
 

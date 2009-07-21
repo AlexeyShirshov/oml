@@ -1,10 +1,13 @@
 <%@ Assembly Name="Worm.Orm" %>
+<%@ Import Namespace="Worm.Cache" %>
+<%@ Import Namespace="Worm.Database" %>
 <%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head runat="server">
     <script runat="server" language="VB">
+#Const UseUserInstance = True
         
         Public Function GetTime() As Date
             Using mgr As OrmReadOnlyDBManager = CreateDBManager()
@@ -13,7 +16,12 @@
         End Function
         
         Public Function CreateDBManager() As OrmReadOnlyDBManager
-            Return New OrmReadOnlyDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
+#If UseUserInstance Then
+            Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+            Return New OrmReadOnlyDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+            Return New OrmReadOnlyDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), new SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=wormtest;")
+#End If
         End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
@@ -73,6 +81,7 @@
             End Try
         End Sub
 </script>
+    <title>adkljfvadfklv</title>
 </head>
 <body>
     <%=GetTime() & "  test membership ok"%>

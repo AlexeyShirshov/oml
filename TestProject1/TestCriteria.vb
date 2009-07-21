@@ -1,24 +1,39 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
-Imports Worm.Orm
+Imports Worm.Entities
 Imports System.Diagnostics
-Imports CoreFramework.Structures
+Imports Worm.Database
+Imports Worm.Query.Sorting
+Imports Worm.Criteria.Core
+Imports Worm.Entities.Meta
+Imports Worm.Criteria
+Imports Worm.Query
+Imports Worm.Expressions2
 
 <TestClass()> Public Class TestCriteria
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](GetType(Entity4), "Title").Eq("lsd").Filter, IEntityFilter)
+        Dim cr As Worm.Criteria.PredicateLink = Ctor.prop(GetType(Entity4), "ID").eq(56). _
+            [and](GetType(Entity4), "Title").eq("lsd")
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim cr2 As PredicateLink = CType(cr.Clone, PredicateLink)
+        cr2.[and](GetType(Entity4), "Title").[in](New String() {"a"})
 
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
-        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+        Dim f As IEntityFilter = CType(cr.Filter, IEntityFilter)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
+        Dim schema As New ObjectMappingEngine("1")
+        Dim gen As New SQLGenerator
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(gen, "p")
+
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
+
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+
+        Dim f2 As IEntityFilter = CType(cr2.Filter, IEntityFilter)
+        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -28,17 +43,18 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = CType(Criteria.AutoTypeField("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter(GetType(Entity4)), IEntityFilter)
+        Dim f As IEntityFilter = CType(Ctor.prop(GetType(Entity4), "ID").eq(56). _
+            [and]("Title").eq("lsd").Filter(), IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New ObjectMappingEngine("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
-        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -49,17 +65,18 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](Criteria.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(Ctor.prop(GetType(Entity4), "ID").eq(56). _
+            [and](Ctor.prop(GetType(Entity4), "Title").eq(56).[or](GetType(Entity), "ID").eq(483)).Filter, IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New ObjectMappingEngine("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
-        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
-        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -69,17 +86,18 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(New Ctor(GetType(Entity4)).prop("ID").eq(56). _
+            [and]("Title").eq("lsd").Filter, IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New ObjectMappingEngine("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
-        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -89,17 +107,18 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As IEntityFilter = CType(New Ctor(GetType(Entity4)).prop("ID").eq(56). _
+            [and](New Ctor(GetType(Entity4)).prop("Title").eq(56).[or]("ID").eq(483)).Filter, IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New ObjectMappingEngine("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim gen As New SQLGenerator
+        Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
-        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0), Nothing)
 
-        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -109,24 +128,26 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSort()
-        Dim s As Sort = Sorting.Field("sdgfn").Asc
-        Assert.AreEqual("sdgfn", s.FieldName)
-        Assert.AreEqual(SortType.Asc, s.Order)
+        Dim t As Type = GetType(Type)
+        Dim mpe As New ObjectMappingEngine
 
-        Dim s2 As Sort = Sorting.Field("sdgfn").Desc
-        Assert.AreEqual("sdgfn", s2.FieldName)
-        Assert.AreEqual(SortType.Desc, s2.Order)
+        Dim s As SortExpression = SCtor.prop(t, "sdgfn").asc
+        Assert.AreEqual("Asc$$System.Type$sdgfn", s.GetStaticString(mpe, Nothing))
+        Assert.AreEqual(SortExpression.SortType.Asc, s.Order)
 
-        Dim s3 As Sort = Sorting.Field("sdgfn").Order(False)
-        Assert.AreEqual("sdgfn", s3.FieldName)
-        Assert.AreEqual(SortType.Desc, s3.Order)
+        Dim s2 As SortExpression = SCtor.prop(t, "sdgfn").desc
+        Assert.AreEqual("Desc$$System.Type$sdgfn", s2.GetDynamicString)
+        Assert.AreEqual(SortExpression.SortType.Desc, s2.Order)
 
-        Dim s4 As Sort = Sorting.Field("sdgfn").Order(True)
-        Assert.AreEqual("sdgfn", s4.FieldName)
-        Assert.AreEqual(SortType.Asc, s4.Order)
+        Dim s3 As SortExpression = SCtor.prop(t, "sdgfn").Order(False)
+        Assert.AreEqual("sdgfn", CType(s3.Operand, EntityExpression).ObjectProperty.PropertyAlias)
+        Assert.AreEqual(SortExpression.SortType.Desc, s3.Order)
 
-        Dim s5 As Sort = Sorting.Field("sdgfn").Order("desc")
-        Assert.AreEqual("sdgfn", s5.FieldName)
-        Assert.AreEqual(SortType.Desc, s5.Order)
+        Dim s4 As SortExpression = SCtor.prop(t, "sdgfn").Order(True)
+        Assert.AreEqual(SortExpression.SortType.Asc, s4.Order)
+
+        Dim s5 As SortExpression = SCtor.prop(t, "sdgfn").Order("desc")
+        Assert.AreEqual(t, CType(s3.Operand, EntityExpression).ObjectProperty.Entity.GetRealType(mpe))
+        Assert.AreEqual(SortExpression.SortType.Desc, s5.Order)
     End Sub
 End Class

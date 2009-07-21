@@ -1,0 +1,314 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Worm</RootNamespace>
+    <AssemblyName>Worm.Orm</AssemblyName>
+    <OptionStrict>On</OptionStrict>
+    <StartupObject>
+    </StartupObject>
+    <MyType>Windows</MyType>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Worm.snk</AssemblyOriginatorKeyFile>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
+    <LangVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <RunFxCop>true</RunFxCop>
+    <FxCopRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1704;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1705;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1814;-Microsoft.Security#CA2104</FxCopRules>
+    <FxCopUseTypeNameInSuppression>false</FxCopUseTypeNameInSuppression>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+    <DefineConstants>ExcludeFindMethods</DefineConstants>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <DefineConstants>OLDM2M = True,ExcludeFindMethods = False</DefineConstants>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Signed Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Signed Debug\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unsigned Release|AnyCPU' ">
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Unsigned Release\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Trace|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug_Trace\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <DefineConstants>DebugLocks,TraceManagerCreation,dsfg="xxx"</DefineConstants>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugNonUserInstance|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\DebugNonUserInstance\</OutputPath>
+    <DocumentationFile>Worm.Orm.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRules>
+    </CodeAnalysisRules>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Import Include="CoreFramework.Structures" />
+    <Import Include="CoreFramework.Threading" />
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Text" />
+    <Import Include="System.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Diagrams\Mapping.cd" />
+    <None Include="Diagrams\Entities.cd" />
+    <None Include="Diagrams\Managers.cd" />
+    <None Include="Diagrams\Schema.cd" />
+    <None Include="Diagrams\schema_ext.cd" />
+    <None Include="Diagrams\StoredProcs.cd" />
+    <None Include="Migrated rules for Worm.Orm %282%29.ruleset" />
+    <None Include="Migrated rules for Worm.Orm.ruleset" />
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="Query\Expressions\Expressions.cd" />
+    <None Include="Worm.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Cache\Abstract.vb" />
+    <Compile Include="Cache\CacheItem.vb" />
+    <Compile Include="Cache\classes.vb" />
+    <Compile Include="Cache\ListConverters.vb" />
+    <Compile Include="Cache\NewObjectsStore.vb" />
+    <Compile Include="Cache\ReadonlyCache.vb" />
+    <Compile Include="Collections\CollectionWithIndex.vb" />
+    <Compile Include="Collections\CopyEnumerators.vb" />
+    <Compile Include="Collections\SyncGenericDictionary.vb" />
+    <Compile Include="DbMS\SP\MultiResultset.vb" />
+    <Compile Include="DbMS\SP\NonQuery.vb" />
+    <Compile Include="DbMS\SP\QueryEntity.vb" />
+    <Compile Include="DbMS\SP\QuerySP.vb" />
+    <Compile Include="DbMS\SP\SPBase.vb" />
+    <Compile Include="QueryCmd\db\BaseProvider.vb" />
+    <Compile Include="QueryCmd\QueryExecutor.vb" />
+    <Compile Include="QueryCmd\RelationCmd.vb" />
+    <Compile Include="QueryCmd\xml\CacheItemPropviders.vb" />
+    <Compile Include="QueryCmd\xml\XmlQueryExecutor.vb" />
+    <Compile Include="Query\Builders\ExpressionBuilder.vb" />
+    <Compile Include="Query\Builders\GroupBuilder.vb" />
+    <Compile Include="Query\Builders\SelectBuilder.vb" />
+    <Compile Include="Query\Builders\SortBuilder.vb" />
+    <Compile Include="Query\Criteria\Filters\Abstract.vb" />
+    <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
+    <Compile Include="Query\Criteria\Filters\Templates.vb" />
+    <Compile Include="Query\Builders\PredicateBuilder.vb" />
+    <Compile Include="Query\Criteria\Predicates\Predicates.vb" />
+    <Compile Include="Query\Criteria\Predicates\PredicateLink.vb" />
+    <Compile Include="Query\Criteria\Expressions.vb" />
+    <Compile Include="Query\Criteria\Values\Abstract.vb" />
+    <Compile Include="Query\Criteria\Values\FilterValues.vb" />
+    <Compile Include="Query\Criteria\Conditions.vb" />
+    <Compile Include="Query\Builders\JoinBuilder.vb" />
+    <Compile Include="Query\Criteria\Joins\JoinCriteria.vb" />
+    <Compile Include="Query\Criteria\Joins\JoinFilter.vb" />
+    <Compile Include="Query\Criteria\Joins\QueryJoin.vb" />
+    <Compile Include="Managers\db\Saver.vb" />
+    <Compile Include="QueryCmd\CacheItemBaseProvider.vb" />
+    <Compile Include="QueryCmd\classes.vb" />
+    <Compile Include="Query\db\Formater.vb" />
+    <Compile Include="Query\Expressions\AggregateExpression.vb" />
+    <Compile Include="Query\Expressions\BinaryExpression.vb" />
+    <Compile Include="Query\Expressions\EntityExpression.vb" />
+    <Compile Include="Query\Expressions\Interfaces.vb" />
+    <Compile Include="Query\Expressions\ParameterExpression.vb" />
+    <Compile Include="Query\Expressions\Primitive.vb" />
+    <Compile Include="Query\Expressions\SelectedFieldExpression.vb" />
+    <Compile Include="Query\Expressions\SelectExpressions.vb" />
+    <Compile Include="Query\Expressions\TableExpression.vb" />
+    <Compile Include="Query\Grouping.vb" />
+    <Compile Include="Query\IPager.vb" />
+    <Compile Include="Query\ObjectAlias.vb" />
+    <Compile Include="Query\ReadonlyMatrix.vb" />
+    <Compile Include="Query\Sorting.vb" />
+    <Compile Include="Entity\Abstract.vb" />
+    <Compile Include="Entity\Anonym.vb" />
+    <Compile Include="Entity\CachedEntity.vb" />
+    <Compile Include="Entity\Entity.vb" />
+    <Compile Include="Query\Prop.vb" />
+    <Compile Include="Managers\Classes.vb" />
+    <Compile Include="Managers\db\CacheItemProviders.vb" />
+    <Compile Include="Managers\InnerMgrClasses.vb" />
+    <Compile Include="Query\ReadonlyList.vb" />
+    <Compile Include="Managers\xml\DataProviders.vb" />
+    <Compile Include="Managers\xml\XmlManager.vb" />
+    <Compile Include="Mapping\Classes.vb" />
+    <Compile Include="Mapping\Interfaces.vb" />
+    <Compile Include="Mapping\ObjectSchema\Classes.vb" />
+    <Compile Include="Mapping\ObjectSchema\PredefinedSchemas.vb" />
+    <Compile Include="OrmDictionary.vb" />
+    <Compile Include="Mapping\ObjectSchema\MetaAttributes.vb" />
+    <Compile Include="Managers\db\OrmDBManager.vb" />
+    <Compile Include="Managers\db\OrmRODBManager.vb" />
+    <Compile Include="Managers\OrmManager.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Query\Aggregates.vb" />
+    <Compile Include="QueryCmd\db\DbQueryExecutor.vb" />
+    <Compile Include="QueryCmd\db\CacheItemProviders.vb" />
+    <Compile Include="QueryCmd\QueryCmd.vb" />
+    <Compile Include="Entity\Relation.vb" />
+    <Compile Include="Query\WormContext.vb" />
+    <Compile Include="StmtGenerators\db\DbGenerator.vb" />
+    <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
+    <Compile Include="Query\Criteria\Filters\Filters.vb" />
+    <Compile Include="Mapping\MappingEngine.vb" />
+    <Compile Include="StmtGenerators\db\SQL2008Generator.vb" />
+    <Compile Include="StmtGenerators\StmtGenerator.vb" />
+    <Compile Include="StmtGenerators\xml\XmlGenerator.vb" />
+    <Compile Include="Web\HttpCacheDic.vb" />
+    <Compile Include="Cache\OrmCache.vb" />
+    <Compile Include="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Application.myapp</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Entity\KeyEntity.vb" />
+    <Compile Include="other.vb" />
+    <Compile Include="SearchConfiguration.vb" />
+    <Compile Include="StmtGenerators\db\SQL2005Generator.vb" />
+    <Compile Include="DbMS\SP\ScalarSP.vb" />
+    <Compile Include="Web\Listener.vb" />
+    <Compile Include="Web\Management.vb" />
+    <Compile Include="Web\Membership.vb" />
+    <Compile Include="Web\Profile.vb" />
+    <Compile Include="Web\Role.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+</Project>

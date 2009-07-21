@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.CodeDom;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     static class CodeGenHelper
     {
@@ -13,6 +13,24 @@ namespace OrmCodeGenLib
         const string REGION_PRIVATE_FIELDS = "Private Fields";
         const string REGION_NESTED_TYPES = "Nested Types";
         const string REGION_CONSTRUCTORS = "Constructors";
+
+		//public static CodeCompileUnit MergeCodeCompileUnits(IEnumerable<CodeCompileUnit> units)
+		//{
+		//    CodeCompileUnit merged = new CodeCompileUnit();
+		//    Dictionary<string, CodeNamespace> addedNamespaces = new Dictionary<string, CodeNamespace>();
+		//    foreach (CodeCompileUnit unit in units)
+		//    {
+		//        CodeNamespace targetNS;
+		//        foreach (CodeNamespace sourceNamespace in unit.Namespaces)
+		//        {
+		//            if(!addedNamespaces.TryGetValue(sourceNamespace.Name, out targetNS))
+		//            {
+		//                targetNS = new CodeNamespace(sourceNamespace.Name);
+		//            }
+					
+		//        }
+		//    }
+		//}
 
         public static void SetRegions(CodeTypeDeclaration typeDeclaration)
         {
@@ -173,7 +191,7 @@ namespace OrmCodeGenLib
         {
             return
                 IsCodeMethod(match) &&
-                ((match as CodeMemberMethod).Attributes & MemberAttributes.Override) == MemberAttributes.Static
+                ((match as CodeMemberMethod).Attributes & MemberAttributes.Override) == MemberAttributes.Override
                 && !IsInterfaceImplementedMethod(match);
         }
 

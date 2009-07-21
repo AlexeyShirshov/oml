@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     public class OrmCodeDomGeneratorSettings
     {
@@ -13,7 +13,8 @@ namespace OrmCodeGenLib
         private string _fileNameSuffix = string.Empty;
         private string _classNamePrefix = string.Empty;
         private string _classNameSuffix = string.Empty;
-        //private bool _partial = false;
+        private bool _useTypeInProps;
+        private bool _removeOldm2m;
         //private OrmObjectGeneratorBehaviour _behaviour = OrmObjectGeneratorBehaviour.Objects;
         private LanguageSpecificHacks _languageSpecificHacks; 
 
@@ -22,6 +23,27 @@ namespace OrmCodeGenLib
         //    get { return _behaviour == OrmObjectGeneratorBehaviour.PartialObjects || _split || Partial; }
         //}
 
+        public bool UseTypeInProps
+        {
+            get
+            {
+                return _useTypeInProps;
+            }
+            set
+            {
+                _useTypeInProps = value;
+            }
+        }
+
+        public bool RemoveOldM2M
+        {
+            get { return _removeOldm2m; }
+            set { _removeOldm2m = value; }
+        }
+
+        //public bool OnlySchema { get; set; }
+
+		[Obsolete("Don't even think about entity's class and entity's schema def class declaration in separate files.", true)]
         public bool Split
         {
             get { return _split; }
@@ -116,9 +138,14 @@ namespace OrmCodeGenLib
 		GenerateVbTryCastStatement = 0x1000,
 		GenerateCsLockStatement = 0x2000,
 		GenerateVbSyncLockStatement = 0x4000,
+        GenerateCsXorStatement = 0x8000,
+        GenerateVbXorStatement = 0x10000,
+        GenerateCsForeachStatement = 0x20000,
+        GenerateVbForeachStatement = 0x40000,
+        AllowPartialInterfaces = 0x80000,
 
-        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement,
-        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement | GenerateVbSyncLockStatement,
+        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement | GenerateCsXorStatement | GenerateCsForeachStatement | AllowPartialInterfaces,
+        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement | GenerateVbSyncLockStatement | GenerateVbXorStatement | GenerateVbForeachStatement,
     }
 
 }
