@@ -603,47 +603,20 @@ Namespace Query.Database
         '    End If
         'End Sub
 
-        Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
+        Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal execCtx As IExecutionContext, _
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal from As FromClauseDef, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal selList As IEnumerable(Of SelectExpression))
 
             Dim b As Boolean
             Dim cols As New StringBuilder
-            Dim colsa As New StringBuilder
-            'For Each p As SelectExpression In selList
-            '    Dim colsa_ As StringBuilder = Nothing
-            '    If (p.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-            '        colsa_ = colsa
-            '    End If
-            '    p.AddAlias = True
-            '    s.CreateSelectExpressionFormater().Format(p, cols, query, colsa_, mpe, almgr, params, _
-            '        filterInfo, Nothing, query.FromClause, True)
-            '    cols.Append(", ")
-            '    If colsa_ IsNot Nothing Then
-            '        colsa_.Append(",")
-            '    End If
-            'Next
             Dim be As BinaryExpressionBase = BinaryExpressionBase.CreateFromEnumerable(selList)
             If be IsNot Nothing Then
-                cols.Append(be.MakeStatement(mpe, query.FromClause, s, _
-                       params, almgr, filterInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, query))
+                cols.Append(be.MakeStatement(mpe, from, s, _
+                       params, almgr, filterInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, execCtx))
             End If
             If cols.Length > 0 Then
-                'cols.Length -= 2
                 b = True
-            End If
-            'If colsa.Length = 0 Then
-            '    For Each p As SelectExpression In selList
-            '        Dim cols_ As New StringBuilder
-            '        s.CreateSelectExpressionFormater().Format(p, cols_, query, colsa, mpe, almgr, params, _
-            '            filterInfo, Nothing, query.FromClause, True)
-            '        colsa.Append(",")
-            '        Exit For
-            '    Next
-            'End If
-            If colsa.Length > 0 Then
-                colsa.Length -= 1
             End If
             sb.Append(cols.ToString)
 
@@ -653,40 +626,26 @@ Namespace Query.Database
                 'End If
                 sb.Append("*")
             End If
-
-            If query.RowNumberFilter IsNot Nothing Then
-                If Not s.SupportRowNumber Then
-                    Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
-                End If
-                sb.Append(",row_number() over (")
-                If query.Sort IsNot Nothing Then
-                    sb.Append(RowNumberOrder)
-                    'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
-                Else
-                    sb.Append("order by ").Append(colsa.ToString)
-                End If
-                sb.Append(") as ").Append(QueryCmd.RowNumerColumn)
-            End If
         End Sub
 
-        Protected Shared Sub ReplaceSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, _
-            ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal selList As IEnumerable(Of SelectExpression))
+        'Protected Shared Sub ReplaceSelectList(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
+        '    ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IEntitySchema, _
+        '    ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
+        '    ByVal selList As IEnumerable(Of SelectExpression))
 
-            'Dim tbl As SourceFragment = Nothing
-            'If query.FromClause IsNot Nothing Then
-            '    tbl = query.FromClause.Table
-            'End If
+        '    'Dim tbl As SourceFragment = Nothing
+        '    'If query.FromClause IsNot Nothing Then
+        '    '    tbl = query.FromClause.Table
+        '    'End If
 
-            For Each p As SelectExpression In selList
-                'If Not String.IsNullOrEmpty(p._tempMark) Then
-                '    s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
-                '        filterInfo, Nothing, query.FromClause, True)
-                'End If
-                p.MakeStatement(mpe, query.FromClause, s, params, almgr, filterInfo, MakeStatementMode.Replace, query)
-            Next
-        End Sub
+        '    For Each p As SelectExpression In selList
+        '        'If Not String.IsNullOrEmpty(p._tempMark) Then
+        '        '    s.CreateSelectExpressionFormater().Format(p, sb, query, Nothing, mpe, almgr, params, _
+        '        '        filterInfo, Nothing, query.FromClause, True)
+        '        'End If
+        '        p.MakeStatement(mpe, query.FromClause, s, params, almgr, filterInfo, MakeStatementMode.Replace, query)
+        '    Next
+        'End Sub
 
         Public Delegate Function Func(Of T)() As T
 
@@ -1473,7 +1432,30 @@ l1:
                 selSb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
             End If
 
-            FormSelectList(mpe, query, selSb, s, almgr, filterInfo, params, query._sl)
+            FormSelectList(mpe, query, selSb, s, query.FromClause, almgr, filterInfo, params, query._sl)
+            If query.RowNumberFilter IsNot Nothing Then
+                If Not s.SupportRowNumber Then
+                    Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
+                End If
+                selSb.Append(",row_number() over (")
+                If query.Sort IsNot Nothing Then
+                    selSb.Append(RowNumberOrder)
+                    'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+                Else
+                    selSb.Append("order by ")
+                    Dim ob As List(Of SelectExpression) = query._sl.FindAll(Function(se) (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK)
+                    If ob.Count = 0 Then
+                        ob = query._sl
+                    End If
+                    For Each se As SelectExpression In ob
+                        selSb.Append(CType(query, IExecutionContext).FindColumn(mpe, se.GetIntoPropertyAlias)).Append(",")
+                    Next
+                    If ob.Count > 0 Then
+                        selSb.Length -= 1
+                    End If
+                End If
+                selSb.Append(") as ").Append(QueryCmd.RowNumerColumn)
+            End If
 
             selSb.Append(" from ")
             sb.Insert(sbStart, selSb.ToString)

@@ -185,7 +185,7 @@ Imports Worm.Entities
 
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))
             Dim q1 As New QueryCmd()
-            Dim t As Table1 = q1.GetByID(Of Table1)(1, False, mgr)
+            Dim t As Table1 = q1.GetByID(Of Table1)(1, mgr)
 
             mgr.BeginTransaction()
             Try

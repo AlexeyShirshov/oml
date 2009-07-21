@@ -376,12 +376,23 @@ Namespace Entities
             Return -1
         End Function
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As _IKeyEntity) As M2MRelation
-            Return CType(obj.GetRelation(Host.GetType), M2MRelation)
+        Public Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As IKeyEntity) As M2MRelation
+            Dim otherKey As String = Key
+            If Me.GetType Is obj.GetType Then
+                otherKey = M2MRelationDesc.GetRevKey(otherKey)
+            End If
+            Return CType(obj.GetRelation(Host.GetType(), otherKey), M2MRelation)
         End Function
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of Relation)
-            Return Host.GetAllRelation
+        Public Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of M2MRelation)
+            Dim rels As New List(Of M2MRelation)
+            For Each o As _IKeyEntity In Added
+                rels.Add(GetRevert(mgr, o))
+            Next
+            For Each o As _IKeyEntity In Deleted
+                rels.Add(GetRevert(mgr, o))
+            Next
+            Return rels
         End Function
 
         Protected Overridable Sub AcceptDual(ByVal mgr As OrmManager)
