@@ -854,10 +854,22 @@ Partial Public MustInherit Class OrmManager
         Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
     End Function
 
+    Public Function GetKeyEntityFromCacheLoadedOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+        Dim o As T = CreateKeyEntity(Of T)(id)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheLoadedOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
+    End Function
+
     Public Function GetKeyEntityFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
         Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
+    End Function
+
+    Public Function GetKeyEntityFromCacheLoadedOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
+        Dim o As IKeyEntity = CreateKeyEntity(id, type)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheLoadedOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
     End Function
 
     Public Function [Get](Of T As {IKeyEntity, New})(ByVal id As Object) As T
@@ -1582,6 +1594,10 @@ l1:
         Return _cache.NormalizeObject(obj, False, True, dic, True, Me)
     End Function
 
+    Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
+    End Function
+
     Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
     End Function
@@ -2302,8 +2318,13 @@ l1:
             If c IsNot Nothing Then
                 For Each rl As Relation In obj.GetAllRelation
                     Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                    If el IsNot Nothing Then
+                        For Each rm As M2MRelation In el.GetRevert(Me)
+                            rm.Update(obj, oldId)
+                        Next
+                    End If
                     'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
-                    If el IsNot Nothing Then c.RemoveM2MQueries(el)
+                    'If el IsNot Nothing Then c.RemoveM2MQueries(el)
 
                     'For Each o As IOrmBase In el.Added
                     '    'Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)

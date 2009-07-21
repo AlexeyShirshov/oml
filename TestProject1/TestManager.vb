@@ -115,7 +115,7 @@ Imports Worm
     Public Sub TestEditConcurent()
         Dim c As New OrmCache
         Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
-            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, True, mgr)
+            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
             Assert.IsTrue(o.InternalProperties.IsLoaded)
         End Using
@@ -302,7 +302,7 @@ Imports Worm
 
             'mgr.Find(Of Entity4)(12).Reload()
             Dim q As New QueryCmd()
-            q.GetByIds(Of Entity4)(New Object() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False, mgr)
+            q.GetByIds(Of Entity4)(New Object() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, mgr)
 
             Dim c As ICollection(Of Entity4) = e.GetCmd(GetType(Entity4)).WithLoad(True).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
             Assert.AreEqual(10, c.Count)
@@ -744,7 +744,7 @@ Imports Worm
 
                 e2.SaveChanges(True)
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(10, True, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(10, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e2)
             Finally
@@ -767,7 +767,7 @@ Imports Worm
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e2))
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(11, True, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(11, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e2)
             Finally
@@ -844,7 +844,7 @@ Imports Worm
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
                 Assert.AreEqual(ObjectState.Deleted, e.InternalProperties.ObjectState)
 
-                e = New QueryCmd().GetByID(Of Entity2)(10, True, mgr)
+                e = New QueryCmd().GetByID(Of Entity2)(10, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e)
             Finally
@@ -1025,7 +1025,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, True, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
@@ -1063,7 +1063,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.Cache.NewObjectManager = Me
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, True, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
@@ -1180,7 +1180,7 @@ Imports Worm
     <TestMethod()> _
     Public Sub TestLoadM2M()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, False, mgr)
+            Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, mgr)
 
             Dim rel As Meta.M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
@@ -1206,7 +1206,7 @@ Imports Worm
     <TestMethod()> _
     Public Sub TestLoadM2M2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, False, mgr)
+            Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, mgr)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), col4)
             Assert.AreEqual(15, rel.Load(Of Entity, Entity4)(col, False, mgr).Count)

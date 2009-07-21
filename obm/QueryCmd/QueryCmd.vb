@@ -328,6 +328,12 @@ Namespace Query
                 End Set
             End Property
         End Class
+
+        Public Enum GetByIDOptions
+            GetAsIs
+            EnsureExistsInStore
+            EnsureLoadedFromStore
+        End Enum
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
@@ -4610,10 +4616,10 @@ l1:
         End Function
 
 #Region " GetByID "
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean) As T
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
-                    Return GetByID(Of T)(id, ensureLoaded, mgr)
+                    Return GetByID(Of T)(id, options, mgr)
                 End Using
             Else
                 Throw New QueryCmdException("Manager is required", Me)
@@ -4622,14 +4628,14 @@ l1:
         End Function
 
         Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object) As T
-            Return GetByID(Of T)(id, False)
+            Return GetByID(Of T)(id, GetByIDOptions.GetAsIs)
         End Function
 
         Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
-            Return GetByID(Of T)(id, False, mgr)
+            Return GetByID(Of T)(id, GetByIDOptions.GetAsIs, mgr)
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean, ByVal mgr As OrmManager) As T
+        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
             End If
@@ -4669,19 +4675,28 @@ l1:
                 End If
                 Try
                     If GetType(T) IsNot tp Then
-                        'o = mgr.LoadType(id, tp, ensureLoaded, False)
-                        If ensureLoaded Then
-                            o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                        Else
-                            o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                        End If
+                        Select Case options
+                            Case GetByIDOptions.EnsureExistsInStore
+                                o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                            Case GetByIDOptions.GetAsIs
+                                o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                            Case GetByIDOptions.EnsureLoadedFromStore
+                                o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                            Case Else
+                                Throw New NotImplementedException
+                        End Select
                     Else
                         'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
-                        If ensureLoaded Then
-                            o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
-                        Else
-                            o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
-                        End If
+                        Select Case options
+                            Case GetByIDOptions.EnsureExistsInStore
+                                o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                            Case GetByIDOptions.GetAsIs
+                                o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                            Case GetByIDOptions.EnsureLoadedFromStore
+                                o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
+                            Case Else
+                                Throw New NotImplementedException
+                        End Select
                     End If
                 Finally
                     mgr.SetSchema(oldSch)
@@ -4731,7 +4746,7 @@ l1:
 
         Public Function [GetByIds](Of T As {New, IKeyEntity})( _
                     ByVal ids As IEnumerable(Of Object), _
-                    ByVal ensureLoaded As Boolean, _
+                    ByVal options As GetByIDOptions, _
                     ByVal mgr As OrmManager) As ReadOnlyList(Of T)
 
             If mgr Is Nothing Then Throw New ArgumentNullException("Manager is required")
@@ -4748,19 +4763,39 @@ l1:
 
                 Try
                     If GetType(T) IsNot tp Then
-                        If Not ensureLoaded Then
-                            ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
-                        Else
-                            ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
-                            ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
-                        End If
+                        Select Case options
+                            Case GetByIDOptions.GetAsIs
+                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                            Case GetByIDOptions.EnsureExistsInStore
+                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                                ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
+                            Case GetByIDOptions.EnsureLoadedFromStore
+                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                                Dim props As New List(Of EntityPropertyAttribute)()
+                                For Each ep As EntityPropertyAttribute In mgr.MappingEngine.GetProperties(tp).Keys
+                                    props.Add(ep)
+                                Next
+                                ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, props)
+                            Case Else
+                                Throw New NotImplementedException
+                        End Select
                     Else
-                        If Not ensureLoaded Then
-                            ConvertIdsToObjects(tp, list, ids, mgr)
-                        Else
-                            ConvertIdsToObjects(tp, list, ids, mgr)
-                            ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
-                        End If
+                        Select Case options
+                            Case GetByIDOptions.GetAsIs
+                                ConvertIdsToObjects(tp, list, ids, mgr)
+                            Case GetByIDOptions.EnsureExistsInStore
+                                ConvertIdsToObjects(tp, list, ids, mgr)
+                                ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, mgr.MappingEngine.GetPrimaryKeys(tp))
+                            Case GetByIDOptions.EnsureLoadedFromStore
+                                ConvertIdsToObjects(tp, list, ids, mgr)
+                                Dim props As New List(Of EntityPropertyAttribute)()
+                                For Each ep As EntityPropertyAttribute In mgr.MappingEngine.GetProperties(tp).Keys
+                                    props.Add(ep)
+                                Next
+                                ro = mgr.LoadObjects(Of T)(ro, 0, list.Count, props)
+                            Case Else
+                                Throw New NotImplementedException
+                        End Select
                     End If
 
                     For Each o As IKeyEntity In list
@@ -4783,11 +4818,11 @@ l1:
 
         Public Function [GetByIds](Of T As {New, IKeyEntity})( _
                             ByVal ids As ICollection(Of Object), _
-                            ByVal ensureLoaded As Boolean) As ReadOnlyList(Of T)
+                            ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
-                    Return GetByIds(Of T)(ids, ensureLoaded, mgr)
+                    Return GetByIds(Of T)(ids, options, mgr)
                 End Using
             Else
                 Throw New QueryCmdException("Manager is required", Me)
@@ -4796,7 +4831,11 @@ l1:
         End Function
 
         Public Function [GetByIds](Of T As {New, IKeyEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
-            Return GetByIds(Of T)(ids, False)
+            Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs)
+        End Function
+
+        Public Function [GetByIds](Of T As {New, IKeyEntity})(ByVal ids As ICollection(Of Object), ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+            Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs, mgr)
         End Function
 
         Private Function GetRealType(Of T As {New, IKeyEntity})(ByVal mgr As OrmManager) As Type
@@ -4811,10 +4850,10 @@ l1:
             Return tp
         End Function
 
-        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean) As T
+        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
-                    Return GetByIDDyn(Of T)(id, ensureLoaded, mgr)
+                    Return GetByIDDyn(Of T)(id, options, mgr)
                 End Using
             Else
                 Throw New QueryCmdException("Manager is required", Me)
@@ -4823,10 +4862,10 @@ l1:
         End Function
 
         Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object) As T
-            Return GetByIDDyn(Of T)(id, False)
+            Return GetByIDDyn(Of T)(id, GetByIDOptions.GetAsIs)
         End Function
 
-        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal ensureLoaded As Boolean, ByVal mgr As OrmManager) As T
+        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
             End If
@@ -4844,11 +4883,16 @@ l1:
                     mgr.SetSchema(SpecificMappingEngine)
                 End If
                 Try
-                    If ensureLoaded Then
-                        o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                    Else
-                        o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                    End If
+                    Select Case options
+                        Case GetByIDOptions.EnsureExistsInStore
+                            o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                        Case GetByIDOptions.GetAsIs
+                            o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                        Case GetByIDOptions.EnsureLoadedFromStore
+                            o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                        Case Else
+                            Throw New NotImplementedException
+                    End Select
                 Finally
                     mgr.SetSchema(oldSch)
                 End Try

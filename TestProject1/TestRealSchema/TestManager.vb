@@ -574,7 +574,7 @@ Public Class TestManagerRS
             Dim tt1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             Dim tt2 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
 
-            Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
+            Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, mgr)
             Dim t10s As ICollection(Of Table10) = New QueryCmd().Select(FCtor.prop(GetType(Table10), "Table1")).Where(Ctor.prop(GetType(Table10), "Table1").in(t1s)).ToList(Of Table10)(mgr)
 
             Assert.AreEqual(3, t10s.Count)
@@ -598,7 +598,7 @@ Public Class TestManagerRS
             Dim t1 As ICollection(Of Table10) = New QueryCmd().SelectEntity(GetType(Table10), WithLoad).Where(New Ctor(GetType(Table10)).prop("Table1").eq(tt1)).ToList(Of Table10)(mgr)
             Assert.AreEqual(2, t1.Count)
 
-            Dim t1s As ReadOnlyList(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
+            Dim t1s As ReadOnlyList(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, mgr)
             Dim t10s As ReadOnlyList(Of Table10) = t1s.LoadChildren(Of Table10)(New RelationDesc(New EntityUnion(GetType(Table10)), "Table1"), True, mgr)
             Assert.AreEqual(3, t10s.Count)
 
@@ -650,7 +650,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjectsM2M()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, False, mgr)
+            Dim t1s As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2}, mgr)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Table1), GetType(Table33), True)
             rel.Load(Of Table1, Table33)(t1s, False, mgr)
             'mgr.LoadObjects(Of Table33)(rel, Nothing, CType(t1s, System.Collections.ICollection), Nothing)
@@ -739,7 +739,7 @@ Public Class TestManagerRS
             Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
             Assert.IsNotNull(t1)
 
-            t1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
+            t1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsNull(t1)
         End Using
     End Sub
@@ -854,7 +854,7 @@ Public Class TestManagerRS
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
 
-                e = New QueryCmd().GetByID(Of Composite)(1, True, mgr)
+                e = New QueryCmd().GetByID(Of Composite)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e)
             Finally
@@ -1296,7 +1296,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadNonCached()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
+            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsNotNull(t)
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))
