@@ -1,0 +1,254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</ProjectGuid>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <StartupObject>
+    </StartupObject>
+    <RootNamespace>TestProject1</RootNamespace>
+    <AssemblyName>TestProject1</AssemblyName>
+    <OptionStrict>On</OptionStrict>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <FileUpgradeFlags>0</FileUpgradeFlags>
+    <OldToolsVersion>4.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <LangVersion />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <IncrementalBuild>true</IncrementalBuild>
+    <OutputPath>bin\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DefineConstants>UseUserInstance</DefineConstants>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <IncrementalBuild>false</IncrementalBuild>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Trace|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug_Trace\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugNonUserInstance|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\DebugNonUserInstance\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>True</SpecificVersion>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="CoreFramework.Structures" />
+    <Import Include="CoreFramework.Threading" />
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Advanced\Composite.vb" />
+    <Compile Include="Advanced\GuidPK.vb" />
+    <Compile Include="Advanced\Inheritance.vb" />
+    <Compile Include="Advanced\MultiTable.vb" />
+    <Compile Include="Advanced\Pod.vb" />
+    <Compile Include="Advanced\SimpleModel.vb" />
+    <Compile Include="Advanced\SimpleObj.vb" />
+    <Compile Include="Advanced\TestComplexEntities.vb" />
+    <Compile Include="Aliases\JoinAliases.vb" />
+    <Compile Include="Aliases\TestFilters.vb" />
+    <Compile Include="App_Code\MyMembership.vb" />
+    <Compile Include="App_Code\MyRoles.vb" />
+    <Compile Include="App_Code\OrmSupp.vb" />
+    <Compile Include="App_Code\Profile.vb" />
+    <Compile Include="ASPHosting\TestMembership.vb" />
+    <Compile Include="ASPHosting\TestProfile.vb" />
+    <Compile Include="ASPHosting\TestCache.vb" />
+    <Compile Include="ASPHosting\TestProcess.vb" />
+    <Compile Include="ASPHosting\TestRoles.vb" />
+    <Compile Include="Expressions\BinaryTest.vb" />
+    <Compile Include="Expressions\SelectTest.vb" />
+    <Compile Include="Expressions\UnaryTest.vb" />
+    <Compile Include="Query\fts.vb" />
+    <Compile Include="Query\ImmCache.vb" />
+    <Compile Include="Query\InnerCmds.vb" />
+    <Compile Include="Query\JoinTest.vb" />
+    <Compile Include="Query\Matrix.vb" />
+    <Compile Include="Query\Modification.vb" />
+    <Compile Include="Query\SmartCache.vb" />
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Query\Agreegates.vb" />
+    <Compile Include="Query\Cache.vb" />
+    <Compile Include="Query\QueryTest.vb" />
+    <Compile Include="Relations\TestM2M.vb" />
+    <Compile Include="Relations\TestModify.vb" />
+    <Compile Include="Relations\TestRel.vb" />
+    <Compile Include="TestCriteria.vb" />
+    <Compile Include="TestRealSchema\Table1to1.vb" />
+    <Compile Include="TestRealSchema\TestExFilter.vb" />
+    <Compile Include="TestRealSchema\TestListManager.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="OrmBaseTest.vb" />
+    <Compile Include="TestEntities.vb" />
+    <Compile Include="Testm2m.vb" />
+    <Compile Include="TestManager.vb" />
+    <Compile Include="TestMerge.vb" />
+    <Compile Include="TestPmgr.vb" />
+    <Compile Include="TestJoins.vb" />
+    <Compile Include="TestRealSchema\Table1.vb" />
+    <Compile Include="TestRealSchema\Table10.vb" />
+    <Compile Include="TestRealSchema\Table2.vb" />
+    <Compile Include="TestRealSchema\Table3.vb" />
+    <Compile Include="TestRealSchema\Table4.vb" />
+    <Compile Include="TestRealSchema\Tables1to3.vb" />
+    <Compile Include="TestRealSchema\TestDic.vb" />
+    <Compile Include="TestRealSchema\TestDistinct.vb" />
+    <Compile Include="TestRealSchema\TestJoins.vb">
+    </Compile>
+    <Compile Include="TestRealSchema\TestManager.vb" />
+    <Compile Include="TestRealSchema\TestProcs.vb" />
+    <Compile Include="TestRealSchema\TestReject.vb" />
+    <Compile Include="TestRealSchema\TestSchema.vb" />
+    <Compile Include="TestRealSchema\TestSearch.vb" />
+    <Compile Include="TestRealSchema\TestSerialization.vb" />
+    <Compile Include="TestRealSchema\TestTracker.vb" />
+    <Compile Include="TestSort.vb" />
+    <Compile Include="TraceListener.vb" />
+    <Compile Include="VSCodeGenAccessors.vb" />
+    <Compile Include="XML\Criteria.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ASPNETHosting\ASPNETHosting.vbproj">
+      <Project>{7D8F3864-281D-495E-B0E4-5731FC31D007}</Project>
+      <Name>ASPNETHosting</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
+      <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
+      <Name>Worm.Orm</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ASPHosting\Web\testwebcache.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\testhttpdic.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\TestMembership.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\TestProfile.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\httpcache-stresstest.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <EmbeddedResource Include="ASPHosting\Web\kl.js" />
+    <Content Include="ASPHosting\Web\test.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\testhttpcache.aspx">
+    </Content>
+    <Content Include="ASPHosting\Web\testobjects.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\Testroles.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <EmbeddedResource Include="XML\data.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="ASPHosting\Web\handler.ashx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </None>
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.Targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>

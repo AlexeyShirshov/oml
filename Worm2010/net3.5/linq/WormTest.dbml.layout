@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ordesignerObjectsDiagram dslVersion="1.0.0.0" absoluteBounds="0, 0, 11, 11" name="WormTest">
+  <DataContextMoniker Name="/WormTestDataContext" />
+  <nestedChildShapes>
+    <classShape Id="8a749d80-1a2a-4c4d-b9e5-de5bf4877f72" absoluteBounds="6.25, 6.375, 2, 1.2605004882812505">
+      <DataClassMoniker Name="/WormTestDataContext/Table" />
+      <nestedChildShapes>
+        <elementListCompartment Id="9a2f5630-e65e-4f6e-983d-f3d389ef3de6" absoluteBounds="6.265, 6.835, 1.9700000000000002, 0.70050048828125" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="6f593f70-c51a-416e-964e-e0db7ea39011" absoluteBounds="6.5, 3.25, 2, 1.4248478190104166">
+      <DataClassMoniker Name="/WormTestDataContext/Tables1to3Relation" />
+      <nestedChildShapes>
+        <elementListCompartment Id="8d1953bf-fc45-489c-8b59-ec0c2342752b" absoluteBounds="6.515, 3.71, 1.9700000000000002, 0.86484781901041674" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="7ca21d7a-b689-47af-9899-0b96a4b29cbd" absoluteBounds="0.75, 3, 2, 1.7535424804687505">
+      <DataClassMoniker Name="/WormTestDataContext/Table1" />
+      <nestedChildShapes>
+        <elementListCompartment Id="21c7e4f1-b7eb-484d-8319-f14a0bddfe7e" absoluteBounds="0.765, 3.46, 1.9700000000000002, 1.19354248046875" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="17eca242-d3d5-4225-a3c3-df0dcc47f92c" absoluteBounds="3.5, 2.25, 2, 1.0961531575520835">
+      <DataClassMoniker Name="/WormTestDataContext/Table10" />
+      <nestedChildShapes>
+        <elementListCompartment Id="43893897-47ee-4c21-a94f-218dc0a4e189" absoluteBounds="3.515, 2.71, 1.9700000000000002, 0.53615315755208326" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="7d0de70e-6518-4800-9b15-70aa99583e88" absoluteBounds="6.75, 0.75, 2, 1.4248478190104166">
+      <DataClassMoniker Name="/WormTestDataContext/Table1to1" />
+      <nestedChildShapes>
+        <elementListCompartment Id="808ed287-cbde-468a-bfd8-149294082fe4" absoluteBounds="6.765, 1.21, 1.9700000000000002, 0.86484781901041674" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="8ada1d5b-189c-4de7-8a9f-e20e07233b5e" absoluteBounds="3.5, 6.25, 2, 1.5891951497395827">
+      <DataClassMoniker Name="/WormTestDataContext/Table2" />
+      <nestedChildShapes>
+        <elementListCompartment Id="7cebf56c-e379-4848-b6a7-80791a4f3485" absoluteBounds="3.515, 6.71, 1.9700000000000002, 1.0291951497395833" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="ac5fe572-6982-49cc-bf1e-27c3e453bb3c" absoluteBounds="3.75, 9.125, 2, 1.5891951497395844">
+      <DataClassMoniker Name="/WormTestDataContext/Table3" />
+      <nestedChildShapes>
+        <elementListCompartment Id="c60ec9fa-d3c1-4755-803d-cbd39d98205c" absoluteBounds="3.765, 9.585, 1.9700000000000002, 1.0291951497395833" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(2.75 : 4.04175048828125); (6.5 : 4.04175048828125)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/WormTestDataContext/Table1/Table1_Tables1to3Relation" />
+      <nodes>
+        <classShapeMoniker Id="7ca21d7a-b689-47af-9899-0b96a4b29cbd" />
+        <classShapeMoniker Id="6f593f70-c51a-416e-964e-e0db7ea39011" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(2.75 : 3.17307657877604); (3.5 : 3.17307657877604)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/WormTestDataContext/Table1/Table1_Table10" />
+      <nodes>
+        <classShapeMoniker Id="7ca21d7a-b689-47af-9899-0b96a4b29cbd" />
+        <classShapeMoniker Id="17eca242-d3d5-4225-a3c3-df0dcc47f92c" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(5.5 : 7.00525024414063); (5.57291666666667 : 7.00525024414062 : JumpStart); (5.73958333333333 : 7.00525024414063 : JumpEnd); (6.25 : 7.00525024414063)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/WormTestDataContext/Table2/Table2_Table" />
+      <nodes>
+        <classShapeMoniker Id="8ada1d5b-189c-4de7-8a9f-e20e07233b5e" />
+        <classShapeMoniker Id="8a749d80-1a2a-4c4d-b9e5-de5bf4877f72" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(1.75 : 4.75354248046875); (1.75 : 7.04459757486979); (3.5 : 7.04459757486979)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/WormTestDataContext/Table1/Table1_Table2" />
+      <nodes>
+        <classShapeMoniker Id="7ca21d7a-b689-47af-9899-0b96a4b29cbd" />
+        <classShapeMoniker Id="8ada1d5b-189c-4de7-8a9f-e20e07233b5e" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(5.65625 : 9.125); (5.65625 : 4.38955165364583); (6.5 : 4.38955165364583)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/WormTestDataContext/Table3/Table3_Tables1to3Relation" />
+      <nodes>
+        <classShapeMoniker Id="ac5fe572-6982-49cc-bf1e-27c3e453bb3c" />
+        <classShapeMoniker Id="6f593f70-c51a-416e-964e-e0db7ea39011" />
+      </nodes>
+    </associationConnector>
+  </nestedChildShapes>
+</ordesignerObjectsDiagram>
