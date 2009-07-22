@@ -182,16 +182,27 @@ l1:
                         _pk = l.ToArray
                         AddHandler _mgr.ObjectCreated, AddressOf ObjectCreated
                     ElseIf Not GetType(AnonymousEntity).IsAssignableFrom(createType) Then
-                        Dim cnt As Integer = 0
-                        For Each d As EntityUnion In sender._types.Keys
-                            If GetType(_IEntity).IsAssignableFrom(d.GetRealType(_mgr.MappingEngine)) Then
-                                cnt += 1
-                                If cnt > 1 Then
-                                    _cancel = True
-                                    Exit For
+                        Dim cnt As Integer = 0, dic As New Dictionary(Of Type, Object)
+                        For Each se As SelectExpression In sender._sl
+                            For Each su As SelectUnion In Expressions2.Helper.GetSelectedEntities(se)
+                                Dim d As EntityUnion = su.EntityUnion
+                                If d IsNot Nothing Then
+                                    Dim rt As Type = d.GetRealType(_mgr.MappingEngine)
+                                    If GetType(_IEntity).IsAssignableFrom(rt) Then
+                                        Dim o As Object = Nothing
+                                        If Not dic.TryGetValue(rt, o) Then
+                                            If dic.Count = 0 Then
+                                                dic.Add(rt, Nothing)
+                                            Else
+                                                _cancel = True
+                                                GoTo l2
+                                            End If
+                                        End If
+                                    End If
                                 End If
-                            End If
+                            Next
                         Next
+l2:
                         args.Cancel = _cancel
                         If Not _cancel Then
                             If (cnt <> 0 And cnt <> sender._types.Count) Then

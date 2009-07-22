@@ -391,9 +391,9 @@ Namespace Query
 
                 Dim addf As IFilter = Nothing
 
-                If m2m Then
-                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(m2mType)
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(m2mType)
 
+                If m2m Then
                     Dim selected_r As M2MRelationDesc = CType(rel, M2MRelationDesc)
                     Dim filtered_r As M2MRelationDesc = Nothing
                     If hostType Is m2mType Then
@@ -456,7 +456,7 @@ l1:
                         Else
                             If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(m2mEU) Then
                                 'se.ObjectSource = SelectTypes(0).First
-                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym)
+                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym, stmt)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
@@ -520,6 +520,10 @@ l1:
                             'se.Attributes = Field2DbRelations.PK
                             '_sl.Add(se)
                             _sl.AddRange(mpe.GetPrimaryKeys(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                        End If
+
+                        If Not _types.ContainsKey(m2mEU) Then
+                            _types.Add(m2mEU, oschema)
                         End If
                     Else
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
