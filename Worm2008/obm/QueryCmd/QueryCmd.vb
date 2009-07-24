@@ -1086,7 +1086,7 @@ l1:
                     End If
                 End If
 
-                If AutoJoins Then
+                If AutoJoins OrElse IsFTS Then
                     Dim t As Type = Nothing
                     Dim selSchema As IEntitySchema = Nothing
                     Dim tos As EntityUnion = fromEU
@@ -1098,7 +1098,7 @@ l1:
 
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
                         If tp.First IsNot tos AndAlso Not HasInQuery(tp.First) Then
-                            If Not _appendMain AndAlso IsFTS Then
+                            If (_appendMain Is Nothing OrElse Not _appendMain) AndAlso IsFTS Then
                                 _appendMain = True
                             End If
 
