@@ -115,7 +115,7 @@ Partial Public MustInherit Class OrmManager
         End Set
     End Property
 
-    Public ReadOnly Property GetLastExecutionResult() As ExecutionResult
+    Public ReadOnly Property LastExecutionResult() As ExecutionResult
         Get
             Return _er
         End Get
@@ -1453,8 +1453,8 @@ l1:
 
         Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
 
-        If ce._expires = Date.MinValue Then
-            ce._expires = _expiresPattern
+        If ce._Expires = Date.MinValue Then
+            ce._Expires = _expiresPattern
         End If
 
         Dim ce_ As UpdatableCachedItem = CType(ce, UpdatableCachedItem)
@@ -2503,6 +2503,18 @@ l1:
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), ILoadableList)
+    End Function
+
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As ILoadableList
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), ILoadableList)
     End Function
 
     Friend Shared Function _CreateReadOnlyList(ByVal t As Type) As IListEdit

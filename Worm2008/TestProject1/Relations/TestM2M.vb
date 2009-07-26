@@ -170,7 +170,7 @@ Imports Worm.Entities.Meta
                 Using s As New ModificationsTracker(mgr)
                     s.Add(e)
 
-                    e2 = s.CreateNewObject(Of Entity4)()
+                    e2 = s.CreateNewKeyEntity(Of Entity4)()
 
                     CType(e, Worm.Entities.IRelations).Add(e2)
 
@@ -214,7 +214,7 @@ Imports Worm.Entities.Meta
                 Dim e2 As Entity4 = Nothing
 
                 Using s As New ModificationsTracker(mgr)
-                    e2 = s.CreateNewObject(Of Entity4)()
+                    e2 = s.CreateNewKeyEntity(Of Entity4)()
 
                     e.GetCmd(GetType(Entity4)).Add(e2)
 

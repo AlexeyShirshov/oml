@@ -114,6 +114,7 @@
     <Compile Include="Query\JoinTest.vb" />
     <Compile Include="Query\Matrix.vb" />
     <Compile Include="Query\Modification.vb" />
+    <Compile Include="Query\ReadOnlyList.vb" />
     <Compile Include="Query\SmartCache.vb" />
     <Compile Include="My Project\Settings.Designer.vb">
       <AutoGen>True</AutoGen>

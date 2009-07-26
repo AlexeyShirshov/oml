@@ -67,7 +67,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t1 As Table1 = s.CreateNewObject(Of Table1)()
+                    Dim t1 As Table1 = s.CreateNewKeyEntity(Of Table1)()
                     t1.CreatedAt = Now
                     s.AcceptModifications()
                 End Using
@@ -207,7 +207,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t1 As Table2 = s.CreateNewObject(Of Table2)()
+                    Dim t1 As Table2 = s.CreateNewKeyEntity(Of Table2)()
                     t1.Money = 1
                     t1.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
                     s.AcceptModifications()
@@ -371,7 +371,7 @@ Imports System.Collections.ObjectModel
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim en4 As Entity4 = s.CreateNewObject(Of Entity4)()
+                    Dim en4 As Entity4 = s.CreateNewKeyEntity(Of Entity4)()
                     en4.Title = "xxx"
                     e.Relations.Add(en4)
 

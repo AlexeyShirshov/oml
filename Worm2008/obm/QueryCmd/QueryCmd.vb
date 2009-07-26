@@ -334,6 +334,78 @@ Namespace Query
             EnsureExistsInStore
             EnsureLoadedFromStore
         End Enum
+
+        Public Class ModifyResultArgs
+
+            Private _col As ICollection
+
+            Public Property Matrix() As ReadonlyMatrix
+                Get
+                    Return CType(_col, ReadonlyMatrix)
+                End Get
+                Set(ByVal value As ReadonlyMatrix)
+                    _col = value
+                End Set
+            End Property
+
+            Public Property ReadOnlyList() As IReadOnlyList
+                Get
+                    Return CType(_col, IReadOnlyList)
+                End Get
+                Set(ByVal value As IReadOnlyList)
+                    _col = value
+                End Set
+            End Property
+
+            Public Property SimpleList() As ICollection
+                Get
+                    Return _col
+                End Get
+                Set(ByVal value As ICollection)
+                    _col = value
+                End Set
+            End Property
+
+            Private _o As Object
+            Public Property CustomInfo() As Object
+                Get
+                    Return _o
+                End Get
+                Set(ByVal value As Object)
+                    _o = value
+                End Set
+            End Property
+
+            Private _executed As Boolean
+            Private _mgr As OrmManager
+
+            Public ReadOnly Property FromCache() As Boolean
+                Get
+                    Return Not _executed
+                End Get
+            End Property
+
+            Public ReadOnly Property OrmManager() As OrmManager
+                Get
+                    Return _mgr
+                End Get
+            End Property
+
+            Public ReadOnly Property IsSimple() As Boolean
+                Get
+                    Dim t As Type = _col.GetType
+                    Return Not (GetType(IReadOnlyList).IsAssignableFrom(t) OrElse GetType(ReadonlyMatrix).IsAssignableFrom(t))
+                End Get
+            End Property
+
+            Public Sub New()
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManager, ByVal fromCache As Boolean)
+                _executed = Not fromCache
+                _mgr = mgr
+            End Sub
+        End Class
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
@@ -342,6 +414,7 @@ Namespace Query
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
         Public Event GetDynamicKey4Filter(ByVal sender As QueryCmd, ByVal args As GetDynamicKey4FilterEventArgs)
         Public Event QueryPrepared(ByVal sender As QueryCmd, ByVal args As QueryPreparedEventArgs)
+        Public Event ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
 
         Friend _sel As SelectClauseDef
         Protected _filter As IGetFilter
@@ -674,23 +747,27 @@ Namespace Query
             End Sub
         End Class
 
+        Private Function IsAnonymous(ByVal mpe As ObjectMappingEngine) As Boolean
+            Dim isanonym As Boolean
+            If CreateType IsNot Nothing Then
+                Dim ct As Type = CreateType.GetRealType(mpe)
+                isanonym = GetType(AnonymousEntity).IsAssignableFrom(ct) _
+                    AndAlso Not GetType(AnonymousCachedEntity).IsAssignableFrom(ct)
+            End If
+            Return isanonym
+        End Function
+
         Public Shared Sub Prepare(ByVal root As QueryCmd, ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
             ByVal stmt As StmtGenerator)
 
-            Dim createOS As EntityUnion = root.CreateType
-            Dim isanonym As Boolean
-            If createOS IsNot Nothing Then
-                Dim createType As Type = createOS.GetRealType(schema)
-                isanonym = GetType(AnonymousEntity).IsAssignableFrom(createType) _
-                    AndAlso Not GetType(AnonymousCachedEntity).IsAssignableFrom(createType)
-            End If
+            Dim isanonym As Boolean = root.IsAnonymous(mpe)
 
             'Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New StmtQueryIterator(root)
                 'Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 'Dim c As List(Of SelectExpression) = Nothing
-                q.Prepare(executor, schema, filterInfo, stmt, isanonym)
+                q.Prepare(executor, mpe, filterInfo, stmt, isanonym)
                 'If f IsNot Nothing Then
                 '    fs.Add(f)
                 'End If
@@ -1097,7 +1174,7 @@ l1:
                     selSchema = _types(tos)
 
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If tp.First IsNot tos AndAlso Not HasInQuery(tp.First) Then
+                        If Not tp.First.Equals(tos) AndAlso Not HasInQuery(tp.First) Then
                             If (_appendMain Is Nothing OrElse Not _appendMain) AndAlso IsFTS Then
                                 _appendMain = True
                             End If
@@ -1565,7 +1642,7 @@ l1:
 
             If SelectList IsNot Nothing Then
                 Dim it As IList = SelectList
-                If _types.Count < 2 Then
+                If GetSelectedTypesCount(mpe) < 2 OrElse IsAnonymous(mpe) Then
                     Dim l As New List(Of SelectExpression)(SelectList)
                     l.Sort(Function(s1 As SelectExpression, s2 As SelectExpression) s1.GetDynamicString.CompareTo(s2.GetDynamicString))
                     it = l
@@ -1829,10 +1906,6 @@ l1:
 
         Protected Function _WithLoad(ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal mpe As ObjectMappingEngine) As Boolean
             Return (tp.Second.HasValue AndAlso tp.Second.Value) OrElse Not GetType(IPropertyLazyLoad).IsAssignableFrom(tp.First.GetRealType(mpe))
-        End Function
-
-        Protected Friend Overridable Function ModifyResult(Of T As _IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
-            Return result
         End Function
 
 #Region " Properties "
@@ -2244,18 +2317,18 @@ l1:
             Joins = New QueryJoin() {}
         End Sub
 
-        <Obsolete("User Join method")> _
-        Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
-            Dim l As New List(Of QueryJoin)
-            If Me.Joins IsNot Nothing Then
-                l.AddRange(Me.Joins)
-            End If
-            If joins IsNot Nothing Then
-                l.AddRange(joins)
-            End If
-            Me.Joins = l.ToArray
-            Return Me
-        End Function
+        '<Obsolete("User Join method")> _
+        'Public Function JoinAdd(ByVal joins() As QueryJoin) As QueryCmd
+        '    Dim l As New List(Of QueryJoin)
+        '    If Me.Joins IsNot Nothing Then
+        '        l.AddRange(Me.Joins)
+        '    End If
+        '    If joins IsNot Nothing Then
+        '        l.AddRange(joins)
+        '    End If
+        '    Me.Joins = l.ToArray
+        '    Return Me
+        'End Function
 
         Public Function Join(ByVal rel As RelationDescEx) As QueryCmd
             Return Join(JCtor.join_relation(rel))
@@ -5211,7 +5284,7 @@ l1:
             Return oschema.GetFieldColumnMap
         End Function
 
-        Public Sub SetCache(ByVal l As IEnumerable)
+        Public Sub SetCache(ByVal l As ICollection)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -5221,9 +5294,45 @@ l1:
             End Using
         End Sub
 
-        Public Sub SetCache(ByVal mgr As OrmManager, ByVal l As IEnumerable)
+        Public Sub SetCache(ByVal mgr As OrmManager, ByVal l As ICollection)
             CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
         End Sub
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix, ByVal ci As Object) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, True) With {.Matrix = m, .CustomInfo = ci}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList, ByVal ci As Object) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, True) With {.ReadOnlyList = l, .CustomInfo = ci}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection, ByVal ci As Object) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, True) With {.SimpleList = l, .CustomInfo = ci}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, False) With {.Matrix = m}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, False) With {.ReadOnlyList = l}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
+
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, False) With {.SimpleList = l}
+            RaiseEvent ModifyResult(Me, r)
+            Return r
+        End Function
     End Class
 
     '    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

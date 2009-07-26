@@ -426,7 +426,11 @@ Namespace Criteria.Values
 
         Public Overridable Function _ToString() As String Implements IFilterValue._ToString
             If _v IsNot Nothing Then
-                Return _v.ToString
+                If TypeOf _v Is Decimal Then
+                    Return CType(_v, Decimal).ToString("G29")
+                Else
+                    Return _v.ToString
+                End If
             End If
             Return String.Empty
         End Function

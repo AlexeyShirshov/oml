@@ -19,28 +19,33 @@ Namespace Query
 
 #Region " Ctors "
         Protected Sub New()
+            Init()
         End Sub
 
         Public Sub New(ByVal rel As Relation)
             _rel = rel
             [From](rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _desc = desc
             [From](desc.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc)
             _desc = desc
             [From](desc.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             _rel = rel
             [From](rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type)
@@ -51,6 +56,7 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
@@ -61,6 +67,7 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion)
@@ -71,6 +78,7 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion, ByVal key As String)
@@ -81,24 +89,28 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As IKeyEntity)
             'MyBase.New(obj, desc.Key)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal rel As Relation, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = rel
             [From](rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _desc = desc
             [From](desc.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
@@ -109,6 +121,7 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
@@ -119,6 +132,7 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
@@ -129,12 +143,14 @@ Namespace Query
                 _rel = New Relation(obj, _desc)
             End If
             [From](_rel.Relation.Entity)
+            Init()
         End Sub
 
         Public Sub New(ByVal desc As RelationDesc, ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
+            Init()
         End Sub
 #End Region
 
@@ -355,6 +371,10 @@ Namespace Query
             CopyTo(q)
             Return q
         End Function
+
+        Protected Sub Init()
+            AddHandler ModifyResult, AddressOf _ModifyResult
+        End Sub
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
             ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
@@ -858,6 +878,12 @@ l1:
             End Set
         End Property
 
+        Public ReadOnly Property HasChanges() As Boolean
+            Get
+                Return Relation.HasChanges
+            End Get
+        End Property
+
         Public Overloads Overrides Function Count(ByVal mgr As OrmManager) As Integer
             Dim cnt As Integer = MyBase.Count(mgr)
             If Relation.HasChanges Then
@@ -867,53 +893,51 @@ l1:
             Return cnt
         End Function
 
-        Protected Friend Overrides Function ModifyResult(Of T As Entities._IEntity)(ByVal result As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
-            If Relation.HasChanges Then
-                Dim toRem As New ReadOnlyObjectList(Of T)(Relation.Deleted.ConvertAll(Function(e) CType(e, T)))
+        Protected Overridable Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
+            If Relation.HasChanges AndAlso Not args.IsSimple Then
 
-                Dim newRes As IListEdit = CType(result.Clone, IListEdit)
+                Dim nr As IListEdit = CType(args.ReadOnlyList.Clone, IListEdit)
 
-                For Each o As IEntity In toRem.ApplyFilter(Filter)
-                    newRes.Remove(o)
+                For Each o As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Deleted, Filter)
+                    nr.Remove(o)
                 Next
 
-                Dim toAdd As New ReadOnlyObjectList(Of T)(Relation.Added.ConvertAll(Function(e) CType(e, T)))
-
-                toAdd = New ReadOnlyObjectList(Of T)(toAdd.ApplyFilter(Filter))
+                Dim toAdd As New List(Of IEntity)
+                For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Added, Filter)
+                    toAdd.Add(a)
+                Next
 
                 If Sort IsNot Nothing Then
-                    Dim c As New Sorting.EntityComparer(Of T)(Sort)
+                    Dim c As New Sorting.EntityComparer(Sort)
+                    Dim newres As ArrayList = ArrayList.Adapter(nr)
                     For Each o As IEntity In toAdd
-                        Dim pos As Integer = CType(newRes, ReadOnlyObjectList(Of T)).List.BinarySearch(CType(o, T), c)
+                        Dim pos As Integer = newres.BinarySearch(o, c)
                         If pos < 0 Then
-                            newRes.Insert(Not pos, o)
+                            nr.Insert(Not pos, o)
                         Else
-                            newRes.Insert(pos, o)
+                            nr.Insert(pos, o)
                             'Throw New QueryCmdException("Object in added list already in query", Me)
                         End If
                     Next
                     If TopParam IsNot Nothing Then
-                        Dim cnt As Integer = newRes.List.Count
+                        Dim cnt As Integer = nr.Count
                         For i As Integer = TopParam.Count To cnt - 1
-                            newRes.List.RemoveAt(i)
+                            nr.List.RemoveAt(i)
                         Next
                     End If
                 Else
                     For i As Integer = 0 To toAdd.Count - 1
                         If TopParam IsNot Nothing Then
-                            If TopParam.Count + i <= newRes.List.Count Then
+                            If TopParam.Count + i <= nr.Count Then
                                 Exit For
                             End If
                         End If
-                        Dim o As T = toAdd(i)
-                        newRes.Add(o)
+                        nr.Add(toAdd(i))
                     Next
                 End If
 
-                Return CType(newRes, Global.Worm.ReadOnlyObjectList(Of T))
-            Else
-                Return result
+                args.ReadOnlyList = nr
             End If
-        End Function
+        End Sub
     End Class
 End Namespace

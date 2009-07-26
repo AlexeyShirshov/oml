@@ -555,12 +555,13 @@ Public Class TestManagerRS
 
                 Assert.AreNotEqual(-100, r1.Identifier)
 
-                Dim c2 As ICollection(Of Table33) = t1.GetCmd(GetType(Table33)).WithLoad(WithLoad).ToList(Of Table33)(mgr)
-                Assert.AreEqual(4, c2.Count)
+                Dim c2 As ICollection(Of Table33) = t1.GetCmd(GetType(Table33)).WithLoad(True).ToList(Of Table33)(mgr)
+                Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
+                Assert.AreEqual(3, c2.Count)
 
                 r1.RejectChanges()
 
-                c2 = t1.GetCmd(GetType(Table33)).WithLoad(WithLoad).ToList(Of Table33)(mgr)
+                c2 = t1.GetCmd(GetType(Table33)).WithLoad(True).ToList(Of Table33)(mgr)
                 Assert.AreEqual(3, c2.Count)
             Finally
                 mgr.Rollback()
@@ -824,11 +825,11 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim cc As ICollection(Of Table1) = New QueryCmd().Top(10).SelectEntity(GetType(Table1), True).ToList(Of Table1)(mgr)
 
-            Assert.AreEqual(3, mgr.GetLastExecutionResult.RowCount)
-            Assert.IsFalse(mgr.GetLastExecutionResult.CacheHit)
+            Assert.AreEqual(3, mgr.LastExecutionResult.RowCount)
+            Assert.IsFalse(mgr.LastExecutionResult.CacheHit)
 
-            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecutionResult.ExecutionTime.ToString)
-            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecutionResult.FetchTime.ToString)
+            System.Diagnostics.Trace.WriteLine(mgr.LastExecutionResult.ExecutionTime.ToString)
+            System.Diagnostics.Trace.WriteLine(mgr.LastExecutionResult.FetchTime.ToString)
 
             Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
             t.Load()
@@ -929,11 +930,13 @@ Public Class TestManagerRS
                 Dim t As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
                 Assert.AreEqual(1D, t.Money)
 
-                t.Money = 2
+                t.Money = 2D
                 t.SaveChanges(True)
 
                 c = New QueryCmd().Where(Ctor.prop(GetType(Table2), "Money").eq(1)).ToList(Of Table2)(mgr)
+                Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
                 c2 = New QueryCmd().Where(Ctor.prop(GetType(Table2), "Money").eq(2)).ToList(Of Table2)(mgr)
+                Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
 
                 Assert.AreEqual(0, c.Count)
                 Assert.AreEqual(2, c2.Count)

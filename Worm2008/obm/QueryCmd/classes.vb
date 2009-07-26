@@ -35,15 +35,13 @@ Namespace Query
 
         Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix
 
-        'Function ExecSimple(Of CreateType As {_ICachedEntity, New}, ReturnType)( _
-        '    ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
-
         Function ExecSimple(Of ReturnType)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
         Sub RenewCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal v As Boolean)
         Sub ClearCache(ByVal mgr As OrmManager, ByVal query As QueryCmd)
         Sub ResetObjects(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub SetCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal l As ICollection)
 
         ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 

@@ -347,6 +347,7 @@ Partial Public Class OrmManager
         Private _mgr As OrmManager
 
         Public Sub New(ByVal f As IFilter)
+            Throw New NotImplementedException
             _mgr = OrmManager.CurrentManager
             _f = _mgr._externalFilter
             _mgr._externalFilter = f
