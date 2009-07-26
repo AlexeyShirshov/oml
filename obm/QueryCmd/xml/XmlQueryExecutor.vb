@@ -66,5 +66,9 @@
         Public Sub ResetObjects(ByVal mgr As OrmManager, ByVal query As QueryCmd) Implements IExecutor.ResetObjects
             Throw New NotImplementedException
         End Sub
+
+        Public Sub SetCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal l As System.Collections.ICollection) Implements IExecutor.SetCache
+            Throw New NotImplementedException
+        End Sub
     End Class
 End Namespace

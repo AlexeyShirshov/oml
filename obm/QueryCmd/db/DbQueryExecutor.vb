@@ -291,7 +291,7 @@ Namespace Query.Database
                     Dim created As Boolean = args.Created
                     'query._load = oldLoad
 
-                    query.LastExecutionResult = mgr.GetLastExecutionResult
+                    query.LastExecutionResult = mgr.LastExecutionResult
 
                     mgr.RaiseOnDataAvailable()
 

@@ -31,7 +31,7 @@ Public Class MyRoles
         ElseIf col.Count = 0 Then
             If createIfNotExist Then
                 Using mt As New ModificationsTracker(UserMapper.CreateManager)
-                    Dim r As MyRole = mt.CreateNewObject(Of MyRole)()
+                    Dim r As MyRole = mt.CreateNewKeyEntity(Of MyRole)()
                     r.RoleName = name
                     mt.AcceptModifications()
                     Return r

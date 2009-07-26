@@ -154,7 +154,7 @@ Imports Worm
 
             Dim c As ICollection(Of Entity4) = e.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.AreEqual(4, c.Count)
-            Assert.AreEqual(4, mgr.GetLastExecutionResult.RowCount)
+            Assert.AreEqual(4, mgr.LastExecutionResult.RowCount)
 
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)

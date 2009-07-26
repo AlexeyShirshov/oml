@@ -63,7 +63,7 @@ Namespace Cache
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
             ElseIf mc._externalFilter IsNot Nothing Then
-                Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
+                Dim er As OrmManager.ExecutionResult = mc.LastExecutionResult
                 Dim l As Integer = 0
                 If er.LoadedInResultset.HasValue Then
                     l = er.LoadedInResultset.Value
@@ -291,7 +291,7 @@ Namespace Cache
                         End If
                     Next
                     If loaded < l.Count Then
-                        Dim er As OrmManager.ExecutionResult = mc.GetLastExecutionResult
+                        Dim er As OrmManager.ExecutionResult = mc.LastExecutionResult
                         If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, loaded) Then
                             'c = FromWeakList(Of T)(weak_list, mc)
                             c.LoadObjects()

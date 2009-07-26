@@ -75,13 +75,13 @@ Public Class TestTracker
                     AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
                     'AddHandler tracker.BeginRollback, AddressOf br
 
-                    Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
+                    Dim t As Table1 = tracker.CreateNewKeyEntity(Of Table1)()
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
                     Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues))
 
-                    Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
+                    Dim t2 As Table2 = tracker.CreateNewKeyEntity(Of Table2)()
                     Assert.IsNotNull(t2)
                     Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues))
 
@@ -110,13 +110,13 @@ Public Class TestTracker
                     AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
                     'AddHandler tracker.BeginRollback, AddressOf br
 
-                    Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
+                    Dim t As Table1 = tracker.CreateNewKeyEntity(Of Table1)()
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
                     Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues))
 
-                    Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
+                    Dim t2 As Table2 = tracker.CreateNewKeyEntity(Of Table2)()
                     Assert.IsNotNull(t2)
                     Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues))
 
@@ -145,7 +145,7 @@ Public Class TestTracker
             mgr.BeginTransaction()
             Try
                 Using tracker As New ModificationsTracker
-                    Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
+                    Dim t As Table1 = tracker.CreateNewKeyEntity(Of Table1)()
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
@@ -237,7 +237,7 @@ Public Class TestTracker
                 Using tracker As New ModificationsTracker
                     AddHandler tracker.Saver.ObjectSavingError, AddressOf er
 
-                    tt = tracker.CreateNewObject(Of Table2)()
+                    tt = tracker.CreateNewKeyEntity(Of Table2)()
                     tt.Money = 200
                     tt.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
 

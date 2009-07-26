@@ -85,7 +85,7 @@ Public Class MyProfile
             Else
                 If createIfNotExist Then
                     Using mt As New ModificationsTracker(CreateManager)
-                        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
+                        Dim u As MyUser = mt.CreateNewKeyEntity(Of MyUser)()
                         u.LastActivity = GetNow()
                         u.IsAnonymous = True
                         u.UserName = name
@@ -114,7 +114,7 @@ Public Class MyProfile
     End Function
 
     Protected Overrides Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
-        Dim u As MyUser = mt.CreateNewObject(Of MyUser)()
+        Dim u As MyUser = mt.CreateNewKeyEntity(Of MyUser)()
         u.UserName = name
         Return u
     End Function

@@ -6,13 +6,11 @@ Imports Worm.Entities
 Imports Worm.Expressions2
 
 Friend Interface IListEdit
-    Inherits IReadOnlyList, ICloneable
+    Inherits IReadOnlyList
     Overloads Sub Add(ByVal o As Entities.IEntity)
     Overloads Sub Remove(ByVal o As Entities.IEntity)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
     ReadOnly Property List() As IList
-    Function CloneEmpty() As IListEdit
-    ReadOnly Property RealType() As Type
 End Interface
 
 Public Interface ILoadableList
@@ -22,7 +20,9 @@ Public Interface ILoadableList
 End Interface
 
 Public Interface IReadOnlyList
-    Inherits IList
+    Inherits IList, ICloneable
+    Function CloneEmpty() As IReadOnlyList
+    ReadOnly Property RealType() As Type
 End Interface
 
 <Serializable()> _
@@ -170,56 +170,7 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         End If
     End Function
 
-    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
-        Return SelectEntity(Of EntityType)(0, Count, propertyAlias)
-    End Function
-
-    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
-        Dim r As IListEdit = Nothing
-        Dim mpe As ObjectMappingEngine = Nothing
-        Dim oschema As IEntitySchema = Nothing
-        For i As Integer = 0 To Me.Count - 1
-            If start <= i AndAlso start + length > i Then
-                Dim o As T = Me(i)
-                If mpe Is Nothing Then
-                    mpe = o.GetMappingEngine
-                    oschema = mpe.GetEntitySchema(o.GetType)
-                End If
-                Dim obj As IEntity = CType(mpe.GetPropertyValue(o, propertyAlias, oschema), IEntity)
-                If obj IsNot Nothing Then
-                    If r Is Nothing Then
-                        r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
-                    End If
-                    r.Add(obj)
-                End If
-            End If
-        Next
-        Return CType(r, ReadOnlyList(Of EntityType))
-    End Function
-
-    Public Function SelectProperties(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray propertyAliases() As String) As ReadOnlyEntityList(Of Entities.AnonymousCachedEntity)
-        Dim r As IListEdit = New ReadOnlyEntityList(Of AnonymousCachedEntity)
-        Dim mpe As ObjectMappingEngine = Nothing
-        Dim oschema As IEntitySchema = Nothing
-        For i As Integer = 0 To Me.Count - 1
-            If start <= i AndAlso start + length > i Then
-                Dim o As T = Me(i)
-                If mpe Is Nothing Then
-                    mpe = o.GetMappingEngine
-                    oschema = mpe.GetEntitySchema(o.GetType)
-                End If
-                Dim obj As New AnonymousCachedEntity
-                For Each propertyAlias As String In propertyAliases
-                    Dim propValue As Object = mpe.GetPropertyValue(o, propertyAlias, oschema)
-                    obj(propertyAlias) = propValue
-                Next
-                r.Add(obj)
-            End If
-        Next
-        Return CType(r, ReadOnlyEntityList(Of AnonymousCachedEntity))
-    End Function
-
-    Friend Overrides Function CloneEmpty() As IListEdit
+    Friend Overrides Function CloneEmpty() As IReadOnlyList
         Return New ReadOnlyList(Of T)(_rt)
     End Function
 
@@ -240,6 +191,10 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     Implements ILoadableList
 
     Public Sub New()
+        MyBase.new()
+    End Sub
+
+    Public Sub New(ByVal t As Type)
         MyBase.new()
     End Sub
 
@@ -376,7 +331,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
         End If
     End Function
 
-    Friend Overrides Function CloneEmpty() As IListEdit
+    Friend Overrides Function CloneEmpty() As IReadOnlyList
         Return New ReadOnlyEntityList(Of T)
     End Function
 
@@ -421,16 +376,21 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         MyClass.New(New List(Of T)(list))
     End Sub
 
-    'Public Sub Add(ByVal o As T)
-    '    _l.Add(o)
-    'End Sub
+    Public Sub New(ByVal t As Type)
+        MyClass.new()
+    End Sub
 
-    'Public Sub AddRange(ByVal col As IEnumerable(Of T))
-    '    'For Each o As T In col
-    '    '    Add(o)
-    '    'Next
-    '    _l.AddRange(col)
-    'End Sub
+    Public Sub New(ByVal t As Type, ByVal col As IEnumerable(Of T))
+        MyClass.New(col)
+    End Sub
+
+    Public Sub New(ByVal t As Type, ByVal list As List(Of T))
+        MyClass.New(list)
+    End Sub
+
+    Public Sub New(ByVal t As Type, ByVal list As ReadOnlyObjectList(Of T))
+        MyClass.New(list)
+    End Sub
 
     Public Sub Sort(ByVal cs As IComparer(Of T))
         _l.Sort(cs)
@@ -500,7 +460,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         Return Nothing
     End Function
 
-    Friend Overridable Function CloneEmpty() As IListEdit Implements IListEdit.CloneEmpty
+    Friend Overridable Function CloneEmpty() As IReadOnlyList Implements IReadOnlyList.CloneEmpty
         Return New ReadOnlyObjectList(Of T)()
     End Function
 
@@ -508,9 +468,74 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         Return New ReadOnlyObjectList(Of T)(_l)
     End Function
 
-    Public Overridable ReadOnly Property RealType() As System.Type Implements IListEdit.RealType
+    Public Overridable ReadOnly Property RealType() As System.Type Implements IReadOnlyList.RealType
         Get
             Return GetType(T)
         End Get
     End Property
+
+    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+        Return SelectEntity(Of EntityType)(0, Count, propertyAlias)
+    End Function
+
+    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+        Dim r As IListEdit = Nothing
+        Dim mpe As ObjectMappingEngine = Nothing
+        Dim oschema As IEntitySchema = Nothing
+        For i As Integer = 0 To Me.Count - 1
+            If start <= i AndAlso start + length > i Then
+                Dim o As T = Me(i)
+                If mpe Is Nothing Then
+                    mpe = o.GetMappingEngine
+                    oschema = mpe.GetEntitySchema(o.GetType)
+                End If
+                Dim obj As IEntity = CType(mpe.GetPropertyValue(o, propertyAlias, oschema), IEntity)
+                If obj IsNot Nothing Then
+                    If r Is Nothing Then
+                        r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
+                    End If
+                    r.Add(obj)
+                End If
+            End If
+        Next
+        Return CType(r, ReadOnlyList(Of EntityType))
+    End Function
+
+    Public Function SelectProperties(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray propertyAliases() As String) As ReadOnlyEntityList(Of Entities.AnonymousCachedEntity)
+        Dim r As IListEdit = New ReadOnlyEntityList(Of AnonymousCachedEntity)
+        Dim mpe As ObjectMappingEngine = Nothing
+        Dim oschema As IEntitySchema = Nothing
+        For i As Integer = 0 To Me.Count - 1
+            If start <= i AndAlso start + length > i Then
+                Dim o As T = Me(i)
+                If mpe Is Nothing Then
+                    mpe = o.GetMappingEngine
+                    oschema = mpe.GetEntitySchema(o.GetType)
+                End If
+                Dim obj As New AnonymousCachedEntity
+                For Each propertyAlias As String In propertyAliases
+                    Dim propValue As Object = mpe.GetPropertyValue(o, propertyAlias, oschema)
+                    obj(propertyAlias) = propValue
+                Next
+                r.Add(obj)
+            End If
+        Next
+        Return CType(r, ReadOnlyEntityList(Of AnonymousCachedEntity))
+    End Function
+
+    Public Function Cast(Of CastType)() As IList(Of CastType)
+        If GetType(Entities._IEntity).IsAssignableFrom(GetType(CastType)) Then
+            Dim l As IListEdit = CType(OrmManager.CreateReadOnlyList(GetType(CastType), RealType), IListEdit)
+            For Each e As Object In Me
+                l.Add(CType(e, _IEntity))
+            Next
+            Return CType(l, IList(Of CastType))
+        Else
+            Dim l As New List(Of CastType)
+            For Each e As Object In Me
+                l.Add(CType(e, CastType))
+            Next
+            Return l
+        End If
+    End Function
 End Class

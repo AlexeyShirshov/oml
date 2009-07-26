@@ -62,7 +62,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim f As Table1 = s.CreateNewObject(Of Table1)()
+                    Dim f As Table1 = s.CreateNewKeyEntity(Of Table1)()
                     f.Code = 20
                     f.CreatedAt = Now
 
@@ -120,11 +120,19 @@ Imports Worm.Criteria
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
+            l = q.ToList(Of Table1)(mgr)
+            Assert.AreEqual(2, l.Count)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
+
+            Dim q2 As QueryCmd = New QueryCmd().SelectEntity(GetType(Table1)) _
+                .Where(Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
+
+            Assert.AreEqual(2, q2.Count(mgr))
 
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim f As Table1 = s.CreateNewObject(Of Table1)()
+                    Dim f As Table1 = s.CreateNewKeyEntity(Of Table1)()
                     f.Code = 20
                     f.CreatedAt = Now
                     'f.Enum = Enum1.first
@@ -136,6 +144,8 @@ Imports Worm.Criteria
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
                 Assert.IsFalse(q.LastExecutionResult.CacheHit)
 
+                Assert.AreEqual(3, q2.Count(mgr))
+                Assert.IsTrue(q2.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -157,7 +167,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t1 As Table1 = s.CreateNewObject(Of Table1)()
+                    Dim t1 As Table1 = s.CreateNewKeyEntity(Of Table1)()
                     t1.CreatedAt = Now
                     s.AcceptModifications()
                 End Using
@@ -328,7 +338,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim t1 As Table2 = s.CreateNewObject(Of Table2)()
+                    Dim t1 As Table2 = s.CreateNewKeyEntity(Of Table2)()
                     t1.Money = 1
                     t1.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
                     s.AcceptModifications()
@@ -437,7 +447,7 @@ Imports Worm.Criteria
             mgr.BeginTransaction()
             Try
                 Using s As New ModificationsTracker(mgr)
-                    Dim f As Table1 = s.CreateNewObject(Of Table1)()
+                    Dim f As Table1 = s.CreateNewKeyEntity(Of Table1)()
                     f.EnumStr = 4
                     f.CreatedAt = Now
 
