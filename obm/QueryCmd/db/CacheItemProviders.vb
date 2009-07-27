@@ -198,7 +198,8 @@ Namespace Query.Database
             End Sub
 
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
-                Return New CachedItemBase(GetEntities(), _mgr.Cache)
+                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, GetEntities())
+                Return New CachedItemBase(args.ReadOnlyList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
             End Function
         End Class
 
@@ -364,25 +365,8 @@ Namespace Query.Database
             End Function
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As UpdatableCachedItem
-                Dim t As Type = _q.GetSelectedType(MappingEngine)
-                'Dim sortex As IOrmSorting2 = Nothing
-                'If t IsNot Nothing Then
-                '    sortex = TryCast(_mgr.MappingEngine.GetEntitySchema(t, False), IOrmSorting2)
-                'End If
-
-                Dim s As Date = Nothing
-                'If sortex IsNot Nothing Then
-                '    Dim ts As TimeSpan = sortex.SortExpiration(Sort)
-                '    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
-                '        s = Now.Add(ts)
-                '    End If
-                'End If
-                'Dim f As IFilter = Nothing
-                'If _q.Filter IsNot Nothing Then f = _q.Filter.Filter
-                'If _f.Length > 0 Then
-                '    f = _f(0)
-                'End If
-                Return New UpdatableCachedItem(s, col, _mgr)
+                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, col)
+                Return New UpdatableCachedItem(args.ReadOnlyList, _mgr) With {.CustomInfo = args.CustomInfo}
             End Function
 
             'Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)

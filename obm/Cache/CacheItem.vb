@@ -9,12 +9,13 @@ Namespace Cache
 
     <Serializable()> _
     Public Class CachedItemBase
-        Protected Friend _expires As Date
+        Friend _expires As Date
         Protected _execTime As TimeSpan
         Protected _fetchTime As TimeSpan
         Protected _sort As OrderByClause
+        Private _customInfo As Object
 
-        Private _col As ICollection
+        Protected _col As ICollection
 
         Friend Sub New()
         End Sub
@@ -155,20 +156,50 @@ Namespace Cache
                 _sort = value
             End Set
         End Property
+
+        Public Sub Expire()
+            _expires = Nothing
+            'SortExpire()
+        End Sub
+
+        'Public Sub SortExpire()
+        '    _sortExpires = Nothing
+        'End Sub
+
+        Public ReadOnly Property Expires() As Boolean
+            Get
+                If _expires <> Date.MinValue Then
+                    Return _expires < Date.Now
+                End If
+                Return False
+            End Get
+        End Property
+
+        Public Property CustomInfo() As Object
+            Get
+                Return _customInfo
+            End Get
+            Set(ByVal value As Object)
+                _customInfo = value
+            End Set
+        End Property
+
+        Public Overridable Sub Clear(ByVal mgr As OrmManager)
+            mgr.ListConverter.Clear(_col, mgr)
+        End Sub
     End Class
 
     <Serializable()> _
     Public Class UpdatableCachedItem
         Inherits CachedItemBase
 
-        Protected _obj As Object
         'Protected _st As SortType
         'Protected _obj As Object
         'Protected _mark As Object
         'Protected _cache As OrmBase
         Protected _f As IFilter
         'Protected Friend _expires As Date
-        Protected _sortExpires As Date
+        'Protected _sortExpires As Date
         'Protected _execTime As TimeSpan
         'Protected _fetchTime As TimeSpan
 
@@ -191,39 +222,41 @@ Namespace Cache
         End Sub
 
         'Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
-        Public Sub New(ByVal sortExpire As Date, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
-            'If sort IsNot Nothing Then
-            '    _sort = CType(sort.Clone, Sorting.Sort)
-            'End If
-            '_st = sortType
-            'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
-            _obj = mgr.ListConverter.ToWeakList(obj)
-            'End Using
-            '_cache = mgr.Cache
-            If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
-            ' _f = filter
-            _expires = mgr._expiresPattern
-            _sortExpires = sortExpire
-            _execTime = mgr.Exec
-            _fetchTime = mgr.Fecth
-        End Sub
+        'Public Sub New(ByVal sortExpire As Date, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+        '    'If sort IsNot Nothing Then
+        '    '    _sort = CType(sort.Clone, Sorting.Sort)
+        '    'End If
+        '    '_st = sortType
+        '    'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
+        '    _obj = mgr.ListConverter.ToWeakList(obj)
+        '    'End Using
+        '    '_cache = mgr.Cache
+        '    If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
+        '    ' _f = filter
+        '    _expires = mgr._expiresPattern
+        '    '_sortExpires = sortExpire
+        '    _execTime = mgr.Exec
+        '    _fetchTime = mgr.Fecth
+        'End Sub
 
-        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As CacheBase)
-            _obj = obj
+        Friend Sub New(ByVal obj As ICollection, ByVal cache As CacheBase)
+            MyBase.New(obj, cache)
+            '_obj = obj
             '_cache = cache
-            If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
+            'If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
         'Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
-        Public Sub New(ByVal obj As IEnumerable, ByVal mgr As OrmManager)
+        Public Sub New(ByVal obj As ICollection, ByVal mgr As OrmManager)
             '_sort = Nothing
             '_st = sortType
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
-            _obj = mgr.ListConverter.ToWeakList(obj)
+            '_obj = mgr.ListConverter.ToWeakList(obj)
             'End Using
             '_cache = mgr.Cache
-            If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
+            'If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
             '_f = Filter
+            MyBase.New(obj, mgr.Cache)
             _expires = mgr._expiresPattern
             _execTime = mgr.Exec
             _fetchTime = mgr.Fecth
@@ -271,39 +304,21 @@ Namespace Cache
         'End Function
 
         Public Overrides Function GetCount(ByVal cache As CacheBase) As Integer
-            Return cache.ListConverter.GetCount(_obj)
+            Return cache.ListConverter.GetCount(_col)
         End Function
 
-        Public Overrides Function GetAliveCount(ByVal cache As CacheBase) As Integer
-            Return cache.ListConverter.GetAliveCount(_obj)
-        End Function
+        'Public Overrides Function GetAliveCount(ByVal cache As CacheBase) As Integer
+        '    Return cache.ListConverter.GetAliveCount(_col)
+        'End Function
 
-        Public Sub Expire()
-            _expires = Nothing
-            SortExpire()
-        End Sub
-
-        Public Sub SortExpire()
-            _sortExpires = Nothing
-        End Sub
-
-        Public ReadOnly Property Expires() As Boolean
-            Get
-                If _expires <> Date.MinValue Then
-                    Return _expires < Date.Now
-                End If
-                Return False
-            End Get
-        End Property
-
-        Public ReadOnly Property SortExpires() As Boolean
-            Get
-                If _sortExpires <> Date.MinValue Then
-                    Return _sortExpires < Date.Now
-                End If
-                Return False
-            End Get
-        End Property
+        'Public ReadOnly Property SortExpires() As Boolean
+        '    Get
+        '        If _sortExpires <> Date.MinValue Then
+        '            Return _sortExpires < Date.Now
+        '        End If
+        '        Return False
+        '    End Get
+        'End Property
 
         Public Function SortEquals(ByVal sort As OrderByClause, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
             'If _sort Is Nothing Then
@@ -349,13 +364,13 @@ Namespace Cache
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             Dim lc As IListObjectConverter = mgr.ListConverter
-            Return lc.FromWeakList(Of T)(_obj, mgr, start, length, withLoad, created, successed)
+            Return lc.FromWeakList(Of T)(_col, mgr, start, length, withLoad, created, successed)
         End Function
 
         Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})( _
             ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Dim lc As IListObjectConverter = mgr.ListConverter
-            Return lc.FromWeakList(Of T)(_obj, mgr)
+            Return lc.FromWeakList(Of T)(_col, mgr)
         End Function
 
         'Public Sub SetObjectList(ByVal mc As OrmManager, ByVal value As OrmBase())
@@ -389,15 +404,11 @@ Namespace Cache
         'End Sub
 
         Public Overridable Function Add(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
-            Return mgr.ListConverter.Add(_obj, mgr, obj, _sort)
+            Return mgr.ListConverter.Add(_col, mgr, obj, _sort)
         End Function
 
         Public Overridable Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
-            mgr.ListConverter.Delete(_obj, obj, mgr)
-        End Sub
-
-        Public Overridable Sub Clear(ByVal mgr As OrmManager)
-            mgr.ListConverter.Clear(_obj, mgr)
+            mgr.ListConverter.Delete(_col, obj, mgr)
         End Sub
 
         Public Property Filter() As IFilter

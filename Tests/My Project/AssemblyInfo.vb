@@ -12,7 +12,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("")> 
 <Assembly: AssemblyProduct("Web object-relational mapping framework test project")> 
-<Assembly: AssemblyCopyright(ight © XMedia 2007")> 
+<Assembly: AssemblyCopyright("Copyright © 2007")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>

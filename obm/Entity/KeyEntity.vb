@@ -435,12 +435,13 @@ Namespace Entities
                 Dim el As M2MRelation = TryCast(rl, M2MRelation)
                 If el Is Nothing Then Continue For
                 SyncLock "1efb139gf8bh"
-                    For Each o As _IKeyEntity In el.Added
-                        Dim otherKey As String = el.Key
-                        If Me.GetType Is o.GetType Then
-                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        End If
-                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                    For Each o As IKeyEntity In el.Added
+                        'Dim otherKey As String = el.Key
+                        'If Me.GetType Is o.GetType Then
+                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        'End If
+                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
                         m.Added.Remove(Me)
                         m._savedIds.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
@@ -454,12 +455,13 @@ Namespace Entities
                     Next
                     el.Added.Clear()
 
-                    For Each o As _IKeyEntity In el.Deleted
-                        Dim otherKey As String = el.Key
-                        If Me.GetType Is o.GetType Then
-                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        End If
-                        Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                    For Each o As IKeyEntity In el.Deleted
+                        'Dim otherKey As String = el.Key
+                        'If Me.GetType Is o.GetType Then
+                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        'End If
+                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
                         m.Deleted.Remove(Me)
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
@@ -841,11 +843,12 @@ Namespace Entities
                 If Not el.Added.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
                         Dim ke As IKeyEntity = CType(obj, IKeyEntity)
-                        Dim otherKey As String = el.Key
-                        If Me.GetType Is ke.GetType Then
-                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        End If
-                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        'Dim otherKey As String = el.Key
+                        'If Me.GetType Is ke.GetType Then
+                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        'End If
+                        'Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        Dim el2 As M2MRelation = CType(el, M2MRelation).GetRevert(Nothing, ke)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Added.Contains(Me) Then
                                 If el.Deleted.Contains(obj) Then
@@ -922,10 +925,11 @@ Namespace Entities
                     If TypeOf el Is M2MRelation Then
                         Dim ke As IKeyEntity = CType(obj, IKeyEntity)
                         Dim otherKey As String = el.Key
-                        If Me.GetType Is ke.GetType Then
-                            otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        End If
-                        Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        'If Me.GetType Is ke.GetType Then
+                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                        'End If
+                        'Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                        Dim el2 As M2MRelation = CType(el, M2MRelation).GetRevert(Nothing, ke)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Deleted.Contains(Me) Then
                                 If el.Added.Contains(obj) Then

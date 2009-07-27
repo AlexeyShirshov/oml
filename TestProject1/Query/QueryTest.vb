@@ -1114,7 +1114,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(1, True)
+        Dim t As Table1 = q.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore)
 
         Assert.IsNotNull(t)
         Assert.AreEqual(0, q.ExecCount)
@@ -1131,7 +1131,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(-59871, False)
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871)
 
         Assert.IsNotNull(t)
         Assert.AreEqual(0, q.ExecCount)
@@ -1148,7 +1148,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(-59871, True)
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871, QueryCmd.GetByIDOptions.EnsureExistsInStore)
 
         Assert.IsNull(t)
 
@@ -1180,7 +1180,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd()
 
         Dim ids() As Object = {1, 2, 3}
-        Dim list = q.GetByIds(Of Table1)(ids, True, TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+        Dim list = q.GetByIds(Of Table1)(ids, QueryCmd.GetByIDOptions.EnsureLoadedFromStore, TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
         Assert.IsNotNull(list)
         Assert.AreEqual(3, list.Count)
@@ -1197,7 +1197,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
         Dim ids() As Object = {-34322, -24243, 3}
-        Dim list = q.GetByIds(Of Table1)(ids, True)
+        Dim list = q.GetByIds(Of Table1)(ids, QueryCmd.GetByIDOptions.EnsureExistsInStore)
 
         Assert.IsNotNull(list)
         Assert.AreEqual(1, list.Count)

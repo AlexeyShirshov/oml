@@ -81,7 +81,7 @@ Public Class TestReject
     <TestMethod()> _
     Public Sub TestDelete2()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(3, True, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(3, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
             mgr.BeginTransaction()
             Try

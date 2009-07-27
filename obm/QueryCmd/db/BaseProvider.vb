@@ -53,7 +53,9 @@ Namespace Query.Database
             End Sub
 
             Public Overloads Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As Cache.CachedItemBase
-                Return New Cache.CachedItemBase(GetMatrix(), _mgr.Cache)
+                Dim m As ReadonlyMatrix = GetMatrix()
+                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, m)
+                Return New Cache.CachedItemBase(args.Matrix, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
             End Function
 
             Protected Function GetMatrix() As ReadonlyMatrix
@@ -231,7 +233,9 @@ Namespace Query.Database
             End Sub
 
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As Cache.CachedItemBase
-                Return New Cache.CachedItemBase(CType(GetSimpleValues(Of T)(), ICollection), _mgr.Cache)
+                Dim col As ICollection = CType(GetSimpleValues(Of T)(), ICollection)
+                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, col)
+                Return New Cache.CachedItemBase(args.SimpleList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
             End Function
         End Class
     End Class
