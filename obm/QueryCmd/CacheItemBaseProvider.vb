@@ -213,6 +213,9 @@ Namespace Query
                         End If
 
                         If Not added Then
+                            'cache.validate_AddDeleteType(selectTypes, _key, _id)
+                            'cache.validate_UpdateType(selectTypes, _key, _id)
+
                             If (_q.FromClause.ObjectSource IsNot Nothing AndAlso Not selectTypes.Contains(_q.FromClause.ObjectSource.GetRealType(MappingEngine))) Then
                                 cache.validate_AddDeleteType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
                                 cache.validate_UpdateType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
