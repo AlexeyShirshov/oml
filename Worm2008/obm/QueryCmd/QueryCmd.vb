@@ -4449,7 +4449,7 @@ l1:
                 For Each ns As SortExpression In Sort
                     For Each s As SelectUnion In GetSelectedEntities(ns)
                         If s.EntityUnion IsNot Nothing Then
-                            dp.AddBoth(s.EntityUnion.GetRealType(mpe))
+                            dp.AddUpdated(s.EntityUnion.GetRealType(mpe))
                         End If
                     Next
                 Next
