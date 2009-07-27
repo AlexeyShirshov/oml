@@ -7,6 +7,7 @@ Imports Worm
 Imports System.Collections
 Imports Worm.Query.Sorting
 Imports Worm.Expressions2
+Imports Worm.Query
 
 <TestClass()> Public Class TestSort
 
@@ -47,32 +48,58 @@ Imports Worm.Expressions2
     '
 #End Region
 
-    '<TestMethod()> _
-    'Public Sub TestExternalSort()
-    '    Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
-    '        Dim r As ReadOnlyList(Of Entity) = mgr.FindTop(Of Entity)(10, Nothing, Nothing, False)
-    '        Assert.AreEqual(10, r.Count)
+    <TestMethod()> _
+    Public Sub TestModifyResult()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
+            Dim q As QueryCmd = New QueryCmd().Top(10)
+            Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)(mgr)
+            Assert.AreEqual(10, r.Count)
+            Assert.IsFalse(mgr.LastExecutionResult.CacheHit)
 
-    '        r = mgr.FindTop(Of Entity)(10, Nothing, Worm.Query.SCtor.External("xxx", AddressOf ExternalSort), False)
-    '        Assert.AreEqual(1, r.Count)
+            AddHandler q.ModifyResult, AddressOf ExternalSort
+            r = q.ToOrmList(Of Entity)(mgr)
+            Assert.AreEqual(1, r.Count)
+            Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
+        End Using
+    End Sub
 
-    '        r = mgr.FindTop(Of Entity)(10, Nothing, Worm.Query.SCtor.External("yyy", AddressOf ExternalSort).desc, False)
-    '        Assert.AreEqual(2, r.Count)
-    '    End Using
-    'End Sub
+    <TestMethod()> _
+    Public Sub TestModifyResultExpire()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Worm.ObjectMappingEngine("1"))
+            Dim q As QueryCmd = New QueryCmd().Top(10)
+            AddHandler q.ModifyResult, AddressOf ExternalSort2
 
-    'Protected Function ExternalSort(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As SortExpression, ByVal objs As ICollection) As ICollection
-    '    Dim col As IList(Of Entity) = CType(objs, IList(Of Entity))
-    '    Dim r As New List(Of Entity)
-    '    Select Case sort.SortBy
-    '        Case "xxx"
-    '            r.Add(col(0))
-    '        Case "yyy"
-    '            r.Add(col(0))
-    '            r.Add(col(1))
-    '        Case Else
-    '            Throw New NotSupportedException(sort.SortBy)
-    '    End Select
-    '    Return New ReadOnlyList(Of Entity)(r)
-    'End Function
+            Dim r As ReadOnlyList(Of Entity) = q.ToOrmList(Of Entity)(mgr)
+            Assert.AreEqual(10, r.Count)
+            Assert.IsFalse(mgr.LastExecutionResult.CacheHit)
+
+            r = q.ToOrmList(Of Entity)(mgr)
+            Assert.AreEqual(1, r.Count)
+            Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
+
+            Threading.Thread.Sleep(1100)
+
+            r = q.ToOrmList(Of Entity)(mgr)
+            Assert.AreEqual(2, r.Count)
+            Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
+
+        End Using
+    End Sub
+
+    Protected Sub ExternalSort(ByVal sender As QueryCmd, ByVal args As QueryCmd.ModifyResultArgs)
+        args.ReadOnlyList = New ReadOnlyList(Of Entity)(New Entity() {CType(args.ReadOnlyList(0), Entity)})
+    End Sub
+
+    Protected Sub ExternalSort2(ByVal sender As QueryCmd, ByVal args As QueryCmd.ModifyResultArgs)
+        If args.FromCache Then
+            Dim d As Date = CDate(args.CustomInfo)
+            If d < Now Then
+                args.ReadOnlyList = New ReadOnlyList(Of Entity)(New Entity() {CType(args.ReadOnlyList(0), Entity), CType(args.ReadOnlyList(1), Entity)})
+            Else
+                args.ReadOnlyList = New ReadOnlyList(Of Entity)(New Entity() {CType(args.ReadOnlyList(0), Entity)})
+            End If
+        Else
+            args.CustomInfo = Now.AddSeconds(1)
+        End If
+    End Sub
 End Class

@@ -2257,8 +2257,8 @@ l1:
                                 f = True
                             End If
                             se._realAtt = attr
-                            'Else
-                            '    f = se.ObjectSource IsNot Nothing AndAlso Not Object.Equals(se.ObjectSource, se.Into)
+                        Else
+                            f = props Is Nothing OrElse props.Count = 0
                         End If
 
                         If f OrElse (Not String.IsNullOrEmpty(propertyAlias) AndAlso (propertyMap.ContainsKey(propertyAlias))) Then

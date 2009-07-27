@@ -37,7 +37,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.IsTrue(t1.InternalProperties.IsLoaded)
 
@@ -53,11 +53,11 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, True, mgr)
+            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Assert.IsFalse(t2.Tbl.InternalProperties.IsLoaded)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, True, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsFalse(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(t1, t2.Tbl)
 
@@ -125,7 +125,7 @@ Public Class TestSchema
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             col.LoadObjects()
 
-            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True, mgr)
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -144,7 +144,7 @@ Public Class TestSchema
                 If Not l.Contains(j) Then l.Add(j)
             Next
 
-            Dim uol As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(l.ToArray, True, mgr)
+            Dim uol As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(l.ToArray, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
         End Using
     End Sub
 
@@ -160,7 +160,7 @@ Public Class TestSchema
             col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.EntityPropertyAttribute)(New Meta.EntityPropertyAttribute() {ea}))
             Assert.AreEqual(0, col.Count)
 
-            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True, mgr)
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.AreEqual(2, col.Count)
 

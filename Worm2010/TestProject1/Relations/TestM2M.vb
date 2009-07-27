@@ -170,7 +170,7 @@ Imports Worm.Entities.Meta
                 Using s As New ModificationsTracker(mgr)
                     s.Add(e)
 
-                    e2 = s.CreateNewObject(Of Entity4)()
+                    e2 = s.CreateNewKeyEntity(Of Entity4)()
 
                     CType(e, Worm.Entities.IRelations).Add(e2)
 
@@ -214,7 +214,7 @@ Imports Worm.Entities.Meta
                 Dim e2 As Entity4 = Nothing
 
                 Using s As New ModificationsTracker(mgr)
-                    e2 = s.CreateNewObject(Of Entity4)()
+                    e2 = s.CreateNewKeyEntity(Of Entity4)()
 
                     e.GetCmd(GetType(Entity4)).Add(e2)
 
@@ -407,8 +407,8 @@ Imports Worm.Entities.Meta
         Dim q3 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
         q3.From(q1).Union(q2)
 
-        Dim q4 As QueryCmd = CType(q3.Clone, QueryCmd)
-        Dim q5 As QueryCmd = CType(q3.Clone, QueryCmd)
+        'Dim q4 As QueryCmd = CType(q3.Clone, QueryCmd)
+        'Dim q5 As QueryCmd = CType(q3.Clone, QueryCmd)
 
         Dim l As ReadOnlyEntityList(Of Table1) = q3.ToList(Of Table1)()
 

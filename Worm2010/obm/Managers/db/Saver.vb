@@ -869,7 +869,7 @@ l1:
             'End If
         End Sub
 
-        Public Function CreateNewObject(Of T As {IKeyEntity, New})() As T
+        Public Function CreateNewKeyEntity(Of T As {IKeyEntity, New})() As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If

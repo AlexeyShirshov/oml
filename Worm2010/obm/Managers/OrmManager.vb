@@ -115,7 +115,7 @@ Partial Public MustInherit Class OrmManager
         End Set
     End Property
 
-    Public ReadOnly Property GetLastExecutionResult() As ExecutionResult
+    Public ReadOnly Property LastExecutionResult() As ExecutionResult
         Get
             Return _er
         End Get
@@ -854,10 +854,22 @@ Partial Public MustInherit Class OrmManager
         Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
     End Function
 
+    Public Function GetKeyEntityFromCacheLoadedOrDB(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+        Dim o As T = CreateKeyEntity(Of T)(id)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheLoadedOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
+    End Function
+
     Public Function GetKeyEntityFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
         Dim o As IKeyEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
+    End Function
+
+    Public Function GetKeyEntityFromCacheLoadedOrDB(ByVal id As Object, ByVal type As Type) As IKeyEntity
+        Dim o As IKeyEntity = CreateKeyEntity(id, type)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheLoadedOrLoadFromDB(o, GetDictionary(type)), IKeyEntity)
     End Function
 
     Public Function [Get](Of T As {IKeyEntity, New})(ByVal id As Object) As T
@@ -1441,8 +1453,8 @@ l1:
 
         Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
 
-        If ce._expires = Date.MinValue Then
-            ce._expires = _expiresPattern
+        If ce._Expires = Date.MinValue Then
+            ce._Expires = _expiresPattern
         End If
 
         Dim ce_ As UpdatableCachedItem = CType(ce, UpdatableCachedItem)
@@ -1580,6 +1592,10 @@ l1:
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Return _cache.NormalizeObject(obj, False, True, dic, True, Me)
+    End Function
+
+    Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
     End Function
 
     Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
@@ -2302,8 +2318,13 @@ l1:
             If c IsNot Nothing Then
                 For Each rl As Relation In obj.GetAllRelation
                     Dim el As M2MRelation = TryCast(rl, M2MRelation)
+                    If el IsNot Nothing Then
+                        For Each rm As M2MRelation In el.GetRevert(Me)
+                            rm.Update(obj, oldId)
+                        Next
+                    End If
                     'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
-                    If el IsNot Nothing Then c.RemoveM2MQueries(el)
+                    'If el IsNot Nothing Then c.RemoveM2MQueries(el)
 
                     'For Each o As IOrmBase In el.Added
                     '    'Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
@@ -2482,6 +2503,18 @@ l1:
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), ILoadableList)
+    End Function
+
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As ILoadableList
+        Dim rt As Type = Nothing
+        If GetType(IKeyEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyList(Of ))
+        ElseIf GetType(ICachedEntity).IsAssignableFrom(listType) Then
+            rt = GetType(ReadOnlyEntityList(Of ))
+        Else
+            rt = GetType(ReadOnlyObjectList(Of ))
+        End If
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), ILoadableList)
     End Function
 
     Friend Shared Function _CreateReadOnlyList(ByVal t As Type) As IListEdit
