@@ -445,16 +445,17 @@ Namespace Criteria.Joins
 
                 If _l.Property.Entity.IsQuery Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
-                    If executor.GetFieldColumnMap(oschema, lt).ContainsKey(f) Then
-                        If executor Is Nothing Then
-                            map = oschema.GetFieldColumnMap(f)
-                        Else
-                            map = executor.GetFieldColumnMap(oschema, lt)(f)
-                        End If
-                        map = New MapField2Column(Nothing, map.ColumnExpression, _l.Property.Entity.ObjectAlias.Tbl)
-                    Else
-                        map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
-                    End If
+                    'If executor.GetFieldColumnMap(oschema, lt).ContainsKey(f) Then
+                    '    If executor Is Nothing Then
+                    '        map = oschema.GetFieldColumnMap(f)
+                    '    Else
+                    '        map = executor.GetFieldColumnMap(oschema, lt)(f)
+                    '    End If
+                    '    map = New MapField2Column(Nothing, map.ColumnExpression, _l.Property.Entity.ObjectAlias.Tbl)
+                    'Else
+                    '    map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
+                    'End If
+                    map = New MapField2Column(f, executor.FindColumn(schema, f), _l.Property.Entity.ObjectAlias.Tbl)
                     os = _l.Property.Entity
                 Else 'If _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
@@ -508,16 +509,17 @@ Namespace Criteria.Joins
                 End If
                 If _r.Property.Entity.IsQuery Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
-                    If executor.GetFieldColumnMap(oschema, rt).ContainsKey(f) Then
-                        If executor Is Nothing Then
-                            map2 = oschema.GetFieldColumnMap(f)
-                        Else
-                            map2 = executor.GetFieldColumnMap(oschema, rt)(f)
-                        End If
-                        map2 = New MapField2Column(Nothing, map2.ColumnExpression, _r.Property.Entity.ObjectAlias.Tbl)
-                    Else
-                        map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
-                    End If
+                    'If executor.GetFieldColumnMap(oschema, rt).ContainsKey(f) Then
+                    '    If executor Is Nothing Then
+                    '        map2 = oschema.GetFieldColumnMap(f)
+                    '    Else
+                    '        map2 = executor.GetFieldColumnMap(oschema, rt)(f)
+                    '    End If
+                    '    map2 = New MapField2Column(Nothing, map2.ColumnExpression, _r.Property.Entity.ObjectAlias.Tbl)
+                    'Else
+                    '    map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
+                    'End If
+                    map2 = New MapField2Column(f, executor.FindColumn(schema, f), _r.Property.Entity.ObjectAlias.Tbl)
                     os2 = _r.Property.Entity
                 Else 'If _r.Property.Entity IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)

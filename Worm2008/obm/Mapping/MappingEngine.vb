@@ -1729,7 +1729,7 @@ Public Class ObjectMappingEngine
                         If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea1.EntityName) Then
                             If names.Contains(ea1.EntityName) Then
                                 Dim currentType As Pair(Of Type, EntityAttribute) = CType(names(ea1.EntityName), Pair(Of Type, EntityAttribute))
-                                Dim e As EntityAttribute = Nothing
+                                Dim e As EntityAttribute = currentType.Second
                                 If currentType.Second.Version = mpe._version Then
                                     If ea1.Version = mpe._version Then
                                         If currentType.First.IsAssignableFrom(tp) Then
@@ -1814,7 +1814,7 @@ Public Class ObjectMappingEngine
                             If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
                                 If names.Contains(ea2.EntityName) Then
                                     Dim currentType As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
-                                    Dim e As EntityAttribute = Nothing
+                                    Dim e As EntityAttribute = currentType.Second
                                     If currentType.Second.Version = mpe._version Then
                                         If ea2.Version = mpe._version Then
                                             If currentType.First.IsAssignableFrom(tp) Then

@@ -245,6 +245,20 @@ Namespace Query
             End If
         End Function
 
+        Public Shared Function TypeEquals(ByVal mpe As ObjectMappingEngine, ByVal e1 As EntityUnion, ByVal e2 As EntityUnion) As Boolean
+            If Not String.IsNullOrEmpty(e1._en) Then
+                If Not String.IsNullOrEmpty(e2._en) Then
+                    Return e1._en = e2._en
+                Else
+                    Return mpe.GetTypeByEntityName(e1._en) Is e2.GetRealType(mpe)
+                End If
+            ElseIf String.IsNullOrEmpty(e2._en) Then
+                Return e1.GetRealType(mpe) Is e2.GetRealType(mpe)
+            Else
+                Return EntityNameEquals(mpe, e2, e1)
+            End If
+        End Function
+
         Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _a IsNot Nothing AndAlso _a.Query IsNot Nothing Then
                 _a.Query.Prepare(executor, schema, filterInfo, stmt, isAnonym)

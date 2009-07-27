@@ -1174,7 +1174,7 @@ l1:
                     selSchema = _types(tos)
 
                     For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If Not tp.First.Equals(tos) AndAlso Not HasInQuery(tp.First) Then
+                        If Not EntityUnion.TypeEquals(mpe, tp.First, tos) AndAlso Not HasInQuery(tp.First) Then
                             If (_appendMain Is Nothing OrElse Not _appendMain) AndAlso IsFTS Then
                                 _appendMain = True
                             End If

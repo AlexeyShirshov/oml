@@ -123,6 +123,53 @@ Namespace Query
         End Function
     End Class
 
+    Public Class CombineExecutor
+        Implements IExecutionContext
+
+        Private _f As IExecutionContext
+        Private _s As IExecutionContext
+
+        Public Sub New(ByVal execCtx As IExecutionContext)
+            _f = execCtx
+        End Sub
+
+        Public Sub New(ByVal f As IExecutionContext, ByVal s As IExecutionContext)
+            _f = f
+            _s = s
+        End Sub
+
+        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
+            Dim c As String = _f.FindColumn(mpe, p)
+            If String.IsNullOrEmpty(c) AndAlso _s IsNot Nothing Then
+                c = _s.FindColumn(mpe, p)
+            End If
+            Return c
+        End Function
+
+        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
+            Dim c As IEntitySchema = _f.GetEntitySchema(mpe, t)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
+                c = _s.GetEntitySchema(mpe, t)
+            End If
+            Return c
+        End Function
+
+        Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements IExecutionContext.GetFieldColumnMap
+            Dim c As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) = _f.GetFieldColumnMap(oschema, t)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
+                c = _s.GetFieldColumnMap(oschema, t)
+            End If
+            Return c
+        End Function
+
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements IExecutionContext.ReplaceSchema
+            _f.ReplaceSchema(mpe, t, newMap)
+            If _s IsNot Nothing Then
+                _s.ReplaceSchema(mpe, t, newMap)
+            End If
+        End Sub
+    End Class
+
     <Serializable()> _
     Public Class Top
         Private _perc As Boolean
