@@ -556,13 +556,13 @@ namespace Worm.CodeGen.Core
                         if (propertyAliasClass != null)
                         {
                             var createMethod = new CodeMemberMethod
-                                                   {
-                                                       Name = "CreateAlias",
-                                                       ReturnType =
-                                                        new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
-                                                                              propertyAliasClass.Name),
-                                                       Attributes = MemberAttributes.Public | MemberAttributes.Static | MemberAttributes.Final,
-                                                   };
+                           {
+                               Name = "CreateAlias",
+                               ReturnType =
+                                new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
+                                                      propertyAliasClass.Name),
+                               Attributes = MemberAttributes.Public | MemberAttributes.Static | MemberAttributes.Final,
+                           };
                             if (entity.BaseEntity != null)
                                 createMethod.Attributes |= MemberAttributes.New;
                             createMethod.Statements.Add(
@@ -573,13 +573,13 @@ namespace Worm.CodeGen.Core
                             entityClass.Members.Add(createMethod);
 
                             var getMethod = new CodeMemberMethod
-                                                {
-                                                    Name = "GetAlias",
-                                                    ReturnType =
-                                                        new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
-                                                                              instancedPropertyAliasClass.Name),
-                                                    Attributes = MemberAttributes.Public | MemberAttributes.Static | MemberAttributes.Final,
-                                                };
+                            {
+                                Name = "WrapAlias",
+                                ReturnType =
+                                    new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity) + "." +
+                                                          instancedPropertyAliasClass.Name),
+                                Attributes = MemberAttributes.Public | MemberAttributes.Static | MemberAttributes.Final,
+                            };
 
                             if (entity.BaseEntity != null)
                                 getMethod.Attributes |= MemberAttributes.New;
