@@ -464,7 +464,7 @@ Namespace Criteria.Joins
                     Else
                         map = executor.GetFieldColumnMap(oschema, lt)(f)
                     End If
-                    If _l.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _l.Property.Entity) Then
+                    If almgr.ContainsKey(map.Table, _l.Property.Entity) Then
                         os = _l.Property.Entity
                     ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _eu) Then
                         os = _eu
@@ -528,7 +528,7 @@ Namespace Criteria.Joins
                     Else
                         map2 = executor.GetFieldColumnMap(oschema, rt)(f)
                     End If
-                    If _r.Property.Entity.ObjectAlias IsNot Nothing AndAlso almgr.ContainsKey(map.Table, _r.Property.Entity) Then
+                    If almgr.ContainsKey(map.Table, _r.Property.Entity) Then
                         os2 = _r.Property.Entity
                     ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map2.Table, _eu) Then
                         os2 = _eu
