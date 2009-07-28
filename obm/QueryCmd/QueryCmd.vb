@@ -4350,30 +4350,32 @@ l1:
             Return CType(_Clone(), QueryCmd)
         End Function
 
-        Private Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
-
+        Private Function _FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
             For Each se As SelectExpression In _sl
                 'If se.PropType = PropType.ObjectProperty Then
                 If se.GetIntoPropertyAlias = p Then
                     If Not String.IsNullOrEmpty(se.ColumnAlias) Then
                         Return se.ColumnAlias
                     Else
-                        Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
-                        'If col.Count <> 1 Then
-                        '    Throw New QueryCmdException("", Me)
-                        'End If
-                        For Each su As SelectUnion In col
-                            If su.EntityUnion IsNot Nothing Then
-                                Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
-                                If Not String.IsNullOrEmpty(map.ColumnName) Then
-                                    Return map.ColumnName
-                                Else
-                                    Return map.ColumnExpression
+                        Dim te As TableExpression = TryCast(se.Operand, TableExpression)
+                        If te IsNot Nothing Then
+                            Return te.SourceField
+                        Else
+                            Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
+                            'If col.Count <> 1 Then
+                            '    Throw New QueryCmdException("", Me)
+                            'End If
+                            For Each su As SelectUnion In col
+                                If su.EntityUnion IsNot Nothing Then
+                                    Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
+                                    If Not String.IsNullOrEmpty(map.ColumnName) Then
+                                        Return map.ColumnName
+                                    Else
+                                        Return map.ColumnExpression
+                                    End If
                                 End If
-                                'Else
-                                '    Throw New QueryCmdException("", Me)
-                            End If
-                        Next
+                            Next
+                        End If
                     End If
                     'Else
                     '    If se.PropertyAlias = p Then
@@ -4393,12 +4395,24 @@ l1:
                 '    End If
                 'End If
             Next
+            Return Nothing
+        End Function
 
-            If _from.AnyQuery Is Nothing Then
-                Throw New QueryCmdException("Couldn't find column for property " & p, Me)
-            Else
-                Return _from.AnyQuery.FindColumn(mpe, p)
+        Private Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
+            Dim c As String = Nothing
+            If _from.AnyQuery IsNot Nothing Then
+                c = _from.AnyQuery._FindColumn(mpe, p)
             End If
+
+            If String.IsNullOrEmpty(c) Then
+                c = _FindColumn(mpe, p)
+
+                If String.IsNullOrEmpty(c) Then
+                    Throw New QueryCmdException("Couldn't find column for property " & p, Me)
+                End If
+            End If
+
+            Return c
         End Function
 
         Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get

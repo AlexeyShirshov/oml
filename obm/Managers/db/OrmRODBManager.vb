@@ -2209,18 +2209,18 @@ l1:
                         If c Is Nothing Then
                             'Dim props As IDictionary = MappingEngine.GetProperties(original_type, oschema)
                             If props IsNot Nothing AndAlso props.Count > 0 Then
-                                'If selectList.Count = 1 AndAlso (se.ObjectSource Is Nothing OrElse se.ObjectSource.GetRealType(MappingEngine) IsNot original_type) Then
-                                '    If attr = Field2DbRelations.None Then
-                                '        attr = Field2DbRelations.PK
-                                '    End If
-                                '    If se.Into Is Nothing Then
-                                '        Dim l As List(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(original_type, oschema)
-                                '        propertyAlias = l(0).PropertyAlias
-                                '        se.IntoPropertyAlias = propertyAlias
-                                '        se.Into = New EntityUnion(original_type)
-                                '        f = True
-                                '    End If
-                                'End If
+                                If String.IsNullOrEmpty(propertyAlias) AndAlso selectList.Count = 1 Then
+                                    If attr = Field2DbRelations.None Then
+                                        attr = Field2DbRelations.PK
+                                    End If
+                                    'If se.Into Is Nothing Then
+                                    Dim l As List(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(original_type, oschema)
+                                    propertyAlias = l(0).PropertyAlias
+                                    '    se.IntoPropertyAlias = propertyAlias
+                                    '    se.Into = New EntityUnion(original_type)
+                                    f = True
+                                    'End If
+                                End If
                                 For Each de As DictionaryEntry In props
                                     c = CType(de.Key, EntityPropertyAttribute)
                                     If c.PropertyAlias = propertyAlias Then
@@ -2230,12 +2230,6 @@ l1:
                                         Exit For
                                     End If
                                 Next
-                                'If propertyMap.ContainsKey(propertyAlias) Then
-                                '    Dim nattr As Field2DbRelations = propertyMap(propertyAlias).GetAttributes(c)
-                                '    If nattr <> Field2DbRelations.None Then
-                                '        attr = nattr
-                                '    End If
-                                'End If
                                 If attr = Field2DbRelations.None Then
                                     attr = se.Attributes
                                 End If
