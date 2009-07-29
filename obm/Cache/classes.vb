@@ -542,13 +542,13 @@ Namespace Cache
         End Sub
 
         Public Sub AddDeleted(ByVal t As Type)
-            If Not _d.Contains(t) Then
+            If t IsNot Nothing AndAlso Not _d.Contains(t) Then
                 _d.Add(t)
             End If
         End Sub
 
         Public Sub AddUpdated(ByVal t As Type)
-            If Not _u.Contains(t) Then
+            If t IsNot Nothing AndAlso Not _u.Contains(t) Then
                 _u.Add(t)
             End If
         End Sub
