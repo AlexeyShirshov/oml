@@ -248,50 +248,6 @@ Imports Worm.Entities
         Assert.AreEqual(2, r.Count)
     End Sub
 
-
-    <TestMethod()> Public Sub TestLoadBatchValidate()
-        Dim cache As New OrmCache
-        Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
-
-        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New MSSQL2005Generator))
-
-        Dim t1 As Table1 = q1.GetByID(Of Table1)(1)
-
-        Dim t() As Table1 = New Table1() {t1, q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
-
-        Table1.Table2Relation.Load(Of Table1, Table2)(t, False)
-
-        Assert.IsTrue(t1.Table2s.IsInCache)
-
-        Dim tables2 As RelationCmd = t1.Table2s
-        Assert.AreEqual(2, tables2.ToList(Of Table2).Count)
-        Assert.IsTrue(tables2.LastExecutionResult.CacheHit)
-
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(mpe, cache)
-            mgr.BeginTransaction()
-            Try
-                Using mt As New ModificationsTracker(mgr)
-                    Dim t2 As Table2 = mt.CreateNewKeyEntity(Of Table2)()
-                    tables2.Add(t2)
-                    Assert.AreSame(t1, t2.Tbl)
-
-                    Assert.AreEqual(3, tables2.ToList(Of Table2).Count)
-                    Assert.IsTrue(tables2.LastExecutionResult.CacheHit)
-
-                    mt.AcceptModifications()
-                End Using
-
-                Assert.IsFalse(tables2.haschanges)
-                Dim r As ReadOnlyEntityList(Of Table2) = tables2.ToList(Of Table2)(mgr)
-                Assert.AreEqual(3, r.Count)
-                Assert.IsTrue(tables2.LastExecutionResult.CacheHit)
-
-            Finally
-                mgr.Rollback()
-            End Try
-        End Using
-    End Sub
-
     '<TestMethod()> Public Sub TestLoadBatchValidate2()
     '    Dim cache As New OrmCache
     '    Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")

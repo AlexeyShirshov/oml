@@ -212,14 +212,14 @@ Namespace Query
         Private _calc As Type
         Private _ver As String
 
-        Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-            If _calc Is Nothing OrElse _ver <> schema.Version Then
+        Public Function GetRealType(ByVal mpe As ObjectMappingEngine) As Type
+            If _calc Is Nothing OrElse _ver <> mpe.Version Then
                 _calc = AnyType
-                _ver = schema.Version
+                _ver = mpe.Version
                 If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
-                    _calc = schema.GetTypeByEntityName(AnyEntityName)
+                    _calc = mpe.GetTypeByEntityName(AnyEntityName)
                 ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
-                    _calc = _a.Query.GetSelectedOS.GetRealType(schema)
+                    _calc = _a.Query.GetSelectedOS.GetRealType(mpe)
                 End If
             End If
             Return _calc
