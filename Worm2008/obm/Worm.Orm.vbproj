@@ -178,12 +178,14 @@
     <Compile Include="Query\Expressions\AggregateExpression.vb" />
     <Compile Include="Query\Expressions\BinaryExpression.vb" />
     <Compile Include="Query\Expressions\EntityExpression.vb" />
+    <Compile Include="Query\Expressions\helper.vb" />
     <Compile Include="Query\Expressions\Interfaces.vb" />
     <Compile Include="Query\Expressions\ParameterExpression.vb" />
     <Compile Include="Query\Expressions\Primitive.vb" />
     <Compile Include="Query\Expressions\SelectedFieldExpression.vb" />
     <Compile Include="Query\Expressions\SelectExpressions.vb" />
     <Compile Include="Query\Expressions\TableExpression.vb" />
+    <Compile Include="Query\Expressions\UnaryExpression.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />

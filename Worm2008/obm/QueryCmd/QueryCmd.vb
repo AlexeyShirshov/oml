@@ -1044,7 +1044,7 @@ l1:
                                     p = d.Value
                                 End If
                             Next
-                            AddTypeFields(mpe, _sl, tp, Nothing, isAnonym, stmt)
+                            AddTypeFields(mpe, _sl, tp, If(p IsNot Nothing, p.First, Nothing), isAnonym, stmt)
                             'If tp.Second Then
                             '    Throw New NotImplementedException
                             'Else
@@ -1064,7 +1064,8 @@ l1:
                         End If
 
                         For Each de As KeyValuePair(Of EntityUnion, IEntitySchema) In _types
-                            Dim t As Type = de.Key.GetRealType(mpe)
+                            Dim deEU As EntityUnion = de.Key
+                            Dim t As Type = deEU.GetRealType(mpe)
                             If Not _pdic.ContainsKey(t) Then
                                 'If Not GetType(IPropertyLazyLoad).IsAssignableFrom(t) Then
                                 Dim hasCmplx As Boolean = False
@@ -1073,7 +1074,11 @@ l1:
                                     Dim pit As Type = pi.PropertyType
                                     Dim ep As EntityPropertyAttribute = CType(tde.Key, EntityPropertyAttribute)
                                     If Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
-                                        Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) se.GetIntoPropertyAlias = ep.PropertyAlias)
+                                        Dim selex As SelectExpression = _sl.Find(Function(se As SelectExpression) _
+                                            TypeOf se.Operand Is EntityExpression AndAlso _
+                                            CType(se.Operand, EntityExpression).ObjectProperty.PropertyAlias = ep.PropertyAlias) 'AndAlso _
+                                        'CType(se.Operand, EntityExpression).ObjectProperty.Entity.Equals(deEU))
+
                                         If selex IsNot Nothing Then
                                             hasCmplx = _PrepareExtracted(mpe, filterInfo, f, eudic, de, t, pit, ep, selex)
                                         End If
@@ -1086,7 +1091,7 @@ l1:
                                                 If p.Second.Contains(ep.PropertyAlias) Then
                                                     hasCmplx = _PrepareExtracted(mpe, filterInfo, f, eudic, de, t, pit, ep, New SelectExpression(t, ep.PropertyAlias))
                                                     If Not hasCmplx AndAlso Not _sl.Exists(Function(se) se.GetIntoPropertyAlias = ep.PropertyAlias) Then
-                                                        _sl.Add(New SelectExpression(de.Key, ep.PropertyAlias) With { _
+                                                        _sl.Add(New SelectExpression(deEU, ep.PropertyAlias) With { _
                                                             .Attributes = ep.Behavior _
                                                         })
                                                         '.Column = ep.Column, _
@@ -1097,7 +1102,7 @@ l1:
                                         Else
                                             Dim prop As String = Nothing
                                             For Each p As Pair(Of String, EntityUnion) In eudic.Values
-                                                If p.Second Is de.Key Then
+                                                If p.Second Is deEU Then
                                                     prop = p.First
                                                     Exit For
                                                 End If
@@ -1198,9 +1203,10 @@ l1:
             Dim eu As EntityUnion = Nothing
             Dim p As Pair(Of String, EntityUnion) = Nothing
             Dim hasCmplx As Boolean = False
-            If Not eudic.TryGetValue(selex.GetIntoPropertyAlias & "$" & pit.ToString, p) Then
+            Dim prop As String = CType(selex.Operand, EntityExpression).ObjectProperty.PropertyAlias
+            If Not eudic.TryGetValue(prop & "$" & pit.ToString, p) Then
                 eu = New EntityUnion(New QueryAlias(pit))
-                eudic(selex.GetIntoPropertyAlias & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(selex.GetIntoPropertyAlias, eu)
+                eudic(prop & "$" & pit.ToString) = New Pair(Of String, EntityUnion)(prop, eu)
             Else
                 eu = p.Second
             End If
@@ -1418,7 +1424,12 @@ l1:
                 For Each se As SelectExpression In l
                     Dim prop As String = se.GetIntoPropertyAlias
                     If pod Then
-                        se.IntoPropertyAlias = t.Name & "-" & prop
+                        Dim rp As String = prop
+                        Dim ee As EntityExpression = TryCast(se.Operand, EntityExpression)
+                        If ee IsNot Nothing Then
+                            rp = ee.ObjectProperty.PropertyAlias
+                        End If
+                        se.IntoPropertyAlias = t.Name & "-" & rp
                         If Not String.IsNullOrEmpty(pref) Then
                             se.IntoPropertyAlias = "%" & pref & "-" & se.IntoPropertyAlias
                         End If
@@ -4421,6 +4432,7 @@ l1:
             'End If
 
             Dim dp As New Cache.DependentTypes
+            Dim singleType As Boolean = True
             If _joins IsNot Nothing Then
                 For Each j As QueryJoin In _joins
                     If j.ObjectSource IsNot Nothing Then
@@ -4433,16 +4445,19 @@ l1:
                         'End If
                         If t IsNot Nothing Then
                             dp.AddBoth(t)
+                            singleType = False
                         End If
                     End If
                 Next
             End If
 
-            Dim types As ICollection(Of Type) = Nothing
-            Dim singleType As Boolean = GetSelectedTypes(mpe, types)
+            Dim fromType As Type = Nothing
+            If FromClause.QueryEU IsNot Nothing Then
+                fromType = FromClause.QueryEU.GetRealType(mpe)
+            End If
 
             If singleType AndAlso Not dp.IsEmpty Then
-                dp.AddBoth(types)
+                dp.AddBoth(fromType)
             End If
 
             If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
@@ -4450,7 +4465,7 @@ l1:
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                     If Cache.IsCalculated(fdp) Then
                         If singleType Then
-                            dp.AddBoth(types)
+                            dp.AddBoth(fromType)
                         End If
                         dp.Merge(fdp)
                         'Else
@@ -4461,9 +4476,27 @@ l1:
 
             If _order IsNot Nothing Then
                 For Each ns As SortExpression In Sort
-                    For Each s As SelectUnion In GetSelectedEntities(ns)
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, ns)
+                    If Cache.IsCalculated(fdp) Then
+                        If singleType Then
+                            dp.AddBoth(fromType)
+                        End If
+                        dp.Merge(fdp)
+                    Else
+                        For Each s As SelectUnion In GetSelectedEntities(ns)
+                            If s.EntityUnion IsNot Nothing Then
+                                dp.AddUpdated(s.EntityUnion.GetRealType(mpe))
+                            End If
+                        Next
+                    End If
+                Next
+            End If
+
+            If _group IsNot Nothing Then
+                For Each ge As IExpression In Group.GetExpressions
+                    For Each s As SelectUnion In GetSelectedEntities(ge)
                         If s.EntityUnion IsNot Nothing Then
-                            dp.AddUpdated(s.EntityUnion.GetRealType(mpe))
+                            dp.AddDeleted(s.EntityUnion.GetRealType(mpe))
                         End If
                     Next
                 Next
