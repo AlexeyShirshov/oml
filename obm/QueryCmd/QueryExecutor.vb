@@ -204,6 +204,8 @@ l2:
             If d IsNot Nothing Then
                 If GetType(IReadOnlyList).IsAssignableFrom(l.GetType) Then
                     ce = New UpdatableCachedItem(l, mgr)
+                    CType(ce, UpdatableCachedItem).Filter = query._f
+                    CType(ce, UpdatableCachedItem).Sort = query.Sort
                 ElseIf GetType(ReadonlyMatrix).IsAssignableFrom(l.GetType) Then
                     ce = New CachedItemBase(CType(l, ReadonlyMatrix), mgr.Cache)
                 Else

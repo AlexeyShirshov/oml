@@ -433,54 +433,60 @@ Namespace Entities
 
             For Each rl As Relation In _relations
                 Dim el As M2MRelation = TryCast(rl, M2MRelation)
-                If el Is Nothing Then Continue For
-                SyncLock "1efb139gf8bh"
-                    For Each o As IKeyEntity In el.Added
-                        'Dim otherKey As String = el.Key
-                        'If Me.GetType Is o.GetType Then
-                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        'End If
-                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
-                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
-                        m.Added.Remove(Me)
-                        m._savedIds.Remove(Me)
-                        If updateCache AndAlso cache IsNot Nothing Then
-                            cache.RemoveM2MQueries(m)
-                        Else
-                            Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                            If Not l.Contains(m) Then
-                                l.Add(m)
-                            End If
-                        End If
-                    Next
-                    el.Added.Clear()
 
-                    For Each o As IKeyEntity In el.Deleted
-                        'Dim otherKey As String = el.Key
-                        'If Me.GetType Is o.GetType Then
-                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        'End If
-                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
-                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
-                        m.Deleted.Remove(Me)
+                SyncLock "1efb139gf8bh"
+                    If el IsNot Nothing Then
+                        For Each o As IKeyEntity In rl.Added
+                            'Dim otherKey As String = el.Key
+                            'If Me.GetType Is o.GetType Then
+                            '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                            'End If
+                            'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                            Dim m As M2MRelation = el.GetRevert(Nothing, o)
+                            m.Added.Remove(Me)
+                            m._savedIds.Remove(Me)
+                            If updateCache AndAlso cache IsNot Nothing Then
+                                cache.RemoveM2MQueries(m)
+                            Else
+                                Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                                If Not l.Contains(m) Then
+                                    l.Add(m)
+                                End If
+                            End If
+                        Next
+                    End If
+                    rl.Added.Clear()
+
+                    If el IsNot Nothing Then
+                        For Each o As IKeyEntity In rl.Deleted
+                            'Dim otherKey As String = el.Key
+                            'If Me.GetType Is o.GetType Then
+                            '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                            'End If
+                            'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                            Dim m As M2MRelation = el.GetRevert(Nothing, o)
+                            m.Deleted.Remove(Me)
+                            If updateCache AndAlso cache IsNot Nothing Then
+                                cache.RemoveM2MQueries(el)
+                            Else
+                                Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                                If Not l.Contains(m) Then
+                                    l.Add(m)
+                                End If
+                            End If
+                        Next
+                    End If
+                    rl.Deleted.Clear()
+
+                    If el IsNot Nothing Then
+                        el.Reject2()
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
                         Else
                             Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                            If Not l.Contains(m) Then
-                                l.Add(m)
+                            If Not l.Contains(el) Then
+                                l.Add(el)
                             End If
-                        End If
-                    Next
-                    el.Deleted.Clear()
-                    el.Reject2()
-
-                    If updateCache AndAlso cache IsNot Nothing Then
-                        cache.RemoveM2MQueries(el)
-                    Else
-                        Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                        If Not l.Contains(el) Then
-                            l.Add(el)
                         End If
                     End If
                 End SyncLock

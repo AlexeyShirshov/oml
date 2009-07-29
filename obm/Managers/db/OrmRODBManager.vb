@@ -2214,6 +2214,7 @@ l1:
                                         attr = Field2DbRelations.PK
                                     End If
                                     'If se.Into Is Nothing Then
+l1:
                                     Dim l As List(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(original_type, oschema)
                                     propertyAlias = l(0).PropertyAlias
                                     '    se.IntoPropertyAlias = propertyAlias
@@ -2222,14 +2223,20 @@ l1:
                                     'End If
                                 End If
                                 For Each de As DictionaryEntry In props
-                                    c = CType(de.Key, EntityPropertyAttribute)
-                                    If c.PropertyAlias = propertyAlias Then
+                                    Dim cc As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+                                    If cc.PropertyAlias = propertyAlias Then
                                         pi = CType(de.Value, Reflection.PropertyInfo)
-                                        se._c = c
+                                        se._c = cc
                                         se._pi = pi
+                                        c = cc
                                         Exit For
                                     End If
                                 Next
+
+                                If Not f AndAlso c Is Nothing AndAlso selectList.Count = 1 AndAlso se.GetIntoEntityUnion.GetRealType(MappingEngine) IsNot original_type Then
+                                    GoTo l1
+                                End If
+
                                 If attr = Field2DbRelations.None Then
                                     attr = se.Attributes
                                 End If

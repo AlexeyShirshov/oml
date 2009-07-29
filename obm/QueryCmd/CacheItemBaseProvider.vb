@@ -175,10 +175,8 @@ Namespace Query
                         Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate(MappingEngine)
                         If hasSelectTypes AndAlso evalSort Then
                             added = cache.validate_AddCalculatedType(selectTypes, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
-                            If uce IsNot Nothing Then
-                                If _q.Filter IsNot Nothing Then
-                                    uce.Filter = _q.Filter.Filter
-                                End If
+                            If uce IsNot Nothing AndAlso added Then
+                                uce.Filter = fl
                             End If
                         End If
 
