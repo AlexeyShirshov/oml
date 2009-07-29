@@ -2233,7 +2233,7 @@ l1:
                                     End If
                                 Next
 
-                                If Not f AndAlso c Is Nothing AndAlso selectList.Count = 1 AndAlso se.GetIntoEntityUnion.GetRealType(MappingEngine) IsNot original_type Then
+                                If Not f AndAlso c Is Nothing AndAlso selectList.Count = 1 AndAlso (se.GetIntoEntityUnion Is Nothing OrElse se.GetIntoEntityUnion.GetRealType(MappingEngine) IsNot original_type) Then
                                     GoTo l1
                                 End If
 
