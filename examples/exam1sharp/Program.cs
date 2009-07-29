@@ -205,6 +205,8 @@ namespace exam1sharp
                 .Where(Ctor.prop(typeof(SalesOrder), "SalesOrderDetailID").eq(1))
                 .Single() as SalesOrder;
 
+            Console.WriteLine("Territory name: {0}", o.Territory.Name);
+
             o.OrderQty += 10;
             o.OrderDate = new DateTime(2001, 07, 5);
 

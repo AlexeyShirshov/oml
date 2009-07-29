@@ -6,41 +6,38 @@ Worm.Orm
 </name>
 </assembly>
 <members>
-<member name="F:Worm.Cache.OrmCache._invalidate">
+<member name="M:Worm.Entities.KeyEntityBase.Equals(System.Object)">
+	<param name="obj">The System.Object to compare with the current System.Object.</param>
+	<returns>true if the specified System.Object is equal to the current System.Object; otherwise, false.</returns>
+</member><member name="M:Worm.Entities.KeyEntityBase.GetHashCode">
+	<returns>A hash code for the current System.Object.</returns>
+</member><member name="T:Worm.Entities.KeyEntityBase">
 	<summary>
- dictionary.key - тип
- dictionary.value - массив изменяемых полей
+ Базовый класс для всех типов
  </summary>
-	<remarks></remarks>
-</member><member name="F:Worm.Cache.OrmCache._field_depends">
+	<remarks>
+ Класс является потокобезопасным как на чтение так и на запись.
+ Предоставляет следующий функционал:
+ XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="M:Worm.Entities.CachedEntity.ReadXml(System.Xml.XmlReader)"/> и <see cref="M:Worm.Entities.CachedEntity.WriteXml(System.Xml.XmlWriter)"/>.
+ <code lang="vb">Это код</code>
+		<example>Это пример</example>
+	</remarks>
+</member><member name="F:Worm.Entities.ObjectState.None">
 	<summary>
- pair.first - поле
- pair.second - тип
- зависит от dictionary.key - ключ в кеше и dictionary.value - id в кеше
+ Объект загружен из БД
  </summary>
-	<remarks></remarks>
-</member><member name="M:Worm.Cache.OrmCache.AddDependType(System.Object,System.Type,System.String,System.String,Worm.Criteria.Core.IFilter,Worm.ObjectMappingEngine)">
+</member><member name="F:Worm.Entities.ObjectState.NotFoundInSource">
 	<summary>
- Зависимость выбираемого типа от ключа в кеше
+ Попытка загрузить данный обьект из БД не удалась. Это может быть из-за того, что, например, он был удален.
  </summary>
-	<param name="t"></param>
-	<param name="key"></param>
-	<param name="id"></param>
-	<remarks></remarks>
-</member><member name="M:Worm.Cache.OrmCache.AddDepend(Worm.Entities.ICachedEntity,System.String,System.String)">
+</member><member name="F:Worm.Entities.ObjectState.Clone">
 	<summary>
- Зависимость экземпляра объекта от ключа (объект присутствует в фильтре)
+ Объект является копией редактируемого объекта
  </summary>
-	<param name="obj"></param>
-	<param name="key"></param>
-	<param name="id"></param>
-	<remarks></remarks>
-</member><member name="M:Worm.Cache.OrmCache.RemoveDepends(Worm.Entities.ICachedEntity)">
+</member><member name="F:Worm.Entities.ObjectState.NotLoaded">
 	<summary>
- Удаляет все ключи в кеше, которые зависят от данного объекта
+ Специальное состояние, между Created и None, когда объект ожидается что есть в базе, но еще не загружен
  </summary>
-	<param name="obj"></param>
-	<remarks></remarks>
 </member><member name="M:Worm.Database.SQLGenerator.Sort(System.Collections.Generic.IDictionary{Worm.Entities.Meta.SourceFragment,System.Collections.Generic.List{Worm.Criteria.Core.ITemplateFilter}},Worm.Entities.Meta.SourceFragment[])">
 	<summary>
  Сортирует словарь в соответствии с порядком ключей в коллекции
@@ -86,49 +83,38 @@ Worm.Orm
 	<param name="sch"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:Worm.IPrepareTable.AddTable(Worm.Entities.Meta.SourceFragment@,Worm.Query.EntityUnion)">
+</member><member name="P:Worm.Entities.Meta.EntityPropertyAttribute.PropertyAlias">
 	<summary>
- Добавляет таблицу в словарь и создает текстовое представление таблицы (псевдоним)
+ Имя поля класса, которое мапится на колонку в БД
  </summary>
-	<param name="table">Таблица</param>
-	<returns>Возвращает псевдоним таблицы</returns>
-	<remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
-</member><member name="M:Worm.IPrepareTable.Replace(Worm.ObjectMappingEngine,Worm.StmtGenerator,Worm.Entities.Meta.SourceFragment,Worm.Query.EntityUnion,System.Text.StringBuilder)">
+</member><member name="P:Worm.Entities.Meta.EntityPropertyAttribute.ColumnName">
 	<summary>
- Заменяет в <see cref="T:System.Text.StringBuilder"/> названия таблиц на псевдонимы
+ Column alias
  </summary>
-	<param name="schema">Схема</param>
-	<param name="table">Таблица</param>
-	<param name="sb">StringBuilder</param>
+	<value></value>
+	<returns>Column alias</returns>
 	<remarks></remarks>
-</member><member name="T:Worm.IPrepareTable">
+</member><member name="F:Worm.Entities.Meta.Field2DbRelations.RowVersion">
 	<summary>
- Интерфейс для "подготовки" таблицы перед генерацией запроса
+ RV or [ReadOnly] or SyncUpdate or SyncInsert
  </summary>
-	<remarks>Используется для реализации функций в качестве таблиц, разрешения схем таблицы (schema resolve)</remarks>
-</member><member name="F:Worm.Misc.DicIndexBase._parent">
+	<remarks></remarks>
+</member><member name="F:Worm.Entities.Meta.Field2DbRelations.PrimaryKey">
 	<summary>
- родительский элемент
+ PK or SyncInsert or [ReadOnly]
  </summary>
-</member><member name="F:Worm.Misc.DicIndexBase._count">
+	<remarks></remarks>
+</member><member name="M:Worm.OrmManager.LoadObjects``1(Worm.ReadOnlyEntityList{``0},System.String[],System.Int32,System.Int32)">
 	<summary>
- количество элементов на данном уровне
+ Load parent objects from collection of childs
  </summary>
-</member><member name="M:Worm.Misc.DicIndexBase.GetHashCode">
-	<returns>A hash code for the current System.Object.</returns>
-</member><member name="P:Worm.My.Resources.Resources.ResourceManager">
-	<summary>
-  Returns the cached ResourceManager instance used by this class.
-</summary>
-</member><member name="P:Worm.My.Resources.Resources.Culture">
-	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
-</summary>
-</member><member name="T:Worm.My.Resources.Resources">
-	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
-</summary>
+	<typeparam name="T">Type of child collection</typeparam>
+	<param name="objs">Child collection</param>
+	<param name="fields">Array of properties in child type, used to get parent object</param>
+	<param name="start">Point in child collection from where start to load</param>
+	<param name="length">Length of loaded window</param>
+	<returns>Collection of child objects</returns>
+	<remarks></remarks>
 </member><member name="M:Worm.ObjectMappingException.#ctor">
 	<summary>
  Конструктор по умолчанию
@@ -158,6 +144,27 @@ Worm.Orm
 	</summary>
 	<remarks>Класс управляет версиями схем объектов, предоставляет удобные обертки для методов
  <see cref="T:Worm.Entities.Meta.IEntitySchema"/> через тип объекта.</remarks>
+</member><member name="P:Worm.My.Resources.Resources.ResourceManager">
+	<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:Worm.My.Resources.Resources.Culture">
+	<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="T:Worm.My.Resources.Resources">
+	<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member><member name="P:Worm.Entities.CachedEntity.InternalClass.OriginalCopy">
+	<summary>
+ Модифицированная версия объекта
+ </summary>
+</member><member name="M:Worm.Entities.CachedEntity.RejectChanges">
+	<summary>
+ Отмена изменений
+ </summary>
 </member><member name="M:Worm.Entities.Meta.OrmObjectIndex.GetKeyForItem(Worm.Entities.Meta.MapField2Column)">
 	<summary>
  Возвращает ключ коллекции MapField2Column
@@ -172,92 +179,56 @@ Worm.Orm
 	<remarks>
  Наследник абстрактного класс <see cref="T:Worm.Collections.IndexedCollection`2"/>, реализующий метод <see cref="M:Worm.Collections.IndexedCollection`2.GetKeyForItem(`1)"/>
 	</remarks>
-</member><member name="P:Worm.Entities.Meta.EntityPropertyAttribute.PropertyAlias">
+</member><member name="F:Worm.Misc.DicIndexBase._parent">
 	<summary>
- Имя поля класса, которое мапится на колонку в БД
+ родительский элемент
  </summary>
-</member><member name="F:Worm.Entities.Meta.Field2DbRelations.RowVersion">
+</member><member name="F:Worm.Misc.DicIndexBase._count">
 	<summary>
- RV or [ReadOnly] or SyncUpdate or SyncInsert
+ количество элементов на данном уровне
  </summary>
-	<remarks></remarks>
-</member><member name="F:Worm.Entities.Meta.Field2DbRelations.PrimaryKey">
-	<summary>
- PK or SyncInsert or [ReadOnly]
- </summary>
-	<remarks></remarks>
+</member><member name="M:Worm.Misc.DicIndexBase.GetHashCode">
+	<returns>A hash code for the current System.Object.</returns>
 </member><member name="M:Worm.Database.OrmReadOnlyDBManager.Rollback">
 	<summary>
  Отменяет изменения, выполненные в транзакции
  </summary>
 	<remarks>Состояние измененных объектов после отмены изменений на уровне БД не меняется, так что нужно в ручную снова выполнить загрузку их из БД</remarks>
-</member><member name="M:Worm.OrmManager.LoadObjects``1(System.String,Worm.Criteria.PredicateLink,System.Collections.IEnumerable,System.Int32,System.Int32)">
+</member><member name="F:Worm.Cache.OrmCache._invalidate">
 	<summary>
- Load child collections from parents
+ dictionary.key - тип
+ dictionary.value - массив изменяемых полей
  </summary>
-	<typeparam name="T">Type to load. This is child type.</typeparam>
-	<param name="propertyAlias">Field name of property in child type what references to parent type</param>
-	<param name="criteria">Additional criteria</param>
-	<param name="ecol">Collection of parent objects.</param>
-	<param name="start">Point in parent collection from where start to load</param>
-	<param name="length">Length of loaded window</param>
-	<returns>Collection of child objects arranged in order of parent in parent collection</returns>
 	<remarks></remarks>
-</member><member name="M:Worm.OrmManager.Find``1(System.Object)">
+</member><member name="F:Worm.Cache.OrmCache._field_depends">
 	<summary>
- Поиск объекта по Id
+ pair.first - поле
+ pair.second - тип
+ зависит от dictionary.key - ключ в кеше и dictionary.value - id в кеше
  </summary>
-</member><member name="M:Worm.OrmManager.LoadObjects``1(Worm.ReadOnlyEntityList{``0},System.String[],System.Int32,System.Int32)">
-	<summary>
- Load parent objects from collection of childs
- </summary>
-	<typeparam name="T">Type of child collection</typeparam>
-	<param name="objs">Child collection</param>
-	<param name="fields">Array of properties in child type, used to get parent object</param>
-	<param name="start">Point in child collection from where start to load</param>
-	<param name="length">Length of loaded window</param>
-	<returns>Collection of child objects</returns>
 	<remarks></remarks>
-</member><member name="M:Worm.Entities.KeyEntityBase.Equals(System.Object)">
-	<param name="obj">The System.Object to compare with the current System.Object.</param>
-	<returns>true if the specified System.Object is equal to the current System.Object; otherwise, false.</returns>
-</member><member name="M:Worm.Entities.KeyEntityBase.GetHashCode">
-	<returns>A hash code for the current System.Object.</returns>
-</member><member name="T:Worm.Entities.KeyEntityBase">
+</member><member name="M:Worm.Cache.OrmCache.AddDependType(System.Object,System.Type,System.String,System.String,Worm.Criteria.Core.IFilter,Worm.ObjectMappingEngine)">
 	<summary>
- Базовый класс для всех типов
+ Зависимость выбираемого типа от ключа в кеше
  </summary>
-	<remarks>
- Класс является потокобезопасным как на чтение так и на запись.
- Предоставляет следующий функционал:
- XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="M:Worm.Entities.CachedEntity.ReadXml(System.Xml.XmlReader)"/> и <see cref="M:Worm.Entities.CachedEntity.WriteXml(System.Xml.XmlWriter)"/>.
- <code lang="vb">Это код</code>
-		<example>Это пример</example>
-	</remarks>
-</member><member name="F:Worm.Entities.ObjectState.None">
+	<param name="t"></param>
+	<param name="key"></param>
+	<param name="id"></param>
+	<remarks></remarks>
+</member><member name="M:Worm.Cache.OrmCache.AddDepend(Worm.Entities.ICachedEntity,System.String,System.String)">
 	<summary>
- Объект загружен из БД
+ Зависимость экземпляра объекта от ключа (объект присутствует в фильтре)
  </summary>
-</member><member name="F:Worm.Entities.ObjectState.NotFoundInSource">
+	<param name="obj"></param>
+	<param name="key"></param>
+	<param name="id"></param>
+	<remarks></remarks>
+</member><member name="M:Worm.Cache.OrmCache.RemoveDepends(Worm.Entities.ICachedEntity)">
 	<summary>
- Попытка загрузить данный обьект из БД не удалась. Это может быть из-за того, что, например, он был удален.
+ Удаляет все ключи в кеше, которые зависят от данного объекта
  </summary>
-</member><member name="F:Worm.Entities.ObjectState.Clone">
-	<summary>
- Объект является копией редактируемого объекта
- </summary>
-</member><member name="F:Worm.Entities.ObjectState.NotLoaded">
-	<summary>
- Специальное состояние, между Created и None, когда объект ожидается что есть в базе, но еще не загружен
- </summary>
-</member><member name="P:Worm.Entities.CachedEntity.InternalClass.OriginalCopy">
-	<summary>
- Модифицированная версия объекта
- </summary>
-</member><member name="M:Worm.Entities.CachedEntity.RejectChanges">
-	<summary>
- Отмена изменений
- </summary>
+	<param name="obj"></param>
+	<remarks></remarks>
 </member><member name="M:Worm.helper.ShouldPrefix(System.String)">
 	<summary>
  Метод определяет нужно ли добавлять псевдоним таблицы для поля в БД
@@ -401,6 +372,18 @@ Worm.Orm
  Класс, повзволяющий точно замерять промежутки времени
  </summary>
 	<remarks></remarks>
+</member><member name="M:Worm.IPrepareTable.AddTable(Worm.Entities.Meta.SourceFragment@,Worm.Query.EntityUnion)">
+	<summary>
+ Добавляет таблицу в словарь и создает текстовое представление таблицы (псевдоним)
+ </summary>
+	<param name="table">Таблица</param>
+	<returns>Возвращает псевдоним таблицы</returns>
+	<remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
+</member><member name="T:Worm.IPrepareTable">
+	<summary>
+ Интерфейс для "подготовки" таблицы перед генерацией запроса
+ </summary>
+	<remarks>Используется для реализации функций в качестве таблиц, разрешения схем таблицы (schema resolve)</remarks>
 </member>
 </members>
 </doc>
