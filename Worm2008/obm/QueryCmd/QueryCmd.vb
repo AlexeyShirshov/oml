@@ -17,7 +17,8 @@ Namespace Query
 
     '<Serializable()> _
     Public Class QueryCmd
-        Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement, IExecutionContext
+        Implements ICloneable, Criteria.Values.IQueryElement, IExecutionContext
+        'Implements Cache.IQueryDependentTypes
 
 #Region " Classes "
 
@@ -4426,93 +4427,128 @@ l1:
             Return c
         End Function
 
-        Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-            'If SelectedType Is Nothing Then
-            '    Return New Cache.EmptyDependentTypes
+        Public Function GetDependentEntities(ByVal mpe As ObjectMappingEngine) As Dictionary(Of EntityUnion, List(Of String))
+            Dim d As New Dictionary(Of EntityUnion, List(Of String))
+            'If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing Then
+            '    l.Add(FromClause.QueryEU)
             'End If
 
-            Dim dp As New Cache.DependentTypes
-            Dim singleType As Boolean = True
             If _joins IsNot Nothing Then
                 For Each j As QueryJoin In _joins
                     If j.ObjectSource IsNot Nothing Then
-                        Dim t As Type = j.ObjectSource.GetRealType(mpe)
-                        'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
-                        '    t = mpe.GetTypeByEntityName(j.EntityName)
-                        'End If
-                        'If t Is Nothing Then
-                        '    Return New Cache.EmptyDependentTypes
-                        'End If
-                        If t IsNot Nothing Then
-                            dp.AddBoth(t)
-                            singleType = False
+                        Dim l As New List(Of String)
+                        If j.Condition IsNot Nothing Then
+                            For Each f As IFilter In j.Condition.GetAllFilters
+                                Dim ef As EntityFilter = TryCast(f, EntityFilter)
+                                If ef IsNot Nothing AndAlso ef.Template.ObjectSource.Equals(j.ObjectSource) Then
+                                    l.Add(ef.Template.PropertyAlias)
+                                Else
+                                    Dim jf As JoinFilter = TryCast(f, JoinFilter)
+                                    If jf IsNot Nothing Then
+                                        If jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity.Equals(j.ObjectSource) Then
+                                            l.Add(jf.Left.Property.PropertyAlias)
+                                        ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity.Equals(j.ObjectSource) Then
+                                            l.Add(jf.Right.Property.PropertyAlias)
+                                        End If
+                                    End If
+                                End If
+                            Next
                         End If
+                        d.Add(j.ObjectSource, l)
                     End If
                 Next
             End If
 
-            Dim fromType As Type = Nothing
-            If FromClause.QueryEU IsNot Nothing Then
-                fromType = FromClause.QueryEU.GetRealType(mpe)
-            End If
-
-            If singleType AndAlso Not dp.IsEmpty Then
-                dp.AddBoth(fromType)
-            End If
-
-            If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
-                For Each f As IFilter In _filter.Filter.GetAllFilters
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
-                    If Cache.IsCalculated(fdp) Then
-                        If singleType Then
-                            dp.AddBoth(fromType)
-                        End If
-                        dp.Merge(fdp)
-                        'Else
-                        '    Return fdp
-                    End If
-                Next
-            End If
-
-            If _order IsNot Nothing Then
-                For Each ns As SortExpression In Sort
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, ns)
-                    If Cache.IsCalculated(fdp) Then
-                        If singleType Then
-                            dp.AddBoth(fromType)
-                        End If
-                        dp.Merge(fdp)
-                    Else
-                        For Each s As SelectUnion In GetSelectedEntities(ns)
-                            If s.EntityUnion IsNot Nothing Then
-                                dp.AddUpdated(s.EntityUnion.GetRealType(mpe))
-                            End If
-                        Next
-                    End If
-                Next
-            End If
-
-            If _group IsNot Nothing Then
-                For Each ge As IExpression In Group.GetExpressions
-                    For Each s As SelectUnion In GetSelectedEntities(ge)
-                        If s.EntityUnion IsNot Nothing Then
-                            dp.AddDeleted(s.EntityUnion.GetRealType(mpe))
-                        End If
-                    Next
-                Next
-            End If
-
-            If SelectList IsNot Nothing Then
-                For Each se As SelectExpression In SelectList
-                    For Each s As SelectUnion In GetSelectedEntities(se)
-                        If s.EntityUnion IsNot Nothing Then
-                            dp.AddBoth(s.EntityUnion.GetRealType(mpe))
-                        End If
-                    Next
-                Next
-            End If
-            Return dp.Get
+            Return d
         End Function
+
+        'Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+        '    'If SelectedType Is Nothing Then
+        '    '    Return New Cache.EmptyDependentTypes
+        '    'End If
+
+        '    Dim dp As New Cache.DependentTypes
+        '    Dim singleType As Boolean = True
+        '    If _joins IsNot Nothing Then
+        '        For Each j As QueryJoin In _joins
+        '            If j.ObjectSource IsNot Nothing Then
+        '                Dim t As Type = j.ObjectSource.GetRealType(mpe)
+        '                'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+        '                '    t = mpe.GetTypeByEntityName(j.EntityName)
+        '                'End If
+        '                'If t Is Nothing Then
+        '                '    Return New Cache.EmptyDependentTypes
+        '                'End If
+        '                If t IsNot Nothing Then
+        '                    dp.AddBoth(t)
+        '                    singleType = False
+        '                End If
+        '            End If
+        '        Next
+        '    End If
+
+        '    Dim fromType As Type = Nothing
+        '    If FromClause.QueryEU IsNot Nothing Then
+        '        fromType = FromClause.QueryEU.GetRealType(mpe)
+        '    End If
+
+        '    If singleType AndAlso Not dp.IsEmpty Then
+        '        dp.AddBoth(fromType)
+        '    End If
+
+        '    If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
+        '        For Each f As IFilter In _filter.Filter.GetAllFilters
+        '            Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
+        '            If Cache.IsCalculated(fdp) Then
+        '                If singleType Then
+        '                    dp.AddBoth(fromType)
+        '                End If
+        '                dp.Merge(fdp)
+        '                'Else
+        '                '    Return fdp
+        '            End If
+        '        Next
+        '    End If
+
+        '    If _order IsNot Nothing Then
+        '        For Each ns As SortExpression In Sort
+        '            Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, ns)
+        '            If Cache.IsCalculated(fdp) Then
+        '                If singleType Then
+        '                    dp.AddBoth(fromType)
+        '                End If
+        '                dp.Merge(fdp)
+        '            Else
+        '                For Each s As SelectUnion In GetSelectedEntities(ns)
+        '                    If s.EntityUnion IsNot Nothing Then
+        '                        dp.AddUpdated(s.EntityUnion.GetRealType(mpe))
+        '                    End If
+        '                Next
+        '            End If
+        '        Next
+        '    End If
+
+        '    If _group IsNot Nothing Then
+        '        For Each ge As IExpression In Group.GetExpressions
+        '            For Each s As SelectUnion In GetSelectedEntities(ge)
+        '                If s.EntityUnion IsNot Nothing Then
+        '                    dp.AddDeleted(s.EntityUnion.GetRealType(mpe))
+        '                End If
+        '            Next
+        '        Next
+        '    End If
+
+        '    If SelectList IsNot Nothing Then
+        '        For Each se As SelectExpression In SelectList
+        '            For Each s As SelectUnion In GetSelectedEntities(se)
+        '                If s.EntityUnion IsNot Nothing Then
+        '                    dp.AddBoth(s.EntityUnion.GetRealType(mpe))
+        '                End If
+        '            Next
+        '        Next
+        '    End If
+        '    Return dp.Get
+        'End Function
 
         Public Function Load(ByVal entityName As String) As QueryCmd
             Dim os As EntityUnion = GetSelectedOS()

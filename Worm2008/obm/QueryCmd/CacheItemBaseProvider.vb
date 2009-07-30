@@ -132,12 +132,11 @@ Namespace Query
                 Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New MetaDataQueryIterator(_q)
-                    For Each j As QueryJoin In q._js
-                        If j.ObjectSource IsNot Nothing Then
-                            Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
-                            cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
-                            cache.validate_UpdateType(New Type() {jt}, _key, _id)
-                        End If
+                    For Each de As KeyValuePair(Of EntityUnion, List(Of String)) In q.GetDependentEntities(MappingEngine)
+                        Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
+                        cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                        cache.validate_UpdateType(New Type() {jt}, _key, _id)
+
                     Next
 
                     Dim dp As Cache.IDependentTypes = CType(q, Cache.IQueryDependentTypes).Get(MappingEngine)
