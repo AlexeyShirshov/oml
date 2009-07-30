@@ -98,7 +98,7 @@ Namespace Expressions2
 
     <Serializable()> _
     Public Class QueryExpression
-        Implements IExpression, IDependentTypes
+        Implements IExpression ', IDependentTypes
 
         Private _q As Query.QueryCmd
 
@@ -153,13 +153,13 @@ Namespace Expressions2
             _q.Prepare(executor, schema, contextFilter, stmt, isAnonym)
         End Sub
 
-        Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetAddDelete
-            Return CType(_q, IDependentTypes).GetAddDelete
-        End Function
+        'Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetAddDelete
+        '    Return CType(_q, IDependentTypes).GetAddDelete
+        'End Function
 
-        Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetUpdate
-            Return CType(_q, IDependentTypes).GetUpdate
-        End Function
+        'Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetUpdate
+        '    Return CType(_q, IDependentTypes).GetUpdate
+        'End Function
     End Class
 
     <Serializable()> _

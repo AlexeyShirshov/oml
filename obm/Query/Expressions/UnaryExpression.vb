@@ -6,7 +6,7 @@ Namespace Expressions2
 
     <Serializable()> _
     Public MustInherit Class UnaryExpressionBase
-        Implements IUnaryExpression, IDependentTypes
+        Implements IUnaryExpression ', IDependentTypes
 
         Private _v As IExpression
 
@@ -83,18 +83,18 @@ Namespace Expressions2
 
         Protected MustOverride Function Clone(ByVal operand As IExpression) As IUnaryExpression
 
-        Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetAddDelete
-            Dim fdp As Cache.IDependentTypes = TryCast(Operand, IDependentTypes)
-            If fdp IsNot Nothing Then
-                Return fdp.GetAddDelete
-            Else
-                Return New EmptyDependentTypes
-            End If
-        End Function
+        'Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetAddDelete
+        '    Dim fdp As Cache.IDependentTypes = TryCast(Operand, IDependentTypes)
+        '    If fdp IsNot Nothing Then
+        '        Return fdp.GetAddDelete
+        '    Else
+        '        Return New EmptyDependentTypes
+        '    End If
+        'End Function
 
-        Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetUpdate
+        'Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetUpdate
 
-        End Function
+        'End Function
     End Class
 
     <Serializable()> _
