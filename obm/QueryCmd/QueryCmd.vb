@@ -4427,34 +4427,41 @@ l1:
             Return c
         End Function
 
-        Public Function GetDependentEntities(ByVal mpe As ObjectMappingEngine) As Dictionary(Of EntityUnion, List(Of String))
+        Public Function GetDependentEntities(ByVal mpe As ObjectMappingEngine, ByRef fl As List(Of String)) As Dictionary(Of EntityUnion, List(Of String))
             Dim d As New Dictionary(Of EntityUnion, List(Of String))
-            'If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing Then
-            '    l.Add(FromClause.QueryEU)
-            'End If
+            Dim fe As EntityUnion = Nothing
+            If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing Then
+                fe = FromClause.QueryEU
+                fl = New List(Of String)
+            End If
 
-            If _joins IsNot Nothing Then
-                For Each j As QueryJoin In _joins
+            If _js IsNot Nothing Then
+                For Each j As QueryJoin In _js
                     If j.ObjectSource IsNot Nothing Then
-                        Dim l As New List(Of String)
+                        Dim l As List(Of String) = Nothing
+                        If Not d.TryGetValue(j.ObjectSource, l) Then
+                            l = New List(Of String)
+                            d.Add(j.ObjectSource, l)
+                        End If
+
                         If j.Condition IsNot Nothing Then
                             For Each f As IFilter In j.Condition.GetAllFilters
                                 Dim ef As EntityFilter = TryCast(f, EntityFilter)
-                                If ef IsNot Nothing AndAlso ef.Template.ObjectSource.Equals(j.ObjectSource) Then
-                                    l.Add(ef.Template.PropertyAlias)
+                                If ef IsNot Nothing Then
+                                    xxx(ef.Template.ObjectSource, fe, ef.Template.PropertyAlias, fl, d)
                                 Else
                                     Dim jf As JoinFilter = TryCast(f, JoinFilter)
                                     If jf IsNot Nothing Then
-                                        If jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity.Equals(j.ObjectSource) Then
-                                            l.Add(jf.Left.Property.PropertyAlias)
-                                        ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity.Equals(j.ObjectSource) Then
-                                            l.Add(jf.Right.Property.PropertyAlias)
+                                        If jf.Left.Property.Entity IsNot Nothing Then
+                                            xxx(jf.Left.Property.Entity, fe, jf.Left.Property.PropertyAlias, fl, d)
+                                        End If
+                                        If jf.Right.Property.Entity IsNot Nothing Then
+                                            xxx(jf.Right.Property.Entity, fe, jf.Right.Property.PropertyAlias, fl, d)
                                         End If
                                     End If
                                 End If
                             Next
                         End If
-                        d.Add(j.ObjectSource, l)
                     End If
                 Next
             End If
@@ -4462,6 +4469,21 @@ l1:
             Return d
         End Function
 
+        Private Shared Sub xxx(ByVal eu As EntityUnion, ByVal fe As EntityUnion, ByVal prop As String, _
+                               ByVal fl As List(Of String), ByVal d As Dictionary(Of EntityUnion, List(Of String)))
+            If Not eu.Equals(fe) Then
+                Dim ll As List(Of String) = Nothing
+                If Not d.TryGetValue(eu, ll) Then
+                    ll = New List(Of String)
+                    d.Add(eu, ll)
+                End If
+                ll.Add(prop)
+            Else
+                If Not fl.Contains(prop) Then
+                    fl.Add(prop)
+                End If
+            End If
+        End Sub
         'Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
         '    'If SelectedType Is Nothing Then
         '    '    Return New Cache.EmptyDependentTypes
