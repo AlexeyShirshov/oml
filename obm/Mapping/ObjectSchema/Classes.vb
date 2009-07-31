@@ -39,11 +39,11 @@ Namespace Entities.Meta
         Implements ICloneable
 
         Public ReadOnly _propertyAlias As String
-        Public ReadOnly ColumnExpression As String
         Public ReadOnly DBType As DBType
         Public ReadOnly _newattributes As Field2DbRelations
         Private _tbl As SourceFragment
         Private _columnName As String
+        Private _exp As String
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
             _propertyAlias = propertyAlias
@@ -116,8 +116,17 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        Public Property ColumnExpression() As String
+            Get
+                Return _exp
+            End Get
+            Set(ByVal value As String)
+                _exp = value
+            End Set
+        End Property
+
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New MapField2Column(Me._propertyAlias, ColumnExpression, Table, Me._newattributes, Me.DBType)
+            Return New MapField2Column(Me._propertyAlias, ColumnExpression, Table, Me._newattributes, Me.DBType) With {.ColumnName = ColumnName}
         End Function
     End Class
 

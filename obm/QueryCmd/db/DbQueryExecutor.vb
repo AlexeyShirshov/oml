@@ -1197,6 +1197,10 @@ l1:
             oschema.GetFieldColumnMap.CopyTo(newcol)
             For Each m As MapField2Column In newcol
                 m.Table = tbl
+                If Not String.IsNullOrEmpty(m.ColumnName) Then
+                    m.ColumnExpression = m.ColumnName
+                    m.ColumnName = Nothing
+                End If
             Next
             Return newcol
         End Function
