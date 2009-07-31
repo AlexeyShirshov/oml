@@ -146,6 +146,8 @@ Namespace Cache
         Private Class FieldsRef
             Inherits Dictionary(Of EntityField, CacheEntryRef)
 
+            Private _t As New Dictionary(Of Type, List(Of EntityField))
+
             Public Overloads Sub Add(ByVal ef As EntityField, ByVal key As String, ByVal id As String)
                 Dim c As CacheEntryRef = Nothing
                 If Not TryGetValue(ef, c) Then
@@ -153,16 +155,44 @@ Namespace Cache
                     Add(ef, c)
                 End If
                 c.Add(key, id)
+                Dim l As List(Of EntityField) = Nothing
+                If Not _t.TryGetValue(ef.OrmType, l) Then
+                    l = New List(Of EntityField)
+                    _t.Add(ef.OrmType, l)
+                End If
+                l.Add(ef)
             End Sub
 
-            Public Overloads Function Remove(ByVal t As Type, ByVal fieldName As String, ByVal cache As CacheBase) As Boolean
+            Public Overloads Function Remove(ByVal t As Type, ByVal cache As CacheBase) As Boolean
+                Dim l As List(Of EntityField) = Nothing
+                If _t.TryGetValue(t, l) Then
+                    For Each ef As EntityField In l
+                        Remove(ef, cache, False)
+                    Next
+                    _t.Remove(t)
+                    Return True
+                End If
+                Return False
+            End Function
+
+            Public Overloads Function Remove(ByVal ef As EntityField, ByVal cache As CacheBase, Optional ByVal remTypes As Boolean = True) As Boolean
                 Dim c As CacheEntryRef = Nothing
-                Dim ef As New EntityField(fieldName, t)
                 If TryGetValue(ef, c) Then
-                    c.Remove(cache)
                     Remove(ef)
+                    If remTypes Then
+                        c.Remove(cache)
+                        Dim l As List(Of EntityField) = Nothing
+                        If _t.TryGetValue(ef.OrmType, l) Then
+                            l.Remove(ef)
+                        End If
+                    End If
                 End If
                 Return c IsNot Nothing
+            End Function
+
+            Public Overloads Function Remove(ByVal t As Type, ByVal fieldName As String, ByVal cache As CacheBase) As Boolean
+                Dim ef As New EntityField(fieldName, t)
+                Return Remove(ef, cache)
             End Function
         End Class
 
@@ -187,25 +217,25 @@ Namespace Cache
         Private _invalidate As New Dictionary(Of Type, List(Of String))
         'Private _relations As New Dictionary(Of Type, List(Of Type))
         Private _object_depends As New Dictionary(Of EntityProxy, Dictionary(Of String, List(Of String)))
-        ''' <summary>
-        ''' pair.first - поле
-        ''' pair.second - тип
-        ''' зависит от dictionary.key - ключ в кеше и dictionary.value - id в кеше
-        ''' </summary>
-        ''' <remarks></remarks>
-        Private _field_depends As New Dictionary(Of EntityField, Dictionary(Of String, List(Of String)))
+        '''' <summary>
+        '''' pair.first - поле
+        '''' pair.second - тип
+        '''' зависит от dictionary.key - ключ в кеше и dictionary.value - id в кеше
+        '''' </summary>
+        '''' <remarks></remarks>
+        'Private _field_depends As New Dictionary(Of EntityField, Dictionary(Of String, List(Of String)))
 
         Private _lock As New Object
         Private _beh As CacheListBehavior
 
-        Private _tp As New Type2SelectiveFiltersDepends
-        Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
+        'Private _tp As New Type2SelectiveFiltersDepends
+        'Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
         Private _m2mSimpleQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
 
         'Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
-        Private _jt As New Dictionary(Of Type, List(Of Type))
+        'Private _jt As New Dictionary(Of Type, List(Of Type))
 
         Private _trackDelete As New Dictionary(Of Type, Pair(Of Integer, List(Of Integer)))
 
@@ -217,7 +247,7 @@ Namespace Cache
         Private _groupedFields As New FieldsRef
         Private _addedTypes As New Dictionary(Of Type, Type)
         Private _deletedTypes As New Dictionary(Of Type, Type)
-        Private _m2mQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
+        'Private _m2mQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
 #If OLDM2M Then
         Public Delegate Function EnumM2MCache(ByVal mgr As OrmManager, ByVal entity As M2MCache) As Boolean
 #End If
@@ -382,52 +412,52 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub AddFieldDepend(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
-#End If
+        '        Protected Friend Sub AddFieldDepend(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
+        '#End If
 
-                Dim d As Dictionary(Of String, List(Of String)) = Nothing
-                Dim ef As New EntityField(p.First, p.Second)
-                If Not _field_depends.TryGetValue(ef, d) Then
-                    d = New Dictionary(Of String, List(Of String))
-                    _field_depends.Add(ef, d)
-                End If
-                Dim l As List(Of String) = Nothing
-                If Not d.TryGetValue(id, l) Then
-                    l = New List(Of String)
-                    d.Add(id, l)
-                End If
-                If Not l.Contains(key) Then
-                    l.Add(key)
-                End If
-            End Using
-        End Sub
+        '                Dim d As Dictionary(Of String, List(Of String)) = Nothing
+        '                Dim ef As New EntityField(p.First, p.Second)
+        '                If Not _field_depends.TryGetValue(ef, d) Then
+        '                    d = New Dictionary(Of String, List(Of String))
+        '                    _field_depends.Add(ef, d)
+        '                End If
+        '                Dim l As List(Of String) = Nothing
+        '                If Not d.TryGetValue(id, l) Then
+        '                    l = New List(Of String)
+        '                    d.Add(id, l)
+        '                End If
+        '                If Not l.Contains(key) Then
+        '                    l.Add(key)
+        '                End If
+        '            End Using
+        '        End Sub
 
-        Protected Friend Function ResetFieldDepends(ByVal p As Pair(Of String, Type)) As Boolean
-            Dim rv As Boolean
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
-#End If
-                Dim d As Dictionary(Of String, List(Of String)) = Nothing
-                Dim ef As New EntityField(p.First, p.Second)
-                If _field_depends.TryGetValue(ef, d) Then
-                    For Each ke As KeyValuePair(Of String, List(Of String)) In d
-                        For Each key As String In ke.Value
-                            RemoveEntry(key, ke.Key)
-                            rv = True
-                            'Dim dic As IDictionary = CType(_filters(key), IDictionary)
-                            'dic.Remove(ke.Key)
-                        Next
-                    Next
-                End If
-            End Using
-            Return rv
-        End Function
+        '        Protected Friend Function ResetFieldDepends(ByVal p As Pair(Of String, Type)) As Boolean
+        '            Dim rv As Boolean
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
+        '#End If
+        '                Dim d As Dictionary(Of String, List(Of String)) = Nothing
+        '                Dim ef As New EntityField(p.First, p.Second)
+        '                If _field_depends.TryGetValue(ef, d) Then
+        '                    For Each ke As KeyValuePair(Of String, List(Of String)) In d
+        '                        For Each key As String In ke.Value
+        '                            RemoveEntry(key, ke.Key)
+        '                            rv = True
+        '                            'Dim dic As IDictionary = CType(_filters(key), IDictionary)
+        '                            'dic.Remove(ke.Key)
+        '                        Next
+        '                    Next
+        '                End If
+        '            End Using
+        '            Return rv
+        '        End Function
 
         Public Sub validate_AddDeleteType(ByVal ts As IEnumerable(Of Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
@@ -449,6 +479,9 @@ Namespace Cache
 #End If
                 For Each t As Type In ts
                     _updateTypes.Add(t, key, id)
+                    _sortedFields.Remove(t, Me)
+                    _groupedFields.Remove(t, Me)
+                    _filteredFields.Remove(t, Me)
                 Next
             End Using
         End Sub
@@ -503,9 +536,11 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
 #End If
-                Dim ef As EntityField = New EntityField(p.First, p.Second)
+                If Not _updateTypes.ContainsKey(p.Second) Then
+                    Dim ef As EntityField = New EntityField(p.First, p.Second)
 
-                _filteredFields.Add(ef, key, id)
+                    _filteredFields.Add(ef, key, id)
+                End If
             End Using
         End Sub
 
@@ -516,9 +551,11 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
 #End If
-                Dim ef As EntityField = New EntityField(p.First, p.Second)
+                If Not _updateTypes.ContainsKey(p.Second) Then
+                    Dim ef As EntityField = New EntityField(p.First, p.Second)
 
-                _sortedFields.Add(ef, key, id)
+                    _sortedFields.Add(ef, key, id)
+                End If
             End Using
         End Sub
 
@@ -529,9 +566,11 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
 #End If
-                Dim ef As EntityField = New EntityField(p.First, p.Second)
+                If Not _updateTypes.ContainsKey(p.Second) Then
+                    Dim ef As EntityField = New EntityField(p.First, p.Second)
 
-                _groupedFields.Add(ef, key, id)
+                    _groupedFields.Add(ef, key, id)
+                End If
             End Using
         End Sub
 
@@ -821,7 +860,7 @@ Namespace Cache
                         If GetUpdatedFields(rt, fields) Then
                             If fields.Contains(tmpl.PropertyAlias) Then
                                 Dim b As Boolean = _filteredFields.Remove(rt, tmpl.PropertyAlias, Me)
-                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, rt))
+                                'b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, rt))
 
                                 If b Then
                                     _sortedFields.Remove(rt, tmpl.PropertyAlias, Me)
@@ -833,23 +872,25 @@ Namespace Cache
                     Next
                 End If
 
-                For Each sort As SortExpression In s
-                    For Each ee As IEntityPropertyExpression In GetEntityExpressions(sort)
-                        Dim t As Type = ee.ObjectProperty.Entity.GetRealType(schema)
-                        Dim fields As List(Of String) = Nothing
-                        If GetUpdatedFields(t, fields) Then
-                            Dim prop As String = ee.ObjectProperty.PropertyAlias
-                            If fields.Contains(prop) Then
-                                If _sortedFields.Remove(t, prop, Me) Then
-                                    _filteredFields.Remove(t, prop, Me)
-                                    ResetFieldDepends(New Pair(Of String, Type)(prop, t))
-                                    RemoveUpdatedFields(t, prop)
-                                    Return False
+                If s IsNot Nothing Then
+                    For Each sort As SortExpression In s
+                        For Each ee As IEntityPropertyExpression In GetEntityExpressions(sort)
+                            Dim t As Type = ee.ObjectProperty.Entity.GetRealType(schema)
+                            Dim fields As List(Of String) = Nothing
+                            If GetUpdatedFields(t, fields) Then
+                                Dim prop As String = ee.ObjectProperty.PropertyAlias
+                                If fields.Contains(prop) Then
+                                    If _sortedFields.Remove(t, prop, Me) Then
+                                        _filteredFields.Remove(t, prop, Me)
+                                        'ResetFieldDepends(New Pair(Of String, Type)(prop, t))
+                                        RemoveUpdatedFields(t, prop)
+                                        Return False
+                                    End If
                                 End If
                             End If
-                        End If
+                        Next
                     Next
-                Next
+                End If
             End If
 
             Return True
@@ -1041,71 +1082,71 @@ Namespace Cache
                     k = c.GetEntityTypeKey(mgr.GetContextInfo)
                 End If
 
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
-#Else
-                Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
-#End If
-                    Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
-                    If _qt.TryGetValue(k, l) Then
-                        Dim rm As New List(Of String)
-                        For Each kv As KeyValuePair(Of String, Pair(Of String)) In l
-                            Dim dic As IDictionary = _GetDictionary(kv.Value.First)
-                            If dic IsNot Nothing Then
-                                'dic.Remove(kv.Value.Second)
-                                RemoveEntry(kv.Value)
-                                rm.Add(kv.Key)
-                            End If
-                        Next
-                        If rm.Count > 0 Then
-                            For Each s As String In rm
-                                l.Remove(s)
-                            Next
-                            If l.Count = 0 Then
-                                _qt.Remove(k)
-                            End If
-                            GoTo l1
-                        End If
-                    End If
-                End Using
+                '#If DebugLocks Then
+                '            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
+                '#Else
+                '                Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
+                '#End If
+                '                    Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
+                '                    If _qt.TryGetValue(k, l) Then
+                '                        Dim rm As New List(Of String)
+                '                        For Each kv As KeyValuePair(Of String, Pair(Of String)) In l
+                '                            Dim dic As IDictionary = _GetDictionary(kv.Value.First)
+                '                            If dic IsNot Nothing Then
+                '                                'dic.Remove(kv.Value.Second)
+                '                                RemoveEntry(kv.Value)
+                '                                rm.Add(kv.Key)
+                '                            End If
+                '                        Next
+                '                        If rm.Count > 0 Then
+                '                            For Each s As String In rm
+                '                                l.Remove(s)
+                '                            Next
+                '                            If l.Count = 0 Then
+                '                                _qt.Remove(k)
+                '                            End If
+                '                            GoTo l1
+                '                        End If
+                '                    End If
+                '                End Using
 
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
-#Else
-                Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-#End If
-                    Dim l As TemplateHashs = _tp.GetFilters(k)
-                    For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
-                        Dim dic As IDictionary = _GetDictionary(p.Key)
-                        If dic IsNot Nothing Then
-                            If callbacks IsNot Nothing Then
-                                callbacks.BeginUpdate(0)
-                            End If
-                            For Each op As Pair(Of _ICachedEntity) In objs
-                                Dim obj As _ICachedEntity = op.First
-                                If obj Is Nothing Then
-                                    Throw New ArgumentException("At least one element in objs is nothing")
-                                End If
+                '#If DebugLocks Then
+                '            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
+                '#Else
+                '                Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
+                '#End If
+                '                    Dim l As TemplateHashs = _tp.GetFilters(k)
+                '                    For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
+                '                        Dim dic As IDictionary = _GetDictionary(p.Key)
+                '                        If dic IsNot Nothing Then
+                '                            If callbacks IsNot Nothing Then
+                '                                callbacks.BeginUpdate(0)
+                '                            End If
+                '                            For Each op As Pair(Of _ICachedEntity) In objs
+                '                                Dim obj As _ICachedEntity = op.First
+                '                                If obj Is Nothing Then
+                '                                    Throw New ArgumentException("At least one element in objs is nothing")
+                '                                End If
 
-                                If tt IsNot obj.GetType Then
-                                    Throw New ArgumentException("Collection contains different types")
-                                End If
+                '                                If tt IsNot obj.GetType Then
+                '                                    Throw New ArgumentException("Collection contains different types")
+                '                                End If
 
-                                If obj.UpdateCtx.Added OrElse obj.UpdateCtx.Deleted Then
-                                    UpdateFilters(p, schema, oschema, obj, op.Second, dic, callbacks, Nothing, forseEval, mgr)
-                                End If
-                            Next
-                            If callbacks IsNot Nothing Then
-                                callbacks.EndUpdate()
-                            End If
-                            '_filters.Remove(p.Key)
-                        End If
-                    Next
-                End Using
+                '                                If obj.UpdateCtx.Added OrElse obj.UpdateCtx.Deleted Then
+                '                                    UpdateFilters(p, schema, oschema, obj, op.Second, dic, callbacks, Nothing, forseEval, mgr)
+                '                                End If
+                '                            Next
+                '                            If callbacks IsNot Nothing Then
+                '                                callbacks.EndUpdate()
+                '                            End If
+                '                            '_filters.Remove(p.Key)
+                '                        End If
+                '                    Next
+                '                End Using
 l1:
                 ValidateExternal(objs, mgr, callbacks, afterDelegate, contextKey)
 
-                UpdateJoins(tt, objs, schema, oschema, mgr, contextKey, afterDelegate, callbacks)
+                'UpdateJoins(tt, objs, schema, oschema, mgr, contextKey, afterDelegate, callbacks)
             End If
         End Sub
 
@@ -1257,38 +1298,38 @@ l1:
             Next
         End Sub
 
-        Private Sub UpdateJoins(ByVal tt As Type, ByVal objs As IList, ByVal schema As ObjectMappingEngine, _
-                                ByVal oschema As IEntitySchema, ByVal mgr As OrmManager, ByVal contextKey As Object, _
-                                ByVal afterDelegate As OnUpdated, ByVal callbacks As IUpdateCacheCallbacks)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
-#End If
-                Dim ts As List(Of Type) = Nothing
-                If _jt.TryGetValue(tt, ts) Then
-                    For Each t As Type In ts
-                        For Each p As Pair(Of _ICachedEntity) In objs
-                            Dim obj As _ICachedEntity = p.First
+        '        Private Sub UpdateJoins(ByVal tt As Type, ByVal objs As IList, ByVal schema As ObjectMappingEngine, _
+        '                                ByVal oschema As IEntitySchema, ByVal mgr As OrmManager, ByVal contextKey As Object, _
+        '                                ByVal afterDelegate As OnUpdated, ByVal callbacks As IUpdateCacheCallbacks)
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
+        '#End If
+        '                Dim ts As List(Of Type) = Nothing
+        '                If _jt.TryGetValue(tt, ts) Then
+        '                    For Each t As Type In ts
+        '                        For Each p As Pair(Of _ICachedEntity) In objs
+        '                            Dim obj As _ICachedEntity = p.First
 
-                            If obj Is Nothing Then
-                                Throw New ArgumentException("At least one element in objs is nothing")
-                            End If
+        '                            If obj Is Nothing Then
+        '                                Throw New ArgumentException("At least one element in objs is nothing")
+        '                            End If
 
-                            If tt IsNot obj.GetType Then
-                                Throw New ArgumentException("Collection contains different types")
-                            End If
+        '                            If tt IsNot obj.GetType Then
+        '                                Throw New ArgumentException("Collection contains different types")
+        '                            End If
 
-                            Dim o As _IEntity = schema.GetJoinObj(oschema, obj, t)
+        '                            Dim o As _IEntity = schema.GetJoinObj(oschema, obj, t)
 
-                            If o IsNot Nothing Then
-                                UpdateCache(schema, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(CType(o, _ICachedEntity), Nothing)}, mgr, afterDelegate, contextKey, callbacks, True, False)
-                            End If
-                        Next
-                    Next
-                End If
-            End Using
-        End Sub
+        '                            If o IsNot Nothing Then
+        '                                UpdateCache(schema, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(CType(o, _ICachedEntity), Nothing)}, mgr, afterDelegate, contextKey, callbacks, True, False)
+        '                            End If
+        '                        Next
+        '                    Next
+        '                End If
+        '            End Using
+        '        End Sub
 
         Public Sub ValidateExternal(ByVal objs As IList, _
             ByVal mgr As OrmManager, ByVal callbacks As IUpdateCacheCallbacks, _
@@ -1323,73 +1364,73 @@ l1:
 
         End Sub
 
-        ''' <summary>
-        ''' Зависимость выбираемого типа от ключа в кеше
-        ''' </summary>
-        ''' <param name="t"></param>
-        ''' <param name="key"></param>
-        ''' <param name="id"></param>
-        ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As ObjectMappingEngine)
-            'Debug.WriteLine(t.Name & ": add dependent " & id)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-#End If
-                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(filterInfo, t))
-                l.Add(f, key, id)
-                'Dim h As List(Of String) = l.GetIds(key, f)
-                'If Not h.Contains(id) Then
-                '    h.Add(id)
-                'End If
-            End Using
-        End Sub
+        '        ''' <summary>
+        '        ''' Зависимость выбираемого типа от ключа в кеше
+        '        ''' </summary>
+        '        ''' <param name="t"></param>
+        '        ''' <param name="key"></param>
+        '        ''' <param name="id"></param>
+        '        ''' <remarks></remarks>
+        '        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As ObjectMappingEngine)
+        '            'Debug.WriteLine(t.Name & ": add dependent " & id)
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
+        '#End If
+        '                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(filterInfo, t))
+        '                l.Add(f, key, id)
+        '                'Dim h As List(Of String) = l.GetIds(key, f)
+        '                'If Not h.Contains(id) Then
+        '                '    h.Add(id)
+        '                'End If
+        '            End Using
+        '        End Sub
 
-        Protected Friend Sub AddFilterlessDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, _
-            ByVal schema As ObjectMappingEngine)
-            Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
-            Dim o As Object = schema.GetEntityTypeKey(filterInfo, t)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
-#End If
-                If Not _qt.TryGetValue(o, l) Then
-                    l = New Dictionary(Of String, Pair(Of String))
-                    _qt.Add(o, l)
-                End If
-                Dim k As String = key & "-" & id
-                If Not l.ContainsKey(k) Then
-                    l.Add(k, New Pair(Of String)(key, id))
-                End If
-            End Using
-        End Sub
+        '        Protected Friend Sub AddFilterlessDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, _
+        '            ByVal schema As ObjectMappingEngine)
+        '            Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
+        '            Dim o As Object = schema.GetEntityTypeKey(filterInfo, t)
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
+        '#End If
+        '                If Not _qt.TryGetValue(o, l) Then
+        '                    l = New Dictionary(Of String, Pair(Of String))
+        '                    _qt.Add(o, l)
+        '                End If
+        '                Dim k As String = key & "-" & id
+        '                If Not l.ContainsKey(k) Then
+        '                    l.Add(k, New Pair(Of String)(key, id))
+        '                End If
+        '            End Using
+        '        End Sub
 
-        Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)
-            If joinType Is Nothing Then
-                Throw New ArgumentNullException("joinType")
-            End If
+        '        Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)
+        '            If joinType Is Nothing Then
+        '                Throw New ArgumentNullException("joinType")
+        '            End If
 
-            If selectType Is Nothing Then
-                Throw New ArgumentNullException("selectType")
-            End If
+        '            If selectType Is Nothing Then
+        '                Throw New ArgumentNullException("selectType")
+        '            End If
 
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
-#End If
-                Dim l As List(Of Type) = Nothing
-                If Not _jt.TryGetValue(joinType, l) Then
-                    l = New List(Of Type)
-                    _jt(joinType) = l
-                End If
-                If Not l.Contains(selectType) Then
-                    l.Add(selectType)
-                End If
-            End Using
-        End Sub
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
+        '#End If
+        '                Dim l As List(Of Type) = Nothing
+        '                If Not _jt.TryGetValue(joinType, l) Then
+        '                    l = New List(Of Type)
+        '                    _jt(joinType) = l
+        '                End If
+        '                If Not l.Contains(selectType) Then
+        '                    l.Add(selectType)
+        '                End If
+        '            End Using
+        '        End Sub
 
         ''' <summary>
         ''' Зависимость экземпляра объекта от ключа (объект присутствует в фильтре)
