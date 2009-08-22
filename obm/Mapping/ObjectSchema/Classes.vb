@@ -8,7 +8,7 @@ Namespace Entities.Meta
     Public Structure DBType
         Public Size As Integer
         Public Type As String
-        Public Nullable As Boolean
+        Private _isNotNullable As Boolean
 
         Public Sub New(ByVal type As String)
             Me.Type = type
@@ -22,13 +22,22 @@ Namespace Entities.Meta
         Public Sub New(ByVal type As String, ByVal size As Integer, ByVal nullable As Boolean)
             Me.Type = type
             Me.Size = size
-            Me.Nullable = nullable
+            Me._isNotNullable = Not nullable
         End Sub
 
         Public Sub New(ByVal type As String, ByVal nullable As Boolean)
             Me.Type = type
-            Me.Nullable = nullable
+            Me._isNotNullable = Not nullable
         End Sub
+
+        Public Property IsNullable() As Boolean
+            Get
+                Return Not _isNotNullable
+            End Get
+            Set(ByVal value As Boolean)
+                _isNotNullable = Not value
+            End Set
+        End Property
 
         Public Function IsEmpty() As Boolean
             Return String.IsNullOrEmpty(Type)
