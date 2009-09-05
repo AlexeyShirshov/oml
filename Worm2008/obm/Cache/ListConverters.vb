@@ -125,21 +125,43 @@ Namespace Cache
             Return objects
         End Function
 
+        Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mc As OrmManager, ByVal oschema As IEntitySchema) As String
+            Dim prop As String = mc.MappingEngine.GetJoinFieldNameByType(obj.GetType, rt, oschema)
+            If String.IsNullOrEmpty(prop) Then
+                For Each de As DictionaryEntry In mc.MappingEngine.GetRefProperties(obj.GetType, oschema)
+                    Dim p As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    If p.PropertyType.IsAssignableFrom(rt) Then
+                        If Not String.IsNullOrEmpty(prop) Then
+                            Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}: Two properties match {2} and {3}", rt, obj.GetType, prop, CType(de.Key, EntityPropertyAttribute).PropertyAlias))
+                        End If
+                        prop = CType(de.Key, EntityPropertyAttribute).PropertyAlias
+                    End If
+                Next
+            End If
+            Return prop
+        End Function
+
         Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal o As ICachedEntity, _
             ByVal sort As OrderByClause) As Boolean Implements IListObjectConverter.Add
             Dim l As IListEdit = CType(weak_list, IListEdit)
             Dim obj As ICachedEntity = o
             If l.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
-                If props.Count <> 1 Then
-                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
-                End If
-                Dim prop As String = Nothing
-                For Each p As String In props
-                    prop = p
-                Next
+                'Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
+                'If props.Count <> 1 Then
+                '    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                'End If
+                'Dim prop As String = Nothing
+                'For Each p As String In props
+                '    prop = p
+                'Next
+                Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
                 obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                If obj.GetType IsNot l.RealType Then
+                    If Not String.IsNullOrEmpty(prop) Then
+                        Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                    End If
+                End If
             End If
 
             If sort Is Nothing Then
@@ -164,15 +186,21 @@ Namespace Cache
             Dim obj As ICachedEntity = o
             If l.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
-                If props.Count <> 1 Then
-                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
-                End If
-                Dim prop As String = Nothing
-                For Each p As String In props
-                    prop = p
-                Next
+                'Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, l.RealType, oschema)
+                'If props.Count <> 1 Then
+                '    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                'End If
+                'Dim prop As String = Nothing
+                'For Each p As String In props
+                '    prop = p
+                'Next
+                Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
                 obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                If obj.GetType IsNot l.RealType Then
+                    If Not String.IsNullOrEmpty(prop) Then
+                        Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
+                    End If
+                End If
             End If
             l.Remove(obj)
         End Sub
@@ -338,15 +366,22 @@ Namespace Cache
             Dim obj As ICachedEntity = o
             If lo.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
-                If props.Count <> 1 Then
-                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
-                End If
-                Dim prop As String = Nothing
-                For Each p As String In props
-                    prop = p
-                Next
+                'Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
+                'If props.Count <> 1 Then
+                '    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                'End If
+                'Dim prop As String = Nothing
+                'For Each p As String In props
+                '    prop = p
+                'Next
+                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, mc, oschema)
                 obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                If obj.GetType IsNot lo.RealType Then
+                    If Not String.IsNullOrEmpty(prop) Then
+                        Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                    End If
+                End If
+
             End If
 
             If sort Is Nothing Then
@@ -374,15 +409,21 @@ Namespace Cache
             Dim obj As ICachedEntity = o
             If lo.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
-                If props.Count <> 1 Then
-                    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
-                End If
-                Dim prop As String = Nothing
-                For Each p As String In props
-                    prop = p
-                Next
+                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, mc, oschema)
+                'Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
+                'If props.Count <> 1 Then
+                '    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                'End If
+                'Dim prop As String = Nothing
+                'For Each p As String In props
+                '    prop = p
+                'Next
                 obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                If obj.GetType IsNot lo.RealType Then
+                    If Not String.IsNullOrEmpty(prop) Then
+                        Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
+                    End If
+                End If
             End If
 
             lo.Remove(obj)
