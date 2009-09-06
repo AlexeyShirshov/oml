@@ -442,7 +442,7 @@ Namespace Query
             _j = l
         End Sub
 
-        Public Function [on](ByVal f As IFilter) As JoinLink
+        Public Function [on](ByVal f As IGetFilter) As JoinLink
             Return New JoinLink(f, _j)
         End Function
 
