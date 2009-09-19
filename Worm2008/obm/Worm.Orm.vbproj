@@ -272,4 +272,9 @@
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>$(SolutionDir)ilmerge /log /keyfile:$(ProjectDir)worm.snk /t:library /xmldocs /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
+$(SolutionDir)ilmerge /log /keyfile:$(ProjectDir)worm.snk /t:library /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
+del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
+  </PropertyGroup>
 </Project>

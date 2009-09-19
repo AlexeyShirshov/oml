@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E64006B-2B21-4A31-85D8-C669B9C4E7B3}"
 	ProjectSection(SolutionItems) = preProject
+		ILMerge.exe = ILMerge.exe
 		ReadMe.txt = ReadMe.txt
 		TestRunConfig1.testrunconfig = TestRunConfig1.testrunconfig
 		worm1.vsmdi = worm1.vsmdi
