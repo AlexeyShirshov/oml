@@ -479,10 +479,10 @@ Namespace Expressions2
             ByVal obj As _IEntity, ByVal oschema As IEntitySchema, _
             ByRef v As Object, ByRef lv As Object, ByRef rv As Object) As Boolean
 
-            Dim bv As BetweenExpresssion = TryCast(Left, BetweenExpresssion)
+            Dim bv As BetweenExpression = TryCast(Left, BetweenExpression)
             Dim exp As IExpression = Nothing
             If bv Is Nothing Then
-                bv = TryCast(Right, BetweenExpresssion)
+                bv = TryCast(Right, BetweenExpression)
                 exp = Left
             Else
                 exp = Right
@@ -535,7 +535,7 @@ Namespace Expressions2
         End Function
     End Class
 
-    Public Class BetweenExpresssion
+    Public Class BetweenExpression
         Inherits BinaryExpressionBase
         Implements IParameterExpression
 
@@ -568,7 +568,7 @@ Namespace Expressions2
         End Property
 
         Public Overrides Function Clone() As Object
-            Return New BetweenExpresssion(CloneExpression(Left), CloneExpression(Right))
+            Return New BetweenExpression(CloneExpression(Left), CloneExpression(Right))
         End Function
 
         Public Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As IParameterExpression.ModifyValueArgs) Implements IParameterExpression.ModifyValue

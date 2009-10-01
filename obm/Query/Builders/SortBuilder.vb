@@ -414,7 +414,9 @@ Namespace Query
 
         Public Shared Function Exp(ByVal expression As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(expression.Expression)
+            If expression IsNot Nothing Then
+                f.AddExpression(expression.Expression)
+            End If
             Return f
         End Function
 #End Region
@@ -471,11 +473,11 @@ Namespace Query
             End Function
 
             Public Overloads Shared Widening Operator CType(ByVal so As Int) As SortExpression
-                Return CType(so.GetAllProperties(0), SortExpression)
+                Return CType(so.GetExpressions(0), SortExpression)
             End Operator
 
             Public Overloads Shared Widening Operator CType(ByVal so As Int) As OrderByClause
-                Return New OrderByClause(so.GetAllProperties().ConvertAll(Function(e) CType(e, SortExpression)))
+                Return New OrderByClause(so.GetExpressions().ConvertAll(Function(e) CType(e, SortExpression)))
             End Operator
         End Class
     End Class

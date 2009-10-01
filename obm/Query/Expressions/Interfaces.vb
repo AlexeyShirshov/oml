@@ -29,7 +29,10 @@ Namespace Expressions2
         BitAnd
         BitOr
 
-        'arithmetic
+        ''' <summary>
+        ''' Arithmetic additional
+        ''' </summary>
+        ''' <remarks></remarks>
         Add
         Subtract
         Divide
