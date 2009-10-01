@@ -16,7 +16,7 @@ Namespace Query
             Protected _l As List(Of IExpression)
 
             Public Function AddExpression(ByVal exp As IExpression) As T
-                GetAllProperties.Add(Wrap(exp))
+                GetExpressions.Add(Wrap(exp))
                 Return CType(Me, T)
             End Function
 
@@ -24,7 +24,7 @@ Namespace Query
                 Return exp
             End Function
 
-            Public Function GetAllProperties() As List(Of IExpression)
+            Public Function GetExpressions() As List(Of IExpression)
                 If _l Is Nothing Then
                     _l = New List(Of IExpression)
                 End If
@@ -37,7 +37,7 @@ Namespace Query
 
 #Region " Members "
             Public Function prop(ByVal propertyAlias As String) As T
-                Return prop(New PropertyAliasExpression(propertyAlias))
+                Return Exp(New PropertyAliasExpression(propertyAlias))
             End Function
 
             Public Function prop(ByVal t As Type, ByVal propertyAlias As String) As T
@@ -53,17 +53,17 @@ Namespace Query
             End Function
 
             Public Function prop(ByVal os As EntityUnion, ByVal propertyAlias As String) As T
-                Return prop(New EntityExpression(propertyAlias, os))
+                Return Exp(New EntityExpression(propertyAlias, os))
             End Function
 
             Public Function prop(ByVal op As ObjectProperty) As T
-                Return prop(New EntityExpression(op))
+                Return Exp(New EntityExpression(op))
             End Function
 
-            Public Function prop(ByVal exp As IGetExpression) As T
-                AddExpression(exp.Expression)
-                Return CType(Me, T)
-            End Function
+            'Public Function prop(ByVal exp As IGetExpression) As T
+            '    AddExpression(exp.Expression)
+            '    Return CType(Me, T)
+            'End Function
 
             Public Function column(ByVal table As SourceFragment, ByVal tableColumn As String) As T
                 AddExpression(New TableExpression(table, tableColumn))
@@ -86,14 +86,16 @@ Namespace Query
             End Function
 
             Public Function Exp(ByVal expression As IGetExpression) As T
-                GetAllProperties.Add(expression.Expression)
+                If expression IsNot Nothing Then
+                    AddExpression(expression.Expression)
+                End If
                 Return CType(Me, T)
             End Function
 #End Region
 
             Public ReadOnly Property Expression() As Expressions2.IExpression Implements Expressions2.IGetExpression.Expression
                 Get
-                    Return GetAllProperties()(0)
+                    Return GetExpressions()(0)
                 End Get
             End Property
         End Class
@@ -241,7 +243,29 @@ Namespace Query
 
         Public Shared Function Exp(ByVal expression As IGetExpression) As T
             Dim f As New T
-            f.AddExpression(expression.Expression)
+            If expression IsNot Nothing Then
+                f.AddExpression(expression.Expression)
+            End If
+            Return f
+        End Function
+
+        Public Shared Function Param(ByVal value As Object) As T
+            Dim f As New T
+            If value Is Nothing Then
+                f.AddExpression(New DBNullExpression())
+            Else
+                f.AddExpression(New ParameterExpression(value))
+            End If
+            Return f
+        End Function
+
+        Public Shared Function Literal(ByVal value As Object) As T
+            Dim f As New T
+            If value Is Nothing Then
+                f.AddExpression(New DBNullExpression())
+            Else
+                f.AddExpression(New LiteralExpression(value.ToString))
+            End If
             Return f
         End Function
 #End Region
@@ -344,6 +368,36 @@ Namespace Query
                 AddExpression(New QueryExpression(q))
                 Return CType(Me, T)
             End Function
+
+#Region " Arithmetic "
+            Public Function Add(ByVal value As Object) As T
+                If value Is Nothing Then
+                    Throw New ArgumentNullException("value")
+                End If
+
+                Return Add(New ParameterExpression(value))
+            End Function
+
+            Public Function AddLiteral(ByVal value As Object) As T
+                If value Is Nothing Then
+                    Throw New ArgumentNullException("value")
+                End If
+
+                Return Add(New LiteralExpression(value.ToString))
+            End Function
+
+            Public Function Add(ByVal value As IGetExpression) As T
+                If value IsNot Nothing Then
+                    Dim lastIdx As Integer = GetExpressions.Count - 1
+                    GetExpressions(lastIdx) = New BinaryExpression(GetExpressions(lastIdx), _
+                        BinaryOperationType.Add, _
+                        value.Expression)
+                End If
+
+                Return CType(Me, T)
+            End Function
+
+#End Region
         End Class
     End Class
 

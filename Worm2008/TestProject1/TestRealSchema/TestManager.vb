@@ -1276,7 +1276,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim l As New List(Of Table1)
             Using cmd As New System.Data.SqlClient.SqlCommand("select id, code from table1 where id = 1")
-                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id").into("ID", Field2DbRelations.PK).column(Nothing, "code").into("Code").GetAllProperties.ConvertAll(Function(e) CType(e, SelectExpression))
+                Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id").into("ID", Field2DbRelations.PK).column(Nothing, "code").into("Code").GetExpressions.ConvertAll(Function(e) CType(e, SelectExpression))
 
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
                     mgr.MappingEngine.GetEntitySchema(GetType(Table1)), SelectExpression.GetMapping(s))
