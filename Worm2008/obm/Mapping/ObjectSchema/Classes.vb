@@ -44,59 +44,102 @@ Namespace Entities.Meta
         End Function
     End Structure
 
+    Public Class SourceField
+        Private _dbType As DBType
+        Private _columnName As String
+        Private _exp As String
+        Private _pk As String
+
+        Public Property SourceFieldExpression() As String
+            Get
+                Return _exp
+            End Get
+            Set(ByVal value As String)
+                _exp = value
+            End Set
+        End Property
+
+        Public Property SourceFieldAlias() As String
+            Get
+                Return _columnName
+            End Get
+            Set(ByVal value As String)
+                _columnName = value
+            End Set
+        End Property
+
+        Public Property DBType() As DBType
+            Get
+                Return _dbType
+            End Get
+            Set(ByVal value As DBType)
+                _dbType = value
+            End Set
+        End Property
+
+        Public Property PrimaryKey() As String
+            Get
+                Return _pk
+            End Get
+            Set(ByVal value As String)
+                _pk = value
+            End Set
+        End Property
+    End Class
+
     Public Class MapField2Column
         Implements ICloneable
 
-        Public ReadOnly _propertyAlias As String
-        Public ReadOnly DBType As DBType
-        Public ReadOnly _newattributes As Field2DbRelations
+        Private _propertyAlias As String
+        Private _newattributes As Field2DbRelations
         Private _tbl As SourceFragment
-        Private _columnName As String
-        Private _exp As String
+        Private _sf As New List(Of SourceField)
+
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations)
+            _propertyAlias = propertyAlias
+            _tbl = tableName
+            _newattributes = newAttributes
+        End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
-            _propertyAlias = propertyAlias
-            Me.ColumnExpression = columnExpression
-            Table = tableName
-            _newattributes = Field2DbRelations.None
+            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
-            _propertyAlias = propertyAlias
-            Me.ColumnExpression = columnExpression
-            Table = tableName
-            _newattributes = newAttributes
+            MyClass.New(propertyAlias, tableName, newAttributes)
+            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = dbType
+            _sf(0).DBType = dbType
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType)
+            _sf(0).DBType = New DBType(dbType)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, size)
+            _sf(0).DBType = New DBType(dbType, size)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, size, nullable)
+            _sf(0).DBType = New DBType(dbType, size, nullable)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, nullable)
+            _sf(0).DBType = New DBType(dbType, nullable)
         End Sub
 
         Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
@@ -116,26 +159,41 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property ColumnName() As String
+        Public Property PropertyAlias() As String
             Get
-                Return _columnName
+                Return _propertyAlias
             End Get
             Set(ByVal value As String)
-                _columnName = value
+                _propertyAlias = value
             End Set
         End Property
 
-        Public Property ColumnExpression() As String
+        Public Property Attributes() As Field2DbRelations
             Get
-                Return _exp
+                Return _newattributes
             End Get
-            Set(ByVal value As String)
-                _exp = value
+            Set(ByVal value As Field2DbRelations)
+                _newattributes = value
             End Set
+        End Property
+
+        Public Property SourceFields() As List(Of SourceField)
+            Get
+                Return _sf
+            End Get
+            Set(ByVal value As List(Of SourceField))
+                _sf = value
+            End Set
+        End Property
+
+        Public ReadOnly Property ColumnExpression() As String
+            Get
+                Return _sf(0).SourceFieldExpression
+            End Get
         End Property
 
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New MapField2Column(Me._propertyAlias, ColumnExpression, Table, Me._newattributes, Me.DBType) With {.ColumnName = ColumnName}
+            Return New MapField2Column(Me._propertyAlias, Table, Me._newattributes) With {.SourceFields = New List(Of SourceField)(_sf)}
         End Function
     End Class
 
@@ -892,7 +950,7 @@ Namespace Entities.Meta
         ''' <returns>Возвращает <see cref="MapField2Column._propertyAlias"/></returns>
         ''' <remarks>Используется при индексации коллекции</remarks>
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
-            Return item._propertyAlias
+            Return item.PropertyAlias
         End Function
     End Class
 End Namespace

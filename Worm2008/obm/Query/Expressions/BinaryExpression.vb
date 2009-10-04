@@ -330,13 +330,13 @@ Namespace Expressions2
             Return l
         End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
             If Right Is Nothing Then
-                Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
             End If
-            Return "(" & Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
+            Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
                 stmt.BinaryOperator2String(_oper) & _
-                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
+                Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
         End Function
 
         'Public Overrides Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression

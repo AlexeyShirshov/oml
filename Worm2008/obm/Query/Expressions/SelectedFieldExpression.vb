@@ -334,6 +334,20 @@ Namespace Expressions2
                     Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
                     If pe IsNot Nothing Then
                         propertyAlias = pe.PropertyAlias
+                    Else
+                        For Each e As IExpression In _exp.GetExpressions
+                            ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                            If ee IsNot Nothing Then
+                                propertyAlias = ee.ObjectProperty.PropertyAlias
+                                Exit For
+                            Else
+                                pe = TryCast(e, PropertyAliasExpression)
+                                If pe IsNot Nothing Then
+                                    propertyAlias = pe.PropertyAlias
+                                    Exit For
+                                End If
+                            End If
+                        Next
                     End If
                 End If
             End If

@@ -20,15 +20,15 @@ Namespace Database
         Implements ICreateParam
 
         Private _params As List(Of System.Data.Common.DbParameter)
-        Private _schema As SQLGenerator
+        Private _stmt As SQLGenerator
         Private _prefix As String
         Private _named_params As Boolean
 
-        Public Sub New(ByVal mpe As SQLGenerator, ByVal prefix As String)
-            _schema = mpe
+        Public Sub New(ByVal stmtGen As SQLGenerator, ByVal prefix As String)
+            _stmt = stmtGen
             _params = New List(Of System.Data.Common.DbParameter)
             _prefix = prefix
-            _named_params = mpe.ParamName("p", 1) <> mpe.ParamName("p", 2)
+            _named_params = stmtGen.ParamName("p", 1) <> stmtGen.ParamName("p", 2)
         End Sub
 
         ', ByVal mpe As ObjectMappingEngine
@@ -63,12 +63,12 @@ Namespace Database
         End Function
 
         Public Function CreateParam(ByVal value As Object) As String Implements ICreateParam.CreateParam
-            If _schema Is Nothing Then
+            If _stmt Is Nothing Then
                 Throw New InvalidOperationException("Object must be created")
             End If
 
-            Dim pname As String = _schema.ParamName(_prefix, _params.Count + 1)
-            _params.Add(_schema.CreateDBParameter(pname, value))
+            Dim pname As String = _stmt.ParamName(_prefix, _params.Count + 1)
+            _params.Add(_stmt.CreateDBParameter(pname, value))
             Return pname
         End Function
 
@@ -408,7 +408,7 @@ Namespace Database
                         Else
                             Dim m As MapField2Column = CType(o, MapField2Column)
                             c = New EntityPropertyAttribute(m.ColumnExpression)
-                            c.PropertyAlias = m._propertyAlias
+                            c.PropertyAlias = m.PropertyAlias
                         End If
                         If c IsNot Nothing Then
                             Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, c.PropertyAlias, pi, TryCast(oschema, IEntitySchema))
@@ -600,7 +600,7 @@ l1:
                         Else
                             Dim m As MapField2Column = CType(o, MapField2Column)
                             c = New EntityPropertyAttribute(m.ColumnExpression)
-                            c.PropertyAlias = m._propertyAlias
+                            c.PropertyAlias = m.PropertyAlias
                         End If
                         Dim att As Field2DbRelations = mpe.GetAttributes(os, c)
                         If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -667,7 +667,7 @@ l1:
                                 Dim clm As EntityPropertyAttribute = mpe.GetColumnByPropertyAlias(type, ef.Template.PropertyAlias, os)
                                 If clm Is Nothing Then
                                     Dim m As MapField2Column = os.GetFieldColumnMap(ef.Template.PropertyAlias)
-                                    att = m._newattributes
+                                    att = m.Attributes
                                 Else
                                     att = mpe.GetAttributes(os, clm)
                                 End If
@@ -832,7 +832,7 @@ l1:
                 Else
                     Dim m As MapField2Column = CType(o, MapField2Column)
                     c = New EntityPropertyAttribute(m.ColumnExpression)
-                    c.PropertyAlias = m._propertyAlias
+                    c.PropertyAlias = m.PropertyAlias
                 End If
                 Dim pa As String = c.PropertyAlias
                 If c IsNot Nothing Then
@@ -988,7 +988,7 @@ l2:
                 Else
                     Dim m As MapField2Column = CType(o, MapField2Column)
                     c = New EntityPropertyAttribute(m.ColumnExpression)
-                    c.PropertyAlias = m._propertyAlias
+                    c.PropertyAlias = m.PropertyAlias
                 End If
                 Dim pa As String = c.PropertyAlias
                 If c IsNot Nothing Then
@@ -1101,7 +1101,7 @@ l2:
                         Next
                         If pk_table Is Nothing Then
                             For Each c As MapField2Column In esch.GetFieldColumnMap
-                                If (c._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                If (c.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                     pk_table = c.Table
                                     Exit For
                                 End If
@@ -1339,7 +1339,7 @@ l2:
                         Else
                             Dim m As MapField2Column = CType(oo, MapField2Column)
                             c = New EntityPropertyAttribute(m.ColumnExpression)
-                            c.PropertyAlias = m._propertyAlias
+                            c.PropertyAlias = m.PropertyAlias
                         End If
 
                         If c IsNot Nothing Then
@@ -2622,7 +2622,7 @@ l2:
                 Dim arr As Generic.IList(Of EntityPropertyAttribute) = Nothing
                 If Not String.IsNullOrEmpty(_field) Then
                     arr = New Generic.List(Of EntityPropertyAttribute)
-                    arr.Add(New EntityPropertyAttribute(_field, String.Empty))
+                    arr.Add(New EntityPropertyAttribute() With {.PropertyAlias = _field})
                 End If
                 sb.Append(SelectWithJoin(dbschema, _t, almgr, paramMgr, _joins, _
                     arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))

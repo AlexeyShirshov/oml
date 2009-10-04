@@ -91,16 +91,16 @@ Namespace Entities.Meta
 
             For Each m As MapField2Column In realTypecols
                 _cols.Add(m)
-                If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     _pk = m.ColumnExpression
                 End If
             Next
 
             For Each m As MapField2Column In baseTypeCols
-                If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     _fk = m.ColumnExpression
                 Else
-                    _cols(m._propertyAlias).Table = m.Table
+                    _cols(m.PropertyAlias).Table = m.Table
                 End If
             Next
         End Sub

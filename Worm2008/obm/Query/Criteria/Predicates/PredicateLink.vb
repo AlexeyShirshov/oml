@@ -415,6 +415,14 @@ Namespace Criteria
             'Return l.ToArray
             Return New List(Of IFilter)(p.Filter.GetAllFilters).ToArray
         End Operator
+
+        Public Shared Operator And(ByVal a As PredicateLink, ByVal b As PredicateLink) As PredicateLink
+            Return a.and(b)
+        End Operator
+
+        Public Shared Operator Or(ByVal a As PredicateLink, ByVal b As PredicateLink) As PredicateLink
+            Return a.or(b)
+        End Operator
     End Class
 
 End Namespace

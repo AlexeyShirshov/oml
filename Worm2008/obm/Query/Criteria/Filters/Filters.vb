@@ -107,7 +107,7 @@ Namespace Criteria.Core
             ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal inSelect As Boolean, ByVal oschema As IEntitySchema, ByVal executor As IExecutionContext) As String
             'If _dbFilter Then
-            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue, filterInfo, inSelect, executor)
+            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute() With {.PropertyAlias = Template.PropertyAlias}).PrepareValue, filterInfo, inSelect, executor)
             'Else
             'Throw New InvalidOperationException
             'End If
@@ -237,7 +237,7 @@ Namespace Criteria.Core
 
             Dim pd As Values.PrepareValueDelegate = Nothing
             If _prep Then
-                pd = AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue
+                pd = AddressOf New cls(oschema, New EntityPropertyAttribute() With {.PropertyAlias = Template.PropertyAlias}).PrepareValue
             End If
 
             Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, almgr, pd, Nothing, False, Nothing)
