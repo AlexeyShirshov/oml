@@ -1752,7 +1752,7 @@ l1:
         End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-            Dim c As New EntityPropertyAttribute(propertyAlias, String.Empty)
+            Dim c As New EntityPropertyAttribute With {.PropertyAlias = propertyAlias}
             Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
             Dim idx As Integer = arr.BinarySearch(c)
             If idx < 0 Then Throw New OrmObjectException("Property " & propertyAlias & " not found in type " & Me.GetType.ToString & ". Ensure it is not suppressed")

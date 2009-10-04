@@ -302,37 +302,37 @@ Namespace Query
 
         Public Shared Function prop(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(exp.Expression)
+            f.AppendExpression(exp.Expression)
             Return f
         End Function
 
         Public Shared Function column(ByVal table As SourceFragment, ByVal tableColumn As String) As Int
             Dim f As New Int
-            f.AddExpression(New TableExpression(table, tableColumn))
+            f.AppendExpression(New TableExpression(table, tableColumn))
             Return f
         End Function
 
         Public Shared Function column(ByVal inner As QueryCmd) As Int
             Dim f As New Int
-            f.AddExpression(New QueryExpression(inner))
+            f.AppendExpression(New QueryExpression(inner))
             Return f
         End Function
 
         Public Shared Function custom(ByVal expression As String) As Int
             Dim f As New Int
-            f.AddExpression(New CustomExpression(expression))
+            f.AppendExpression(New CustomExpression(expression))
             Return f
         End Function
 
         Public Shared Function custom(ByVal expression As String, ByVal ParamArray params() As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New CustomExpression(expression, params))
+            f.AppendExpression(New CustomExpression(expression, params))
             Return f
         End Function
 
         Public Shared Function count() As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count))
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count))
             Return f
         End Function
 
@@ -346,7 +346,7 @@ Namespace Query
 
         Public Shared Function count_distinct(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count, exp) With {.Distinct = True})
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count, exp) With {.Distinct = True})
             Return f
         End Function
 
@@ -360,13 +360,13 @@ Namespace Query
 
         Public Shared Function sum(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, exp))
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Sum, exp))
             Return f
         End Function
 
         Public Shared Function max(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Max, exp))
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Max, exp))
             Return f
         End Function
 
@@ -380,7 +380,7 @@ Namespace Query
 
         Public Shared Function min(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Min, exp))
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Min, exp))
             Return f
         End Function
 
@@ -402,20 +402,20 @@ Namespace Query
 
         Public Shared Function avg(ByVal exp As IGetExpression) As Int
             Dim f As New Int
-            f.AddExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Average, exp))
+            f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Average, exp))
             Return f
         End Function
 
         Public Shared Function query(ByVal q As QueryCmd) As Int
             Dim f As New Int
-            f.AddExpression(New QueryExpression(q))
+            f.AppendExpression(New QueryExpression(q))
             Return f
         End Function
 
         Public Shared Function Exp(ByVal expression As IGetExpression) As Int
             Dim f As New Int
             If expression IsNot Nothing Then
-                f.AddExpression(expression.Expression)
+                f.AppendExpression(expression.Expression)
             End If
             Return f
         End Function

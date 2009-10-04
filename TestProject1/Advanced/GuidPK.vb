@@ -8,7 +8,7 @@ Public Class GuidPK
     Private _code As Integer
     Private _id As Guid
 
-    <EntityPropertyAttribute(column:="code")> _
+    <EntityPropertyAttribute("code")> _
     Public Property Code() As Integer
         Get
             Using Read("Code")
@@ -22,7 +22,7 @@ Public Class GuidPK
         End Set
     End Property
 
-    <EntityPropertyAttribute(PropertyAlias:="ID", Behavior:=Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
+    <EntityPropertyAttribute("pk", Field2DbRelations.PrimaryKey, "ID", DBType:="uniqueidentifier")> _
     Public Overrides Property Identifier() As Object
         Get
             Return _id

@@ -329,7 +329,7 @@ Namespace Database
             If o.ObjectState <> ObjectState.Deleted Then Return False
             Dim oSchema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
             For Each m As MapField2Column In _mgr.MappingEngine.GetMappedFields(oSchema)
-                If main.Equals(_mgr.MappingEngine.GetPropertyValue(o, m._propertyAlias, oSchema)) Then
+                If main.Equals(_mgr.MappingEngine.GetPropertyValue(o, m.PropertyAlias, oSchema)) Then
                     Return True
                 End If
             Next

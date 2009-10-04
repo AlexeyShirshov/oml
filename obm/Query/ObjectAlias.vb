@@ -1,5 +1,6 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
+Imports Worm.Criteria
 
 Namespace Query
 
@@ -319,6 +320,73 @@ Namespace Query
 
             Return PropertyAlias
         End Function
+
+#Region " Operators "
+        Public Shared Operator +(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) + b
+        End Operator
+
+        Public Shared Operator -(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) - b
+        End Operator
+
+        Public Shared Operator *(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) * b
+        End Operator
+
+        Public Shared Operator /(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) / b
+        End Operator
+
+        Public Shared Operator Mod(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Mod b
+        End Operator
+
+        Public Shared Operator Xor(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Xor b
+        End Operator
+
+        Public Shared Operator And(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) And b
+        End Operator
+
+        Public Shared Operator Or(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Or b
+        End Operator
+
+        Public Shared Operator =(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) = b
+        End Operator
+
+        Public Shared Operator <>(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) <> b
+        End Operator
+
+        Public Shared Operator >(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) > b
+        End Operator
+
+        Public Shared Operator <(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) < b
+        End Operator
+
+        Public Shared Operator >=(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) >= b
+        End Operator
+
+        Public Shared Operator <=(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) <= b
+        End Operator
+
+        Public Shared Widening Operator CType(ByVal a As ObjectProperty) As ECtor.Int
+            Return ECtor.prop(a)
+        End Operator
+
+        Public Shared Widening Operator CType(ByVal a As ObjectProperty) As Expressions2.EntityExpression
+            Return New Expressions2.EntityExpression(a)
+        End Operator
+
+#End Region
     End Structure
 
 End Namespace

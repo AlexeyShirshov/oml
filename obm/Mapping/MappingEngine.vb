@@ -139,10 +139,10 @@ Public Class ObjectMappingEngine
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc._newattributes) With { _
+                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
                             .Column = mc.ColumnExpression, _
-                            .PropertyAlias = mc._propertyAlias, _
-                            .ColumnName = mc.ColumnName _
+                            .PropertyAlias = mc.PropertyAlias, _
+                            .Behavior = mc.Attributes _
                         }
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
@@ -156,7 +156,7 @@ Public Class ObjectMappingEngine
                         bd = bd.GetBaseDefinition
                     Loop
 
-                    column = New EntityPropertyAttribute(propertyAlias, String.Empty)
+                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
                     column.Column = propertyAlias
                 End If
             End If
@@ -172,7 +172,8 @@ Public Class ObjectMappingEngine
 
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(column.PropertyAlias) Then
-                        Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias)._newattributes
+                        Dim mc As MapField2Column = propertyMap(column.PropertyAlias)
+                        Dim attr As Field2DbRelations = mc.Attributes
                         If attr <> Field2DbRelations.None Then
                             column.Behavior = attr
                         End If
@@ -200,10 +201,10 @@ Public Class ObjectMappingEngine
                 If propertyMap IsNot Nothing Then
                     If propertyMap.ContainsKey(propertyAlias) Then 'AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
                         Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc._newattributes) With { _
+                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
                             .Column = mc.ColumnExpression, _
-                            .PropertyAlias = mc._propertyAlias, _
-                            .ColumnName = mc.ColumnName _
+                            .PropertyAlias = mc.PropertyAlias, _
+                            .Behavior = mc.Attributes _
                         }
                     End If
                 ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
@@ -217,7 +218,7 @@ Public Class ObjectMappingEngine
                         bd = bd.GetBaseDefinition
                     Loop
 
-                    column = New EntityPropertyAttribute(propertyAlias, String.Empty)
+                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
                     column.Column = propertyAlias
                 End If
             End If
@@ -231,7 +232,7 @@ Public Class ObjectMappingEngine
 
                     If propertyMap IsNot Nothing Then
                         If propertyMap.ContainsKey(column.PropertyAlias) Then
-                            Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias)._newattributes
+                            Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias).Attributes
                             If attr <> Field2DbRelations.None Then
                                 column.Behavior = attr
                             End If
@@ -325,7 +326,7 @@ Public Class ObjectMappingEngine
         End If
         Dim l As New List(Of MapField2Column)
         For Each m As MapField2Column In schema.GetFieldColumnMap
-            If Array.IndexOf(sup, m._propertyAlias) < 0 Then
+            If Array.IndexOf(sup, m.PropertyAlias) < 0 Then
                 l.Add(m)
             End If
         Next
@@ -369,7 +370,7 @@ Public Class ObjectMappingEngine
 
         For Each p As MapField2Column In coll
             If p.ColumnExpression = columnName Then
-                Return p._propertyAlias
+                Return p.PropertyAlias
             End If
         Next
 
@@ -853,7 +854,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(original_type, New EntityPropertyAttribute(propertyAlias, String.Empty))
+        Return GetProperty(original_type, New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias})
     End Function
 
     Public Function GetProperty(ByVal t As Type, ByVal schema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -861,7 +862,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(t, schema, New EntityPropertyAttribute(propertyAlias, String.Empty))
+        Return GetProperty(t, schema, New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias})
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -869,7 +870,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(original_type, False)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(original_type, False)(New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}), Reflection.PropertyInfo)
     End Function
 
     Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IEntitySchema, ByVal propertyAlias As String) As Reflection.PropertyInfo
@@ -877,7 +878,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetMappedProperties(t, oschema)(New EntityPropertyAttribute(propertyAlias, String.Empty)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(t, oschema)(New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}), Reflection.PropertyInfo)
     End Function
 
     Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IEntitySchema = Nothing) As Generic.List(Of EntityPropertyAttribute)
@@ -1994,7 +1995,7 @@ Public Class ObjectMappingEngine
 
     Public Function GetPKTable(ByVal t As Type, ByVal schema As IEntitySchema) As SourceFragment
         For Each m As MapField2Column In schema.GetFieldColumnMap
-            If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+            If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                 Return m.Table
             End If
         Next

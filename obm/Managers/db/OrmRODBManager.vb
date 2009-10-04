@@ -1071,7 +1071,7 @@ l1:
             Dim arr As New List(Of EntityPropertyAttribute)(MappingEngine.GetSortedFieldList(original_type, oschema))
             If arr.Count = 0 Then
                 For Each m As MapField2Column In oschema.GetFieldColumnMap
-                    arr.Add(New EntityPropertyAttribute(m._propertyAlias, m._newattributes, m.ColumnExpression))
+                    arr.Add(New EntityPropertyAttribute(m.PropertyAlias, m.Attributes, m.ColumnExpression))
                 Next
             End If
             Dim load As Boolean = True
@@ -2021,7 +2021,7 @@ l1:
                     If selectList Is Nothing OrElse selectList.Count = 0 Then
                         'selectList = New List(Of EntityPropertyAttribute)
                         'For Each m As MapField2Column In fields_idx
-                        '    Dim clm As New EntityPropertyAttribute(m._propertyAlias, m._newattributes)
+                        '    Dim clm As New EntityPropertyAttribute(m._propertyAlias, m.Attributes)
                         '    clm.Column = If(Not String.IsNullOrEmpty(m._columnName), m._columnName, m._propertyAlias)
                         '    selectList.Add(clm)
                         'Next
@@ -2036,9 +2036,9 @@ l1:
                         End If
                         If fields_idx.Count > 0 Then
                             For Each m As MapField2Column In fields_idx
-                                Dim se As New SelectExpression(original_type, m._propertyAlias)
-                                se.ColumnAlias = If(Not String.IsNullOrEmpty(m.ColumnExpression), m.ColumnExpression, m._propertyAlias)
-                                se.Attributes = m._newattributes
+                                Dim se As New SelectExpression(original_type, m.PropertyAlias)
+                                se.ColumnAlias = If(Not String.IsNullOrEmpty(m.ColumnExpression), m.ColumnExpression, m.PropertyAlias)
+                                se.Attributes = m.Attributes
                                 selectList.Add(se)
                             Next
                             CType(selectList, List(Of SelectExpression)).Sort(Function(c1 As SelectExpression, c2 As SelectExpression) _

@@ -4,19 +4,95 @@ Namespace Entities.Meta
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
     <Serializable()> _
+    Public NotInheritable Class SourceFieldAttribute
+        Inherits Attribute
+
+        Public Sub New(ByVal columnExpression As String, ByVal primaryKeyPropertyAlias As String)
+            Me.ColumnExpression = columnExpression
+            PrimaryKey = primaryKeyPropertyAlias
+        End Sub
+
+        Private _columnName As String
+        Public Property ColumnName() As String
+            Get
+                Return _columnName
+            End Get
+            Set(ByVal value As String)
+                _columnName = value
+            End Set
+        End Property
+
+        Private _columnExpression As String
+        Public Property ColumnExpression() As String
+            Get
+                Return _columnExpression
+            End Get
+            Set(ByVal value As String)
+                _columnExpression = value
+            End Set
+        End Property
+
+        Private _pk As String
+        Public Property PrimaryKey() As String
+            Get
+                Return _pk
+            End Get
+            Set(ByVal value As String)
+                _pk = value
+            End Set
+        End Property
+
+        Private _type As String
+        Public Property SourceFieldType() As String
+            Get
+                Return _type
+            End Get
+            Set(ByVal value As String)
+                _type = value
+            End Set
+        End Property
+
+        Private _size As Integer
+        Public Property SourceFieldSize() As Integer
+            Get
+                Return _size
+            End Get
+            Set(ByVal value As Integer)
+                _size = value
+            End Set
+        End Property
+
+        Private _isNotNullable As Boolean
+        Public Property IsNullable() As Boolean
+            Get
+                Return Not _isNotNullable
+            End Get
+            Set(ByVal value As Boolean)
+                _isNotNullable = Not value
+            End Set
+        End Property
+
+    End Class
+
+    <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
+    <Serializable()> _
     Public NotInheritable Class EntityPropertyAttribute
         Inherits Attribute
         Implements IComparable(Of EntityPropertyAttribute), ICloneable
 
-        Private _fieldName As String
+        Private _propertyAlias As String
         Private _behavior As Field2DbRelations
-        Private _ver As String
-        Private _columnExpression As String
+
         Private _idx As Integer = -1
-        Private _db As DBType
-        Private _columnName As String
+        Private _version As String
+
+        Private _sf() As SourceField
 
         Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal ParamArray sourceFields() As SourceField)
+            _sf = sourceFields
         End Sub
 
         Public Sub New(ByVal behavior As Field2DbRelations)
@@ -24,33 +100,48 @@ Namespace Entities.Meta
         End Sub
 
         Public Sub New(ByVal columnExpression As String)
-            _columnExpression = columnExpression
+            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
             Me._behavior = Field2DbRelations.None
         End Sub
 
         Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations)
-            _columnExpression = columnExpression
+            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
             Me._behavior = behavior
         End Sub
 
-        Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
-            _fieldName = propertAlias
+        Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations, ByVal propertyAlias As String)
+            _propertyAlias = propertyAlias
+            _behavior = behavior
+            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
         End Sub
 
-        Friend Sub New(ByVal propertAlias As String, ByVal behavior As Field2DbRelations, ByVal columnExpression As String)
-            _fieldName = propertAlias
-            _behavior = behavior
-        End Sub
+        'Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
+        '    _propertyAlias = propertAlias
+        'End Sub
+
+        'Friend Sub New(ByVal propertAlias As String, ByVal behavior As Field2DbRelations, ByVal columnExpression As String)
+        '    _propertyAlias = propertAlias
+        '    _behavior = behavior
+        'End Sub
+
+        Public Property SourceFields() As SourceField()
+            Get
+                Return _sf
+            End Get
+            Set(ByVal value As SourceField())
+                _sf = value
+            End Set
+        End Property
 
         ''' <summary>
         ''' Имя поля класса, которое мапится на колонку в БД
         ''' </summary>
         Public Property PropertyAlias() As String
             Get
-                Return _fieldName
+                Return _propertyAlias
             End Get
             Set(ByVal value As String)
-                _fieldName = value
+                _propertyAlias = value
             End Set
         End Property
 
@@ -63,21 +154,12 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property Column() As String
-            Get
-                Return _columnExpression
-            End Get
-            Set(ByVal value As String)
-                _columnExpression = value
-            End Set
-        End Property
-
         Public Property SchemaVersion() As String
             Get
-                Return _ver
+                Return _version
             End Get
             Set(ByVal value As String)
-                _ver = value
+                _version = value
             End Set
         End Property
 
@@ -91,7 +173,7 @@ Namespace Entities.Meta
         End Property
 
         Public Function CompareTo(ByVal other As EntityPropertyAttribute) As Integer Implements System.IComparable(Of EntityPropertyAttribute).CompareTo
-            Return _fieldName.CompareTo(other._fieldName)
+            Return _propertyAlias.CompareTo(other._propertyAlias)
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -102,46 +184,24 @@ Namespace Entities.Meta
             If obj Is Nothing Then
                 Return False
             End If
-            Return PropertyAlias.Equals(obj._fieldName)
+            Return PropertyAlias.Equals(obj._propertyAlias)
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return _fieldName.GetHashCode
+            Return _propertyAlias.GetHashCode
         End Function
 
-        Public ReadOnly Property SourceType() As DBType
+        Public Property Column() As String
             Get
-                Return New DBType(_type, _sz, _n)
-            End Get
-        End Property
-
-        Private _type As String
-        Public Property DBType() As String
-            Get
-                Return _type
+                Return _sf(0).SourceFieldExpression
             End Get
             Set(ByVal value As String)
-                _type = value
-            End Set
-        End Property
-
-        Private _sz As Integer
-        Public Property DBSize() As Integer
-            Get
-                Return _sz
-            End Get
-            Set(ByVal value As Integer)
-                _sz = value
-            End Set
-        End Property
-
-        Private _n As Boolean
-        Public Property Nullable() As Boolean
-            Get
-                Return _n
-            End Get
-            Set(ByVal value As Boolean)
-                _n = value
+                If _sf.Length = 0 Then
+                    ReDim _sf(0)
+                ElseIf _sf.Length > 1 Then
+                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+                End If
+                _sf(0).SourceFieldExpression = value
             End Set
         End Property
 
@@ -153,25 +213,77 @@ Namespace Entities.Meta
         ''' <remarks></remarks>
         Public Property ColumnName() As String
             Get
-                Return _columnName
+                Return _sf(0).SourceFieldAlias
             End Get
             Set(ByVal value As String)
-                _columnName = value
+                If _sf.Length = 0 Then
+                    ReDim _sf(0)
+                ElseIf _sf.Length > 1 Then
+                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+                End If
+                _sf(0).SourceFieldAlias = value
             End Set
         End Property
+
+        Public Property DBType() As String
+            Get
+                Return _sf(0).DBType.Type
+            End Get
+            Set(ByVal value As String)
+                If _sf.Length = 0 Then
+                    ReDim _sf(0)
+                ElseIf _sf.Length > 1 Then
+                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+                End If
+                _sf(0).DBType = New DBType(value, _sf(0).DBType.Size, _sf(0).DBType.IsNullable)
+            End Set
+        End Property
+
+        Public Property DBSize() As Integer
+            Get
+                Return _sf(0).DBType.Size
+            End Get
+            Set(ByVal value As Integer)
+                If _sf.Length = 0 Then
+                    ReDim _sf(0)
+                ElseIf _sf.Length > 1 Then
+                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+                End If
+                _sf(0).DBType = New DBType(_sf(0).DBType.Type, value, _sf(0).DBType.IsNullable)
+            End Set
+        End Property
+
+        Public Property Nullable() As Boolean
+            Get
+                Return _sf(0).DBType.IsNullable
+            End Get
+            Set(ByVal value As Boolean)
+                If _sf.Length = 0 Then
+                    ReDim _sf(0)
+                ElseIf _sf.Length > 1 Then
+                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+                End If
+                _sf(0).DBType = New DBType(_sf(0).DBType.Type, _sf(0).DBType.Size, value)
+            End Set
+        End Property
+
+        'Public ReadOnly Property SourceType() As DBType
+        '    Get
+        '        Return New DBType(_type, _sz, _n)
+        '    End Get
+        'End Property
 
         Public Function Clone() As EntityPropertyAttribute
             Return CType(_Clone(), EntityPropertyAttribute)
         End Function
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
-            Dim c As New EntityPropertyAttribute(_fieldName, Behavior, Nothing)
-            c._columnExpression = _columnExpression
-            c._db = _db
+            Dim c As New EntityPropertyAttribute(Behavior)
             c._idx = _idx
-            c._n = _n
-            c._sz = _sz
-            c._type = _type
+            c._propertyAlias = _propertyAlias
+            Dim sf(_sf.Length - 1) As SourceField
+            Array.Copy(_sf, sf, _sf.Length)
+            c._sf = sf
             Return c
         End Function
     End Class

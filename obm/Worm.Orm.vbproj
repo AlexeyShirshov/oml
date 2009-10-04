@@ -161,6 +161,7 @@
     <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
     <Compile Include="Query\Criteria\Filters\Templates.vb" />
     <Compile Include="Query\Builders\PredicateBuilder.vb" />
+    <Compile Include="Query\Criteria\Predicates\PredicateBase.vb" />
     <Compile Include="Query\Criteria\Predicates\Predicates.vb" />
     <Compile Include="Query\Criteria\Predicates\PredicateLink.vb" />
     <Compile Include="Query\Criteria\Expressions.vb" />

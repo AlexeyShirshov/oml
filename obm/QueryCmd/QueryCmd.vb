@@ -1137,7 +1137,7 @@ l1:
                     'If _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso s IsNot Nothing Then
                     '    For Each m As MapField2Column In s.GetFieldColumnMap
                     '        Dim se As New SelectExpression(m.Table, m.Column)
-                    '        se.Attributes = m._newattributes
+                    '        se.Attributes = m.Attributes
                     '        se.PropertyAlias = m._propertyAlias
                     '        _sl.Add(se)
                     '    Next
@@ -1437,7 +1437,7 @@ l1:
                     End If
                     cl.Add(se)
                     Dim m As MapField2Column = oschema.GetFieldColumnMap(prop)
-                    se.Attributes = se.Attributes Or m._newattributes
+                    se.Attributes = se.Attributes Or m.Attributes
                     If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(mpe) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK
                     End If
@@ -2374,6 +2374,28 @@ l1:
             Return Me
         End Function
 
+        Public Function OrderBy(ByVal ParamArray op() As ObjectProperty) As QueryCmd
+            Dim s As New SCtor.Int
+            For Each o As ObjectProperty In op
+                s = s.prop(o)
+            Next
+            Return OrderBy(s)
+        End Function
+
+        Public Function OrderBy(ByVal ParamArray exp() As ECtor.Int) As QueryCmd
+            Dim f As New List(Of SortExpression)
+            For Each ei As ECtor.Int In exp
+                For Each e As IGetExpression In ei.GetExpressions
+                    If TypeOf e Is SortExpression Then
+                        f.Add(CType(e, SortExpression))
+                    Else
+                        f.Add(New SortExpression(e.Expression))
+                    End If
+                Next
+            Next
+            Return OrderBy(New OrderByClause(f))
+        End Function
+
         Public Function WhereAdd(ByVal filter As IGetFilter) As QueryCmd
             If Me.Filter Is Nothing Then
                 Me.Filter = filter
@@ -2655,6 +2677,28 @@ l1:
                 Array.ConvertAll(Of QueryAlias, Pair(Of EntityUnion, Boolean?))(aliases, _
                     Function(item As QueryAlias) New Pair(Of EntityUnion, Boolean?)(New EntityUnion(item), Nothing)))
             Return Me
+        End Function
+
+        Public Function [Select](ByVal ParamArray props() As ObjectProperty) As QueryCmd
+            Dim f As New FCtor.Int
+            For Each p As ObjectProperty In props
+                f = f.prop(p)
+            Next
+            Return [Select](f)
+        End Function
+
+        Public Function [Select](ByVal ParamArray exp() As ECtor.Int) As QueryCmd
+            Dim f As New List(Of SelectExpression)
+            For Each ei As ECtor.Int In exp
+                For Each e As IGetExpression In ei.GetExpressions
+                    If TypeOf e Is SelectExpression Then
+                        f.Add(CType(e, SelectExpression))
+                    Else
+                        f.Add(New SelectExpression(e.Expression))
+                    End If
+                Next
+            Next
+            Return [Select](New ObjectModel.ReadOnlyCollection(Of SelectExpression)(f))
         End Function
 
         Public Function [Select](ByVal fields() As SelectExpression) As QueryCmd
@@ -3435,7 +3479,7 @@ l1:
                 'End If
             Else
                 For Each m As MapField2Column In selSchema.GetFieldColumnMap
-                    If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         hasPK = True
                         Exit For
                     End If
@@ -4167,7 +4211,7 @@ l1:
             Dim s As IEntitySchema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
             If s IsNot Nothing AndAlso s.GetType IsNot GetType(SimpleObjectSchema) Then
                 For Each m As MapField2Column In s.GetFieldColumnMap
-                    If (m._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         pk = True
                         Exit For
                     End If
@@ -4214,7 +4258,7 @@ l1:
                         End If
                         c.Table = tbl
                     End If
-                    If (c._newattributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    If (c.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         pk = True
                     End If
                 Next
