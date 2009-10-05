@@ -95,6 +95,10 @@ Namespace Entities.Meta
         Private _tbl As SourceFragment
         Private _sf As New List(Of SourceField)
 
+        Friend PropertyInfo As Reflection.PropertyInfo
+        Friend Index As Integer = -1
+        Friend Schema As IEntitySchema
+
         Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations)
             _propertyAlias = propertyAlias
             _tbl = tableName
@@ -195,6 +199,39 @@ Namespace Entities.Meta
         Public Function Clone() As Object Implements System.ICloneable.Clone
             Return New MapField2Column(Me._propertyAlias, Table, Me._newattributes) With {.SourceFields = New List(Of SourceField)(_sf)}
         End Function
+
+        ''' <summary>
+        ''' Возвращает значение поля
+        ''' </summary>
+        ''' <param name="obj">Объект</param>
+        ''' <returns>Значение поля</returns>
+        ''' <remarks>Использует метод <see cref="ObjectMappingEngine.GetPropertyValue"/></remarks>
+        ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и значение поле невозможно получить по рефлекшену.</exception>
+        Public Function GetValue(ByVal obj As Object) As Object
+            Return ObjectMappingEngine.GetPropertyValue(obj, PropertyAlias, PropertyInfo, Schema)
+        End Function
+
+        Public Sub SetValue(ByVal o As Object, ByVal value As Object)
+            ObjectMappingEngine.SetPropertyValue(o, PropertyAlias, PropertyInfo, value, Schema)
+        End Sub
+
+        Public ReadOnly Property IsPK() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.PK) = Field2DbRelations.PK
+            End Get
+        End Property
+
+        Public ReadOnly Property IsReadOnly() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.ReadOnly) = Field2DbRelations.ReadOnly
+            End Get
+        End Property
+
+        Public ReadOnly Property IsRowVersion() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion
+            End Get
+        End Property
     End Class
 
     Public Class RelationDesc

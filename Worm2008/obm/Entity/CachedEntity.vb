@@ -1181,29 +1181,32 @@ l1:
             End Get
         End Property
 
+        ''' <summary>
+        ''' Возвращает массив полей и значений первичный ключей
+        ''' </summary>
+        ''' <returns>массив первичных ключей</returns>
+        ''' <remarks>Для получения схемы типа используется движок маппинга, возвращаемый функцией <see cref="GetMappingEngine"/></remarks>
+        ''' <exception cref="InvalidOperationException">Если невозможно получить схему для типа</exception>
+        ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и значение первичного ключа невозможно получить по рефлекшену.</exception>
         Public Overridable Function GetPKValues() As PKDesc() Implements ICachedEntity.GetPKValues
             Dim l As New List(Of PKDesc)
-            'Using mc As IGetManager = GetMgr()
             Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
+            Dim oschema As IEntitySchema = Nothing
             If schema Is Nothing Then
-                Dim oschema As IEntitySchema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
-                For Each kv As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(Me.GetType)
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                    If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, Nothing)))
-                    End If
-                Next
+                oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
             Else
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(Me.GetType)
-                For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType, oschema)
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                    If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        l.Add(New PKDesc(c.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)))
-                    End If
-                Next
+                oschema = schema.GetEntitySchema(Me.GetType)
             End If
+
+            If oschema Is Nothing Then
+                Throw New InvalidOperationException(String.Format("Cannot get entity schema for type {0}", Me.GetType))
+            End If
+
+            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                If mp.IsPK Then
+                    l.Add(New PKDesc(mp.PropertyAlias, mp.GetValue(Me)))
+                End If
+            Next
             Return l.ToArray
         End Function
 
