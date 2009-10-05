@@ -130,6 +130,10 @@ Namespace Entities
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub Load(ByVal propertyAlias As String)
         Sub RemoveOriginalCopy(ByVal cache As CacheBase)
+        ''' <summary>
+        ''' Возвращает массив полей и значений первичный ключей
+        ''' </summary>
+        ''' <returns>Массив полей и значений первичный ключей</returns>
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity

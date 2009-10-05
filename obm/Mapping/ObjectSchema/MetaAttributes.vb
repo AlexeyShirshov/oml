@@ -83,7 +83,7 @@ Namespace Entities.Meta
         Private _propertyAlias As String
         Private _behavior As Field2DbRelations
 
-        Private _idx As Integer = -1
+        'Private _idx As Integer = -1
         Private _version As String
 
         Private _sf() As SourceField
@@ -163,14 +163,14 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property Index() As Integer
-            Get
-                Return _idx
-            End Get
-            Set(ByVal value As Integer)
-                _idx = value
-            End Set
-        End Property
+        'Public Property Index() As Integer
+        '    Get
+        '        Return _idx
+        '    End Get
+        '    Set(ByVal value As Integer)
+        '        _idx = value
+        '    End Set
+        'End Property
 
         Public Function CompareTo(ByVal other As EntityPropertyAttribute) As Integer Implements System.IComparable(Of EntityPropertyAttribute).CompareTo
             Return _propertyAlias.CompareTo(other._propertyAlias)

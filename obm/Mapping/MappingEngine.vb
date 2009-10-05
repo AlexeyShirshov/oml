@@ -99,208 +99,208 @@ Public Class ObjectMappingEngine
         _mapn = resolveEntityName
     End Sub
 
-#Region " reflection "
+    '#Region " reflection "
 
-    Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
-        Return GetProperties(t, GetEntitySchema(t, False))
-    End Function
+    '    Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
+    '        Return GetProperties(t, GetEntitySchema(t, False))
+    '    End Function
 
-    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal raw As Boolean) As IDictionary
-        Return GetMappedProperties(t, Nothing, Nothing, raw)
-    End Function
+    '    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal raw As Boolean) As IDictionary
+    '        Return GetMappedProperties(t, Nothing, Nothing, raw)
+    '    End Function
 
-    Public Shared Function GetMappedProperties(ByVal t As Type) As IDictionary
-        Return GetMappedProperties(t, Nothing, Nothing, True)
-    End Function
+    '    Public Shared Function GetMappedProperties(ByVal t As Type) As IDictionary
+    '        Return GetMappedProperties(t, Nothing, Nothing, True)
+    '    End Function
 
-    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        Dim propertyMap As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
-        If schema IsNot Nothing Then propertyMap = schema.GetFieldColumnMap()
+    '    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
+    '        Dim propertyMap As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+    '        If schema IsNot Nothing Then propertyMap = schema.GetFieldColumnMap()
 
-        Return GetMappedProperties(t, schema, propertyMap, False)
-    End Function
+    '        Return GetMappedProperties(t, schema, propertyMap, False)
+    '    End Function
 
-    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IEntitySchema, _
-        ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal raw As Boolean) As IDictionary
-        Dim result As New Hashtable
+    '    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IEntitySchema, _
+    '        ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal raw As Boolean) As IDictionary
+    '        Dim result As New Hashtable
 
-        Dim sup() As String = Nothing
-        If schema IsNot Nothing Then
-            Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
-            If s IsNot Nothing Then sup = s.GetSuppressedFields()
-        End If
+    '        Dim sup() As String = Nothing
+    '        If schema IsNot Nothing Then
+    '            Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
+    '            If s IsNot Nothing Then sup = s.GetSuppressedFields()
+    '        End If
 
-        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-            Dim column As EntityPropertyAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
-            If column Is Nothing Then
-                Dim propertyAlias As String = pi.Name
-                If propertyMap IsNot Nothing Then
-                    If propertyMap.ContainsKey(propertyAlias) Then
-                        Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
-                            .Column = mc.ColumnExpression, _
-                            .PropertyAlias = mc.PropertyAlias, _
-                            .Behavior = mc.Attributes _
-                        }
-                    End If
-                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
-                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
-                            Continue For
-                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
-                            Exit Do
-                        End If
-                        bd = bd.GetBaseDefinition
-                    Loop
+    '        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
+    '            Dim column As EntityPropertyAttribute = Nothing
+    '            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+    '            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
+    '            If column Is Nothing Then
+    '                Dim propertyAlias As String = pi.Name
+    '                If propertyMap IsNot Nothing Then
+    '                    If propertyMap.ContainsKey(propertyAlias) Then
+    '                        Dim mc As MapField2Column = propertyMap(propertyAlias)
+    '                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
+    '                            .Column = mc.ColumnExpression, _
+    '                            .PropertyAlias = mc.PropertyAlias, _
+    '                            .Behavior = mc.Attributes _
+    '                        }
+    '                    End If
+    '                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+    '                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
+    '                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
+    '                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+    '                            Continue For
+    '                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
+    '                            Exit Do
+    '                        End If
+    '                        bd = bd.GetBaseDefinition
+    '                    Loop
 
-                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
-                    column.Column = propertyAlias
-                End If
-            End If
+    '                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
+    '                    column.Column = propertyAlias
+    '                End If
+    '            End If
 
-            If column IsNot Nothing Then
-                If String.IsNullOrEmpty(column.PropertyAlias) Then
-                    column.PropertyAlias = pi.Name
-                End If
+    '            If column IsNot Nothing Then
+    '                If String.IsNullOrEmpty(column.PropertyAlias) Then
+    '                    column.PropertyAlias = pi.Name
+    '                End If
 
-                If String.IsNullOrEmpty(column.Column) Then
-                    column.Column = pi.Name
-                End If
+    '                If String.IsNullOrEmpty(column.Column) Then
+    '                    column.Column = pi.Name
+    '                End If
 
-                If propertyMap IsNot Nothing Then
-                    If propertyMap.ContainsKey(column.PropertyAlias) Then
-                        Dim mc As MapField2Column = propertyMap(column.PropertyAlias)
-                        Dim attr As Field2DbRelations = mc.Attributes
-                        If attr <> Field2DbRelations.None Then
-                            column.Behavior = attr
-                        End If
-                        column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
-                    End If
-                End If
+    '                If propertyMap IsNot Nothing Then
+    '                    If propertyMap.ContainsKey(column.PropertyAlias) Then
+    '                        Dim mc As MapField2Column = propertyMap(column.PropertyAlias)
+    '                        Dim attr As Field2DbRelations = mc.Attributes
+    '                        If attr <> Field2DbRelations.None Then
+    '                            column.Behavior = attr
+    '                        End If
+    '                        column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
+    '                    End If
+    '                End If
 
-                If (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
-                    result.Add(column, pi)
-                End If
-            End If
-        Next
+    '                If (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
+    '                    result.Add(column, pi)
+    '                End If
+    '            End If
+    '        Next
 
-        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-            If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
-                Continue For
-            End If
+    '        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+    '            If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+    '                Continue For
+    '            End If
 
-            Dim column As EntityPropertyAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
+    '            Dim column As EntityPropertyAttribute = Nothing
+    '            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
+    '            If columns.Length > 0 Then column = CType(columns(0), EntityPropertyAttribute)
 
-            If column Is Nothing Then
-                Dim propertyAlias As String = pi.Name
-                If propertyMap IsNot Nothing Then
-                    If propertyMap.ContainsKey(propertyAlias) Then 'AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
-                        Dim mc As MapField2Column = propertyMap(propertyAlias)
-                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
-                            .Column = mc.ColumnExpression, _
-                            .PropertyAlias = mc.PropertyAlias, _
-                            .Behavior = mc.Attributes _
-                        }
-                    End If
-                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
-                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
-                            Continue For
-                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
-                            Exit Do
-                        End If
-                        bd = bd.GetBaseDefinition
-                    Loop
+    '            If column Is Nothing Then
+    '                Dim propertyAlias As String = pi.Name
+    '                If propertyMap IsNot Nothing Then
+    '                    If propertyMap.ContainsKey(propertyAlias) Then 'AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
+    '                        Dim mc As MapField2Column = propertyMap(propertyAlias)
+    '                        column = New EntityPropertyAttribute(mc.SourceFields.ToArray) With { _
+    '                            .Column = mc.ColumnExpression, _
+    '                            .PropertyAlias = mc.PropertyAlias, _
+    '                            .Behavior = mc.Attributes _
+    '                        }
+    '                    End If
+    '                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+    '                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
+    '                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
+    '                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+    '                            Continue For
+    '                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
+    '                            Exit Do
+    '                        End If
+    '                        bd = bd.GetBaseDefinition
+    '                    Loop
 
-                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
-                    column.Column = propertyAlias
-                End If
-            End If
+    '                    column = New EntityPropertyAttribute() With {.PropertyAlias = propertyAlias}
+    '                    column.Column = propertyAlias
+    '                End If
+    '            End If
 
-            If column IsNot Nothing Then
-                If String.IsNullOrEmpty(column.PropertyAlias) Then
-                    column.PropertyAlias = pi.Name
-                End If
-                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) _
-                    AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
+    '            If column IsNot Nothing Then
+    '                If String.IsNullOrEmpty(column.PropertyAlias) Then
+    '                    column.PropertyAlias = pi.Name
+    '                End If
+    '                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) _
+    '                    AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
 
-                    If propertyMap IsNot Nothing Then
-                        If propertyMap.ContainsKey(column.PropertyAlias) Then
-                            Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias).Attributes
-                            If attr <> Field2DbRelations.None Then
-                                column.Behavior = attr
-                            End If
-                            column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
-                        End If
-                    End If
+    '                    If propertyMap IsNot Nothing Then
+    '                        If propertyMap.ContainsKey(column.PropertyAlias) Then
+    '                            Dim attr As Field2DbRelations = propertyMap(column.PropertyAlias).Attributes
+    '                            If attr <> Field2DbRelations.None Then
+    '                                column.Behavior = attr
+    '                            End If
+    '                            column.ColumnName = propertyMap(column.PropertyAlias).ColumnName
+    '                        End If
+    '                    End If
 
-                    result.Add(column, pi)
-                End If
-            End If
-        Next
+    '                    result.Add(column, pi)
+    '                End If
+    '            End If
+    '        Next
 
-        Return result
-    End Function
+    '        Return result
+    '    End Function
 
-    Public Function GetRefProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IList
-        If t Is Nothing Then Throw New ArgumentNullException("t")
-        Dim s As String = Nothing
-        If schema Is Nothing Then
-            s = t.ToString
-        Else
-            s = t.ToString & schema.GetType().ToString
-        End If
-        Dim key As String = "refproperties" & s
-        Dim d As IList = CType(map(key), IList)
-        If d Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(key)
-                d = CType(map(key), IList)
-                If d Is Nothing Then
-                    Dim dic As IDictionary = GetProperties(t, schema)
-                    d = New ArrayList
-                    For Each tde As DictionaryEntry In dic
-                        Dim pi As Reflection.PropertyInfo = CType(tde.Value, Reflection.PropertyInfo)
-                        Dim pit As Type = pi.PropertyType
-                        If ObjectMappingEngine.IsEntityType(pit, Me) Then
-                            d.Add(tde)
-                        End If
-                    Next
-                End If
-            End Using
-        End If
-        Return d
-    End Function
+    '    Public Function GetRefProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IList
+    '        If t Is Nothing Then Throw New ArgumentNullException("t")
+    '        Dim s As String = Nothing
+    '        If schema Is Nothing Then
+    '            s = t.ToString
+    '        Else
+    '            s = t.ToString & schema.GetType().ToString
+    '        End If
+    '        Dim key As String = "refproperties" & s
+    '        Dim d As IList = CType(map(key), IList)
+    '        If d Is Nothing Then
+    '            Using SyncHelper.AcquireDynamicLock(key)
+    '                d = CType(map(key), IList)
+    '                If d Is Nothing Then
+    '                    Dim dic As IDictionary = GetProperties(t, schema)
+    '                    d = New ArrayList
+    '                    For Each tde As DictionaryEntry In dic
+    '                        Dim pi As Reflection.PropertyInfo = CType(tde.Value, Reflection.PropertyInfo)
+    '                        Dim pit As Type = pi.PropertyType
+    '                        If ObjectMappingEngine.IsEntityType(pit, Me) Then
+    '                            d.Add(tde)
+    '                        End If
+    '                    Next
+    '                End If
+    '            End Using
+    '        End If
+    '        Return d
+    '    End Function
 
-    Public Function GetProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        If t Is Nothing Then Throw New ArgumentNullException("t")
-        Dim s As String = Nothing
-        If schema Is Nothing Then
-            s = t.ToString
-        Else
-            s = t.ToString & schema.GetType().ToString
-        End If
-        Dim key As String = "properties" & s
-        Dim h As IDictionary = CType(map(key), IDictionary)
-        If h Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(key)
-                h = CType(map(key), IDictionary)
-                If h Is Nothing Then
-                    h = GetMappedProperties(t, schema)
+    '    Public Function GetProperties(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
+    '        If t Is Nothing Then Throw New ArgumentNullException("t")
+    '        Dim s As String = Nothing
+    '        If schema Is Nothing Then
+    '            s = t.ToString
+    '        Else
+    '            s = t.ToString & schema.GetType().ToString
+    '        End If
+    '        Dim key As String = "properties" & s
+    '        Dim h As IDictionary = CType(map(key), IDictionary)
+    '        If h Is Nothing Then
+    '            Using SyncHelper.AcquireDynamicLock(key)
+    '                h = CType(map(key), IDictionary)
+    '                If h Is Nothing Then
+    '                    h = GetMappedProperties(t, schema)
 
-                    map(key) = h
-                End If
-            End Using
-        End If
-        Return h
-    End Function
+    '                    map(key) = h
+    '                End If
+    '            End Using
+    '        End If
+    '        Return h
+    '    End Function
 
-#End Region
+    '#End Region
 
 #Region " object functions "
 
@@ -1083,11 +1083,24 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Shared Function GetPropertyValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IEntitySchema) As Object
+    ''' <summary>
+    ''' Возвращает значение данного свойства объекта
+    ''' </summary>
+    ''' <param name="obj">Объект</param>
+    ''' <param name="propertyAlias">Имя поля</param>
+    ''' <param name="pi"><see cref="Reflection.PropertyInfo"/> для поля</param>
+    ''' <param name="oschema">Схема объекта</param>
+    ''' <returns>Значение поля</returns>
+    ''' <remarks>Если тип не реализует <see cref="IOptimizedValues"/>, то используется метод получения значения через рефлекшн. 
+    ''' Если реализует и свойство загружено или тип не реализует <see cref="IPropertyLazyLoad"/>, вызывает <see cref="IOptimizedValues.GetValueOptimized"/>.
+    ''' Если свойство не загружено и тип реализует <see cref="IPropertyLazyLoad"/>, 
+    ''' вызов <see cref="IOptimizedValues.GetValueOptimized"/> обрамляется объектом, который возвращает метод <see cref="IPropertyLazyLoad.Read"/></remarks>
+    ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и параметр <paramref name="pi"/> не задан.</exception>
+    Public Shared Function GetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IEntitySchema) As Object
         Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
         If ov Is Nothing Then
             If pi Is Nothing Then
-                Throw New ArgumentNullException("pi")
+                Throw New ArgumentException(String.Format("PropertyInfo must be specified for property {0}.{1}", obj.GetType, propertyAlias))
             End If
 
             'Using obj.SyncHelper(True, propertyAlias)
@@ -1095,7 +1108,7 @@ Public Class ObjectMappingEngine
             'Return obj.GetValueOptimized(pi, propertyAlias, oschema)
             'End Using
         Else
-            If obj.IsPropertyLoaded(propertyAlias) Then
+            If GetType(_IEntity).IsAssignableFrom(obj.GetType) AndAlso CType(obj, _IEntity).IsPropertyLoaded(propertyAlias) Then
                 Return ov.GetValueOptimized(propertyAlias, oschema)
             Else
                 Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
