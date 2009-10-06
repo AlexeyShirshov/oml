@@ -34,13 +34,13 @@ Namespace Collections
 
         Private _dic As IDictionary(Of TItemKey, TItem)
         Private _coll As IList(Of TItem)
-        Private _keyCount As Integer
-        Private _threshold As Integer = 1
-        Private _rw As System.Threading.ReaderWriterLock
+        'Private _keyCount As Integer
+        Private _threshold As Integer = 5
+        'Private _rw As System.Threading.ReaderWriterLock
 
         Public Sub New()
             _coll = GetCollection()
-            _rw = New System.Threading.ReaderWriterLock()
+            '_rw = New System.Threading.ReaderWriterLock()
         End Sub
 
         Public Sub New(ByVal threshold As Integer)
@@ -83,7 +83,8 @@ Namespace Collections
         End Function
 
         Protected Overridable Function GetDictionary() As IDictionary(Of TItemKey, TItem)
-            Return New Dictionary(Of TItemKey, TItem)
+            'Return New Dictionary(Of TItemKey, TItem)
+            Return New SortedList(Of TItemKey, TItem)
         End Function
 
         Protected Overridable Function GetCollection() As IList(Of TItem)

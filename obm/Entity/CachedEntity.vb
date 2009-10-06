@@ -1182,7 +1182,7 @@ l1:
         End Property
 
         ''' <summary>
-        ''' Возвращает массив полей и значений первичный ключей
+        ''' Возвращает массив полей и значений первичного ключа
         ''' </summary>
         ''' <returns>массив первичных ключей</returns>
         ''' <remarks>Для получения схемы типа используется движок маппинга, возвращаемый функцией <see cref="GetMappingEngine"/></remarks>
@@ -1747,12 +1747,12 @@ l1:
             End If
         End Function
 
-        Protected Function GetProperties(ByVal schema As ObjectMappingEngine) As IDictionary
-            If _props Is Nothing Then
-                _props = schema.GetProperties(Me.GetType)
-            End If
-            Return _props
-        End Function
+        'Protected Function GetProperties(ByVal schema As ObjectMappingEngine) As IDictionary
+        '    If _props Is Nothing Then
+        '        _props = schema.GetProperties(Me.GetType)
+        '    End If
+        '    Return _props
+        'End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
             Dim c As New EntityPropertyAttribute With {.PropertyAlias = propertyAlias}
