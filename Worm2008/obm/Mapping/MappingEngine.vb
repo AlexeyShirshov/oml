@@ -787,23 +787,23 @@ Public Class ObjectMappingEngine
         Return db
     End Function
 
-    Public Function GetAttributes(ByVal type As Type, ByVal c As EntityPropertyAttribute) As Field2DbRelations
-        If type Is Nothing Then
-            Throw New ArgumentNullException("type")
-        End If
+    'Public Function GetAttributes(ByVal type As Type, ByVal c As EntityPropertyAttribute) As Field2DbRelations
+    '    If type Is Nothing Then
+    '        Throw New ArgumentNullException("type")
+    '    End If
 
-        Dim schema As IEntitySchema = GetEntitySchema(type)
+    '    Dim schema As IEntitySchema = GetEntitySchema(type)
 
-        Return GetAttributes(schema, c)
-    End Function
+    '    Return GetAttributes(schema, c)
+    'End Function
 
-    Public Function GetAttributes(ByVal schema As IEntitySchema, ByVal c As EntityPropertyAttribute) As Field2DbRelations
-        If schema Is Nothing Then
-            Throw New ArgumentNullException("schema")
-        End If
+    'Public Function GetAttributes(ByVal schema As IEntitySchema, ByVal c As EntityPropertyAttribute) As Field2DbRelations
+    '    If schema Is Nothing Then
+    '        Throw New ArgumentNullException("schema")
+    '    End If
 
-        Return schema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c)
-    End Function
+    '    Return schema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c)
+    'End Function
 #End Region
 
 #Region " Helpers "
@@ -1045,43 +1045,43 @@ Public Class ObjectMappingEngine
     '    Return GetFieldValue(obj, propertyAlias, pi, schema)
     'End Function
 
-    Public Function GetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, _
-        ByVal schema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Object
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
+    'Public Function GetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, _
+    '    ByVal schema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Object
+    '    If obj Is Nothing Then
+    '        Throw New ArgumentNullException("obj")
+    '    End If
 
-        Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
-        If ov Is Nothing Then
-            If pi Is Nothing Then
-                'If schema IsNot Nothing Then
-                pi = GetProperty(obj.GetType, schema, propertyAlias)
-                'Else
-                '    pi = GetProperty(obj.GetType, propertyAlias)
-                'End If
-            End If
+    '    Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
+    '    If ov Is Nothing Then
+    '        If pi Is Nothing Then
+    '            'If schema IsNot Nothing Then
+    '            pi = GetProperty(obj.GetType, schema, propertyAlias)
+    '            'Else
+    '            '    pi = GetProperty(obj.GetType, propertyAlias)
+    '            'End If
+    '        End If
 
-            If pi Is Nothing Then
-                Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
-            End If
+    '        If pi Is Nothing Then
+    '            Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
+    '        End If
 
-            Return pi.GetValue(obj, Nothing)
-        Else
-            Dim e As _IEntity = TryCast(obj, _IEntity)
-            If e IsNot Nothing AndAlso e.IsPropertyLoaded(propertyAlias) Then
-                Return ov.GetValueOptimized(propertyAlias, schema)
-            Else
-                Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
-                If ll IsNot Nothing Then
-                    Using ll.Read(propertyAlias)
-                        Return ov.GetValueOptimized(propertyAlias, schema)
-                    End Using
-                Else
-                    Return ov.GetValueOptimized(propertyAlias, schema)
-                End If
-            End If
-        End If
-    End Function
+    '        Return pi.GetValue(obj, Nothing)
+    '    Else
+    '        Dim e As _IEntity = TryCast(obj, _IEntity)
+    '        If e IsNot Nothing AndAlso e.IsPropertyLoaded(propertyAlias) Then
+    '            Return ov.GetValueOptimized(propertyAlias, schema)
+    '        Else
+    '            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
+    '            If ll IsNot Nothing Then
+    '                Using ll.Read(propertyAlias)
+    '                    Return ov.GetValueOptimized(propertyAlias, schema)
+    '                End Using
+    '            Else
+    '                Return ov.GetValueOptimized(propertyAlias, schema)
+    '            End If
+    '        End If
+    '    End If
+    'End Function
 
     ''' <summary>
     ''' Возвращает значение данного свойства объекта
@@ -1134,45 +1134,45 @@ Public Class ObjectMappingEngine
     '    End Using
     'End Function
 
-    Public Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
+    'Public Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
+    '    If obj Is Nothing Then
+    '        Throw New ArgumentNullException("obj")
+    '    End If
 
-        Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
-        If ov Is Nothing Then
-            'Dim pi As Reflection.PropertyInfo = Nothing
-            'If oschema Is Nothing Then
+    '    Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
+    '    If ov Is Nothing Then
+    '        'Dim pi As Reflection.PropertyInfo = Nothing
+    '        'If oschema Is Nothing Then
 
-            'Else
-            '    pi = GetProperty(obj.GetType, oschema, propertyAlias)
-            'End If
-            Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, oschema, propertyAlias)
+    '        'Else
+    '        '    pi = GetProperty(obj.GetType, oschema, propertyAlias)
+    '        'End If
+    '        Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, oschema, propertyAlias)
 
-            If pi Is Nothing Then
-                Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
-            End If
+    '        If pi Is Nothing Then
+    '            Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
+    '        End If
 
-            'Using obj.SyncHelper(False, propertyAlias)
-            'obj.SetValueOptimized(pi, propertyAlias, oschema, value)
-            pi.SetValue(obj, value, Nothing)
-            'End Using
-        Else
-            'If obj.IsLoaded Then
-            '    ov.SetValueOptimized(propertyAlias, oschema, value)
-            'Else
-            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
-            If ll IsNot Nothing Then
-                Using ll.Write(propertyAlias)
-                    ov.SetValueOptimized(propertyAlias, oschema, value)
-                End Using
-            Else
-                ov.SetValueOptimized(propertyAlias, oschema, value)
-            End If
-            'End If
-        End If
+    '        'Using obj.SyncHelper(False, propertyAlias)
+    '        'obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+    '        pi.SetValue(obj, value, Nothing)
+    '        'End Using
+    '    Else
+    '        'If obj.IsLoaded Then
+    '        '    ov.SetValueOptimized(propertyAlias, oschema, value)
+    '        'Else
+    '        Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
+    '        If ll IsNot Nothing Then
+    '            Using ll.Write(propertyAlias)
+    '                ov.SetValueOptimized(propertyAlias, oschema, value)
+    '            End Using
+    '        Else
+    '            ov.SetValueOptimized(propertyAlias, oschema, value)
+    '        End If
+    '        'End If
+    '    End If
 
-    End Sub
+    'End Sub
 
     Public Shared Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal pi As Reflection.PropertyInfo, ByVal value As Object, ByVal oschema As IEntitySchema)
         If obj Is Nothing Then
@@ -1889,6 +1889,12 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="t"></param>
+    ''' <returns></returns>
+    ''' <exception cref="ArgumentNullException">Если t пустая ссылка</exception>
     Public Function GetEntitySchema(ByVal t As Type) As IEntitySchema
         Return GetEntitySchema(t, True)
     End Function
@@ -1913,6 +1919,13 @@ Public Class ObjectMappingEngine
         Return idic
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="t"></param>
+    ''' <param name="check"></param>
+    ''' <returns></returns>
+    ''' <exception cref="ArgumentNullException">Если t пустая ссылка</exception>
     Public Function GetEntitySchema(ByVal t As Type, ByVal check As Boolean) As IEntitySchema
         If t Is Nothing Then
             If check Then

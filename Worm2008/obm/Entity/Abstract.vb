@@ -330,11 +330,20 @@ Namespace Entities
 
     End Class
 
+    ''' <summary>
+    ''' Обертка над массивом полей и значений
+    ''' </summary>
+    ''' <remarks>Реализует операции сравнения и получения хэш-кода для 
+    ''' массива полей и значений <see cref="PKDesc"/></remarks>
     <Serializable()> _
     Public Class PKWrapper
         Private _id As PKDesc()
         Private _str As String
 
+        ''' <summary>
+        ''' Инициализация объекта
+        ''' </summary>
+        ''' <param name="pk">Массив полей и значений</param>
         Public Sub New(ByVal pk() As PKDesc)
             _id = pk
         End Sub
