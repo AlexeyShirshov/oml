@@ -7,6 +7,9 @@ Namespace Entities.Meta
     Public NotInheritable Class SourceFieldAttribute
         Inherits Attribute
 
+        Friend Sub New()
+        End Sub
+
         Public Sub New(ByVal columnExpression As String, ByVal primaryKeyPropertyAlias As String)
             Me.ColumnExpression = columnExpression
             PrimaryKey = primaryKeyPropertyAlias
@@ -72,6 +75,16 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        Private _version As String
+        Public Property SchemaVersion() As String
+            Get
+                Return _version
+            End Get
+            Set(ByVal value As String)
+                _version = value
+            End Set
+        End Property
+
     End Class
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
@@ -83,36 +96,38 @@ Namespace Entities.Meta
         Private _propertyAlias As String
         Private _behavior As Field2DbRelations
 
-        'Private _idx As Integer = -1
+        Friend _pi As Reflection.PropertyInfo
+        Friend _raw As Boolean
+
         Private _version As String
 
-        Private _sf() As SourceField
+        Private _sf() As SourceFieldAttribute
 
         Public Sub New()
         End Sub
 
-        Public Sub New(ByVal ParamArray sourceFields() As SourceField)
-            _sf = sourceFields
-        End Sub
+        'Public Sub New(ByVal ParamArray sourceFields() As SourceFieldAttribute)
+        '    _sf = sourceFields
+        'End Sub
 
         Public Sub New(ByVal behavior As Field2DbRelations)
             Me._behavior = behavior
         End Sub
 
         Public Sub New(ByVal columnExpression As String)
-            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
+            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
             Me._behavior = Field2DbRelations.None
         End Sub
 
         Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations)
-            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
+            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
             Me._behavior = behavior
         End Sub
 
         Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations, ByVal propertyAlias As String)
             _propertyAlias = propertyAlias
             _behavior = behavior
-            _sf = New SourceField() {New SourceField With {.SourceFieldExpression = columnExpression}}
+            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
         End Sub
 
         'Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
@@ -124,11 +139,11 @@ Namespace Entities.Meta
         '    _behavior = behavior
         'End Sub
 
-        Public Property SourceFields() As SourceField()
+        Public Property SourceFields() As SourceFieldAttribute()
             Get
                 Return _sf
             End Get
-            Set(ByVal value As SourceField())
+            Set(ByVal value As SourceFieldAttribute())
                 _sf = value
             End Set
         End Property
@@ -193,7 +208,11 @@ Namespace Entities.Meta
 
         Public Property Column() As String
             Get
-                Return _sf(0).SourceFieldExpression
+                If _sf.Length = 1 Then
+                    Return _sf(0).ColumnExpression
+                Else
+                    Return Nothing
+                End If
             End Get
             Set(ByVal value As String)
                 If _sf.Length = 0 Then
@@ -201,7 +220,7 @@ Namespace Entities.Meta
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If
-                _sf(0).SourceFieldExpression = value
+                _sf(0).ColumnExpression = value
             End Set
         End Property
 
@@ -213,7 +232,11 @@ Namespace Entities.Meta
         ''' <remarks></remarks>
         Public Property ColumnName() As String
             Get
-                Return _sf(0).SourceFieldAlias
+                If _sf.Length = 1 Then
+                    Return _sf(0).ColumnName
+                Else
+                    Return Nothing
+                End If
             End Get
             Set(ByVal value As String)
                 If _sf.Length = 0 Then
@@ -221,13 +244,17 @@ Namespace Entities.Meta
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If
-                _sf(0).SourceFieldAlias = value
+                _sf(0).ColumnName = value
             End Set
         End Property
 
         Public Property DBType() As String
             Get
-                Return _sf(0).DBType.Type
+                If _sf.Length = 1 Then
+                    Return _sf(0).SourceFieldType
+                Else
+                    Return Nothing
+                End If
             End Get
             Set(ByVal value As String)
                 If _sf.Length = 0 Then
@@ -235,13 +262,17 @@ Namespace Entities.Meta
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If
-                _sf(0).DBType = New DBType(value, _sf(0).DBType.Size, _sf(0).DBType.IsNullable)
+                _sf(0).SourceFieldType = value
             End Set
         End Property
 
         Public Property DBSize() As Integer
             Get
-                Return _sf(0).DBType.Size
+                If _sf.Length = 1 Then
+                    Return _sf(0).SourceFieldSize
+                Else
+                    Return Nothing
+                End If
             End Get
             Set(ByVal value As Integer)
                 If _sf.Length = 0 Then
@@ -249,13 +280,17 @@ Namespace Entities.Meta
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If
-                _sf(0).DBType = New DBType(_sf(0).DBType.Type, value, _sf(0).DBType.IsNullable)
+                _sf(0).SourceFieldSize = value
             End Set
         End Property
 
         Public Property Nullable() As Boolean
             Get
-                Return _sf(0).DBType.IsNullable
+                If _sf.Length = 1 Then
+                    Return _sf(0).IsNullable
+                Else
+                    Return Nothing
+                End If
             End Get
             Set(ByVal value As Boolean)
                 If _sf.Length = 0 Then
@@ -263,7 +298,7 @@ Namespace Entities.Meta
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If
-                _sf(0).DBType = New DBType(_sf(0).DBType.Type, _sf(0).DBType.Size, value)
+                _sf(0).IsNullable = value
             End Set
         End Property
 
@@ -279,9 +314,9 @@ Namespace Entities.Meta
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
             Dim c As New EntityPropertyAttribute(Behavior)
-            c._idx = _idx
+            'c._idx = _idx
             c._propertyAlias = _propertyAlias
-            Dim sf(_sf.Length - 1) As SourceField
+            Dim sf(_sf.Length - 1) As SourceFieldAttribute
             Array.Copy(_sf, sf, _sf.Length)
             c._sf = sf
             Return c
@@ -307,7 +342,7 @@ Namespace Entities.Meta
         ''' </summary>
         ''' <remarks></remarks>
         PrimaryKey = 37
-        [Private] = 64
+        NotSerialized = 64
         Factory = 128
     End Enum
 
@@ -322,6 +357,7 @@ Namespace Entities.Meta
         Private _schema As String
         Private _pk As String
         Private _rawProps As Boolean
+        Private _notInheritBase As Boolean
 
         Public Sub New(ByVal schema As String, ByVal tableName As String, ByVal version As String)
             _v = version
@@ -338,14 +374,14 @@ Namespace Entities.Meta
             _v = version
         End Sub
 
-        'Public Property PrimaryKey() As String
-        '    Get
-        '        Return _pk
-        '    End Get
-        '    Set(ByVal value As String)
-        '        _pk = value
-        '    End Set
-        'End Property
+        Public Property InheritBaseTable() As Boolean
+            Get
+                Return Not _notInheritBase
+            End Get
+            Set(ByVal value As Boolean)
+                _notInheritBase = Not value
+            End Set
+        End Property
 
         Public ReadOnly Property Type() As Type
             Get
@@ -386,6 +422,13 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        ''' <summary>
+        ''' Рассматривать ли при генерации схемы свойства без атрибута <see cref="EntityPropertyAttribute" />
+        ''' </summary>
+        ''' <value>Значение свойства</value>
+        ''' <returns>Если True, все свойства типа, к которому относится данный атрибут будут 
+        ''' участвовать при генерации схемы</returns>
+        ''' <remarks>По умолчанию False</remarks>
         Public Property RawProperties() As Boolean
             Get
                 Return _rawProps
@@ -394,5 +437,99 @@ Namespace Entities.Meta
                 _rawProps = value
             End Set
         End Property
+    End Class
+
+    <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
+    <Serializable()> _
+    Public NotInheritable Class JoinAttribute
+        Inherits Attribute
+
+        Public Sub New(ByVal tableSchema As String, ByVal tableName As String, _
+                        ByVal joinTableSchema As String, ByVal joinTableName As String)
+            _table = tableName
+            _schema = tableSchema
+            _joinTable = joinTableName
+            _joinSchema = joinTableSchema
+        End Sub
+
+        Private _table As String
+        Public Property TableName() As String
+            Get
+                Return _table
+            End Get
+            Set(ByVal value As String)
+                _table = value
+            End Set
+        End Property
+
+        Private _schema As String
+        Public Property TableSchema() As String
+            Get
+                Return _schema
+            End Get
+            Set(ByVal value As String)
+                _schema = value
+            End Set
+        End Property
+
+        Private _joinTable As String
+        Public Property JoinTableName() As String
+            Get
+                Return _joinTable
+            End Get
+            Set(ByVal value As String)
+                _joinTable = value
+            End Set
+        End Property
+
+        Private _joinSchema As String
+        Public Property JoinTableSchema() As String
+            Get
+                Return _joinSchema
+            End Get
+            Set(ByVal value As String)
+                _joinSchema = value
+            End Set
+        End Property
+
+        Private _pks As String
+
+        ''' <summary>
+        ''' Список первичных ключей, разделенный через запятую
+        ''' </summary>
+        ''' <remarks>Порядок следования ключей должен быть таким же как и в <see cref="ForeignKeys" /></remarks>
+        Public Property PrimaryKeys() As String
+            Get
+                Return _pks
+            End Get
+            Set(ByVal value As String)
+                _pks = value
+            End Set
+        End Property
+
+        Private _fks As String
+        ''' <summary>
+        ''' Список внешних ключей, разделенных через запятую
+        ''' </summary>
+        ''' <remarks>Порядок следования ключей должен быть таким же как и в <see cref="PrimaryKeys" /></remarks>
+        Public Property ForeignKeys() As String
+            Get
+                Return _fks
+            End Get
+            Set(ByVal value As String)
+                _fks = value
+            End Set
+        End Property
+
+        Private _version As String
+        Public Property SchemaVersion() As String
+            Get
+                Return _version
+            End Get
+            Set(ByVal value As String)
+                _version = value
+            End Set
+        End Property
+
     End Class
 End Namespace

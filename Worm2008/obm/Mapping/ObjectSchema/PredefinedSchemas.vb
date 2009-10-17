@@ -16,52 +16,8 @@ Namespace Entities.Meta
             _table = _cols(0).Table
         End Sub
 
-        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal schema As String, ByVal cols As ICollection(Of EntityPropertyAttribute))
-            'If String.IsNullOrEmpty(pk) Then
-            '    Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
-            'End If
-
-            'If tables IsNot Nothing Then
-            '    _tables = New SourceFragment(tables.Length - 1) {}
-            '    For i As Integer = 0 To tables.Length - 1
-            '        _tables(i) = New SourceFragment(tables(i))
-            '    Next
-            'End If
-
-            If String.IsNullOrEmpty(table) Then
-                Throw New ArgumentNullException("table")
-            Else
-                _table = New SourceFragment(schema, table)
-            End If
-
-            For Each c As EntityPropertyAttribute In cols
-                If String.IsNullOrEmpty(c.PropertyAlias) Then
-                    Throw New ObjectMappingException(String.Format("Cann't create schema for entity {0}", t))
-                End If
-
-                If String.IsNullOrEmpty(c.Column) Then
-                    'If c.PropertyAlias = OrmBaseT.PKName Then
-                    '    c.Column = pk
-                    'Else
-                    Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.PropertyAlias, t))
-                    'End If
-                End If
-
-                'Dim tbl As SourceFragment = Nothing
-                'If Not String.IsNullOrEmpty(c.TableName) Then
-                '    tbl = FindTbl(c.TableName)
-                'Else
-                '    If _tables.Length = 0 Then
-                '        Throw New DBSchemaException(String.Format("Neigther entity {1} nor column {0} has table name", c.FieldName, t))
-                '    End If
-
-                '    tbl = _tables(0)
-                'End If
-
-                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table, c.Behavior, c.DBType, c.DBSize) With {.ColumnName = c.ColumnName})
-            Next
-
-            '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
+        Friend Sub New(ByVal sourceFragment As SourceFragment)
+            _table = sourceFragment
         End Sub
 
         Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
@@ -75,34 +31,70 @@ Namespace Entities.Meta
         End Property
     End Class
 
-    Public NotInheritable Class SimpleTwotableObjectSchema
+    Public NotInheritable Class SimpleMultiTableObjectSchema
         Implements IEntitySchema
         Implements IMultiTableObjectSchema
 
         Private _cols As Collections.IndexedCollection(Of String, MapField2Column) = New OrmObjectIndex
-        Private _tables(1) As SourceFragment
-        Private _pk As String
-        Private _fk As String
+        Private _tables() As SourceFragment
+        Private _baseSchema As IEntitySchema
+        Private _bpkTable As SourceFragment
+        Private _ownPKs() As MapField2Column
+        Private _basePKs() As MapField2Column
+        Private _joins() As JoinAttribute
+        Private _t As Type
 
-        Friend Sub New(ByVal realTypecols As Collections.IndexedCollection(Of String, MapField2Column), _
-                       ByVal baseTypeCols As Collections.IndexedCollection(Of String, MapField2Column))
-            _tables(0) = realTypecols(0).Table
-            _tables(1) = baseTypeCols(0).Table
+        Friend Sub New(ByVal type As Type, ByVal ownTable As SourceFragment, ByVal ownProperties As List(Of EntityPropertyAttribute), _
+                       ByVal baseSchema As IEntitySchema, ByVal version As String)
 
-            For Each m As MapField2Column In realTypecols
-                _cols.Add(m)
-                If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    _pk = m.ColumnExpression
-                End If
-            Next
+            _t = type
 
-            For Each m As MapField2Column In baseTypeCols
-                If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    _fk = m.ColumnExpression
+            Dim tables As New List(Of SourceFragment)
+            Dim qj As New List(Of QueryJoin)
+
+            tables.Add(ownTable)
+            ObjectMappingEngine.ApplyAttributes2Schema(Me, ownProperties)
+
+            If baseSchema IsNot Nothing Then
+                Dim l As New List(Of MapField2Column)
+                For Each m As MapField2Column In _cols
+                    If m.IsPK Then
+                        l.Add(m)
+                    End If
+                Next
+                _ownPKs = l.ToArray
+
+                _baseSchema = baseSchema
+
+                Dim mt As IMultiTableObjectSchema = TryCast(baseSchema, IMultiTableObjectSchema)
+                If mt IsNot Nothing Then
+                    tables.AddRange(mt.GetTables)
                 Else
-                    _cols(m.PropertyAlias).Table = m.Table
+                    tables.Add(baseSchema.Table)
                 End If
-            Next
+
+                l.Clear()
+                For Each m As MapField2Column In baseSchema.GetFieldColumnMap
+                    If m.IsPK Then
+                        l.Add(m)
+                        _bpkTable = m.Table
+                    Else
+                        _cols(m.PropertyAlias).Table = m.Table
+                    End If
+                Next
+                _basePKs = l.ToArray
+
+                If _basePKs.Length > 1 Then
+                    _joins = Array.FindAll(CType(type.GetCustomAttributes(GetType(JoinAttribute), False), JoinAttribute()), Function(ja As JoinAttribute) _
+                        String.IsNullOrEmpty(ja.SchemaVersion) OrElse ja.SchemaVersion = version)
+
+                    If _joins.Length = 0 Then
+                        Throw New ObjectMappingException(String.Format("Entity {0} has multiple tables with complex pk. You have to use JoinAttribute to define joins for version {1}", type, version))
+                    End If
+                End If
+            End If
+
+            _tables = tables.ToArray
         End Sub
 
         Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
@@ -116,7 +108,84 @@ Namespace Entities.Meta
         End Property
 
         Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
-            Return New QueryJoin(right, JoinType.Join, Ctor.column(left, _pk).eq(right, _fk).Filter)
+            If _bpkTable IsNot Nothing Then
+                If left Is Table AndAlso right Is _bpkTable Then
+                    Dim j As JoinCondition = JCtor.join(right)
+                    If _basePKs.Length = 1 Then
+                        Return j.on(right, _basePKs(0).PropertyAlias).eq(left, _ownPKs(0).PropertyAlias)
+                    Else
+                        Dim joina As JoinAttribute = Array.Find(_joins, Function(ja As JoinAttribute) _
+                            ja.TableSchema = left.Schema AndAlso ja.TableName = left.Name AndAlso _
+                            ja.JoinTableSchema = right.Schema AndAlso ja.JoinTableName = right.Name)
+                        If joina Is Nothing Then
+                            joina = Array.Find(_joins, Function(ja As JoinAttribute) _
+                                ja.TableSchema = right.Schema AndAlso ja.TableName = right.Name AndAlso _
+                                ja.JoinTableSchema = left.Schema AndAlso ja.JoinTableName = left.Name)
+                        End If
+
+                        If joina Is Nothing Then
+                            Throw New ObjectMappingException(String.Format("Cannot find JoinAttribute for table {0}.{1} and {2}.{3} in entity {4}", left.Schema, left.Name, right.Schema, right.Name, _t))
+                        End If
+
+                        Dim pks As String() = joina.PrimaryKeys.Split(","c)
+                        Dim fks As String() = joina.ForeignKeys.Split(","c)
+                        Dim jl As JoinLink = Nothing
+                        For i As Integer = 0 To pks.Length - 1
+                            If jl Is Nothing Then
+                                jl = j.on(right, fks(i)).eq(left, pks(i))
+                            Else
+                                jl = jl.and(right, fks(i)).eq(left, pks(i))
+                            End If
+                        Next
+
+                        If jl Is Nothing Then
+                            Throw New ObjectMappingException(String.Format("Cannot find primary keys in JoinAttribute for table {0}.{1} and {2}.{3} in entity {4}", left.Schema, left.Name, right.Schema, right.Name, _t))
+                        End If
+
+                        Return jl
+                    End If
+                ElseIf right Is Table AndAlso left Is _bpkTable Then
+                    Dim j As JoinCondition = JCtor.join(right)
+                    If _basePKs.Length = 1 Then
+                        Return j.on(right, _ownPKs(0).PropertyAlias).eq(left, _basePKs(0).PropertyAlias)
+                    Else
+                        Dim joina As JoinAttribute = Array.Find(_joins, Function(ja As JoinAttribute) _
+                            ja.TableSchema = left.Schema AndAlso ja.TableName = left.Name AndAlso _
+                            ja.JoinTableSchema = right.Schema AndAlso ja.JoinTableName = right.Name)
+                        If joina Is Nothing Then
+                            joina = Array.Find(_joins, Function(ja As JoinAttribute) _
+                                ja.TableSchema = right.Schema AndAlso ja.TableName = right.Name AndAlso _
+                                ja.JoinTableSchema = left.Schema AndAlso ja.JoinTableName = left.Name)
+                        End If
+
+                        If joina Is Nothing Then
+                            Throw New ObjectMappingException(String.Format("Cannot find JoinAttribute for table {0}.{1} and {2}.{3} in entity {4}", left.Schema, left.Name, right.Schema, right.Name, _t))
+                        End If
+
+                        Dim pks As String() = joina.PrimaryKeys.Split(","c)
+                        Dim fks As String() = joina.ForeignKeys.Split(","c)
+                        Dim jl As JoinLink = Nothing
+                        For i As Integer = 0 To pks.Length - 1
+                            If jl Is Nothing Then
+                                jl = j.on(left, fks(i)).eq(right, pks(i))
+                            Else
+                                jl = jl.and(left, fks(i)).eq(right, pks(i))
+                            End If
+                        Next
+
+                        If jl Is Nothing Then
+                            Throw New ObjectMappingException(String.Format("Cannot find primary keys in JoinAttribute for table {0}.{1} and {2}.{3} in entity {4}", left.Schema, left.Name, right.Schema, right.Name, _t))
+                        End If
+
+                        Return jl
+                    End If
+                End If
+                Dim mt As IMultiTableObjectSchema = TryCast(_baseSchema, IMultiTableObjectSchema)
+                If mt IsNot Nothing Then
+                    Return mt.GetJoins(left, right)
+                End If
+            End If
+            Return Nothing
         End Function
 
         Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables

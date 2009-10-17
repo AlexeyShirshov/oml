@@ -7,7 +7,7 @@ Namespace Expressions2
     Public Class SelectExpression
         Implements Expressions2.IExpression
 
-        Private _exp As Expressions2.IExpression
+        Private ReadOnly _exp As Expressions2.IExpression
         Private _falias As String
 
         Private _attr As Field2DbRelations
@@ -15,9 +15,10 @@ Namespace Expressions2
         Private _dst As EntityUnion
 
 #Region " Cache "
-        Friend _c As EntityPropertyAttribute
-        Friend _pi As Reflection.PropertyInfo
+        'Friend _c As EntityPropertyAttribute
+        'Friend _pi As Reflection.PropertyInfo
         Friend _realAtt As Field2DbRelations
+        Friend _m As MapField2Column
         Friend _tempMark As String
 #End Region
 
@@ -211,18 +212,19 @@ Namespace Expressions2
 
 #End Region
 
-        Public Sub CopyTo(ByVal s As SelectExpression)
-            With s
-                ._exp = _exp
-                ._attr = _attr
-                ._c = _c
-                ._dst = _dst
-                ._falias = _falias
-                ._pi = _pi
-                ._realAtt = _realAtt
-                ._dstProp = _dstProp
-            End With
-        End Sub
+        'Public Sub CopyTo(ByVal s As SelectExpression)
+        '    With s
+        '        ._exp = _exp
+        '        ._attr = _attr
+        '        ._dst = _dst
+        '        ._falias = _falias
+        '        '._c = _c
+        '        '._pi = _pi
+        '        ._realAtt = _realAtt
+        '        ._dstProp = _dstProp
+        '        ._m = _m
+        '    End With
+        'End Sub
 
         'Protected Sub RaiseOnChange()
         '    RaiseEvent OnChange()
@@ -324,46 +326,64 @@ Namespace Expressions2
             _exp.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
         End Sub
 
+        Private _intoPA As String
         Public Function GetIntoPropertyAlias() As String
-            Dim propertyAlias As String = IntoPropertyAlias
+            Dim propertyAlias As String = _intoPA
             If String.IsNullOrEmpty(propertyAlias) Then
-                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
-                If ee IsNot Nothing Then
-                    propertyAlias = ee.ObjectProperty.PropertyAlias
-                Else
-                    Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
-                    If pe IsNot Nothing Then
-                        propertyAlias = pe.PropertyAlias
+                propertyAlias = IntoPropertyAlias
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
+                    If ee IsNot Nothing Then
+                        propertyAlias = ee.ObjectProperty.PropertyAlias
                     Else
-                        For Each e As IExpression In _exp.GetExpressions
-                            ee = TryCast(e, Expressions2.IEntityPropertyExpression)
-                            If ee IsNot Nothing Then
-                                propertyAlias = ee.ObjectProperty.PropertyAlias
-                                Exit For
-                            Else
-                                pe = TryCast(e, PropertyAliasExpression)
-                                If pe IsNot Nothing Then
-                                    propertyAlias = pe.PropertyAlias
+                        Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
+                        If pe IsNot Nothing Then
+                            propertyAlias = pe.PropertyAlias
+                        Else
+                            For Each e As IExpression In _exp.GetExpressions
+                                ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                                If ee IsNot Nothing Then
+                                    propertyAlias = ee.ObjectProperty.PropertyAlias
                                     Exit For
+                                Else
+                                    pe = TryCast(e, PropertyAliasExpression)
+                                    If pe IsNot Nothing Then
+                                        propertyAlias = pe.PropertyAlias
+                                        Exit For
+                                    End If
                                 End If
-                            End If
-                        Next
+                            Next
+                        End If
                     End If
                 End If
-            End If
-            If String.IsNullOrEmpty(propertyAlias) Then
-                propertyAlias = ColumnAlias
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    propertyAlias = ColumnAlias
+                End If
+                _intoPA = propertyAlias
             End If
             Return propertyAlias
         End Function
 
+        Private _intoEU As EntityUnion
         Public Function GetIntoEntityUnion() As EntityUnion
-            Dim eu As EntityUnion = Into
+            Dim eu As EntityUnion = _intoEU
             If eu Is Nothing Then
-                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
-                If ee IsNot Nothing Then
-                    eu = ee.ObjectProperty.Entity
+                eu = Into
+                If eu Is Nothing Then
+                    Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
+                    If ee IsNot Nothing Then
+                        eu = ee.ObjectProperty.Entity
+                    Else
+                        For Each e As IExpression In _exp.GetExpressions
+                            ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                            If ee IsNot Nothing Then
+                                eu = ee.ObjectProperty.Entity
+                                Exit For
+                            End If
+                        Next
+                    End If
                 End If
+                _intoEU = eu
             End If
             Return eu
         End Function

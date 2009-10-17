@@ -319,7 +319,7 @@ Namespace Expressions2
                     End If
 
                     If TypeOf v Is IParameterExpression Then
-                        re = re.ReplaceExpression(v, New ParameterExpression(schema.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)))
+                        re = re.ReplaceExpression(v, New ParameterExpression(ObjectMappingEngine.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)))
                     End If
                 End If
             Next

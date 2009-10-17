@@ -346,11 +346,11 @@ Namespace Entities
             MyBase.Init()
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IKeyEntity.Init
-            MyBase._Init(cache, schema)
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _IKeyEntity.Init
+            MyBase._Init(cache, mpe)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, schema)
+            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, GetEntitySchema(mpe).GetFieldColumnMap, mpe)
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -637,12 +637,13 @@ Namespace Entities
 
         Public Overrides Sub RejectRelationChanges(ByVal mc As OrmManager)
             Using SyncHelper(False)
-                Dim t As Type = Me.GetType
                 'Using gmc As IGetManager = GetMgr()
                 'Dim mc As OrmManager = gmc.Manager
+#If OLDM2M Then
+                Dim t As Type = Me.GetType
                 Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
                 Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
-#If OLDM2M Then
+
                 If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                     Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
                     cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
@@ -709,9 +710,10 @@ Namespace Entities
                 Return "PK:" & Identifier.ToString
             End Get
         End Property
+
 #Region " Relations "
-        Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
-            Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
+        Protected Overrides Function GetChildChangedObjects() As System.Collections.Generic.List(Of ICachedEntity)
+            Dim l As List(Of ICachedEntity) = MyBase.GetChildChangedObjects()
             For Each rl As Relation In _relations.ToArray
                 For Each e As ICachedEntity In rl.Added
                     l.Add(e)

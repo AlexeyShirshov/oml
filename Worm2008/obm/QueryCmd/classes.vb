@@ -27,10 +27,10 @@ Namespace Query
         Function ExecEntity(Of CreateType As {_IEntity, New}, ReturnType As {_IEntity})( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
 
-        Function Exec(Of ReturnType As _ICachedEntity)( _
+        Function Exec(Of ReturnType As ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
-        Function Exec(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
+        Function Exec(Of CreateType As {ICachedEntity, New}, ReturnType As ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix

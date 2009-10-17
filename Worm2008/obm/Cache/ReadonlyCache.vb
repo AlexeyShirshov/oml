@@ -667,7 +667,7 @@ Namespace Cache
         End Function
 
         Public Function NormalizeObject(ByVal obj As _ICachedEntity, _
-            ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary, _
+            ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal entityDictionary As IDictionary, _
             ByVal addOnCreate As Boolean, ByVal mgr As OrmManager, ByVal fromDb As Boolean, _
             ByVal oschema As IEntitySchema) As _ICachedEntity
 
@@ -676,14 +676,14 @@ Namespace Cache
             Dim type As Type = obj.GetType
 
 #If DEBUG Then
-            If dic Is Nothing Then
+            If entityDictionary Is Nothing Then
                 Dim name As String = type.Name
                 Throw New OrmManagerException("Collection for " & name & " not exists")
             End If
 #End If
             Dim id As CacheKey = New CacheKey(obj)
             Dim created As Boolean = False ', checked As Boolean = False
-            Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
+            Dim a As _ICachedEntity = CType(entityDictionary(id), _ICachedEntity)
             Dim oc As ObjectModification = Nothing
             If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
                 a = NewObjectManager.GetNew(type, obj.GetPKValues)
@@ -703,7 +703,7 @@ Namespace Cache
                 If oc Is Nothing Then oc = ShadowCopy(obj, mgr, oschema)
                 If oc IsNot Nothing Then
                     a = CType(oc.Obj, _ICachedEntity)
-                    AddObjectInternal(a, New CacheKey(a), dic)
+                    AddObjectInternal(a, New CacheKey(a), entityDictionary)
                     Return a
                 End If
             End If
@@ -711,7 +711,7 @@ Namespace Cache
             If a Is Nothing Then
                 Dim sync_key As String = "LoadType" & id.ToString & type.ToString
                 Using SyncHelper.AcquireDynamicLock(sync_key)
-                    a = CType(dic(id), _ICachedEntity)
+                    a = CType(entityDictionary(id), _ICachedEntity)
                     If a Is Nothing Then
                         'If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
                         '    Throw New NotSupportedException
@@ -744,7 +744,7 @@ Namespace Cache
                         End If
                         created = True
                         If a IsNot Nothing AndAlso addOnCreate Then
-                            AddObjectInternal(a, id, dic)
+                            AddObjectInternal(a, id, entityDictionary)
                         End If
                     End If
                 End Using
@@ -892,15 +892,11 @@ Namespace Cache
         Public Sub SyncPOCO(ByVal c As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object)
             If c IsNot Nothing Then
                 If c.ObjectState = ObjectState.Created Then c.BeginLoading()
-                For Each de As DictionaryEntry In mpe.GetProperties(o.GetType, oschema)
-                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    Dim ea As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                    mpe.SetPropertyValue(c, ea.PropertyAlias, mpe.GetPropertyValue(o, ea.PropertyAlias, oschema), oschema)
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    mpe.SetPropertyValue(c, m.PropertyAlias, _
+                        mpe.GetPropertyValue(o, m.PropertyAlias, oschema), oschema)
                 Next
                 If c.ObjectState = ObjectState.Created Then c.EndLoading()
-                'If c.ObjectState = ObjectState.Modified Then
-                '    c.AcceptChanges(False, True)
-                'End If
             End If
         End Sub
     End Class

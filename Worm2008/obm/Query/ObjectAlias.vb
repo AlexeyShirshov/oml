@@ -265,6 +265,14 @@ Namespace Query
                 _a.Query.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
+
+        Public Shared Operator =(ByVal a As EntityUnion, ByVal b As EntityUnion) As Boolean
+            Return Equals(a, b)
+        End Operator
+
+        Public Shared Operator <>(ByVal a As EntityUnion, ByVal b As EntityUnion) As Boolean
+            Return Not Equals(a, b)
+        End Operator
     End Class
 
     <Serializable()> _

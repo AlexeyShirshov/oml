@@ -85,7 +85,7 @@ Imports System.Collections.ObjectModel
 
         q.From(t1). _
             Join(JCtor.join(t2).on(t1, "ID").eq(t2, "ID")). _
-            SelectEntity(t1, True).SelectAdd(t2, True)
+            SelectEntity(t1, True).AddEntityToSelectList(t2, True)
 
         Dim m As ReadonlyMatrix = q.ToMatrix
     End Sub
@@ -130,7 +130,7 @@ Imports System.Collections.ObjectModel
         m = q.ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        m = q.SelectEntity(t1, True).SelectAdd(t2, True).ToMatrix
+        m = q.SelectEntity(t1, True).AddEntityToSelectList(t2, True).ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)
@@ -168,7 +168,7 @@ Imports System.Collections.ObjectModel
         m = q.ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
-        m = q.SelectEntity(t1, True).SelectAdd(t2, True).ToMatrix
+        m = q.SelectEntity(t1, True).AddEntityToSelectList(t2, True).ToMatrix
         Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
         Assert.AreEqual(3, m.Count)

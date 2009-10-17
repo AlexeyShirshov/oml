@@ -159,7 +159,7 @@ Namespace Expressions2
                             If pks.Count <> 1 Then
                                 Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                             End If
-                            If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias, Nothing), filterValue) Then
+                            If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias), filterValue) Then
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         End If
@@ -359,7 +359,7 @@ Namespace Expressions2
                 Dim t As Type = obj.GetType
                 Dim rt As Type = eexp.ObjectProperty.Entity.GetRealType(mpe)
                 If rt Is t Then
-                    v = mpe.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)
+                    v = ObjectMappingEngine.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema, Nothing)
                     Return True
                 Else
                     Throw New NotSupportedException(String.Format("Different types in expression ({0}) and object ({1})", rt, t))

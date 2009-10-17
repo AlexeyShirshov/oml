@@ -524,10 +524,10 @@ l1:
                         _types.Add(heu, hschema)
                         _sl.Add(New SelectExpression(table, filtered_r.Column, mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias, heu))
 
-                        SelectAdd(heu, False)
+                        AddEntityToSelectList(heu, False)
 
-                        _pdic.Add(m2mType, mpe.GetProperties(m2mType, oschema))
-                        _pdic.Add(hostType, mpe.GetProperties(hostType, hschema))
+                        '_pdic.Add(m2mType, mpe.GetProperties(m2mType, oschema))
+                        '_pdic.Add(hostType, mpe.GetProperties(hostType, hschema))
                     End If
 
                 Else
@@ -795,9 +795,9 @@ l1:
                     Using gm As IGetManager = o.GetMgr
                         Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
                         Try
-                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
                         Catch ex As InvalidCastException
-                            mpe.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
                         End Try
                     End Using
                 End If
@@ -824,9 +824,9 @@ l1:
                 Using gm As IGetManager = o.GetMgr
                     Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
                     Try
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
                     Catch ex As InvalidCastException
-                        mpe.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
                     End Try
                 End Using
             End If

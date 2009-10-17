@@ -179,7 +179,7 @@ Namespace Entities
                     If mc IsNot Nothing Then
                         Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
                         Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
-                        Dim o As ICachedEntity = TryCast(mpe.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
+                        Dim o As ICachedEntity = TryCast(ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
                         If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
                             Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
                             If ov IsNot Nothing Then
@@ -322,25 +322,16 @@ Namespace Entities
         End Property
 
         Protected Overridable Function DumpState() As String
-            Dim schema As ObjectMappingEngine = GetMappingEngine()
-            Dim props As IDictionary = Nothing
-            Dim oschema As IEntitySchema = Nothing
-            If schema Is Nothing Then
-                oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
-                props = ObjectMappingEngine.GetMappedProperties(Me.GetType, oschema)
-            Else
-                oschema = schema.GetEntitySchema(Me.GetType)
-                props = schema.GetProperties(Me.GetType)
-            End If
-
+            Dim mpe As ObjectMappingEngine = GetMappingEngine()
+            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim sb As New StringBuilder
             Dim olr As Boolean = _readRaw
             _readRaw = True
             Try
-                For Each kv As DictionaryEntry In props
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                    Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                    sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
+                For Each m As MapField2Column In map
+                    sb.Append(m.PropertyAlias).Append("=")
+                    sb.Append(ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo)).Append(";")
                 Next
             Finally
                 _readRaw = olr
@@ -408,37 +399,21 @@ Namespace Entities
             Return e
         End Function
 
-        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
-            Dim props As IDictionary = Nothing
-            If mgr Is Nothing Then
-                props = ObjectMappingEngine.GetMappedProperties(Me.GetType, oschema)
-            Else
-                props = mgr.MappingEngine.GetProperties(Me.GetType)
-            End If
-            For Each kv As DictionaryEntry In props
-                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                Dim c As EntityPropertyAttribute = CType(kv.Key, EntityPropertyAttribute)
-                ObjectMappingEngine.SetPropertyValue([to], c.PropertyAlias, pi, ObjectMappingEngine.GetPropertyValue(from, c.PropertyAlias, pi, oschema), oschema)
+        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, _
+            ByVal schema As IEntitySchema)
+
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap
+
+            For Each m As MapField2Column In map
+                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(from, m.PropertyAlias, schema, m.PropertyInfo), schema, m.PropertyInfo)
             Next
         End Sub
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
-            Using mc As IGetManager = GetMgr()
-                Dim oschema As IEntitySchema = Nothing
-                If mc IsNot Nothing Then
-                    oschema = mc.Manager.MappingEngine.GetEntitySchema(Me.GetType)
-                Else
-                    oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
-                End If
-                Using [to].GetSyncRoot
-                    [to].BeginLoading()
-                    Dim mgr As OrmManager = Nothing
-                    If mc IsNot Nothing Then
-                        mgr = mc.Manager
-                    End If
-                    CopyProperties([from], [to], mgr, oschema)
-                    [to].EndLoading()
-                End Using
+            Using [to].GetSyncRoot
+                [to].BeginLoading()
+                CopyProperties([from], [to], GetEntitySchema(GetMappingEngine()))
+                [to].EndLoading()
             End Using
         End Sub
 
@@ -546,34 +521,31 @@ Namespace Entities
 #End Region
 
         Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
-            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
-            If schema Is Nothing Then
-                Return ObjectMappingEngine.GetPropertyInt(Me.GetType, propertyAlias)
-            Else
-                Return schema.GetPropertyValue(Me, propertyAlias)
-            End If
+            Return ObjectMappingEngine.GetPropertyValue(Me.GetType, propertyAlias, GetEntitySchema(GetMappingEngine))
         End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
-            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
-            Dim pi As Reflection.PropertyInfo
-            If schema Is Nothing Then
-                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
-            Else
-                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
-            End If
-            Return pi.GetValue(Me, Nothing)
+            'Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
+            'Dim pi As Reflection.PropertyInfo
+            'If schema Is Nothing Then
+            '    pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            'Else
+            '    pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            'End If
+            'Return pi.GetValue(Me, Nothing)
+            Return oschema.GetFieldColumnMap(propertyAlias).GetValue(Me)
         End Function
 
         Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
-            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
-            Dim pi As Reflection.PropertyInfo
-            If schema Is Nothing Then
-                pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
-            Else
-                pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
-            End If
-            pi.SetValue(Me, value, Nothing)
+            'Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
+            'Dim pi As Reflection.PropertyInfo
+            'If schema Is Nothing Then
+            '    pi = ObjectMappingEngine.GetPropertyInt(Me.GetType, oschema, propertyAlias)
+            'Else
+            '    pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
+            'End If
+            'pi.SetValue(Me, value, Nothing)
+            oschema.GetFieldColumnMap(propertyAlias).SetValue(Me, value)
         End Sub
 
         Protected Overridable Overloads Sub Init()
@@ -590,7 +562,11 @@ Namespace Entities
         End Sub
 
         Protected Overridable Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As Meta.IEntitySchema Implements _IEntity.GetEntitySchema
-            Return mpe.GetEntitySchema(Me.GetType, True)
+            If mpe Is Nothing Then
+                Return ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
+            Else
+                Return mpe.GetEntitySchema(Me.GetType, True)
+            End If
         End Function
     End Class
 

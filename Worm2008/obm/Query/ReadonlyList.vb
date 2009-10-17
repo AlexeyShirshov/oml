@@ -29,37 +29,30 @@ End Interface
 Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
     Inherits ReadOnlyEntityList(Of T)
 
-    Private _rt As Type
     Private Shared _empty As New ReadOnlyList(Of T)
 
     Public Sub New(ByVal realType As Type)
-        MyBase.new()
-        _rt = realType
+        MyBase.new(realType)
     End Sub
 
     Public Sub New()
         MyBase.new()
-        _rt = GetType(T)
     End Sub
 
     Public Sub New(ByVal realType As Type, ByVal col As IEnumerable(Of T))
-        MyBase.New(col)
-        _rt = realType
+        MyBase.New(realType, col)
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
         MyBase.New(col)
-        _rt = GetType(T)
     End Sub
 
     Public Sub New(ByVal realType As Type, ByVal list As List(Of T))
-        MyBase.New(list)
-        _rt = realType
+        MyBase.New(realType, list)
     End Sub
 
     Public Sub New(ByVal realType As Type, ByVal list As ReadOnlyList(Of T))
-        MyBase.New(list)
-        _rt = realType
+        MyBase.New(realType, list)
     End Sub
 
     Public Shared ReadOnly Property Empty() As ReadOnlyList(Of T)
@@ -67,47 +60,6 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
             Return _empty
         End Get
     End Property
-
-    Public Overrides Function LoadObjects() As ReadOnlyEntityList(Of T)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(_rt, Me)
-            End Using
-        Else
-            Return Me
-        End If
-    End Function
-
-    Public Overrides Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(_rt, Me, start, length)
-            End Using
-        Else
-            Return Me
-        End If
-    End Function
-
-    Public Overloads Function LoadObjects(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Return mgr.LoadObjects(_rt, Me)
-        Else
-            Return Me
-        End If
-    End Function
-
-    Public Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-        If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Return mgr.LoadObjects(_rt, Me, start, length)
-        Else
-            Return Me
-        End If
-    End Function
-
 
     Public Overrides Function Distinct() As ReadOnlyEntityList(Of T)
         Return DistinctEntity()
@@ -178,40 +130,43 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Return New ReadOnlyList(Of T)(_rt, _l)
     End Function
 
-    Public Overrides ReadOnly Property RealType() As System.Type
-        Get
-            Return _rt
-        End Get
-    End Property
 End Class
 
 <Serializable()> _
-Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
+Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     Inherits ReadOnlyObjectList(Of T)
     Implements ILoadableList
 
+    Protected _rt As Type
+
     Public Sub New()
         MyBase.new()
+        _rt = GetType(T)
     End Sub
 
     Public Sub New(ByVal t As Type)
         MyBase.new()
+        _rt = RealType
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal col As IEnumerable(Of T))
         MyBase.New(col)
+        _rt = RealType
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
         MyBase.New(col)
+        _rt = GetType(T)
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal list As List(Of T))
         MyBase.New(list)
+        _rt = RealType
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal list As ReadOnlyEntityList(Of T))
         MyBase.New(list)
+        _rt = RealType
     End Sub
 
     Public Overridable Function Distinct() As ReadOnlyEntityList(Of T)
@@ -224,47 +179,43 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
         Return New ReadOnlyEntityList(Of T)(l.Keys)
     End Function
 
-    Public Overridable Function LoadObjects() As ReadOnlyEntityList(Of T)
+    Public Overridable overloads Function LoadObjects() As ReadOnlyEntityList(Of T)
+        Return LoadObjects(0, _l.Count)
+    End Function
+
+    Public Overloads Function LoadObjects(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        Return Query.QueryCmd.LoadObjects(Me, True, mgr)
+    End Function
+
+    Public Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        Return Query.QueryCmd.LoadObjects(Me, start, length, True, mgr)
+    End Function
+
+    Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Dim l As New List(Of T)
-            For Each obj As T In _l
-                If Not obj.IsLoaded Then
-                    obj.Load(Nothing)
-                End If
-                l.Add(obj)
-            Next
-            Return New ReadOnlyEntityList(Of T)(l)
+            Dim cmd As New Query.QueryCmd(o.CreateManager)
+            Return cmd.From(_rt).LoadObjects(Me, start, length)
         Else
             Return Me
         End If
     End Function
 
-    Public Overridable Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+    Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray properties2Load() As String) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Dim l As New List(Of T)
-            For i As Integer = start To Math.Max(Count, start + length) - 1
-                Dim obj As T = _l(i)
-                If Not obj.IsLoaded Then
-                    obj.Load(Nothing)
-                End If
-                If obj.IsLoaded Then
-                    l.Add(obj)
-                End If
-            Next
-            Return New ReadOnlyEntityList(Of T)(l)
+            Dim cmd As New Query.QueryCmd(o.CreateManager)
+            Return cmd.Select(Array.ConvertAll(properties2Load, Function(s) New Query.ObjectProperty(_rt, s))).From(_rt).LoadObjects(Me, start, length)
         Else
             Return Me
         End If
     End Function
 
-    Public Overridable Function LoadObjects(ByVal fields() As String, ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+    Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal properties2Load As ObjectModel.ReadOnlyCollection(Of SelectExpression)) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(Of T)(Me, fields, start, length)
-            End Using
+            Dim cmd As New Query.QueryCmd(o.CreateManager)
+            Return cmd.Select(properties2Load).From(_rt).LoadObjects(Me, start, length)
         Else
             Return Me
         End If
@@ -297,7 +248,7 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
                 For j As Integer = 0 To parentPropertyAliases.Length - 1
-                    Dim propValue As Object = mpe.GetPropertyValue(o, parentPropertyAliases(j), oschema)
+                    Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, parentPropertyAliases(j), oschema)
                     Dim obj As IEntity = TryCast(propValue, IEntity)
                     If obj Is Nothing AndAlso propValue IsNot Nothing Then
                         Throw New ArgumentException("Property " & parentPropertyAliases(j) & " is not entity")
@@ -338,6 +289,13 @@ Public Class ReadOnlyEntityList(Of T As {Entities.ICachedEntity})
     Public Overrides Function Clone() As Object
         Return New ReadOnlyEntityList(Of T)(_l)
     End Function
+
+    Public Overrides ReadOnly Property RealType() As System.Type
+        Get
+            Return _rt
+        End Get
+    End Property
+
 End Class
 
 <Serializable()> _

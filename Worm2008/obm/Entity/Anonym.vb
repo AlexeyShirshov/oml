@@ -216,12 +216,13 @@ Namespace Entities
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Updated
         Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.ChangesAccepted
 
-        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
+        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
                     For i As Integer = 0 To _props.Count - 1
-                        If Not _members_load_state(i, schema) Then
+                        If Not _members_load_state(i, map, schema) Then
                             allloaded = False
                             Exit For
                         End If
@@ -232,7 +233,7 @@ Namespace Entities
             End Using
         End Function
 
-        Public Function ForseUpdate(ByVal c As Meta.EntityPropertyAttribute) As Boolean Implements _ICachedEntity.ForseUpdate
+        Public Function ForseUpdate(ByVal propertyAlias As String) As Boolean Implements _ICachedEntity.ForseUpdate
             Return False
         End Function
 
@@ -319,12 +320,12 @@ Namespace Entities
                     If value AndAlso Not _loaded Then
                         Dim cnt As Integer = _props.Count
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, mpe) = True
+                            _members_load_state(i, Nothing, mpe) = True
                         Next
                     ElseIf Not value AndAlso _loaded Then
                         Dim cnt As Integer = _props.Count
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, mpe) = False
+                            _members_load_state(i, Nothing, mpe) = False
                         Next
                     End If
                     _loaded = value
@@ -333,20 +334,22 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Function SetLoaded(ByVal fieldName As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
-            Dim i As Integer
-            For Each p As String In _props.Keys
-                If p = fieldName Then
-                    Exit For
-                End If
-                i += 1
-            Next
-            _members_load_state(i, schema) = check
+        Public Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+            Dim idx As Integer
+            'For Each p As String In _props.Keys
+            '    If p = propertyAlias Then
+            '        Exit For
+            '    End If
+            '    idx += 1
+            'Next
+            idx = map.IndexOf(propertyAlias)
+            _members_load_state(idx, map, mpe) = check
         End Function
 
-        Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
-            Return SetLoaded(c.PropertyAlias, loaded, check, schema)
-        End Function
+        'Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        '    Return SetLoaded(c.PropertyAlias, loaded, check, schema)
+        'End Function
 
         Public ReadOnly Property UpdateCtx() As UpdateCtx Implements _ICachedEntity.UpdateCtx
             Get
@@ -866,7 +869,7 @@ Namespace Entities
         Protected Overrides Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             If _myschema Is Nothing Then
                 'Return mpe.GetEntitySchema(t)
-                Throw New InvalidOperationException
+                Throw New InvalidOperationException(String.Format("Schema for type {0} is not set", Me.GetType))
             Else
                 Return _myschema
             End If
@@ -876,9 +879,10 @@ Namespace Entities
             Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, GetEntitySchema(mgr.MappingEngine))
         End Function
 
-        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal schema As ObjectMappingEngine)
+        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
+            Dim schema As IEntitySchema = GetEntitySchema(mpe)
             For Each p As PKDesc In pk
-                SetLoaded(p.PropertyAlias, True, True, schema)
+                SetLoaded(p.PropertyAlias, True, True, schema.GetFieldColumnMap, mpe)
             Next
         End Sub
 
@@ -908,17 +912,21 @@ Namespace Entities
             Return mo
         End Function
 
-        Protected Property _members_load_state(ByVal idx As Integer, ByVal mpe As ObjectMappingEngine) As Boolean
+        Private Sub InitLoadState(ByVal map As Collections.IndexedCollection(Of String, MapField2Column))
+            If _loaded_members Is Nothing Then
+                '_loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
+                _loaded_members = New BitArray(map.Count)
+            End If
+        End Sub
+
+        Protected Property _members_load_state(ByVal idx As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal mpe As ObjectMappingEngine) As Boolean
             Get
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
-                End If
+                InitLoadState(map)
                 Return _loaded_members(idx)
             End Get
             Set(ByVal value As Boolean)
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
-                End If
+                InitLoadState(map)
                 _loaded_members(idx) = value
             End Set
         End Property
@@ -948,11 +956,11 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overloads Sub _GetChangedObjectGraph(ByVal gl As System.Collections.Generic.List(Of _ICachedEntity)) Implements _ICachedEntity.GetChangedObjectGraph
+        Protected Overloads Sub _GetChangedObjectGraph(ByVal gl As System.Collections.Generic.List(Of _ICachedEntity)) Implements _ICachedEntity.FillChangedObjectList
             Throw New NotImplementedException
         End Sub
 
-        Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
+        Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectList
             Throw New NotImplementedException
         End Function
 

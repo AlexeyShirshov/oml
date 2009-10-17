@@ -42,7 +42,7 @@ Public Class Table3
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType([from], Table3)
             CType([to], Table3)._id = ._id
             CType([to], Table3)._obj = ._obj
@@ -179,7 +179,7 @@ Public Class Table3
     End Sub
 
     Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IPropertyConverter.CreateContainingEntity
-        _obj = mgr.GetKeyEntityFromCacheOrCreate(CInt(value), GetObjectType())
+        _obj = mgr.GetKeyEntityFromCacheOrCreate(value, GetObjectType())
         Return _obj
     End Function
 End Class
