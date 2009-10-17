@@ -359,7 +359,7 @@ Namespace Cache
 
         'End Function
 
-        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, _
+        Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
@@ -367,7 +367,7 @@ Namespace Cache
             Return lc.FromWeakList(Of T)(_col, mgr, start, length, withLoad, created, successed)
         End Function
 
-        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})( _
+        Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)( _
             ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Dim lc As IListObjectConverter = mgr.ListConverter
             Return lc.FromWeakList(Of T)(_col, mgr)

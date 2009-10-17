@@ -7,6 +7,7 @@ Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports Worm.Query
+Imports Worm.Expressions2
 
 <TestClass()> Public Class OrmSchemaTest
 
@@ -92,7 +93,7 @@ Imports Worm.Query
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
-        Dim sel As List(Of EntityPropertyAttribute) = Nothing
+        Dim sel As List(Of SelectExpression) = Nothing
 
         Dim expected As String = "declare @pk_id Int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
@@ -117,7 +118,7 @@ Imports Worm.Query
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
-        Dim sel As List(Of EntityPropertyAttribute) = Nothing
+        Dim sel As List(Of SelectExpression) = Nothing
 
         Dim expected As String = "declare @pk_id Int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
@@ -324,7 +325,7 @@ Imports Worm.Query
             o.Load()
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
-            Dim sel As List(Of EntityPropertyAttribute) = Nothing
+            Dim sel As List(Of SelectExpression) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, params, sel, upd))
 
@@ -385,7 +386,7 @@ Imports Worm.Query
 "if @dboent3_rownum > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
-            Dim sel As List(Of EntityPropertyAttribute) = Nothing
+            Dim sel As List(Of SelectExpression) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             Dim actual As String = gen.Update(schemaV1, o, Nothing, params, sel, upd)
             Assert.AreEqual(expected, actual, String.Compare(expected, actual).ToString)

@@ -101,12 +101,11 @@ Namespace Entities
         Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function SetLoaded(ByVal propertyMap As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean
+        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+        Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
-        Function ForseUpdate(ByVal c As EntityPropertyAttribute) As Boolean
+        Function ForseUpdate(ByVal propertyAlias As String) As Boolean
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
@@ -116,8 +115,8 @@ Namespace Entities
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
         Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
-        Sub GetChangedObjectGraph(ByVal gl As Generic.List(Of _ICachedEntity))
-        Function GetChangedObjectGraph() As Generic.List(Of _ICachedEntity)
+        Sub FillChangedObjectList(ByVal objectList As Generic.List(Of _ICachedEntity))
+        Function GetChangedObjectList() As Generic.List(Of _ICachedEntity)
     End Interface
 
     Public Interface IKeyProvider

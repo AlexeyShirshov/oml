@@ -50,12 +50,15 @@ Namespace Database.Storedprocs
             Dim cols As List(Of SelectExpression) = GetColumns()
             If cols Is Nothing OrElse cols.Count = 0 Then
                 cols = New List(Of SelectExpression)
-                Dim pks As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
-                For Each pk As EntityPropertyAttribute In pks
-                    Dim exp As New TableExpression(pk.Column)
-                    Dim se As New SelectExpression(exp, pk.PropertyAlias, GetType(T))
-                    se.Attributes = pk.Behavior
-                    cols.Add(se)
+                'Dim pks As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
+                Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetType(T))
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    If m.IsPK Then
+                        Dim exp As New TableExpression(m.ColumnExpression)
+                        Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
+                        se.Attributes = m.Attributes
+                        cols.Add(se)
+                    End If
                 Next
             End If
             mgr.LoadMultipleObjects(Of T)(cmd, rr, cols)

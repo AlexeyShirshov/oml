@@ -63,7 +63,7 @@ Public Class Table1
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType(from, Table1)
             CType([to], Table1)._id = ._id
             CType([to], Table1)._code = ._code
@@ -122,7 +122,8 @@ Public Class Table1
         ElseIf fieldName = "ID" Then
             Return _id
         Else
-            Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
+            Return oschema.GetFieldColumnMap(fieldName).GetValue(Me)
+            'Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
             'Throw New NotSupportedException(fieldName)
             'Return MyBase.GetValue(pi, fieldName, oschema)
         End If
@@ -222,8 +223,8 @@ Public Class Table1Implementation
         _tbl = New SourceFragment("dbo.Table1")
     End Sub
 
-    Public Overrides Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        If c.PropertyAlias = "EnumStr" Then
+    Public Overrides Function ChangeValueType(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        If c = "EnumStr" Then
             If TypeOf value Is Enum1 Then
                 newvalue = value.ToString
                 Return True

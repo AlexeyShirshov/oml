@@ -496,7 +496,7 @@ Namespace Criteria.Values
                                 If pks.Count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
-                                If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias, Nothing), filterValue) Then
+                                If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias), filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(IKeyEntity).IsAssignableFrom(valt) Then
@@ -516,7 +516,7 @@ Namespace Criteria.Values
                                 If pks.Count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
-                                If Equals(mpe.GetPropertyValue(filterValue, pks(0).PropertyAlias, Nothing), evaluatedValue) Then
+                                If Equals(mpe.GetPropertyValue(filterValue, pks(0).PropertyAlias), evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             End If

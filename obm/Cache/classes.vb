@@ -247,11 +247,11 @@ Namespace Cache
             Return co
         End Function
 
-        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal dic As IDictionary) As T
+        Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal dic As IDictionary) As T
             Return GetObject(Of T)(mgr, mgr.Cache, mgr.GetContextInfo, mgr.MappingEngine, dic)
         End Function
 
-        Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
+        Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
             ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As T
             Dim o As T = CType(_ref.Target, T)
             If o Is Nothing Then

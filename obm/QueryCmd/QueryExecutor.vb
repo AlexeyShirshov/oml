@@ -115,7 +115,7 @@ l2:
                 Return ce.GetMatrix(m, q.propWithLoads, created, m.GetStart, m.GetLength, s)
             End Function
 
-            Public Function GetEntityList(Of ReturnType As _ICachedEntity)(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReadOnlyEntityList(Of ReturnType)
+            Public Function GetEntityList(Of ReturnType As ICachedEntity)(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReadOnlyEntityList(Of ReturnType)
                 ci = ce.CustomInfo
                 Return CType(ce, UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s)
             End Function
@@ -258,7 +258,7 @@ l2:
             End If
         End Function
 
-        Public Function Exec(Of ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
+        Public Function Exec(Of ReturnType As ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.prepared
@@ -277,7 +277,7 @@ l2:
                         For Each row As ObjectModel.ReadOnlyCollection(Of Entities._IEntity) In r
                             l.Add(CType(row(0), ReturnType))
                         Next
-                        res = CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), l), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                        res = CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), l), ReadOnlyEntityList(Of ReturnType))
                     Else
                         Throw New InvalidOperationException
                     End If
@@ -294,7 +294,7 @@ l2:
             End Try
         End Function
 
-        Public Function Exec(Of CreateType As {New, Entities._ICachedEntity}, ReturnType As Entities._ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
+        Public Function Exec(Of CreateType As {New, ICachedEntity}, ReturnType As ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.prepared

@@ -24,8 +24,8 @@ Namespace Cache
             ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadonlyMatrix
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
-        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager, _
+        Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As OrderByClause) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
@@ -39,7 +39,7 @@ Namespace Cache
     Public Class FakeListConverter
         Implements IListObjectConverter
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManager, _
+        Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mc As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = Nothing
@@ -58,7 +58,7 @@ Namespace Cache
             If withLoad AndAlso Not created Then
                 c.LoadObjects(start, length)
                 Dim s As Boolean = True
-                c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
+                c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), ReadOnlyEntityList(Of T))
                 If Not s Then
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
@@ -83,7 +83,7 @@ Namespace Cache
                     End If
                 End If
                 Dim s As Boolean = True
-                c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
+                c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), ReadOnlyEntityList(Of T))
                 If Not s Then
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
@@ -94,7 +94,7 @@ Namespace Cache
                         Throw New InvalidOperationException("Paging is not supported with external filter")
                     End If
                     length = Math.Min(c.Count, length + start)
-                    Dim ar As Generic.IList(Of T) = TryCast(c, Generic.IList(Of T))
+                    Dim ar As IList(Of T) = TryCast(c, IList(Of T))
                     Dim l As New Generic.List(Of T)
                     If ar IsNot Nothing Then
                         For i As Integer = start To length - 1
@@ -115,7 +115,7 @@ Namespace Cache
                     If mc.GetRev Then
                         l.Reverse()
                     End If
-                    c = CType(OrmManager._CreateReadOnlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
+                    c = CType(OrmManager._CreateReadOnlyList(GetType(T), l), ReadOnlyEntityList(Of T))
                 End If
             End If
             Return c
@@ -125,16 +125,15 @@ Namespace Cache
             Return objects
         End Function
 
-        Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mc As OrmManager, ByVal oschema As IEntitySchema) As String
-            Dim prop As String = mc.MappingEngine.GetJoinFieldNameByType(obj.GetType, rt, oschema)
+        Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema) As String
+            Dim prop As String = mgr.MappingEngine.GetJoinFieldNameByType(obj.GetType, rt, oschema)
             If String.IsNullOrEmpty(prop) Then
-                For Each de As DictionaryEntry In mc.MappingEngine.GetRefProperties(obj.GetType, oschema)
-                    Dim p As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    If p.PropertyType.IsAssignableFrom(rt) Then
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    If m.PropertyInfo.PropertyType.IsAssignableFrom(rt) Then
                         If Not String.IsNullOrEmpty(prop) Then
-                            Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}: Two properties match {2} and {3}", rt, obj.GetType, prop, CType(de.Key, EntityPropertyAttribute).PropertyAlias))
+                            Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}: Two properties or more match {2} and {3}", rt, obj.GetType, prop, m.PropertyAlias))
                         End If
-                        prop = CType(de.Key, EntityPropertyAttribute).PropertyAlias
+                        prop = m.PropertyAlias
                     End If
                 Next
             End If
@@ -156,7 +155,7 @@ Namespace Cache
                 '    prop = p
                 'Next
                 Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
-                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot l.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
                         Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
@@ -195,7 +194,7 @@ Namespace Cache
                 '    prop = p
                 'Next
                 Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
-                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot l.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
                         Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", l.RealType, obj.GetType))
@@ -220,7 +219,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = CType(weak_list, ReadOnlyEntityList(Of T))
             Return c
         End Function
@@ -271,7 +270,7 @@ Namespace Cache
     Public Class ListConverter
         Implements IListObjectConverter
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManager, _
+        Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mc As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
@@ -325,11 +324,11 @@ Namespace Cache
                             c.LoadObjects()
                         Else
                             successed = IListObjectConverter.ExtractListResult.NeedLoad
-                            Return CType(OrmManager._CreateReadOnlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+                            Return CType(OrmManager._CreateReadOnlyList(GetType(T)), ReadOnlyEntityList(Of T))
                         End If
                     End If
                     Dim s As Boolean = True
-                    c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
+                    c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), ReadOnlyEntityList(Of T))
                     If Not s Then
                         successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                     End If
@@ -375,7 +374,7 @@ Namespace Cache
                 '    prop = p
                 'Next
                 Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, mc, oschema)
-                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot lo.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
                         Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
@@ -418,7 +417,7 @@ Namespace Cache
                 'For Each p As String In props
                 '    prop = p
                 'Next
-                obj = CType(mc.MappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
+                obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot lo.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
                         Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))
@@ -451,7 +450,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
@@ -465,7 +464,7 @@ Namespace Cache
                     OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
+            Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects), ReadOnlyEntityList(Of T))
         End Function
 
         Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList

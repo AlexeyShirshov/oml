@@ -798,9 +798,9 @@ l1:
             Dim o As Object = _syncObj(sender)
             _syncObj.Remove(sender)
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
-            ObjectMappingEngine.InitPOCO(_mgr.MappingEngine.GetProperties(o.GetType, oschema), _
+            ObjectMappingEngine.InitPOCO( _
                 o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
-                _mgr.MappingEngine, sender, o, _mgr)
+                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.GetContextInfo)
         End Sub
 
         Public Overridable Sub Delete(ByVal obj As Object)

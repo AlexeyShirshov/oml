@@ -208,11 +208,11 @@ Namespace Entities.Meta
         ''' <remarks>Использует метод <see cref="ObjectMappingEngine.GetPropertyValue"/></remarks>
         ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и значение поле невозможно получить по рефлекшену.</exception>
         Public Function GetValue(ByVal obj As Object) As Object
-            Return ObjectMappingEngine.GetPropertyValue(obj, PropertyAlias, PropertyInfo, Schema)
+            Return ObjectMappingEngine.GetPropertyValue(obj, PropertyAlias, Schema, PropertyInfo)
         End Function
 
         Public Sub SetValue(ByVal o As Object, ByVal value As Object)
-            ObjectMappingEngine.SetPropertyValue(o, PropertyAlias, PropertyInfo, value, Schema)
+            ObjectMappingEngine.SetPropertyValue(o, PropertyAlias, value, Schema, PropertyInfo)
         End Sub
 
         Public ReadOnly Property IsPK() As Boolean
@@ -230,6 +230,12 @@ Namespace Entities.Meta
         Public ReadOnly Property IsRowVersion() As Boolean
             Get
                 Return (Attributes And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion
+            End Get
+        End Property
+
+        Public ReadOnly Property IsFactory() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.Factory) = Field2DbRelations.Factory
             End Get
         End Property
     End Class
@@ -439,7 +445,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mpe.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -569,7 +575,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mpe.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -695,7 +701,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)(mgr)
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mgr.MappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)

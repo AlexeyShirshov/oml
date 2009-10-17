@@ -1,4 +1,6 @@
-﻿Imports Worm.Entities.Meta
+﻿Option Infer On
+
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports System.ComponentModel
 Imports System.Collections.Generic
@@ -100,22 +102,18 @@ Namespace Entities
                         Dim srcProp As String = _srcProps(i)
                         Dim dstProp As String = _dstProps(i)
 
-                        Dim dc As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(dt, dstProp, oschema)
-                        'Dim sc As New EntityPropertyAttribute(p.First)
-                        Dim o As Object = schema.GetPropertyValue(source, srcProp, oschema)
-                        'Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(dt, oschema, c)
-                        '_dst.SetValue(pi, c, oschema, o)
-                        schema.SetPropertyValue(_dst, dstProp, o, oschema)
-                        If (schema.GetAttributes(oschema, dc) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        ObjectMappingEngine.SetPropertyValue(_dst, dstProp, ObjectMappingEngine.GetPropertyValue(source, srcProp, oschema, Nothing), oschema, Nothing)
+
+                        If oschema.GetFieldColumnMap(dstProp).IsPK Then
                             pk = True
                         End If
-                        'End If
+
                     Next
+
                     If pk Then
                         Dim nm As INewObjectsStore = mgr.Cache.NewObjectManager
                         If nm IsNot Nothing Then
                             nm.RemoveNew(dt, pk_old)
-
                             nm.AddNew(_dst)
                         End If
                     End If
@@ -225,7 +223,7 @@ Namespace Entities
                 End Get
             End Property
 
-            Public ReadOnly Property Changes(ByVal obj As ICachedEntity) As EntityPropertyAttribute()
+            Public ReadOnly Property Changes(ByVal obj As ICachedEntity) As String()
                 Get
                     Return _o.Changes(obj)
                     'Dim columns As New Generic.List(Of EntityPropertyAttribute)
@@ -302,19 +300,19 @@ Namespace Entities
             End Property
 
             Public Function GetM2MRelatedChangedObjects() As List(Of ICachedEntity)
-                Return _o.GetChangedRelationObjects
+                Return _o.GetChildChangedObjects
             End Function
 
             Public Function GetRelatedChangedObjects() As List(Of ICachedEntity)
-                Return _o.GetRelatedChangedObjects
+                Return _o.GetParentChangedObjects
             End Function
 
             Public Function GetChangedObjectGraph() As List(Of _ICachedEntity)
-                Return _o.GetChangedObjectGraph
+                Return _o.GetChangedObjectList
             End Function
 
             Public Function GetChangedObjectGraphWithSelf() As List(Of _ICachedEntity)
-                Return _o.GetChangedObjectGraphWithSelf
+                Return _o.GetChangedObjectListWithSelf
             End Function
 
             Public Sub SetCreateManager(ByVal createManager As ICreateManager)
@@ -365,20 +363,13 @@ Namespace Entities
             _hasPK = True
         End Sub
 
-        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, _
-            ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
+        Private Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, _
+            ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
-                    Dim cnt As Integer = 0
-                    If arr Is Nothing Then
-                        cnt = GetProperties(schema).Count
-                    Else
-                        cnt = arr.Count
-                    End If
-
-                    For i As Integer = 0 To cnt - 1
-                        If Not _members_load_state(i, cnt, schema) Then
+                    For i As Integer = 0 To map.Count - 1
+                        If Not _members_load_state(i, map, mpe) Then
                             'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
                             'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                             allloaded = False
@@ -392,125 +383,67 @@ Namespace Entities
             End Using
         End Function
 
-        Protected Property _members_load_state(ByVal idx As Integer, ByVal cnt As Integer, ByVal mpe As ObjectMappingEngine) As Boolean
-            Get
-                If _loaded_members Is Nothing OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version) Then
-                    Dim l As List(Of EntityPropertyAttribute) = Nothing
-                    If cnt = 0 Then
-                        If IsPKLoaded Then
-                            l = SortedColumnAttributeList(mpe)
-                            cnt = l.Count
-                        Else
-                            cnt = SortedColumnAttributeCount(mpe)
-                        End If
-                    End If
-                    _loaded_members = New BitArray(cnt)
-                    _sver = If(mpe Is Nothing, "w-x", mpe.Version)
-                    If IsPKLoaded Then
-                        Dim getted As Boolean = False
-                        Dim oschema As IEntitySchema = Nothing
-                        For i As Integer = 0 To cnt - 1
-                            If Not _loaded_members(i) Then
-                                If l Is Nothing Then l = SortedColumnAttributeList(mpe)
-                                If mpe IsNot Nothing AndAlso Not getted Then
-                                    oschema = mpe.GetEntitySchema(Me.GetType)
-                                    getted = True
-                                End If
-                                Dim c As EntityPropertyAttribute = l(i)
-                                If oschema Is Nothing Then
-                                    If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                        _loaded_members(i) = True
-                                    End If
-                                Else
-                                    If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                        _loaded_members(i) = True
-                                    End If
-                                End If
+        Private Sub InitLoadState(ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
+            If _loaded_members Is Nothing OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version) Then
+                _loaded_members = New BitArray(map.Count)
+                _sver = If(mpe Is Nothing, "w-x", mpe.Version)
+                If IsPKLoaded Then
+                    For i As Integer = 0 To map.Count - 1
+                        If Not _loaded_members(i) Then
+                            If map(i).IsPK Then
+                                _loaded_members(i) = True
                             End If
-                        Next
-                    End If
+                        End If
+                    Next
                 End If
+            End If
+        End Sub
+
+        Protected Property _members_load_state(ByVal idx As Integer, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+            Get
+                InitLoadState(map, mpe)
                 Return _loaded_members(idx)
             End Get
             Set(ByVal value As Boolean)
-                If _loaded_members Is Nothing OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version) Then
-                    Dim l As List(Of EntityPropertyAttribute) = Nothing
-                    If cnt = 0 Then
-                        If IsPKLoaded Then
-                            l = SortedColumnAttributeList(mpe)
-                            cnt = l.Count
-                        Else
-                            cnt = SortedColumnAttributeCount(mpe)
-                        End If
-                    End If
-                    _loaded_members = New BitArray(cnt)
-                    _sver = If(mpe Is Nothing, "w-x", mpe.Version)
-                    If IsPKLoaded Then
-                        If l Is Nothing Then l = SortedColumnAttributeList(mpe)
-                        Dim oschema As IEntitySchema = Nothing
-                        If mpe IsNot Nothing Then
-                            oschema = mpe.GetEntitySchema(Me.GetType)
-                        End If
-                        For i As Integer = 0 To l.Count - 1
-                            Dim c As EntityPropertyAttribute = l(i)
-                            If oschema Is Nothing Then
-                                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    _loaded_members(i) = True
-                                End If
-                            Else
-                                If (mpe.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    _loaded_members(i) = True
-                                End If
-                            End If
-                        Next
-                    End If
-                End If
+                InitLoadState(map, mpe)
                 _loaded_members(idx) = value
             End Set
         End Property
 
-        Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
-            Dim c As EntityPropertyAttribute = Nothing
+        Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
-            If schema Is Nothing Then
-                c = ObjectMappingEngine.GetColumnByMappedPropertyAlias(Me.GetType, propertyAlias, Nothing)
-            Else
-                For Each de As DictionaryEntry In GetProperties(schema)
-                    Dim ep As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                    If ep.PropertyAlias = propertyAlias Then
-                        c = ep
-                        Exit For
-                    End If
-                Next
-                If c Is Nothing Then
-                    Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
-                End If
+            Dim idx As Integer = map.IndexOf(propertyAlias)
+            If idx < 0 Then
+                Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
             End If
-
-            Return SetLoaded(c, loaded, check, schema)
+            Dim old As Boolean = _members_load_state(idx, map, mpe)
+            _members_load_state(idx, map, mpe) = loaded
+            Return old
         End Function
 
-        Private Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        'Private Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
-            Dim idx As Integer = c.Index
-            Dim cnt As Integer
-            If idx = -1 OrElse (schema IsNot Nothing AndAlso schema.Version <> c.SchemaVersion) Then
-                Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(schema)
-                idx = arr.BinarySearch(c)
-                cnt = arr.Count
-                c.Index = idx
-                If schema IsNot Nothing Then c.SchemaVersion = schema.Version
-            End If
+        '    Dim idx As Integer = c.Index
+        '    Dim cnt As Integer
+        '    If idx = -1 OrElse (mpe IsNot Nothing AndAlso mpe.Version <> c.SchemaVersion) Then
+        '        Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(mpe)
+        '        idx = arr.BinarySearch(c)
+        '        cnt = arr.Count
+        '        c.Index = idx
+        '        If mpe IsNot Nothing Then c.SchemaVersion = mpe.Version
+        '    End If
 
-            If idx < 0 AndAlso check Then Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, c.PropertyAlias))
+        '    If idx < 0 AndAlso check Then Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, c.PropertyAlias))
 
-            If idx >= 0 Then
-                Dim old As Boolean = _members_load_state(idx, cnt, schema)
-                _members_load_state(idx, cnt, schema) = loaded
-                Return old
-                'End Using
-            End If
-        End Function
+        '    If idx >= 0 Then
+        '        Dim old As Boolean = _members_load_state(idx, cnt, mpe)
+        '        _members_load_state(idx, cnt, mpe) = loaded
+        '        Return old
+        '        'End Using
+        '    End If
+        'End Function
 
         Public Function BeginAlter() As IDisposable Implements ICachedEntity.BeginAlter
 #If DebugLocks Then
@@ -635,22 +568,25 @@ Namespace Entities
 
         Private Sub SetLoaded(ByVal value As Boolean) Implements _ICachedEntity.SetLoaded
             Using SyncHelper(False)
-                Using mc As IGetManager = GetMgr()
-                    Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
-                    If value AndAlso Not _loaded Then
-                        Dim cnt As Integer = SortedColumnAttributeCount(mpe)
-                        For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, cnt, mpe) = True
-                        Next
-                    ElseIf Not value AndAlso _loaded Then
-                        Dim cnt As Integer = SortedColumnAttributeCount(mpe)
-                        For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, cnt, mpe) = False
-                        Next
-                    End If
-                    _loaded = value
-                    Debug.Assert(_loaded = value)
-                End Using
+                Dim mpe As ObjectMappingEngine = GetMappingEngine()
+                'If mpe Is Nothing Then
+                '    Throw New OrmObjectException(String.Format("Cannot get MappingEngine for type {0}", Me.GetType))
+                'End If
+                Dim oschema As IEntitySchema = GetEntitySchema(mpe)
+
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+
+                If value AndAlso Not _loaded Then
+                    For i As Integer = 0 To map.Count - 1
+                        _members_load_state(i, map, mpe) = True
+                    Next
+                ElseIf Not value AndAlso _loaded Then
+                    For i As Integer = 0 To map.Count - 1
+                        _members_load_state(i, map, mpe) = False
+                    Next
+                End If
+                _loaded = value
+                Debug.Assert(_loaded = value)
             End Using
         End Sub
 
@@ -827,31 +763,21 @@ Namespace Entities
             'End If
         End Sub
 
-        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal schema As ObjectMappingEngine)
+        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
             Dim tt As Type = Me.GetType
-            Dim oschema As IEntitySchema = Nothing
-            If schema IsNot Nothing Then
-                oschema = schema.GetEntitySchema(tt)
-            Else
-                oschema = ObjectMappingEngine.GetEntitySchema(tt, Nothing, Nothing, Nothing)
-            End If
+            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
             BeginLoading()
             For Each p As PKDesc In pk
-                If schema Is Nothing Then
-                    ObjectMappingEngine.SetPropertyValue(Me, p.PropertyAlias, _
-                        ObjectMappingEngine.GetPropertyInt(tt, oschema, p.PropertyAlias), p.Value, oschema)
-                Else
-                    schema.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
-                End If
-                SetLoaded(p.PropertyAlias, True, True, schema)
+                ObjectMappingEngine.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
+                SetLoaded(p.PropertyAlias, True, True, oschema.GetFieldColumnMap, mpe)
             Next
             EndLoading()
             'End Using
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
-            _Init(cache, schema)
-            SetPK(pk, schema)
+        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
+            _Init(cache, mpe)
+            SetPK(pk, mpe)
             PKLoaded(pk.Length)
         End Sub
 
@@ -872,17 +798,17 @@ Namespace Entities
             CType(Me, _IEntity).BeginLoading()
 
             Using mc As IGetManager = GetMgr()
-                Dim schema As ObjectMappingEngine = mc.Manager.MappingEngine
-
+                Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+                Dim schema As IEntitySchema = GetEntitySchema(mpe)
                 With reader
 l1:
                     If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
-                        ReadValues(mc.Manager, reader, schema)
-
+                        ReadValues(mc.Manager, reader, schema, mpe)
+                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap
                         Do While .Read
                             Select Case .NodeType
                                 Case XmlNodeType.Element
-                                    ReadValue(mc.Manager, .Name, reader, schema)
+                                    ReadValue(mc.Manager, .Name, reader, map, schema, mpe)
                                 Case XmlNodeType.EndElement
                                     If .Name = t.Name Then Exit Do
                             End Select
@@ -901,50 +827,51 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue, Nothing)
+                If mpe IsNot Nothing Then CheckIsAllLoaded(mpe, Integer.MaxValue, Nothing)
             End Using
         End Sub
 
         Protected Overridable Sub WriteXml(ByVal writer As System.Xml.XmlWriter) Implements System.Xml.Serialization.IXmlSerializable.WriteXml
             With writer
                 Dim t As Type = Me.GetType
-
+                Dim mpe As ObjectMappingEngine = GetMappingEngine()
+                Dim oschema As IEntitySchema = GetEntitySchema(mpe)
                 Dim elems As New Generic.List(Of Pair(Of String, Object))
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
                 Dim objs As New List(Of Pair(Of String, PKDesc()))
 
-                For Each de As DictionaryEntry In GetMappingEngine.GetProperties(t)
-                    Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    If c IsNot Nothing AndAlso (GetMappingEngine.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+                    If (m.Attributes And Field2DbRelations.NotSerialized) <> Field2DbRelations.NotSerialized Then
+                        Dim propertyAlias As String = m.PropertyAlias
                         If IsLoaded Then
                             Dim v As Object = pi.GetValue(Me, Nothing)
                             Dim tt As Type = pi.PropertyType
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, PKDesc())(c.PropertyAlias, CType(v, ICachedEntity).GetPKValues))
+                                    objs.Add(New Pair(Of String, PKDesc())(propertyAlias, CType(v, ICachedEntity).GetPKValues))
                                 Else
-                                    objs.Add(New Pair(Of String, PKDesc())(c.PropertyAlias, Nothing))
+                                    objs.Add(New Pair(Of String, PKDesc())(propertyAlias, Nothing))
                                 End If
                             ElseIf tt.IsArray Then
-                                elems.Add(New Pair(Of String, Object)(c.PropertyAlias, pi.GetValue(Me, Nothing)))
+                                elems.Add(New Pair(Of String, Object)(propertyAlias, pi.GetValue(Me, Nothing)))
                             ElseIf tt Is GetType(XmlDocument) Then
                                 Dim xdoc As XmlDocument = CType(pi.GetValue(Me, Nothing), XmlDocument)
                                 If xdoc Is Nothing Then
-                                    xmls.Add(New Pair(Of String, String)(c.PropertyAlias, Nothing))
+                                    xmls.Add(New Pair(Of String, String)(propertyAlias, Nothing))
                                 Else
-                                    xmls.Add(New Pair(Of String, String)(c.PropertyAlias, xdoc.OuterXml))
+                                    xmls.Add(New Pair(Of String, String)(propertyAlias, xdoc.OuterXml))
                                 End If
                             Else
                                 If v IsNot Nothing Then
-                                    .WriteAttributeString(c.PropertyAlias, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
+                                    .WriteAttributeString(propertyAlias, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
                                 Else
-                                    .WriteAttributeString(c.PropertyAlias, "xxx:nil")
+                                    .WriteAttributeString(propertyAlias, "xxx:nil")
                                 End If
                             End If
-                        ElseIf (GetMappingEngine.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            .WriteAttributeString(c.PropertyAlias, pi.GetValue(Me, Nothing).ToString)
+                        ElseIf m.IsPK Then
+                            .WriteAttributeString(propertyAlias, pi.GetValue(Me, Nothing).ToString)
                         End If
                     End If
                 Next
@@ -980,60 +907,48 @@ l1:
             End With
         End Sub
 
-        Protected Sub ReadValue(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal reader As XmlReader, ByVal schema As ObjectMappingEngine)
+        Protected Sub ReadValue(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal reader As XmlReader, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
             reader.Read()
-            'Dim c As EntityPropertyAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+            Dim m As MapField2Column = map(propertyAlias)
             Select Case reader.NodeType
                 Case XmlNodeType.CDATA
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
-                    'Dim c As EntityPropertyAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
-                    pi.SetValue(Me, x, Nothing)
-                    SetLoaded(propertyAlias, True, True, schema)
+                    ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, x, oschema, m.PropertyInfo)
+                    SetLoaded(propertyAlias, True, True, map, mpe)
                 Case XmlNodeType.Text
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
-                    'Dim c As EntityPropertyAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim v As String = reader.Value
-                    pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
-                    SetLoaded(propertyAlias, True, True, schema)
-                    'Using ms As New IO.MemoryStream(Convert.FromBase64String(CStr(v)))
-                    '    Dim f As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
-                    '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
-                    '    SetLoaded(c, True)
-                    'End Using
+                    ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Convert.FromBase64String(v), oschema, m.PropertyInfo)
+                    SetLoaded(propertyAlias, True, True, map, mpe)
                 Case XmlNodeType.EndElement
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
-                    'Dim c As EntityPropertyAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
-                    pi.SetValue(Me, Nothing, Nothing)
-                    SetLoaded(propertyAlias, True, True, schema)
+                    ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Nothing, oschema, m.PropertyInfo)
+                    SetLoaded(propertyAlias, True, True, map, mpe)
                 Case XmlNodeType.Element
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
-                    Dim c As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(Me.GetType, propertyAlias)
                     Dim o As ICachedEntity = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
                     'Using mc As IGetManager = GetMgr()
-                    If (schema.GetAttributes(Me.GetType, c) And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-                        Dim f As IPropertyConverter = TryCast(Me, IPropertyConverter)
-                        If f IsNot Nothing Then
-                            Dim e As _IEntity = f.CreateContainingEntity(mgr, pk(0).PropertyAlias, pk(0).Value)
-                            If e IsNot Nothing Then
-                                'e.SetMgrString(IdentityString)
-                                'RaiseObjectLoaded(e)
-                            End If
-                        Else
-                            Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", propertyAlias))
-                        End If
-                    Else
-                        o = mgr.CreateObject(pk, pi.PropertyType)
-                        pi.SetValue(Me, o, Nothing)
-                        If o IsNot Nothing Then
-                            o.SetCreateManager(CreateManager)
-                            'RaiseObjectLoaded(o)
-                        End If
+                    'If m.IsFactory Then
+                    '    Dim f As IPropertyConverter = TryCast(Me, IPropertyConverter)
+                    '    If f IsNot Nothing Then
+                    '        Dim e As _IEntity = f.CreateContainingEntity(mgr, propertyAlias, pk)
+                    '        If e IsNot Nothing Then
+                    '            'e.SetMgrString(IdentityString)
+                    '            'RaiseObjectLoaded(e)
+                    '        End If
+                    '    Else
+                    '        Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", propertyAlias))
+                    '    End If
+                    'Else
+                    o = mgr.CreateObject(pk, m.PropertyInfo.PropertyType)
+                    ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, o, oschema, m.PropertyInfo)
+                    If o IsNot Nothing Then
+                        o.SetCreateManager(CreateManager)
+                        'RaiseObjectLoaded(o)
                     End If
+                    'End If
                     'End Using
-                    SetLoaded(propertyAlias, True, True, schema)
+                    SetLoaded(propertyAlias, True, True, map, mpe)
             End Select
         End Sub
 
@@ -1053,26 +968,20 @@ l1:
             Return l.ToArray
         End Function
 
-        Protected Sub ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader, ByVal schema As ObjectMappingEngine)
+        Protected Sub ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader, _
+            ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
-                Dim oschema As IEntitySchema = Nothing
-                If schema IsNot Nothing Then
-                    oschema = schema.GetEntitySchema(t)
-                End If
-
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                 Dim fv As IDBValueConverter = TryCast(Me, IDBValueConverter)
                 Dim pk_count As Integer
 
                 Do
+                    Dim m As MapField2Column = map(.Name)
+                    Dim pi As Reflection.PropertyInfo = m.PropertyInfo
 
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(t, oschema, .Name)
-                    Dim c As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(t, .Name)
-
-                    Dim att As Field2DbRelations = schema.GetAttributes(oschema, c)
-
-                    If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    If m.IsPK Then
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
@@ -1082,11 +991,12 @@ l1:
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(.Name, True, True, schema)
+                            SetLoaded(.Name, True, True, map, mpe)
                             pk_count += 1
                         End If
                     End If
                 Loop While .MoveToNextAttribute
+
                 Dim obj As _ICachedEntity = Me
 
                 If pk_count > 0 Then
@@ -1115,16 +1025,13 @@ l1:
                 End If
 
                 .MoveToFirstAttribute()
+
                 Do
 
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(t, oschema, .Name)
-                    Dim c As EntityPropertyAttribute = schema.GetColumnByPropertyAlias(t, .Name)
+                    Dim m As MapField2Column = map(.Name)
+                    Dim pi As Reflection.PropertyInfo = m.PropertyInfo
 
-                    Dim att As Field2DbRelations = schema.GetAttributes(oschema, c)
-                    'Dim not_pk As Boolean = (att And Field2DbRelations.PK) = 0
-
-                    'Me.IsLoaded = not_pk
-                    If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    If Not m.IsPK Then
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
@@ -1138,9 +1045,9 @@ l1:
                             'Else
                             'Using mc As IGetManager = GetMgr()
                             Dim type_created As Type = pi.PropertyType
-                            Dim en As String = schema.GetEntityNameByType(type_created)
+                            Dim en As String = mpe.GetEntityNameByType(type_created)
                             If Not String.IsNullOrEmpty(en) Then
-                                type_created = schema.GetTypeByEntityName(en)
+                                type_created = mpe.GetTypeByEntityName(en)
 
                                 If type_created Is Nothing Then
                                     Throw New OrmManagerException("Cannot find type for entity " & en)
@@ -1149,7 +1056,7 @@ l1:
                             Dim v As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(value, type_created)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, True, schema)
+                                SetLoaded(.Name, True, True, map, mpe)
                                 If v IsNot Nothing Then
                                     v.SetCreateManager(CreateManager)
                                     'RaiseObjectLoaded(v)
@@ -1161,7 +1068,7 @@ l1:
                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, True, schema)
+                                SetLoaded(.Name, True, True, map, mpe)
                             End If
                         End If
 
@@ -1204,7 +1111,7 @@ l1:
 
             For Each mp As MapField2Column In oschema.GetFieldColumnMap
                 If mp.IsPK Then
-                    l.Add(New PKDesc(mp.PropertyAlias, mp.GetValue(Me)))
+                    l.Add(New PKDesc(mp.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, mp.PropertyAlias, oschema, mp.PropertyInfo)))
                 End If
             Next
             Return l.ToArray
@@ -1240,47 +1147,38 @@ l1:
                 Dim sb As New StringBuilder
                 sb.Append("Attributes:").Append(vbCrLf)
                 If ObjectState = Entities.ObjectState.Modified Then
-                    For Each c As EntityPropertyAttribute In Changes(OriginalCopy)
-                        sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
+                    For Each pa As String In Changes(OriginalCopy)
+                        sb.Append(vbTab).Append(pa).Append(vbCrLf)
                     Next
                 Else
-                    Dim t As Type = Me.GetType
-                    'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
-                    '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
-                    'Dim o As OrmBase = GetNew()
                     Dim o As ICachedEntity = CType(CreateSelfInitPK(), ICachedEntity)
-                    For Each c As EntityPropertyAttribute In Changes(o)
-                        sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
+                    For Each pa As String In Changes(o)
+                        sb.Append(vbTab).Append(pa).Append(vbCrLf)
                     Next
                 End If
                 Return sb.ToString
             End Get
         End Property
 
-        Protected Overridable ReadOnly Property Changes(ByVal obj As ICachedEntity) As EntityPropertyAttribute()
+        Protected Overridable ReadOnly Property Changes(ByVal obj As ICachedEntity) As String()
             Get
-                Dim columns As New Generic.List(Of EntityPropertyAttribute)
-                Dim t As Type = obj.GetType
-                'Using mc As IGetManager = GetMgr()
+                Dim l As New List(Of String)
                 Dim schema As ObjectMappingEngine = GetMappingEngine()
-                Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
+                Dim oschema As IEntitySchema = GetEntitySchema(schema)
                 If Not Object.Equals(obj.SpecificMappingEngine, SpecificMappingEngine) Then
                     obj.SpecificMappingEngine = SpecificMappingEngine()
                 End If
-                For Each de As DictionaryEntry In schema.GetProperties(t, oschema)
-                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                    Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, c.PropertyAlias, pi, oschema)
-                    If (schema.GetAttributes(oschema, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
-                        Dim current As Object = ObjectMappingEngine.GetPropertyValue(Me, c.PropertyAlias, pi, oschema)
+                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                    Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, m.PropertyAlias, oschema, m.PropertyInfo)
+                    If Not m.IsReadOnly Then
+                        Dim current As Object = ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo)
                         If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                             (current IsNot Nothing AndAlso Not current.Equals(original)) Then
-                            columns.Add(c)
+                            l.Add(m.PropertyAlias)
                         End If
                     End If
                 Next
-                'End Using
-                Return columns.ToArray
+                Return l.ToArray
             End Get
         End Property
 
@@ -1702,50 +1600,50 @@ l1:
             End If
         End Sub
 
-        Protected Overridable Function ForseUpdate(ByVal c As EntityPropertyAttribute) As Boolean Implements _ICachedEntity.ForseUpdate
+        Protected Overridable Function ForseUpdate(ByVal propertyAlias As String) As Boolean Implements _ICachedEntity.ForseUpdate
             Return False
         End Function
 
-        Protected Function SortedColumnAttributeCount(ByVal sch As ObjectMappingEngine) As Integer
-            Dim schema As ObjectMappingEngine = sch
-            If schema Is Nothing Then
-                schema = GetMappingEngine()
-            End If
-            If schema Is Nothing Then
-                If _attList IsNot Nothing Then
-                    Return _attList.Count
-                Else
-                    Return SortedColumnAttributeList(schema).Count
-                End If
-            Else
-                Return GetProperties(schema).Count
-            End If
-        End Function
+        'Protected Function SortedColumnAttributeCount(ByVal sch As ObjectMappingEngine) As Integer
+        '    Dim schema As ObjectMappingEngine = sch
+        '    If schema Is Nothing Then
+        '        schema = GetMappingEngine()
+        '    End If
+        '    If schema Is Nothing Then
+        '        If _attList IsNot Nothing Then
+        '            Return _attList.Count
+        '        Else
+        '            Return SortedColumnAttributeList(schema).Count
+        '        End If
+        '    Else
+        '        Return GetProperties(schema).Count
+        '    End If
+        'End Function
 
-        Private _attList As List(Of EntityPropertyAttribute)
-        Protected Function SortedColumnAttributeList(ByVal sch As ObjectMappingEngine) As List(Of EntityPropertyAttribute)
-            Dim schema As ObjectMappingEngine = sch
-            If schema Is Nothing Then
-                schema = GetMappingEngine()
-            End If
-            If schema Is Nothing Then
-                If _attList Is Nothing Then
-                    Dim l As New List(Of EntityPropertyAttribute)
-                    For Each cl As EntityPropertyAttribute In ObjectMappingEngine.GetMappedProperties(Me.GetType, False).Keys
-                        Dim idx As Integer = l.BinarySearch(cl)
-                        If idx < 0 Then
-                            l.Insert(Not idx, cl)
-                        Else
-                            Throw New InvalidOperationException
-                        End If
-                    Next
-                    _attList = l
-                End If
-                Return _attList
-            Else
-                Return schema.GetSortedFieldList(Me.GetType)
-            End If
-        End Function
+        'Private _attList As List(Of EntityPropertyAttribute)
+        'Protected Function SortedColumnAttributeList(ByVal sch As ObjectMappingEngine) As List(Of EntityPropertyAttribute)
+        '    Dim schema As ObjectMappingEngine = sch
+        '    If schema Is Nothing Then
+        '        schema = GetMappingEngine()
+        '    End If
+        '    If schema Is Nothing Then
+        '        If _attList Is Nothing Then
+        '            Dim l As New List(Of EntityPropertyAttribute)
+        '            For Each cl As EntityPropertyAttribute In ObjectMappingEngine.GetMappedProperties(Me.GetType, False).Keys
+        '                Dim idx As Integer = l.BinarySearch(cl)
+        '                If idx < 0 Then
+        '                    l.Insert(Not idx, cl)
+        '                Else
+        '                    Throw New InvalidOperationException
+        '                End If
+        '            Next
+        '            _attList = l
+        '        End If
+        '        Return _attList
+        '    Else
+        '        Return schema.GetSortedFieldList(Me.GetType)
+        '    End If
+        'End Function
 
         'Protected Function GetProperties(ByVal schema As ObjectMappingEngine) As IDictionary
         '    If _props Is Nothing Then
@@ -1755,11 +1653,13 @@ l1:
         'End Function
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-            Dim c As New EntityPropertyAttribute With {.PropertyAlias = propertyAlias}
-            Dim arr As Generic.List(Of EntityPropertyAttribute) = SortedColumnAttributeList(Nothing)
-            Dim idx As Integer = arr.BinarySearch(c)
-            If idx < 0 Then Throw New OrmObjectException("Property " & propertyAlias & " not found in type " & Me.GetType.ToString & ". Ensure it is not suppressed")
-            Return _members_load_state(idx, SortedColumnAttributeCount(Nothing), GetMappingEngine)
+            Dim mpe As ObjectMappingEngine = GetMappingEngine()
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = GetEntitySchema(mpe).GetFieldColumnMap
+            Dim idx As Integer = map.IndexOf(propertyAlias)
+            If idx < 0 Then
+                Throw New OrmObjectException(String.Format("Property {0} not found in type {1}. Ensure it is not suppressed", propertyAlias, Me.GetType))
+            End If
+            Return _members_load_state(idx, map, mpe)
         End Function
 
         Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
@@ -1819,7 +1719,8 @@ l1:
 
 #End Region
 
-        Protected Overridable Function GetChangedRelationObjects() As List(Of ICachedEntity)
+#Region " Graph "
+        Protected Overridable Function GetChildChangedObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
             'Using mc As IGetManager = GetMgr()
             '    For Each o As Pair(Of M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
@@ -1834,12 +1735,13 @@ l1:
             Return l
         End Function
 
-        Protected Overridable Function GetRelatedChangedObjects() As List(Of ICachedEntity)
+        Protected Overridable Function GetParentChangedObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
-            For Each kv As DictionaryEntry In GetMappingEngine.GetProperties(Me.GetType)
-                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+            Dim oschema As IEntitySchema = GetEntitySchema(GetMappingEngine)
+            For Each m As MapField2Column In oschema.GetFieldColumnMap
+                Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-                    Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, CType(kv.Key, EntityPropertyAttribute).PropertyAlias, pi, Nothing), CachedEntity)
+                    Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo), ICachedEntity)
                     If o IsNot Nothing AndAlso o.HasChanges Then
                         l.Add(o)
                     End If
@@ -1848,41 +1750,43 @@ l1:
             Return l
         End Function
 
-        Protected Friend Function GetChangedObjectGraph() As List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
+        Protected Friend Function GetChangedObjectList() As List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectList
             Dim l As New List(Of _ICachedEntity)
-            GetChangedObjectGraph(l)
+            FillChangedObjectList(l)
             Return l
         End Function
 
-        Protected Friend Sub GetChangedObjectGraph(ByVal gl As List(Of _ICachedEntity)) Implements _ICachedEntity.GetChangedObjectGraph
+        Protected Friend Sub FillChangedObjectList(ByVal objectList As List(Of _ICachedEntity)) Implements _ICachedEntity.FillChangedObjectList
             Dim l As New List(Of _ICachedEntity)
 
-            For Each o As _ICachedEntity In GetRelatedChangedObjects()
-                If Not gl.Contains(o) Then
-                    gl.Add(o)
+            For Each o As _ICachedEntity In GetParentChangedObjects()
+                If Not objectList.Contains(o) Then
+                    objectList.Add(o)
                     l.Add(o)
                 End If
             Next
 
-            For Each o As _ICachedEntity In GetChangedRelationObjects()
-                If Not gl.Contains(o) Then
-                    gl.Add(o)
+            For Each o As _ICachedEntity In GetChildChangedObjects()
+                If Not objectList.Contains(o) Then
+                    objectList.Add(o)
                     l.Add(o)
                 End If
             Next
 
             For Each o As _ICachedEntity In l
-                o.GetChangedObjectGraph(gl)
+                o.FillChangedObjectList(objectList)
             Next
         End Sub
 
-        Protected Friend Function GetChangedObjectGraphWithSelf() As List(Of _ICachedEntity)
-            Dim l As List(Of _ICachedEntity) = GetChangedObjectGraph()
+        Protected Friend Function GetChangedObjectListWithSelf() As List(Of _ICachedEntity)
+            Dim l As List(Of _ICachedEntity) = GetChangedObjectList()
             If HasChanges AndAlso Not l.Contains(Me) Then
                 l.Add(Me)
             End If
             Return l
         End Function
+
+#End Region
 
         Public Overridable Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
             Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, mgr.MappingEngine.GetEntitySchema(Me.GetType))

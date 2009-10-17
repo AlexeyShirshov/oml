@@ -129,7 +129,7 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface ISchemaInit
-        Sub GetSchema(ByVal schema As ObjectMappingEngine, ByVal t As Type)
+        Sub InitSchema(ByVal mpe As ObjectMappingEngine, ByVal declaredType As Type)
     End Interface
 
     Public Interface ICacheBehavior
@@ -157,8 +157,8 @@ Namespace Entities.Meta
 
     Public Interface IEntitySchemaBase
         Inherits IEntitySchema
-        Function ChangeValueType(ByVal c As Worm.Entities.Meta.EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        Function GetSuppressedFields() As String()
+        Function ChangeValueType(ByVal propertyAlias As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        'Function GetSuppressedFields() As String()
     End Interface
 
     Public Interface IDefferedLoading

@@ -260,7 +260,7 @@ Imports Worm
                   .left_join(GetType(Ent2)).on(tbl, "id").eq(GetType(Ent2), "ID") _
                   .left_join(GetType(Ent3)).on(tbl, "id").eq(GetType(Ent3), "ID")) _
             .SelectEntity(GetType(Ent2), True) _
-            .SelectAdd(GetType(Ent3), True) _
+            .AddEntityToSelectList(GetType(Ent3), True) _
             .ToMatrix()
 
         Assert.AreEqual(14, m.Count)
