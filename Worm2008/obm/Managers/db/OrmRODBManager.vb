@@ -1163,7 +1163,7 @@ l1:
                 ec.BeginTrackDelete(o.GetType)
             End If
             Try
-                LoadSingleFromReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(o.GetType), tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, idx)
+                LoadEntityFromDataReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(o.GetType), tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, idx)
                 idx += tp.Properties2Load.Count
                 For Each pr As Pair(Of String, Reflection.PropertyInfo) In tp.ParentProperties
                     Dim pit As Type = pr.Second.PropertyType
@@ -1188,7 +1188,7 @@ l1:
                         'If dic.Count = 0 Then
                         '    idic = MappingEngine.GetProperties(pit, ntp.Schema)
                         'End If
-                        LoadFromDataReader(an, dr, ntp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, Nothing, True, Nothing, _
+                        LoadObjectFromDataReader(an, dr, ntp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, Nothing, True, Nothing, _
                             ntp.EntitySchema, ntp.EntitySchema.GetFieldColumnMap, 0, idx)
                     End If
                 Next
@@ -1328,7 +1328,7 @@ l1:
            ByVal modifiedloaded As Boolean)
             Invariant()
 
-            Dim dic As IDictionary = GetDictionary(obj.GetType, obj.GetEntitySchema(MappingEngine))
+            Dim dic As IDictionary = GetDictionary(obj.GetType, TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior))
 
             LoadSingleObject(cmd, selectList, obj, fromRS, check_pk, load, modifiedloaded, dic)
         End Sub
@@ -1354,7 +1354,7 @@ l1:
                             Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                         End If
 
-                        LoadSingleFromReader(ce, obj, load, fromRS, ec, dr, dic, selectList, check_pk, 0)
+                        LoadEntityFromDataReader(ce, obj, load, fromRS, ec, dr, dic, selectList, check_pk, 0)
 
                         loaded = True
                     Loop
@@ -1364,7 +1364,7 @@ l1:
                     ElseIf dr.RecordsAffected < 0 Then
                         If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, obj.GetEntitySchema(MappingEngine))
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior))
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If
@@ -1384,7 +1384,7 @@ l1:
             End Try
         End Sub
 
-        Private Sub LoadSingleFromReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal fromRS As Boolean, _
+        Private Sub LoadEntityFromDataReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal fromRS As Boolean, _
             ByVal ec As OrmCache, ByVal dr As System.Data.Common.DbDataReader, ByVal dic As IDictionary, ByVal selectList As IList(Of SelectExpression), _
             ByVal check_pk As Boolean, ByVal baseIdx As Integer)
             Dim loadLock As IDisposable = Nothing
@@ -1406,12 +1406,12 @@ l1:
                     Dim loaded As Boolean
                     If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
                         If fromRS Then
-                            Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            Dim ro As _IEntity = CType(LoadObjectFromDataReader(obj, dr, selectList, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx), _IEntity)
                             AfterLoadingProcess(dic, obj, lock, ro)
                             obj = ro
                             ce = TryCast(obj, _ICachedEntity)
                         Else
-                            LoadFromDataReader(obj, dr, selectList, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            LoadObjectFromDataReader(obj, dr, selectList, check_pk, dic, fromRS, lock, oschema, cm, 0, baseIdx)
                             obj.CorrectStateAfterLoading(False)
                         End If
                         loaded = True
@@ -1420,7 +1420,7 @@ l1:
                     If Not obj.IsLoaded AndAlso loaded Then
                         If load Then
                             'Throw New ApplicationException
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, GetContextInfo, oschema)
+                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
                             obj.SetObjectState(ObjectState.NotFoundInSource)
                             If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If
@@ -1678,7 +1678,7 @@ l1:
                 'Dim arr As New Dictionary(Of Type, List(Of EntityPropertyAttribute))
                 For Each k As KeyValuePair(Of EntityUnion, IEntitySchema) In types
                     Dim tt As Type = k.Key.GetRealType(MappingEngine)
-                    objDic.Add(k.Key, GetDictionary(tt, k.Value))
+                    objDic.Add(k.Key, GetDictionary(tt, TryCast(k.Value, ICacheBehavior)))
                     'arr(tt) = MappingEngine.GetSortedFieldList(tt, k.Value)
                 Next
 
@@ -1966,7 +1966,7 @@ l1:
             values.Add(New ReadOnlyObjectList(Of _IEntity)(l))
         End Sub
 
-        Public Sub QueryObjects(Of T As {_IEntity, New})( _
+        Public Sub QueryObjects(Of T As {New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, _
             ByVal selectList As IList(Of SelectExpression), ByVal oschema As IEntitySchema, _
@@ -2000,26 +2000,10 @@ l1:
                 Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
 
-                    'If idx = -1 Then
-                    '    Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False)(0)
-                    '    Try
-                    '        idx = dr.GetOrdinal(pk_name)
-                    '    Catch ex As IndexOutOfRangeException
-                    '        If _mcSwitch.TraceError Then
-                    '            Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-                    '            Trace.WriteLine(Environment.StackTrace)
-                    '        End If
-                    '        Throw New OrmManagerException("Cannot get primary key ordinal", ex)
-                    '    End Try
-                    'End If
-
-                    'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
-
-                    'Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
                     Dim entityDictionary As IDictionary = Nothing
                     Dim selectType As Type = GetType(T)
                     If selectType IsNot Nothing Then
-                        entityDictionary = GetDictionary(selectType, oschema)
+                        entityDictionary = GetDictionary(selectType, TryCast(oschema, ICacheBehavior))
                     End If
                     Dim il As IListEdit = TryCast(values, IListEdit)
                     If il IsNot Nothing Then
@@ -2089,7 +2073,7 @@ l1:
             End Try
         End Sub
 
-        Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
+        Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByVal ro As _IEntity)
             Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
             ro.CorrectStateAfterLoading(notFromCache)
             'If notFromCache Then
@@ -2109,28 +2093,21 @@ l1:
             'End If
         End Sub
 
-        Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
+        Protected Friend Sub LoadFromResultSet(Of T As {New})( _
             ByVal values As IList, ByVal selectList As IList(Of SelectExpression), _
             ByVal dr As System.Data.Common.DbDataReader, _
             ByVal entityDictionary As IDictionary, ByRef loaded As Integer, ByVal rownum As Integer, _
             ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
-            'Dim id As Integer = CInt(dr.GetValue(idx))
-            'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
-            'If GetType(IKeyEntity).IsAssignableFrom(GetType(T)) Then
-            'Else
-            'End If
-            'Dim obj As _ICachedEntity = CType(CreateEntity(Of T)(), _ICachedEntity)
-            'If obj IsNot Nothing Then
-            'If _raiseCreated Then
-            'RaiseObjectCreated(obj)
-            'End If
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                RaiseObjectCreated(obj)
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, entityDictionary, True, lock, oschema, fields_idx, rownum)
-                AfterLoadingProcess(entityDictionary, obj, lock, ro)
+                Dim entity As _IEntity = TryCast(obj, _IEntity)
+                If entity IsNot Nothing Then RaiseObjectCreated(entity)
+                Dim ro As Object = LoadObjectFromDataReader(obj, dr, selectList, False, entityDictionary, True, lock, oschema, fields_idx, rownum)
+                If entity IsNot Nothing Then
+                    AfterLoadingProcess(entityDictionary, entity, lock, CType(ro, _IEntity))
+                End If
 #If DEBUG Then
                 If lock IsNot Nothing Then
                     Dim ce As CachedEntity = TryCast(ro, CachedEntity)
@@ -2140,7 +2117,7 @@ l1:
                 Dim orm As _ICachedEntity = TryCast(ro, _ICachedEntity)
                 If orm Is Nothing OrElse orm.IsPKLoaded Then
                     values.Add(ro)
-                    If ro.IsLoaded Then
+                    If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
                         loaded += 1
                     End If
                 End If
@@ -2150,38 +2127,9 @@ l1:
                     lock.Dispose()
                 End If
             End Try
-            '            If withLoad AndAlso Not _cache.IsDeleted(TryCast(obj, ICachedEntity)) Then
-            '                Using obj.GetSyncRoot()
-            '                    If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
-            '                        'If obj.IsLoaded Then obj.IsLoaded = False
-
-            '                        'If Not obj.IsLoaded Then
-            '                        '    obj.ObjectState = ObjectState.NotFoundInDB
-            '                        '    RemoveObjectFromCache(obj)
-            '                        'Else
-            '                        obj.CorrectStateAfterLoading()
-            '                        values.Add(obj)
-            '                        loaded += 1
-            '                        'End If
-            '                    ElseIf obj.ObjectState = ObjectState.Modified Then
-            '                        GoTo l1
-            '                    End If
-            '                End Using
-            '            Else
-            'l1:
-            '                values.Add(obj)
-            '                If obj.IsLoaded Then
-            '                    loaded += 1
-            '                End If
-            '            End If
-            'Else
-            'If _mcSwitch.TraceVerbose Then
-            '    WriteLine("Attempt to load unallowed object " & GetType(T).Name & " (" & id & ")")
-            'End If
-            'End If
         End Sub
 
-        Protected Function LoadFromDataReader(ByVal obj As Object, ByVal dr As System.Data.Common.DbDataReader, _
+        Protected Function LoadObjectFromDataReader(ByVal obj As Object, ByVal dr As System.Data.Common.DbDataReader, _
             ByVal selectList As IList(Of SelectExpression), ByVal check_pk As Boolean, _
             ByVal entityDictionary As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _

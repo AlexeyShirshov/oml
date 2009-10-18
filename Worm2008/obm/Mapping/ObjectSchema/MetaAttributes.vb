@@ -359,10 +359,10 @@ Namespace Entities.Meta
         Private _rawProps As Boolean
         Private _notInheritBase As Boolean
 
-        Public Sub New(ByVal schema As String, ByVal tableName As String, ByVal version As String)
+        Public Sub New(ByVal tableSchema As String, ByVal tableName As String, ByVal version As String)
             _v = version
             _table = tableName
-            _schema = schema
+            _schema = tableSchema
         End Sub
 
         Public Sub New(ByVal schemaType As Type, ByVal version As String)

@@ -335,43 +335,41 @@ Public Class ObjectMappingEngine
     '    Return js.ToArray
     'End Function
 
-    Public Function GetMappedFields(ByVal schema As IEntitySchema) As ICollection(Of MapField2Column)
-        Dim sup() As String = Nothing
-        Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
-        If s IsNot Nothing Then sup = s.GetSuppressedFields()
-        If sup Is Nothing OrElse sup.Length = 0 Then
-            Return schema.GetFieldColumnMap.Values
-        End If
-        Dim l As New List(Of MapField2Column)
-        For Each m As MapField2Column In schema.GetFieldColumnMap
-            If Array.IndexOf(sup, m.PropertyAlias) < 0 Then
-                l.Add(m)
-            End If
-        Next
-        Return l
-    End Function
+    'Public Function GetMappedFields(ByVal schema As IEntitySchema) As ICollection(Of MapField2Column)
+    '    Dim sup() As String = Nothing
+    '    Dim s As IEntitySchemaBase = TryCast(schema, IEntitySchemaBase)
+    '    If s IsNot Nothing Then sup = s.GetSuppressedFields()
+    '    If sup Is Nothing OrElse sup.Length = 0 Then
+    '        Return schema.GetFieldColumnMap.Values
+    '    End If
+    '    Dim l As New List(Of MapField2Column)
+    '    For Each m As MapField2Column In schema.GetFieldColumnMap
+    '        If Array.IndexOf(sup, m.PropertyAlias) < 0 Then
+    '            l.Add(m)
+    '        End If
+    '    Next
+    '    Return l
+    'End Function
 
-    Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
+    Public Function GetEntityKey(ByVal t As Type) As String
         Dim schema As IEntitySchema = GetEntitySchema(t, False)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
         If c IsNot Nothing Then
-            Return c.GetEntityKey(filterInfo)
+            Return c.GetEntityKey()
         Else
             Return t.ToString
         End If
     End Function
 
-    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
-        Return GetEntityTypeKey(filterInfo, t, GetEntitySchema(t))
+    Public Function GetEntityTypeKey(ByVal t As Type) As Object
+        Return GetEntityTypeKey(t, TryCast(GetEntitySchema(t), ICacheBehavior))
     End Function
 
-    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IEntitySchema) As Object
-        Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
-
+    Public Shared Function GetEntityTypeKey(ByVal t As Type, ByVal c As ICacheBehavior) As Object
         If c IsNot Nothing Then
-            Return c.GetEntityTypeKey(filterInfo)
+            Return c.GetEntityTypeKey()
         Else
             Return t
         End If
@@ -1520,6 +1518,10 @@ Public Class ObjectMappingEngine
         Return GetIdic.Contains(tp)
     End Function
 
+    Public Function CreateAndInitSchemaAndNames(ByVal tp As Type, ByVal ea As EntityAttribute) As IEntitySchema
+        Return ObjectMappingEngine.CreateAndInitSchemaAndNames(tp, Me, GetIdic, GetNames, ea)
+    End Function
+
     Private Shared Function CreateAndInitSchema(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
         ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
         Dim schema As IEntitySchema = Nothing
@@ -1556,7 +1558,7 @@ Public Class ObjectMappingEngine
         Return schema
     End Function
 
-    Private Shared Function CreateAndInitSchemaAndNames(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
+    Public Shared Function CreateAndInitSchemaAndNames(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
         ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
 
         Dim schema As IEntitySchema = CreateAndInitSchema(tp, mpe, idic, names, ea)
@@ -2406,8 +2408,7 @@ Public Class ObjectMappingEngine
                 If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
                     o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
                     o.SetObjectState(ObjectState.NotLoaded)
-                    o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), _
-                                              True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+                    o = cache.FindObjectInCache(Nothing, CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
                 Else
                     Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
                     If pks.Count <> 1 Then
@@ -2416,8 +2417,7 @@ Public Class ObjectMappingEngine
                     If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
                         o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
                         o.SetObjectState(ObjectState.NotLoaded)
-                        o = cache.NormalizeObject(CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), _
-                                                  True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+                        o = cache.FindObjectInCache(Nothing, CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
                     Else
                         o = Entity.CreateEntity(type_created, cache, MappingEngine)
                         MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)

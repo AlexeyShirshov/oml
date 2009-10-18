@@ -48,12 +48,12 @@ Namespace Query
             End Get
         End Property
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object) As String
             Dim t As Type = GetRealType(mpe)
             If t IsNot Nothing Then
-                Return mpe.GetEntityKey(contextFilter, t)
+                Return mpe.GetEntityKey(t)
             Else
-                Return _q.ToStaticString(mpe, contextFilter)
+                Return _q.ToStaticString(mpe, contextInfo)
             End If
         End Function
 
@@ -154,7 +154,7 @@ Namespace Query
 
             Dim t As Type = GetRealType(mpe)
             If t IsNot Nothing Then
-                Return mpe.GetEntityKey(contextFilter, t)
+                Return mpe.GetEntityKey(t)
             Else
                 Return _a.ToStaticString(mpe, contextFilter)
             End If

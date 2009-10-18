@@ -567,7 +567,7 @@ Imports System.Collections.ObjectModel
 
         Dim t As Table1 = q.GetByID(Of Table1)(1)
 
-        Assert.IsTrue(c.IsInCachePrecise(t, Nothing, s))
+        Assert.IsTrue(c.IsInCachePrecise(t, s))
 
         Assert.IsFalse(t.InternalProperties.IsLoaded)
         Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
@@ -577,21 +577,21 @@ Imports System.Collections.ObjectModel
         Assert.IsTrue(t.InternalProperties.IsLoaded)
         Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
 
-        Dim dic As System.Collections.IDictionary = c.GetOrmDictionary(Nothing, GetType(Table1), s)
+        Dim dic As System.Collections.IDictionary = c.GetOrmDictionary(GetType(Table1), s)
 
         Dim id As CacheKey = New CacheKey(t)
 
         dic.Remove(id)
 
-        Assert.IsFalse(c.IsInCachePrecise(t, Nothing, s))
+        Assert.IsFalse(c.IsInCachePrecise(t, s))
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(GetType(Table1))))
+        Assert.IsNotNull(c.ShadowCopy(t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
 
         t = q.GetByID(Of Table1)(1)
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t, s, s.GetEntitySchema(GetType(Table1))))
+        Assert.IsNotNull(c.ShadowCopy(t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
 
         Assert.IsTrue(t.InternalProperties.IsLoaded)
         Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)

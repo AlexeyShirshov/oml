@@ -1278,8 +1278,10 @@ Public Class TestManagerRS
             Using cmd As New System.Data.SqlClient.SqlCommand("select id, code from table1 where id = 1")
                 Dim s As List(Of SelectExpression) = FCtor.column(Nothing, "id").into("ID", Field2DbRelations.PK).column(Nothing, "code").into("Code").GetExpressions.ConvertAll(Function(e) CType(e, SelectExpression))
 
+                Dim schema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetType(Table1))
+
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
-                    mgr.MappingEngine.GetEntitySchema(GetType(Table1)), SelectExpression.GetMapping(s))
+                    schema, schema.GetFieldColumnMap)
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(1, l(0).ID)

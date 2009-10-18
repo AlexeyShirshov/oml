@@ -371,7 +371,7 @@ Namespace Entities
                     'AcceptRelationalChanges(updateCache, mc)
 
                     If (ObjectState <> Entities.ObjectState.None) Then
-                        mo = RemoveVersionData(mc.Cache, mc.MappingEngine, mc.GetContextInfo, setState)
+                        mo = RemoveVersionData(mc.Cache, mc.MappingEngine, setState)
                         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
                             '_valProcs = False
@@ -383,7 +383,7 @@ Namespace Entities
                             RaiseEvent Deleted(Me, EventArgs.Empty)
                         ElseIf _upd.Added Then
                             '_valProcs = False
-                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, GetEntitySchema(mc.MappingEngine))
+                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mc.MappingEngine), ICacheBehavior))
                             Dim kw As CacheKey = New CacheKey(Me)
                             Dim o As _ICachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
@@ -472,7 +472,7 @@ Namespace Entities
             SetObjectState(Entities.ObjectState.Modified)
             _copy = clone
             Dim c As CacheBase = mgr.Cache
-            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, GetEntitySchema(mgr.MappingEngine))
+            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         End Sub
 
@@ -627,7 +627,7 @@ Namespace Entities
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, obj.GetEntitySchema(mgr.MappingEngine))
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -708,7 +708,7 @@ Namespace Entities
                     If olds <> Entities.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
-                        RemoveVersionData(mgr.Cache, mgr.MappingEngine, mgr.GetContextInfo, False)
+                        RemoveVersionData(mgr.Cache, mgr.MappingEngine, False)
                     End If
 
                     If newid IsNot Nothing Then
@@ -726,7 +726,7 @@ Namespace Entities
                         If oldkey.HasValue Then
                             'Using gmc As IGetManager = GetMgr()
                             'Dim mc As OrmManager = gmc.Manager
-                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType, GetEntitySchema(mgr.MappingEngine))
+                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                             If dic Is Nothing Then
                                 Dim name As String = Me.GetType.Name
                                 Throw New OrmObjectException("Collection for " & name & " not exists")
@@ -736,7 +736,7 @@ Namespace Entities
                         End If
                         ' End Using
 
-                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, mgr.GetContextInfo, GetEntitySchema(mgr.MappingEngine))
+                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                         _copy = Nothing
                         _loaded = False
                         '_loaded_members = New BitArray(_loaded_members.Count)
@@ -746,7 +746,7 @@ Namespace Entities
         End Sub
 
         Public Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -819,7 +819,7 @@ Namespace Entities
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -850,12 +850,12 @@ Namespace Entities
                     End If
                 End If
             End If
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit, GetEntitySchema(mgr.MappingEngine))
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Sub
 
         Protected Sub CreateClone4Delete(ByVal mgr As OrmManager)
             SetObjectState(Entities.ObjectState.Deleted)
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, GetEntitySchema(mgr.MappingEngine))
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             Dim mgrLocal As OrmManager = GetCurrent()
             If mgrLocal IsNot Nothing Then
                 mgrLocal.RaiseBeginDelete(Me)
@@ -863,7 +863,7 @@ Namespace Entities
         End Sub
 
         Protected Function EnsureInCache(ByVal mgr As OrmManager) As ICachedEntity
-            Return mgr.EnsureInCache(Me, mgr.GetDictionary(Me.GetType, GetEntitySchema(mgr.MappingEngine)))
+            Return mgr.EnsureInCache(Me, mgr.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)))
         End Function
 
         Protected Overrides Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
@@ -876,7 +876,7 @@ Namespace Entities
         End Function
 
         Public Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
-            Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, GetEntitySchema(mgr.MappingEngine))
+            Return mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Function
 
         Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
@@ -894,7 +894,7 @@ Namespace Entities
         End Sub
 
         Protected Function RemoveVersionData(ByVal cache As CacheBase, _
-           ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal setState As Boolean) As _ICachedEntity
+           ByVal mpe As ObjectMappingEngine, ByVal setState As Boolean) As _ICachedEntity
             Dim mo As _ICachedEntity = Nothing
 
             If setState Then
@@ -906,7 +906,7 @@ Namespace Entities
             End If
 
             mo = CType(OriginalCopy, _ICachedEntity)
-            cache.UnregisterModification(Me, mpe, context, GetEntitySchema(mpe))
+            cache.UnregisterModification(Me, mpe, TryCast(GetEntitySchema(mpe), ICacheBehavior))
             _copy = Nothing
 
             Return mo

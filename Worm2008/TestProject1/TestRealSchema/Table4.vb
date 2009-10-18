@@ -131,11 +131,11 @@ Public Class Table4Implementation
     '    Return _tables
     'End Function
 
-    Public Function GetEntityKey(ByVal filterInfo As Object) As String Implements ICacheBehavior.GetEntityKey
+    Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
         Return "kljf"
     End Function
 
-    Public Function GetEntityTypeKey(ByVal filterInfo As Object) As Object Implements ICacheBehavior.GetEntityTypeKey
+    Public Function GetEntityTypeKey() As Object Implements ICacheBehavior.GetEntityTypeKey
         Return "91bn34fh    oebnfklE:"
     End Function
 End Class

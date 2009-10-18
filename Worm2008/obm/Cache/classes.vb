@@ -153,7 +153,7 @@ Namespace Cache
 
         Public ReadOnly User As Object
         '<CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        Private _obj As _ICachedEntity
+        Private _obj As Object
         Public ReadOnly DateTime As Date
         Public ReadOnly Reason As ReasonEnum
         'Private _obj As EntityProxy
@@ -167,7 +167,7 @@ Namespace Cache
             End Get
         End Property
 #End If
-        Sub New(ByVal obj As _ICachedEntity, ByVal user As Object, ByVal reason As ReasonEnum, ByVal pk() As PKDesc)
+        Sub New(ByVal obj As Object, ByVal user As Object, ByVal reason As ReasonEnum, ByVal pk() As PKDesc)
             'Sub New(ByVal user As Object, ByVal reason As ReasonEnum)
             DateTime = Now
             'Me.Obj = obj
@@ -181,7 +181,7 @@ Namespace Cache
 #End If
         End Sub
 
-        Public ReadOnly Property Obj() As ICachedEntity
+        Public ReadOnly Property Obj() As Object
             Get
                 Return _obj
             End Get
@@ -235,12 +235,12 @@ Namespace Cache
         End Sub
 
         Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk() As PKDesc, ByVal type As Type, _
-            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
-            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, cache, schema)
+            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, cache, mpe)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
-            Dim co As ICachedEntity = cache.NormalizeObject(o, False, False, dic, addOnCreate, mgr)
+            Dim co As ICachedEntity = CType(cache.FindObjectInCache(type, o, New CacheKey(o), TryCast(mpe.GetEntitySchema(type), ICacheBehavior), dic, addOnCreate, False), ICachedEntity)
 
             mgr.RaiseObjectRestored(ReferenceEquals(co, o), co)
 
@@ -347,7 +347,7 @@ Namespace Cache
                     Return False
                 Else
                     If dic Is Nothing Then
-                        dic = mc.Cache.GetOrmDictionary(mc.GetContextInfo, le.EntityType, mc.MappingEngine)
+                        dic = mc.Cache.GetOrmDictionary(le.EntityType, mc.MappingEngine)
                     End If
                     Dim o As ICachedEntity = le.GetObject(mc, dic)
                     arr.Add(o)

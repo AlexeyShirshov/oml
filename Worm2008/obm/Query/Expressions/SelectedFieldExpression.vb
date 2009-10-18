@@ -230,32 +230,32 @@ Namespace Expressions2
         '    RaiseEvent OnChange()
         'End Sub
 
-        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
-            Dim c As New OrmObjectIndex
-            Return GetMapping(c, selectList)
-        End Function
+        'Public Shared Function GetMapping(Of T As SelectExpression)(ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
+        '    Dim c As New OrmObjectIndex
+        '    Return GetMapping(c, selectList)
+        'End Function
 
-        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
-            For Each s As T In selectList
-                Dim pa As String = s.GetIntoPropertyAlias
-                'If String.IsNullOrEmpty(pa) Then
-                '    Throw New OrmManagerException("Alias for property in custom type is not specified")
-                'End If
-                Dim te As TableExpression = TryCast(s.Operand, TableExpression)
-                If te IsNot Nothing Then
-                    c.Add(New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes) With {.ColumnName = s.ColumnAlias})
-                Else
-                    Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
-                    If ee IsNot Nothing Then
-                        c.Add(New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
-                    Else
-                        Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
-                        c.Add(New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
-                    End If
-                End If
-            Next
-            Return c
-        End Function
+        'Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
+        '    For Each s As T In selectList
+        '        Dim pa As String = s.GetIntoPropertyAlias
+        '        'If String.IsNullOrEmpty(pa) Then
+        '        '    Throw New OrmManagerException("Alias for property in custom type is not specified")
+        '        'End If
+        '        Dim te As TableExpression = TryCast(s.Operand, TableExpression)
+        '        If te IsNot Nothing Then
+        '            c.Add(New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes) With {.ColumnName = s.ColumnAlias})
+        '        Else
+        '            Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
+        '            If ee IsNot Nothing Then
+        '                c.Add(New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+        '            Else
+        '                Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
+        '                c.Add(New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+        '            End If
+        '        End If
+        '    Next
+        '    Return c
+        'End Function
 
         Public Property Attributes() As Field2DbRelations
             Get

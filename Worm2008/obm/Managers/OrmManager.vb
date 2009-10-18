@@ -1058,7 +1058,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.GetStaticString(_schema, GetContextInfo) & GetStaticKey() & _schema.GetEntityKey(GetContextInfo, t)
+        Return filter.GetStaticString(_schema, GetContextInfo) & GetStaticKey() & _schema.GetEntityKey(t)
     End Function
 
 #If Not ExcludeFindMethods Then
@@ -1537,12 +1537,12 @@ l1:
 #End If
     End Function
 
-    Protected Friend Function LoadType(ByVal id As Object, ByVal t As Type, ByVal load As Boolean, ByVal checkOnCreate As Boolean) As IKeyEntity
-        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
-        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadType", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Object), GetType(Boolean), GetType(Boolean)}, Nothing)
-        Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), IKeyEntity)
-    End Function
+    'Protected Friend Function LoadType(ByVal id As Object, ByVal t As Type, ByVal load As Boolean, ByVal checkOnCreate As Boolean) As IKeyEntity
+    '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+    '    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadType", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Object), GetType(Boolean), GetType(Boolean)}, Nothing)
+    '    Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+    '    Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), IKeyEntity)
+    'End Function
 
     Public Function CreateKeyEntity(ByVal id As Object, ByVal t As Type) As IKeyEntity
         Return KeyEntity.CreateKeyEntity(id, t, _cache, _schema)
@@ -1587,27 +1587,27 @@ l1:
 
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary, _
         ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, False, False, entityDictionary, add2Cache, Me, fromDb, oschema)
+        Return _cache.FindObjectInCache(Nothing, obj, False, False, entityDictionary, add2Cache, Me, fromDb, oschema)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, False, True, dic, True, Me)
+        Return _cache.FindObjectInCache(obj, False, True, dic, True, Me)
     End Function
 
     Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
+        Return _cache.FindObjectInCache(obj, True, True, dic, True, Me)
     End Function
 
-    Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
-    End Function
+    'Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+    '    Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
+    'End Function
 
-    Protected Function LoadTypeInternal(Of T As {IKeyEntity, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
+    'Protected Function LoadTypeInternal(Of T As {IKeyEntity, New})(ByVal id As Object, _
+    '    ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
-        Dim o As T = CreateKeyEntity(Of T)(id)
-        Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
-    End Function
+    '    Dim o As T = CreateKeyEntity(Of T)(id)
+    '    Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
+    'End Function
 
     '    Protected Function GetObjectFromCache(Of T As {IOrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Object, T), _
     '        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
@@ -1680,20 +1680,20 @@ l1:
     '        Return a
     '    End Function
 
-    Protected Friend Function LoadType(Of T As {IKeyEntity, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
+    '    Protected Friend Function LoadType(Of T As {IKeyEntity, New})(ByVal id As Object, _
+    '        ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
 
-        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+    '        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
 
-#If DEBUG Then
-        If dic Is Nothing Then
-            Dim name As String = GetType(T).Name
-            Throw New OrmManagerException("Collection for " & name & " not exists")
-        End If
-#End If
+    '#If DEBUG Then
+    '        If dic Is Nothing Then
+    '            Dim name As String = GetType(T).Name
+    '            Throw New OrmManagerException("Collection for " & name & " not exists")
+    '        End If
+    '#End If
 
-        Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
-    End Function
+    '        Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
+    '    End Function
 
     Protected Sub Add2Cache(ByVal obj As ICachedEntity)
         If obj Is Nothing Then
@@ -1782,8 +1782,8 @@ l1:
         Dim t As System.Type = obj.GetType
 
         Dim name As String = t.Name
-        Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
-        Dim dic As IDictionary = GetDictionary(t, oschema)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Dim dic As IDictionary = GetDictionary(t, cb)
         If dic Is Nothing Then
             ''todo: throw an exception when all collections will be implemented
             'Return
@@ -1795,7 +1795,7 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.GetSyncRoot
-                If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
+                If Cache.ShadowCopy(obj, cb) IsNot Nothing Then
                     Return False
                 End If
 
@@ -1817,11 +1817,11 @@ l1:
 #End If
                 End If
 
-                _cache.RegisterRemoval(obj, Me, oschema)
+                _cache.RegisterRemoval(obj, MappingEngine, cb)
             End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(obj, Me, oschema) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(obj, cb) Is Nothing)
         End Using
         Return True
     End Function
@@ -1851,31 +1851,27 @@ l1:
     End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema)
+        Return _cache.GetOrmDictionary(t, _schema)
     End Function
 
-    Public Function GetDictionary(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema, schema)
+    Public Function GetDictionary(ByVal t As Type, ByVal cb As ICacheBehavior) As IDictionary
+        Return _cache.GetOrmDictionary(t, cb)
     End Function
 
     Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of Object, T)
-        Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema)
+        Return _cache.GetOrmDictionary(Of T)(_schema)
     End Function
 
-    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
-        If oschema Is Nothing Then
-            Return Nothing
-        Else
-            Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema, oschema)
-        End If
+    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As Generic.IDictionary(Of Object, T)
+        Return _cache.GetOrmDictionary(Of T)(cb)
     End Function
 
     Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
-        Return _cache.IsInCachePrecise(obj, GetContextInfo, _schema)
+        Return _cache.IsInCachePrecise(obj, _schema)
     End Function
 
     Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
-        Return _cache.IsInCache(id, t, GetContextInfo, _schema)
+        Return _cache.IsInCache(id, t, _schema)
     End Function
 
     <Conditional("DEBUG")> _
@@ -2045,7 +2041,7 @@ l1:
         If String.IsNullOrEmpty(direct) Then
             direct = M2MRelationDesc.DirKey
         End If
-        Return _schema.GetEntityKey(GetContextInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextInfo, tt2) & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(tt2) & "$" & GetStaticKey()
     End Function
 
 #If Not ExcludeFindMethods Then
@@ -3572,7 +3568,7 @@ l1:
                     Case ObjectState.Modified
                         r = ObjectModification.ReasonEnum.Edit
                 End Select
-                _cache.RegisterModification(Me, obj, r, MappingEngine.GetEntitySchema(obj.GetType))
+                _cache.RegisterModification(Me, obj, r, TryCast(MappingEngine.GetEntitySchema(obj.GetType), ICacheBehavior))
             End If
         End If
     End Sub

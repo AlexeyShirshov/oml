@@ -133,8 +133,8 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface ICacheBehavior
-        Function GetEntityKey(ByVal filterInfo As Object) As String
-        Function GetEntityTypeKey(ByVal filterInfo As Object) As Object
+        Function GetEntityKey() As String
+        Function GetEntityTypeKey() As Object
     End Interface
 
     Public Interface IJoinBehavior

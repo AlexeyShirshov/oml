@@ -332,16 +332,6 @@ Namespace Cache
             End Set
         End Property
 
-        'Public MustOverride Function CreateResultsetsDictionary() As IDictionary
-
-        'Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine) As System.Collections.IDictionary
-
-        'Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
-
-        'Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
-
-        'Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
-
         Friend Sub BeginTrackDelete(ByVal t As Type)
             Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
@@ -488,7 +478,7 @@ Namespace Cache
 
         Protected Friend Function validate_AddCalculatedType(ByVal ts As IEnumerable(Of Type), _
             ByVal key As String, ByVal id As String, ByVal f As IFilter, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object) As Boolean
+            ByVal schema As ObjectMappingEngine) As Boolean
 
             Dim r As Boolean
 
@@ -503,7 +493,7 @@ Namespace Cache
                     If oschema IsNot Nothing Then
                         Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                         If c IsNot Nothing Then
-                            tkey = c.GetEntityKey(filterInfo)
+                            tkey = c.GetEntityKey()
                         End If
                         Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
                         r = l.Add(f, key, id)
@@ -908,7 +898,7 @@ Namespace Cache
             'Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             If c IsNot Nothing Then
-                tkey = c.GetEntityKey(mgr.GetContextInfo)
+                tkey = c.GetEntityKey()
             End If
 
             Dim oneLoop As Boolean
@@ -1079,7 +1069,7 @@ Namespace Cache
                 Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
                 Dim k As Object = tt
                 If c IsNot Nothing Then
-                    k = c.GetEntityTypeKey(mgr.GetContextInfo)
+                    k = c.GetEntityTypeKey()
                 End If
 
                 '#If DebugLocks Then
@@ -1469,8 +1459,8 @@ l1:
             End Using
         End Sub
 
-        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema)
-            MyBase.RegisterRemoval(obj, mgr, oschema)
+        Public Overrides Sub RegisterRemoval(ByVal obj As Entities._ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal cb As ICacheBehavior)
+            MyBase.RegisterRemoval(obj, mpe, cb)
             RemoveDepends(obj)
         End Sub
         ''' <summary>

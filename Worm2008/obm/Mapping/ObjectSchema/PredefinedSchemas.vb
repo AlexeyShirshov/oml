@@ -204,11 +204,11 @@ Namespace Entities.Meta
             _t = t
         End Sub
 
-        Public Function GetEntityKey(ByVal filterInfo As Object) As String Implements ICacheBehavior.GetEntityKey
+        Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
             Return _t.ToString
         End Function
 
-        Public Function GetEntityTypeKey(ByVal filterInfo As Object) As Object Implements ICacheBehavior.GetEntityTypeKey
+        Public Function GetEntityTypeKey() As Object Implements ICacheBehavior.GetEntityTypeKey
             Return _t
         End Function
 

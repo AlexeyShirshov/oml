@@ -277,13 +277,13 @@ Namespace Cache
             If weak_list Is Nothing Then Return Nothing
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
-            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager._CreateReadOnlyList(GetType(T)), ReadOnlyEntityList(Of T))
             Dim realT As Type = Nothing
             If l.Count > 0 Then
                 realT = l(0).EntityType
             End If
             If realT IsNot Nothing Then
-                Dim dic As IDictionary = mc.Cache.GetOrmDictionary(mc.GetContextInfo, realT, mc.MappingEngine)
+                Dim dic As IDictionary = mc.Cache.GetOrmDictionary(realT, mc.MappingEngine)
                 If mc._externalFilter Is Nothing Then
                     If start < l.Count Then
                         length = Math.Min(start + length, l.Count)
@@ -455,7 +455,7 @@ Namespace Cache
             Dim lo As WeakEntityList = CType(weak_list, WeakEntityList)
             Dim l As Generic.List(Of WeakEntityReference) = lo.List
             Dim objects As New Generic.List(Of T)
-            Dim dic As IDictionary = mgr.Cache.GetOrmDictionary(mgr.GetContextInfo, GetType(T), mgr.MappingEngine)
+            Dim dic As IDictionary = mgr.Cache.GetOrmDictionary(GetType(T), mgr.MappingEngine)
             For Each loe As WeakEntityReference In l
                 Dim o As T = loe.GetObject(Of T)(mgr, dic)
                 If o IsNot Nothing Then
@@ -479,7 +479,7 @@ Namespace Cache
                 For j As Integer = 0 To wl.List.Count - 1
                     Dim wr As WeakEntityReference = wl.List(j)
                     If odic Is Nothing Then
-                        odic = mgr.Cache.GetOrmDictionary(mgr.GetContextInfo, wr.EntityType, mgr.MappingEngine)
+                        odic = mgr.Cache.GetOrmDictionary(wr.EntityType, mgr.MappingEngine)
                     End If
                     Dim o As ICachedEntity = wr.GetObject(mgr, odic)
                     If o IsNot Nothing Then
