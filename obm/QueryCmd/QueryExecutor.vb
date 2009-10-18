@@ -27,8 +27,8 @@ Namespace Query
                 End Set
             End Property
 
-            Public Sub prepared(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
-                RemoveHandler sender.QueryPrepared, AddressOf prepared
+            Public Sub QueryPreparedHandler(ByVal sender As QueryCmd, ByVal args As QueryCmd.QueryPreparedEventArgs)
+                RemoveHandler sender.QueryPrepared, AddressOf QueryPreparedHandler
                 If sender.CreateType IsNot Nothing Then
                     Dim createType As Type = sender.CreateType.GetRealType(_mgr.MappingEngine)
                     If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
@@ -261,7 +261,7 @@ l2:
         Public Function Exec(Of ReturnType As ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
             Dim c As New cls(mgr)
             Try
-                AddHandler query.QueryPrepared, AddressOf c.prepared
+                AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
                 Dim cis As New CIStore
                 Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
                    Function() GetProcessor(Of ReturnType)(mgr, query), _
@@ -297,7 +297,7 @@ l2:
         Public Function Exec(Of CreateType As {New, ICachedEntity}, ReturnType As ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
             Dim c As New cls(mgr)
             Try
-                AddHandler query.QueryPrepared, AddressOf c.prepared
+                AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
                 Dim cis As New CIStore
                 Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
                    Function() GetProcessorT(Of CreateType, ReturnType)(mgr, query), _
@@ -338,7 +338,7 @@ l2:
             'If GetType(AnonymousCachedEntity).IsAssignableFrom(query.CreateType) Then
             Dim c As New cls(mgr)
             Try
-                AddHandler query.QueryPrepared, AddressOf c.prepared
+                AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
                 Dim cis As New CIStore
                 Dim res As ReadOnlyObjectList(Of ReturnType) = _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
                     Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
@@ -372,7 +372,7 @@ l2:
             If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(CreateType)) Then
                 Dim c As New cls(mgr)
                 Try
-                    AddHandler query.QueryPrepared, AddressOf c.prepared
+                    AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
                     Return _ExecEntity(Of ReturnType)(mgr, query, _
                             Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
                 Finally

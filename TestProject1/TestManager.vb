@@ -140,8 +140,8 @@ Imports Worm
                 Dim l As Object = New QueryCmd().SelectEntity(GetType(Entity4), True).Where(Ctor.prop(GetType(Entity4), "ID").less_than(100000)).ToList(Of Entity4)(mgr)
             End If
 
-            Dim e As Entity4 = CType(c.GetKeyEntityFromCacheOrCreate(1, GetType(Entity4), False, Nothing, mgr.MappingEngine), Entity4)
-
+            Dim e As Entity4 = CType(c.GetKeyEntityFromCacheOrCreate(1, GetType(Entity4), False, mgr.MappingEngine), Entity4)
+            Assert.IsNotNull(e)
             Assert.AreNotEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
         End Using
 

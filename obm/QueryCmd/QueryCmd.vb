@@ -4345,62 +4345,43 @@ l1:
                                    ByRef hasPK As Boolean) As IEntitySchema
             hasPK = False
             Dim s As IEntitySchema = mpe.GetPOCOEntitySchema(t)
-            If s IsNot Nothing Then
-                For Each m As MapField2Column In s.GetFieldColumnMap
-                    If m.IsPK Then
-                        hasPK = True
-                        Exit For
-                    End If
-                Next
-            Else
-                If SelectList Is Nothing Then
-                    Dim tbl As SourceFragment = Nothing
-                    If _from IsNot Nothing Then
-                        tbl = _from.Table
-                    End If
-                    If tbl Is Nothing Then
-                        tbl = ObjectMappingEngine.GetTable(mpe, t, String.Empty)
-                    End If
-                    Dim selList As New OrmObjectIndex
-                    For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
-                        Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                        selList.Add(New MapField2Column(c.PropertyAlias, c.Column, tbl))
-                        If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            hasPK = True
-                        End If
-                    Next
-                    If hasPK Then
-                        s = New SimpleTypedEntitySchema(t, selList)
-                    Else
-                        s = New SimpleObjectSchema(selList)
-                    End If
-                Else
-                    Dim cols As Collections.IndexedCollection(Of String, MapField2Column) = SelectExpression.GetMapping(SelectList)
-                    Dim tbl As SourceFragment = Nothing, hasTable As Boolean = False
-                    For Each c As MapField2Column In cols
-                        If c.Table Is Nothing Then
-                            If Not hasTable Then
-                                If _from IsNot Nothing Then
-                                    tbl = _from.Table
+            If s Is Nothing Then
+                Dim tbl As SourceFragment = _from.Table
+                If tbl Is Nothing AndAlso SelectList IsNot Nothing Then
+                    For Each se As SelectExpression In SelectList
+                        For Each e As IExpression In se.GetExpressions
+                            Dim te As TableExpression = TryCast(e, TableExpression)
+                            If te IsNot Nothing Then
+                                tbl = te.SourceFragment
+                                GoTo exit_for
+                            Else
+                                Dim ee As EntityExpression = TryCast(e, EntityExpression)
+                                If ee IsNot Nothing Then
+                                    Dim rt As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
+                                    If rt IsNot t Then
+                                        Dim esch As IEntitySchema = mpe.GetEntitySchema(rt)
+                                        If esch IsNot Nothing Then
+                                            tbl = esch.Table
+                                            GoTo exit_for
+                                        End If
+                                    End If
                                 End If
-                                If tbl Is Nothing Then
-                                    tbl = ObjectMappingEngine.GetTable(mpe, t, String.Empty)
-                                End If
-                                hasTable = True
                             End If
-                            c.Table = tbl
-                        End If
-                        If (c.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            hasPK = True
-                        End If
+                        Next
                     Next
-                    If hasPK Then
-                        s = New SimpleTypedEntitySchema(t, cols)
-                    Else
-                        s = New SimpleObjectSchema(cols)
-                    End If
+exit_for:
                 End If
+                If tbl Is Nothing Then
+                    Throw New QueryCmdException(String.Format("Cannot create schema for type {0}. QueryCmd has empty FromClause or else entity has no EntityAttribute", t), Me)
+                End If
+                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(tbl.Schema, tbl.Name, mpe.Version))
             End If
+            For Each m As MapField2Column In s.GetFieldColumnMap
+                If m.IsPK Then
+                    hasPK = True
+                    Exit For
+                End If
+            Next
             Return s
         End Function
 

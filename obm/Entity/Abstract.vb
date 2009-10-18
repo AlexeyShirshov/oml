@@ -336,6 +336,8 @@ Namespace Entities
     ''' массива полей и значений <see cref="PKDesc"/></remarks>
     <Serializable()> _
     Public Class PKWrapper
+        Implements IKeyProvider
+
         Private _id As PKDesc()
         Private _str As String
 
@@ -408,6 +410,22 @@ Namespace Entities
                 _str = sb.ToString
             End If
             Return _str
+        End Function
+
+        Public ReadOnly Property Key() As Integer Implements IKeyProvider.Key
+            Get
+                Return GetHashCode()
+            End Get
+        End Property
+
+        Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
+            Get
+                Return ToString()
+            End Get
+        End Property
+
+        Public Function GetPKs() As PKDesc()
+            Return _id
         End Function
     End Class
 

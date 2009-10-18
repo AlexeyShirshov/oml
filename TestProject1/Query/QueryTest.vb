@@ -972,12 +972,12 @@ Imports Worm.Expressions2
             Assert.IsTrue(mgr.IsInCachePrecise(t))
         End Using
 
-        Assert.IsTrue(cache.IsInCachePrecise(t, Nothing, schema))
+        Assert.IsTrue(cache.IsInCachePrecise(t, schema))
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
         For Each tt As Table1 In l
-            Assert.IsTrue(cache.IsInCachePrecise(tt, Nothing, schema))
+            Assert.IsTrue(cache.IsInCachePrecise(tt, schema))
             Assert.IsFalse(tt.InternalProperties.IsLoaded)
             Assert.IsNotNull(tt.Name)
             Assert.IsTrue(tt.InternalProperties.IsLoaded)

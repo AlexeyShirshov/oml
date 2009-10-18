@@ -323,7 +323,7 @@ Module Module2
                                             Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                             If Not done Then
                                                 Debug.Assert(st.Saver.AffectedObjects.Count = 0)
-                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t, mgr)
+                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t, TryCast(mgr.MappingEngine.GetEntitySchema(t.GetType), ICacheBehavior))
                                                 Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Entities.ObjectState.NotFoundInSource)
                                                 Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
                                             End If

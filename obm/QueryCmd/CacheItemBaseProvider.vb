@@ -181,7 +181,7 @@ Namespace Query
                                     uce.Sort = _q.Sort
                                 End If
                                 If Not hasJoins Then
-                                    added = cache.validate_AddCalculatedType(New Type() {ft}, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
+                                    added = cache.validate_AddCalculatedType(New Type() {ft}, _key, _id, fl, MappingEngine)
                                     If uce IsNot Nothing AndAlso added Then
                                         uce.Filter = fl
                                     End If
