@@ -1197,10 +1197,12 @@ l1:
             oschema.GetFieldColumnMap.CopyTo(newcol)
             For Each m As MapField2Column In newcol
                 m.Table = tbl
-                If Not String.IsNullOrEmpty(m.ColumnName) Then
-                    m.ColumnExpression = m.ColumnName
-                    m.ColumnName = Nothing
-                End If
+                For Each sf As SourceField In m.SourceFields
+                    If Not String.IsNullOrEmpty(sf.SourceFieldAlias) Then
+                        sf.SourceFieldExpression = sf.SourceFieldAlias
+                        sf.SourceFieldAlias = Nothing
+                    End If
+                Next
             Next
             Return newcol
         End Function
