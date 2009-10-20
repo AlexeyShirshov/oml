@@ -4539,8 +4539,8 @@ exit_for:
                             For Each su As SelectUnion In col
                                 If su.EntityUnion IsNot Nothing Then
                                     Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
-                                    If Not String.IsNullOrEmpty(map.ColumnName) Then
-                                        Return map.ColumnName
+                                    If Not String.IsNullOrEmpty(map.SourceFieldAlias) Then
+                                        Return map.SourceFieldAlias
                                     Else
                                         Return map.ColumnExpression
                                     End If

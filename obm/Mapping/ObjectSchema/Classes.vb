@@ -190,9 +190,25 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public ReadOnly Property ColumnExpression() As String
+        Public ReadOnly Property SourceFieldExpression() As String
             Get
+                If _sf.Count > 1 Then
+                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+                End If
                 Return _sf(0).SourceFieldExpression
+            End Get
+        End Property
+
+        Public ReadOnly Property SourceFieldAlias() As String
+            Get
+                If _sf.Count > 1 Then
+                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+                End If
+                Return _sf(0).SourceFieldAlias
             End Get
         End Property
 

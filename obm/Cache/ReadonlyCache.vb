@@ -789,8 +789,9 @@ Namespace Cache
                 CType(c, AnonymousCachedEntity).SetKey(cc.Key)
             End If
             c.SetObjectState(ObjectState.NotLoaded)
+            Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
 
-            Dim ro As _ICachedEntity = FindObjectInCache(type, c, False, False, GetOrmDictionary(Nothing, GetType(AnonymousCachedEntity), mpe, oschema), True, Nothing, False, oschema)
+            Dim ro As Object = FindObjectInCache(type, c, New CacheKey(c), cb, GetOrmDictionary(GetType(AnonymousCachedEntity), cb), True, False)
 
             If ReferenceEquals(ro, c) Then
                 CType(c, AnonymousCachedEntity)._myschema = oschema
@@ -801,7 +802,7 @@ Namespace Cache
                     End If
                 End If
             End If
-            Return ro
+            Return CType(ro, _ICachedEntity)
         End Function
 
         Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _

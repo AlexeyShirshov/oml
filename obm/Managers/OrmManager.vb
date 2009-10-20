@@ -1587,15 +1587,18 @@ l1:
 
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary, _
         ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
-        Return _cache.FindObjectInCache(Nothing, obj, False, False, entityDictionary, add2Cache, Me, fromDb, oschema)
+        Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, entityDictionary, add2Cache, fromDb), _ICachedEntity)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.FindObjectInCache(obj, False, True, dic, True, Me)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, True, False), _ICachedEntity)
     End Function
 
     Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.FindObjectInCache(obj, True, True, dic, True, Me)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, True, False), _ICachedEntity)
     End Function
 
     'Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity

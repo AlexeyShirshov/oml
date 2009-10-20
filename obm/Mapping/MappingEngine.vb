@@ -10,6 +10,7 @@ Imports Worm.Criteria
 Imports Worm.Criteria.Conditions
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports Worm.Cache
 
 'Namespace Schema
 
@@ -2408,7 +2409,8 @@ Public Class ObjectMappingEngine
                 If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
                     o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
                     o.SetObjectState(ObjectState.NotLoaded)
-                    o = cache.FindObjectInCache(Nothing, CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+                    Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+                    o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
                 Else
                     Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
                     If pks.Count <> 1 Then
@@ -2417,7 +2419,8 @@ Public Class ObjectMappingEngine
                     If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
                         o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
                         o.SetObjectState(ObjectState.NotLoaded)
-                        o = cache.FindObjectInCache(Nothing, CType(o, _ICachedEntity), False, False, cache.GetOrmDictionary(contextInfo, type_created, MappingEngine), True, Nothing, True, MappingEngine.GetEntitySchema(type_created))
+                        Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+                        o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
                     Else
                         o = Entity.CreateEntity(type_created, cache, MappingEngine)
                         MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
