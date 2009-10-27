@@ -2300,7 +2300,7 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Shared Function SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
-        ByVal value As Object, ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+        ByVal value() As PKDesc, ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
         ByVal propertyAlias As String, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object) As Object
 
         Return SetValue(propType, MappingEngine, cache, value, obj, map, propertyAlias, Nothing, Nothing, Nothing, objectLoaded, contextInfo)
@@ -2309,13 +2309,13 @@ Public Class ObjectMappingEngine
     Public Delegate Sub ObjectLoadedDelegate(ByVal obj As IEntity)
 
     Public Shared Function SetValue(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase, _
-        ByVal value As Object, ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+        ByVal sv() As PKDesc, ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
         ByVal propertyAlias As String, ByVal ce As _ICachedEntity, ByVal m As MapField2Column, _
         ByVal oschema As IEntitySchema, ByVal objectLoaded As ObjectLoadedDelegate, ByVal contextInfo As Object) As Object
 
         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-
-        If value Is Nothing Then
+        Dim value As Object = sv(0).Value
+        If sv Is Nothing Then
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
             If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
         ElseIf value.GetType Is propType Then
@@ -2405,33 +2405,46 @@ Public Class ObjectMappingEngine
                         Throw New OrmManagerException("Cannot find type for entity " & en)
                     End If
                 End If
-                Dim o As _IEntity = Nothing
-                If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
-                    o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
-                    o.SetObjectState(ObjectState.NotLoaded)
-                    Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
-                    o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
-                Else
-                    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
-                    If pks.Count <> 1 Then
-                        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
-                    End If
-                    If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
-                        o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
-                        o.SetObjectState(ObjectState.NotLoaded)
-                        Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
-                        o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
-                    Else
-                        o = Entity.CreateEntity(type_created, cache, MappingEngine)
-                        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
-                    End If
+                'If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
+                '    o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
+                '    o.SetObjectState(ObjectState.NotLoaded)
+                '    Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+                '    o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
+                'Else
+                '    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
+                '    If pks.Count <> 1 Then
+                '        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
+                '    End If
+                '    If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
+                '        o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
+                '        o.SetObjectState(ObjectState.NotLoaded)
+                '        Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+                '        o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
+                '    Else
+                '        o = Entity.CreateEntity(type_created, cache, MappingEngine)
+                '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
+                '    End If
+                'End If
+                Dim o As Object = Entity.CreateObject(sv, type_created, cache, MappingEngine)
+                Dim e As _IEntity = TryCast(o, _IEntity)
+                Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
+                Dim pkw As PKWrapper = Nothing
+                If e IsNot Nothing Then
+                    e.SetObjectState(ObjectState.NotLoaded)
                 End If
-
+                If cce IsNot Nothing Then
+                    pkw = New CacheKey(CType(o, ICachedEntity))
+                Else
+                    pkw = New PKWrapper(sv)
+                End If
+                Dim cb As ICacheBehavior = TryCast(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+                o = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
+                e = TryCast(o, _IEntity)
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                If o IsNot Nothing Then
+                If e IsNot Nothing Then
                     Dim eo As IEntity = TryCast(obj, IEntity)
-                    If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then o.SetCreateManager(eo.CreateManager)
-                    If objectLoaded IsNot Nothing Then objectLoaded(o)
+                    If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then e.SetCreateManager(eo.CreateManager)
+                    If objectLoaded IsNot Nothing Then objectLoaded(e)
                 End If
                 If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
                 Return o
@@ -2450,7 +2463,7 @@ Public Class ObjectMappingEngine
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
                 If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
             End If
-        End If
+            End If
         Return value
     End Function
 

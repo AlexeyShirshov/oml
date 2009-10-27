@@ -21,9 +21,9 @@ Namespace Cache
             _t = o.GetType
         End Sub
 
-        Public Function GetEntity() As ICachedEntity
-            Return OrmManager.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
-        End Function
+        'Public Function GetEntity() As ICachedEntity
+        '    Return OrmManager.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
+        'End Function
 
         Public ReadOnly Property EntityType() As Type
             Get
@@ -242,6 +242,7 @@ Namespace Cache
 
             Dim co As ICachedEntity = CType(cache.FindObjectInCache(type, o, New CacheKey(o), TryCast(mpe.GetEntitySchema(type), ICacheBehavior), dic, addOnCreate, False), ICachedEntity)
 
+            cache.GetEntityFromCacheOrCreate(pk, type, addOnCreate, dic, mpe)
             mgr.RaiseObjectRestored(ReferenceEquals(co, o), co)
 
             Return co

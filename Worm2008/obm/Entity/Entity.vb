@@ -485,37 +485,45 @@ Namespace Entities
             End If
         End Function
 
-        Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _ICachedEntity
+        Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
             If GetType(IKeyEntity).IsAssignableFrom(type) Then
-                Return CreateKeyEntity(pk(0).Value, type, cache, schema)
-            Else 'If GetType(ICachedEntity).IsAssignableFrom(type) Then
-                Return CreateEntity(pk, type, cache, schema)
-                'Else
-                '    Return CreateEntity(type, cache, schema)
+                Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
+            ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
+                Return CreateEntity(pk, type, cache, mpe)
+            ElseIf GetType(IEntity).IsAssignableFrom(type) Then
+                Return CreateEntity(type, cache, mpe)
+            Else
+                Dim e As Object = Activator.CreateInstance(type)
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
+                For Each p As PKDesc In pk
+                    ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
+                Next
+                Return e
             End If
         End Function
 
-        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
             Dim o As New T
-            o.Init(pk, cache, schema)
+            o.Init(pk, cache, mpe)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _ICachedEntity
-            Dim o As _ICachedEntity = CType(Activator.CreateInstance(t), _ICachedEntity)
-            o.Init(pk, cache, schema)
+        Public Shared Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
+            Dim e As Object = Activator.CreateInstance(t)
+            Dim o As _ICachedEntity = CType(e, _ICachedEntity)
+            o.Init(pk, cache, mpe)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As _IEntity
+        Public Shared Function CreateEntity(ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _IEntity
             Dim o As _IEntity = CType(Activator.CreateInstance(t), _IEntity)
-            o.Init(cache, schema)
+            o.Init(cache, mpe)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(Of T As {_IEntity, New})(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateEntity(Of T As {_IEntity, New})(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
             Dim o As New T
-            o.Init(cache, schema)
+            o.Init(cache, mpe)
             Return o
         End Function
 #End Region
