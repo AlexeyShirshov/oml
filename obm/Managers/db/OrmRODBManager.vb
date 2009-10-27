@@ -1159,11 +1159,12 @@ l1:
 
             Dim tp As LoadTypeDescriptor = selDic(selOS)
 
+            Dim objType As Type = o.GetType
             If tp.Load AndAlso ec IsNot Nothing Then
-                ec.BeginTrackDelete(o.GetType)
+                ec.BeginTrackDelete(objType)
             End If
             Try
-                LoadEntityFromDataReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(o.GetType), tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, idx)
+                LoadEntityFromDataReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(objType), tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), True, idx)
                 idx += tp.Properties2Load.Count
                 For Each pr As Pair(Of String, Reflection.PropertyInfo) In tp.ParentProperties
                     Dim pit As Type = pr.Second.PropertyType
@@ -1195,7 +1196,7 @@ l1:
                 Return idx
             Finally
                 If tp.Load AndAlso ec IsNot Nothing Then
-                    ec.EndTrackDelete(o.GetType)
+                    ec.EndTrackDelete(objType)
                 End If
             End Try
         End Function
@@ -1639,17 +1640,15 @@ l1:
         '                       oschema, fields_idx)
         'End Sub
 
-        Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
+        Protected Friend Sub LoadMultipleObjects(Of T As New)( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal values As IList, _
-             ByVal selectList As List(Of SelectExpression))
+            ByVal selectList As List(Of SelectExpression))
 
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            QueryObjects(Of T)(cmd, values, _
-                               selectList, _
-                               oschema, fields_idx)
+            QueryObjects(Of T)(cmd, values, selectList, oschema, fields_idx)
         End Sub
 
         Public Sub QueryMultiTypeObjects( _
@@ -2203,6 +2202,12 @@ l1:
 
                         If pk OrElse (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             pk_count += 1
+                            If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
+                                Dim te As TableExpression = CType(se.Expression, TableExpression)
+                                If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                    idx = dr.GetOrdinal(te.SourceField)
+                                End If
+                            End If
                             Dim value As Object = dr.GetValue(idx)
                             If fv IsNot Nothing Then
                                 value = fv.CreateValue(propertyAlias, value)
@@ -2290,28 +2295,35 @@ l1:
                         'Dim pi As Reflection.PropertyInfo = se._pi
                         Dim att As Field2DbRelations = se._realAtt
                         Dim m As MapField2Column = se._m
-
-                        Dim value As Object = dr.GetValue(idx)
-                        If fv IsNot Nothing Then
-                            value = fv.CreateValue(propertyAlias, value)
+                        Dim sv(m.SourceFields.Count - 1) As PKDesc
+                        If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
+                            Dim te As TableExpression = CType(se.Expression, TableExpression)
+                            If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                idx = dr.GetOrdinal(te.SourceField)
+                            End If
                         End If
+                        For k As Integer = 0 To sv.Length - 1
+                            Dim value As Object = dr.GetValue(idx)
+                            If fv IsNot Nothing Then
+                                value = fv.CreateValue(propertyAlias, value)
+                            End If
+                            sv(k) = New PKDesc(m.SourceFields(k).PrimaryKey, value)
+                            'If String.IsNullOrEmpty(propertyAlias) Then
+                            '    propertyAlias = c.Column
+                            'End If
 
-                        'If String.IsNullOrEmpty(propertyAlias) Then
-                        '    propertyAlias = c.Column
-                        'End If
-
-                        'If String.IsNullOrEmpty(propertyAlias) Then
-                        '    'Continue For
-                        '    Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, GetContextInfo)))
-                        'End If
+                            'If String.IsNullOrEmpty(propertyAlias) Then
+                            '    'Continue For
+                            '    Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, GetContextInfo)))
+                            'End If
 
 #If TRACELOADING Then
                         If Not obj.IsLoading Then
                             Throw New OrmManagerException("object is not in loading: [STACK]" & CType(obj, Entity)._lstack & "[/STACK][ESTACK]" & CType(obj, Entity)._estack & "[/ESTACK]")
                         End If
 #End If
-
-                        ParseValueFromDb(dr, att, idx, obj, m, propertyAlias, oschema, propertyMap, value, _
+                        Next
+                        ParseValueFromDb(dr, att, idx, obj, m, propertyAlias, oschema, propertyMap, sv, _
                                          ce, check_pk, fac)
                     Next
 
@@ -2411,9 +2423,10 @@ l1:
             ByVal att As Field2DbRelations, ByVal i As Integer, ByVal obj As Object, _
             ByVal m As MapField2Column, ByVal propertyAlias As String, _
             ByVal oschema As IEntitySchema, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
-            ByVal value As Object, ByVal ce As _ICachedEntity, _
+            ByVal sv() As PKDesc, ByVal ce As _ICachedEntity, _
             ByVal check_pk As Boolean, ByVal fac As List(Of Pair(Of String, Object)))
             Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+            Dim value As Object = sv(0).Value
             If pi Is Nothing Then
                 If dr.IsDBNull(i) Then
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema)
@@ -2472,7 +2485,7 @@ l1:
                         '    End If
                         '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                         'Else
-                        ObjectMappingEngine.SetValue(propType, MappingEngine, Cache, value, obj, map, propertyAlias, ce, m, oschema, AddressOf RaiseObjectLoaded, GetContextInfo)
+                        ObjectMappingEngine.SetValue(propType, MappingEngine, Cache, sv, obj, map, propertyAlias, ce, m, oschema, AddressOf RaiseObjectLoaded, GetContextInfo)
                         'End If
                     End If
                 ElseIf dr.IsDBNull(i) Then

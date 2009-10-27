@@ -13,6 +13,7 @@ Namespace Expressions2
         Private _attr As Field2DbRelations
         Private _dstProp As String
         Private _dst As EntityUnion
+        Private _correctIdx As Boolean
 
 #Region " Cache "
         'Friend _c As EntityPropertyAttribute
@@ -262,6 +263,15 @@ Namespace Expressions2
             Next
             Return c
         End Function
+
+        Public Property CorrectFieldIndex() As Boolean
+            Get
+                Return _correctIdx
+            End Get
+            Set(ByVal value As Boolean)
+                _correctIdx = value
+            End Set
+        End Property
 
         Public Property Attributes() As Field2DbRelations
             Get

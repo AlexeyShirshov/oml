@@ -585,7 +585,7 @@ Namespace Cache
         End Function
 
         Public Function GetKeyFromPK(ByVal pk() As PKDesc, ByVal type As Type) As Integer
-            Dim o As ICachedEntity = CachedEntity.CreateObject(pk, type, Me, Nothing)
+            Dim o As IKeyProvider = CType(CachedEntity.CreateObject(pk, type, Me, Nothing), IKeyProvider)
             Return o.Key
         End Function
 
@@ -723,13 +723,41 @@ Namespace Cache
         End Function
 
         Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type, _
-            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine) As ICachedEntity
-            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, Me, mpe)
-
-            o.SetObjectState(ObjectState.NotLoaded)
+            ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
+            Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
+            Dim pkw As PKWrapper = Nothing
+            Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
+            Dim e As _IEntity = TryCast(o, _ICachedEntity)
+            If e IsNot Nothing Then
+                e.SetObjectState(ObjectState.NotLoaded)
+            End If
+            If ce IsNot Nothing Then
+                pkw = New CacheKey(ce)
+            Else
+                pkw = New PKWrapper(pk)
+            End If
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
-            Return CType(FindObjectInCache(type, o, New CacheKey(o), cb, GetOrmDictionary(type, cb), addOnCreate, False), ICachedEntity)
+            Return CType(FindObjectInCache(type, o, pkw, cb, GetOrmDictionary(type, cb), addOnCreate, False), ICachedEntity)
+        End Function
+
+        Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type, _
+            ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
+            Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
+            Dim pkw As PKWrapper = Nothing
+            Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
+            Dim e As _IEntity = TryCast(o, _ICachedEntity)
+            If e IsNot Nothing Then
+                e.SetObjectState(ObjectState.NotLoaded)
+            End If
+            If ce IsNot Nothing Then
+                pkw = New CacheKey(ce)
+            Else
+                pkw = New PKWrapper(pk)
+            End If
+
+            Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
+            Return CType(FindObjectInCache(type, o, pkw, cb, dic, addOnCreate, False), ICachedEntity)
         End Function
 
         Protected Friend Shared Sub AddObjectInternal(ByVal obj As Object, ByVal id As PKWrapper, ByVal dic As IDictionary)

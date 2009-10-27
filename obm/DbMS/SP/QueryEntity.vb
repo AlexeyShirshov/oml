@@ -9,7 +9,7 @@ Imports Worm.Expressions2
 
 Namespace Database.Storedprocs
 
-    Public MustInherit Class QueryEntityStoredProcBase(Of T As {_IEntity, New})
+    Public MustInherit Class QueryEntityStoredProcBase(Of T As New)
         Inherits StoredProcBase
 
         Private _exec As TimeSpan
@@ -57,6 +57,7 @@ Namespace Database.Storedprocs
                         Dim exp As New TableExpression(m.ColumnExpression)
                         Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
                         se.Attributes = m.Attributes
+                        se.CorrectFieldIndex = True
                         cols.Add(se)
                     End If
                 Next
