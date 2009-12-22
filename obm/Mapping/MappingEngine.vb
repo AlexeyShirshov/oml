@@ -1304,22 +1304,22 @@ Public Class ObjectMappingEngine
     '    Return GetColumnNameByFieldNameInternal(type, field, table_alias)
     'End Function
 
-    Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String) As String
-        If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
+    'Public Function GetColumnNameByPropertyAlias(ByVal type As Type, ByVal propertyAlias As String) As String
+    '    If String.IsNullOrEmpty(propertyAlias) Then Throw New ArgumentNullException("propertyAlias")
 
-        Dim schema As IEntitySchema = GetEntitySchema(type)
+    '    Dim schema As IEntitySchema = GetEntitySchema(type)
 
-        Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+    '    Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
-        Dim p As MapField2Column = Nothing
-        If coll.TryGetValue(propertyAlias, p) Then
-            Dim c As String = Nothing
-            c = p.ColumnExpression
-            Return c
-        End If
+    '    Dim p As MapField2Column = Nothing
+    '    If coll.TryGetValue(propertyAlias, p) Then
+    '        Dim c As String = Nothing
+    '        c = p.ColumnExpression
+    '        Return c
+    '    End If
 
-        Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
-    End Function
+    '    Throw New ObjectMappingException("Cannot find property: " & propertyAlias)
+    'End Function
 
     'Protected Function GetColumnsFromPropertyAlias(ByVal main As Type, ByVal propertyType As Type) As EntityPropertyAttribute()
     '    If main Is Nothing Then Throw New ArgumentNullException("main")
@@ -1955,40 +1955,40 @@ Public Class ObjectMappingEngine
     '    Return values
     'End Function
 
-    Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal fld As String, _
-                                  ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
-                                  ByVal values As List(Of String), ByVal os As EntityUnion)
-        If Not GetType(IEntity).IsAssignableFrom(t) Then
-            Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
-        End If
+    'Private Shared Sub FormatType(ByVal t As Type, ByVal stmt As StmtGenerator, ByVal fld As String, _
+    '                              ByVal schema As ObjectMappingEngine, ByVal aliases As IPrepareTable, _
+    '                              ByVal values As List(Of String), ByVal os As EntityUnion)
+    '    If Not GetType(IEntity).IsAssignableFrom(t) Then
+    '        Throw New NotSupportedException(String.Format("Type {0} is not assignable from IEntity", t))
+    '    End If
 
-        Dim d As String = schema.Delimiter
-        If stmt IsNot Nothing Then
-            d = stmt.Selector
-        End If
+    '    Dim d As String = schema.Delimiter
+    '    If stmt IsNot Nothing Then
+    '        d = stmt.Selector
+    '    End If
 
-        Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
-        Dim tbl As SourceFragment = Nothing
-        Dim map As MapField2Column = Nothing
-        'Dim fld As String = p.Second
-        If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
-            fld = map.ColumnExpression
-            tbl = map.Table
-        Else
-            tbl = oschema.Table
-        End If
+    '    Dim oschema As IEntitySchema = schema.GetEntitySchema(t)
+    '    Dim tbl As SourceFragment = Nothing
+    '    Dim map As MapField2Column = Nothing
+    '    'Dim fld As String = p.Second
+    '    If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
+    '        fld = map.ColumnExpression
+    '        tbl = map.Table
+    '    Else
+    '        tbl = oschema.Table
+    '    End If
 
-        If aliases IsNot Nothing Then
-            Debug.Assert(aliases.ContainsKey(tbl, os), "There is not alias for table " & tbl.RawName)
-            Try
-                values.Add(aliases.GetAlias(tbl, os) & d & fld)
-            Catch ex As KeyNotFoundException
-                Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
-            End Try
-        Else
-            values.Add(tbl.UniqueName(os) & d & fld)
-        End If
-    End Sub
+    '    If aliases IsNot Nothing Then
+    '        Debug.Assert(aliases.ContainsKey(tbl, os), "There is not alias for table " & tbl.RawName)
+    '        Try
+    '            values.Add(aliases.GetAlias(tbl, os) & d & fld)
+    '        Catch ex As KeyNotFoundException
+    '            Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
+    '        End Try
+    '    Else
+    '        values.Add(tbl.UniqueName(os) & d & fld)
+    '    End If
+    'End Sub
 
     Public ReadOnly Property Delimiter() As String
         Get
