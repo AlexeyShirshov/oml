@@ -411,7 +411,7 @@ Namespace Collections
                     Using e As IEnumerator(Of KeyValuePair(Of TItemKey, TItem)) = _dic.GetEnumerator
                         Dim i As Integer = 0
                         Do While e.MoveNext
-                            If e.Current.Value.Equals(item) Then
+                            If e.Current.Key.Equals(item) Then
                                 Return i
                             End If
                             i += 1

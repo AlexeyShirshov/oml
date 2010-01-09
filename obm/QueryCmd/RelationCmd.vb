@@ -447,10 +447,9 @@ Namespace Query
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                     Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS
                     If prd OrElse mt IsNot Nothing Then
-                        'table = CType(table.Clone, SourceFragment)
+                        Dim pka As String = mpe.GetSinglePK(m2mType, oschema)
                         AppendMain = True
-                        Dim jf As New JoinFilter(table, selected_r.Column, _
-                            m2mEU, mpe.GetPrimaryKeys(m2mType)(0).PropertyAlias, _fo)
+                        Dim jf As New JoinFilter(table, selected_r.Column, m2mEU, pka, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         jn.ObjectSource = selected_r.Entity
                         _js.Insert(0, jn)
@@ -460,7 +459,10 @@ Namespace Query
                         tu = m2mEU
 
                         If _WithLoad(m2mEU, mpe) Then
-                            _sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                                _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
+                            Next
+                            '_sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         ElseIf SelectedEntities IsNot Nothing Then
                             GoTo l1
                         Else
@@ -479,12 +481,13 @@ l1:
                                 AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym, stmt)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
-                                Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
+                                'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
+                                Dim pka As String = mpe.GetSinglePK(m2mType, oschema)
                                 Dim te As New TableExpression(table, selected_r.Column)
                                 te.SetEntity(ideu)
                                 _sl.Add(New SelectExpression(te) With { _
                                     .Attributes = Field2DbRelations.PK, _
-                                    .IntoPropertyAlias = pk.PropertyAlias, _
+                                    .IntoPropertyAlias = pka, _
                                     .Into = m2mEU _
                                 })
                             End If
@@ -522,7 +525,8 @@ l1:
                         Dim heu As New EntityUnion(hostType)
                         Dim hschema As IEntitySchema = mpe.GetEntitySchema(hostType)
                         _types.Add(heu, hschema)
-                        _sl.Add(New SelectExpression(table, filtered_r.Column, mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias, heu))
+                        Dim hpk As String = mpe.GetSinglePK(hostType, hschema) 'mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias
+                        _sl.Add(New SelectExpression(table, filtered_r.Column, hpk, heu))
 
                         AddEntityToSelectList(heu, False)
 
@@ -533,13 +537,21 @@ l1:
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(m2mEU, mpe) Then
-                            _sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                                _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
+                            Next
+                            '_sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
                             'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
                             'Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
                             'se.Attributes = Field2DbRelations.PK
                             '_sl.Add(se)
-                            _sl.AddRange(mpe.GetPrimaryKeys(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                                If mp.IsPK Then
+                                    _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
+                                End If
+                            Next
+                            '_sl.AddRange(mpe.GetPrimaryKeys(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         End If
 
                         If Not _types.ContainsKey(m2mEU) Then
@@ -682,7 +694,7 @@ l1:
             Return Me
         End Function
 
-        Public Sub LoadObjects()
+        Public Overloads Sub LoadObjects()
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -690,7 +702,7 @@ l1:
             LoadObjects(_getMgr)
         End Sub
 
-        Public Sub LoadObjects(ByVal getMgr As ICreateManager)
+        Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr)
@@ -698,7 +710,7 @@ l1:
             End Using
         End Sub
 
-        Public Sub LoadObjects(ByVal mgr As OrmManager)
+        Public Overloads Sub LoadObjects(ByVal mgr As OrmManager)
             Dim os As EntityUnion = GetSelectedOS()
             If os Is Nothing Then
                 Throw New QueryCmdException("You must select type", Me)
@@ -719,7 +731,7 @@ l1:
             End If
         End Sub
 
-        Public Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
+        Public Overloads Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -727,7 +739,7 @@ l1:
             LoadObjects(_getMgr, start, length)
         End Sub
 
-        Public Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
+        Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using mgr As OrmManager = getMgr.CreateManager
                 Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr, start, length)
@@ -735,7 +747,7 @@ l1:
             End Using
         End Sub
 
-        Public Sub LoadObjects(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
+        Public Overloads Sub LoadObjects(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
             Dim os As EntityUnion = GetSelectedOS()
             If os Is Nothing Then
                 Throw New QueryCmdException("You must select type", Me)

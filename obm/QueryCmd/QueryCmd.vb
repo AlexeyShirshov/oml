@@ -1514,15 +1514,25 @@ l1:
 
                 Dim l As New List(Of SelectExpression)
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
-                    l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) _
-                        New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                    'l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) _
+                    '    New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                    '        .Into = tp.First, _
+                    '        .Attributes = c.Behavior, _
+                    '        .IntoPropertyAlias = c.PropertyAlias _
+                    '    } _
+                    '))
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        l.Add(New SelectExpression(New PropertyAliasExpression(mp.PropertyAlias)) With { _
                             .Into = tp.First, _
-                            .Attributes = c.Behavior, _
-                            .IntoPropertyAlias = c.PropertyAlias _
-                        } _
-                    ))
+                            .Attributes = mp.Attributes, _
+                            .IntoPropertyAlias = mp.PropertyAlias _
+                        })
+                    Next
                 Else
-                    l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        l.Add(New SelectExpression(New ObjectProperty(tp.First, mp.PropertyAlias)))
+                    Next
+                    'l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
                 End If
 
                 Dim df As IDefferedLoading = TryCast(oschema, IDefferedLoading)
@@ -1564,25 +1574,29 @@ l1:
                 Next
             Else
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
-                    For Each c As EntityPropertyAttribute In mpe.GetPrimaryKeys(t, oschema)
-                        Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
-                            .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
-                        }
-                        se.Attributes = c.Behavior
-                        cl.Add(se)
+                    For Each c As MapField2Column In oschema.GetFieldColumnMap
+                        If c.IsPK Then
+                            Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                                .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
+                            }
+                            se.Attributes = c.Attributes
+                            cl.Add(se)
+                        End If
                     Next
                 Else
                     If IsFTS Then
-                        Dim pk As String = mpe.GetPrimaryKeys(t, oschema)(0).PropertyAlias
+                        Dim pk As String = mpe.GetSinglePK(t, oschema)
                         Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
                         se.Into = tp.First
                         se.Attributes = Field2DbRelations.PK
                         _sl.Add(se)
                     Else
-                        For Each c As EntityPropertyAttribute In mpe.GetPrimaryKeys(t, oschema)
-                            Dim se As New SelectExpression(tp.First, c.PropertyAlias)
-                            se.Attributes = c.Behavior
-                            cl.Add(se)
+                        For Each c As MapField2Column In oschema.GetFieldColumnMap
+                            If c.IsPK Then
+                                Dim se As New SelectExpression(tp.First, c.PropertyAlias)
+                                se.Attributes = c.Attributes
+                                cl.Add(se)
+                            End If
                         Next
                     End If
                 End If
@@ -3132,10 +3146,10 @@ l1:
                 Try
                     SelectClause = Nothing
                     Dim st As Type = selOS.GetRealType(mgr.MappingEngine)
-                    Dim spk As String = mgr.MappingEngine.GetPrimaryKeys(st)(0).PropertyAlias
+                    Dim spk As String = mgr.MappingEngine.GetSinglePK(st)
                     Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(st)
                     For Each tt As Type In types
-                        Dim pk As String = mgr.MappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias
+                        Dim pk As String = mgr.MappingEngine.GetSinglePK(tt)
                         Join(JCtor.left_join(tt).on(selOS, spk).eq(tt, pk))
                         AddEntityToSelectList(tt, withLoad)
                     Next
@@ -3661,13 +3675,19 @@ l1:
                 End If
 
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-                Dim v As Object = ObjectMappingEngine.GetPropertyValue(e, pa, oschema)
+                Dim v As Object = ObjectMappingEngine.GetPropertyValue(e, pa, oschema, pi)
                 If v Is DBNull.Value Then
                     v = Nothing
                 End If
                 'pi.SetValue(ro, v, Nothing)
                 Dim pit As Type = pi.PropertyType
-                v = ObjectMappingEngine.SetValue(pit, mpe, cache, v, ro, map, m.PropertyAlias, Nothing, contextInfo)
+                Dim vals() As PKDesc = Nothing
+                'If ObjectMappingEngine.IsEntityType(pit, mpe) Then
+                '    vals = mpe.GetPKs(v, GetEntitySchema(mpe, pit))
+                'Else
+                vals = New PKDesc() {New PKDesc(pa, v)}
+                'End If
+                v = ObjectMappingEngine.SetValue(pit, mpe, cache, vals, ro, map, m.PropertyAlias, Nothing, contextInfo)
                 If v IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
@@ -4521,16 +4541,16 @@ exit_for:
             Return CType(_Clone(), QueryCmd)
         End Function
 
-        Private Function _FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
+        Private Function _FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
             For Each se As SelectExpression In _sl
                 'If se.PropType = PropType.ObjectProperty Then
                 If se.GetIntoPropertyAlias = p Then
                     If Not String.IsNullOrEmpty(se.ColumnAlias) Then
-                        Return se.ColumnAlias
+                        Return New String() {se.ColumnAlias}
                     Else
                         Dim te As TableExpression = TryCast(se.Operand, TableExpression)
                         If te IsNot Nothing Then
-                            Return te.SourceField
+                            Return New String() {te.SourceField}
                         Else
                             Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
                             'If col.Count <> 1 Then
@@ -4540,9 +4560,9 @@ exit_for:
                                 If su.EntityUnion IsNot Nothing Then
                                     Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
                                     If Not String.IsNullOrEmpty(map.SourceFieldAlias) Then
-                                        Return map.SourceFieldAlias
+                                        Return New String() {map.SourceFieldAlias}
                                     Else
-                                        Return map.ColumnExpression
+                                        Return map.SourceFields.ConvertAll(Function(item) item.SourceFieldExpression).ToArray
                                     End If
                                 End If
                             Next
@@ -4569,16 +4589,16 @@ exit_for:
             Return Nothing
         End Function
 
-        Private Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
-            Dim c As String = Nothing
+        Private Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String() Implements IExecutionContext.FindColumn
+            Dim c() As String = Nothing
             If _from.AnyQuery IsNot Nothing Then
                 c = _from.AnyQuery._FindColumn(mpe, p)
             End If
 
-            If String.IsNullOrEmpty(c) Then
+            If c Is Nothing Then
                 c = _FindColumn(mpe, p)
 
-                If String.IsNullOrEmpty(c) Then
+                If c Is Nothing Then
                     Throw New QueryCmdException("Couldn't find column for property " & p, Me)
                 End If
             End If
@@ -5500,7 +5520,7 @@ exit_for:
                 tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetSinglePK(tt)).eq(o))
                     Return SingleOrDefaultDyn(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf
@@ -5517,7 +5537,7 @@ exit_for:
                 tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKeys(tt)(0).PropertyAlias).eq(o))
+                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetSinglePK(tt)).eq(o))
                     Return SingleOrDefault(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf

@@ -447,7 +447,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
                     mpe = o.GetMappingEngine
                     oschema = mpe.GetEntitySchema(o.GetType)
                 End If
-                Dim obj As IEntity = CType(mpe.GetPropertyValue(o, propertyAlias, oschema), IEntity)
+                Dim obj As IEntity = CType(ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema), IEntity)
                 If obj IsNot Nothing Then
                     If r Is Nothing Then
                         r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
@@ -472,7 +472,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
                 End If
                 Dim obj As New AnonymousCachedEntity
                 For Each propertyAlias As String In propertyAliases
-                    Dim propValue As Object = mpe.GetPropertyValue(o, propertyAlias, oschema)
+                    Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema)
                     obj(propertyAlias) = propValue
                 Next
                 r.Add(obj)

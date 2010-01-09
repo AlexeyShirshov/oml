@@ -47,8 +47,10 @@ l1:
                             'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
                             _oschema = oschema
                             'End If
-                            For Each pk As EntityPropertyAttribute In _mgr.MappingEngine.GetPrimaryKeys(createType, oschema)
-                                l.Add(pk.PropertyAlias)
+                            For Each pk As MapField2Column In oschema.GetFieldColumnMap
+                                If pk.IsPK Then
+                                    l.Add(pk.PropertyAlias)
+                                End If
                             Next
                             If l.Count = 0 Then
                                 GoTo l1

@@ -805,13 +805,14 @@ Namespace Cache
 
         Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
             ByVal o As Object, ByVal mgr As OrmManager) As _ICachedEntity
-            Dim pk As New List(Of PKDesc)
             Dim type As Type = o.GetType
-            For Each e As EntityPropertyAttribute In mpe.GetPrimaryKeys(type, oschema)
-                Dim pkd As New PKDesc(e.PropertyAlias, ObjectMappingEngine.GetPropertyValue(o, e.PropertyAlias, oschema))
-                pk.Add(pkd)
-            Next
-            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pk.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
+            'Dim pk As New List(Of PKDesc)
+            'For Each e As EntityPropertyAttribute In mpe.GetPrimaryKeys(type, oschema)
+            '    Dim pkd As New PKDesc(e.PropertyAlias, ObjectMappingEngine.GetPropertyValue(o, e.PropertyAlias, oschema))
+            '    pk.Add(pkd)
+            'Next
+            Dim pks() As PKDesc = mpe.GetPKs(o, oschema)
+            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), Me, mpe)
             Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
             If cc IsNot Nothing Then
                 CType(c, AnonymousCachedEntity).SetKey(cc.Key)

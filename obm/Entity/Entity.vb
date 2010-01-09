@@ -529,10 +529,13 @@ Namespace Entities
 #End Region
 
         Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
-            Return ObjectMappingEngine.GetPropertyValue(Me.GetType, propertyAlias, GetEntitySchema(GetMappingEngine))
+            Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, GetEntitySchema(GetMappingEngine))
         End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
+            If oschema Is Nothing Then
+                Throw New ArgumentNullException("oschema")
+            End If
             'Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             'Dim pi As Reflection.PropertyInfo
             'If schema Is Nothing Then
@@ -541,7 +544,8 @@ Namespace Entities
             '    pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
             'End If
             'Return pi.GetValue(Me, Nothing)
-            Return oschema.GetFieldColumnMap(propertyAlias).GetValue(Me)
+            'Return oschema.GetFieldColumnMap(propertyAlias).GetValue(Me)
+            Return oschema.GetFieldColumnMap(propertyAlias).PropertyInfo.GetValue(Me, Nothing)
         End Function
 
         Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
@@ -553,7 +557,8 @@ Namespace Entities
             '    pi = schema.GetProperty(Me.GetType, oschema, propertyAlias)
             'End If
             'pi.SetValue(Me, value, Nothing)
-            oschema.GetFieldColumnMap(propertyAlias).SetValue(Me, value)
+            'oschema.GetFieldColumnMap(propertyAlias).SetValue(Me, value)
+            oschema.GetFieldColumnMap(propertyAlias).PropertyInfo.SetValue(Me, value, Nothing)
         End Sub
 
         Protected Overridable Overloads Sub Init()

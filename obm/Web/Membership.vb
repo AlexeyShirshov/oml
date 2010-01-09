@@ -500,7 +500,8 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
-            Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(schema.GetPrimaryKeys(UserMapper.GetUserType)(0).PropertyAlias).eq(providerUserKey))
+            Dim ut As Type = UserMapper.GetUserType
+            Dim users As IList = UserMapper.FindUsers(New Ctor(ut).prop(Schema.GetSinglePK(ut)).eq(providerUserKey))
             If users.Count <> 1 Then
                 Return Nothing
             End If

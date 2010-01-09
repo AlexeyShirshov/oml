@@ -750,13 +750,13 @@ Partial Public MustInherit Class OrmManager
     'End Function
 
     Public Function GetEntityFromCacheOrDB(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateObject(pk, type)
+        Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateObject(pk, type)
+        Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
     End Function
@@ -1556,7 +1556,7 @@ l1:
         Return CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
     End Function
 
-    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As _ICachedEntity
+    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As Object
         Return CachedEntity.CreateObject(pk, type, _cache, _schema)
     End Function
 
@@ -3942,10 +3942,10 @@ l1:
     End Sub
 
     Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
-        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetPrimaryKeys(m2m.Entity.GetRealType(schema))(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetSinglePK(m2m.Entity.GetRealType(schema)), Worm.Criteria.FilterOperation.Equal)
         Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
         m2m = schema.GetM2MRelation(m2m.Entity.GetRealType(schema), type2join, True)
-        Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+        Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetSinglePK(type2join), Worm.Criteria.FilterOperation.Equal)
         Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
         Return New QueryJoin() {mj, tj}
     End Function
@@ -3961,7 +3961,7 @@ l1:
         '    tbl = GetTables(selectType)(0)
         'End If
 
-        Dim jf As New JoinFilter(joinOS, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, selectType, field, oper)
+        Dim jf As New JoinFilter(joinOS, schema.GetSinglePK(type2join), selectType, field, oper)
 
         Dim t As EntityUnion = joinos
         If switchTable Then
@@ -3970,6 +3970,81 @@ l1:
 
         Return New QueryJoin(t, joinType, jf)
     End Function
+
+    Public Sub ParseValueFromDb(ByVal isNull As Boolean, ByVal att As Field2DbRelations, _
+            ByVal obj As Object, ByVal m As MapField2Column, ByVal propertyAlias As String, _
+            ByVal oschema As IEntitySchema, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal sv As PKDesc(), ByVal ce As _ICachedEntity, ByVal fac As List(Of Pair(Of String, Object)))
+        Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+        Dim value As Object = sv(0).Value
+        If pi Is Nothing Then
+            If isNull Then
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema)
+            Else
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
+            End If
+            If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+        Else
+            Dim propType As Type = pi.PropertyType
+            'If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+            '    Dim v As Object = pi.GetValue(obj, Nothing)
+            '    If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
+            '        If propType.IsEnum Then
+            '            value = [Enum].ToObject(propType, value)
+            '        Else
+            '            value = Convert.ChangeType(value, propType)
+            '        End If
+            '    End If
+            '    If Not v.Equals(value) Then
+            '        Throw New OrmManagerException("PK values is not equals (" & dr.GetName(i) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
+            '    End If
+            'Else
+            If Not isNull AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                    fac.Add(New Pair(Of String, Object)(propertyAlias, value))
+                    'If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+                    '    'obj.CreateObject(c.FieldName, value)
+                    '    obj.SetValue(pi, c, )
+                    '    obj.SetLoaded(c, True, True)
+                    '    'If GetType(OrmBase) Is pi.PropertyType Then
+                    '    '    obj.CreateObject(CInt(value))
+                    '    '    obj.SetLoaded(c, True)
+                    '    'Else
+                    '    '    Dim type_created As Type = pi.PropertyType
+                    '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                    '    '    obj.SetValue(pi, c, o)
+                    '    '    obj.SetLoaded(c, True)
+                    '    'End If
+                Else
+                    'If GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                    '    Dim type_created As Type = propType
+                    '    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                    '    If Not String.IsNullOrEmpty(en) Then
+                    '        Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                    '        If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                    '            type_created = cr
+                    '        End If
+                    '        If type_created Is Nothing Then
+                    '            Throw New OrmManagerException("Cannot find type for entity " & en)
+                    '        End If
+                    '    End If
+                    '    Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
+                    '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                    '    If o IsNot Nothing Then
+                    '        If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
+                    '        RaiseObjectLoaded(o)
+                    '    End If
+                    '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    'Else
+                    ObjectMappingEngine.SetValue(propType, MappingEngine, cache, sv, obj, map, propertyAlias, ce, m, oschema, AddressOf RaiseObjectLoaded, GetContextInfo)
+                    'End If
+                End If
+            ElseIf isNull Then
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
+                If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+            End If
+        End If
+    End Sub
 End Class
 
 'End Namespace

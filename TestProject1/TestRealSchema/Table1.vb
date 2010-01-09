@@ -116,13 +116,14 @@ Public Class Table1
     End Sub
 
     Public Overridable Overloads Function GetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
-        If fieldName = "ddd" Then
+        ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
+        If propertyAlias = "ddd" Then
             Return Name
-        ElseIf fieldName = "ID" Then
+        ElseIf propertyAlias = "ID" Then
             Return _id
         Else
-            Return oschema.GetFieldColumnMap(fieldName).GetValue(Me)
+            Return GetValueReflection(propertyAlias, oschema)
+            'Return oschema.GetFieldColumnMap(fieldName).GetValue(Me)
             'Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
             'Throw New NotSupportedException(fieldName)
             'Return MyBase.GetValue(pi, fieldName, oschema)

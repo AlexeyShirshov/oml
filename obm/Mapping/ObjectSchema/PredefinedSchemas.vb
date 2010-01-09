@@ -53,6 +53,8 @@ Namespace Entities.Meta
             Dim qj As New List(Of QueryJoin)
 
             tables.Add(ownTable)
+            _tables = tables.ToArray
+
             ObjectMappingEngine.ApplyAttributes2Schema(Me, ownProperties)
 
             If baseSchema IsNot Nothing Then

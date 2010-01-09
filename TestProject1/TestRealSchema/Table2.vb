@@ -70,7 +70,7 @@ Public Class Table2
         End Select
     End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal oschema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
         Select Case propertyAlias
             Case "Table1"
                 Return _tbl1
@@ -81,7 +81,8 @@ Public Class Table2
             Case "DT"
                 Return _dt
             Case Else
-                Return schema.GetFieldColumnMap(propertyAlias).GetValue(Me)
+                Return GetValueReflection(propertyAlias, oschema)
+                'Return schema.GetFieldColumnMap(propertyAlias).GetValue(Me)
                 'Return GetMappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)

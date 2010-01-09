@@ -105,6 +105,13 @@ Namespace Entities.Meta
             _newattributes = newAttributes
         End Sub
 
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpressions As IEnumerable(Of String), ByVal tableName As SourceFragment)
+            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+            For Each e As String In columnExpressions
+                _sf.Add(New SourceField With {.SourceFieldExpression = e})
+            Next
+        End Sub
+
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
             MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
             _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
@@ -453,7 +460,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
@@ -583,7 +595,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
@@ -709,7 +726,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mgr.MappingEngine.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If

@@ -78,6 +78,10 @@ Namespace Criteria.Core
                 End If
 
                 Dim t As Type = obj.GetType
+                If oschema Is Nothing Then
+                    oschema = schema.GetEntitySchema(t)
+                End If
+
                 Dim rt As Type = Template.ObjectSource.GetRealType(schema)
                 If rt Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
@@ -210,7 +214,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
+                Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
             Else
                 Return String.Empty
             End If
@@ -254,7 +258,7 @@ Namespace Criteria.Core
                 End If
             End If
 
-            Return New Pair(Of String)(map.ColumnExpression, prname)
+            Return New Pair(Of String)(map.SourceFieldExpression, prname)
         End Function
 
         Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
@@ -396,7 +400,7 @@ Namespace Criteria.Core
                         End Try
                     End If
 
-                    Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
+                    Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
                 End If
             Else
                 Return String.Empty
