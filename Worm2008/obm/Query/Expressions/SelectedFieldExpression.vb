@@ -490,7 +490,13 @@ Namespace Expressions2
             'If (stmtMode Or MakeStatementMode.Select) = MakeStatementMode.Select Then
             '    Return al & mpe.Delimiter & executor.FindColumn(mpe, _pa)
             'Else
-            Return al & stmt.Selector & executor.FindColumn(mpe, _pa)
+            Dim sb As New StringBuilder
+            For Each s As String In executor.FindColumn(mpe, _pa)
+                sb.Append(al).Append(stmt.Selector).Append(s)
+                sb.Append(",")
+            Next
+            sb.Length -= 1
+            Return sb.ToString
             'End If
         End Function
 

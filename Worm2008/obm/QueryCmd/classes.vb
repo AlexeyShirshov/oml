@@ -81,7 +81,7 @@ Namespace Query
         Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
         Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal newMap As OrmObjectIndex)
         Function GetFieldColumnMap(ByVal oschema As IEntitySchema, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
-        Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
+        Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
     End Interface
 
     Public Class ExecutorCtx
@@ -118,7 +118,7 @@ Namespace Query
             End Get
         End Property
 
-        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
+        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String() Implements IExecutionContext.FindColumn
             Throw New NotImplementedException
         End Function
     End Class
@@ -138,9 +138,9 @@ Namespace Query
             _s = s
         End Sub
 
-        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
-            Dim c As String = _f.FindColumn(mpe, p)
-            If String.IsNullOrEmpty(c) AndAlso _s IsNot Nothing Then
+        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String() Implements IExecutionContext.FindColumn
+            Dim c() As String = _f.FindColumn(mpe, p)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
                 c = _s.FindColumn(mpe, p)
             End If
             Return c

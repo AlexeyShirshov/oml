@@ -155,11 +155,7 @@ Namespace Expressions2
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         ElseIf ObjectMappingEngine.IsEntityType(vt, mpe) Then
-                            Dim pks As IList(Of EntityPropertyAttribute) = mpe.GetPrimaryKeys(vt)
-                            If pks.Count <> 1 Then
-                                Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
-                            End If
-                            If Equals(mpe.GetPropertyValue(evaluatedValue, pks(0).PropertyAlias), filterValue) Then
+                            If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetSinglePK(vt)), filterValue) Then
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         End If

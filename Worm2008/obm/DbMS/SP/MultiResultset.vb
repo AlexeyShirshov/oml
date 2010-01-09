@@ -30,7 +30,7 @@ Namespace Database.Storedprocs
             Private _loaded As Integer
             Private _oschema As IEntitySchema
             Private _cm As Collections.IndexedCollection(Of String, MapField2Column)
-            Private _cols As List(Of EntityPropertyAttribute)
+            'Private _cols As List(Of EntityPropertyAttribute)
             Private _entityDictionary As IDictionary
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
@@ -44,7 +44,7 @@ Namespace Database.Storedprocs
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     _oschema = mpe.GetEntitySchema(original_type)
                     _cm = _oschema.GetFieldColumnMap
-                    _cols = mpe.GetSortedFieldList(original_type, _oschema)
+                    '_cols = mpe.GetSortedFieldList(original_type, _oschema)
                     _entityDictionary = mgr.GetDictionary(original_type)
                 End If
                 Dim loaded As Integer

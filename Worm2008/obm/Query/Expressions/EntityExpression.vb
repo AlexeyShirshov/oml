@@ -109,18 +109,25 @@ Namespace Expressions2
                 [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter
             End If
 
-            Dim s As String = [alias] & map.ColumnExpression
+            Dim sb As New StringBuilder
+            For Each sf As SourceField In map.SourceFields
+                sb.Append([alias] & sf.SourceFieldExpression)
 
-            If Not String.IsNullOrEmpty(map.ColumnName) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
-                Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
-                RaiseEvent FormatBehaviour(Me, args)
+                If Not String.IsNullOrEmpty(sf.SourceFieldAlias) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
+                    Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
+                    RaiseEvent FormatBehaviour(Me, args)
 
-                If args.NeedAlias Then
-                    s &= " " & map.ColumnName
+                    If args.NeedAlias Then
+                        sb.Append(" ").Append(sf.SourceFieldAlias)
+                    End If
                 End If
-            End If
 
-            Return s
+                sb.Append(",")
+            Next
+
+            sb.Length -= 1
+
+            Return sb.ToString
         End Function
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse

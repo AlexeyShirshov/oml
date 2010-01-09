@@ -368,13 +368,6 @@ Namespace Database
                     Dim keys As New List(Of MapField2Column)
                     Dim real_t As Type = obj.GetType
                     Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
-                    Dim unions() As String = ObjectMappingEngine.GetUnions(real_t)
-                    'Dim uniontype As String = ""
-                    If unions IsNot Nothing Then
-                        Throw New NotImplementedException
-                        'uniontype = GetUnionType(obj)
-                    End If
-
                     Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     Dim es As IEntitySchema = oschema
                     If rs IsNot Nothing AndAlso (rs.SupportedOperation And IReadonlyObjectSchema.Operation.Insert) = IReadonlyObjectSchema.Operation.Insert Then
@@ -401,10 +394,6 @@ Namespace Database
                         If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                          (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
                             Dim tb As SourceFragment = mpe.GetPropertyTable(es, propertyAlias)
-                            If unions IsNot Nothing Then
-                                Throw New NotImplementedException
-                                'tb = MapUnionType2Table(real_t, uniontype)
-                            End If
 
                             Dim f As EntityFilter = Nothing
                             Dim v As Object = mpe.ChangeValueType(es, propertyAlias, current)
@@ -467,7 +456,7 @@ l1:
                         If Not QueryJoin.IsEmpty(jn) Then
                             Dim f As IFilter = jn.Condition
                             For Each m As MapField2Column In keys
-                                f = JoinFilter.ChangeEntityJoinToLiteral(mpe, f, real_t, m.PropertyAlias, "@pk_" & m.ColumnExpression)
+                                f = JoinFilter.ChangeEntityJoinToLiteral(mpe, f, real_t, m.PropertyAlias, "@pk_" & m.SourceFieldExpression)
 
                                 If f Is Nothing Then
                                     Throw New ObjectMappingException("Cannot change join")
@@ -479,7 +468,7 @@ l1:
                             ins_tables(j).Filters.AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
-                    dbparams = FormInsert(mpe, ins_tables, ins_cmd, real_t, es, selectedProps, unions, Nothing)
+                    dbparams = FormInsert(mpe, ins_tables, ins_cmd, real_t, es, selectedProps, Nothing)
 
                     If True Then
                         selectedProperties = selectedProps.ConvertAll(Function(e) New SelectExpression(e))
@@ -566,7 +555,7 @@ l1:
         Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of InsertedTable), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema, _
             ByVal selectedProperties As List(Of EntityExpression), _
-            ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
+            ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
 
             If params Is Nothing Then
                 params = New ParamMgr(Me, "p")
@@ -588,7 +577,7 @@ l1:
                         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                         Dim att As Field2DbRelations = m.Attributes
                         If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Dim clm As String = m.ColumnExpression 'mpe.GetColumnNameByPropertyAlias(os, m.PropertyAlias, False, Nothing)
+                            Dim clm As String = m.SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(os, m.PropertyAlias, False, Nothing)
                             Dim s As String = "@pk_" & clm
                             Dim dt As String = "int"
                             Dim propertyAlias As String = m.PropertyAlias
@@ -755,17 +744,13 @@ l1:
                         'almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
                         ins_cmd.Append(selSb.ToString)
 
-                        If unions IsNot Nothing Then
-                            Throw New NotImplementedException
-                            'ins_cmd.Append(GetColumnNameByFieldName(type, "ID", pk_table)).Append(" = @id")
-                        Else
-                            Dim cn As New PredicateLink
-                            For Each pk As Pair(Of String) In insertedPK
-                                cn = CType(cn.[and](pk_table, mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)).eq(New LiteralValue(pk.Second)), PredicateLink)
-                            Next
-                            'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
-                            ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, Nothing))
-                        End If
+                        Dim cn As New PredicateLink
+                        For Each pk As Pair(Of String) In insertedPK
+                            Dim clm As String = os.GetFieldColumnMap(pk.First).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)
+                            cn = CType(cn.[and](pk_table, clm).eq(New LiteralValue(pk.Second)), PredicateLink)
+                        Next
+                        'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
+                        ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, Nothing))
                     End If
                 End If
             End If
@@ -788,8 +773,9 @@ l1:
 
         End Structure
 
-        Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
-            ByVal selectedProperties As List(Of EntityExpression), ByVal unions As String()) As ExecutorCtx
+        Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, _
+            ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
+            ByVal selectedProperties As List(Of EntityExpression)) As ExecutorCtx
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
@@ -829,19 +815,21 @@ l1:
 
                             If originalType IsNot currentType Then
                                 If ObjectMappingEngine.IsEntityType(original.GetType, mpe) Then
-                                    Dim sch As IEntitySchema = mpe.GetEntitySchema(originalType, False)
-                                    If sch Is Nothing Then
-                                        sch = mpe.GetPOCOEntitySchema(originalType)
-                                    End If
-                                    current = mpe.CreateObj(original.GetType, current, sch)
-                                    GoTo l1
+                                    'Dim sch As IEntitySchema = mpe.GetEntitySchema(originalType, False)
+                                    'If sch Is Nothing Then
+                                    '    sch = mpe.GetPOCOEntitySchema(originalType)
+                                    'End If
+                                    'current = mpe.CreateObj(original.GetType, current, sch)
+                                    'GoTo l1
+                                    Throw New ApplicationException
                                 ElseIf ObjectMappingEngine.IsEntityType(currentType, mpe) Then
-                                    Dim sch As IEntitySchema = mpe.GetEntitySchema(currentType, False)
-                                    If sch Is Nothing Then
-                                        sch = mpe.GetPOCOEntitySchema(currentType)
-                                    End If
-                                    original = mpe.CreateObj(currentType, original, sch)
-                                    GoTo l1
+                                    'Dim sch As IEntitySchema = mpe.GetEntitySchema(currentType, False)
+                                    'If sch Is Nothing Then
+                                    '    sch = mpe.GetPOCOEntitySchema(currentType)
+                                    'End If
+                                    'original = mpe.CreateObj(currentType, original, sch)
+                                    'GoTo l1
+                                    Throw New ApplicationException
                                 Else
                                     'Throw New InvalidOperationException(String.Format("Property {0} has different types {1} and {2}", pa, originalType, currentType))
                                     If SizeOf(original) > SizeOf(current) Then
@@ -858,8 +846,9 @@ l1:
                                 If sch Is Nothing Then
                                     sch = mpe.GetPOCOEntitySchema(currentType)
                                 End If
-                                For Each ep As EntityPropertyAttribute In mpe.GetPrimaryKeys(currentType, sch)
-                                    If Not Object.Equals(ObjectMappingEngine.GetPropertyValue(current, ep.PropertyAlias, sch), ObjectMappingEngine.GetPropertyValue(original, ep.PropertyAlias, sch)) Then
+                                For Each mp As MapField2Column In sch.GetFieldColumnMap
+                                    Dim p As String = mp.PropertyAlias
+                                    If Not Object.Equals(ObjectMappingEngine.GetPropertyValue(current, p, sch), ObjectMappingEngine.GetPropertyValue(original, p, sch)) Then
                                         GoTo l3
                                     End If
                                 Next
@@ -876,11 +865,6 @@ l3:
                         End If
 
                         Dim fieldTable As SourceFragment = mpe.GetPropertyTable(oschema, pa)
-
-                        If unions IsNot Nothing Then
-                            Throw New NotImplementedException
-                            'fieldTable = MapUnionType2Table(rt, uniontype)
-                        End If
 
                         If Not tables.ContainsKey(fieldTable) Then
                             tables.Add(fieldTable, New TableUpdate(fieldTable))
@@ -944,7 +928,7 @@ l2:
         End Function
 
         Protected Sub GetUpdateConditions(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema, _
-            ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
+            ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal filterInfo As Object)
 
             Dim rt As Type = obj.GetType
 
@@ -973,10 +957,6 @@ l2:
                     Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, TryCast(oschema, IEntitySchema), pi)
 
                     Dim tb As SourceFragment = mpe.GetPropertyTable(oschema, pa)
-                    If unions IsNot Nothing Then
-                        Throw New NotImplementedException
-                        'tb = MapUnionType2Table(rt, uniontype)
-                    End If
 
                     For Each de_table As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
                         'Dim de_table As TableUpdate = updated_tables(tb)
@@ -1013,7 +993,8 @@ l2:
             Next
         End Sub
 
-        Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+        Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, _
+            ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByRef selectedProperties As Generic.List(Of SelectExpression), ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
@@ -1036,13 +1017,6 @@ l2:
                     Dim updated_tables As New Dictionary(Of SourceFragment, TableUpdate)
                     Dim rt As Type = obj.GetType
 
-                    Dim unions() As String = ObjectMappingEngine.GetUnions(rt)
-                    'Dim uniontype As String = ""
-                    If unions IsNot Nothing Then
-                        Throw New NotImplementedException
-                        'uniontype = GetUnionType(obj)
-                    End If
-
                     'Dim sb_updates As New StringBuilder
                     Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
                     Dim esch As IEntitySchema = oschema
@@ -1051,7 +1025,7 @@ l2:
                         esch = ro.GetEditableSchema
                     End If
 
-                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps, unions)
+                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -1059,7 +1033,7 @@ l2:
                     Next
                     updated_fields = l
 
-                    GetUpdateConditions(mpe, obj, esch, updated_tables, unions, filterInfo)
+                    GetUpdateConditions(mpe, obj, esch, updated_tables, filterInfo)
 
                     selectedProperties = syncUpdateProps.ConvertAll(Function(e) New SelectExpression(e))
 
@@ -1172,7 +1146,7 @@ l2:
                                 Nothing, True, Nothing, Nothing, syncUpdateProps, esch, filterInfo))
                             Dim cn As New Condition.ConditionConstructor
                             For Each p As PKDesc In obj.GetPKValues
-                                Dim clm As String = mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
+                                Dim clm As String = esch.GetFieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
                                 cn.AddFilter(New dc.TableFilter(mpe.GetPropertyTable(esch, p.PropertyAlias), clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, filterInfo, params)
@@ -1238,7 +1212,7 @@ l2:
             Dim oldl As Integer = upd_cmd.Length
             upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and @lastErr = 0 ")
             Dim newl As Integer = upd_cmd.Length
-            FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
+            FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, params)
             If newl = upd_cmd.Length Then
                 upd_cmd.Length = oldl
                 Return False
@@ -1408,27 +1382,19 @@ l2:
             ByVal selectedProperties As Generic.IList(Of EntityExpression), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
 
             Dim selectcmd As New StringBuilder
-            Dim unions() As String = Nothing
-            If original_type IsNot Nothing Then
-                unions = ObjectMappingEngine.GetUnions(original_type)
-            End If
             'Dim pmgr As ParamMgr = params 'New ParamMgr()
 
-            If unions Is Nothing Then
-                AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, _
+            AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, _
                            TryCast(schema, IMultiTableObjectSchema), original_type)
-                If joins IsNot Nothing Then
-                    For i As Integer = 0 To joins.Length - 1
-                        Dim join As QueryJoin = CType(joins(i), QueryJoin)
+            If joins IsNot Nothing Then
+                For i As Integer = 0 To joins.Length - 1
+                    Dim join As QueryJoin = CType(joins(i), QueryJoin)
 
-                        If Not QueryJoin.IsEmpty(join) Then
-                            'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                            join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
-                        End If
-                    Next
-                End If
-            Else
-                Throw New NotImplementedException
+                    If Not QueryJoin.IsEmpty(join) Then
+                        'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
+                    End If
+                Next
             End If
 
             Dim selSb As New StringBuilder
@@ -1454,7 +1420,13 @@ l2:
                     selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(mpe.GetPrimaryKeysName(original_type, mpe, True, schema, Nothing).ConvertAll(Function(s) New EntityExpression(s, original_type))).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
+                    Dim l As New List(Of EntityExpression)
+                    For Each mp As MapField2Column In schema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            l.Add(New EntityExpression(mp.PropertyAlias, original_type))
+                        End If
+                    Next
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(l).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 End If
             Else
                 selSb.Append("*")
@@ -1633,8 +1605,6 @@ l2:
             Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, False, Nothing, Nothing, filterInfo, Nothing)
         End Function
 
-#End If
-
         ''' <summary>
         ''' Добавление джоинов для типа, когда основная таблица может не линковаться
         ''' </summary>
@@ -1765,6 +1735,7 @@ l2:
                 'End If
             Next
         End Sub
+#End If
 
         ''' <summary>
         ''' Построение таблиц, включая джоины
@@ -2214,105 +2185,105 @@ l2:
             End If
         End Function
 
-        Public Function GetDictionarySelect(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, ByVal filter_info As Object) As String
+        'Public Function GetDictionarySelect(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal level As Integer, _
+        '    ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, ByVal filter_info As Object) As String
 
-            Dim odic As ISupportAlphabet = TryCast(mpe.GetEntitySchema(type), ISupportAlphabet)
-            If odic Is Nothing OrElse String.IsNullOrEmpty(odic.GetFirstDicField) Then
-                Throw New InvalidOperationException(String.Format("Type {0} is not supports dictionary", type.Name))
-            End If
+        '    Dim odic As ISupportAlphabet = TryCast(mpe.GetEntitySchema(type), ISupportAlphabet)
+        '    If odic Is Nothing OrElse String.IsNullOrEmpty(odic.GetFirstDicField) Then
+        '        Throw New InvalidOperationException(String.Format("Type {0} is not supports dictionary", type.Name))
+        '    End If
 
-            Dim sb As New StringBuilder
-            Dim almgr As AliasMgr = AliasMgr.Create
+        '    Dim sb As New StringBuilder
+        '    Dim almgr As AliasMgr = AliasMgr.Create
 
-            If String.IsNullOrEmpty(odic.GetSecondDicField) Then
-                sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, True))
-            Else
-                Dim joins2() As Worm.Criteria.Joins.QueryJoin = CreateFullJoinsClone(joins)
-                sb.Append("select name,sum(cnt) from (")
-                sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, False))
-                sb.Append(" union ")
-                almgr = AliasMgr.Create
-                sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetSecondDicField, level, almgr, params, filter, joins2, filter_info, False))
-                sb.Append(") sd group by name order by name")
-            End If
+        '    If String.IsNullOrEmpty(odic.GetSecondDicField) Then
+        '        sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, True))
+        '    Else
+        '        Dim joins2() As Worm.Criteria.Joins.QueryJoin = CreateFullJoinsClone(joins)
+        '        sb.Append("select name,sum(cnt) from (")
+        '        sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, False))
+        '        sb.Append(" union ")
+        '        almgr = AliasMgr.Create
+        '        sb.Append(GetDicStmt(mpe, type, CType(odic, IEntitySchema), odic.GetSecondDicField, level, almgr, params, filter, joins2, filter_info, False))
+        '        sb.Append(") sd group by name order by name")
+        '    End If
 
-            Return sb.ToString
-        End Function
+        '    Return sb.ToString
+        'End Function
 
-        Public Function GetDictionarySelect(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, ByVal filter_info As Object, _
-            ByVal firstField As String, ByVal secField As String) As String
+        'Public Function GetDictionarySelect(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal level As Integer, _
+        '    ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, ByVal filter_info As Object, _
+        '    ByVal firstField As String, ByVal secField As String) As String
 
-            If String.IsNullOrEmpty(firstField) Then
-                Throw New ArgumentNullException("firstField")
-            End If
+        '    If String.IsNullOrEmpty(firstField) Then
+        '        Throw New ArgumentNullException("firstField")
+        '    End If
 
-            Dim s As IEntitySchema = mpe.GetEntitySchema(type)
+        '    Dim s As IEntitySchema = mpe.GetEntitySchema(type)
 
-            Dim sb As New StringBuilder
-            Dim almgr As AliasMgr = AliasMgr.Create
+        '    Dim sb As New StringBuilder
+        '    Dim almgr As AliasMgr = AliasMgr.Create
 
-            If String.IsNullOrEmpty(secField) Then
-                sb.Append(GetDicStmt(mpe, type, s, firstField, level, almgr, params, filter, joins, filter_info, True))
-            Else
-                Dim joins2() As Worm.Criteria.Joins.QueryJoin = CreateFullJoinsClone(joins)
-                sb.Append("select name,sum(cnt) from (")
-                sb.Append(GetDicStmt(mpe, type, s, firstField, level, almgr, params, filter, joins, filter_info, False))
-                sb.Append(" union ")
-                almgr = AliasMgr.Create
-                sb.Append(GetDicStmt(mpe, type, s, secField, level, almgr, params, filter, joins, filter_info, False))
-                sb.Append(") sd group by name order by name")
-            End If
+        '    If String.IsNullOrEmpty(secField) Then
+        '        sb.Append(GetDicStmt(mpe, type, s, firstField, level, almgr, params, filter, joins, filter_info, True))
+        '    Else
+        '        Dim joins2() As Worm.Criteria.Joins.QueryJoin = CreateFullJoinsClone(joins)
+        '        sb.Append("select name,sum(cnt) from (")
+        '        sb.Append(GetDicStmt(mpe, type, s, firstField, level, almgr, params, filter, joins, filter_info, False))
+        '        sb.Append(" union ")
+        '        almgr = AliasMgr.Create
+        '        sb.Append(GetDicStmt(mpe, type, s, secField, level, almgr, params, filter, joins, filter_info, False))
+        '        sb.Append(") sd group by name order by name")
+        '    End If
 
-            Return sb.ToString
-        End Function
+        '    Return sb.ToString
+        'End Function
 
-        Protected Function GetDicStmt(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal field As String, ByVal level As Integer, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
-            ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
-            Dim sb As New StringBuilder
-            Dim tbl As SourceFragment = mpe.GetTables(schema)(0)
-            Dim al As String = "ZZZZZXXXXXXXX"
-            'If Not almgr.Aliases.ContainsKey(tbl) Then
-            '    al = almgr.AddTable(tbl)
-            'Else
-            '    al = almgr.Aliases(tbl)
-            'End If
+        'Protected Function GetDicStmt(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal field As String, ByVal level As Integer, _
+        '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
+        '    ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
+        '    Dim sb As New StringBuilder
+        '    Dim tbl As SourceFragment = mpe.GetTables(schema)(0)
+        '    Dim al As String = "ZZZZZXXXXXXXX"
+        '    'If Not almgr.Aliases.ContainsKey(tbl) Then
+        '    '    al = almgr.AddTable(tbl)
+        '    'Else
+        '    '    al = almgr.Aliases(tbl)
+        '    'End If
 
-            Dim n As String = mpe.GetColumnNameByPropertyAlias(schema, field, False, Nothing)
-            sb.Append("select left(")
-            sb.Append(al).Append(Selector).Append(n)
-            sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
-            AppendFrom(mpe, almgr, filter_info, mpe.GetTables(t), sb, params, _
-                       TryCast(schema, IMultiTableObjectSchema), t)
-            If joins IsNot Nothing Then
-                For i As Integer = 0 To joins.Length - 1
-                    Dim join As QueryJoin = CType(joins(i), QueryJoin)
+        '    Dim n As String = mpe.GetColumnNameByPropertyAlias(schema, field, False, Nothing)
+        '    sb.Append("select left(")
+        '    sb.Append(al).Append(Selector).Append(n)
+        '    sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
+        '    AppendFrom(mpe, almgr, filter_info, mpe.GetTables(t), sb, params, _
+        '               TryCast(schema, IMultiTableObjectSchema), t)
+        '    If joins IsNot Nothing Then
+        '        For i As Integer = 0 To joins.Length - 1
+        '            Dim join As QueryJoin = CType(joins(i), QueryJoin)
 
-                    If Not QueryJoin.IsEmpty(join) Then
-                        'almgr.AddTable(join.Table, Nothing, params)
-                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing, sb)
-                    End If
-                Next
-            End If
+        '            If Not QueryJoin.IsEmpty(join) Then
+        '                'almgr.AddTable(join.Table, Nothing, params)
+        '                join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filter_info, almgr, params, Nothing, sb)
+        '            End If
+        '        Next
+        '    End If
 
-            AppendWhere(mpe, t, filter, almgr, sb, filter_info, params)
+        '    AppendWhere(mpe, t, filter, almgr, sb, filter_info, params)
 
-            sb.Append(" group by left(")
-            sb.Append(al).Append(Selector).Append(n)
-            sb.Append(",").Append(level).Append(")")
+        '    sb.Append(" group by left(")
+        '    sb.Append(al).Append(Selector).Append(n)
+        '    sb.Append(",").Append(level).Append(")")
 
-            If appendOrder Then
-                sb.Append(" order by left(")
-                sb.Append(al).Append(Selector).Append(n)
-                sb.Append(",").Append(level).Append(")")
-            End If
+        '    If appendOrder Then
+        '        sb.Append(" order by left(")
+        '        sb.Append(al).Append(Selector).Append(n)
+        '        sb.Append(",").Append(level).Append(")")
+        '    End If
 
-            sb.Replace(al, almgr.GetAlias(tbl, Nothing))
+        '    sb.Replace(al, almgr.GetAlias(tbl, Nothing))
 
-            Return sb.ToString
-        End Function
+        '    Return sb.ToString
+        'End Function
 
         Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As IKeyEntity, _
             ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation, _
@@ -2415,7 +2386,7 @@ l2:
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If m.IsPK OrElse m.IsRowVersion Then
 
-                    Dim s As String = m.ColumnExpression 'mpe.GetColumnNameByPropertyAlias(t, mpe, c.PropertyAlias, False, Nothing)
+                    Dim s As String = m.SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(t, mpe, c.PropertyAlias, False, Nothing)
                     If cm Then
                         sb.Append(", ")
                     Else

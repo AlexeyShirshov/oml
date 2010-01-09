@@ -925,7 +925,7 @@ l1:
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Nothing, oschema, m.PropertyInfo)
                     SetLoaded(propertyAlias, True, True, map, mpe)
                 Case XmlNodeType.Element
-                    Dim o As ICachedEntity = Nothing
+                    Dim o As Object = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
                     'Using mc As IGetManager = GetMgr()
                     'If m.IsFactory Then
@@ -942,8 +942,8 @@ l1:
                     'Else
                     o = mgr.CreateObject(pk, m.PropertyInfo.PropertyType)
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, o, oschema, m.PropertyInfo)
-                    If o IsNot Nothing Then
-                        o.SetCreateManager(CreateManager)
+                    If o IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(o.GetType) Then
+                        CType(o, _ICachedEntity).SetCreateManager(CreateManager)
                         'RaiseObjectLoaded(o)
                     End If
                     'End If
@@ -1096,25 +1096,15 @@ l1:
         ''' <exception cref="InvalidOperationException">Если невозможно получить схему для типа</exception>
         ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и значение первичного ключа невозможно получить по рефлекшену.</exception>
         Public Overridable Function GetPKValues() As PKDesc() Implements ICachedEntity.GetPKValues
-            Dim l As New List(Of PKDesc)
-            Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
-            Dim oschema As IEntitySchema = Nothing
-            If schema Is Nothing Then
-                oschema = ObjectMappingEngine.GetEntitySchema(Me.GetType, Nothing, Nothing, Nothing)
-            Else
-                oschema = schema.GetEntitySchema(Me.GetType)
-            End If
+            Dim mpe As Worm.ObjectMappingEngine = GetMappingEngine()
+
+            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
 
             If oschema Is Nothing Then
                 Throw New InvalidOperationException(String.Format("Cannot get entity schema for type {0}", Me.GetType))
             End If
 
-            For Each mp As MapField2Column In oschema.GetFieldColumnMap
-                If mp.IsPK Then
-                    l.Add(New PKDesc(mp.PropertyAlias, ObjectMappingEngine.GetPropertyValue(Me, mp.PropertyAlias, oschema, mp.PropertyInfo)))
-                End If
-            Next
-            Return l.ToArray
+            Return mpe.GetPKs(Me, oschema)
         End Function
 
         Protected ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy

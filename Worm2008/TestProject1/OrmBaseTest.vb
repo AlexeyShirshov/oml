@@ -443,12 +443,6 @@ End Class
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
-    Public Sub TestGetUnions()
-        Dim schema As New Worm.ObjectMappingEngine("1")
-        Worm.ObjectMappingEngine.GetUnions(Nothing)
-    End Sub
-
-    <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetColumnValue()
         Dim schema As New Worm.ObjectMappingEngine("1")
         schema.GetPropertyValue(Nothing, "ID")

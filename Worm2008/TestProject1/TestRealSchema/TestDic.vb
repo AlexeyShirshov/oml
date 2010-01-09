@@ -12,20 +12,20 @@ Imports Worm.Misc
 <TestClass()> _
 Public Class TestDic
 
-    <TestMethod()> _
-    Public Sub TestStmt()
+    '<TestMethod()> _
+    'Public Sub TestStmt()
 
-        Dim s As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
-        Dim p As New ParamMgr(gen, "p")
-        Dim stmt As String = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing)
-        Dim checkedStmt As String = "select left(t1.name,1) name,count(*) cnt from dbo.Table1 t1 group by left(t1.name,1) order by left(t1.name,1)"
-        Assert.AreEqual(checkedStmt, stmt)
+    '    Dim s As New Worm.ObjectMappingEngine("1")
+    '    Dim gen As New SQLGenerator
+    '    Dim p As New ParamMgr(gen, "p")
+    '    Dim stmt As String = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing)
+    '    Dim checkedStmt As String = "select left(t1.name,1) name,count(*) cnt from dbo.Table1 t1 group by left(t1.name,1) order by left(t1.name,1)"
+    '    Assert.AreEqual(checkedStmt, stmt)
 
-        stmt = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing, "Title", Nothing)
+    '    stmt = gen.GetDictionarySelect(s, GetType(Table1), 1, p, Nothing, Nothing, Nothing, "Title", Nothing)
 
-        Assert.AreEqual(checkedStmt, stmt)
-    End Sub
+    '    Assert.AreEqual(checkedStmt, stmt)
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestLike()

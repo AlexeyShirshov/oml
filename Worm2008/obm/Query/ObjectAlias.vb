@@ -315,7 +315,7 @@ Namespace Query
 
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
-                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe))(0).PropertyAlias
+                Return mpe.GetSinglePK(Entity.GetRealType(mpe))
             End If
 
             Return PropertyAlias
@@ -323,7 +323,8 @@ Namespace Query
 
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
-                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe), oschema)(0).PropertyAlias
+                Dim eu As EntityUnion = Entity
+                Return mpe.GetSinglePK(oschema, Function() eu.GetRealType(mpe))
             End If
 
             Return PropertyAlias

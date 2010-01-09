@@ -236,7 +236,7 @@ Namespace Cache
 
         Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk() As PKDesc, ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
-            Dim o As _ICachedEntity = CachedEntity.CreateObject(pk, type, cache, mpe)
+            Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, cache, mpe), _ICachedEntity)
 
             o.SetObjectState(ObjectState.NotLoaded)
 

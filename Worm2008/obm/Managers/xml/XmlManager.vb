@@ -281,9 +281,10 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            For Each m As MapField2Column In oschema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            For Each m As MapField2Column In map
                 If m.IsPK Then
-                    Dim attr As String = m.ColumnExpression
+                    Dim attr As String = m.SourceFieldExpression
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -292,7 +293,8 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
 
-                        ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                        MappingEngine.ParsePKFromDb(obj, False, oschema, map, obj, m, m.PropertyAlias, nodes.Current.Value)
+                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         sn = True
                         cnt += 1
                     Loop
@@ -309,7 +311,7 @@ Namespace Xml
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             For Each m As MapField2Column In map
                 If Not m.IsPK Then
-                    Dim attr As String = m.ColumnExpression
+                    Dim attr As String = m.SourceFieldExpression
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -317,8 +319,9 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
-                        If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
+                        ParseValueFromDb(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, TryCast(obj, _ICachedEntity), Nothing)
+                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                        'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
                         sn = True
                         cnt += 1
                     Loop

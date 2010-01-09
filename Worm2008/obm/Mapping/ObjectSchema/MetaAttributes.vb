@@ -101,7 +101,7 @@ Namespace Entities.Meta
 
         Private _version As String
 
-        Private _sf() As SourceFieldAttribute
+        Private _sf(-1) As SourceFieldAttribute
 
         Public Sub New()
         End Sub
@@ -217,6 +217,7 @@ Namespace Entities.Meta
             Set(ByVal value As String)
                 If _sf.Length = 0 Then
                     ReDim _sf(0)
+                    _sf(0) = New SourceFieldAttribute
                 ElseIf _sf.Length > 1 Then
                     Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
                 End If

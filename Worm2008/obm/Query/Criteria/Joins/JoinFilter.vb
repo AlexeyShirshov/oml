@@ -402,7 +402,7 @@ Namespace Criteria.Joins
             '    '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
             'End If
 
-            sb.Append(_l.ToString).Append(" - ").Append(_r.ToString).Append(" - ")
+            sb.Append(_l._ToString).Append(" - ").Append(_r._ToString).Append(" - ")
             Return sb.ToString
         End Function
 
@@ -578,12 +578,12 @@ Namespace Criteria.Joins
 
             Dim lp As String = [alias]
             If map IsNot Nothing Then
-                lp &= map.ColumnExpression
+                lp &= map.SourceFieldExpression
             End If
 
             Dim rp As String = alias2
             If map2 IsNot Nothing Then
-                rp &= map2.ColumnExpression
+                rp &= map2.SourceFieldExpression
             End If
 
             Return lp & stmt.Oper2String(_oper) & rp
