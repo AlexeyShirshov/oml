@@ -2282,7 +2282,7 @@ l1:
                         'lock = True
 
                         If entityDictionary IsNot Nothing AndAlso (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
-                            robj = NormalizeObject(ce, entityDictionary, fromRS, True, oschema)
+                            robj = NormalizeObject(ce, entityDictionary, fromRS OrElse ce.ObjectState = ObjectState.Created, True, oschema)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
                             ce = CType(robj, _ICachedEntity)

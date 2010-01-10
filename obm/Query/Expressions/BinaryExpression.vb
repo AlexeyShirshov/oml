@@ -334,6 +334,7 @@ Namespace Expressions2
             If Right Is Nothing Then
                 Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
             End If
+            'If typeof Left is EntityExpression
             Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
                 stmt.BinaryOperator2String(_oper) & _
                 Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"

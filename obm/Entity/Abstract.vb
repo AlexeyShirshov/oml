@@ -74,6 +74,11 @@ Namespace Entities
 
     Public Interface IEntity
         Inherits ICloneable
+        ''' <summary>
+        ''' Объект блокировки сущности
+        ''' </summary>
+        ''' <returns>Возвращает объект в конструкторе которого создана блокировка на сущность. Блокировка снимается в методе <see cref="IDisposable.Dispose"/></returns>
+        ''' <remarks>Необходимо использовать блокировку при дуступе к внутреним метаданными сущности, таким как <see cref="IEntity.ObjectState"/></remarks>
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity

@@ -662,15 +662,12 @@ Namespace Cache
             If a Is Nothing Then
                 If oc Is Nothing Then oc = ShadowCopy(id, cb)
                 If oc IsNot Nothing Then
-                    a = oc.Obj
-                    AddObjectInternal(a, id, entityDictionary)
-                    Return a
+                    Return AddObjectInternal(oc.Obj, id, entityDictionary)
                 End If
             End If
 
             If a Is Nothing AndAlso addIfNotFound Then
-                a = obj
-                AddObjectInternal(a, id, entityDictionary)
+                a = AddObjectInternal(obj, id, entityDictionary)
             End If
 
             Return a
@@ -760,27 +757,29 @@ Namespace Cache
             Return CType(FindObjectInCache(type, o, pkw, cb, dic, addOnCreate, False), ICachedEntity)
         End Function
 
-        Protected Friend Shared Sub AddObjectInternal(ByVal obj As Object, ByVal id As PKWrapper, ByVal dic As IDictionary)
+        Protected Friend Shared Function AddObjectInternal(ByVal obj As Object, ByVal id As PKWrapper, ByVal dic As IDictionary) As Object
 #If DEBUG Then
             Dim e As IEntity = TryCast(obj, IEntity)
             If e IsNot Nothing Then Debug.Assert(e.ObjectState <> ObjectState.Deleted)
 #End If
-            Dim trace As Boolean = False
+            'Dim trace As Boolean = False
             SyncLock dic.SyncRoot
                 If Not dic.Contains(id) Then
                     dic.Add(id, obj)
+                    Return obj
 #If TraceCreation Then
                 Diagnostics.Debug.WriteLine(String.Format("{2} - dt: {0}, {1}", Now, Environment.StackTrace, obj.GetName))
 #End If
                 Else
-                    trace = True
+                    'Trace = True
+                    Return dic(id)
                 End If
             End SyncLock
 
-            If trace AndAlso OrmManager._mcSwitch.TraceVerbose Then
-                OrmManager.WriteLine(String.Format("Attempt to add existing object of type {0} ({1}) to cashe", obj.GetType, id.ToString))
-            End If
-        End Sub
+            'If trace AndAlso OrmManager._mcSwitch.TraceVerbose Then
+            '    OrmManager.WriteLine(String.Format("Attempt to add existing object of type {0} ({1}) to cashe", obj.GetType, id.ToString))
+            'End If
+        End Function
 
         Public Function GetAllKeys() As List(Of String) Implements IExploreQueryCache.GetAllKeys
             Dim l As New List(Of String)
