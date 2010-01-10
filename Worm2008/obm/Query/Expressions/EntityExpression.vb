@@ -110,22 +110,37 @@ Namespace Expressions2
             End If
 
             Dim sb As New StringBuilder
+            Dim lastPostfix As Integer = 1
             For Each sf As SourceField In map.SourceFields
+                Dim idx_beg As Integer = sb.Length
                 sb.Append([alias] & sf.SourceFieldExpression)
 
-                If Not String.IsNullOrEmpty(sf.SourceFieldAlias) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
-                    Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
-                    RaiseEvent FormatBehaviour(Me, args)
+                Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
+                RaiseEvent FormatBehaviour(Me, args)
 
-                    If args.NeedAlias Then
+                If args.NeedAlias Then
+                    If Not String.IsNullOrEmpty(sf.SourceFieldAlias) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
                         sb.Append(" ").Append(sf.SourceFieldAlias)
                     End If
                 End If
 
-                sb.Append(",")
+                If args.CustomStatement IsNot Nothing Then
+                    If args.CustomStatement.FromLeft Then
+                        sb.Insert(idx_beg, args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                            almgr, contextFilter, stmtMode, executor, sf))
+                    Else
+                        sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                            almgr, contextFilter, stmtMode, executor, sf))
+                    End If
+                    sb.Append(" and ")
+                    lastPostfix = 5
+                Else
+                    sb.Append(",")
+                End If
+
             Next
 
-            sb.Length -= 1
+            sb.Length -= lastPostfix
 
             Return sb.ToString
         End Function

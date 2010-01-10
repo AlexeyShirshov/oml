@@ -1593,7 +1593,12 @@ l1:
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
-        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, True, False), _ICachedEntity)
+        Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
+        If e Is Nothing Then
+            e.Load(Me)
+            e = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
+        End If
+        Return e
     End Function
 
     Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity

@@ -1257,6 +1257,21 @@ Namespace Entities
         NotLoaded
     End Enum
 
+    Public Enum EntityState
+        Flag_HasIdentity = 1
+        Flag_NotExistsInStore = 2
+        Flag_ExistsInStore = 4
+        Flag_Modify = 8
+        Flag_Delete = 16
+
+        Created = 0
+        NotExistsInStore = Flag_HasIdentity + Flag_NotExistsInStore
+        ExistsInStore = Flag_HasIdentity + Flag_ExistsInStore
+        Modifing = ExistsInStore + Flag_Modify
+        Deleting = ExistsInStore + Flag_Delete
+        Deleted = NotExistsInStore + Flag_Delete
+        SyncStore = Flag_NotExistsInStore + Flag_ExistsInStore
+    End Enum
     '    Public Module OrmBaseT
     '        Public Const PKName As String = "ID"
     '    End Module

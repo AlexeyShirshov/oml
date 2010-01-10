@@ -136,6 +136,17 @@ Namespace Expressions2
 
         Class FormatBehaviourArgs
 
+            Public Delegate Function MakeStatementDelegate(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
+                          ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
+                          ByVal almgr As IPrepareTable, ByVal contextFilter As Object, _
+                          ByVal stmtMode As MakeStatementMode, ByVal executor As IExecutionContext, _
+                          ByVal field As SourceField) As String
+
+            Class CustomStatementClass
+                Public FromLeft As Boolean
+                Public MakeStatement As MakeStatementDelegate
+            End Class
+
             Private _notNeedAlias As Boolean
             Public Property NeedAlias() As Boolean
                 Get
@@ -143,6 +154,16 @@ Namespace Expressions2
                 End Get
                 Set(ByVal value As Boolean)
                     _notNeedAlias = Not value
+                End Set
+            End Property
+
+            Private _сustom As CustomStatementClass
+            Public Property CustomStatement() As CustomStatementClass
+                Get
+                    Return _сustom
+                End Get
+                Set(ByVal value As CustomStatementClass)
+                    _сustom = value
                 End Set
             End Property
 
