@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandLineParser.cs" />
     <Compile Include="Globalization.cs" />
     <Compile Include="Pairs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
