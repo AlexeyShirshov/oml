@@ -143,7 +143,7 @@ Namespace Criteria.Joins
                     Dim als As String = almgr.AddTable(tbl2, os_)
 
                     sb.Append(") as ").Append(als).Append(" on ")
-                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, filterInfo, almgr, pname))
+                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, New CombineExecutor(al.Query, executor), filterInfo, almgr, pname))
                     'almgr.Replace(mpe, schema, tbl2, os_, sb)
                     Return tbl2
                 End If

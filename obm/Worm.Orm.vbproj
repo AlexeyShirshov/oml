@@ -107,7 +107,7 @@
     </CodeAnalysisRules>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
-    <DefineConstants>DebugLocks,TraceManagerCreation,dsfg="xxx"</DefineConstants>
+    <DefineConstants>DebugLocks,TraceManagerCreation,ExcludeFindMethods</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugNonUserInstance|AnyCPU' ">
@@ -160,6 +160,7 @@
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +191,7 @@
     <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
     <Compile Include="Query\Criteria\Filters\Templates.vb" />
     <Compile Include="Query\Builders\PredicateBuilder.vb" />
+    <Compile Include="Query\Criteria\Predicates\PredicateBase.vb" />
     <Compile Include="Query\Criteria\Predicates\Predicates.vb" />
     <Compile Include="Query\Criteria\Predicates\PredicateLink.vb" />
     <Compile Include="Query\Criteria\Expressions.vb" />
@@ -207,12 +209,14 @@
     <Compile Include="Query\Expressions\AggregateExpression.vb" />
     <Compile Include="Query\Expressions\BinaryExpression.vb" />
     <Compile Include="Query\Expressions\EntityExpression.vb" />
+    <Compile Include="Query\Expressions\helper.vb" />
     <Compile Include="Query\Expressions\Interfaces.vb" />
     <Compile Include="Query\Expressions\ParameterExpression.vb" />
     <Compile Include="Query\Expressions\Primitive.vb" />
     <Compile Include="Query\Expressions\SelectedFieldExpression.vb" />
     <Compile Include="Query\Expressions\SelectExpressions.vb" />
     <Compile Include="Query\Expressions\TableExpression.vb" />
+    <Compile Include="Query\Expressions\UnaryExpression.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />

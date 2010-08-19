@@ -91,7 +91,7 @@ Imports Worm.Query
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
-        Assert.AreEqual(al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression, p.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual(al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").SourceFieldExpression, p.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestUnary()
@@ -112,7 +112,7 @@ Imports Worm.Query
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
-        Assert.AreEqual("-" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression, u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("-" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").SourceFieldExpression, u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestUnaryNot()
@@ -133,7 +133,7 @@ Imports Worm.Query
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
-        Assert.AreEqual("~" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression, u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("~" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").SourceFieldExpression, u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestCustom()
@@ -154,7 +154,7 @@ Imports Worm.Query
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
-        Assert.AreEqual("isnull(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").ColumnExpression & ")", u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("isnull(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).GetFieldColumnMap("Str").SourceFieldExpression & ")", u.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
 End Class

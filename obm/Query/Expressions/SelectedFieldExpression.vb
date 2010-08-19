@@ -7,17 +7,19 @@ Namespace Expressions2
     Public Class SelectExpression
         Implements Expressions2.IExpression
 
-        Private _exp As Expressions2.IExpression
+        Private ReadOnly _exp As Expressions2.IExpression
         Private _falias As String
 
         Private _attr As Field2DbRelations
         Private _dstProp As String
         Private _dst As EntityUnion
+        Private _correctIdx As Boolean
 
 #Region " Cache "
-        Friend _c As EntityPropertyAttribute
-        Friend _pi As Reflection.PropertyInfo
+        'Friend _c As EntityPropertyAttribute
+        'Friend _pi As Reflection.PropertyInfo
         Friend _realAtt As Field2DbRelations
+        Friend _m As MapField2Column
         Friend _tempMark As String
 #End Region
 
@@ -211,18 +213,19 @@ Namespace Expressions2
 
 #End Region
 
-        Public Sub CopyTo(ByVal s As SelectExpression)
-            With s
-                ._exp = _exp
-                ._attr = _attr
-                ._c = _c
-                ._dst = _dst
-                ._falias = _falias
-                ._pi = _pi
-                ._realAtt = _realAtt
-                ._dstProp = _dstProp
-            End With
-        End Sub
+        'Public Sub CopyTo(ByVal s As SelectExpression)
+        '    With s
+        '        ._exp = _exp
+        '        ._attr = _attr
+        '        ._dst = _dst
+        '        ._falias = _falias
+        '        '._c = _c
+        '        '._pi = _pi
+        '        ._realAtt = _realAtt
+        '        ._dstProp = _dstProp
+        '        ._m = _m
+        '    End With
+        'End Sub
 
         'Protected Sub RaiseOnChange()
         '    RaiseEvent OnChange()
@@ -241,19 +244,34 @@ Namespace Expressions2
                 'End If
                 Dim te As TableExpression = TryCast(s.Operand, TableExpression)
                 If te IsNot Nothing Then
-                    c.Add(New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                    Dim m As MapField2Column = New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes)
+                    c.Add(m)
+                    m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                 Else
                     Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
                     If ee IsNot Nothing Then
-                        c.Add(New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                        Dim m As MapField2Column = New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes)
+                        c.Add(m)
+                        m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                     Else
                         Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
-                        c.Add(New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes) With {.ColumnName = s.ColumnAlias})
+                        Dim m As MapField2Column = New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes)
+                        c.Add(m)
+                        m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                     End If
                 End If
             Next
             Return c
         End Function
+
+        Public Property CorrectFieldIndex() As Boolean
+            Get
+                Return _correctIdx
+            End Get
+            Set(ByVal value As Boolean)
+                _correctIdx = value
+            End Set
+        End Property
 
         Public Property Attributes() As Field2DbRelations
             Get
@@ -324,32 +342,64 @@ Namespace Expressions2
             _exp.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
         End Sub
 
+        Private _intoPA As String
         Public Function GetIntoPropertyAlias() As String
-            Dim propertyAlias As String = IntoPropertyAlias
+            Dim propertyAlias As String = _intoPA
             If String.IsNullOrEmpty(propertyAlias) Then
-                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
-                If ee IsNot Nothing Then
-                    propertyAlias = ee.ObjectProperty.PropertyAlias
-                Else
-                    Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
-                    If pe IsNot Nothing Then
-                        propertyAlias = pe.PropertyAlias
+                propertyAlias = IntoPropertyAlias
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
+                    If ee IsNot Nothing Then
+                        propertyAlias = ee.ObjectProperty.PropertyAlias
+                    Else
+                        Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
+                        If pe IsNot Nothing Then
+                            propertyAlias = pe.PropertyAlias
+                        Else
+                            For Each e As IExpression In _exp.GetExpressions
+                                ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                                If ee IsNot Nothing Then
+                                    propertyAlias = ee.ObjectProperty.PropertyAlias
+                                    Exit For
+                                Else
+                                    pe = TryCast(e, PropertyAliasExpression)
+                                    If pe IsNot Nothing Then
+                                        propertyAlias = pe.PropertyAlias
+                                        Exit For
+                                    End If
+                                End If
+                            Next
+                        End If
                     End If
                 End If
-            End If
-            If String.IsNullOrEmpty(propertyAlias) Then
-                propertyAlias = ColumnAlias
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    propertyAlias = ColumnAlias
+                End If
+                _intoPA = propertyAlias
             End If
             Return propertyAlias
         End Function
 
+        Private _intoEU As EntityUnion
         Public Function GetIntoEntityUnion() As EntityUnion
-            Dim eu As EntityUnion = Into
+            Dim eu As EntityUnion = _intoEU
             If eu Is Nothing Then
-                Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
-                If ee IsNot Nothing Then
-                    eu = ee.ObjectProperty.Entity
+                eu = Into
+                If eu Is Nothing Then
+                    Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
+                    If ee IsNot Nothing Then
+                        eu = ee.ObjectProperty.Entity
+                    Else
+                        For Each e As IExpression In _exp.GetExpressions
+                            ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                            If ee IsNot Nothing Then
+                                eu = ee.ObjectProperty.Entity
+                                Exit For
+                            End If
+                        Next
+                    End If
                 End If
+                _intoEU = eu
             End If
             Return eu
         End Function
@@ -440,7 +490,13 @@ Namespace Expressions2
             'If (stmtMode Or MakeStatementMode.Select) = MakeStatementMode.Select Then
             '    Return al & mpe.Delimiter & executor.FindColumn(mpe, _pa)
             'Else
-            Return al & stmt.Selector & executor.FindColumn(mpe, _pa)
+            Dim sb As New StringBuilder
+            For Each s As String In executor.FindColumn(mpe, _pa)
+                sb.Append(al).Append(stmt.Selector).Append(s)
+                sb.Append(",")
+            Next
+            sb.Length -= 1
+            Return sb.ToString
             'End If
         End Function
 

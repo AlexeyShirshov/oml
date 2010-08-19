@@ -67,15 +67,18 @@ Namespace Query
             End Get
         End Property
 
+#If DEBUG Then
         Public Overrides Function ToString() As String
-            If _tf IsNot Nothing Then
-                Return _tf.First.RawName & "$" & _tf.Second
-            ElseIf _c IsNot Nothing Then
-                Return _c._ToString
-            Else
-                Return _op.Entity._ToString & "$" & _op.PropertyAlias
-            End If
+            Throw New NotSupportedException
+            'If _tf IsNot Nothing Then
+            '    Return _tf.First.RawName & "$" & _tf.Second
+            'ElseIf _c IsNot Nothing Then
+            '    Return _c._ToString
+            'Else
+            '    Return _op.Entity._ToString & "$" & _op.PropertyAlias
+            'End If
         End Function
+#End If
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, FieldReference))

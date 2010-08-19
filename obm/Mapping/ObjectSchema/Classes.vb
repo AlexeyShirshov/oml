@@ -8,7 +8,7 @@ Namespace Entities.Meta
     Public Structure DBType
         Public Size As Integer
         Public Type As String
-        Public Nullable As Boolean
+        Private _isNotNullable As Boolean
 
         Public Sub New(ByVal type As String)
             Me.Type = type
@@ -22,72 +22,135 @@ Namespace Entities.Meta
         Public Sub New(ByVal type As String, ByVal size As Integer, ByVal nullable As Boolean)
             Me.Type = type
             Me.Size = size
-            Me.Nullable = nullable
+            Me._isNotNullable = Not nullable
         End Sub
 
         Public Sub New(ByVal type As String, ByVal nullable As Boolean)
             Me.Type = type
-            Me.Nullable = nullable
+            Me._isNotNullable = Not nullable
         End Sub
+
+        Public Property IsNullable() As Boolean
+            Get
+                Return Not _isNotNullable
+            End Get
+            Set(ByVal value As Boolean)
+                _isNotNullable = Not value
+            End Set
+        End Property
 
         Public Function IsEmpty() As Boolean
             Return String.IsNullOrEmpty(Type)
         End Function
     End Structure
 
+    Public Class SourceField
+        Private _dbType As DBType
+        Private _columnName As String
+        Private _exp As String
+        Private _pk As String
+
+        Public Property SourceFieldExpression() As String
+            Get
+                Return _exp
+            End Get
+            Set(ByVal value As String)
+                _exp = value
+            End Set
+        End Property
+
+        Public Property SourceFieldAlias() As String
+            Get
+                Return _columnName
+            End Get
+            Set(ByVal value As String)
+                _columnName = value
+            End Set
+        End Property
+
+        Public Property DBType() As DBType
+            Get
+                Return _dbType
+            End Get
+            Set(ByVal value As DBType)
+                _dbType = value
+            End Set
+        End Property
+
+        Public Property PrimaryKey() As String
+            Get
+                Return _pk
+            End Get
+            Set(ByVal value As String)
+                _pk = value
+            End Set
+        End Property
+    End Class
+
     Public Class MapField2Column
         Implements ICloneable
 
-        Public ReadOnly _propertyAlias As String
-        Public ReadOnly ColumnExpression As String
-        Public ReadOnly DBType As DBType
-        Public ReadOnly _newattributes As Field2DbRelations
+        Private _propertyAlias As String
+        Private _newattributes As Field2DbRelations
         Private _tbl As SourceFragment
-        Private _columnName As String
+        Private _sf As New List(Of SourceField)
+
+        Friend PropertyInfo As Reflection.PropertyInfo
+        Friend Index As Integer = -1
+        Friend Schema As IEntitySchema
+
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations)
+            _propertyAlias = propertyAlias
+            _tbl = tableName
+            _newattributes = newAttributes
+        End Sub
+
+        Public Sub New(ByVal propertyAlias As String, ByVal columnExpressions As IEnumerable(Of String), ByVal tableName As SourceFragment)
+            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+            For Each e As String In columnExpressions
+                _sf.Add(New SourceField With {.SourceFieldExpression = e})
+            Next
+        End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
-            _propertyAlias = propertyAlias
-            Me.ColumnExpression = columnExpression
-            Table = tableName
-            _newattributes = Field2DbRelations.None
+            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
-            _propertyAlias = propertyAlias
-            Me.ColumnExpression = columnExpression
-            Table = tableName
-            _newattributes = newAttributes
+            MyClass.New(propertyAlias, tableName, newAttributes)
+            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = dbType
+            _sf(0).DBType = dbType
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType)
+            _sf(0).DBType = New DBType(dbType)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, size)
+            _sf(0).DBType = New DBType(dbType, size)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, size, nullable)
+            _sf(0).DBType = New DBType(dbType, size, nullable)
         End Sub
 
         Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
             MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            Me.DBType = New DBType(dbType, nullable)
+            _sf(0).DBType = New DBType(dbType, nullable)
         End Sub
 
         Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
@@ -107,18 +170,97 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property ColumnName() As String
+        Public Property PropertyAlias() As String
             Get
-                Return _columnName
+                Return _propertyAlias
             End Get
             Set(ByVal value As String)
-                _columnName = value
+                _propertyAlias = value
             End Set
         End Property
 
+        Public Property Attributes() As Field2DbRelations
+            Get
+                Return _newattributes
+            End Get
+            Set(ByVal value As Field2DbRelations)
+                _newattributes = value
+            End Set
+        End Property
+
+        Public Property SourceFields() As List(Of SourceField)
+            Get
+                Return _sf
+            End Get
+            Set(ByVal value As List(Of SourceField))
+                _sf = value
+            End Set
+        End Property
+
+        Public ReadOnly Property SourceFieldExpression() As String
+            Get
+                If _sf.Count > 1 Then
+                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+                End If
+                Return _sf(0).SourceFieldExpression
+            End Get
+        End Property
+
+        Public ReadOnly Property SourceFieldAlias() As String
+            Get
+                If _sf.Count > 1 Then
+                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+                End If
+                Return _sf(0).SourceFieldAlias
+            End Get
+        End Property
+
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New MapField2Column(Me._propertyAlias, ColumnExpression, Table, Me._newattributes, Me.DBType)
+            Return New MapField2Column(Me._propertyAlias, Table, Me._newattributes) With {.SourceFields = New List(Of SourceField)(_sf)}
         End Function
+
+        ''' <summary>
+        ''' Возвращает значение поля
+        ''' </summary>
+        ''' <param name="obj">Объект</param>
+        ''' <returns>Значение поля</returns>
+        ''' <remarks>Использует метод <see cref="ObjectMappingEngine.GetPropertyValue"/></remarks>
+        ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и значение поле невозможно получить по рефлекшену.</exception>
+        Public Function GetValue(ByVal obj As Object) As Object
+            Return ObjectMappingEngine.GetPropertyValue(obj, PropertyAlias, Schema, PropertyInfo)
+        End Function
+
+        Public Sub SetValue(ByVal o As Object, ByVal value As Object)
+            ObjectMappingEngine.SetPropertyValue(o, PropertyAlias, value, Schema, PropertyInfo)
+        End Sub
+
+        Public ReadOnly Property IsPK() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.PK) = Field2DbRelations.PK
+            End Get
+        End Property
+
+        Public ReadOnly Property IsReadOnly() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.ReadOnly) = Field2DbRelations.ReadOnly
+            End Get
+        End Property
+
+        Public ReadOnly Property IsRowVersion() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion
+            End Get
+        End Property
+
+        Public ReadOnly Property IsFactory() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.Factory) = Field2DbRelations.Factory
+            End Get
+        End Property
     End Class
 
     Public Class RelationDesc
@@ -318,7 +460,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
@@ -326,7 +473,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mpe.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -448,7 +595,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mpe.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
@@ -456,7 +608,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mpe.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -574,7 +726,12 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As List(Of SelectExpression) = mgr.MappingEngine.GetPrimaryKeys(rtt, oschema).ConvertAll(Function(clm As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(clm, rtt))
+                    Dim se As New List(Of SelectExpression)
+                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                        If mp.IsPK Then
+                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                        End If
+                    Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
                 End If
@@ -582,7 +739,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)(mgr)
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(mgr.MappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -874,7 +1031,7 @@ Namespace Entities.Meta
         ''' <returns>Возвращает <see cref="MapField2Column._propertyAlias"/></returns>
         ''' <remarks>Используется при индексации коллекции</remarks>
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
-            Return item._propertyAlias
+            Return item.PropertyAlias
         End Function
     End Class
 End Namespace

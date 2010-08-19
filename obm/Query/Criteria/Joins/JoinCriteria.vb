@@ -15,11 +15,12 @@ Namespace Criteria.Joins
         Private _c As Condition.ConditionConstructor
         'Private _jc As List(Of QueryJoin)
 
-        Protected Friend Sub New(ByVal f As IFilter, ByVal jc As List(Of QueryJoin))
+        Protected Friend Sub New(ByVal f As IGetFilter, ByVal jc As List(Of QueryJoin))
             MyBase.New(jc)
             _c = New Condition.ConditionConstructor
-            _c.AddFilter(f)
-            '_jc = jc
+            If f IsNot Nothing Then
+                _c.AddFilter(f.Filter)
+            End If
         End Sub
 
         Protected Friend Sub New(ByVal os As EntityUnion, ByVal jc As List(Of QueryJoin))

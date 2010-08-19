@@ -34,13 +34,13 @@ Namespace Collections
 
         Private _dic As IDictionary(Of TItemKey, TItem)
         Private _coll As IList(Of TItem)
-        Private _keyCount As Integer
-        Private _threshold As Integer = 1
-        Private _rw As System.Threading.ReaderWriterLock
+        'Private _keyCount As Integer
+        Private _threshold As Integer = 5
+        'Private _rw As System.Threading.ReaderWriterLock
 
         Public Sub New()
             _coll = GetCollection()
-            _rw = New System.Threading.ReaderWriterLock()
+            '_rw = New System.Threading.ReaderWriterLock()
         End Sub
 
         Public Sub New(ByVal threshold As Integer)
@@ -83,7 +83,8 @@ Namespace Collections
         End Function
 
         Protected Overridable Function GetDictionary() As IDictionary(Of TItemKey, TItem)
-            Return New Dictionary(Of TItemKey, TItem)
+            'Return New Dictionary(Of TItemKey, TItem)
+            Return New SortedList(Of TItemKey, TItem)
         End Function
 
         Protected Overridable Function GetCollection() As IList(Of TItem)
@@ -392,6 +393,36 @@ Namespace Collections
 
 #End Region
 
+        Public Function IndexOf(ByVal item As TItemKey) As Integer
+            Using SyncHelper(True)
+                Invariant()
+
+                If _coll IsNot Nothing Then
+                    Using e As IEnumerator(Of TItem) = _coll.GetEnumerator
+                        Dim i As Integer = 0
+                        Do While e.MoveNext
+                            If GetKeyForItem(e.Current).Equals(item) Then
+                                Return i
+                            End If
+                            i += 1
+                        Loop
+                    End Using
+                Else
+                    Using e As IEnumerator(Of KeyValuePair(Of TItemKey, TItem)) = _dic.GetEnumerator
+                        Dim i As Integer = 0
+                        Do While e.MoveNext
+                            If e.Current.Key.Equals(item) Then
+                                Return i
+                            End If
+                            i += 1
+                        Loop
+                    End Using
+                End If
+
+                Return -1
+            End Using
+        End Function
+
 #Region " IList (Of) implementation "
 
         Public Function IndexOf(ByVal item As TItem) As Integer Implements System.Collections.Generic.IList(Of TItem).IndexOf
@@ -401,16 +432,18 @@ Namespace Collections
                 If _coll IsNot Nothing Then
                     Return _coll.IndexOf(item)
                 Else
-                    Using enumerator1 As IEnumerator(Of TItem) = GetEnumerator()
+                    Using enumerator1 As IEnumerator(Of KeyValuePair(Of TItemKey, TItem)) = _dic.GetEnumerator
                         Dim i As Integer = 0
                         Do While enumerator1.MoveNext
-                            If enumerator1.Current.Equals(item) Then
+                            If enumerator1.Current.Value.Equals(item) Then
                                 Return i
                             End If
                             i += 1
                         Loop
                     End Using
                 End If
+
+                Return -1
             End Using
         End Function
 

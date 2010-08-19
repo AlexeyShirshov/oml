@@ -180,17 +180,17 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IKeyEntity}, T2 As IKeyEntity)( _
-            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
-            Throw New NotImplementedException
-        End Function
+        'Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IKeyEntity}, T2 As IKeyEntity)( _
+        '    ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
+        '    ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+        '    Throw New NotImplementedException
+        'End Function
 
-        Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IKeyEntity)(ByVal realType As Type, _
-            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
-            Throw New NotImplementedException
-        End Function
+        'Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IKeyEntity)(ByVal realType As Type, _
+        '    ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
+        '    ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Entities.Meta.EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+        '    Throw New NotImplementedException
+        'End Function
 
 #If Not ExcludeFindMethods Then
         Protected Overloads Overrides Function Search(Of T As {New, IKeyEntity})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Entities.Meta.IFtsStringFormatter, Optional ByVal joins() As QueryJoin = Nothing) As ReadOnlyList(Of T)
@@ -281,9 +281,10 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            For Each c As EntityPropertyAttribute In MappingEngine.GetSortedFieldList(original_type)
-                If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing)
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            For Each m As MapField2Column In map
+                If m.IsPK Then
+                    Dim attr As String = m.SourceFieldExpression
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -291,18 +292,9 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        Dim pi As Reflection.PropertyInfo = Nothing
 
-                        For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type, oschema)
-                            c = CType(de.Key, EntityPropertyAttribute)
-                            If c.PropertyAlias = c.PropertyAlias Then
-                                pi = CType(de.Value, Reflection.PropertyInfo)
-                                Exit For
-                            End If
-                        Next
-
-                        ObjectMappingEngine.SetValue(pi.PropertyType, MappingEngine, Cache, nodes.Current.Value, obj, pi, c.PropertyAlias, Nothing, GetContextInfo)
-                        'MappingEngine.SetPropertyValue(obj, c.PropertyAlias, nodes.Current.Value, oschema)
+                        MappingEngine.ParsePKFromDb(obj, False, oschema, map, obj, m, m.PropertyAlias, nodes.Current.Value)
+                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         sn = True
                         cnt += 1
                     Loop
@@ -314,13 +306,12 @@ Namespace Xml
 
         Protected Function LoadData(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _IEntity) As Boolean
             Dim original_type As Type = obj.GetType
-            Dim columns As List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(original_type)
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
-                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing)
+            Dim cnt As Integer
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            For Each m As MapField2Column In map
+                If Not m.IsPK Then
+                    Dim attr As String = m.SourceFieldExpression
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -328,16 +319,18 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        ObjectMappingEngine.SetPropertyValue(obj, c.PropertyAlias, pi, nodes.Current.Value, oschema)
-                        If orm IsNot Nothing Then orm.SetLoaded(c, True, True, MappingEngine)
+                        ParseValueFromDb(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, TryCast(obj, _ICachedEntity), Nothing)
+                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                        'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
                         sn = True
+                        cnt += 1
                     Loop
                 Else
-                    If orm IsNot Nothing Then orm.SetLoaded(c, True, True, MappingEngine)
+                    If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
                 End If
             Next
             If orm IsNot Nothing Then
-                orm.CheckIsAllLoaded(MappingEngine, columns.Count, columns)
+                orm.CheckIsAllLoaded(MappingEngine, cnt, map)
             End If
         End Function
 

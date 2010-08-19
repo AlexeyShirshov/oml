@@ -750,13 +750,13 @@ Partial Public MustInherit Class OrmManager
     'End Function
 
     Public Function GetEntityFromCacheOrDB(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateObject(pk, type)
+        Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateObject(pk, type)
+        Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
     End Function
@@ -1058,7 +1058,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.GetStaticString(_schema, GetContextInfo) & GetStaticKey() & _schema.GetEntityKey(GetContextInfo, t)
+        Return filter.GetStaticString(_schema, GetContextInfo) & GetStaticKey() & _schema.GetEntityKey(t)
     End Function
 
 #If Not ExcludeFindMethods Then
@@ -1374,7 +1374,7 @@ l1:
         Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, Nothing)
     End Function
 
-    Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache(Of T As ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
 
         Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, AddressOf _ValCE(Of T))
@@ -1447,14 +1447,14 @@ l1:
         Return ce
     End Function
 
-    Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItemBase, _
+    Private Function _ValCE(Of T As ICachedEntity)(ByRef ce As CachedItemBase, _
         ByVal del_ As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
         Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
 
-        If ce._Expires = Date.MinValue Then
-            ce._Expires = _expiresPattern
+        If ce._expires = Date.MinValue Then
+            ce._expires = _expiresPattern
         End If
 
         Dim ce_ As UpdatableCachedItem = CType(ce, UpdatableCachedItem)
@@ -1537,12 +1537,12 @@ l1:
 #End If
     End Function
 
-    Protected Friend Function LoadType(ByVal id As Object, ByVal t As Type, ByVal load As Boolean, ByVal checkOnCreate As Boolean) As IKeyEntity
-        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
-        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadType", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Object), GetType(Boolean), GetType(Boolean)}, Nothing)
-        Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), IKeyEntity)
-    End Function
+    'Protected Friend Function LoadType(ByVal id As Object, ByVal t As Type, ByVal load As Boolean, ByVal checkOnCreate As Boolean) As IKeyEntity
+    '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+    '    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadType", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Object), GetType(Boolean), GetType(Boolean)}, Nothing)
+    '    Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+    '    Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), IKeyEntity)
+    'End Function
 
     Public Function CreateKeyEntity(ByVal id As Object, ByVal t As Type) As IKeyEntity
         Return KeyEntity.CreateKeyEntity(id, t, _cache, _schema)
@@ -1556,7 +1556,7 @@ l1:
         Return CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
     End Function
 
-    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As _ICachedEntity
+    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As Object
         Return CachedEntity.CreateObject(pk, type, _cache, _schema)
     End Function
 
@@ -1585,29 +1585,37 @@ l1:
         Return NormalizeObject(obj, dic, True, False, MappingEngine.GetEntitySchema(obj.GetType))
     End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary, _
         ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, False, False, dic, add2Cache, Me, fromDb, oschema)
+        Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, entityDictionary, add2Cache, fromDb), _ICachedEntity)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, False, True, dic, True, Me)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
+        If e Is Nothing Then
+            e.Load(Me)
+            e = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
+        End If
+        Return e
     End Function
 
     Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, True, False), _ICachedEntity)
     End Function
 
-    Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
-    End Function
+    'Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+    '    Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
+    'End Function
 
-    Protected Function LoadTypeInternal(Of T As {IKeyEntity, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
+    'Protected Function LoadTypeInternal(Of T As {IKeyEntity, New})(ByVal id As Object, _
+    '    ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
-        Dim o As T = CreateKeyEntity(Of T)(id)
-        Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
-    End Function
+    '    Dim o As T = CreateKeyEntity(Of T)(id)
+    '    Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
+    'End Function
 
     '    Protected Function GetObjectFromCache(Of T As {IOrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Object, T), _
     '        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
@@ -1680,20 +1688,20 @@ l1:
     '        Return a
     '    End Function
 
-    Protected Friend Function LoadType(Of T As {IKeyEntity, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
+    '    Protected Friend Function LoadType(Of T As {IKeyEntity, New})(ByVal id As Object, _
+    '        ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
 
-        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+    '        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
 
-#If DEBUG Then
-        If dic Is Nothing Then
-            Dim name As String = GetType(T).Name
-            Throw New OrmManagerException("Collection for " & name & " not exists")
-        End If
-#End If
+    '#If DEBUG Then
+    '        If dic Is Nothing Then
+    '            Dim name As String = GetType(T).Name
+    '            Throw New OrmManagerException("Collection for " & name & " not exists")
+    '        End If
+    '#End If
 
-        Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
-    End Function
+    '        Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
+    '    End Function
 
     Protected Sub Add2Cache(ByVal obj As ICachedEntity)
         If obj Is Nothing Then
@@ -1782,8 +1790,8 @@ l1:
         Dim t As System.Type = obj.GetType
 
         Dim name As String = t.Name
-        Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
-        Dim dic As IDictionary = GetDictionary(t, oschema)
+        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
+        Dim dic As IDictionary = GetDictionary(t, cb)
         If dic Is Nothing Then
             ''todo: throw an exception when all collections will be implemented
             'Return
@@ -1795,7 +1803,7 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.GetSyncRoot
-                If Cache.ShadowCopy(obj, Me, oschema) IsNot Nothing Then
+                If Cache.ShadowCopy(obj, cb) IsNot Nothing Then
                     Return False
                 End If
 
@@ -1817,11 +1825,11 @@ l1:
 #End If
                 End If
 
-                _cache.RegisterRemoval(obj, Me, oschema)
+                _cache.RegisterRemoval(obj, MappingEngine, cb)
             End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(obj, Me, oschema) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(obj, cb) Is Nothing)
         End Using
         Return True
     End Function
@@ -1851,31 +1859,27 @@ l1:
     End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema)
+        Return _cache.GetOrmDictionary(t, _schema)
     End Function
 
-    Public Function GetDictionary(ByVal t As Type, ByVal schema As IEntitySchema) As IDictionary
-        Return _cache.GetOrmDictionary(GetContextInfo, t, _schema, schema)
+    Public Function GetDictionary(ByVal t As Type, ByVal cb As ICacheBehavior) As IDictionary
+        Return _cache.GetOrmDictionary(t, cb)
     End Function
 
     Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of Object, T)
-        Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema)
+        Return _cache.GetOrmDictionary(Of T)(_schema)
     End Function
 
-    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal oschema As IEntitySchema) As Generic.IDictionary(Of Object, T)
-        If oschema Is Nothing Then
-            Return Nothing
-        Else
-            Return _cache.GetOrmDictionary(Of T)(GetContextInfo, _schema, oschema)
-        End If
+    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As Generic.IDictionary(Of Object, T)
+        Return _cache.GetOrmDictionary(Of T)(cb)
     End Function
 
     Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
-        Return _cache.IsInCachePrecise(obj, GetContextInfo, _schema)
+        Return _cache.IsInCachePrecise(obj, _schema)
     End Function
 
     Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
-        Return _cache.IsInCache(id, t, GetContextInfo, _schema)
+        Return _cache.IsInCache(id, t, _schema)
     End Function
 
     <Conditional("DEBUG")> _
@@ -1900,95 +1904,59 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub InsertObject(Of T As {IKeyEntity})(ByVal cache As CacheBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IKeyEntity)
+    Private Shared Sub InsertObject(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal check_loaded As Boolean, _
+        ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
-                    Dim idx As Integer = l.BinarySearch(o.Identifier)
-                    If idx < 0 Then
-                        l.Insert(Not idx, o.Identifier)
-                    End If
+                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) _
+                    AndAlso Not entityDictionary.ContainsKey(o) Then
+                    entityDictionary.Add(o, Nothing)
                 End If
             End If
         End If
     End Sub
 
-    Private Shared Sub InsertObject(Of T As {IKeyEntity})(ByVal mgr As OrmManager, _
-        ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IKeyEntity, _
-        ByVal columns As List(Of EntityPropertyAttribute))
+    Private Shared Sub InsertObject(Of T As ICachedEntity)(ByVal cache As CacheBase, _
+        ByVal check_loaded As Boolean, ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity, _
+        ByVal properties As List(Of EntityExpression))
 
-        Throw New NotImplementedException
+        If o IsNot Nothing Then
+            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
+                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
+                    For Each p As EntityExpression In properties
+                        If Not o.IsPropertyLoaded(p.ObjectProperty.PropertyAlias) AndAlso Not entityDictionary.ContainsKey(o) Then
+                            entityDictionary.Add(o, Nothing)
+                            Exit For
+                        End If
+                    Next
+                End If
+            End If
+        End If
     End Sub
 
-    Protected Shared Function FormPKValues(Of T As {IKeyEntity})(ByVal cache As CacheBase, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-        Optional ByVal check_loaded As Boolean = True) As List(Of Object)
+    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal objs As ReadOnlyEntityList(Of T), _
+        ByVal start As Integer, ByVal length As Integer, _
+        Optional ByVal check_loaded As Boolean = True) As ICollection(Of ICachedEntity)
 
-        Dim l As New Generic.List(Of Object)
-        Dim col As IList(Of T) = TryCast(objs, IList(Of T))
-        If col IsNot Nothing Then
-            For i As Integer = start To start + length - 1
-                Dim o As IKeyEntity = col(i)
-                InsertObject(Of T)(cache, check_loaded, l, o)
-            Next
-        Else
-            Dim i As Integer = 0
-            For Each o As IKeyEntity In objs
-                If i >= start + length Then
-                    Exit For
-                End If
-                If i >= start Then
-                    InsertObject(Of T)(cache, check_loaded, l, o)
-                    'If o IsNot Nothing Then
-                    '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
-                    '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
-                    '            Dim idx As Integer = l.BinarySearch(o.Identifier)
-                    '            If idx < 0 Then
-                    '                l.Insert(Not idx, o.Identifier)
-                    '            End If
-                    '        End If
-                    '    End If
-                    'End If
-                End If
-                i += 1
-            Next
-        End If
-        Return l
+        Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
+        For i As Integer = start To start + length - 1
+            Dim o As ICachedEntity = objs(i)
+            InsertObject(Of T)(cache, check_loaded, entityDictionary, o)
+        Next
+
+        Return entityDictionary.Keys
     End Function
 
-    Protected Shared Function FormPKValues(Of T As {IKeyEntity, New})(ByVal mgr As OrmManager, _
-        ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-        ByVal check_loaded As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute)) As List(Of Object)
+    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, _
+        ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer, _
+        ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression)) As ICollection(Of ICachedEntity)
 
-        Dim l As New Generic.List(Of Object)
-        Dim col As IList(Of T) = TryCast(objs, IList(Of T))
-        If col IsNot Nothing Then
-            For i As Integer = start To start + length - 1
-                Dim o As IKeyEntity = col(i)
-                InsertObject(Of T)(mgr, check_loaded, l, o, columns)
-            Next
-        Else
-            Dim i As Integer = 0
-            For Each o As IKeyEntity In objs
-                If i >= start + length Then
-                    Exit For
-                End If
-                If i >= start Then
-                    InsertObject(Of T)(mgr, check_loaded, l, o, columns)
-                    'If o IsNot Nothing Then
-                    '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
-                    '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
-                    '            Dim idx As Integer = l.BinarySearch(o.Identifier)
-                    '            If idx < 0 Then
-                    '                l.Insert(Not idx, o.Identifier)
-                    '            End If
-                    '        End If
-                    '    End If
-                    'End If
-                End If
-                i += 1
-            Next
-        End If
-        Return l
+        Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
+        For i As Integer = start To start + length - 1
+            Dim o As ICachedEntity = objs(i)
+            InsertObject(Of T)(cache, check_loaded, entityDictionary, o, properties)
+        Next
+        Return entityDictionary.Keys
     End Function
 
     Public Shared Sub WriteWarning(ByVal message As String)
@@ -2081,7 +2049,7 @@ l1:
         If String.IsNullOrEmpty(direct) Then
             direct = M2MRelationDesc.DirKey
         End If
-        Return _schema.GetEntityKey(GetContextInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetContextInfo, tt2) & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(tt2) & "$" & GetStaticKey()
     End Function
 
 #If Not ExcludeFindMethods Then
@@ -3040,7 +3008,7 @@ l1:
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
                 'Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
-                Dim obj As IEntity = CType(MappingEngine.GetPropertyValue(o, fields(i), oschema), IEntity)
+                Dim obj As IEntity = CType(ObjectMappingEngine.GetPropertyValue(o, fields(i), oschema, Nothing), IEntity)
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
                         'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
@@ -3079,13 +3047,13 @@ l1:
         Return col
     End Function
 
-    Protected Function LoadObjectsInternal(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
-        Return LoadObjectsInternal(Of T, T)(objs, start, length, remove_not_found, columns, withLoad)
-    End Function
+    'Protected Function LoadObjectsInternal(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+    '    Return LoadObjectsInternal(Of T, T)(objs, start, length, remove_not_found, columns, withLoad)
+    'End Function
 
-    Public Function LoadObjects(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of EntityPropertyAttribute)) As ReadOnlyList(Of T)
-        Return LoadObjectsInternal(objs, start, length, True, columns, _schema.GetSortedFieldList(GetType(T)).Count = columns.Count)
-    End Function
+    'Public Function LoadObjects(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of EntityPropertyAttribute)) As ReadOnlyList(Of T)
+    '    Return LoadObjectsInternal(objs, start, length, True, columns, _schema.GetSortedFieldList(GetType(T)).Count = columns.Count)
+    'End Function
 
     'Public Function LoadObjects(Of T As {IKeyEntity, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
     '    Return LoadObjectsInternal(objs, start, length, True)
@@ -3103,13 +3071,13 @@ l1:
     '    Return LoadObjectsInternal(Of T, T2)(objs, 0, objs.Count, True, _schema.GetSortedFieldList(GetType(T)), True)
     'End Function
 
-    Public Function LoadObjects(Of T2 As IKeyEntity)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T2)
-        Return LoadObjectsInternal(Of T2)(realType, objs, start, length, True, _schema.GetSortedFieldList(realType), True)
-    End Function
+    'Public Function LoadObjects(Of T2 As IKeyEntity)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T2)
+    '    Return LoadObjectsInternal(Of T2)(realType, objs, start, length, True, _schema.GetSortedFieldList(realType), True)
+    'End Function
 
-    Public Function LoadObjects(Of T2 As IKeyEntity)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2)) As ReadOnlyList(Of T2)
-        Return LoadObjectsInternal(Of T2)(realType, objs, 0, objs.Count, True, _schema.GetSortedFieldList(realType), True)
-    End Function
+    'Public Function LoadObjects(Of T2 As IKeyEntity)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2)) As ReadOnlyList(Of T2)
+    '    Return LoadObjectsInternal(Of T2)(realType, objs, 0, objs.Count, True, _schema.GetSortedFieldList(realType), True)
+    'End Function
 
     'Public Overridable Function ConvertIds2Objects(ByVal t As Type, ByVal ids As ICollection(Of Object), ByVal check As Boolean) As ICollection
     '    Dim self_t As Type = Me.GetType
@@ -3561,8 +3529,8 @@ l1:
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
     Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
-    Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
-    Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of EntityPropertyAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    'Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    'Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
@@ -3584,14 +3552,14 @@ l1:
 
 #End Region
 
-    Protected Friend Function LoadObjectsInternal(Of T As {IKeyEntity, New})( _
-            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
-        Dim original_type As Type = GetType(T)
-        Dim columns As Generic.List(Of EntityPropertyAttribute) = _schema.GetSortedFieldList(original_type)
+    'Protected Friend Function LoadObjectsInternal(Of T As {IKeyEntity, New})( _
+    '        ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+    '        ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+    '    Dim original_type As Type = GetType(T)
+    '    Dim columns As Generic.List(Of EntityPropertyAttribute) = _schema.GetSortedFieldList(original_type)
 
-        Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
-    End Function
+    '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
+    'End Function
 
     Protected Friend Sub RegisterInCashe(ByVal obj As _ICachedEntity)
         If Not IsInCachePrecise(obj) Then
@@ -3608,7 +3576,7 @@ l1:
                     Case ObjectState.Modified
                         r = ObjectModification.ReasonEnum.Edit
                 End Select
-                _cache.RegisterModification(Me, obj, r, MappingEngine.GetEntitySchema(obj.GetType))
+                _cache.RegisterModification(Me, obj, r, TryCast(MappingEngine.GetEntitySchema(obj.GetType), ICacheBehavior))
             End If
         End If
     End Sub
@@ -3979,10 +3947,10 @@ l1:
     End Sub
 
     Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
-        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetPrimaryKeys(m2m.Entity.GetRealType(schema))(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetSinglePK(m2m.Entity.GetRealType(schema)), Worm.Criteria.FilterOperation.Equal)
         Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
         m2m = schema.GetM2MRelation(m2m.Entity.GetRealType(schema), type2join, True)
-        Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, Worm.Criteria.FilterOperation.Equal)
+        Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetSinglePK(type2join), Worm.Criteria.FilterOperation.Equal)
         Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
         Return New QueryJoin() {mj, tj}
     End Function
@@ -3998,7 +3966,7 @@ l1:
         '    tbl = GetTables(selectType)(0)
         'End If
 
-        Dim jf As New JoinFilter(joinOS, schema.GetPrimaryKeys(type2join)(0).PropertyAlias, selectType, field, oper)
+        Dim jf As New JoinFilter(joinOS, schema.GetSinglePK(type2join), selectType, field, oper)
 
         Dim t As EntityUnion = joinos
         If switchTable Then
@@ -4007,6 +3975,81 @@ l1:
 
         Return New QueryJoin(t, joinType, jf)
     End Function
+
+    Public Sub ParseValueFromDb(ByVal isNull As Boolean, ByVal att As Field2DbRelations, _
+            ByVal obj As Object, ByVal m As MapField2Column, ByVal propertyAlias As String, _
+            ByVal oschema As IEntitySchema, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal sv As PKDesc(), ByVal ce As _ICachedEntity, ByVal fac As List(Of Pair(Of String, Object)))
+        Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+        Dim value As Object = sv(0).Value
+        If pi Is Nothing Then
+            If isNull Then
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema)
+            Else
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
+            End If
+            If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+        Else
+            Dim propType As Type = pi.PropertyType
+            'If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+            '    Dim v As Object = pi.GetValue(obj, Nothing)
+            '    If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
+            '        If propType.IsEnum Then
+            '            value = [Enum].ToObject(propType, value)
+            '        Else
+            '            value = Convert.ChangeType(value, propType)
+            '        End If
+            '    End If
+            '    If Not v.Equals(value) Then
+            '        Throw New OrmManagerException("PK values is not equals (" & dr.GetName(i) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
+            '    End If
+            'Else
+            If Not isNull AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                    fac.Add(New Pair(Of String, Object)(propertyAlias, value))
+                    'If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+                    '    'obj.CreateObject(c.FieldName, value)
+                    '    obj.SetValue(pi, c, )
+                    '    obj.SetLoaded(c, True, True)
+                    '    'If GetType(OrmBase) Is pi.PropertyType Then
+                    '    '    obj.CreateObject(CInt(value))
+                    '    '    obj.SetLoaded(c, True)
+                    '    'Else
+                    '    '    Dim type_created As Type = pi.PropertyType
+                    '    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                    '    '    obj.SetValue(pi, c, o)
+                    '    '    obj.SetLoaded(c, True)
+                    '    'End If
+                Else
+                    'If GetType(IKeyEntity).IsAssignableFrom(propType) Then
+                    '    Dim type_created As Type = propType
+                    '    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                    '    If Not String.IsNullOrEmpty(en) Then
+                    '        Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+                    '        If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                    '            type_created = cr
+                    '        End If
+                    '        If type_created Is Nothing Then
+                    '            Throw New OrmManagerException("Cannot find type for entity " & en)
+                    '        End If
+                    '    End If
+                    '    Dim o As IKeyEntity = GetKeyEntityFromCacheOrCreate(value, type_created)
+                    '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, pi, o, oschema)
+                    '    If o IsNot Nothing Then
+                    '        If obj.CreateManager IsNot Nothing Then o.SetCreateManager(obj.CreateManager)
+                    '        RaiseObjectLoaded(o)
+                    '    End If
+                    '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
+                    'Else
+                    ObjectMappingEngine.SetValue(propType, MappingEngine, cache, sv, obj, map, propertyAlias, ce, m, oschema, AddressOf RaiseObjectLoaded, GetContextInfo)
+                    'End If
+                End If
+            ElseIf isNull Then
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
+                If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+            End If
+        End If
+    End Sub
 End Class
 
 'End Namespace

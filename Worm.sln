@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 10
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E64006B-2B21-4A31-85D8-C669B9C4E7B3}"
 	ProjectSection(SolutionItems) = preProject
 		ReadMe.txt = ReadMe.txt
@@ -36,14 +36,6 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ConsoleTests", "Tests\Conso
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ASPNETHosting", "ASPNETHosting\ASPNETHosting.vbproj", "{7D8F3864-281D-495E-B0E4-5731FC31D007}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.CodeGenerator", "OrmCodeGen\Worm.CodeGen.CodeGenerator.csproj", "{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.Core", "OrmCodeGenLib\Worm.CodeGen.Core.csproj", "{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.XmlGenerator", "XmlSchemaGen\Worm.CodeGen.XmlGenerator.csproj", "{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeGenTesting", "TestsCodeGenLib\CodeGenTesting.csproj", "{FD0ADB48-33C6-4399-9943-6ACAB857CF53}"
-EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "test", "net3.5\linq\test.vbproj", "{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestLinq", "net3.5\TestLinq\TestLinq.vbproj", "{0D88361E-442C-409C-AAC7-4878E72199CB}"
@@ -52,50 +44,37 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Worm.Linq", "net3.5\linqpro
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 12
+		SccNumberOfProjects = 8
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs03.codeplex.com/
+		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs03
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = ASPNETHosting\\ASPNETHosting.vbproj
 		SccProjectTopLevelParentUniqueName1 = Worm.sln
 		SccProjectName1 = ASPNETHosting
 		SccLocalPath1 = ASPNETHosting
-		SccProjectUniqueName2 = OrmCodeGenLib\\Worm.CodeGen.Core.csproj
-		SccProjectName2 = OrmCodeGenLib
-		SccLocalPath2 = OrmCodeGenLib
-		SccProjectUniqueName3 = XmlSchemaGen\\Worm.CodeGen.XmlGenerator.csproj
-		SccProjectName3 = XmlSchemaGen
-		SccLocalPath3 = XmlSchemaGen
-		SccProjectUniqueName4 = OrmCodeGen\\Worm.CodeGen.CodeGenerator.csproj
-		SccProjectName4 = OrmCodeGen
-		SccLocalPath4 = OrmCodeGen
-		SccProjectUniqueName5 = obm\\Worm.Orm.vbproj
-		SccProjectName5 = obm
-		SccLocalPath5 = obm
-		SccProjectUniqueName6 = TestProject1\\UnitTesting.vbproj
+		SccProjectUniqueName2 = obm\\Worm.Orm.vbproj
+		SccProjectName2 = obm
+		SccLocalPath2 = obm
+		SccProjectUniqueName3 = TestProject1\\UnitTesting.vbproj
+		SccProjectTopLevelParentUniqueName3 = Worm.sln
+		SccProjectName3 = TestProject1
+		SccLocalPath3 = TestProject1
+		SccProjectUniqueName4 = Tests\\ConsoleTests.vbproj
+		SccProjectTopLevelParentUniqueName4 = Worm.sln
+		SccProjectName4 = Tests
+		SccLocalPath4 = Tests
+		SccProjectUniqueName5 = net3.5\\linq\\test.vbproj
+		SccProjectTopLevelParentUniqueName5 = Worm.sln
+		SccProjectName5 = net3.5/linq
+		SccLocalPath5 = net3.5\\linq
+		SccProjectUniqueName6 = net3.5\\TestLinq\\TestLinq.vbproj
 		SccProjectTopLevelParentUniqueName6 = Worm.sln
-		SccProjectName6 = TestProject1
-		SccLocalPath6 = TestProject1
-		SccProjectUniqueName7 = TestsCodeGenLib\\CodeGenTesting.csproj
+		SccProjectName6 = net3.5/TestLinq
+		SccLocalPath6 = net3.5\\TestLinq
+		SccProjectUniqueName7 = net3.5\\linqprovider\\Worm.Linq.vbproj
 		SccProjectTopLevelParentUniqueName7 = Worm.sln
-		SccProjectName7 = TestsCodeGenLib
-		SccLocalPath7 = TestsCodeGenLib
-		SccProjectUniqueName8 = Tests\\ConsoleTests.vbproj
-		SccProjectTopLevelParentUniqueName8 = Worm.sln
-		SccProjectName8 = Tests
-		SccLocalPath8 = Tests
-		SccProjectUniqueName9 = net3.5\\linq\\test.vbproj
-		SccProjectTopLevelParentUniqueName9 = Worm.sln
-		SccProjectName9 = net3.5/linq
-		SccLocalPath9 = net3.5\\linq
-		SccProjectUniqueName10 = net3.5\\TestLinq\\TestLinq.vbproj
-		SccProjectTopLevelParentUniqueName10 = Worm.sln
-		SccProjectName10 = net3.5/TestLinq
-		SccLocalPath10 = net3.5\\TestLinq
-		SccProjectUniqueName11 = net3.5\\linqprovider\\Worm.Linq.vbproj
-		SccProjectTopLevelParentUniqueName11 = Worm.sln
-		SccProjectName11 = net3.5/linqprovider
-		SccLocalPath11 = net3.5\\linqprovider
+		SccProjectName7 = net3.5/linqprovider
+		SccLocalPath7 = net3.5\\linqprovider
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Worm1.vsmdi
@@ -166,62 +145,6 @@ Global
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug AddIn|Any CPU.ActiveCfg = Debug_Trace|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug AddIn|Any CPU.Build.0 = Debug_Trace|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug_Trace|Any CPU.ActiveCfg = Debug_Trace|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug_Trace|Any CPU.Build.0 = Debug_Trace|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.DebugNonUserInstance|Any CPU.ActiveCfg = DebugNonUserInstance|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.DebugNonUserInstance|Any CPU.Build.0 = DebugNonUserInstance|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
 		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
 		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
 		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
@@ -272,7 +195,6 @@ Global
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
 		{8E02FB04-15DE-416A-9468-0C99CC1DBE65} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
 		{7D8F3864-281D-495E-B0E4-5731FC31D007} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
-		{FD0ADB48-33C6-4399-9943-6ACAB857CF53} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
 		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
 		{0D88361E-442C-409C-AAC7-4878E72199CB} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
 		{C479F776-A580-4451-813F-2D151635996D} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}

@@ -80,7 +80,7 @@ Namespace Web
                 If oschema Is Nothing Then
                     oschema = u.GetMappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 End If
-                users.Add(CStr(u.GetMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
+                users.Add(CStr(ObjectMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
             Next
             Return users.ToArray
             'End Using
@@ -96,7 +96,7 @@ Namespace Web
                 If oschema Is Nothing Then
                     oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                roles.Add(CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
+                roles.Add(CStr(ObjectMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
             Next
             Return roles.ToArray
             'End Using
@@ -114,7 +114,7 @@ Namespace Web
                 If oschema Is Nothing Then
                     oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                roles.Add(CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
+                roles.Add(CStr(ObjectMappingEngine.GetPropertyValue(r, _rolenameField, oschema)))
             Next
             Return roles.ToArray
             'End Using
@@ -132,7 +132,7 @@ Namespace Web
                 If oschema Is Nothing Then
                     oschema = u.GetMappingEngine.GetEntitySchema(UserMapper.GetUserType)
                 End If
-                users.Add(CStr(u.GetMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
+                users.Add(CStr(ObjectMappingEngine.GetPropertyValue(u, UserMapper.UserNameField, oschema)))
             Next
             Return users.ToArray
             'End Using
@@ -145,7 +145,7 @@ Namespace Web
                 If oschema Is Nothing Then
                     oschema = r.GetMappingEngine.GetEntitySchema(GetRoleType)
                 End If
-                If CStr(r.GetMappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
+                If CStr(ObjectMappingEngine.GetPropertyValue(r, _rolenameField, oschema)) = roleName Then
                     Return True
                 End If
             Next

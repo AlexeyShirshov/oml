@@ -134,14 +134,17 @@ Namespace Query.Database
                 Dim i As Integer = 0
                 Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 _almgr = AliasMgr.Create
-                If _q._optimizeIn IsNot Nothing Then
-                    If _q._f IsNot Nothing Then
-                        _q._f = _q._f.RemoveFilter(_q._optimizeIn)
-                    End If
+                If _q._optimizeIn IsNot Nothing AndAlso _q._f IsNot Nothing Then
+                    _q._f = _q._f.RemoveFilter(_q._optimizeIn)
+                End If
+                If _q._optimizeOr IsNot Nothing OrElse _q._optimizeIn IsNot Nothing Then
                     If _q._f Is Nothing Then
-                        _q._f = New CustomFilter("1", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("1"))
+                        _q._f = New CustomFilter("'optin'", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("'optin'"))
+                    Else
+                        _q._f = Ctor.Filter(_q._f).and(New CustomFilter("'optin'", Criteria.FilterOperation.Equal, New Criteria.Values.LiteralValue("'optin'"))).Filter
                     End If
                 End If
+
                 Return MakeQueryStatement(_mgr.MappingEngine, fi, stmtGen, _q, _params, _almgr)
             End Function
 
@@ -190,16 +193,33 @@ Namespace Query.Database
                     For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
                         Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                             With newCmd
-                                .CommandText = cmd.CommandText & cmd_str.First
+                                .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
                                 _params.AppendParams(.Parameters, 0, pcnt)
                                 _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                                 nidx = cmd_str.Second
                             End With
-                            dbm.QueryMultiTypeObjects(_q.CreateTypes, newCmd, l, _q._types, _q._pdic, sl)
+                            dbm.QueryMultiTypeObjects(_q.CreateTypes, newCmd, l, _q._types, sl)
                         End Using
                     Next
                 Else
-                    dbm.QueryMultiTypeObjects(_q.CreateTypes, cmd, l, _q._types, _q._pdic, sl)
+                    Dim oo As List(Of Criteria.PredicateLink) = _q.GetBatchOrStruct
+                    If oo IsNot Nothing Then
+                        Dim pcnt As Integer = _params.Params.Count
+                        Dim nidx As Integer = pcnt
+                        For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(oo, _almgr, _params)
+                            Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                                With newCmd
+                                    .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
+                                    _params.AppendParams(.Parameters, 0, pcnt)
+                                    _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                    nidx = cmd_str.Second
+                                End With
+                                dbm.QueryMultiTypeObjects(_q.CreateTypes, newCmd, l, _q._types, sl)
+                            End Using
+                        Next
+                    Else
+                        dbm.QueryMultiTypeObjects(_q.CreateTypes, cmd, l, _q._types, sl)
+                    End If
                 End If
                 _q.ExecCount += 1
                 Return New ReadonlyMatrix(l)

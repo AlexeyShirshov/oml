@@ -74,6 +74,11 @@ Namespace Entities
 
     Public Interface IEntity
         Inherits ICloneable
+        ''' <summary>
+        ''' Объект блокировки сущности
+        ''' </summary>
+        ''' <returns>Возвращает объект в конструкторе которого создана блокировка на сущность. Блокировка снимается в методе <see cref="IDisposable.Dispose"/></returns>
+        ''' <remarks>Необходимо использовать блокировку при дуступе к внутреним метаданными сущности, таким как <see cref="IEntity.ObjectState"/></remarks>
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
@@ -101,12 +106,11 @@ Namespace Entities
         Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function SetLoaded(ByVal propertyMap As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
-        Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean
+        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+        Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
-        Function ForseUpdate(ByVal c As EntityPropertyAttribute) As Boolean
+        Function ForseUpdate(ByVal propertyAlias As String) As Boolean
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
@@ -116,8 +120,8 @@ Namespace Entities
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
         Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
-        Sub GetChangedObjectGraph(ByVal gl As Generic.List(Of _ICachedEntity))
-        Function GetChangedObjectGraph() As Generic.List(Of _ICachedEntity)
+        Sub FillChangedObjectList(ByVal objectList As Generic.List(Of _ICachedEntity))
+        Function GetChangedObjectList() As Generic.List(Of _ICachedEntity)
     End Interface
 
     Public Interface IKeyProvider
@@ -130,6 +134,10 @@ Namespace Entities
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub Load(ByVal propertyAlias As String)
         Sub RemoveOriginalCopy(ByVal cache As CacheBase)
+        ''' <summary>
+        ''' Возвращает массив полей и значений первичный ключей
+        ''' </summary>
+        ''' <returns>Массив полей и значений первичный ключей</returns>
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
@@ -326,11 +334,22 @@ Namespace Entities
 
     End Class
 
+    ''' <summary>
+    ''' Обертка над массивом полей и значений
+    ''' </summary>
+    ''' <remarks>Реализует операции сравнения и получения хэш-кода для 
+    ''' массива полей и значений <see cref="PKDesc"/></remarks>
     <Serializable()> _
     Public Class PKWrapper
+        Implements IKeyProvider
+
         Private _id As PKDesc()
         Private _str As String
 
+        ''' <summary>
+        ''' Инициализация объекта
+        ''' </summary>
+        ''' <param name="pk">Массив полей и значений</param>
         Public Sub New(ByVal pk() As PKDesc)
             _id = pk
         End Sub
@@ -396,6 +415,22 @@ Namespace Entities
                 _str = sb.ToString
             End If
             Return _str
+        End Function
+
+        Public ReadOnly Property Key() As Integer Implements IKeyProvider.Key
+            Get
+                Return GetHashCode()
+            End Get
+        End Property
+
+        Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
+            Get
+                Return ToString()
+            End Get
+        End Property
+
+        Public Function GetPKs() As PKDesc()
+            Return _id
         End Function
     End Class
 

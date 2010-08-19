@@ -109,18 +109,40 @@ Namespace Expressions2
                 [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter
             End If
 
-            Dim s As String = [alias] & map.ColumnExpression
+            Dim sb As New StringBuilder
+            Dim lastPostfix As Integer = 1
+            For Each sf As SourceField In map.SourceFields
+                Dim idx_beg As Integer = sb.Length
+                sb.Append([alias] & sf.SourceFieldExpression)
 
-            If Not String.IsNullOrEmpty(map.ColumnName) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
                 Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
                 RaiseEvent FormatBehaviour(Me, args)
 
                 If args.NeedAlias Then
-                    s &= " " & map.ColumnName
+                    If Not String.IsNullOrEmpty(sf.SourceFieldAlias) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
+                        sb.Append(" ").Append(sf.SourceFieldAlias)
+                    End If
                 End If
-            End If
 
-            Return s
+                If args.CustomStatement IsNot Nothing Then
+                    If args.CustomStatement.FromLeft Then
+                        sb.Insert(idx_beg, args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                            almgr, contextFilter, stmtMode, executor, sf))
+                    Else
+                        sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                            almgr, contextFilter, stmtMode, executor, sf))
+                    End If
+                    sb.Append(" and ")
+                    lastPostfix = 5
+                Else
+                    sb.Append(",")
+                End If
+
+            Next
+
+            sb.Length -= lastPostfix
+
+            Return sb.ToString
         End Function
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse

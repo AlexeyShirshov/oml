@@ -39,7 +39,7 @@ Public Class Table4
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType([from], Table4)
             CType([to], Table4)._col = ._col
             CType([to], Table4)._g = ._g
@@ -131,11 +131,11 @@ Public Class Table4Implementation
     '    Return _tables
     'End Function
 
-    Public Function GetEntityKey(ByVal filterInfo As Object) As String Implements ICacheBehavior.GetEntityKey
+    Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
         Return "kljf"
     End Function
 
-    Public Function GetEntityTypeKey(ByVal filterInfo As Object) As Object Implements ICacheBehavior.GetEntityTypeKey
+    Public Function GetEntityTypeKey() As Object Implements ICacheBehavior.GetEntityTypeKey
         Return "91bn34fh    oebnfklE:"
     End Function
 End Class
