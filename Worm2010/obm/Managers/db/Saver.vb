@@ -325,11 +325,11 @@ Namespace Database
             End If
         End Sub
 
-        Protected Overridable Function CheckObj(ByVal main As _ICachedEntity, ByVal o As ICachedEntity) As Boolean
+        Protected Overridable Function CheckObj(ByVal main As ICachedEntity, ByVal o As ICachedEntity) As Boolean
             If o.ObjectState <> ObjectState.Deleted Then Return False
             Dim oSchema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
-            For Each m As MapField2Column In _mgr.MappingEngine.GetMappedFields(oSchema)
-                If main.Equals(_mgr.MappingEngine.GetPropertyValue(o, m._propertyAlias, oSchema)) Then
+            For Each m As MapField2Column In oSchema.GetFieldColumnMap
+                If main.Equals(ObjectMappingEngine.GetPropertyValue(o, m.PropertyAlias, oSchema)) Then
                     Return True
                 End If
             Next
@@ -528,7 +528,7 @@ l1:
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, _mgr) Is Nothing)
+                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     If o.UpdateCtx.UpdatedFields IsNot Nothing Then
@@ -798,9 +798,9 @@ l1:
             Dim o As Object = _syncObj(sender)
             _syncObj.Remove(sender)
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
-            ObjectMappingEngine.InitPOCO(_mgr.MappingEngine.GetProperties(o.GetType, oschema), _
+            ObjectMappingEngine.InitPOCO( _
                 o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
-                _mgr.MappingEngine, sender, o, _mgr)
+                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.GetContextInfo)
         End Sub
 
         Public Overridable Sub Delete(ByVal obj As Object)
@@ -946,7 +946,7 @@ l1:
                         If o.HasChanges Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
                             If o.ShadowCopy(_mgr) IsNot Nothing Then
-                                If _mgr.Cache.ShadowCopy(o, _mgr).Reason = ObjectModification.ReasonEnum.Delete Then
+                                If _mgr.Cache.ShadowCopy(o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)).Reason = ObjectModification.ReasonEnum.Delete Then
                                     Debug.Assert(_saver._deleted.Contains(o))
                                     Debug.Assert(Not _saver._updated.Contains(o))
                                 ElseIf o.ShadowCopy(_mgr).Reason = ObjectModification.ReasonEnum.Edit Then

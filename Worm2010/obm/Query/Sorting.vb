@@ -553,8 +553,8 @@ Namespace Query
                                 Throw New NotSupportedException(String.Format("Expression type {0} is not supported", s.Operand.GetType))
                             End If
                             Dim ss As IEntitySchema = mpe.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(mpe))
-                            xo = x.GetMappingEngine.GetPropertyValue(pr.First, ee.ObjectProperty.PropertyAlias, ss)
-                            yo = x.GetMappingEngine.GetPropertyValue(pr2.First, ee.ObjectProperty.PropertyAlias, ss)
+                            xo = ObjectMappingEngine.GetPropertyValue(pr.First, ee.ObjectProperty.PropertyAlias, ss, Nothing)
+                            yo = ObjectMappingEngine.GetPropertyValue(pr2.First, ee.ObjectProperty.PropertyAlias, ss, Nothing)
                         End If
                     End If
                     Dim k As Integer = 1
@@ -602,10 +602,10 @@ Namespace Query
                     If ss IsNot Nothing Then
                         Return New Pair(Of _IEntity, IOrmSorting)(xo, ss)
                     Else
-                        Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, mpe.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(mpe)))
+                        Return ObjectMappingEngine.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, mpe.GetEntitySchema(ee.ObjectProperty.Entity.GetRealType(mpe)))
                     End If
                 End If
-                Return mpe.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
+                Return ObjectMappingEngine.GetPropertyValue(xo, ee.ObjectProperty.PropertyAlias, tos)
             End Function
 
             Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare

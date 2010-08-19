@@ -216,12 +216,13 @@ Namespace Entities
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Updated
         Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.ChangesAccepted
 
-        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal arr As Generic.List(Of EntityPropertyAttribute)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
+        Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
                     For i As Integer = 0 To _props.Count - 1
-                        If Not _members_load_state(i, schema) Then
+                        If Not _members_load_state(i, map, schema) Then
                             allloaded = False
                             Exit For
                         End If
@@ -232,7 +233,7 @@ Namespace Entities
             End Using
         End Function
 
-        Public Function ForseUpdate(ByVal c As Meta.EntityPropertyAttribute) As Boolean Implements _ICachedEntity.ForseUpdate
+        Public Function ForseUpdate(ByVal propertyAlias As String) As Boolean Implements _ICachedEntity.ForseUpdate
             Return False
         End Function
 
@@ -319,12 +320,12 @@ Namespace Entities
                     If value AndAlso Not _loaded Then
                         Dim cnt As Integer = _props.Count
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, mpe) = True
+                            _members_load_state(i, Nothing, mpe) = True
                         Next
                     ElseIf Not value AndAlso _loaded Then
                         Dim cnt As Integer = _props.Count
                         For i As Integer = 0 To cnt - 1
-                            _members_load_state(i, mpe) = False
+                            _members_load_state(i, Nothing, mpe) = False
                         Next
                     End If
                     _loaded = value
@@ -333,20 +334,22 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Function SetLoaded(ByVal fieldName As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
-            Dim i As Integer
-            For Each p As String In _props.Keys
-                If p = fieldName Then
-                    Exit For
-                End If
-                i += 1
-            Next
-            _members_load_state(i, schema) = check
+        Public Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+            Dim idx As Integer
+            'For Each p As String In _props.Keys
+            '    If p = propertyAlias Then
+            '        Exit For
+            '    End If
+            '    idx += 1
+            'Next
+            idx = map.IndexOf(propertyAlias)
+            _members_load_state(idx, map, mpe) = check
         End Function
 
-        Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
-            Return SetLoaded(c.PropertyAlias, loaded, check, schema)
-        End Function
+        'Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        '    Return SetLoaded(c.PropertyAlias, loaded, check, schema)
+        'End Function
 
         Public ReadOnly Property UpdateCtx() As UpdateCtx Implements _ICachedEntity.UpdateCtx
             Get
@@ -368,7 +371,7 @@ Namespace Entities
                     'AcceptRelationalChanges(updateCache, mc)
 
                     If (ObjectState <> Entities.ObjectState.None) Then
-                        mo = RemoveVersionData(mc.Cache, mc.MappingEngine, mc.GetContextInfo, setState)
+                        mo = RemoveVersionData(mc.Cache, mc.MappingEngine, setState)
                         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
                             '_valProcs = False
@@ -380,7 +383,7 @@ Namespace Entities
                             RaiseEvent Deleted(Me, EventArgs.Empty)
                         ElseIf _upd.Added Then
                             '_valProcs = False
-                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, GetEntitySchema(mc.MappingEngine))
+                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mc.MappingEngine), ICacheBehavior))
                             Dim kw As CacheKey = New CacheKey(Me)
                             Dim o As _ICachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
@@ -469,7 +472,7 @@ Namespace Entities
             SetObjectState(Entities.ObjectState.Modified)
             _copy = clone
             Dim c As CacheBase = mgr.Cache
-            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, GetEntitySchema(mgr.MappingEngine))
+            c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         End Sub
 
@@ -624,7 +627,7 @@ Namespace Entities
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, mgr, obj.GetEntitySchema(mgr.MappingEngine))
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -705,7 +708,7 @@ Namespace Entities
                     If olds <> Entities.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
-                        RemoveVersionData(mgr.Cache, mgr.MappingEngine, mgr.GetContextInfo, False)
+                        RemoveVersionData(mgr.Cache, mgr.MappingEngine, False)
                     End If
 
                     If newid IsNot Nothing Then
@@ -723,7 +726,7 @@ Namespace Entities
                         If oldkey.HasValue Then
                             'Using gmc As IGetManager = GetMgr()
                             'Dim mc As OrmManager = gmc.Manager
-                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType, GetEntitySchema(mgr.MappingEngine))
+                            Dim dic As IDictionary = mgr.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                             If dic Is Nothing Then
                                 Dim name As String = Me.GetType.Name
                                 Throw New OrmObjectException("Collection for " & name & " not exists")
@@ -733,7 +736,7 @@ Namespace Entities
                         End If
                         ' End Using
 
-                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, mgr.GetContextInfo, GetEntitySchema(mgr.MappingEngine))
+                        mgr.Cache.UnregisterModification(Me, mgr.MappingEngine, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                         _copy = Nothing
                         _loaded = False
                         '_loaded_members = New BitArray(_loaded_members.Count)
@@ -743,7 +746,7 @@ Namespace Entities
         End Sub
 
         Public Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -816,7 +819,7 @@ Namespace Entities
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, mgr, GetEntitySchema(mgr.MappingEngine))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -847,12 +850,12 @@ Namespace Entities
                     End If
                 End If
             End If
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit, GetEntitySchema(mgr.MappingEngine))
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Edit, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Sub
 
         Protected Sub CreateClone4Delete(ByVal mgr As OrmManager)
             SetObjectState(Entities.ObjectState.Deleted)
-            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, GetEntitySchema(mgr.MappingEngine))
+            mgr.Cache.RegisterModification(mgr, Me, ObjectModification.ReasonEnum.Delete, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             Dim mgrLocal As OrmManager = GetCurrent()
             If mgrLocal IsNot Nothing Then
                 mgrLocal.RaiseBeginDelete(Me)
@@ -860,25 +863,26 @@ Namespace Entities
         End Sub
 
         Protected Function EnsureInCache(ByVal mgr As OrmManager) As ICachedEntity
-            Return mgr.EnsureInCache(Me, mgr.GetDictionary(Me.GetType, GetEntitySchema(mgr.MappingEngine)))
+            Return mgr.EnsureInCache(Me, mgr.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)))
         End Function
 
         Protected Overrides Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             If _myschema Is Nothing Then
                 'Return mpe.GetEntitySchema(t)
-                Throw New InvalidOperationException
+                Throw New InvalidOperationException(String.Format("Schema for type {0} is not set", Me.GetType))
             Else
                 Return _myschema
             End If
         End Function
 
         Public Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
-            Return mgr.Cache.ShadowCopy(Me, mgr.MappingEngine, GetEntitySchema(mgr.MappingEngine))
+            Return mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Function
 
-        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal schema As ObjectMappingEngine)
+        Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
+            Dim schema As IEntitySchema = GetEntitySchema(mpe)
             For Each p As PKDesc In pk
-                SetLoaded(p.PropertyAlias, True, True, schema)
+                SetLoaded(p.PropertyAlias, True, True, schema.GetFieldColumnMap, mpe)
             Next
         End Sub
 
@@ -890,7 +894,7 @@ Namespace Entities
         End Sub
 
         Protected Function RemoveVersionData(ByVal cache As CacheBase, _
-           ByVal mpe As ObjectMappingEngine, ByVal context As Object, ByVal setState As Boolean) As _ICachedEntity
+           ByVal mpe As ObjectMappingEngine, ByVal setState As Boolean) As _ICachedEntity
             Dim mo As _ICachedEntity = Nothing
 
             If setState Then
@@ -902,23 +906,27 @@ Namespace Entities
             End If
 
             mo = CType(OriginalCopy, _ICachedEntity)
-            cache.UnregisterModification(Me, mpe, context, GetEntitySchema(mpe))
+            cache.UnregisterModification(Me, mpe, TryCast(GetEntitySchema(mpe), ICacheBehavior))
             _copy = Nothing
 
             Return mo
         End Function
 
-        Protected Property _members_load_state(ByVal idx As Integer, ByVal mpe As ObjectMappingEngine) As Boolean
+        Private Sub InitLoadState(ByVal map As Collections.IndexedCollection(Of String, MapField2Column))
+            If _loaded_members Is Nothing Then
+                '_loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
+                _loaded_members = New BitArray(map.Count)
+            End If
+        End Sub
+
+        Protected Property _members_load_state(ByVal idx As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal mpe As ObjectMappingEngine) As Boolean
             Get
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
-                End If
+                InitLoadState(map)
                 Return _loaded_members(idx)
             End Get
             Set(ByVal value As Boolean)
-                If _loaded_members Is Nothing Then
-                    _loaded_members = New BitArray(GetEntitySchema(mpe).GetFieldColumnMap.Count)
-                End If
+                InitLoadState(map)
                 _loaded_members(idx) = value
             End Set
         End Property
@@ -948,11 +956,11 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overloads Sub _GetChangedObjectGraph(ByVal gl As System.Collections.Generic.List(Of _ICachedEntity)) Implements _ICachedEntity.GetChangedObjectGraph
+        Protected Overloads Sub _GetChangedObjectGraph(ByVal gl As System.Collections.Generic.List(Of _ICachedEntity)) Implements _ICachedEntity.FillChangedObjectList
             Throw New NotImplementedException
         End Sub
 
-        Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectGraph
+        Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectList
             Throw New NotImplementedException
         End Function
 

@@ -40,7 +40,7 @@ Public Class Tables1to3
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType([from], Tables1to3)
             CType([to], Tables1to3)._id = ._id
             CType([to], Tables1to3)._name = ._name
@@ -66,7 +66,7 @@ Public Class Tables1to3
         End Select
     End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal oschema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
         Select Case propertyAlias
             Case "Title"
                 Return _name
@@ -75,7 +75,9 @@ Public Class Tables1to3
             Case "Table3"
                 Return _table3
             Case Else
-                Return GetMappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
+                Return GetValueReflection(propertyAlias, oschema)
+                'Return schema.GetFieldColumnMap(propertyAlias).GetValue(Me)
+                'Return GetMappingEngine.GetProperty(Me.GetType, schema, propertyAlias).GetValue(Me, Nothing)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select

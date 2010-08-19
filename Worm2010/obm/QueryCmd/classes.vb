@@ -27,10 +27,10 @@ Namespace Query
         Function ExecEntity(Of CreateType As {_IEntity, New}, ReturnType As {_IEntity})( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
 
-        Function Exec(Of ReturnType As _ICachedEntity)( _
+        Function Exec(Of ReturnType As ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
-        Function Exec(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
+        Function Exec(Of CreateType As {ICachedEntity, New}, ReturnType As ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix
@@ -81,7 +81,7 @@ Namespace Query
         Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
         Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal newMap As OrmObjectIndex)
         Function GetFieldColumnMap(ByVal oschema As IEntitySchema, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
-        Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String
+        Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
     End Interface
 
     Public Class ExecutorCtx
@@ -118,9 +118,56 @@ Namespace Query
             End Get
         End Property
 
-        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String Implements IExecutionContext.FindColumn
+        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String() Implements IExecutionContext.FindColumn
             Throw New NotImplementedException
         End Function
+    End Class
+
+    Public Class CombineExecutor
+        Implements IExecutionContext
+
+        Private _f As IExecutionContext
+        Private _s As IExecutionContext
+
+        Public Sub New(ByVal execCtx As IExecutionContext)
+            _f = execCtx
+        End Sub
+
+        Public Sub New(ByVal f As IExecutionContext, ByVal s As IExecutionContext)
+            _f = f
+            _s = s
+        End Sub
+
+        Public Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String() Implements IExecutionContext.FindColumn
+            Dim c() As String = _f.FindColumn(mpe, p)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
+                c = _s.FindColumn(mpe, p)
+            End If
+            Return c
+        End Function
+
+        Public Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type) As Entities.Meta.IEntitySchema Implements IExecutionContext.GetEntitySchema
+            Dim c As IEntitySchema = _f.GetEntitySchema(mpe, t)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
+                c = _s.GetEntitySchema(mpe, t)
+            End If
+            Return c
+        End Function
+
+        Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements IExecutionContext.GetFieldColumnMap
+            Dim c As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) = _f.GetFieldColumnMap(oschema, t)
+            If c Is Nothing AndAlso _s IsNot Nothing Then
+                c = _s.GetFieldColumnMap(oschema, t)
+            End If
+            Return c
+        End Function
+
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements IExecutionContext.ReplaceSchema
+            _f.ReplaceSchema(mpe, t, newMap)
+            If _s IsNot Nothing Then
+                _s.ReplaceSchema(mpe, t, newMap)
+            End If
+        End Sub
     End Class
 
     <Serializable()> _

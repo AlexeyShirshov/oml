@@ -346,11 +346,11 @@ Namespace Entities
             MyBase.Init()
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) Implements _IKeyEntity.Init
-            MyBase._Init(cache, schema)
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _IKeyEntity.Init
+            MyBase._Init(cache, mpe)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, schema)
+            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, GetEntitySchema(mpe).GetFieldColumnMap, mpe)
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -433,54 +433,60 @@ Namespace Entities
 
             For Each rl As Relation In _relations
                 Dim el As M2MRelation = TryCast(rl, M2MRelation)
-                If el Is Nothing Then Continue For
-                SyncLock "1efb139gf8bh"
-                    For Each o As IKeyEntity In el.Added
-                        'Dim otherKey As String = el.Key
-                        'If Me.GetType Is o.GetType Then
-                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        'End If
-                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
-                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
-                        m.Added.Remove(Me)
-                        m._savedIds.Remove(Me)
-                        If updateCache AndAlso cache IsNot Nothing Then
-                            cache.RemoveM2MQueries(m)
-                        Else
-                            Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                            If Not l.Contains(m) Then
-                                l.Add(m)
-                            End If
-                        End If
-                    Next
-                    el.Added.Clear()
 
-                    For Each o As IKeyEntity In el.Deleted
-                        'Dim otherKey As String = el.Key
-                        'If Me.GetType Is o.GetType Then
-                        '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
-                        'End If
-                        'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
-                        Dim m As M2MRelation = el.GetRevert(Nothing, o)
-                        m.Deleted.Remove(Me)
+                SyncLock "1efb139gf8bh"
+                    If el IsNot Nothing Then
+                        For Each o As IKeyEntity In rl.Added
+                            'Dim otherKey As String = el.Key
+                            'If Me.GetType Is o.GetType Then
+                            '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                            'End If
+                            'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                            Dim m As M2MRelation = el.GetRevert(Nothing, o)
+                            m.Added.Remove(Me)
+                            m._savedIds.Remove(Me)
+                            If updateCache AndAlso cache IsNot Nothing Then
+                                cache.RemoveM2MQueries(m)
+                            Else
+                                Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                                If Not l.Contains(m) Then
+                                    l.Add(m)
+                                End If
+                            End If
+                        Next
+                    End If
+                    rl.Added.Clear()
+
+                    If el IsNot Nothing Then
+                        For Each o As IKeyEntity In rl.Deleted
+                            'Dim otherKey As String = el.Key
+                            'If Me.GetType Is o.GetType Then
+                            '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
+                            'End If
+                            'Dim m As M2MRelation = CType(o.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
+                            Dim m As M2MRelation = el.GetRevert(Nothing, o)
+                            m.Deleted.Remove(Me)
+                            If updateCache AndAlso cache IsNot Nothing Then
+                                cache.RemoveM2MQueries(el)
+                            Else
+                                Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                                If Not l.Contains(m) Then
+                                    l.Add(m)
+                                End If
+                            End If
+                        Next
+                    End If
+                    rl.Deleted.Clear()
+
+                    If el IsNot Nothing Then
+                        el.Reject2()
                         If updateCache AndAlso cache IsNot Nothing Then
                             cache.RemoveM2MQueries(el)
                         Else
                             Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                            If Not l.Contains(m) Then
-                                l.Add(m)
+                            If Not l.Contains(el) Then
+                                l.Add(el)
                             End If
-                        End If
-                    Next
-                    el.Deleted.Clear()
-                    el.Reject2()
-
-                    If updateCache AndAlso cache IsNot Nothing Then
-                        cache.RemoveM2MQueries(el)
-                    Else
-                        Dim l As List(Of M2MRelation) = CType(Me, _ICachedEntity).UpdateCtx.Relations
-                        If Not l.Contains(el) Then
-                            l.Add(el)
                         End If
                     End If
                 End SyncLock
@@ -631,12 +637,13 @@ Namespace Entities
 
         Public Overrides Sub RejectRelationChanges(ByVal mc As OrmManager)
             Using SyncHelper(False)
-                Dim t As Type = Me.GetType
                 'Using gmc As IGetManager = GetMgr()
                 'Dim mc As OrmManager = gmc.Manager
+#If OLDM2M Then
+                Dim t As Type = Me.GetType
                 Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
                 Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
-#If OLDM2M Then
+
                 If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                     Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
                     cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
@@ -703,9 +710,10 @@ Namespace Entities
                 Return "PK:" & Identifier.ToString
             End Get
         End Property
+
 #Region " Relations "
-        Protected Overrides Function GetChangedRelationObjects() As System.Collections.Generic.List(Of ICachedEntity)
-            Dim l As List(Of ICachedEntity) = MyBase.GetChangedRelationObjects()
+        Protected Overrides Function GetChildChangedObjects() As System.Collections.Generic.List(Of ICachedEntity)
+            Dim l As List(Of ICachedEntity) = MyBase.GetChildChangedObjects()
             For Each rl As Relation In _relations.ToArray
                 For Each e As ICachedEntity In rl.Added
                     l.Add(e)
@@ -1249,6 +1257,21 @@ Namespace Entities
         NotLoaded
     End Enum
 
+    Public Enum EntityState
+        Flag_HasIdentity = 1
+        Flag_NotExistsInStore = 2
+        Flag_ExistsInStore = 4
+        Flag_Modify = 8
+        Flag_Delete = 16
+
+        Created = 0
+        NotExistsInStore = Flag_HasIdentity + Flag_NotExistsInStore
+        ExistsInStore = Flag_HasIdentity + Flag_ExistsInStore
+        Modifing = ExistsInStore + Flag_Modify
+        Deleting = ExistsInStore + Flag_Delete
+        Deleted = NotExistsInStore + Flag_Delete
+        SyncStore = Flag_NotExistsInStore + Flag_ExistsInStore
+    End Enum
     '    Public Module OrmBaseT
     '        Public Const PKName As String = "ID"
     '    End Module

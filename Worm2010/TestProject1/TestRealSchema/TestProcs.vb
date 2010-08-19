@@ -457,7 +457,7 @@ Public Class MultiR
     Inherits MultiResultsetQueryEntityStoredProcBase
 
     Class r
-        Inherits MultiResultsetQueryEntityStoredProcBase.OrmDescriptor(Of Table1)
+        Inherits MultiResultsetQueryEntityStoredProcBase.EntityDescriptor(Of Table1)
 
         Protected Overrides Function GetColumns() As List(Of SelectExpression)
             Dim l As New List(Of SelectExpression)

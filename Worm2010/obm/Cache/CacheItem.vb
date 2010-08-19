@@ -166,6 +166,38 @@ Namespace Cache
         '    _sortExpires = Nothing
         'End Sub
 
+        Public Function SortEquals(ByVal sort As OrderByClause, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
+            'If _sort Is Nothing Then
+            '    If sort Is Nothing Then
+            '        Return True
+            '    Else
+            '        Return False
+            '    End If
+            'ElseIf _sort.Key <> 0 Then
+            '    Return _sort.Key = sort.GetOnlyKey(schema, contextFilter).Key
+            'Else
+            '    Return _sort.Equals(sort)
+            'End If
+            If _sort Is Nothing Then
+                If sort Is Nothing Then
+                    Return True
+                Else
+                    Return False
+                End If
+            Else
+                If sort Is Nothing OrElse _sort.Count <> sort.Count Then
+                    Return False
+                Else
+                    For i As Integer = 0 To _sort.Count - 1
+                        If Not _sort(i).Equals(sort(i)) Then
+                            Return False
+                        End If
+                    Next
+                    Return True
+                End If
+            End If
+        End Function
+
         Public ReadOnly Property Expires() As Boolean
             Get
                 If _expires <> Date.MinValue Then
@@ -320,38 +352,6 @@ Namespace Cache
         '    End Get
         'End Property
 
-        Public Function SortEquals(ByVal sort As OrderByClause, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
-            'If _sort Is Nothing Then
-            '    If sort Is Nothing Then
-            '        Return True
-            '    Else
-            '        Return False
-            '    End If
-            'ElseIf _sort.Key <> 0 Then
-            '    Return _sort.Key = sort.GetOnlyKey(schema, contextFilter).Key
-            'Else
-            '    Return _sort.Equals(sort)
-            'End If
-            If _sort Is Nothing Then
-                If sort Is Nothing Then
-                    Return True
-                Else
-                    Return False
-                End If
-            Else
-                If sort Is Nothing OrElse _sort.Count <> sort.Count Then
-                    Return False
-                Else
-                    For i As Integer = 0 To _sort.Count - 1
-                        If Not _sort(i).Equals(sort(i)) Then
-                            Return False
-                        End If
-                    Next
-                    Return True
-                End If
-            End If
-        End Function
-
         'Public Overrides Function GetObjectList(Of T As {_IEntity})(ByVal mgr As OrmManager, _
         '    ByVal withLoad As Boolean, ByVal created As Boolean, _
         '    ByVal start As Integer, ByVal length As Integer, _
@@ -359,7 +359,7 @@ Namespace Cache
 
         'End Function
 
-        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, _
+        Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
@@ -367,7 +367,7 @@ Namespace Cache
             Return lc.FromWeakList(Of T)(_col, mgr, start, length, withLoad, created, successed)
         End Function
 
-        Public Overridable Overloads Function GetObjectList(Of T As {_ICachedEntity})( _
+        Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)( _
             ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Dim lc As IListObjectConverter = mgr.ListConverter
             Return lc.FromWeakList(Of T)(_col, mgr)

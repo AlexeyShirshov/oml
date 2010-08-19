@@ -693,9 +693,9 @@ l1:
                 sb.Append("(")
                 For Each f As String In ifields
                     Dim m As MapField2Column = os.GetFieldColumnMap(f)
-                    sb.Append(m.ColumnExpression).Append(",")
+                    sb.Append(m.SourceFieldExpression).Append(",")
                     If tf IsNot Nothing AndAlso Not replaced Then
-                        sb.Replace("{290ghern}", tf.GetRealTable(m.ColumnExpression))
+                        sb.Replace("{290ghern}", tf.GetRealTable(m.SourceFieldExpression))
                         replaced = True
                     End If
                 Next
@@ -893,8 +893,8 @@ l1:
 
                     'sb.Append(s.EndLine).Append(j.MakeSQLStmt(mpe, s, filterInfo, almgr, params, osrc_))
 
-                    Dim jf As New JoinFilter(tbl_real, s.FTSKey, stt, mpe.GetPrimaryKeys(stt, fromOS)(0).PropertyAlias, _
-                                       Criteria.FilterOperation.Equal)
+                    Dim frompk As String = mpe.GetSinglePK(stt, fromOS) 'mpe.GetPrimaryKeys(stt, fromOS)(0).PropertyAlias 
+                    Dim jf As New JoinFilter(tbl_real, s.FTSKey, stt, frompk, Criteria.FilterOperation.Equal)
 
                     If ctxF IsNot Nothing Then
                         predi.and(ctxF.SetUnion(osrc))
@@ -971,7 +971,7 @@ l1:
 
                         Dim pkname As String = Nothing
                         'If selectedType IsNot Nothing Then
-                        pkname = mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
+                        pkname = mpe.GetSinglePK(selectedType, selSchema) 'mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
                         'End If
                         join.InjectJoinFilter(mpe, selectedType, pkname, pk.First, pk.Second)
                     End If
@@ -1032,10 +1032,13 @@ l1:
                                 Throw New ExecutorException(String.Format("M2M relation between {0} and {1} not found", t, t2))
                             End If
 
+                            Dim t2_pk As String = mpe.GetSinglePK(t2, oschema2)
+                            Dim t1_pk As String = mpe.GetSinglePK(t, oschema)
+
                             Dim rcmd As RelationCmd = TryCast(query, RelationCmd)
                             If rcmd IsNot Nothing Then
                                 If t12t2.Equals(rcmd.RelationDesc) Then
-                                    Dim flt As IGetFilter = Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, mpe.GetPrimaryKeys(t2)(0).PropertyAlias))
+                                    Dim flt As IGetFilter = Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
                                     predi.and(flt.Filter.SetUnion(rcmd.RelationDesc.Entity))
                                     Continue For
                                 End If
@@ -1047,9 +1050,6 @@ l1:
                             Else
                                 t22t1 = mpe.GetM2MRelation(t2, oschema2, t, join.M2MKey)
                             End If
-
-                            Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).PropertyAlias
-                            Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).PropertyAlias
 
                             'Dim jl As JoinLink = JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk)
                             Dim tbl As SourceFragment = CType(t22t1.Table.Clone, SourceFragment)
@@ -1197,6 +1197,12 @@ l1:
             oschema.GetFieldColumnMap.CopyTo(newcol)
             For Each m As MapField2Column In newcol
                 m.Table = tbl
+                For Each sf As SourceField In m.SourceFields
+                    If Not String.IsNullOrEmpty(sf.SourceFieldAlias) Then
+                        sf.SourceFieldExpression = sf.SourceFieldAlias
+                        sf.SourceFieldAlias = Nothing
+                    End If
+                Next
             Next
             Return newcol
         End Function

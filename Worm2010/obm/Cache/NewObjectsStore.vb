@@ -3,11 +3,48 @@ Imports Worm.Entities
 Imports System.Collections.Generic
 
 Namespace Cache
+    ''' <summary>
+    ''' Интерфейс работы с новыми объектами
+    ''' </summary>
+    ''' <remarks>Так как новые объект не хранятся в кеше, система работает с ними с помощью внешнего 
+    ''' хранилища, реализующего данный интерфейс</remarks>
     Public Interface INewObjectsStore
+        ''' <summary>
+        ''' Возвращает набор полей и значений первичного ключа
+        ''' </summary>
+        ''' <param name="t">Тип объекта</param>
+        ''' <param name="mpe">Движок маппинга</param>
+        ''' <returns>Набор полей и значений первичного ключа</returns>
+        ''' <exception cref="ArgumentNullException">Если t или mpe пустая ссылка</exception>
         Function GetPKForNewObject(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As PKDesc()
+        ''' <summary>
+        ''' Возвращает экземпляр нового объекта данного типа по первичному ключу
+        ''' </summary>
+        ''' <param name="t">Тип объекта</param>
+        ''' <param name="pk">Набор полей и значений первичного ключа</param>
+        ''' <returns>Экземпляр нового объекта данного типа по первичному ключу или Nothing, 
+        ''' если не найден</returns>
+        ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
         Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
+        ''' <summary>
+        ''' Добавляет объект в хранилище новых объектов
+        ''' </summary>
+        ''' <param name="obj">Объект</param>
+        ''' <exception cref="ArgumentException">Если объект уже добавлен</exception>
+        ''' <exception cref="ArgumentNullException">Если obj пустая ссылка</exception>
         Sub AddNew(ByVal obj As _ICachedEntity)
+        ''' <summary>
+        ''' Удаляет объект из хранилища новых объектов
+        ''' </summary>
+        ''' <param name="obj">Объект</param>
+        ''' <exception cref="ArgumentNullException">Если obj пустая ссылка</exception>
         Sub RemoveNew(ByVal obj As _ICachedEntity)
+        ''' <summary>
+        ''' Удаляет объект из хранилища новых объектов
+        ''' </summary>
+        ''' <param name="t">Тип объекта</param>
+        ''' <param name="pk">Набор полей и значений первичного ключа</param>
+        ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
         Sub RemoveNew(ByVal t As Type, ByVal pk() As PKDesc)
     End Interface
 
@@ -63,15 +100,23 @@ Namespace Cache
             Return o
         End Function
 
+        ''' <summary>
+        ''' Возвращает набор полей и значений первичного ключа
+        ''' </summary>
+        ''' <param name="t">Тип объекта</param>
+        ''' <param name="mpe">Движок маппинга</param>
+        ''' <returns>Набор полей и значений первичного ключа</returns>
+        ''' <exception cref="ArgumentNullException">Если t или mpe пустая ссылка</exception>
         Public Function GetPKForNewObject(ByVal t As System.Type, ByVal mpe As ObjectMappingEngine) As Entities.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
-            Dim dic As IDictionary = mpe.GetProperties(t)
+            If mpe Is Nothing Then
+                Throw New ArgumentNullException("mpe")
+            End If
+
             Dim l As New List(Of PKDesc)
-            For Each de As DictionaryEntry In dic
-                Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-                If (c.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    Dim id As Object = GetPKValue(t, c.PropertyAlias, pi.PropertyType, pi.DeclaringType)
-                    l.Add(New PKDesc(c.PropertyAlias, id))
+            For Each m As MapField2Column In mpe.GetEntitySchema(t).GetFieldColumnMap
+                If m.IsPK Then
+                    Dim id As Object = GetPKValue(t, m.PropertyAlias, m.PropertyInfo.PropertyType, m.PropertyInfo.DeclaringType)
+                    l.Add(New PKDesc(m.PropertyAlias, id))
                 End If
             Next
             Return l.ToArray

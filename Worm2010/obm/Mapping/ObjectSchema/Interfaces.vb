@@ -1,11 +1,6 @@
-Imports System.Data.SqlClient
-Imports System.Runtime.CompilerServices
-Imports System.Collections.Generic
+
 Imports Worm.Criteria.Core
-Imports Worm.Entities
-Imports Worm.Query.Sorting
 Imports Worm.Criteria.Joins
-Imports Worm.Cache
 Imports Worm.Expressions2
 
 Namespace Entities.Meta
@@ -134,12 +129,12 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface ISchemaInit
-        Sub GetSchema(ByVal schema As ObjectMappingEngine, ByVal t As Type)
+        Sub InitSchema(ByVal mpe As ObjectMappingEngine, ByVal declaredType As Type)
     End Interface
 
     Public Interface ICacheBehavior
-        Function GetEntityKey(ByVal filterInfo As Object) As String
-        Function GetEntityTypeKey(ByVal filterInfo As Object) As Object
+        Function GetEntityKey() As String
+        Function GetEntityTypeKey() As Object
     End Interface
 
     Public Interface IJoinBehavior
@@ -162,8 +157,8 @@ Namespace Entities.Meta
 
     Public Interface IEntitySchemaBase
         Inherits IEntitySchema
-        Function ChangeValueType(ByVal c As Worm.Entities.Meta.EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        Function GetSuppressedFields() As String()
+        Function ChangeValueType(ByVal propertyAlias As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        'Function GetSuppressedFields() As String()
     End Interface
 
     Public Interface IDefferedLoading

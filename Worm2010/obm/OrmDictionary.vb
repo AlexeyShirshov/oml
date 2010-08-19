@@ -307,7 +307,7 @@ Namespace Misc
                         Dim add As New Hashtable
                         For Each ar As T In col2
                             If col.Contains(ar) Then Continue For
-                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, sname, oschema, Nothing))
+                            Dim fv As String = CStr(ObjectMappingEngine.GetPropertyValue(ar, sname, oschema))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -327,7 +327,7 @@ Namespace Misc
                         Next
                         For Each ar As T In col
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(ObjectMappingEngine.GetPropertyValue(ar, fname, oschema))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -349,7 +349,7 @@ Namespace Misc
                         For Each ar As T In c.Values
                             CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.MappingEngine.GetPropertyValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(ObjectMappingEngine.GetPropertyValue(ar, fname, oschema))
                             Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                             If addt IsNot Nothing Then
                                 For Each kl As T In addt
@@ -429,13 +429,13 @@ Namespace Misc
                 If _cmd Is Nothing Then
                     Return cmd.ToObjectList(Of T)(mgr)
                 Else
-                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
+                    Return cmd.WhereAnd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)(mgr)
                 End If
             Else
                 If _cmd Is Nothing Then
                     Return cmd.ToObjectList(Of T)()
                 Else
-                    Return cmd.WhereAdd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)()
+                    Return cmd.WhereAnd(_cmd.Filter).Join(_cmd.Joins).ToObjectList(Of T)()
                 End If
             End If
         End Function

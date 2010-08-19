@@ -134,7 +134,7 @@ Namespace Query.Database
                     For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
                         Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                             With newCmd
-                                .CommandText = cmd.CommandText & cmd_str.First
+                                .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
                                 _params.AppendParams(.Parameters, 0, pcnt)
                                 _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                                 nidx = cmd_str.Second
@@ -143,7 +143,24 @@ Namespace Query.Database
                         End Using
                     Next
                 Else
-                    dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
+                    Dim oo As List(Of Criteria.PredicateLink) = _q.GetBatchOrStruct
+                    If oo IsNot Nothing Then
+                        Dim pcnt As Integer = _params.Params.Count
+                        Dim nidx As Integer = pcnt
+                        For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(oo, _almgr, _params)
+                            Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                                With newCmd
+                                    .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
+                                    _params.AppendParams(.Parameters, 0, pcnt)
+                                    _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                    nidx = cmd_str.Second
+                                End With
+                                dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
+                            End Using
+                        Next
+                    Else
+                        dbm.QueryObjects(t, cmd, rr, sl, oschema, fields)
+                    End If
                 End If
 
                 _q.ExecCount += 1
@@ -246,7 +263,7 @@ Namespace Query.Database
                     For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
                         Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                             With newCmd
-                                .CommandText = cmd.CommandText & cmd_str.First
+                                .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
                                 _params.AppendParams(.Parameters, 0, pcnt)
                                 _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                                 nidx = cmd_str.Second
@@ -259,10 +276,31 @@ Namespace Query.Database
                         End Using
                     Next
                 Else
-                    If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
-                        dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                    Dim oo As List(Of Criteria.PredicateLink) = _q.GetBatchOrStruct
+                    If oo IsNot Nothing Then
+                        Dim pcnt As Integer = _params.Params.Count
+                        Dim nidx As Integer = pcnt
+                        For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(oo, _almgr, _params)
+                            Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                                With newCmd
+                                    .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
+                                    _params.AppendParams(.Parameters, 0, pcnt)
+                                    _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                    nidx = cmd_str.Second
+                                End With
+                                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                                    dbm.QueryObjects(selectType, newCmd, rr, sl, oschema, fields)
+                                Else
+                                    dbm.QueryObjects(Of CreateType)(newCmd, rr, sl, oschema, fields)
+                                End If
+                            End Using
+                        Next
                     Else
-                        dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                        If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                            dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                        Else
+                            dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                        End If
                     End If
                 End If
 
@@ -473,7 +511,7 @@ Namespace Query.Database
                     For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
                         Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                             With newCmd
-                                .CommandText = cmd.CommandText & cmd_str.First
+                                .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
                                 _params.AppendParams(.Parameters, 0, pcnt)
                                 _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                                 nidx = cmd_str.Second
@@ -482,7 +520,24 @@ Namespace Query.Database
                         End Using
                     Next
                 Else
-                    dbm.LoadMultipleObjects(t, cmd, rr, sl)
+                    Dim oo As List(Of Criteria.PredicateLink) = _q.GetBatchOrStruct
+                    If oo IsNot Nothing Then
+                        Dim pcnt As Integer = _params.Params.Count
+                        Dim nidx As Integer = pcnt
+                        For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(oo, _almgr, _params)
+                            Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                                With newCmd
+                                    .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
+                                    _params.AppendParams(.Parameters, 0, pcnt)
+                                    _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                    nidx = cmd_str.Second
+                                End With
+                                dbm.LoadMultipleObjects(t, newCmd, rr, sl)
+                            End Using
+                        Next
+                    Else
+                        dbm.LoadMultipleObjects(t, cmd, rr, sl)
+                    End If
                 End If
 
                 _q.ExecCount += 1
@@ -628,7 +683,7 @@ Namespace Query.Database
                     For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(batch.First, batch.Second, _almgr, _params, False)
                         Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                             With newCmd
-                                .CommandText = cmd.CommandText & cmd_str.First
+                                .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
                                 _params.AppendParams(.Parameters, 0, pcnt)
                                 _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                                 nidx = cmd_str.Second
@@ -641,12 +696,34 @@ Namespace Query.Database
                         End Using
                     Next
                 Else
-                    If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
-                        dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                    Dim oo As List(Of Criteria.PredicateLink) = _q.GetBatchOrStruct
+                    If oo IsNot Nothing Then
+                        Dim pcnt As Integer = _params.Params.Count
+                        Dim nidx As Integer = pcnt
+                        For Each cmd_str As Pair(Of String, Integer) In dbm.GetFilters(oo, _almgr, _params)
+                            Using newCmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
+                                With newCmd
+                                    .CommandText = cmd.CommandText.Replace("'optin' = 'optin'", cmd_str.First)
+                                    _params.AppendParams(.Parameters, 0, pcnt)
+                                    _params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
+                                    nidx = cmd_str.Second
+                                End With
+                                If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                                    dbm.QueryObjects(selectType, newCmd, rr, sl, oschema, fields)
+                                Else
+                                    dbm.QueryObjects(Of CreateType)(newCmd, rr, sl, oschema, fields)
+                                End If
+                            End Using
+                        Next
                     Else
-                        dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                        If selectType IsNot Nothing AndAlso selectType IsNot createType AndAlso createType.IsAssignableFrom(selectType) Then
+                            dbm.QueryObjects(selectType, cmd, rr, sl, oschema, fields)
+                        Else
+                            dbm.QueryObjects(Of CreateType)(cmd, rr, sl, oschema, fields)
+                        End If
                     End If
                 End If
+
                 _q.ExecCount += 1
                 Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

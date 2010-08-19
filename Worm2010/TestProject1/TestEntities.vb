@@ -78,7 +78,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     Protected _objectType As Type
     Protected _tbl As SourceFragment
 
-    Public Overridable Function ChangeValueType(ByVal c As EntityPropertyAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ChangeValueType
         newvalue = value
         Return False
     End Function
@@ -91,9 +91,9 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    Return Nothing
     'End Function
 
-    Public Overridable Function GetSuppressedFields() As String() Implements IEntitySchemaBase.GetSuppressedFields
-        Return New String() {}
-    End Function
+    'Public Overridable Function GetSuppressedFields() As String() Implements IEntitySchemaBase.GetSuppressedFields
+    '    Return New String() {}
+    'End Function
 
     'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
     '    Return Nothing
@@ -117,7 +117,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
     '    Return New M2MRelationDesc() {}
     'End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements ISchemaInit.InitSchema
         _schema = schema
         _objectType = t
     End Sub
@@ -400,7 +400,7 @@ Public Class Entity4
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType([from], Entity4)
             CType([to], Entity4)._name = ._name
             CType([to], Entity4)._id = ._id
@@ -621,7 +621,7 @@ Public Class Entity5
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal mgr As Worm.OrmManager, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
         With CType([from], Entity5)
             CType([to], Entity5)._name = ._name
             CType([to], Entity5)._mark = ._mark

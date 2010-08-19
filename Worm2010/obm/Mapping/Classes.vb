@@ -2,11 +2,24 @@
 
 Namespace Entities.Meta
 
+    ''' <summary>
+    ''' Поле и его значение 
+    ''' </summary>
     <Serializable()> _
     Public Class PKDesc
+        ''' <summary>
+        ''' Имя поля
+        ''' </summary>
         Public ReadOnly PropertyAlias As String
+        ''' <summary>
+        ''' Значение поля
+        ''' </summary>
         Public ReadOnly Value As Object
-
+        ''' <summary>
+        ''' Инициализирует объект
+        ''' </summary>
+        ''' <param name="propAlias">Имя поля</param>
+        ''' <param name="value">Значение поля</param>
         Public Sub New(ByVal propAlias As String, ByVal value As Object)
             Me.PropertyAlias = propAlias
             Me.Value = value

@@ -17,7 +17,8 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
     <SccProvider>SAK</SccProvider>
-    <FileUpgradeFlags>0</FileUpgradeFlags>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
     <OldToolsVersion>4.0</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
@@ -127,6 +128,7 @@
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
     <Compile Include="ASPHosting\TestRoles.vb" />
+    <Compile Include="Expressions\ArithmeticTest.vb" />
     <Compile Include="Expressions\BinaryTest.vb" />
     <Compile Include="Expressions\SelectTest.vb" />
     <Compile Include="Expressions\UnaryTest.vb" />
@@ -136,6 +138,7 @@
     <Compile Include="Query\JoinTest.vb" />
     <Compile Include="Query\Matrix.vb" />
     <Compile Include="Query\Modification.vb" />
+    <Compile Include="Query\QueryExpressions.vb" />
     <Compile Include="Query\ReadOnlyList.vb" />
     <Compile Include="Query\SmartCache.vb" />
     <Compile Include="My Project\Settings.Designer.vb">

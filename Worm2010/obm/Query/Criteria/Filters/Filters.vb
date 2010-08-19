@@ -78,10 +78,14 @@ Namespace Criteria.Core
                 End If
 
                 Dim t As Type = obj.GetType
+                If oschema Is Nothing Then
+                    oschema = schema.GetEntitySchema(t)
+                End If
+
                 Dim rt As Type = Template.ObjectSource.GetRealType(schema)
                 If rt Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
-                    Dim v As Object = schema.GetPropertyValue(obj, Template.PropertyAlias, oschema) 'schema.GetFieldValue(obj, _fieldname)
+                    Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, Template.PropertyAlias, oschema, Nothing) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, schema, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)
@@ -107,7 +111,7 @@ Namespace Criteria.Core
             ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal inSelect As Boolean, ByVal oschema As IEntitySchema, ByVal executor As IExecutionContext) As String
             'If _dbFilter Then
-            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue, filterInfo, inSelect, executor)
+            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, AddressOf New cls(oschema, Template.PropertyAlias).PrepareValue, filterInfo, inSelect, executor)
             'Else
             'Throw New InvalidOperationException
             'End If
@@ -126,13 +130,13 @@ Namespace Criteria.Core
 
         Class cls
             Private _s As IEntitySchema
-            Private _ep As EntityPropertyAttribute
-            Public Sub New(ByVal s As IEntitySchema, ByVal ep As EntityPropertyAttribute)
+            Private _pa As String
+            Public Sub New(ByVal s As IEntitySchema, ByVal pa As String)
                 _s = s
-                _ep = ep
+                _pa = pa
             End Sub
             Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-                Return schema.ChangeValueType(_s, _ep, v)
+                Return schema.ChangeValueType(_s, _pa, v)
             End Function
         End Class
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -210,7 +214,7 @@ Namespace Criteria.Core
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
+                Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, filterInfo, pname, almgr, False, oschema, executor)
             Else
                 Return String.Empty
             End If
@@ -237,7 +241,7 @@ Namespace Criteria.Core
 
             Dim pd As Values.PrepareValueDelegate = Nothing
             If _prep Then
-                pd = AddressOf New cls(oschema, New EntityPropertyAttribute(Template.PropertyAlias, String.Empty)).PrepareValue
+                pd = AddressOf New cls(oschema, Template.PropertyAlias).PrepareValue
             End If
 
             Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, almgr, pd, Nothing, False, Nothing)
@@ -254,7 +258,7 @@ Namespace Criteria.Core
                 End If
             End If
 
-            Return New Pair(Of String)(map.ColumnExpression, prname)
+            Return New Pair(Of String)(map.SourceFieldExpression, prname)
         End Function
 
         Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
@@ -396,7 +400,7 @@ Namespace Criteria.Core
                         End Try
                     End If
 
-                    Return [alias] & map.ColumnExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
+                    Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, filterInfo, executor)
                 End If
             Else
                 Return String.Empty

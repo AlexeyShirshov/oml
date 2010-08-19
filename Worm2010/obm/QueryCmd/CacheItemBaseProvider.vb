@@ -132,22 +132,29 @@ Namespace Query
                 Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New MetaDataQueryIterator(_q)
-                    For Each j As QueryJoin In q._js
-                        If j.ObjectSource IsNot Nothing Then
-                            Dim jt As Type = j.ObjectSource.GetRealType(MappingEngine)
-                            cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                    Dim hasJoins As Boolean = False
+                    Dim flst As List(Of String) = Nothing
+                    For Each de As KeyValuePair(Of EntityUnion, List(Of String)) In q.GetDependentEntities(MappingEngine, flst)
+                        Dim jt As Type = de.Key.GetRealType(MappingEngine)
+                        cache.validate_AddDeleteType(New Type() {jt}, _key, _id)
+                        If de.Value.Count = 0 Then
                             cache.validate_UpdateType(New Type() {jt}, _key, _id)
+                        Else
+                            For Each s As String In de.Value
+                                cache.validate_AddDependentFilterField(New Pair(Of String, Type)(s, jt), _key, _id)
+                            Next
                         End If
+                        hasJoins = True
                     Next
 
-                    Dim dp As Cache.IDependentTypes = CType(q, Cache.IQueryDependentTypes).Get(MappingEngine)
+                    Dim ft As Type = Nothing
+                    If q.FromClause IsNot Nothing AndAlso q.FromClause.QueryEU IsNot Nothing Then
+                        ft = q.FromClause.QueryEU.GetRealType(MappingEngine)
 
-                    ldp.Add(dp)
-
-                    Worm.Cache.Add2Cache(cache, dp, _key, _id)
-
-                    Dim selectTypes As ICollection(Of Type) = Nothing
-                    Dim hasSelectTypes As Boolean = q.GetSelectedTypes(MappingEngine, selectTypes)
+                        For Each s As String In flst
+                            cache.validate_AddDependentFilterField(New Pair(Of String, Type)(s, ft), _key, _id)
+                        Next
+                    End If
 
                     If _q._f IsNot Nothing Then
                         For Each ff As IFilter In _q._f.GetAllFilters
@@ -161,72 +168,65 @@ Namespace Query
                         Next
                     End If
 
-                    'Dim ef As IEntityFilter = Nothing
-                    'If _f IsNot Nothing AndAlso _f.Length > i Then
-                    '    ef = TryCast(_f(i), IEntityFilter)
-                    'End If
-
                     If cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Immediate Then
                         'notPreciseDependsAD = notPreciseDependsAD OrElse Not Worm.Cache.IsEmpty(dp)
                         'notPreciseDependsU = notPreciseDependsAD
                         'If _f IsNot Nothing AndAlso _f.Length > i Then
                         Dim fl As IFilter = _q._f
                         Dim added As Boolean = False
-                        Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate(MappingEngine)
-                        If hasSelectTypes AndAlso evalSort Then
-                            added = cache.validate_AddCalculatedType(selectTypes, _key, _id, fl, MappingEngine, Mgr.GetContextInfo)
-                            If uce IsNot Nothing Then
-                                If _q.Filter IsNot Nothing Then
-                                    uce.Filter = _q.Filter.Filter
+                        If ft IsNot Nothing Then
+                            Dim evalSort As Boolean = _q.Sort Is Nothing OrElse _q.Sort.CanEvaluate(MappingEngine)
+                            If evalSort Then
+                                If uce IsNot Nothing Then
+                                    uce.Sort = _q.Sort
+                                End If
+                                If Not hasJoins Then
+                                    added = cache.validate_AddCalculatedType(New Type() {ft}, _key, _id, fl, MappingEngine)
+                                    If uce IsNot Nothing AndAlso added Then
+                                        uce.Filter = fl
+                                    End If
                                 End If
                             End If
                         End If
 
+                        Dim ad As Boolean
                         If Not added AndAlso fl IsNot Nothing Then
                             For Each fff As IFilter In fl.GetAllFilters
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
-                                    If hasSelectTypes AndAlso Not added Then
-                                        cache.validate_AddDeleteType(selectTypes, _key, _id)
-                                        cache.validate_UpdateType(selectTypes, _key, _id)
-                                        added = True
-                                        'notPreciseDependsAD = True
-                                        'notPreciseDependsU = True
+                                    If ft IsNot Nothing AndAlso Not ad Then
+                                        cache.validate_AddDeleteType(New Type() {ft}, _key, _id)
+                                        cache.validate_UpdateType(New Type() {ft}, _key, _id)
+                                        ad = True
                                     End If
                                 Else
                                     Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
                                     Dim t As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
-                                    If t Is Nothing Then
-                                        Throw New NullReferenceException("Type or entity name for OrmFilterTemplate must be specified")
-                                    End If
-
-                                    'Dim t As Type = tmpl.Type
-                                    'If t Is Nothing Then
-                                    '    t = MappingEngine.GetTypeByEntityName(tmpl.EntityName)
-                                    'End If
-
                                     Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, t)
                                     cache.validate_AddDependentFilterField(p, _key, _id)
                                 End If
                             Next
                         End If
 
-                        If Not added Then
-                            If (_q.FromClause.ObjectSource IsNot Nothing AndAlso Not selectTypes.Contains(_q.FromClause.ObjectSource.GetRealType(MappingEngine))) Then
-                                cache.validate_AddDeleteType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
-                                cache.validate_UpdateType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
-                            Else
-                                Dim rcmd As RelationCmd = TryCast(_q, RelationCmd)
-                                If rcmd IsNot Nothing Then
-                                    cache.validate_AddDeleteType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
-                                    cache.validate_UpdateType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
-                                End If
-                            End If
+                        If Not ad AndAlso Not added AndAlso ft IsNot Nothing Then
+                            cache.validate_AddDeleteType(New Type() {ft}, _key, _id)
+                            cache.validate_UpdateType(New Type() {ft}, _key, _id)
+
+                            'If (_q.FromClause.ObjectSource IsNot Nothing AndAlso Not selectTypes.Contains(_q.FromClause.ObjectSource.GetRealType(MappingEngine))) Then
+                            '    cache.validate_AddDeleteType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
+                            '    cache.validate_UpdateType(New Type() {_q.FromClause.ObjectSource.GetRealType(MappingEngine)}, _key, _id)
+                            'Else
+                            '    Dim rcmd As RelationCmd = TryCast(_q, RelationCmd)
+                            '    If rcmd IsNot Nothing Then
+                            '        cache.validate_AddDeleteType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
+                            '        cache.validate_UpdateType(New Type() {rcmd.RelationDesc.Entity.GetRealType(MappingEngine)}, _key, _id)
+                            '    End If
+                            'End If
                         End If
                     Else
-                        If hasSelectTypes Then
-                            cache.validate_AddDeleteType(selectTypes, _key, _id)
+                        If ft IsNot Nothing Then
+                            cache.validate_AddDeleteType(New Type() {ft}, _key, _id)
                             'notPreciseDependsAD = True
                         End If
 
@@ -237,17 +237,13 @@ Namespace Query
                                 Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
 
                                 If ef Is Nothing Then
-                                    If hasSelectTypes Then
-                                        cache.validate_UpdateType(selectTypes, _key, _id)
+                                    If ft IsNot Nothing Then
+                                        cache.validate_UpdateType(New Type() {ft}, _key, _id)
                                         'notPreciseDependsU = True
                                     End If
                                 Else
                                     Dim tmpl As OrmFilterTemplate = CType(ef.Template, OrmFilterTemplate)
                                     Dim rt As Type = tmpl.ObjectSource.GetRealType(MappingEngine)
-
-                                    If rt Is Nothing Then
-                                        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                                    End If
 
                                     Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                     cache.validate_AddDependentFilterField(p, _key, _id)
@@ -262,19 +258,10 @@ Namespace Query
                                 Dim ee As EntityExpression = TryCast(exp, EntityExpression)
                                 If ee IsNot Nothing Then
                                     Dim t As Type = ee.ObjectProperty.Entity.GetRealType(MappingEngine)
-
-                                    If t Is Nothing Then
-                                        If hasSelectTypes Then
-                                            cache.validate_UpdateType(selectTypes, _key, _id)
-                                            'notPreciseDependsU = True
-                                        End If
-                                    Else
-                                        Dim p As New Pair(Of String, Type)(ee.ObjectProperty.PropertyAlias, t)
-                                        cache.validate_AddDependentSortField(p, _key, _id)
-                                    End If
-                                ElseIf hasSelectTypes Then
-                                    cache.validate_UpdateType(selectTypes, _key, _id)
-                                    'notPreciseDependsU = True
+                                    Dim p As New Pair(Of String, Type)(ee.ObjectProperty.PropertyAlias, t)
+                                    cache.validate_AddDependentSortField(p, _key, _id)
+                                    'ElseIf ft IsNot Nothing Then
+                                    '    cache.validate_AddDeleteType(New Type() {ft}, _key, _id)
                                 End If
                             Next
                         Next
@@ -286,9 +273,8 @@ Namespace Query
                             If ee IsNot Nothing Then
                                 Dim p As New Pair(Of String, Type)(ee.ObjectProperty.PropertyAlias, ee.ObjectProperty.Entity.GetRealType(MappingEngine))
                                 cache.validate_AddDependentGroupField(p, _key, _id)
-                            ElseIf hasSelectTypes Then
-                                cache.validate_UpdateType(selectTypes, _key, _id)
-                                'notPreciseDependsU = True
+                                'ElseIf ft IsNot Nothing Then
+                                '    cache.validate_AddDeleteType(New Type() {ft}, _key, _id)
                             End If
                         Next
                     End If

@@ -261,13 +261,13 @@ Namespace Web
 
                     Dim upd As Date
                     If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                        upd = CDate(schema.GetPropertyValue(u, _lastUpdateField, oschema))
+                        upd = CDate(ObjectMappingEngine.GetPropertyValue(u, _lastUpdateField, oschema))
                     End If
 
                     Dim p As New ProfileInfo( _
-                        CStr(schema.GetPropertyValue(u, _userNameField, oschema)), _
-                        CBool(schema.GetPropertyValue(u, _isAnonymousField, oschema)), _
-                        CDate(schema.GetPropertyValue(u, _lastActivityField, oschema)), upd, 0)
+                        CStr(ObjectMappingEngine.GetPropertyValue(u, _userNameField, oschema)), _
+                        CBool(ObjectMappingEngine.GetPropertyValue(u, _isAnonymousField, oschema)), _
+                        CDate(ObjectMappingEngine.GetPropertyValue(u, _lastActivityField, oschema)), upd, 0)
 
                     profiles.Add(p)
                 Next
@@ -486,7 +486,7 @@ Namespace Web
                     End If
                 Else
                     'Using mgr As OrmManager = _getMgr()
-                    newp.PropertyValue = schema.GetPropertyValue(user, p.Name, oschema)
+                    newp.PropertyValue = ObjectMappingEngine.GetPropertyValue(user, p.Name, oschema)
                     'End Using
                 End If
                 col.Add(newp)
@@ -496,7 +496,7 @@ Namespace Web
                 If user IsNot Nothing Then
                     'Using mgr As OrmManager = _getMgr()
                     'Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema()
-                    schema.SetPropertyValue(user, _lastActivityField, GetNow, oschema)
+                    ObjectMappingEngine.SetPropertyValue(user, _lastActivityField, GetNow, oschema, Nothing)
                     'End Using
                 End If
                 If cok IsNot Nothing Then
@@ -547,7 +547,7 @@ Namespace Web
                             'Using mgr As OrmManager = _getMgr()
                             Using user.BeginEdit
                                 Dim oschema As IEntitySchema = user.GetMappingEngine.GetEntitySchema(user.GetType)
-                                user.GetMappingEngine.SetPropertyValue(user, p.Name, p.PropertyValue, oschema)
+                                ObjectMappingEngine.SetPropertyValue(user, p.Name, p.PropertyValue, oschema)
                             End Using
                             'End Using
                         End If
@@ -571,10 +571,10 @@ Namespace Web
                     Using st As New ModificationsTracker(CreateManager)
                         Using user.BeginEdit
                             If Not String.IsNullOrEmpty(_lastActivityField) Then
-                                user.GetMappingEngine.SetPropertyValue(user, _lastActivityField, d, oschema)
+                                ObjectMappingEngine.SetPropertyValue(user, _lastActivityField, d, oschema)
                             End If
                             If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                                user.GetMappingEngine.SetPropertyValue(user, _lastUpdateField, d, oschema)
+                                ObjectMappingEngine.SetPropertyValue(user, _lastUpdateField, d, oschema)
                             End If
                         End Using
                         st.Add(user)
@@ -665,18 +665,18 @@ Namespace Web
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then
-                                schema.SetPropertyValue(user, p.Name, cok(p.Name), oschema)
+                                ObjectMappingEngine.SetPropertyValue(user, p.Name, cok(p.Name), oschema)
                             ElseIf p.DefaultValue IsNot Nothing Then
-                                schema.SetPropertyValue(user, p.Name, p.DefaultValue, oschema)
+                                ObjectMappingEngine.SetPropertyValue(user, p.Name, p.DefaultValue, oschema)
                             End If
                         End If
                     Next
                     Dim d As Date = GetNow()
                     If Not String.IsNullOrEmpty(_lastActivityField) Then
-                        schema.SetPropertyValue(user, _lastActivityField, d, oschema)
+                        ObjectMappingEngine.SetPropertyValue(user, _lastActivityField, d, oschema)
                     End If
                     If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                        schema.SetPropertyValue(user, _lastUpdateField, d, oschema)
+                        ObjectMappingEngine.SetPropertyValue(user, _lastUpdateField, d, oschema)
                     End If
                     mt.AcceptModifications()
                 End Using

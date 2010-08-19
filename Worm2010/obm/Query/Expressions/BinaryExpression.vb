@@ -319,7 +319,7 @@ Namespace Expressions2
                     End If
 
                     If TypeOf v Is IParameterExpression Then
-                        re = re.ReplaceExpression(v, New ParameterExpression(schema.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)))
+                        re = re.ReplaceExpression(v, New ParameterExpression(ObjectMappingEngine.GetPropertyValue(obj, eexp.ObjectProperty.PropertyAlias, oschema)))
                     End If
                 End If
             Next
@@ -330,13 +330,14 @@ Namespace Expressions2
             Return l
         End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
             If Right Is Nothing Then
-                Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
             End If
-            Return "(" & Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
+            'If typeof Left is EntityExpression
+            Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
                 stmt.BinaryOperator2String(_oper) & _
-                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
+                Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
         End Function
 
         'Public Overrides Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression
@@ -479,10 +480,10 @@ Namespace Expressions2
             ByVal obj As _IEntity, ByVal oschema As IEntitySchema, _
             ByRef v As Object, ByRef lv As Object, ByRef rv As Object) As Boolean
 
-            Dim bv As BetweenExpresssion = TryCast(Left, BetweenExpresssion)
+            Dim bv As BetweenExpression = TryCast(Left, BetweenExpression)
             Dim exp As IExpression = Nothing
             If bv Is Nothing Then
-                bv = TryCast(Right, BetweenExpresssion)
+                bv = TryCast(Right, BetweenExpression)
                 exp = Left
             Else
                 exp = Right
@@ -535,7 +536,7 @@ Namespace Expressions2
         End Function
     End Class
 
-    Public Class BetweenExpresssion
+    Public Class BetweenExpression
         Inherits BinaryExpressionBase
         Implements IParameterExpression
 
@@ -568,7 +569,7 @@ Namespace Expressions2
         End Property
 
         Public Overrides Function Clone() As Object
-            Return New BetweenExpresssion(CloneExpression(Left), CloneExpression(Right))
+            Return New BetweenExpression(CloneExpression(Left), CloneExpression(Right))
         End Function
 
         Public Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As IParameterExpression.ModifyValueArgs) Implements IParameterExpression.ModifyValue

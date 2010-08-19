@@ -1,5 +1,6 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
+Imports Worm.Criteria
 
 Namespace Query
 
@@ -47,12 +48,12 @@ Namespace Query
             End Get
         End Property
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object) As String
             Dim t As Type = GetRealType(mpe)
             If t IsNot Nothing Then
-                Return mpe.GetEntityKey(contextFilter, t)
+                Return mpe.GetEntityKey(t)
             Else
-                Return _q.ToStaticString(mpe, contextFilter)
+                Return _q.ToStaticString(mpe, contextInfo)
             End If
         End Function
 
@@ -153,7 +154,7 @@ Namespace Query
 
             Dim t As Type = GetRealType(mpe)
             If t IsNot Nothing Then
-                Return mpe.GetEntityKey(contextFilter, t)
+                Return mpe.GetEntityKey(t)
             Else
                 Return _a.ToStaticString(mpe, contextFilter)
             End If
@@ -212,14 +213,14 @@ Namespace Query
         Private _calc As Type
         Private _ver As String
 
-        Public Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
-            If _calc Is Nothing OrElse _ver <> schema.Version Then
+        Public Function GetRealType(ByVal mpe As ObjectMappingEngine) As Type
+            If _calc Is Nothing OrElse _ver <> mpe.Version Then
                 _calc = AnyType
-                _ver = schema.Version
+                _ver = mpe.Version
                 If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
-                    _calc = schema.GetTypeByEntityName(AnyEntityName)
+                    _calc = mpe.GetTypeByEntityName(AnyEntityName)
                 ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
-                    _calc = _a.Query.GetSelectedOS.GetRealType(schema)
+                    _calc = _a.Query.GetSelectedOS.GetRealType(mpe)
                 End If
             End If
             Return _calc
@@ -245,11 +246,33 @@ Namespace Query
             End If
         End Function
 
+        Public Shared Function TypeEquals(ByVal mpe As ObjectMappingEngine, ByVal e1 As EntityUnion, ByVal e2 As EntityUnion) As Boolean
+            If Not String.IsNullOrEmpty(e1._en) Then
+                If Not String.IsNullOrEmpty(e2._en) Then
+                    Return e1._en = e2._en
+                Else
+                    Return mpe.GetTypeByEntityName(e1._en) Is e2.GetRealType(mpe)
+                End If
+            ElseIf String.IsNullOrEmpty(e2._en) Then
+                Return e1.GetRealType(mpe) Is e2.GetRealType(mpe)
+            Else
+                Return EntityNameEquals(mpe, e2, e1)
+            End If
+        End Function
+
         Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _a IsNot Nothing AndAlso _a.Query IsNot Nothing Then
                 _a.Query.Prepare(executor, schema, filterInfo, stmt, isAnonym)
             End If
         End Sub
+
+        Public Shared Operator =(ByVal a As EntityUnion, ByVal b As EntityUnion) As Boolean
+            Return Equals(a, b)
+        End Operator
+
+        Public Shared Operator <>(ByVal a As EntityUnion, ByVal b As EntityUnion) As Boolean
+            Return Not Equals(a, b)
+        End Operator
     End Class
 
     <Serializable()> _
@@ -292,7 +315,7 @@ Namespace Query
 
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
-                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe))(0).PropertyAlias
+                Return mpe.GetSinglePK(Entity.GetRealType(mpe))
             End If
 
             Return PropertyAlias
@@ -300,11 +323,79 @@ Namespace Query
 
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
-                Return mpe.GetPrimaryKeys(Entity.GetRealType(mpe), oschema)(0).PropertyAlias
+                Dim eu As EntityUnion = Entity
+                Return mpe.GetSinglePK(oschema, Function() eu.GetRealType(mpe))
             End If
 
             Return PropertyAlias
         End Function
+
+#Region " Operators "
+        Public Shared Operator +(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) + b
+        End Operator
+
+        Public Shared Operator -(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) - b
+        End Operator
+
+        Public Shared Operator *(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) * b
+        End Operator
+
+        Public Shared Operator /(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) / b
+        End Operator
+
+        Public Shared Operator Mod(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Mod b
+        End Operator
+
+        Public Shared Operator Xor(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Xor b
+        End Operator
+
+        Public Shared Operator And(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) And b
+        End Operator
+
+        Public Shared Operator Or(ByVal a As ObjectProperty, ByVal b As Object) As ECtor.Int
+            Return ECtor.prop(a) Or b
+        End Operator
+
+        Public Shared Operator =(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) = b
+        End Operator
+
+        Public Shared Operator <>(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) <> b
+        End Operator
+
+        Public Shared Operator >(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) > b
+        End Operator
+
+        Public Shared Operator <(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) < b
+        End Operator
+
+        Public Shared Operator >=(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) >= b
+        End Operator
+
+        Public Shared Operator <=(ByVal a As ObjectProperty, ByVal b As Object) As PredicateLink
+            Return Ctor.prop(a) <= b
+        End Operator
+
+        Public Shared Widening Operator CType(ByVal a As ObjectProperty) As ECtor.Int
+            Return ECtor.prop(a)
+        End Operator
+
+        Public Shared Widening Operator CType(ByVal a As ObjectProperty) As Expressions2.EntityExpression
+            Return New Expressions2.EntityExpression(a)
+        End Operator
+
+#End Region
     End Structure
 
 End Namespace
