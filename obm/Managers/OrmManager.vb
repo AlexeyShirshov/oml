@@ -1595,7 +1595,7 @@ l1:
         Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
         If e Is Nothing Then
-            e.Load(Me)
+            obj.Load(Me)
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, dic, False, False), _ICachedEntity)
         End If
         Return e
@@ -1908,7 +1908,7 @@ l1:
         ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) _
+                If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues))) _
                     AndAlso Not entityDictionary.ContainsKey(o) Then
                     entityDictionary.Add(o, Nothing)
                 End If
@@ -1922,7 +1922,7 @@ l1:
 
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
+                If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
                     For Each p As EntityExpression In properties
                         If Not o.IsPropertyLoaded(p.ObjectProperty.PropertyAlias) AndAlso Not entityDictionary.ContainsKey(o) Then
                             entityDictionary.Add(o, Nothing)
@@ -1934,6 +1934,17 @@ l1:
         End If
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <typeparam name="T"></typeparam>
+    ''' <param name="cache">Pass null if there is no <see cref="INewObjectsStore" /> or you dont' want use it</param>
+    ''' <param name="objs"></param>
+    ''' <param name="start"></param>
+    ''' <param name="length"></param>
+    ''' <param name="check_loaded"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal objs As ReadOnlyEntityList(Of T), _
         ByVal start As Integer, ByVal length As Integer, _
         Optional ByVal check_loaded As Boolean = True) As ICollection(Of ICachedEntity)
@@ -1947,6 +1958,18 @@ l1:
         Return entityDictionary.Keys
     End Function
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <typeparam name="T"></typeparam>
+    ''' <param name="cache">Pass null if there is no <see cref="INewObjectsStore" /> or you dont' want use it</param>
+    ''' <param name="objs"></param>
+    ''' <param name="start"></param>
+    ''' <param name="length"></param>
+    ''' <param name="check_loaded"></param>
+    ''' <param name="properties"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, _
         ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer, _
         ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression)) As ICollection(Of ICachedEntity)

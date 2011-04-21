@@ -10,6 +10,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Joins
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports Worm
 
 Public Interface IEnt
     Inherits _IKeyEntity
@@ -55,7 +56,7 @@ Public Class Entity
     End Property
 
     Private _char As String
-    <EntityProperty(PropertyAlias:="Char")> _
+    <EntityProperty(PropertyAlias:="Char", SchemaVersion:=ObjectMappingEngine.NeedEntitySchemaMapping)> _
     Public Property [Char]() As String
         Get
             Using Read("Char")

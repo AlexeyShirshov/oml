@@ -572,6 +572,7 @@ Namespace Entities
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
 
             _state = Entities.ObjectState.Created
+            _schema = schema
         End Sub
 
         Protected Overridable Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As Meta.IEntitySchema Implements _IEntity.GetEntitySchema

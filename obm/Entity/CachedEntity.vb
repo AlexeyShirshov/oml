@@ -536,7 +536,7 @@ Namespace Entities
                     ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
                    (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, CType(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)) Is Nothing Then
+                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
                     SetObjectStateClear(Entities.ObjectState.None)
                     Load()
@@ -1281,7 +1281,7 @@ l1:
                 Using SyncHelper(True)
                     If ObjectState = Entities.ObjectState.Modified Then
                         'Using mc As IGetManager = GetMgr()
-                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, CType(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                         'If mo Is Nothing Then mo = _mo
                         If mo IsNot Nothing Then
                             If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
