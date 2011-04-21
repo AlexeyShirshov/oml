@@ -191,11 +191,25 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         Return Query.QueryCmd.LoadObjects(Me, start, length, True, mgr)
     End Function
 
+    Private Function GetCMgr() As ICreateManager
+        For Each o As T In _l
+            If o.CreateManager IsNot Nothing Then
+                Return o.CreateManager
+            End If
+        Next
+        Return Nothing
+    End Function
+
     Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Dim cmd As New Query.QueryCmd(o.CreateManager)
-            Return cmd.From(_rt).LoadObjects(Me, start, length)
+            Dim cmgr As ICreateManager = GetCMgr()
+
+            If cmgr IsNot Nothing Then
+                Dim cmd As New Query.QueryCmd(cmgr)
+                Return cmd.From(_rt).LoadObjects(Me, start, length)
+            Else
+                Return LoadObjects(start, length, OrmManager.CurrentManager)
+            End If
         Else
             Return Me
         End If
@@ -203,9 +217,19 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
     Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray properties2Load() As String) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Dim cmd As New Query.QueryCmd(o.CreateManager)
-            Return cmd.Select(Array.ConvertAll(properties2Load, Function(s) New Query.ObjectProperty(_rt, s))).From(_rt).LoadObjects(Me, start, length)
+            Dim cmgr As ICreateManager = GetCMgr()
+
+            Dim f As New Query.FCtor.Int
+            For Each s As String In properties2Load
+                f = f.prop(_rt, s)
+            Next
+
+            If cmgr IsNot Nothing Then
+                Dim cmd As New Query.QueryCmd(cmgr)
+                Return cmd.Select(f).From(_rt).LoadObjects(Me, start, length)
+            Else
+                Return Query.QueryCmd.LoadObjects(Me, start, length, f, OrmManager.CurrentManager)
+            End If
         Else
             Return Me
         End If
@@ -213,9 +237,14 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
     Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal properties2Load As ObjectModel.ReadOnlyCollection(Of SelectExpression)) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Dim cmd As New Query.QueryCmd(o.CreateManager)
-            Return cmd.Select(properties2Load).From(_rt).LoadObjects(Me, start, length)
+            Dim cmgr As ICreateManager = GetCMgr()
+
+            If cmgr IsNot Nothing Then
+                Dim cmd As New Query.QueryCmd(cmgr)
+                Return cmd.Select(properties2Load).From(_rt).LoadObjects(Me, start, length)
+            Else
+                Return Query.QueryCmd.LoadObjects(Me, start, length, properties2Load, OrmManager.CurrentManager)
+            End If
         Else
             Return Me
         End If

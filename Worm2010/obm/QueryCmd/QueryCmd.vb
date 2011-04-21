@@ -544,16 +544,23 @@ Namespace Query
             If start >= entityList.Count Then
                 Throw New ArgumentException(String.Format("Start value {0} greater than list length {1}", start, entityList.Count))
             End If
+
             Dim need2Load As Boolean = False
-            Using mgr As OrmManager = CreateManager.CreateManager
-                Dim l As New List(Of EntityExpression)
-                For Each s As SelectExpression In SelectList
-                    If TypeOf s.Expression Is EntityExpression Then
-                        l.Add(CType(s.Expression, EntityExpression))
-                    End If
-                Next
-                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr)
-            End Using
+            Dim l As New List(Of EntityExpression)
+            For Each s As SelectExpression In SelectList
+                If TypeOf s.Expression Is EntityExpression Then
+                    l.Add(CType(s.Expression, EntityExpression))
+                End If
+            Next
+
+            If CreateManager Is Nothing Then
+                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager)
+            Else
+                Using mgr As OrmManager = CreateManager.CreateManager
+                    need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr)
+                End Using
+            End If
+
             If need2Load Then
                 Return ToEntityList(Of T)()
             Else
@@ -569,6 +576,10 @@ Namespace Query
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             If length = 0 Then Return entityList
 
+            If entityList Is Nothing Then
+                Throw New ArgumentNullException("entityList")
+            End If
+
             If start >= entityList.Count Then
                 Throw New ArgumentException(String.Format("Start value {0} greater than list length {1}", start, entityList.Count))
             End If
@@ -581,23 +592,53 @@ Namespace Query
             End If
         End Function
 
+        Public Shared Function LoadObjects(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), _
+            ByVal start As Integer, ByVal length As Integer, ByVal properties2Load As ObjectModel.ReadOnlyCollection(Of SelectExpression), ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+            If length = 0 Then Return entityList
+
+            If entityList Is Nothing Then
+                Throw New ArgumentNullException("entityList")
+            End If
+
+            If start >= entityList.Count Then
+                Throw New ArgumentException(String.Format("Start value {0} greater than list length {1}", start, entityList.Count))
+            End If
+
+            Dim q As New QueryCmd
+            If q.Select(properties2Load).From(entityList.RealType).PrepareLoad2Load(Of T)(entityList, start, length, mgr) Then
+                Return q.ToEntityList(Of T)(mgr)
+            Else
+                Return entityList
+            End If
+        End Function
+
         Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer, _
             ByVal length As Integer, ByVal properties As List(Of EntityExpression), ByVal mgr As OrmManager) As Boolean
 
+            Dim cache As CacheBase = Nothing
+            If mgr IsNot Nothing Then
+                cache = mgr.Cache
+            End If
+
             If properties Is Nothing OrElse properties.Count = 0 Then
-                Return PrepareLoad2Load(mgr, OrmManager.FormPKValues(mgr.Cache, entityList, start, length), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
             Else
-                Return PrepareLoad2Load(mgr, OrmManager.FormPKValues(mgr.Cache, entityList, start, length, False, properties), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties), entityList.RealType)
             End If
         End Function
 
         Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer, _
             ByVal length As Integer, ByVal mgr As OrmManager) As Boolean
 
-            Return PrepareLoad2Load(mgr, OrmManager.FormPKValues(mgr.Cache, entityList, start, length), entityList.RealType)
+            Dim cache As CacheBase = Nothing
+            If mgr IsNot Nothing Then
+                cache = mgr.Cache
+            End If
+
+            Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
         End Function
 
-        Private Function PrepareLoad2Load(ByVal mgr As OrmManager, ByVal e2load As ICollection(Of ICachedEntity), ByVal realType As Type) As Boolean
+        Private Function PrepareLoad2Load(ByVal e2load As ICollection(Of ICachedEntity), ByVal realType As Type) As Boolean
 
             If e2load.Count = 0 Then Return False
 
@@ -649,6 +690,8 @@ Namespace Query
             Else
                 Throw New InvalidOperationException
             End If
+
+            Return True
         End Function
 
         Friend ReadOnly Property GetBatchStruct() As Pair(Of List(Of Object), FieldReference)
@@ -4394,7 +4437,7 @@ exit_for:
                 If tbl Is Nothing Then
                     Throw New QueryCmdException(String.Format("Cannot create schema for type {0}. QueryCmd has empty FromClause or else entity has no EntityAttribute", t), Me)
                 End If
-                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(tbl.Schema, tbl.Name, mpe.Version))
+                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl})
             End If
             For Each m As MapField2Column In s.GetFieldColumnMap
                 If m.IsPK Then

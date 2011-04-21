@@ -360,6 +360,9 @@ Namespace Entities.Meta
         Private _rawProps As Boolean
         Private _notInheritBase As Boolean
 
+
+        Friend _tbl As SourceFragment
+
         Public Sub New(ByVal tableSchema As String, ByVal tableName As String, ByVal version As String)
             _v = version
             _table = tableName

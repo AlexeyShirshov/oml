@@ -77,6 +77,7 @@ Public Class ObjectMappingEngine
     Public ReadOnly Mark As Guid = Guid.NewGuid
 
     Public Const DefaultVersion As String = "1"
+    Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
 
     Public Sub New()
         MyClass.New(DefaultVersion)
@@ -134,7 +135,7 @@ Public Class ObjectMappingEngine
                 If m.Attributes = Field2DbRelations.None Then
                     m.Attributes = ep.Behavior
                 End If
-            Else
+            ElseIf ep.SchemaVersion <> NeedEntitySchemaMapping Then
                 m = New MapField2Column(ep.PropertyAlias, schema.Table, ep.Behavior) With { _
                                         .PropertyInfo = ep._pi, .Schema = schema}
                 map.Add(m)
@@ -1050,6 +1051,10 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("obj")
         End If
 
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException("propertyAlias")
+        End If
+
         Dim schema As IEntitySchema = GetEntitySchema(obj.GetType)
 
         Return ObjectMappingEngine.GetPropertyValue(obj, propertyAlias, schema)
@@ -1486,8 +1491,12 @@ Public Class ObjectMappingEngine
         ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
         Dim schema As IEntitySchema = Nothing
         If ea.Type Is Nothing Then
-            If tp.BaseType IsNot Nothing AndAlso ea.InheritBaseTable AndAlso tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) Then
-                Dim ownTable As New SourceFragment(ea.TableSchema, ea.TableName)
+            If tp.BaseType IsNot Nothing AndAlso tp.BaseType IsNot GetType(Object) _
+                AndAlso ea.InheritBaseTable AndAlso tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) Then
+                Dim ownTable As SourceFragment = ea._tbl
+                If ownTable Is Nothing Then
+                    ownTable = New SourceFragment(ea.TableSchema, ea.TableName)
+                End If
 
                 Dim bsch As IEntitySchema = Nothing
                 If idic IsNot Nothing Then
@@ -1499,7 +1508,12 @@ Public Class ObjectMappingEngine
                 schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
                     GetMappedProperties(tp, mpe.Version, ea.RawProperties, True), bsch, mpe.Version)
             Else
-                schema = New SimpleObjectSchema(New SourceFragment(ea.TableSchema, ea.TableName))
+                Dim tbl As SourceFragment = ea._tbl
+                If tbl Is Nothing Then
+                    tbl = New SourceFragment(ea.TableSchema, ea.TableName)
+                End If
+
+                schema = New SimpleObjectSchema(tbl)
                 ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpe.Version, ea.RawProperties, True))
             End If
         Else
@@ -1527,7 +1541,7 @@ Public Class ObjectMappingEngine
         If Not String.IsNullOrEmpty(ea.EntityName) AndAlso names IsNot Nothing Then
             If names.Contains(ea.EntityName) Then
                 Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
-                If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> mpe._version Then
+                If tt.First.IsAssignableFrom(tp) OrElse (mpe IsNot Nothing AndAlso tt.Second.Version <> mpe._version) Then
                     names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                 End If
             Else

@@ -1292,8 +1292,8 @@ l1:
                     Dim b As ConnAction = TestConn(cmd)
                     Try
                         Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                            Dim loaded As Boolean = False
                             Do While dr.Read
-                                Dim loaded As Boolean = False
                                 If loaded Then
                                     Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                                 End If
@@ -1302,6 +1302,14 @@ l1:
 
                                 loaded = True
                             Loop
+
+                            If Not loaded Then
+                                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                                If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
+                                obj.SetObjectState(ObjectState.NotFoundInSource)
+                                If ce IsNot Nothing Then RemoveObjectFromCache(ce)
+                            End If
+
                         End Using
                     Finally
                         CloseConn(b)
@@ -1408,7 +1416,6 @@ l1:
                 Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                 Dim lock As IDisposable = Nothing
                 Try
-                    Dim loaded As Boolean
                     If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
                         If fromRS Then
                             Dim ro As _IEntity = CType(LoadObjectFromDataReader(obj, dr, selectList, dic, fromRS, lock, oschema, cm, 0, baseIdx), _IEntity)
@@ -1418,16 +1425,6 @@ l1:
                         Else
                             LoadObjectFromDataReader(obj, dr, selectList, dic, fromRS, lock, oschema, cm, 0, baseIdx)
                             obj.CorrectStateAfterLoading(False)
-                        End If
-                        loaded = True
-                    End If
-
-                    If Not obj.IsLoaded AndAlso loaded Then
-                        If load Then
-                            'Throw New ApplicationException
-                            If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
-                            obj.SetObjectState(ObjectState.NotFoundInSource)
-                            If ce IsNot Nothing Then RemoveObjectFromCache(ce)
                         End If
                     End If
 
@@ -2896,7 +2893,7 @@ l1:
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
                     If sb.Length > SQLGenerator.QueryLength Then
-                        l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                         sb.Length = 0
                     Else
                         sb.Append(" or ")
@@ -2916,21 +2913,20 @@ l1:
 
                             sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
-                            sb.Insert(0, " and (")
-                            l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
+                            l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                             sb.Length = 0
                             sb2.Length = 0
                             sb2.Append("(")
                         End If
                     Next
+
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New cc.EntityFilter(op, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
                         sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
-                        sb.Insert(0, " and (")
-                        l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                         sb.Length = 0
                     End If
                 End If
@@ -2938,7 +2934,7 @@ l1:
                 If sb.Length > 0 Then
                     sb.Length -= 4
                     If sb.Length > 0 Then
-                        l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                     End If
                 End If
 
