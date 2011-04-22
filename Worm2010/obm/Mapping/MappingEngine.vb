@@ -1247,14 +1247,14 @@ Public Class ObjectMappingEngine
         Return se
     End Function
 
-    Protected Friend Function GetJoinFieldNameByType(ByVal mainType As Type, ByVal subType As Type, ByVal oschema As IEntitySchema) As String
+    Protected Friend Function GetJoinFieldNameByType(ByVal subType As Type, ByVal oschema As IEntitySchema) As String
         Dim j As IJoinBehavior = TryCast(oschema, IJoinBehavior)
         Dim r As String = Nothing
         If j IsNot Nothing Then
             r = j.GetJoinField(subType)
         End If
         If String.IsNullOrEmpty(r) Then
-            Dim c As ICollection(Of String) = GetPropertyAliasByType(mainType, subType, oschema)
+            Dim c As ICollection(Of String) = GetPropertyAliasByType(subType, oschema)
             If c.Count = 1 Then
                 For Each s As String In c
                     r = s
@@ -1266,7 +1266,7 @@ Public Class ObjectMappingEngine
 
     Public Function GetJoinObj(ByVal oschema As IEntitySchema, _
         ByVal obj As _IEntity, ByVal subType As Type) As _IEntity
-        Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, GetEntitySchema(obj.GetType))
+        Dim c As String = GetJoinFieldNameByType(subType, GetEntitySchema(obj.GetType))
         Dim r As _IEntity = Nothing
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, c, oschema)
@@ -1299,34 +1299,53 @@ Public Class ObjectMappingEngine
         Return m.PropertyInfo.PropertyType
     End Function
 
-    Public Function GetPropertyAliasByType(ByVal type As Type, ByVal propertyType As Type, _
-        ByVal oschema As IEntitySchema) As List(Of String)
-        If type Is Nothing Then
-            Throw New ArgumentNullException("type")
+    'Public Function GetPropertyAliasByType(ByVal type As Type, ByVal propertyType As Type, _
+    '    ByVal oschema As IEntitySchema) As List(Of String)
+    '    If type Is Nothing Then
+    '        Throw New ArgumentNullException("type")
+    '    End If
+
+    '    If propertyType Is Nothing Then
+    '        Throw New ArgumentNullException("propertyType")
+    '    End If
+
+    '    'Dim key As String = type.ToString & propertyType.ToString
+    '    'Dim l As List(Of String) = CType(_joins(key), List(Of String))
+    '    'If l Is Nothing Then
+    '    '    Using SyncHelper.AcquireDynamicLock(key)
+    '    '        l = CType(_joins(key), List(Of String))
+    '    '        If l Is Nothing Then
+    '    '            l = New List(Of String)
+    '    '            For Each de As DictionaryEntry In GetProperties(type, oschema)
+    '    '                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+    '    '                If pi.PropertyType Is propertyType Then
+    '    '                    Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
+    '    '                    l.Add(c.PropertyAlias)
+    '    '                End If
+    '    '            Next
+    '    '        End If
+    '    '    End Using
+    '    'End If
+    '    'Return l
+    '    Dim l As New List(Of String)
+    '    For Each m As MapField2Column In oschema.GetFieldColumnMap
+    '        If m.PropertyInfo.PropertyType Is propertyType Then
+    '            l.Add(m.PropertyAlias)
+    '        End If
+    '    Next
+    '    Return l
+    'End Function
+
+    Public Function GetPropertyAliasByType(ByVal propertyType As Type, _
+            ByVal oschema As IEntitySchema) As List(Of String)
+        If oschema Is Nothing Then
+            Throw New ArgumentNullException("oschema")
         End If
 
         If propertyType Is Nothing Then
             Throw New ArgumentNullException("propertyType")
         End If
 
-        'Dim key As String = type.ToString & propertyType.ToString
-        'Dim l As List(Of String) = CType(_joins(key), List(Of String))
-        'If l Is Nothing Then
-        '    Using SyncHelper.AcquireDynamicLock(key)
-        '        l = CType(_joins(key), List(Of String))
-        '        If l Is Nothing Then
-        '            l = New List(Of String)
-        '            For Each de As DictionaryEntry In GetProperties(type, oschema)
-        '                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-        '                If pi.PropertyType Is propertyType Then
-        '                    Dim c As EntityPropertyAttribute = CType(de.Key, EntityPropertyAttribute)
-        '                    l.Add(c.PropertyAlias)
-        '                End If
-        '            Next
-        '        End If
-        '    End Using
-        'End If
-        'Return l
         Dim l As New List(Of String)
         For Each m As MapField2Column In oschema.GetFieldColumnMap
             If m.PropertyInfo.PropertyType Is propertyType Then
@@ -2171,11 +2190,11 @@ Public Class ObjectMappingEngine
 
         Dim jft As JoinFieldType
 
-        Dim field As String = GetJoinFieldNameByType(selectType, type2join, selSchema)
+        Dim field As String = GetJoinFieldNameByType(type2join, selSchema)
 
         If String.IsNullOrEmpty(field) Then
 
-            field = GetJoinFieldNameByType(type2join, selectType, sh)
+            field = GetJoinFieldNameByType(selectType, sh)
 
             If String.IsNullOrEmpty(field) Then
                 Dim m2m As M2MRelationDesc = GetM2MRelation(type2join, selectType, True)

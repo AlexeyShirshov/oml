@@ -1920,14 +1920,25 @@ l1:
                 Dim args As New GetDynamicKey4FilterEventArgs(f)
                 RaiseEvent GetDynamicKey4Filter(Me, args)
                 If Not String.IsNullOrEmpty(args.CustomKey) Then
-                    sb.Append(args.CustomKey).Append("$")
+                    sb.Append(args.CustomKey).Append("f$")
                 Else
-                    sb.Append(f._ToString).Append("$")
+                    sb.Append(f._ToString).Append("f$")
                 End If
             End If
 
+            If _optimizeIn IsNot Nothing Then
+                sb.Append(_optimizeIn._ToString).Append("i$")
+            End If
+
+            If _optimizeOr IsNot Nothing Then
+                For Each f In _optimizeOr
+                    sb.Append(f._ToString)
+                Next
+                sb.Append("o$")
+            End If
+
             If _having IsNot Nothing Then
-                sb.Append(_having.Filter._ToString).Append("$")
+                sb.Append(_having.Filter._ToString).Append("h$")
             End If
 
             If j IsNot Nothing Then
@@ -1936,10 +1947,11 @@ l1:
                         sb.Append(join._ToString)
                     End If
                 Next
+                sb.Append("j$")
             End If
 
             If _top IsNot Nothing Then
-                sb.Append(_top.GetDynamicKey).Append("$")
+                sb.Append(_top.GetDynamicKey).Append("t$")
             End If
 
             If _from IsNot Nothing Then

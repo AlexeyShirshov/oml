@@ -1950,6 +1950,10 @@ l1:
         Optional ByVal check_loaded As Boolean = True) As ICollection(Of ICachedEntity)
 
         Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
+        If length > objs.Count - start Then
+            length = objs.Count - start
+        End If
+
         For i As Integer = start To start + length - 1
             Dim o As ICachedEntity = objs(i)
             InsertObject(Of T)(cache, check_loaded, entityDictionary, o)
@@ -3845,7 +3849,7 @@ l1:
                     If se.EntityUnion IsNot Nothing Then
                         Dim sortType As System.Type = se.EntityUnion.GetRealType(schema)
                         If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
-                            Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
+                            Dim field As String = schema.GetJoinFieldNameByType(sortType, oschema)
 
                             If Not String.IsNullOrEmpty(field) Then
                                 types.Add(sortType)
@@ -3854,7 +3858,7 @@ l1:
                             End If
 
                             If String.IsNullOrEmpty(field) Then
-                                field = schema.GetJoinFieldNameByType(sortType, selectType, schema.GetEntitySchema(sortType))
+                                field = schema.GetJoinFieldNameByType(selectType, schema.GetEntitySchema(sortType))
 
                                 If Not String.IsNullOrEmpty(field) Then
                                     types.Add(sortType)
@@ -3913,11 +3917,11 @@ l1:
         ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type, _
         ByVal t2jSchema As IEntitySchema, ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion)
 
-        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+        Dim field As String = schema.GetJoinFieldNameByType(type2join, selSchema)
 
         If String.IsNullOrEmpty(field) Then
 
-            field = schema.GetJoinFieldNameByType(type2join, selectType, t2jSchema)
+            field = schema.GetJoinFieldNameByType(selectType, t2jSchema)
 
             If String.IsNullOrEmpty(field) Then
                 Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)

@@ -126,7 +126,7 @@ Namespace Cache
         End Function
 
         Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema) As String
-            Dim prop As String = mgr.MappingEngine.GetJoinFieldNameByType(obj.GetType, rt, oschema)
+            Dim prop As String = mgr.MappingEngine.GetJoinFieldNameByType(rt, oschema)
             If String.IsNullOrEmpty(prop) Then
                 For Each m As MapField2Column In oschema.GetFieldColumnMap
                     If m.PropertyInfo.PropertyType.IsAssignableFrom(rt) Then

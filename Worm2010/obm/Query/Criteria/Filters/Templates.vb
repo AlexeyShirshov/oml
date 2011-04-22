@@ -124,7 +124,7 @@ Namespace Criteria.Core
             _op = New ObjectProperty(os, propertyAlias)
         End Sub
 
-        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -133,18 +133,18 @@ Namespace Criteria.Core
             Dim lt As Type = os.AnyType
             If lt Is Nothing Then
                 If Not String.IsNullOrEmpty(os.AnyEntityName) Then
-                    lt = schema.GetTypeByEntityName(os.AnyEntityName)
+                    lt = mpe.GetTypeByEntityName(os.AnyEntityName)
                 Else
                     Throw New InvalidOperationException(String.Format("Type is not specified in filter: {0} {1}", PropertyAlias, OperToString))
                 End If
             End If
 
             If obj.GetType IsNot lt Then
-                Dim o As _IEntity = schema.GetJoinObj(oschema, obj, lt)
+                Dim o As _IEntity = mpe.GetJoinObj(oschema, obj, lt)
                 If o Is Nothing Then
                     Throw New ArgumentException(String.Format("Template type {0} is not match {1}", lt.ToString, obj.GetType))
                 End If
-                Return MakeFilter(schema, schema.GetEntitySchema(lt), CType(o, ICachedEntity))
+                Return MakeFilter(mpe, mpe.GetEntitySchema(lt), CType(o, ICachedEntity))
             Else
                 Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, PropertyAlias, oschema)
                 'If _os.Type IsNot Nothing Then
