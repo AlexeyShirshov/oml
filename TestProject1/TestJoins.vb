@@ -538,20 +538,20 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeHash()
-        Dim schema As New Worm.ObjectMappingEngine("1")
+        Dim mpe As New Worm.ObjectMappingEngine("1")
         Dim t As Type = GetType(Entity)
 
         Dim f As New EntityFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
         Assert.AreEqual(f.ToString, f.MakeHash)
 
-        Dim o As New Entity(1, Nothing, schema)
+        Dim o As New Entity(1, Nothing, mpe)
 
-        Assert.AreEqual(f.MakeHash, f.Template.MakeHash(schema, Nothing, o))
+        Assert.AreEqual(f.MakeHash, f.Template.MakeHash(mpe, mpe.GetEntitySchema(t), o))
     End Sub
 
     <TestMethod()> _
     Public Sub TestMakeHash2()
-        Dim schema As New Worm.ObjectMappingEngine("1")
+        Dim mpe As New Worm.ObjectMappingEngine("1")
         Dim t As Type = GetType(Entity2)
 
         Dim f As New EntityFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
@@ -565,9 +565,10 @@ End Class
         Assert.AreEqual(f.ToString, CType(cAnd.Condition, IEntityFilter).MakeHash)
         Assert.AreEqual(CType(cOr.Condition, IEntityFilter).MakeHash, EntityFilter.EmptyHash)
 
-        Dim o As New Entity2(1, Nothing, schema)
+        Dim o As New Entity2(1, Nothing, mpe)
+        Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
 
-        Assert.AreEqual(CType(cAnd.Condition, IEntityFilter).MakeHash, CType(cAnd.Condition, IEntityFilter).GetFilterTemplate.MakeHash(schema, Nothing, o))
-        Assert.AreEqual(EntityFilter.EmptyHash, CType(cOr.Condition, IEntityFilter).GetFilterTemplate.MakeHash(schema, Nothing, o))
+        Assert.AreEqual(CType(cAnd.Condition, IEntityFilter).MakeHash, CType(cAnd.Condition, IEntityFilter).GetFilterTemplate.MakeHash(mpe, oschema, o))
+        Assert.AreEqual(EntityFilter.EmptyHash, CType(cOr.Condition, IEntityFilter).GetFilterTemplate.MakeHash(mpe, oschema, o))
     End Sub
 End Class

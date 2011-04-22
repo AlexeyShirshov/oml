@@ -1023,6 +1023,17 @@ l2:
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Update) = IReadonlyObjectSchema.Operation.Update Then
                         esch = ro.GetEditableSchema
+                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+                        For Each ep As MapField2Column In esch.GetFieldColumnMap
+                            Dim m As MapField2Column = Nothing
+                            If map.TryGetValue(ep.PropertyAlias, m) Then
+                                ep.PropertyInfo = m.PropertyInfo
+                                ep.Schema = m.Schema
+                                If ep.Attributes = Field2DbRelations.None Then
+                                    ep.Attributes = m.Attributes
+                                End If
+                            End If
+                        Next
                     End If
 
                     Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps)

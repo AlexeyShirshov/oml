@@ -60,7 +60,7 @@ Namespace Database
 
                             Dim b As ConnAction = mgr.TestConn(cmd)
                             Try
-                                mgr.LoadSingleObject(cmd, cols, obj, False, False, False)
+                                mgr.LoadSingleObject(cmd, cols, obj, True, False, False)
 
                                 inv = True
                             Finally
@@ -101,7 +101,7 @@ Namespace Database
                                     Dim b As ConnAction = mgr.TestConn(cmd)
                                     Try
                                         If sel Then
-                                            mgr.LoadSingleObject(cmd, cols, obj, False, False, False)
+                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, False)
                                         Else
                                             Dim r As Integer = cmd.ExecuteNonQuery()
                                             If r = 0 Then
@@ -177,7 +177,7 @@ Namespace Database
 
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
-                                            mgr.LoadSingleObject(cmd, cols, obj, False, False, True)
+                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
                                             If Not obj.IsPKLoaded Then
                                                 Dim cnt As Integer = 0
                                                 For Each mp As MapField2Column In mgr.MappingEngine.GetEntitySchema(obj.GetType).GetFieldColumnMap
@@ -208,7 +208,7 @@ Namespace Database
                                             Dim b As ConnAction = mgr.TestConn(cmd)
                                             Try
                                                 If sel Then
-                                                    mgr.LoadSingleObject(cmd, cols, obj, False, False, True)
+                                                    mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
                                                 Else
                                                     cmd.ExecuteNonQuery()
                                                 End If
@@ -1168,7 +1168,8 @@ l1:
                 ec.BeginTrackDelete(objType)
             End If
             Try
-                LoadEntityFromDataReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(objType), tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), idx)
+                LoadEntityFromDataReader(TryCast(o, _ICachedEntity), o, tp.Load, True, ec, dr, GetDictionary(objType), _
+                                         tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), idx)
                 idx += tp.Properties2Load.Count
                 For Each pr As Pair(Of String, Reflection.PropertyInfo) In tp.ParentProperties
                     Dim pit As Type = pr.Second.PropertyType
@@ -1291,6 +1292,7 @@ l1:
                     Dim ec As OrmCache = TryCast(_cache, OrmCache)
                     Dim b As ConnAction = TestConn(cmd)
                     Try
+                        Dim et As New PerfCounter
                         Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                             Dim loaded As Boolean = False
                             Do While dr.Read
@@ -1311,6 +1313,8 @@ l1:
                             End If
 
                         End Using
+
+                        _cache.LogLoadTime(obj, et.GetTime)
                     Finally
                         CloseConn(b)
                     End Try
@@ -1337,17 +1341,17 @@ l1:
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
            ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity, _
-           ByVal fromRS As Boolean, ByVal load As Boolean, _
+           ByVal modificationSync As Boolean, ByVal load As Boolean, _
            ByVal modifiedloaded As Boolean)
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType, TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior))
 
-            LoadSingleObject(cmd, selectList, obj, fromRS, load, modifiedloaded, dic)
+            LoadSingleObject(cmd, selectList, obj, modificationSync, load, modifiedloaded, dic)
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity, ByVal fromRS As Boolean, _
+            ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity, ByVal modificationSync As Boolean, _
             ByVal load As Boolean, ByVal modifiedloaded As Boolean, _
             ByVal dic As IDictionary)
 
@@ -1367,7 +1371,7 @@ l1:
                             Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                         End If
 
-                        LoadEntityFromDataReader(ce, obj, load, fromRS, ec, dr, dic, selectList, 0)
+                        LoadEntityFromDataReader(ce, obj, load, modificationSync, ec, dr, dic, selectList, 0)
 
                         loaded = True
                     Loop
@@ -1397,7 +1401,7 @@ l1:
             End Try
         End Sub
 
-        Private Sub LoadEntityFromDataReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal fromRS As Boolean, _
+        Private Sub LoadEntityFromDataReader(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal modificationSync As Boolean, _
             ByVal ec As OrmCache, ByVal dr As System.Data.Common.DbDataReader, ByVal dic As IDictionary, ByVal selectList As IList(Of SelectExpression), _
             ByVal baseIdx As Integer)
             Dim loadLock As IDisposable = Nothing
@@ -1417,18 +1421,18 @@ l1:
                 Dim lock As IDisposable = Nothing
                 Try
                     If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
-                        If fromRS Then
-                            Dim ro As _IEntity = CType(LoadObjectFromDataReader(obj, dr, selectList, dic, fromRS, lock, oschema, cm, 0, baseIdx), _IEntity)
+                        If Not modificationSync Then
+                            Dim ro As _IEntity = CType(LoadObjectFromDataReader(obj, dr, selectList, dic, modificationSync, lock, oschema, cm, 0, baseIdx), _IEntity)
                             AfterLoadingProcess(dic, obj, lock, ro)
                             obj = ro
                             ce = TryCast(obj, _ICachedEntity)
                         Else
-                            LoadObjectFromDataReader(obj, dr, selectList, dic, fromRS, lock, oschema, cm, 0, baseIdx)
+                            LoadObjectFromDataReader(obj, dr, selectList, dic, modificationSync, lock, oschema, cm, 0, baseIdx)
                             obj.CorrectStateAfterLoading(False)
                         End If
                     End If
 
-                    If fromRS AndAlso ce IsNot Nothing Then
+                    If Not modificationSync AndAlso ce IsNot Nothing Then
                         If obj.ObjectState <> ObjectState.NotFoundInSource AndAlso obj.ObjectState <> ObjectState.None Then
                             If load Then ce.AcceptChanges(True, True)
                         End If
@@ -2176,9 +2180,34 @@ l1:
             End Try
         End Sub
 
+        ''' <summary>
+        ''' Загружает объект из БД
+        ''' </summary>
+        ''' <param name="obj"></param>
+        ''' <param name="dr"></param>
+        ''' <param name="selectList">Свойства для загрузки</param>
+        ''' <param name="entityDictionary"></param>
+        ''' <param name="modificationSync"></param>
+        ''' <param name="lock"></param>
+        ''' <param name="oschema"></param>
+        ''' <param name="propertyMap"></param>
+        ''' <param name="rownum">Счетчик записей, которые нужно использовать для загрузки в поля объекта</param>
+        ''' <param name="baseIdx">Начальный индекс поля в ридере. Используется при загрузке нескольких объектов из одной записи</param>
+        ''' <returns></returns>
+        ''' <remarks>
+        ''' Алгоритм примерно такой:
+        ''' 0.1 Если это загрузка при модификации (update/insert), сохраняем первичный ключ объекта
+        ''' 1. Грузим первичный ключ в объект
+        ''' 2. Если первичный ключ загружен
+        ''' 2.1. Ищем объект в кеше
+        ''' 2.2. Если объекта в кеше нет
+        ''' 2.2.1 Если это загрузка объекта при модификации, сохраняем копию старого объекта
+        ''' 3. Если первчиный ключ не загружен, но это загрузка объекта при модификации, сохраняем копию старого объекта
+        ''' </remarks>
         Protected Function LoadObjectFromDataReader(ByVal obj As Object, ByVal dr As System.Data.Common.DbDataReader, _
             ByVal selectList As IList(Of SelectExpression), _
-            ByVal entityDictionary As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IEntitySchema, _
+            ByVal entityDictionary As IDictionary, ByVal modificationSync As Boolean, ByRef lock As IDisposable, _
+            ByVal oschema As IEntitySchema, 
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
             ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As Object
 
@@ -2197,14 +2226,13 @@ l1:
             'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            Dim existing As Boolean
-            Dim robj As ICachedEntity = Nothing
+            'Dim existing As Boolean
             Try
                 Dim pk_count As Integer = 0
                 'Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 'Dim attrs(selectList.Count - 1) As Field2DbRelations
                 Dim oldpk() As PKDesc = Nothing
-                If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
+                If ce IsNot Nothing AndAlso modificationSync Then oldpk = ce.GetPKValues()
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
                     d = entity.GetSyncRoot
@@ -2266,6 +2294,7 @@ l1:
                     Next
                 End Using
 
+                Dim robj As ICachedEntity = Nothing
                 If pk_count > 0 Then
                     If ce IsNot Nothing Then
                         ce.PKLoaded(pk_count)
@@ -2279,7 +2308,7 @@ l1:
                         'lock = True
 
                         If entityDictionary IsNot Nothing AndAlso (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
-                            robj = NormalizeObject(ce, entityDictionary, fromRS OrElse ce.ObjectState = ObjectState.Created, True, oschema)
+                            robj = NormalizeObject(ce, entityDictionary, Not modificationSync OrElse ce.ObjectState = ObjectState.Created, True, oschema)
                             Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
                             ce = CType(robj, _ICachedEntity)
@@ -2291,12 +2320,11 @@ l1:
                                         'End Using
                                     ElseIf robj.ObjectState = ObjectState.Modified OrElse robj.ObjectState = ObjectState.Deleted Then
                                         Return robj
-                                    Else
-                                        existing = True
+                                        'Else
+                                        '    existing = True
                                     End If
                                 Else
-                                    If fromRS Then
-                                    Else
+                                    If modificationSync Then
                                         If robj.ObjectState = ObjectState.Created Then
                                             ce.CreateCopyForSaveNewEntry(Me, oldpk)
                                             'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
@@ -2311,7 +2339,7 @@ l1:
                             'End If
                         End If
                     End If
-                ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso entity.ObjectState = ObjectState.Created Then
+                ElseIf ce IsNot Nothing AndAlso modificationSync AndAlso entity.ObjectState = ObjectState.Created Then
                     ce.CreateCopyForSaveNewEntry(Me, Nothing)
                 End If
 
@@ -2932,7 +2960,7 @@ l1:
                 End If
 
                 If sb.Length > 0 Then
-                    sb.Length -= 4
+                    If sb.ToString.EndsWith(" or ") Then sb.Length -= 4
                     If sb.Length > 0 Then
                         l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                     End If
@@ -3713,7 +3741,7 @@ l2:
                 Dim b As ConnAction = TestConn(cmd)
                 Try
                     LoadSingleObject(cmd, arr.ConvertAll(Function(e) New SelectExpression(e)), _
-                                     newObj, True, False, Nothing)
+                                     newObj, False, False, Nothing)
                     newObj.SetObjectState(ObjectState.Clone)
                     Return newObj
                 Finally

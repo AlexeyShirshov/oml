@@ -628,7 +628,7 @@ l1:
                 End If
 
                 If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
-                    field = schema.GetJoinFieldNameByType(selectedType, filteredType, schema.GetEntitySchema(selectedType))
+                    field = schema.GetJoinFieldNameByType(filteredType, schema.GetEntitySchema(selectedType))
                     needReplace = New RelationDesc(selectOS, field)
                 ElseIf Not TypeOf _rel.Relation Is M2MRelationDesc Then
                     field = _rel.Relation.Column
