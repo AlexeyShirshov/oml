@@ -660,7 +660,7 @@ Namespace Query.Database
 
             Dim searchTable As SourceFragment = os.Table
             If st.QueryFields IsNot Nothing AndAlso st.QueryFields.Length = 1 Then
-                searchTable = os.GetFieldColumnMap(st.QueryFields(0)).Table
+                searchTable = os.FieldColumnMap(st.QueryFields(0)).Table
             End If
 
             Dim table As String = st.GetSearchTableName
@@ -692,7 +692,7 @@ Namespace Query.Database
 l1:
                 sb.Append("(")
                 For Each f As String In ifields
-                    Dim m As MapField2Column = os.GetFieldColumnMap(f)
+                    Dim m As MapField2Column = os.FieldColumnMap(f)
                     sb.Append(m.SourceFieldExpression).Append(",")
                     If tf IsNot Nothing AndAlso Not replaced Then
                         sb.Replace("{290ghern}", tf.GetRealTable(m.SourceFieldExpression))
@@ -1194,7 +1194,7 @@ l1:
 
         Private Shared Function CreateNewMap(ByVal oschema As IEntitySchema, ByVal tbl As SourceFragment) As OrmObjectIndex
             Dim newcol As New OrmObjectIndex
-            oschema.GetFieldColumnMap.CopyTo(newcol)
+            oschema.FieldColumnMap.CopyTo(newcol)
             For Each m As MapField2Column In newcol
                 m.Table = tbl
                 For Each sf As SourceField In m.SourceFields

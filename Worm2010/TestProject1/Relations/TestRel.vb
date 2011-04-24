@@ -243,7 +243,7 @@ Imports Worm.Entities
 
         Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1), q1.GetByID(Of Table1)(10), q1.GetByID(Of Table1)(11), q1.GetByID(Of Table1)(20)}
 
-        Dim r As ReadOnlyList(Of _IKeyEntity) = Table1.Table2Relation.Load(Of Table1, _IKeyEntity)(t, False)
+        Dim r As ReadOnlyList(Of _ISinglePKEntity) = Table1.Table2Relation.Load(Of Table1, _ISinglePKEntity)(t, False)
 
         Assert.AreEqual(2, r.Count)
     End Sub

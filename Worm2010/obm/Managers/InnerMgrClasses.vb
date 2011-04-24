@@ -445,7 +445,7 @@ Partial Public Class OrmManager
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As UpdatableCachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
     End Class
 
-    Public MustInherit Class CustDelegate(Of T As {IKeyEntity, New})
+    Public MustInherit Class CustDelegate(Of T As {ISinglePKEntity, New})
         Inherits CustDelegateBase(Of T)
 
         Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T)
@@ -455,4 +455,34 @@ Partial Public Class OrmManager
         Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
     End Class
 
+    Protected Delegate Function LoadObjectFromStorageDelegate(ByVal obj As Object, _
+            ByVal selectList As IList(Of SelectExpression), _
+            ByVal entityDictionary As IDictionary, ByVal modificationSync As Boolean, ByRef lock As IDisposable, _
+            ByVal oschema As IEntitySchema,
+            ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal rownum As Integer, ByVal baseIdx As Integer) As Object
+
+    Protected Class LoadTypeDescriptor
+        Public Load As Boolean
+        Public Properties2Load As List(Of EntityExpression)
+        Public ChildPropertyAlias As String
+        'Public arr As List(Of EntityPropertyAttribute)
+        Public EntitySchema As IEntitySchema
+        'Public PI As Reflection.PropertyInfo
+
+        Private _props As New List(Of Pair(Of String, Reflection.PropertyInfo))
+        Public ReadOnly Property ParentProperties() As IList(Of Pair(Of String, Reflection.PropertyInfo))
+            Get
+                Return _props
+            End Get
+        End Property
+
+        Public Sub New(ByVal load As Boolean, ByVal cols As List(Of EntityExpression), _
+                       ByVal oschema As IEntitySchema)
+            Me.Load = load
+            Me.Properties2Load = cols
+            'Me.arr = arr
+            Me.EntitySchema = oschema
+        End Sub
+    End Class
 End Class

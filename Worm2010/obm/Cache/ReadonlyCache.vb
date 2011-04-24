@@ -475,7 +475,7 @@ Namespace Cache
             _externalObjects.Remove(objectStoreName)
         End Sub
 
-        Protected Friend Sub AddM2MObjDependent(ByVal obj As _IKeyEntity, ByVal key As String, ByVal id As String)
+        Protected Friend Sub AddM2MObjDependent(ByVal obj As _ISinglePKEntity, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -547,7 +547,7 @@ Namespace Cache
             End Using
         End Function
 #End If
-        Protected Friend Sub UpdateM2MEntries(ByVal obj As _IKeyEntity, ByVal oldId As Object, ByVal name As String)
+        Protected Friend Sub UpdateM2MEntries(ByVal obj As _ISinglePKEntity, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -579,7 +579,7 @@ Namespace Cache
             Throw New NotImplementedException
         End Function
 
-        Public Function GetKeyFromPK(Of T As {New, IKeyEntity})(ByVal id As Object) As Integer
+        Public Function GetKeyFromPK(Of T As {New, ISinglePKEntity})(ByVal id As Object) As Integer
             Dim o As T = KeyEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
             Return o.Key
         End Function
@@ -680,9 +680,9 @@ Namespace Cache
         'End Function
 
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
-            ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As IKeyEntity
+            ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
 
-            Dim o As IKeyEntity = KeyEntity.CreateKeyEntity(id, type, Me, mpe)
+            Dim o As ISinglePKEntity = KeyEntity.CreateKeyEntity(id, type, Me, mpe)
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
@@ -692,7 +692,7 @@ Namespace Cache
                 o.SetObjectState(ObjectState.Created)
             End If
 
-            Return CType(obj, IKeyEntity)
+            Return CType(obj, ISinglePKEntity)
         End Function
 
         Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
@@ -843,7 +843,7 @@ Namespace Cache
         Public Sub SyncPOCO(ByVal c As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object)
             If c IsNot Nothing Then
                 If c.ObjectState = ObjectState.Created Then c.BeginLoading()
-                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                For Each m As MapField2Column In oschema.FieldColumnMap
                     ObjectMappingEngine.SetPropertyValue(c, m.PropertyAlias, _
                         ObjectMappingEngine.GetPropertyValue(o, m.PropertyAlias, oschema), oschema)
                 Next

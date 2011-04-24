@@ -357,6 +357,7 @@ End Class
             Implements IEntitySchema
 
             Private _tbl As New SourceFragment("dbo", "EntBase")
+            Private _idx As OrmObjectIndex
 
             Public Overridable ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
                 Get
@@ -364,12 +365,16 @@ End Class
                 End Get
             End Property
 
-            Public Overridable Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) Implements Worm.Entities.Meta.IPropertyMap.GetFieldColumnMap
-                Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", _tbl, Field2DbRelations.PK))
-                idx.Add(New MapField2Column("CreateDt", "dt", _tbl, Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault))
-                Return idx
-            End Function
+            Public Overridable ReadOnly Property GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) Implements Worm.Entities.Meta.IPropertyMap.FieldColumnMap
+                Get
+                    If _idx Is Nothing Then
+                        _idx = New OrmObjectIndex
+                        _idx.Add(New MapField2Column("ID", "id", _tbl, Field2DbRelations.PK))
+                        _idx.Add(New MapField2Column("CreateDt", "dt", _tbl, Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault))
+                    End If
+                    Return _idx
+                End Get
+            End Property
         End Class
     End Class
 
@@ -396,6 +401,7 @@ End Class
             Implements IMultiTableObjectSchema
 
             Private _tbl() As SourceFragment
+            Private _idx As OrmObjectIndex
 
             Public Sub New()
                 _tbl = New SourceFragment() {MyBase.Table, New SourceFragment("dbo", "ent2")}
@@ -407,12 +413,16 @@ End Class
                 End Get
             End Property
 
-            Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
-                Dim idx As New OrmObjectIndex
-                idx.AddRange(MyBase.GetFieldColumnMap)
-                idx.Add(New MapField2Column("Name", "name", _tbl(1)))
-                Return idx
-            End Function
+            Public Overrides ReadOnly Property GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+                Get
+                    If _idx Is Nothing Then
+                        _idx = New OrmObjectIndex
+                        _idx.AddRange(MyBase.GetFieldColumnMap)
+                        _idx.Add(New MapField2Column("Name", "name", _tbl(1)))
+                    End If
+                    Return _idx
+                End Get
+            End Property
 
             Public Function GetJoins(ByVal left As Worm.Entities.Meta.SourceFragment, ByVal right As Worm.Entities.Meta.SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements Worm.Entities.Meta.IMultiTableObjectSchema.GetJoins
                 Return JCtor.join(right).on(right, "id").eq(left, "id")
@@ -447,6 +457,7 @@ End Class
             Implements IMultiTableObjectSchema
 
             Private _tbl() As SourceFragment
+            Private _idx As OrmObjectIndex
 
             Public Sub New()
                 _tbl = New SourceFragment() {MyBase.Table, New SourceFragment("dbo", "ent4")}
@@ -458,14 +469,18 @@ End Class
                 End Get
             End Property
 
-            Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
-                Dim idx As New OrmObjectIndex
-                idx.AddRange(MyBase.GetFieldColumnMap)
-                idx.Remove("ID")
-                idx.Add(New MapField2Column("ID", "pk", _tbl(1), Field2DbRelations.PK))
-                idx.Add(New MapField2Column("Code", "code", _tbl(1)))
-                Return idx
-            End Function
+            Public Overrides ReadOnly Property GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+                Get
+                    If _idx Is Nothing Then
+                        _idx = New OrmObjectIndex
+                        _idx.AddRange(MyBase.GetFieldColumnMap)
+                        _idx.Remove("ID")
+                        _idx.Add(New MapField2Column("ID", "pk", _tbl(1), Field2DbRelations.PK))
+                        _idx.Add(New MapField2Column("Code", "code", _tbl(1)))
+                    End If
+                    Return _idx
+                End Get
+            End Property
 
             Public Function GetJoins(ByVal left As Worm.Entities.Meta.SourceFragment, ByVal right As Worm.Entities.Meta.SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements Worm.Entities.Meta.IMultiTableObjectSchema.GetJoins
                 If right Is _tbl(1) Then

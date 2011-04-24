@@ -324,7 +324,7 @@ Namespace Entities
         Protected Overridable Function DumpState() As String
             Dim mpe As ObjectMappingEngine = GetMappingEngine()
             Dim oschema As IEntitySchema = GetEntitySchema(mpe)
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             Dim sb As New StringBuilder
             Dim olr As Boolean = _readRaw
             _readRaw = True
@@ -400,12 +400,12 @@ Namespace Entities
         End Function
 
         Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, _
-            ByVal schema As IEntitySchema)
+            ByVal oschema As IEntitySchema)
 
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
             For Each m As MapField2Column In map
-                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(from, m.PropertyAlias, schema, m.PropertyInfo), schema, m.PropertyInfo)
+                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(from, m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
             Next
         End Sub
 
@@ -465,20 +465,20 @@ Namespace Entities
 #End Region
 
 #Region " Create methods "
-        Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As IKeyEntity
-            Dim o As IKeyEntity = CType(Activator.CreateInstance(t), IKeyEntity)
+        Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As ISinglePKEntity
+            Dim o As ISinglePKEntity = CType(Activator.CreateInstance(t), ISinglePKEntity)
             o.Init(id, cache, schema)
             Return o
         End Function
 
-        Public Shared Function CreateKeyEntity(Of T As {IKeyEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
             Dim o As New T
             o.Init(id, cache, schema)
             Return o
         End Function
 
         Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
-            If GetType(IKeyEntity).IsAssignableFrom(GetType(T)) Then
+            If GetType(ISinglePKEntity).IsAssignableFrom(GetType(T)) Then
                 Return CType(CreateKeyEntity(pk(0).Value, GetType(T), cache, schema), T)
             Else
                 Return CreateEntity(Of T)(pk, cache, schema)
@@ -486,7 +486,7 @@ Namespace Entities
         End Function
 
         Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
-            If GetType(IKeyEntity).IsAssignableFrom(type) Then
+            If GetType(ISinglePKEntity).IsAssignableFrom(type) Then
                 Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
             ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
                 Return CreateEntity(pk, type, cache, mpe)
@@ -545,7 +545,7 @@ Namespace Entities
             'End If
             'Return pi.GetValue(Me, Nothing)
             'Return oschema.GetFieldColumnMap(propertyAlias).GetValue(Me)
-            Return oschema.GetFieldColumnMap(propertyAlias).PropertyInfo.GetValue(Me, Nothing)
+            Return oschema.FieldColumnMap(propertyAlias).PropertyInfo.GetValue(Me, Nothing)
         End Function
 
         Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
@@ -558,7 +558,7 @@ Namespace Entities
             'End If
             'pi.SetValue(Me, value, Nothing)
             'oschema.GetFieldColumnMap(propertyAlias).SetValue(Me, value)
-            oschema.GetFieldColumnMap(propertyAlias).PropertyInfo.SetValue(Me, value, Nothing)
+            oschema.FieldColumnMap(propertyAlias).PropertyInfo.SetValue(Me, value, Nothing)
         End Sub
 
         Protected Overridable Overloads Sub Init()

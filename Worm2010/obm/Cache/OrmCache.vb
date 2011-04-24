@@ -399,6 +399,8 @@ Namespace Cache
                     'Else
                     '    Throw New OrmCacheException("I have to call BeginTrackDelete")
                 End If
+
+                Return False
             End Using
         End Function
 

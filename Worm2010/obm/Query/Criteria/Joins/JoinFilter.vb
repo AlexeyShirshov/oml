@@ -460,7 +460,7 @@ Namespace Criteria.Joins
                 Else 'If _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
                     If executor Is Nothing Then
-                        map = oschema.GetFieldColumnMap(f)
+                        map = oschema.FieldColumnMap(f)
                     Else
                         map = executor.GetFieldColumnMap(oschema, lt)(f)
                     End If
@@ -524,7 +524,7 @@ Namespace Criteria.Joins
                 Else 'If _r.Property.Entity IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
                     If executor Is Nothing Then
-                        map2 = oschema.GetFieldColumnMap(f)
+                        map2 = oschema.FieldColumnMap(f)
                     Else
                         map2 = executor.GetFieldColumnMap(oschema, rt)(f)
                     End If

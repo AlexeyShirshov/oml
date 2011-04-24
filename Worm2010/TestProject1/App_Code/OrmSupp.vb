@@ -29,7 +29,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
 
     'Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
 
-    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.GetFieldColumnMap
+    Public MustOverride ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.FieldColumnMap
 
     'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
     '    Return objs

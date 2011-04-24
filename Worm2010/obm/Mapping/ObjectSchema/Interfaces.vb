@@ -34,7 +34,7 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IPropertyMap
-        Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
+        ReadOnly Property FieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
     Public Interface IEntitySchema

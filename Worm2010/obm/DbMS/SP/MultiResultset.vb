@@ -43,7 +43,7 @@ Namespace Database.Storedprocs
                     _l = New List(Of T)
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     _oschema = mpe.GetEntitySchema(original_type)
-                    _cm = _oschema.GetFieldColumnMap
+                    _cm = _oschema.FieldColumnMap
                     '_cols = mpe.GetSortedFieldList(original_type, _oschema)
                     _entityDictionary = mgr.GetDictionary(original_type)
                 End If

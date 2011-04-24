@@ -64,15 +64,17 @@ Public MustInherit Class MultiTableSchemaBase
     '    Main
     'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Msg", "msg", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("Msg", "msg", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
         Return _objectType.ToString

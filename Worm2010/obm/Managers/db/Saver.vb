@@ -263,7 +263,7 @@ Namespace Database
 #If DEBUG Then
                 If o.HasChanges Then
                     Dim mo As ObjectModification = o.ShadowCopy(_mgr)
-                    Dim oc As ICachedEntity = o.OriginalCopy
+                    'Dim oc As ICachedEntity = o.OriginalCopy
                     If o.ObjectState = ObjectState.Deleted Then
                         _deleted.Add(o)
                         Debug.Assert(o IsNot Nothing)
@@ -328,7 +328,7 @@ Namespace Database
         Protected Overridable Function CheckObj(ByVal main As ICachedEntity, ByVal o As ICachedEntity) As Boolean
             If o.ObjectState <> ObjectState.Deleted Then Return False
             Dim oSchema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
-            For Each m As MapField2Column In oSchema.GetFieldColumnMap
+            For Each m As MapField2Column In oSchema.FieldColumnMap
                 If main.Equals(ObjectMappingEngine.GetPropertyValue(o, m.PropertyAlias, oSchema)) Then
                     Return True
                 End If
@@ -595,7 +595,7 @@ l1:
             For Each o As Pair(Of ICachedEntity) In copies
                 o.First.CopyBody(o.Second, o.First)
                 o.First.SetObjectState(o.Second.GetOldState)
-                Dim orm As _IKeyEntity = TryCast(o.First, _IKeyEntity)
+                Dim orm As _ISinglePKEntity = TryCast(o.First, _ISinglePKEntity)
                 If orm IsNot Nothing Then
                     orm.RejectM2MIntermidiate()
                 End If
@@ -605,7 +605,7 @@ l1:
                 Dim o As ICachedEntity = p.Second
                 If Not rejectList.Contains(o) Then
                     RaiseEvent ObjectRejecting(Me, o)
-                    Dim orm As _IKeyEntity = TryCast(o, _IKeyEntity)
+                    Dim orm As _ISinglePKEntity = TryCast(o, _ISinglePKEntity)
                     If orm IsNot Nothing Then
                         orm.RejectM2MIntermidiate()
                     End If
@@ -869,7 +869,7 @@ l1:
             'End If
         End Sub
 
-        Public Function CreateNewKeyEntity(Of T As {IKeyEntity, New})() As T
+        Public Function CreateNewKeyEntity(Of T As {ISinglePKEntity, New})() As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -899,7 +899,7 @@ l1:
             Return o
         End Function
 
-        Public Overridable Function CreateNewObject(Of T As {IKeyEntity, New})(ByVal id As Object) As T
+        Public Overridable Function CreateNewObject(Of T As {ISinglePKEntity, New})(ByVal id As Object) As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -912,7 +912,7 @@ l1:
             Return o
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type) As IKeyEntity
+        Public Function CreateNewObject(ByVal t As Type) As ISinglePKEntity
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -920,12 +920,12 @@ l1:
             Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t, _mgr.MappingEngine))
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IKeyEntity
+        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As ISinglePKEntity
             For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
                 Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
                 If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
                     mi = mi.MakeGenericMethod(New Type() {t})
-                    Return CType(mi.Invoke(Me, New Object() {id}), IKeyEntity)
+                    Return CType(mi.Invoke(Me, New Object() {id}), ISinglePKEntity)
                 End If
             Next
             Throw New InvalidOperationException("Cannot find method CreateNewObject")

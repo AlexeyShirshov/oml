@@ -128,7 +128,7 @@ Namespace Cache
         Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema) As String
             Dim prop As String = mgr.MappingEngine.GetJoinFieldNameByType(rt, oschema)
             If String.IsNullOrEmpty(prop) Then
-                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                For Each m As MapField2Column In oschema.FieldColumnMap
                     If m.PropertyInfo.PropertyType.IsAssignableFrom(rt) Then
                         If Not String.IsNullOrEmpty(prop) Then
                             Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}: Two properties or more match {2} and {3}", rt, obj.GetType, prop, m.PropertyAlias))

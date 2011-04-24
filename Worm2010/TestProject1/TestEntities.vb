@@ -13,7 +13,7 @@ Imports Worm.Expressions2
 Imports Worm
 
 Public Interface IEnt
-    Inherits _IKeyEntity
+    Inherits _ISinglePKEntity
 
 End Interface
 
@@ -102,7 +102,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
 
     'Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
 
-    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.GetFieldColumnMap
+    Public MustOverride ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchemaBase.FieldColumnMap
 
     'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
     '    Return objs
@@ -146,14 +146,16 @@ Public Class EntitySchema1v1Implementation
     '    Main
     'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables
@@ -220,13 +222,16 @@ Public Class EntitySchema1v4Implementation
     Inherits EntitySchema1v2Implementation
 
     Private _idx As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
-        If _idx Is Nothing Then
-            _idx = MyBase.GetFieldColumnMap()
-            _idx.Add(New MapField2Column("Char", "s", GetTables()(Tables2.Second)))
-        End If
-        Return _idx
-    End Function
+
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                _idx = MyBase.FieldColumnMap()
+                _idx.Add(New MapField2Column("Char", "s", GetTables()(Tables2.Second)))
+            End If
+            Return _idx
+        End Get
+    End Property
 
 End Class
 
@@ -286,19 +291,22 @@ Public Class EntitySchema2v1Implementation
 
     Private _coladded As Boolean = False
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.GetFieldColumnMap()
-        If Not _coladded Then
-            Try
-                idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
-            Catch ex As ArgumentException
-                'just eat
-                'Diagnostics.Debug.WriteLine("duplicate add")
-            End Try
-            _coladded = True
-        End If
-        Return idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.FieldColumnMap()
+            If Not _coladded Then
+                Try
+                    idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                Catch ex As ArgumentException
+                    'just eat
+                    'Diagnostics.Debug.WriteLine("duplicate add")
+                End Try
+                _coladded = True
+            End If
+            Return idx
+        End Get
+    End Property
+
 End Class
 
 Public Class EntitySchema2v11Implementation
@@ -335,19 +343,21 @@ Public Class EntitySchema2v2Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.GetFieldColumnMap()
-        If Not _coladded Then
-            Try
-                idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
-            Catch ex As ArgumentException
-                'just eat
-                'Diagnostics.Debug.WriteLine("duplicate add")
-            End Try
-            _coladded = True
-        End If
-        Return idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.FieldColumnMap()
+            If Not _coladded Then
+                Try
+                    idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                Catch ex As ArgumentException
+                    'just eat
+                    'Diagnostics.Debug.WriteLine("duplicate add")
+                End Try
+                _coladded = True
+            End If
+            Return idx
+        End Get
+    End Property
 
     Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
         Get
@@ -439,15 +449,17 @@ Public Class EntitySchema4v1Implementation
     '    Main
     'End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Title", "name", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("Title", "name", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables
@@ -676,16 +688,18 @@ Public Class EntitySchema5v1Implementation
         _tbl = New SourceFragment("dbo.ent3")
     End Sub
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Title", "name", Table))
-            idx.Add(New MapField2Column("Version", "version", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("Title", "name", Table))
+                idx.Add(New MapField2Column("Version", "version", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables

@@ -58,9 +58,9 @@ Namespace Query
 
         Function Create(ByVal desc As RelationDesc) As RelationCmd
 
-        Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
+        Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
 
-        Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
 
         'Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -72,9 +72,9 @@ Namespace Query
 
         Function Create(ByVal name As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
 
-        Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
     End Interface
 
     Public Interface IExecutionContext
@@ -105,7 +105,7 @@ Namespace Query
         End Function
 
         Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column) Implements Query.IExecutionContext.GetFieldColumnMap
-            Return oschema.GetFieldColumnMap
+            Return oschema.FieldColumnMap
         End Function
 
         Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema

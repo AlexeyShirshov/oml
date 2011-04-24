@@ -106,7 +106,7 @@ Namespace Entities
         Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
         Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
@@ -166,16 +166,18 @@ Namespace Entities
         Sub ValidateDelete(ByVal mgr As OrmManager)
     End Interface
 
-    Public Interface IPropertyConverter
+    Public Interface IEntityFactory
         Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
     End Interface
 
-    Public Interface IDBValueConverter
-        Function CreateValue(ByVal propertyAlias As String, ByVal value As Object) As Object
+    Public Interface IStorageValueConverter
+        Function CreateValue(ByVal oschema As IEntitySchema, ByVal m As MapField2Column, ByVal propertyAlias As String, ByVal value As Object) As Object
     End Interface
 
     Public Interface _ICachedEntityEx
         Inherits ICachedEntityEx, _ICachedEntity
+
+        'Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
     End Interface
 
     Public Interface IRelations
@@ -213,9 +215,9 @@ Namespace Entities
         Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation
     End Interface
 
-    Public Interface IKeyEntity
-        Inherits _ICachedEntity, IRelations
-        Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+    Public Interface ISinglePKEntity
+        Inherits _ICachedEntityEx, IRelations
+        Shadows Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
 #If OLDM2M Then
         Function GetOldName(ByVal id As Object) As String
@@ -225,8 +227,8 @@ Namespace Entities
         'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
 
-    Public Interface _IKeyEntity
-        Inherits IKeyEntity
+    Public Interface _ISinglePKEntity
+        Inherits ISinglePKEntity
 
 #If OLDM2M Then
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
@@ -238,6 +240,7 @@ Namespace Entities
 
     End Interface
 
+    <Obsolete()>
     Public Interface IOrmEditable(Of T As {KeyEntity})
         Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface

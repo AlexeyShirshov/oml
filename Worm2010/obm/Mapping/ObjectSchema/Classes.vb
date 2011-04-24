@@ -355,11 +355,11 @@ Namespace Entities.Meta
             End Property
         End Class
 
-        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Return Load(Of T, ReturnType)(objs, 0, objs.Count, loadWithObjects)
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), _
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), _
                                     ByVal pager As IPager, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             If pager Is Nothing Then
                 Return Load(Of T, ReturnType)(objs, loadWithObjects)
@@ -368,17 +368,17 @@ Namespace Entities.Meta
             End If
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), _
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), _
                                     ByVal start As Integer, ByVal length As Integer, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
-            Dim lookups As New Dictionary(Of IKeyEntity, IList)
-            Dim newc As New List(Of IKeyEntity)
-            Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
+            Dim lookups As New Dictionary(Of ISinglePKEntity, IList)
+            Dim newc As New List(Of ISinglePKEntity)
+            Dim hasInCache As New Dictionary(Of ISinglePKEntity, Object)
             Dim rcmd As RelationCmd = Nothing
             Dim rt As Type = Nothing
             Dim mpe As ObjectMappingEngine = Nothing
 
             For i As Integer = start To start + length - 1
-                Dim o As IKeyEntity = objs(i)
+                Dim o As ISinglePKEntity = objs(i)
                 If rt Is Nothing Then
                     rt = o.GetType
                 End If
@@ -421,7 +421,7 @@ Namespace Entities.Meta
             End If
 
             Dim ids As New List(Of Object)
-            For Each o As IKeyEntity In newc
+            For Each o As ISinglePKEntity In newc
                 ids.Add(o.Identifier)
             Next
 
@@ -439,7 +439,7 @@ Namespace Entities.Meta
                 Dim r As ReadonlyMatrix = rcmd.ToMatrix
 
                 For Each row As ObjectModel.ReadOnlyCollection(Of _IEntity) In r
-                    Dim key As IKeyEntity = CType(row(1), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(row(1), ISinglePKEntity)
                     Dim val As ReturnType = CType(row(0), ReturnType)
 
                     Dim ll As IList = Nothing
@@ -461,7 +461,7 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                    For Each mp As MapField2Column In oschema.FieldColumnMap
                         If mp.IsPK Then
                             se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                         End If
@@ -473,7 +473,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), ISinglePKEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -485,7 +485,7 @@ Namespace Entities.Meta
 
             Dim l As New ReadOnlyList(Of ReturnType)
             For i As Integer = start To start + length - 1
-                Dim o As IKeyEntity = objs(i)
+                Dim o As ISinglePKEntity = objs(i)
                 Dim v As IList = Nothing
                 If lookups.TryGetValue(o, v) Then
                     For Each oo As IEntity In v
@@ -503,16 +503,16 @@ Namespace Entities.Meta
             Return l
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IEnumerable(Of T), _
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IEnumerable(Of T), _
             ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
-            Dim lookups As New Dictionary(Of IKeyEntity, IList)
-            Dim newc As New List(Of IKeyEntity)
-            Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
+            Dim lookups As New Dictionary(Of ISinglePKEntity, IList)
+            Dim newc As New List(Of ISinglePKEntity)
+            Dim hasInCache As New Dictionary(Of ISinglePKEntity, Object)
             Dim rcmd As RelationCmd = Nothing
             Dim rt As Type = Nothing
             Dim mpe As ObjectMappingEngine = Nothing
 
-            For Each o As IKeyEntity In objs
+            For Each o As ISinglePKEntity In objs
 
                 If rt Is Nothing Then
                     rt = o.GetType
@@ -556,7 +556,7 @@ Namespace Entities.Meta
             End If
 
             Dim ids As New List(Of Object)
-            For Each o As IKeyEntity In newc
+            For Each o As ISinglePKEntity In newc
                 ids.Add(o.Identifier)
             Next
 
@@ -574,7 +574,7 @@ Namespace Entities.Meta
                 Dim r As ReadonlyMatrix = rcmd.ToMatrix
 
                 For Each row As ObjectModel.ReadOnlyCollection(Of _IEntity) In r
-                    Dim key As IKeyEntity = CType(row(1), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(row(1), ISinglePKEntity)
                     Dim val As ReturnType = CType(row(0), ReturnType)
 
                     Dim ll As IList = Nothing
@@ -596,7 +596,7 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                    For Each mp As MapField2Column In oschema.FieldColumnMap
                         If mp.IsPK Then
                             se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                         End If
@@ -608,7 +608,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)()
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), ISinglePKEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -620,7 +620,7 @@ Namespace Entities.Meta
 
             Dim l As New ReadOnlyList(Of ReturnType)
 
-            For Each o As IKeyEntity In objs
+            For Each o As ISinglePKEntity In objs
                 Dim v As IList = Nothing
                 If lookups.TryGetValue(o, v) Then
                     For Each oo As IEntity In v
@@ -638,15 +638,15 @@ Namespace Entities.Meta
             Return l
         End Function
 
-        Public Overridable Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IEnumerable(Of T), _
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IEnumerable(Of T), _
             ByVal loadWithObjects As Boolean, ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
-            Dim lookups As New Dictionary(Of IKeyEntity, IList)
-            Dim newc As New List(Of IKeyEntity)
-            Dim hasInCache As New Dictionary(Of IKeyEntity, Object)
+            Dim lookups As New Dictionary(Of ISinglePKEntity, IList)
+            Dim newc As New List(Of ISinglePKEntity)
+            Dim hasInCache As New Dictionary(Of ISinglePKEntity, Object)
             Dim rcmd As RelationCmd = Nothing
             Dim rt As Type = Nothing
 
-            For Each o As IKeyEntity In objs
+            For Each o As ISinglePKEntity In objs
 
                 If rt Is Nothing Then
                     rt = o.GetType
@@ -687,7 +687,7 @@ Namespace Entities.Meta
             End If
 
             Dim ids As New List(Of Object)
-            For Each o As IKeyEntity In newc
+            For Each o As ISinglePKEntity In newc
                 ids.Add(o.Identifier)
             Next
 
@@ -705,7 +705,7 @@ Namespace Entities.Meta
                 Dim r As ReadonlyMatrix = rcmd.ToMatrix(mgr)
 
                 For Each row As ObjectModel.ReadOnlyCollection(Of _IEntity) In r
-                    Dim key As IKeyEntity = CType(row(1), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(row(1), ISinglePKEntity)
                     Dim val As ReturnType = CType(row(0), ReturnType)
 
                     Dim ll As IList = Nothing
@@ -727,7 +727,7 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                    For Each mp As MapField2Column In oschema.FieldColumnMap
                         If mp.IsPK Then
                             se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                         End If
@@ -739,7 +739,7 @@ Namespace Entities.Meta
                 Dim r As ReadOnlyList(Of ReturnType) = rcmd.ToOrmListDyn(Of ReturnType)(mgr)
 
                 For Each o As ReturnType In r
-                    Dim key As IKeyEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), IKeyEntity)
+                    Dim key As ISinglePKEntity = CType(ObjectMappingEngine.GetPropertyValue(o, op.PropertyAlias, oschema), ISinglePKEntity)
                     Dim ll As IList = Nothing
                     If Not lookups.TryGetValue(key, ll) Then
                         ll = New ReadOnlyList(Of ReturnType)
@@ -751,7 +751,7 @@ Namespace Entities.Meta
 
             Dim l As New ReadOnlyList(Of ReturnType)
 
-            For Each o As IKeyEntity In objs
+            For Each o As ISinglePKEntity In objs
                 Dim v As IList = Nothing
                 If lookups.TryGetValue(o, v) Then
                     For Each oo As IEntity In v
@@ -769,7 +769,7 @@ Namespace Entities.Meta
             Return l
         End Function
 
-        Public Overridable Function CreateCmd(ByVal o As IKeyEntity) As RelationCmd
+        Public Overridable Function CreateCmd(ByVal o As ISinglePKEntity) As RelationCmd
             Return o.GetCmd(Me)
         End Function
 
@@ -988,21 +988,21 @@ Namespace Entities.Meta
             End Get
         End Property
 
-        Public Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+        Public Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Return Rel.Load(Of T, ReturnType)(objs, loadWithObjects)
         End Function
 
-        Public Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), _
+        Public Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), _
                                     ByVal pager As IPager, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Return Rel.Load(Of T, ReturnType)(objs, pager, loadWithObjects)
         End Function
 
-        Public Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IList(Of T), _
+        Public Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IList(Of T), _
                                     ByVal start As Integer, ByVal length As Integer, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Return Rel.Load(Of T, ReturnType)(objs, start, length, loadWithObjects)
         End Function
 
-        Public Function Load(Of T As IKeyEntity, ReturnType As _IKeyEntity)(ByVal objs As IEnumerable(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+        Public Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IEnumerable(Of T), ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Return Rel.Load(Of T, ReturnType)(objs, loadWithObjects)
         End Function
 

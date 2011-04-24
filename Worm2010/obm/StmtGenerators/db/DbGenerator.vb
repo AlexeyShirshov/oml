@@ -368,24 +368,36 @@ Namespace Database
                     Dim keys As New List(Of MapField2Column)
                     Dim real_t As Type = obj.GetType
                     Dim oschema As IEntitySchema = obj.GetEntitySchema(mpe)
+                    Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
                     Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     Dim es As IEntitySchema = oschema
                     If rs IsNot Nothing AndAlso (rs.SupportedOperation And IReadonlyObjectSchema.Operation.Insert) = IReadonlyObjectSchema.Operation.Insert Then
                         es = rs.GetEditableSchema
+                        Dim newMap As Collections.IndexedCollection(Of String, MapField2Column) = es.FieldColumnMap
+                        For Each ep As MapField2Column In newMap
+                            Dim m As MapField2Column = Nothing
+                            If map.TryGetValue(ep.PropertyAlias, m) Then
+                                ep.PropertyInfo = m.PropertyInfo
+                                ep.Schema = m.Schema
+                                If ep.Attributes = Field2DbRelations.None Then
+                                    ep.Attributes = m.Attributes
+                                End If
+                            End If
+                        Next
+                        map = newMap
                     End If
                     Dim js As IMultiTableObjectSchema = TryCast(es, IMultiTableObjectSchema)
                     Dim tbls() As SourceFragment = mpe.GetTables(es)
 
                     Dim pkTable As SourceFragment = mpe.GetPKTable(real_t, es)
 
-                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = es.GetFieldColumnMap
                     Dim exec As New ExecutorCtx(real_t, es)
                     'Dim ie As ICollection = mpe.GetProperties(real_t, es)
                     'If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(real_t) Then
                     '    ie = col
                     'End If
 
-                    For Each m As MapField2Column In col
+                    For Each m As MapField2Column In map
                         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                         Dim propertyAlias As String = m.PropertyAlias
                         Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, propertyAlias, TryCast(oschema, IEntitySchema), pi)
@@ -529,7 +541,7 @@ l1:
 
         Protected Overridable Overloads Function GetDBType(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal os As IEntitySchema, _
             ByVal pa As String, ByVal sf As String) As String
-            Dim m As MapField2Column = os.GetFieldColumnMap(pa)
+            Dim m As MapField2Column = os.FieldColumnMap(pa)
             Dim db As DBType = Nothing
             If String.IsNullOrEmpty(sf) Then
                 db = m.SourceFields(0).DBType
@@ -567,7 +579,7 @@ l1:
                 Dim insertedPK As New List(Of Pair(Of String))
                 Dim syncInsertPK As New List(Of Pair(Of String, Pair(Of String)))
                 If selectedProperties IsNot Nothing Then
-                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = os.GetFieldColumnMap
+                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = os.FieldColumnMap
                     'Dim ie As ICollection = mpe.GetProperties(type, os)
                     'If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(type) Then
                     '    ie = col
@@ -637,7 +649,7 @@ l1:
                             Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, params, item.Executor)
                             If ef IsNot Nothing Then
                                 p = ef.MakeSingleQueryStmt(os, Me, mpe, Nothing, params, item.Executor)
-                                Dim att As Field2DbRelations = os.GetFieldColumnMap(ef.Template.PropertyAlias).Attributes
+                                Dim att As Field2DbRelations = os.FieldColumnMap(ef.Template.PropertyAlias).Attributes
                                 If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _
                                     (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                     If mpe.GetPropertyTable(os, ef.Template.PropertyAlias) Is item.Table Then
@@ -746,7 +758,7 @@ l1:
 
                         Dim cn As New PredicateLink
                         For Each pk As Pair(Of String) In insertedPK
-                            Dim clm As String = os.GetFieldColumnMap(pk.First).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)
+                            Dim clm As String = os.FieldColumnMap(pk.First).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)
                             cn = CType(cn.[and](pk_table, clm).eq(New LiteralValue(pk.Second)), PredicateLink)
                         Next
                         'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
@@ -778,7 +790,7 @@ l1:
             ByVal selectedProperties As List(Of EntityExpression)) As ExecutorCtx
 
             Dim rt As Type = obj.GetType
-            Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             Dim originalCopy As ICachedEntity = obj.OriginalCopy
             Dim exec As New ExecutorCtx(rt, TryCast(oschema, IEntitySchema))
             'Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
@@ -846,7 +858,7 @@ l1:
                                 If sch Is Nothing Then
                                     sch = mpe.GetPOCOEntitySchema(currentType)
                                 End If
-                                For Each mp As MapField2Column In sch.GetFieldColumnMap
+                                For Each mp As MapField2Column In sch.FieldColumnMap
                                     Dim p As String = mp.PropertyAlias
                                     If Not Object.Equals(ObjectMappingEngine.GetPropertyValue(current, p, sch), ObjectMappingEngine.GetPropertyValue(original, p, sch)) Then
                                         GoTo l3
@@ -937,7 +949,7 @@ l2:
             '    ie = oschema.GetFieldColumnMap
             'End If
 
-            For Each m As MapField2Column In oschema.GetFieldColumnMap
+            For Each m As MapField2Column In oschema.FieldColumnMap
                 'Dim c As EntityPropertyAttribute = Nothing
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 'If TypeOf (o) Is DictionaryEntry Then
@@ -1023,8 +1035,8 @@ l2:
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Update) = IReadonlyObjectSchema.Operation.Update Then
                         esch = ro.GetEditableSchema
-                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
-                        For Each ep As MapField2Column In esch.GetFieldColumnMap
+                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                        For Each ep As MapField2Column In esch.FieldColumnMap
                             Dim m As MapField2Column = Nothing
                             If map.TryGetValue(ep.PropertyAlias, m) Then
                                 ep.PropertyInfo = m.PropertyInfo
@@ -1051,7 +1063,7 @@ l2:
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
                         Dim pk_table As SourceFragment = Nothing
-                        For Each m As MapField2Column In esch.GetFieldColumnMap
+                        For Each m As MapField2Column In esch.FieldColumnMap
                             If m.IsPK Then
                                 pk_table = m.Table 'mpe.GetPropertyTable(esch, c.PropertyAlias)
                                 Exit For
@@ -1142,7 +1154,7 @@ l2:
                             If SupportIf() Then
                                 upd_cmd.Append("if ")
                                 For Each tbl As SourceFragment In syncUpdateProps _
-                                    .ConvertAll(Function(e) esch.GetFieldColumnMap(e.ObjectProperty.PropertyAlias).Table)
+                                    .ConvertAll(Function(e) esch.FieldColumnMap(e.ObjectProperty.PropertyAlias).Table)
 
                                     Dim varName As String = "@" & tbl.Name.Replace(".", "") & "_rownum"
                                     upd_cmd.Append(varName).Append(" and ")
@@ -1157,7 +1169,7 @@ l2:
                                 Nothing, True, Nothing, Nothing, syncUpdateProps, esch, filterInfo))
                             Dim cn As New Condition.ConditionConstructor
                             For Each p As PKDesc In obj.GetPKValues
-                                Dim clm As String = esch.GetFieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
+                                Dim clm As String = esch.FieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
                                 cn.AddFilter(New dc.TableFilter(mpe.GetPropertyTable(esch, p.PropertyAlias), clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, filterInfo, params)
@@ -1178,7 +1190,7 @@ l2:
 
             If sel_columns.Count > 0 Then
                 For Each c As EntityPropertyAttribute In sel_columns
-                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.PropertyAlias).Table) Then
+                    If Not tables.ContainsKey(esch.FieldColumnMap()(c.PropertyAlias).Table) Then
                         Return False
                     End If
                 Next
@@ -1194,7 +1206,7 @@ l2:
 
             If sel_columns.Count > 0 Then
                 For Each c As EntityExpression In sel_columns
-                    If table Is esch.GetFieldColumnMap()(c.ObjectProperty.PropertyAlias).Table Then
+                    If table Is esch.FieldColumnMap()(c.ObjectProperty.PropertyAlias).Table Then
                         Return True
                     End If
                 Next
@@ -1241,7 +1253,7 @@ l2:
                 Dim table As SourceFragment = tables(j)
                 Dim o As New Condition.ConditionConstructor
                 If table.Equals(pkTable) Then
-                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+                    Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
                     'Dim ie As ICollection = mpe.GetProperties(type, oschema)
                     'If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(type) Then
                     '    ie = col
@@ -1277,7 +1289,7 @@ l2:
                     If Not QueryJoin.IsEmpty(join) Then
                         Dim f As IFilter = join.Condition
 
-                        For Each m As MapField2Column In oschema.GetFieldColumnMap
+                        For Each m As MapField2Column In oschema.FieldColumnMap
                             If m.IsPK Then
                                 f = JoinFilter.ChangeEntityJoinToLiteral(mpe, f, type, m.PropertyAlias, "@id_" & m.PropertyAlias)
                             End If
@@ -1311,6 +1323,17 @@ l2:
                     Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
                     If ro IsNot Nothing AndAlso (ro.SupportedOperation And IReadonlyObjectSchema.Operation.Delete) = IReadonlyObjectSchema.Operation.Delete Then
                         relSchema = ro.GetEditableSchema
+                        For Each ep As MapField2Column In relSchema.FieldColumnMap
+                            Dim m As MapField2Column = Nothing
+                            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                            If map.TryGetValue(ep.PropertyAlias, m) Then
+                                ep.PropertyInfo = m.PropertyInfo
+                                ep.Schema = m.Schema
+                                If ep.Attributes = Field2DbRelations.None Then
+                                    ep.Attributes = m.Attributes
+                                End If
+                            End If
+                        Next
                     End If
 
                     Dim params As New ParamMgr(Me, "p")
@@ -1424,7 +1447,7 @@ l2:
                     'End If
                     If selectedProperties Is Nothing Then
                         selectedProperties = New List(Of EntityExpression)
-                        For Each m As MapField2Column In schema.GetFieldColumnMap
+                        For Each m As MapField2Column In schema.FieldColumnMap
                             selectedProperties.Add(New EntityExpression(m.PropertyAlias, original_type))
                         Next
                     End If
@@ -1432,7 +1455,7 @@ l2:
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
                     Dim l As New List(Of EntityExpression)
-                    For Each mp As MapField2Column In schema.GetFieldColumnMap
+                    For Each mp As MapField2Column In schema.FieldColumnMap
                         If mp.IsPK Then
                             l.Add(New EntityExpression(mp.PropertyAlias, original_type))
                         End If
@@ -2296,7 +2319,7 @@ l2:
         '    Return sb.ToString
         'End Function
 
-        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As IKeyEntity, _
+        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As ISinglePKEntity, _
             ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation, _
             ByVal pmgr As ParamMgr) As String
 
@@ -2328,7 +2351,7 @@ l2:
                 sb.Append(" where ").Append(al).Append(".").Append(param_relation.Column).Append(" = ")
                 pk = pmgr.AddParam(pk, obj.Identifier)
                 sb.Append(pk).Append(" and ").Append(al).Append(".").Append(relation.Column).Append(" in(")
-                For Each toDel As IKeyEntity In entry.Deleted
+                For Each toDel As ISinglePKEntity In entry.Deleted
                     sb.Append(toDel.Identifier).Append(",")
                 Next
                 sb.Length -= 1
@@ -2348,7 +2371,7 @@ l2:
             End If
 
             If entry.HasAdded Then
-                For Each toAdd As IKeyEntity In entry.Added
+                For Each toAdd As ISinglePKEntity In entry.Added
                     If entry.HasDeleted Then
                         sb.Append(vbTab)
                     End If
@@ -2393,7 +2416,7 @@ l2:
             sb.Append("Concurrency violation error during save object ")
             sb.Append(t.Name).Append(". Key values {")
             Dim cm As Boolean = False
-            For Each m As MapField2Column In mpe.GetEntitySchema(t).GetFieldColumnMap
+            For Each m As MapField2Column In mpe.GetEntitySchema(t).FieldColumnMap
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If m.IsPK OrElse m.IsRowVersion Then
 

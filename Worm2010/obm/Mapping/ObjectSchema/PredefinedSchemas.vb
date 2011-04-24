@@ -20,9 +20,11 @@ Namespace Entities.Meta
             _table = sourceFragment
         End Sub
 
-        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
-            Return _cols
-        End Function
+        Public ReadOnly Property FieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.FieldColumnMap
+            Get
+                Return _cols
+            End Get
+        End Property
 
         Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
             Get
@@ -76,7 +78,7 @@ Namespace Entities.Meta
                 End If
 
                 l.Clear()
-                For Each m As MapField2Column In baseSchema.GetFieldColumnMap
+                For Each m As MapField2Column In baseSchema.FieldColumnMap
                     If m.IsPK Then
                         l.Add(m)
                         _bpkTable = m.Table
@@ -99,9 +101,11 @@ Namespace Entities.Meta
             _tables = tables.ToArray
         End Sub
 
-        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
-            Return _cols
-        End Function
+        Public ReadOnly Property FieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.FieldColumnMap
+            Get
+                Return _cols
+            End Get
+        End Property
 
         Public ReadOnly Property Table() As SourceFragment Implements IEntitySchema.Table
             Get

@@ -113,7 +113,7 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.GetFieldColumnMap
+                    fields = oschema.FieldColumnMap
                 Else
                     fields = GetFieldsIdx(_q)
                 End If
@@ -238,7 +238,7 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.GetFieldColumnMap
+                    fields = oschema.FieldColumnMap
                 Else
                     fields = GetFieldsIdx(_q)
                 End If
@@ -655,7 +655,7 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.GetFieldColumnMap
+                    fields = oschema.FieldColumnMap
                 Else
                     fields = GetFieldsIdx(_q)
                     If Not GetType(AnonymousEntity).IsAssignableFrom(_q.CreateType.GetRealType(_mgr.MappingEngine)) Then

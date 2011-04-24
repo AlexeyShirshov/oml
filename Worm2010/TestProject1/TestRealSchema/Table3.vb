@@ -6,9 +6,9 @@ Imports Worm.Entities
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
     Inherits KeyEntity
-    Implements IOptimizedValues, IPropertyConverter
+    Implements IOptimizedValues, IEntityFactory
 
-    Private _obj As IKeyEntity
+    Private _obj As ISinglePKEntity
     Private _code As Byte
     Private _trigger As Boolean
     Private _id As Integer
@@ -110,13 +110,13 @@ Public Class Table3
     End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Ref", behavior:=Field2DbRelations.Factory)> _
-    Public Property RefObject() As IKeyEntity
+    Public Property RefObject() As ISinglePKEntity
         Get
             Using Read("Ref")
                 Return _obj
             End Using
         End Get
-        Set(ByVal value As IKeyEntity)
+        Set(ByVal value As ISinglePKEntity)
             Using Write("Ref")
                 _obj = value
             End Using
@@ -178,8 +178,8 @@ Public Class Table3
         StartUpdate()
     End Sub
 
-    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IPropertyConverter.CreateContainingEntity
-        _obj = mgr.GetKeyEntityFromCacheOrCreate(value, GetObjectType())
+    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IEntityFactory.CreateContainingEntity
+        _obj = mgr.GetKeyEntityFromCacheOrCreate(CType(value, PKDesc())(0).Value, GetObjectType())
         Return _obj
     End Function
 End Class
@@ -200,18 +200,20 @@ Public Class Table3Implementation
         _tbl = New SourceFragment("dbo.Table3")
     End Sub
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Ref", "ref_id", Table))
-            idx.Add(New MapField2Column("Code", "code", Table))
-            idx.Add(New MapField2Column("Version", "v", Table))
-            idx.Add(New MapField2Column("XML", "x", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("Ref", "ref_id", Table))
+                idx.Add(New MapField2Column("Code", "code", Table))
+                idx.Add(New MapField2Column("Version", "v", Table))
+                idx.Add(New MapField2Column("XML", "x", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables

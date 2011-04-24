@@ -239,7 +239,7 @@ Namespace Database
             'Return True
         End Function
 
-        Protected Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As Type, ByVal direct As String, ByVal el As M2MRelation)
+        Protected Overrides Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal direct As String, ByVal el As M2MRelation)
             _upd.M2MSave(Me, obj, t, direct, el)
             'If obj Is Nothing Then
             '    Throw New ArgumentNullException("obj")

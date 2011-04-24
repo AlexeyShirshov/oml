@@ -48,7 +48,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type)
+        Public Sub New(ByVal obj As ISinglePKEntity, ByVal t As Type)
             'MyBase.New(obj)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(New EntityUnion(t), Nothing))
@@ -59,7 +59,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(New EntityUnion(t), Nothing))
@@ -70,7 +70,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion)
+        Public Sub New(ByVal obj As ISinglePKEntity, ByVal eu As EntityUnion)
             'MyBase.New(obj)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing))
@@ -81,7 +81,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As IKeyEntity, ByVal eu As EntityUnion, ByVal key As String)
+        Public Sub New(ByVal obj As ISinglePKEntity, ByVal eu As EntityUnion, ByVal key As String)
             'MyBase.New(obj, key)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, key))
@@ -92,7 +92,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal desc As RelationDesc, ByVal obj As IKeyEntity)
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As ISinglePKEntity)
             'MyBase.New(obj, desc.Key)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
@@ -113,7 +113,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
+        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, Nothing))
@@ -124,7 +124,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, Nothing))
@@ -135,7 +135,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _IKeyEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, key))
@@ -146,7 +146,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal desc As RelationDesc, ByVal obj As _IKeyEntity, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As _ISinglePKEntity, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
@@ -163,19 +163,19 @@ Namespace Query
             Return Create(rel, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
             Return Create(obj, en, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
             Return Create(obj, en, key, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
             Return Create(name, obj, en, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
             Return Create(name, obj, en, key, OrmManager.CurrentManager)
         End Function
 
@@ -209,7 +209,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -224,7 +224,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -239,7 +239,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -255,7 +255,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As IKeyEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -384,7 +384,7 @@ Namespace Query
             '    Throw New QueryCmdException("RelationCmd must not select more than one type", Me)
             'End If
 
-            Dim m2mObject As IKeyEntity = _rel.Host
+            Dim m2mObject As ISinglePKEntity = _rel.Host
             Dim m2mKey As String = _rel.Key
             'Dim m2mType As Type = selectOS.GetRealType(schema)
             Dim rel As RelationDesc = PrepareRel(mpe, Nothing, Nothing)
@@ -459,7 +459,7 @@ Namespace Query
                         tu = m2mEU
 
                         If _WithLoad(m2mEU, mpe) Then
-                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                            For Each mp As MapField2Column In oschema.FieldColumnMap
                                 _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
                             Next
                             '_sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
@@ -537,7 +537,7 @@ l1:
                 Else
                     If SelectList Is Nothing Then
                         If _WithLoad(m2mEU, mpe) Then
-                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                            For Each mp As MapField2Column In oschema.FieldColumnMap
                                 _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
                             Next
                             '_sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
@@ -546,7 +546,7 @@ l1:
                             'Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
                             'se.Attributes = Field2DbRelations.PK
                             '_sl.Add(se)
-                            For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                            For Each mp As MapField2Column In oschema.FieldColumnMap
                                 If mp.IsPK Then
                                     _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
                                 End If
@@ -595,7 +595,7 @@ l1:
             Dim selRel As RelationDesc = _rel.Relation
 
             If selRel Is Nothing OrElse selRel.Entity Is Nothing OrElse String.IsNullOrEmpty(selRel.Column) Then
-                Dim m2mObject As IKeyEntity = _rel.Host
+                Dim m2mObject As ISinglePKEntity = _rel.Host
                 Dim m2mKey As String = _rel.Key
 
                 Dim filteredType As Type = m2mObject.GetType
@@ -845,13 +845,13 @@ l1:
         End Sub
 
         Public Sub RemoveAll()
-            For Each o As IKeyEntity In ToList()
+            For Each o As ISinglePKEntity In ToList()
                 Remove(o)
             Next
         End Sub
 
         Public Sub RemoveAll(ByVal mgr As OrmManager)
-            For Each o As IKeyEntity In ToList(mgr)
+            For Each o As ISinglePKEntity In ToList(mgr)
                 Remove(o)
             Next
         End Sub

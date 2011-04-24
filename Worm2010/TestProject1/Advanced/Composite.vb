@@ -89,16 +89,18 @@ Public Class CompositeSchema
         Second
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
-            idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
-            idx.Add(New MapField2Column("Title2", "msg", GetTables()(Tables.Second)))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
+                idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
+                idx.Add(New MapField2Column("Title2", "msg", GetTables()(Tables.Second)))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     Public Function GetTables() As SourceFragment() Implements IMultiTableObjectSchema.GetTables
         Return _tables
@@ -138,15 +140,17 @@ Public Class CompositeEditableSchema
         First
     End Enum
 
-    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.GetFieldColumnMap
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Title", "msg", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IEntitySchema.FieldColumnMap
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table))
+                idx.Add(New MapField2Column("Title", "msg", Table))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
         Get

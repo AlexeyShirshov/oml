@@ -81,7 +81,7 @@ Namespace Criteria
             Return GetLink(CreateJoinFilter(op, FilterOperation.NotEqual))
         End Function
 
-        Public Function eq(ByVal value As IKeyEntity) As PredicateLink
+        Public Function eq(ByVal value As ISinglePKEntity) As PredicateLink
             If value Is Nothing Then
                 Return is_null()
             Else
@@ -105,7 +105,7 @@ Namespace Criteria
             Return GetLink(CreateJoinFilter(tbl, column, FilterOperation.Equal))
         End Function
 
-        Public Function not_eq(ByVal value As IKeyEntity) As PredicateLink
+        Public Function not_eq(ByVal value As ISinglePKEntity) As PredicateLink
             If value Is Nothing Then
                 Return is_not_null()
             Else

@@ -26,7 +26,7 @@ Public Interface IReadOnlyList
 End Interface
 
 <Serializable()> _
-Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
+Public Class ReadOnlyList(Of T As {Entities.ISinglePKEntity})
     Inherits ReadOnlyEntityList(Of T)
 
     Private Shared _empty As New ReadOnlyList(Of T)
@@ -75,11 +75,11 @@ Public Class ReadOnlyList(Of T As {Entities.IKeyEntity})
         Return New ReadOnlyList(Of T)(l.Keys)
     End Function
 
-    Public Function LoadChildren(Of ReturnType As Entities._IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+    Public Function LoadChildren(Of ReturnType As Entities._ISinglePKEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
         Return rd.Load(Of T, ReturnType)(Me, loadWithObjects)
     End Function
 
-    Public Function LoadChildren(Of ReturnType As Entities._IKeyEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean, ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+    Public Function LoadChildren(Of ReturnType As Entities._ISinglePKEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean, ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
         Return rd.Load(Of T, ReturnType)(Me, loadWithObjects, mgr)
     End Function
 
@@ -179,7 +179,7 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         Return New ReadOnlyEntityList(Of T)(l.Keys)
     End Function
 
-    Public Overridable overloads Function LoadObjects() As ReadOnlyEntityList(Of T)
+    Public Overridable Overloads Function LoadObjects() As ReadOnlyEntityList(Of T)
         Return LoadObjects(0, _l.Count)
     End Function
 
@@ -200,7 +200,7 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         Return Nothing
     End Function
 
-    Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+    Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim cmgr As ICreateManager = GetCMgr()
 
@@ -215,7 +215,7 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         End If
     End Function
 
-    Public Overridable overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray properties2Load() As String) As ReadOnlyEntityList(Of T)
+    Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray properties2Load() As String) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim cmgr As ICreateManager = GetCMgr()
 
@@ -461,11 +461,11 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End Get
     End Property
 
-    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+    Public Function SelectEntity(Of EntityType As ISinglePKEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
         Return SelectEntity(Of EntityType)(0, Count, propertyAlias)
     End Function
 
-    Public Function SelectEntity(Of EntityType As IKeyEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
+    Public Function SelectEntity(Of EntityType As ISinglePKEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
         Dim r As IListEdit = Nothing
         Dim mpe As ObjectMappingEngine = Nothing
         Dim oschema As IEntitySchema = Nothing

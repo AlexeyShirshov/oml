@@ -44,6 +44,7 @@ Namespace Xml
                 Return CType(StmtGenerator, XPathGenerator)
             End Get
         End Property
+
 #Region " Overrides "
 
         'Public Overrides Function AddObject(ByVal obj As Orm.OrmBase) As Orm.OrmBase
@@ -54,7 +55,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overloads Overrides Sub M2MSave(ByVal obj As IKeyEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As M2MRelation)
+        Protected Overloads Overrides Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As M2MRelation)
             Throw New NotImplementedException
         End Sub
 
@@ -281,7 +282,7 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             For Each m As MapField2Column In map
                 If m.IsPK Then
                     Dim attr As String = m.SourceFieldExpression
@@ -293,7 +294,7 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
 
-                        MappingEngine.ParsePKFromDb(obj, False, oschema, map, obj, m, m.PropertyAlias, nodes.Current.Value)
+                        MappingEngine.AssignValue2PK(obj, False, oschema, map, obj, m, m.PropertyAlias, nodes.Current.Value)
                         'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         sn = True
                         cnt += 1
@@ -308,7 +309,7 @@ Namespace Xml
             Dim original_type As Type = obj.GetType
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Dim cnt As Integer
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             For Each m As MapField2Column In map
                 If Not m.IsPK Then
                     Dim attr As String = m.SourceFieldExpression
@@ -319,14 +320,14 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        ParseValueFromDb(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, TryCast(obj, _ICachedEntity), Nothing)
+                        ParseValueFromStorage(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, TryCast(obj, _ICachedEntity), Nothing)
                         'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
                         sn = True
                         cnt += 1
                     Loop
                 Else
-                    If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
+                    If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, map, MappingEngine)
                 End If
             Next
             If orm IsNot Nothing Then
@@ -334,7 +335,7 @@ Namespace Xml
             End If
         End Function
 
-        Public Overrides Function GetObjectFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
+        Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
             Throw New NotImplementedException
         End Function
     End Class

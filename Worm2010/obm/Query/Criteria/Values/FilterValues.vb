@@ -479,8 +479,8 @@ Namespace Criteria.Values
                         ElseIf evaluatedValue IsNot Nothing Then
                             Dim vt As Type = evaluatedValue.GetType()
                             Dim valt As Type = filterValue.GetType
-                            If GetType(IKeyEntity).IsAssignableFrom(vt) Then
-                                If Equals(CType(evaluatedValue, IKeyEntity).Identifier, filterValue) Then
+                            If GetType(ISinglePKEntity).IsAssignableFrom(vt) Then
+                                If Equals(CType(evaluatedValue, ISinglePKEntity).Identifier, filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
@@ -495,8 +495,8 @@ Namespace Criteria.Values
                                 If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetSinglePK(vt)), filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
-                            ElseIf GetType(IKeyEntity).IsAssignableFrom(valt) Then
-                                If Equals(CType(filterValue, IKeyEntity).Identifier, evaluatedValue) Then
+                            ElseIf GetType(ISinglePKEntity).IsAssignableFrom(valt) Then
+                                If Equals(CType(filterValue, ISinglePKEntity).Identifier, evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(valt) Then
@@ -704,22 +704,22 @@ Namespace Criteria.Values
 
         Private _t As Type
 
-        Public Sub New(ByVal o As IKeyEntity)
+        Public Sub New(ByVal o As ISinglePKEntity)
             MyBase.New()
             If o IsNot Nothing Then
                 _t = o.GetType
                 SetValue(o.Identifier)
             Else
-                _t = GetType(IKeyEntity)
+                _t = GetType(ISinglePKEntity)
             End If
         End Sub
 
-        Public Sub New(ByVal o As IKeyEntity, ByVal caseSensitive As Boolean)
+        Public Sub New(ByVal o As ISinglePKEntity, ByVal caseSensitive As Boolean)
             MyClass.New(o)
             Me.CaseSensitive = caseSensitive
         End Sub
 
-        Public Function GetOrmValue(ByVal mgr As OrmManager) As IKeyEntity
+        Public Function GetOrmValue(ByVal mgr As OrmManager) As ISinglePKEntity
             Return mgr.GetKeyEntityFromCacheOrCreate(Value, _t)
         End Function
 
@@ -731,7 +731,7 @@ Namespace Criteria.Values
 
         Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
-            Dim orm As IKeyEntity = TryCast(v, IKeyEntity)
+            Dim orm As ISinglePKEntity = TryCast(v, ISinglePKEntity)
             If orm IsNot Nothing Then
                 Dim ov As EntityValue = TryCast(Me, EntityValue)
                 If ov Is Nothing Then
