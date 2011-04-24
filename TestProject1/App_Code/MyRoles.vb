@@ -21,7 +21,7 @@ Public Class MyRoles
     '    Return CType(mgr.Find(Of MyRole)(f, Nothing, WithLoad), System.Collections.IList)
     'End Function
 
-    Protected Overrides Function GetRoleByName(ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
+    Protected Overrides Function GetRoleByName(ByVal name As String, ByVal createIfNotExist As Boolean) As Worm.Entities.ISinglePKEntity
         Dim t As Type = GetRoleType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _rolenameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))

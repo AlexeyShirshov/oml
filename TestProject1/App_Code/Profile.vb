@@ -71,7 +71,7 @@ Public Class MyProfile
     '    Return Now
     'End Function
 
-    Protected Overrides Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.IKeyEntity
+    Protected Overrides Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Entities.ISinglePKEntity
         Dim t As Type = GetUserType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
@@ -98,7 +98,7 @@ Public Class MyProfile
                 End If
             End If
         End If
-        Return CType(col(0), IKeyEntity)
+        Return CType(col(0), ISinglePKEntity)
     End Function
 
     Protected Overrides Function GetUserType() As System.Type
@@ -113,7 +113,7 @@ Public Class MyProfile
         Return ".TESTPROJECTANONYMCOOKIE"
     End Function
 
-    Protected Overrides Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.IKeyEntity
+    Protected Overrides Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Entities.ISinglePKEntity
         Dim u As MyUser = mt.CreateNewKeyEntity(Of MyUser)()
         u.UserName = name
         Return u
@@ -321,30 +321,37 @@ Public Class MyUserDef
     Inherits ObjectSchemaBaseImplementationWeb
     Implements ISchemaWithM2M
 
+    Private _idx As OrmObjectIndex
+
     Public Sub New()
         _tbl = New SourceFragment("dbo.users")
     End Sub
+
     'Public Enum Tables
     '    Main
     'End Enum
 
     'Private _tbls() As SourceFragment = {New SourceFragment("dbo.users")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("LastActivity", "last_activity", Table))
-        idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", Table))
-        idx.Add(New MapField2Column("UserName", "username", Table))
-        idx.Add(New MapField2Column("ID", "id", Table))
-        idx.Add(New MapField2Column("Field", "field", Table))
-        idx.Add(New MapField2Column("Password", "password", Table))
-        idx.Add(New MapField2Column("Email", "email", Table))
-        idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", Table))
-        idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", Table))
-        idx.Add(New MapField2Column("IsLocked", "islocked", Table))
-        idx.Add(New MapField2Column("LastLockedAt", "lastlocked", Table))
-        Return idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                _idx = New OrmObjectIndex
+                _idx.Add(New MapField2Column("LastActivity", "last_activity", Table))
+                _idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", Table))
+                _idx.Add(New MapField2Column("UserName", "username", Table))
+                _idx.Add(New MapField2Column("ID", "id", Table))
+                _idx.Add(New MapField2Column("Field", "field", Table))
+                _idx.Add(New MapField2Column("Password", "password", Table))
+                _idx.Add(New MapField2Column("Email", "email", Table))
+                _idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", Table))
+                _idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", Table))
+                _idx.Add(New MapField2Column("IsLocked", "islocked", Table))
+                _idx.Add(New MapField2Column("LastLockedAt", "lastlocked", Table))
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tbls
@@ -414,6 +421,8 @@ Public Class MyRoleDef
     Inherits ObjectSchemaBaseImplementationWeb
     Implements ISchemaWithM2M
 
+    Private _idx As OrmObjectIndex
+
     Public Sub New()
         _tbl = New SourceFragment("dbo.roles")
     End Sub
@@ -423,12 +432,16 @@ Public Class MyRoleDef
 
     'Private _tbls() As SourceFragment = {New SourceFragment("dbo.roles")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("ID", "id", Table))
-        idx.Add(New MapField2Column("Name", "roleName", Table))
-        Return idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                _idx = New OrmObjectIndex
+                _idx.Add(New MapField2Column("ID", "id", Table))
+                _idx.Add(New MapField2Column("Name", "roleName", Table))
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tbls

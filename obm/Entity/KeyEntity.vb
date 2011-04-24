@@ -47,7 +47,7 @@ Namespace Entities
     <Serializable()> _
     Public MustInherit Class KeyEntityBase
         Inherits CachedEntity
-        Implements _IKeyEntity
+        Implements _ISinglePKEntity
 
 #Region " Classes "
 
@@ -346,11 +346,11 @@ Namespace Entities
             MyBase.Init()
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _IKeyEntity.Init
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ISinglePKEntity.Init
             MyBase._Init(cache, mpe)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, GetEntitySchema(mpe).GetFieldColumnMap, mpe)
+            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, GetEntitySchema(mpe).FieldColumnMap, mpe)
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -436,7 +436,7 @@ Namespace Entities
 
                 SyncLock "1efb139gf8bh"
                     If el IsNot Nothing Then
-                        For Each o As IKeyEntity In rl.Added
+                        For Each o As ISinglePKEntity In rl.Added
                             'Dim otherKey As String = el.Key
                             'If Me.GetType Is o.GetType Then
                             '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
@@ -458,7 +458,7 @@ Namespace Entities
                     rl.Added.Clear()
 
                     If el IsNot Nothing Then
-                        For Each o As IKeyEntity In rl.Deleted
+                        For Each o As ISinglePKEntity In rl.Deleted
                             'Dim otherKey As String = el.Key
                             'If Me.GetType Is o.GetType Then
                             '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
@@ -493,7 +493,7 @@ Namespace Entities
             Next
         End Sub
 
-        Private Function GetName() As String Implements _IKeyEntity.GetName
+        Private Function GetName() As String Implements _ISinglePKEntity.GetName
             Return Me.GetType.Name & Identifier.ToString
         End Function
 
@@ -562,7 +562,7 @@ Namespace Entities
         End Property
 #End If
 
-        Public MustOverride Property Identifier() As Object Implements IKeyEntity.Identifier
+        Public MustOverride Property Identifier() As Object Implements ISinglePKEntity.Identifier
 
 #End Region
 
@@ -617,7 +617,7 @@ Namespace Entities
 
         'Protected MustOverride Function GetNew() As OrmBase
 
-        Private Sub _RejectM2MIntermidiate() Implements _IKeyEntity.RejectM2MIntermidiate
+        Private Sub _RejectM2MIntermidiate() Implements _ISinglePKEntity.RejectM2MIntermidiate
             Using SyncHelper(False)
 #If OLDM2M Then
                 For Each acs As AcceptState2 In _needAccept
@@ -850,7 +850,7 @@ Namespace Entities
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
-                        Dim ke As IKeyEntity = CType(obj, IKeyEntity)
+                        Dim ke As ISinglePKEntity = CType(obj, ISinglePKEntity)
                         'Dim otherKey As String = el.Key
                         'If Me.GetType Is ke.GetType Then
                         '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
@@ -931,7 +931,7 @@ Namespace Entities
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
-                        Dim ke As IKeyEntity = CType(obj, IKeyEntity)
+                        Dim ke As ISinglePKEntity = CType(obj, ISinglePKEntity)
                         Dim otherKey As String = el.Key
                         'If Me.GetType Is ke.GetType Then
                         '    otherKey = M2MRelationDesc.GetRevKey(otherKey)
@@ -1002,7 +1002,7 @@ Namespace Entities
             End Using
 #Else
             Dim el As Relation = GetRelation(en, key)
-            el.Reject(nothing)
+            el.Reject(Nothing)
 #End If
         End Sub
 
@@ -1018,7 +1018,7 @@ Namespace Entities
             End Using
 #Else
             Dim el As Relation = GetRelation(t, key)
-            el.Reject(nothing)
+            el.Reject(Nothing)
 #End If
         End Sub
 

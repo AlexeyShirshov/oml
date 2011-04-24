@@ -109,6 +109,7 @@ Public Class Table4Implementation
     Inherits ObjectSchemaBaseImplementation
     Implements ICacheBehavior
 
+    Private _idx As OrmObjectIndex
     'Private _tables() As SourceFragment = {New SourceFragment("dbo.[Table]")}
 
     'Public Enum Tables
@@ -119,13 +120,17 @@ Public Class Table4Implementation
         _tbl = New SourceFragment("dbo.[Table]")
     End Sub
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        Dim idx As New OrmObjectIndex
-        idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
-        idx.Add(New MapField2Column("Col", "col", Table))
-        idx.Add(New MapField2Column("GUID", "uq", Table))
-        Return idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                _idx = New OrmObjectIndex
+                _idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
+                _idx.Add(New MapField2Column("Col", "col", Table))
+                _idx.Add(New MapField2Column("GUID", "uq", Table))
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables
@@ -154,16 +159,18 @@ Public Class Table4Implementation2
         _tbl = New SourceFragment("dbo.[Table]")
     End Sub
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
-            idx.Add(New MapField2Column("Col", "col", Table))
-            idx.Add(New MapField2Column("GUID", "uq", Table, Field2DbRelations.InsertDefault))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                Dim idx As New OrmObjectIndex
+                idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
+                idx.Add(New MapField2Column("Col", "col", Table))
+                idx.Add(New MapField2Column("GUID", "uq", Table, Field2DbRelations.InsertDefault))
+                _idx = idx
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables

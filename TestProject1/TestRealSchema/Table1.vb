@@ -225,29 +225,27 @@ Public Class Table1Implementation
     End Sub
 
     Public Overrides Function ChangeValueType(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        If c = "EnumStr" Then
-            If TypeOf value Is Enum1 Then
-                newvalue = value.ToString
-                Return True
-            End If
-        Else
-            Return MyBase.ChangeValueType(c, value, newvalue)
+        If c = "EnumStr" AndAlso TypeOf value Is Enum1 Then
+            newvalue = value.ToString
+            Return True
         End If
+        Return MyBase.ChangeValueType(c, value, newvalue)
     End Function
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New OrmObjectIndex
-            idx.Add(New MapField2Column("ID", "id", Table))
-            idx.Add(New MapField2Column("Title", "name", Table))
-            idx.Add(New MapField2Column("Enum", "enum", Table))
-            idx.Add(New MapField2Column("EnumStr", "enum_str", Table))
-            idx.Add(New MapField2Column("Code", "code", Table))
-            idx.Add(New MapField2Column("DT", "dt", Table))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
+    Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Get
+            If _idx Is Nothing Then
+                _idx = New OrmObjectIndex
+                _idx.Add(New MapField2Column("ID", "id", Table))
+                _idx.Add(New MapField2Column("Title", "name", Table))
+                _idx.Add(New MapField2Column("Enum", "enum", Table))
+                _idx.Add(New MapField2Column("EnumStr", "enum_str", Table))
+                _idx.Add(New MapField2Column("Code", "code", Table))
+                _idx.Add(New MapField2Column("DT", "dt", Table))
+            End If
+            Return _idx
+        End Get
+    End Property
 
     'Public Overrides Function GetTables() As SourceFragment()
     '    Return _tables

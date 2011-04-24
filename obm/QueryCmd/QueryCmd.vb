@@ -499,7 +499,7 @@ Namespace Query
                     t = p.First
                 ElseIf t IsNot Nothing Then
                     Dim m As MapField2Column = Nothing
-                    If Not schema.GetFieldColumnMap.TryGetValue(base, m) Then
+                    If Not schema.FieldColumnMap.TryGetValue(base, m) Then
                         Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
                     Else
                         t = m.PropertyInfo.PropertyType
@@ -511,7 +511,7 @@ Namespace Query
             If t IsNot Nothing Then
                 Dim schema As IEntitySchema = GetEntitySchema(mpe, t)
                 Dim m As MapField2Column = Nothing
-                If Not schema.GetFieldColumnMap.TryGetValue(ss(0), m) Then
+                If Not schema.FieldColumnMap.TryGetValue(ss(0), m) Then
                     Throw New QueryCmdException(String.Format("Cannot find property {0} in type {1}", ss(0), t), Me)
                 End If
             End If
@@ -711,8 +711,8 @@ Namespace Query
                 If Not TypeOf col Is List(Of Object) Then
                     Dim l As New List(Of Object)
                     For Each oo As Object In col
-                        If GetType(IKeyEntity).IsAssignableFrom(oo.GetType) Then
-                            l.Add(CType(oo, IKeyEntity).Identifier)
+                        If GetType(ISinglePKEntity).IsAssignableFrom(oo.GetType) Then
+                            l.Add(CType(oo, ISinglePKEntity).Identifier)
                         Else
                             l.Add(oo)
                         End If
@@ -1031,7 +1031,7 @@ Namespace Query
                                     Dim createType As EntityUnion = Nothing
                                     If Not _createTypes.TryGetValue(de.Key, createType) Then
 l2:
-                                        For Each m As MapField2Column In oschema.GetFieldColumnMap
+                                        For Each m As MapField2Column In oschema.FieldColumnMap
                                             If m.IsPK Then
                                                 Dim pa As String = m.PropertyAlias
                                                 If Not col.Exists(Function(c) c.GetIntoPropertyAlias = pa) Then
@@ -1242,7 +1242,7 @@ l1:
                             Dim t As Type = deEU.GetRealType(mpe)
                             Dim oschema As IEntitySchema = de.Value
                             Dim parentTypeAdded As Boolean = False
-                            For Each m As MapField2Column In oschema.GetFieldColumnMap
+                            For Each m As MapField2Column In oschema.FieldColumnMap
                                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                                 Dim parentType As Type = pi.PropertyType
 
@@ -1564,7 +1564,7 @@ l1:
                     '        .IntoPropertyAlias = c.PropertyAlias _
                     '    } _
                     '))
-                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                    For Each mp As MapField2Column In oschema.FieldColumnMap
                         l.Add(New SelectExpression(New PropertyAliasExpression(mp.PropertyAlias)) With { _
                             .Into = tp.First, _
                             .Attributes = mp.Attributes, _
@@ -1572,7 +1572,7 @@ l1:
                         })
                     Next
                 Else
-                    For Each mp As MapField2Column In oschema.GetFieldColumnMap
+                    For Each mp As MapField2Column In oschema.FieldColumnMap
                         l.Add(New SelectExpression(New ObjectProperty(tp.First, mp.PropertyAlias)))
                     Next
                     'l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
@@ -1609,7 +1609,7 @@ l1:
                         End If
                     End If
                     cl.Add(se)
-                    Dim m As MapField2Column = oschema.GetFieldColumnMap(prop)
+                    Dim m As MapField2Column = oschema.FieldColumnMap(prop)
                     se.Attributes = se.Attributes Or m.Attributes
                     If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(mpe) Is GetType(AnonymousCachedEntity)) Then
                         se.Attributes = se.Attributes And Not Field2DbRelations.PK
@@ -1617,7 +1617,7 @@ l1:
                 Next
             Else
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
-                    For Each c As MapField2Column In oschema.GetFieldColumnMap
+                    For Each c As MapField2Column In oschema.FieldColumnMap
                         If c.IsPK Then
                             Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
                                 .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
@@ -1634,7 +1634,7 @@ l1:
                         se.Attributes = Field2DbRelations.PK
                         _sl.Add(se)
                     Else
-                        For Each c As MapField2Column In oschema.GetFieldColumnMap
+                        For Each c As MapField2Column In oschema.FieldColumnMap
                             If c.IsPK Then
                                 Dim se As New SelectExpression(tp.First, c.PropertyAlias)
                                 se.Attributes = c.Attributes
@@ -3377,11 +3377,11 @@ l1:
 
 #Region " ToOrmList "
 
-        Public Function ToOrmListDyn(Of T As {_IKeyEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return CType(ToEntityList(Of T)(mgr), ReadOnlyList(Of T))
         End Function
 
-        Public Function ToOrmListDyn(Of T As {_IKeyEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
             'Using mgr As OrmManager = getMgr.CreateManager
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
@@ -3390,7 +3390,7 @@ l1:
             Return CType(ToEntityList(Of T)(getMgr), ReadOnlyList(Of T))
         End Function
 
-        Public Function ToOrmListDyn(Of T As {_IKeyEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToOrmListDyn(Of T)(mgr)
@@ -3398,7 +3398,7 @@ l1:
             End Using
         End Function
 
-        Public Function ToOrmListDyn(Of T As _IKeyEntity)() As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As _ISinglePKEntity)() As ReadOnlyList(Of T)
             If _getMgr Is Nothing Then
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
@@ -3406,11 +3406,11 @@ l1:
             Return ToOrmListDyn(Of T)(_getMgr)
         End Function
 
-        Public Function ToOrmList(Of CreateType As {New, _IKeyEntity}, ReturnType As _IKeyEntity)(ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+        Public Function ToOrmList(Of CreateType As {New, _ISinglePKEntity}, ReturnType As _ISinglePKEntity)(ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
             Return CType(ToList(Of CreateType, ReturnType)(mgr), ReadOnlyList(Of ReturnType))
         End Function
 
-        Public Function ToOrmList(Of CreateType As {New, _IKeyEntity}, ReturnType As _IKeyEntity)(ByVal getMgr As ICreateManager) As ReadOnlyList(Of ReturnType)
+        Public Function ToOrmList(Of CreateType As {New, _ISinglePKEntity}, ReturnType As _ISinglePKEntity)(ByVal getMgr As ICreateManager) As ReadOnlyList(Of ReturnType)
             'Using mgr As OrmManager = getMgr.CreateManager
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
@@ -3419,15 +3419,15 @@ l1:
             Return CType(ToList(Of CreateType, ReturnType)(getMgr), ReadOnlyList(Of ReturnType))
         End Function
 
-        Public Function ToOrmList(Of CreateReturnType As {New, _IKeyEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of CreateReturnType)
+        Public Function ToOrmList(Of CreateReturnType As {New, _ISinglePKEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of CreateReturnType)
             Return CType(ToList(Of CreateReturnType)(mgr), ReadOnlyList(Of CreateReturnType))
         End Function
 
-        Public Function ToOrmList(Of CreateReturnType As {New, _IKeyEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of CreateReturnType)
+        Public Function ToOrmList(Of CreateReturnType As {New, _ISinglePKEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of CreateReturnType)
             Return CType(ToList(Of CreateReturnType)(getMgr), ReadOnlyList(Of CreateReturnType))
         End Function
 
-        Public Function ToOrmList(Of CreateReturnType As {New, _IKeyEntity})() As ReadOnlyList(Of CreateReturnType)
+        Public Function ToOrmList(Of CreateReturnType As {New, _ISinglePKEntity})() As ReadOnlyList(Of CreateReturnType)
             Return CType(ToList(Of CreateReturnType)(), ReadOnlyList(Of CreateReturnType))
         End Function
 #End Region
@@ -3681,7 +3681,7 @@ l1:
                 AddPOCO(rt, selSchema)
                 'End If
             Else
-                For Each m As MapField2Column In selSchema.GetFieldColumnMap
+                For Each m As MapField2Column In selSchema.FieldColumnMap
                     If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         hasPK = True
                         Exit For
@@ -3716,7 +3716,7 @@ l1:
             ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object, _
             Optional ByVal pref As String = Nothing)
             Dim oschema As IEntitySchema = CType(_poco(rt), IEntitySchema)
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             For Each m As MapField2Column In map
                 Dim pa As String = m.PropertyAlias
                 If ctd.GetProperties.Find(pa, False) Is Nothing Then
@@ -3742,7 +3742,7 @@ l1:
                 'Else
                 vals = New PKDesc() {New PKDesc(pa, v)}
                 'End If
-                v = ObjectMappingEngine.SetValue(pit, mpe, cache, vals, ro, map, m.PropertyAlias, Nothing, contextInfo)
+                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, Nothing, contextInfo)
                 If v IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
@@ -4451,7 +4451,7 @@ exit_for:
                 End If
                 s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl})
             End If
-            For Each m As MapField2Column In s.GetFieldColumnMap
+            For Each m As MapField2Column In s.FieldColumnMap
                 If m.IsPK Then
                     hasPK = True
                     Exit For
@@ -5039,7 +5039,7 @@ exit_for:
         End Function
 
 #Region " GetByID "
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
+        Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
                     Return GetByID(Of T)(id, options, mgr)
@@ -5050,15 +5050,15 @@ exit_for:
 
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object) As T
+        Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object) As T
             Return GetByID(Of T)(id, GetByIDOptions.GetAsIs)
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
+        Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
             Return GetByID(Of T)(id, GetByIDOptions.GetAsIs, mgr)
         End Function
 
-        Public Function [GetByID](Of T As {New, IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
+        Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
             End If
@@ -5090,7 +5090,7 @@ exit_for:
 
             'Return Where(f).Single(Of T)()
 
-            Dim o As IKeyEntity = Nothing
+            Dim o As ISinglePKEntity = Nothing
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
@@ -5139,7 +5139,7 @@ exit_for:
             Return CType(o, T)
         End Function
 
-        Friend Sub ConvertIdsToObjects(Of T As {New, IKeyEntity})(ByVal rt As Type, ByVal list As IListEdit, _
+        Friend Sub ConvertIdsToObjects(Of T As {New, ISinglePKEntity})(ByVal rt As Type, ByVal list As IListEdit, _
             ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
             For Each id As Object In ids
                 Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id, True)
@@ -5156,18 +5156,18 @@ exit_for:
         Friend Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit, _
             ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
             For Each id As Object In ids
-                Dim obj As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
+                Dim obj As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
 
                 If obj IsNot Nothing Then
                     list.Add(obj)
                 ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), IKeyEntity)
+                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), ISinglePKEntity)
                     If obj IsNot Nothing Then list.Add(obj)
                 End If
             Next
         End Sub
 
-        Public Function [GetByIds](Of T As {New, IKeyEntity})( _
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
                     ByVal ids As IEnumerable(Of Object), _
                     ByVal options As GetByIDOptions, _
                     ByVal mgr As OrmManager) As ReadOnlyList(Of T)
@@ -5228,7 +5228,7 @@ exit_for:
                     'End Select
                     'End If
 
-                    For Each o As IKeyEntity In list
+                    For Each o As ISinglePKEntity In list
                         If o IsNot Nothing Then
                             If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                                 o.SetCreateManager(_getMgr)
@@ -5246,7 +5246,7 @@ exit_for:
             Return ro
         End Function
 
-        Public Function [GetByIds](Of T As {New, IKeyEntity})( _
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
                             ByVal ids As ICollection(Of Object), _
                             ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
@@ -5260,15 +5260,15 @@ exit_for:
 
         End Function
 
-        Public Function [GetByIds](Of T As {New, IKeyEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
             Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs)
         End Function
 
-        Public Function [GetByIds](Of T As {New, IKeyEntity})(ByVal ids As ICollection(Of Object), ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As ICollection(Of Object), ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs, mgr)
         End Function
 
-        Private Function GetRealType(Of T As {New, IKeyEntity})(ByVal mgr As OrmManager) As Type
+        Private Function GetRealType(Of T As {New, ISinglePKEntity})(ByVal mgr As OrmManager) As Type
             Dim selou As EntityUnion = GetSelectedOS()
             Dim tp As Type = Nothing
             If selou IsNot Nothing Then
@@ -5280,7 +5280,7 @@ exit_for:
             Return tp
         End Function
 
-        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
+        Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
                 Using mgr As OrmManager = _getMgr.CreateManager
                     Return GetByIDDyn(Of T)(id, options, mgr)
@@ -5291,11 +5291,11 @@ exit_for:
 
         End Function
 
-        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object) As T
+        Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object) As T
             Return GetByIDDyn(Of T)(id, GetByIDOptions.GetAsIs)
         End Function
 
-        Public Function [GetByIDDyn](Of T As {IKeyEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
+        Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T
             If mgr Is Nothing Then
                 Throw New QueryCmdException("Manager is required", Me)
             End If
@@ -5306,7 +5306,7 @@ exit_for:
             Dim selou As EntityUnion = GetSelectedOS()
             Dim tp As Type = selou.GetRealType(mgr.MappingEngine)
 
-            Dim o As IKeyEntity = Nothing
+            Dim o As ISinglePKEntity = Nothing
             Using New SetManagerHelper(mgr, CreateManager, _schema)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
@@ -5627,7 +5627,7 @@ exit_for:
             If _newMaps IsNot Nothing AndAlso _newMaps.Contains(t) Then
                 Return CType(_newMaps(t), Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column))
             End If
-            Return oschema.GetFieldColumnMap
+            Return oschema.FieldColumnMap
         End Function
 
         Public Sub SetCache(ByVal l As ICollection)

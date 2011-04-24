@@ -334,7 +334,7 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, _
+        Public Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, _
             ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
             Dim idx As Integer
             'For Each p As String In _props.Keys
@@ -344,7 +344,9 @@ Namespace Entities
             '    idx += 1
             'Next
             idx = map.IndexOf(propertyAlias)
-            _members_load_state(idx, map, mpe) = check
+            Dim old As Boolean = _members_load_state(idx, map, mpe)
+            _members_load_state(idx, map, mpe) = loaded
+            Return old
         End Function
 
         'Public Function SetLoaded(ByVal c As EntityPropertyAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
@@ -882,7 +884,7 @@ Namespace Entities
         Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
             Dim schema As IEntitySchema = GetEntitySchema(mpe)
             For Each p As PKDesc In pk
-                SetLoaded(p.PropertyAlias, True, True, schema.GetFieldColumnMap, mpe)
+                SetLoaded(p.PropertyAlias, True, schema.FieldColumnMap, mpe)
             Next
         End Sub
 

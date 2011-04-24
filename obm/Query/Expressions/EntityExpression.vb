@@ -87,7 +87,7 @@ Namespace Expressions2
 
                     If executor Is Nothing Then
                         oschema = mpe.GetEntitySchema(t)
-                        map = oschema.GetFieldColumnMap(_op.PropertyAlias)
+                        map = oschema.FieldColumnMap(_op.PropertyAlias)
                     Else
                         oschema = executor.GetEntitySchema(mpe, t)
                         map = executor.GetFieldColumnMap(oschema, t)(_op.PropertyAlias)

@@ -16,8 +16,8 @@ Namespace Web
         ReadOnly Property UserNameField() As String
         ReadOnly Property GetNow() As Date
         ReadOnly Property CreateManager() As ICreateManager
-        Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As IKeyEntity
-        Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As IKeyEntity, ByVal cascade As Boolean)
+        Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As ISinglePKEntity
+        Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As ISinglePKEntity, ByVal cascade As Boolean)
         Function GetUserType() As Type
         Function FindUsers(ByVal criteria As Worm.Criteria.PredicateLink) As IList
     End Interface
@@ -40,7 +40,7 @@ Namespace Web
             End Set
         End Property
 
-        Public Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As Entities.IKeyEntity, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
+        Public Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As Entities.ISinglePKEntity, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
             If cascade Then
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
@@ -82,7 +82,7 @@ Namespace Web
 
         Public MustOverride Function GetUserType() As System.Type Implements IUserMapping.GetUserType
         Public MustOverride ReadOnly Property CreateManager() As ICreateManager Implements IUserMapping.CreateManager
-        Public MustOverride Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Entities.IKeyEntity Implements IUserMapping.CreateUser
+        Public MustOverride Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Entities.ISinglePKEntity Implements IUserMapping.CreateUser
 
     End Class
 
@@ -205,7 +205,7 @@ Namespace Web
                     'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
             End Select
             Dim col As ICollection = FindUsers(cl)
-            For Each u As IKeyEntity In col
+            For Each u As ISinglePKEntity In col
                 DeleteProfile(u)
             Next
             Return col.Count
@@ -216,7 +216,7 @@ Namespace Web
             'Using mgr As OrmManager = _getMgr()
             Dim cnt As Integer = 0
             For Each u As String In usernames
-                Dim user As IKeyEntity = GetUserByName(u, True, _autoCreateProfileInDB)
+                Dim user As ISinglePKEntity = GetUserByName(u, True, _autoCreateProfileInDB)
                 If user IsNot Nothing Then
                     DeleteProfile(user)
                 Else
@@ -233,7 +233,7 @@ Namespace Web
             'Using mgr As OrmManager = _getMgr()
             Dim cnt As Integer = 0
             For Each p As ProfileInfo In profiles
-                Dim user As IKeyEntity = GetUserByName(p.UserName, Not p.IsAnonymous, _autoCreateProfileInDB)
+                Dim user As ISinglePKEntity = GetUserByName(p.UserName, Not p.IsAnonymous, _autoCreateProfileInDB)
                 If user IsNot Nothing Then
                     DeleteProfile(user)
                 Else
@@ -256,7 +256,7 @@ Namespace Web
                 For i As Integer = start To [end] - 1
                     Dim u As KeyEntity = CType(col(i), KeyEntity)
                     If schema Is Nothing Then
-                        schema = CType(u, IKeyEntity).GetMappingEngine
+                        schema = CType(u, ISinglePKEntity).GetMappingEngine
                     End If
 
                     Dim upd As Date
@@ -438,7 +438,7 @@ Namespace Web
 
         Public Overrides Function GetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyCollection) As System.Configuration.SettingsPropertyValueCollection
             Dim cok As HttpCookie = Nothing, cookieChecked As Boolean = False
-            Dim user As IKeyEntity = Nothing, userChecked As Boolean = False
+            Dim user As ISinglePKEntity = Nothing, userChecked As Boolean = False
             Dim col As New SettingsPropertyValueCollection
             Dim oschema As IEntitySchema = Nothing
             Dim schema As ObjectMappingEngine
@@ -512,7 +512,7 @@ Namespace Web
         Public Overrides Sub SetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyValueCollection)
             If Not context.ContainsKey("remove_profile") Then
                 Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
-                Dim user As IKeyEntity = Nothing, userChecked As Boolean
+                Dim user As ISinglePKEntity = Nothing, userChecked As Boolean
                 Dim saveCookie As Boolean = False
                 For Each p As SettingsPropertyValue In collection
                     If Not p.Property.IsReadOnly Then
@@ -654,7 +654,7 @@ Namespace Web
         Public Sub MigrateAnonymous(ByVal AnonymousId As String)
             Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
             'Using mgr As OrmManager = _getMgr()
-            Dim user As IKeyEntity = Nothing
+            Dim user As ISinglePKEntity = Nothing
             Try
                 user = GetUserByName(HttpContext.Current.Profile.UserName, True, False) 'CreateUser(mgr, HttpContext.Current.Profile.UserName)
             Catch ex As ArgumentException When ex.Message.Contains("not found")
@@ -710,7 +710,7 @@ Namespace Web
             'Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), ICreateManager)
         End Function
 
-        Protected Overridable Sub DeleteProfile(ByVal u As IKeyEntity)
+        Protected Overridable Sub DeleteProfile(ByVal u As ISinglePKEntity)
             Throw New NotImplementedException
         End Sub
 
@@ -724,7 +724,7 @@ Namespace Web
             Return (cmd.ToList())
         End Function
 
-        Protected Overridable Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As IKeyEntity, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
+        Protected Overridable Sub DeleteUser(ByVal mt As ModificationsTracker, ByVal user As ISinglePKEntity, ByVal cascade As Boolean) Implements IUserMapping.DeleteUser
             If cascade Then
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
@@ -735,8 +735,8 @@ Namespace Web
         End Sub
 
         Protected MustOverride Function GetUserType() As Type Implements IUserMapping.GetUserType
-        Protected MustOverride Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As IKeyEntity Implements IUserMapping.CreateUser
-        Protected MustOverride Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As IKeyEntity
+        Protected MustOverride Function CreateUser(ByVal mt As ModificationsTracker, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As ISinglePKEntity Implements IUserMapping.CreateUser
+        Protected MustOverride Function GetUserByName(ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As ISinglePKEntity
 
     End Class
 End Namespace

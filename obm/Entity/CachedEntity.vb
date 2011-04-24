@@ -104,7 +104,7 @@ Namespace Entities
 
                         ObjectMappingEngine.SetPropertyValue(_dst, dstProp, ObjectMappingEngine.GetPropertyValue(source, srcProp, oschema, Nothing), oschema, Nothing)
 
-                        If oschema.GetFieldColumnMap(dstProp).IsPK Then
+                        If oschema.FieldColumnMap(dstProp).IsPK Then
                             pk = True
                         End If
 
@@ -189,9 +189,6 @@ Namespace Entities
                 End Get
             End Property
 
-            ''' <summary>
-            ''' Модифицированная версия объекта
-            ''' </summary>
             Public ReadOnly Property OriginalCopy() As ICachedEntity
                 Get
                     Return _o.OriginalCopy
@@ -411,7 +408,7 @@ Namespace Entities
             End Set
         End Property
 
-        Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, _
+        Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, _
             ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
             Dim idx As Integer = map.IndexOf(propertyAlias)
@@ -501,7 +498,8 @@ Namespace Entities
         End Sub
 
         Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+            Dim oschema As IEntitySchema = GetEntitySchema(mgr.MappingEngine)
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(oschema, ICacheBehavior))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -517,9 +515,17 @@ Namespace Entities
                 End If
             End If
             Dim olds As ObjectState = ObjectState
-            'Using mc As IGetManager = GetMgr()
-            mgr.LoadObject(Me, propertyAlias)
-            'End Using
+            Dim robj As CachedEntity = CType(mgr.NormalizeObject(Me, mgr.GetDictionary(Me.GetType), False, False, oschema), CachedEntity)
+            If robj IsNot Nothing AndAlso Not ReferenceEquals(robj, Me) Then
+                CopyBody(robj, Me)
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                For Each m As MapField2Column In map
+                    SetLoaded(m.PropertyAlias, True, map, mgr.MappingEngine)
+                Next
+                CheckIsAllLoaded(mgr.MappingEngine, map.Count, map)
+            Else
+                mgr.LoadObject(Me, propertyAlias)
+            End If
             If olds = Entities.ObjectState.Created AndAlso ObjectState = Entities.ObjectState.Modified Then
                 AcceptChanges(True, True)
             ElseIf IsLoaded Then
@@ -574,7 +580,7 @@ Namespace Entities
                 'End If
                 Dim oschema As IEntitySchema = GetEntitySchema(mpe)
 
-                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
                 If value AndAlso Not _loaded Then
                     For i As Integer = 0 To map.Count - 1
@@ -769,7 +775,7 @@ Namespace Entities
             BeginLoading()
             For Each p As PKDesc In pk
                 ObjectMappingEngine.SetPropertyValue(Me, p.PropertyAlias, p.Value, oschema)
-                SetLoaded(p.PropertyAlias, True, True, oschema.GetFieldColumnMap, mpe)
+                SetLoaded(p.PropertyAlias, True, oschema.FieldColumnMap, mpe)
             Next
             EndLoading()
             'End Using
@@ -799,16 +805,17 @@ Namespace Entities
 
             Using mc As IGetManager = GetMgr()
                 Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
-                Dim schema As IEntitySchema = GetEntitySchema(mpe)
+                Dim oschema As IEntitySchema = GetEntitySchema(mpe)
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+
                 With reader
 l1:
                     If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
-                        ReadValues(mc.Manager, reader, schema, mpe)
-                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap
+                        ReadValues(mc.Manager, reader, oschema, mpe)
                         Do While .Read
                             Select Case .NodeType
                                 Case XmlNodeType.Element
-                                    ReadValue(mc.Manager, .Name, reader, map, schema, mpe)
+                                    ReadValue(mc.Manager, .Name, reader, map, oschema, mpe)
                                 Case XmlNodeType.EndElement
                                     If .Name = t.Name Then Exit Do
                             End Select
@@ -827,7 +834,7 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-                If mpe IsNot Nothing Then CheckIsAllLoaded(mpe, Integer.MaxValue, Nothing)
+                If mpe IsNot Nothing Then CheckIsAllLoaded(mpe, Integer.MaxValue, map)
             End Using
         End Sub
 
@@ -840,7 +847,7 @@ l1:
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
                 Dim objs As New List(Of Pair(Of String, PKDesc()))
 
-                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                For Each m As MapField2Column In oschema.FieldColumnMap
                     Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                     If (m.Attributes And Field2DbRelations.NotSerialized) <> Field2DbRelations.NotSerialized Then
                         Dim propertyAlias As String = m.PropertyAlias
@@ -916,31 +923,31 @@ l1:
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, x, oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, True, map, mpe)
+                    SetLoaded(propertyAlias, True, map, mpe)
                 Case XmlNodeType.Text
                     Dim v As String = reader.Value
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Convert.FromBase64String(v), oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, True, map, mpe)
+                    SetLoaded(propertyAlias, True, map, mpe)
                 Case XmlNodeType.EndElement
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Nothing, oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, True, map, mpe)
+                    SetLoaded(propertyAlias, True, map, mpe)
                 Case XmlNodeType.Element
                     Dim o As Object = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
-                    'Using mc As IGetManager = GetMgr()
-                    'If m.IsFactory Then
-                    '    Dim f As IPropertyConverter = TryCast(Me, IPropertyConverter)
-                    '    If f IsNot Nothing Then
-                    '        Dim e As _IEntity = f.CreateContainingEntity(mgr, propertyAlias, pk)
-                    '        If e IsNot Nothing Then
-                    '            'e.SetMgrString(IdentityString)
-                    '            'RaiseObjectLoaded(e)
-                    '        End If
-                    '    Else
-                    '        Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", propertyAlias))
-                    '    End If
-                    'Else
-                    o = mgr.CreateObject(pk, m.PropertyInfo.PropertyType)
+                    If m.IsFactory Then
+                        Dim f As IEntityFactory = TryCast(Me, IEntityFactory)
+                        If f IsNot Nothing Then
+                            Dim e As _IEntity = f.CreateContainingEntity(mgr, propertyAlias, pk)
+                            'If e IsNot Nothing Then
+                            '    e.SetMgrString(IdentityString)
+                            '    RaiseObjectLoaded(e)
+                            'End If
+                        Else
+                            Throw New OrmObjectException(String.Format("Property {0} is factory property. Implementation of IFactory is required.", propertyAlias))
+                        End If
+                    Else
+                        o = mgr.CreateObject(pk, m.PropertyInfo.PropertyType)
+                    End If
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, o, oschema, m.PropertyInfo)
                     If o IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(o.GetType) Then
                         CType(o, _ICachedEntity).SetCreateManager(CreateManager)
@@ -948,7 +955,7 @@ l1:
                     End If
                     'End If
                     'End Using
-                    SetLoaded(propertyAlias, True, True, map, mpe)
+                    SetLoaded(propertyAlias, True, map, mpe)
             End Select
         End Sub
 
@@ -973,8 +980,8 @@ l1:
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
-                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
-                Dim fv As IDBValueConverter = TryCast(Me, IDBValueConverter)
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                Dim fv As IStorageValueConverter = TryCast(Me, IStorageValueConverter)
                 Dim pk_count As Integer
 
                 Do
@@ -985,13 +992,13 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(.Name, value))
+                            value = CStr(fv.CreateValue(oschema, m, .Name, value))
                         End If
 
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(.Name, True, True, map, mpe)
+                            SetLoaded(.Name, True, map, mpe)
                             pk_count += 1
                         End If
                     End If
@@ -1035,10 +1042,10 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(.Name, value))
+                            value = CStr(fv.CreateValue(oschema, m, .Name, value))
                         End If
 
-                        If GetType(IKeyEntity).IsAssignableFrom(pi.PropertyType) Then
+                        If GetType(ISinglePKEntity).IsAssignableFrom(pi.PropertyType) Then
                             'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                             '    CreateObject(.Name, value)
                             '    SetLoaded(c, True)
@@ -1053,10 +1060,10 @@ l1:
                                     Throw New OrmManagerException("Cannot find type for entity " & en)
                                 End If
                             End If
-                            Dim v As IKeyEntity = mgr.GetKeyEntityFromCacheOrCreate(value, type_created)
+                            Dim v As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(value, type_created)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, True, map, mpe)
+                                SetLoaded(.Name, True, map, mpe)
                                 If v IsNot Nothing Then
                                     v.SetCreateManager(CreateManager)
                                     'RaiseObjectLoaded(v)
@@ -1068,7 +1075,7 @@ l1:
                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, True, map, mpe)
+                                SetLoaded(.Name, True, map, mpe)
                             End If
                         End If
 
@@ -1109,18 +1116,18 @@ l1:
 
         Protected ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy
             Get
-                Using SyncHelper(False)
-                    If _copy Is Nothing Then
-                        If (ObjectState = Entities.ObjectState.Modified OrElse Not IsPropertiesLazyLoad) AndAlso ObjectState <> Entities.ObjectState.Created AndAlso ObjectState <> Entities.ObjectState.Deleted Then
-                            Using gm As IGetManager = GetMgr()
-                                _copy = CType(gm.Manager.GetObjectFromStorage(Me), CachedEntity)
-                            End Using
-                        End If
-                    End If
+                'Using SyncHelper(False)
+                '    If _copy Is Nothing Then
+                '        If (ObjectState = Entities.ObjectState.Modified OrElse Not IsPropertiesLazyLoad) AndAlso ObjectState <> Entities.ObjectState.Created AndAlso ObjectState <> Entities.ObjectState.Deleted Then
+                '            Using gm As IGetManager = GetMgr()
+                '                _copy = CType(gm.Manager.GetEntityCloneFromStorage(Me), CachedEntity)
+                '            End Using
+                '        End If
+                '    End If
 
-                    Return _copy
-                End Using
-                'Return OriginalCopy(OrmCache)
+                '    Return _copy
+                'End Using
+                Return _copy
             End Get
         End Property
 
@@ -1158,7 +1165,7 @@ l1:
                 If Not Object.Equals(obj.SpecificMappingEngine, SpecificMappingEngine) Then
                     obj.SpecificMappingEngine = SpecificMappingEngine()
                 End If
-                For Each m As MapField2Column In oschema.GetFieldColumnMap
+                For Each m As MapField2Column In oschema.FieldColumnMap
                     Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, m.PropertyAlias, oschema, m.PropertyInfo)
                     If Not m.IsReadOnly Then
                         Dim current As Object = ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo)
@@ -1644,7 +1651,7 @@ l1:
 
         Protected Overrides Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
             Dim mpe As ObjectMappingEngine = GetMappingEngine()
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = GetEntitySchema(mpe).GetFieldColumnMap
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = GetEntitySchema(mpe).FieldColumnMap
             Dim idx As Integer = map.IndexOf(propertyAlias)
             If idx < 0 Then
                 Throw New OrmObjectException(String.Format("Property {0} not found in type {1}. Ensure it is not suppressed", propertyAlias, Me.GetType))
@@ -1728,7 +1735,7 @@ l1:
         Protected Overridable Function GetParentChangedObjects() As List(Of ICachedEntity)
             Dim l As New List(Of ICachedEntity)
             Dim oschema As IEntitySchema = GetEntitySchema(GetMappingEngine)
-            For Each m As MapField2Column In oschema.GetFieldColumnMap
+            For Each m As MapField2Column In oschema.FieldColumnMap
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
                     Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo), ICachedEntity)

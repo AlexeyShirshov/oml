@@ -522,7 +522,7 @@ Namespace Misc
     End Class
 
     <Serializable()> _
-    Public Class DicIndex(Of T As {New, IKeyEntity})
+    Public Class DicIndex(Of T As {New, ISinglePKEntity})
         Inherits DicIndexT(Of T)
 
         Protected _filter As IFilter

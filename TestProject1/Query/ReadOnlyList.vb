@@ -67,7 +67,7 @@ Imports Worm.Entities
 
         Assert.AreEqual(2, r.Count)
 
-        Assert.IsInstanceOfType(r.Cast(Of IPropertyConverter), GetType(List(Of IPropertyConverter)))
+        Assert.IsInstanceOfType(r.Cast(Of IEntityFactory), GetType(List(Of IEntityFactory)))
     End Sub
 
 End Class

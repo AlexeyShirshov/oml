@@ -92,15 +92,17 @@ Imports Worm.Query
             _tbl = New SourceFragment("/root/objects/object")
         End Sub
 
-        Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
-            If _idx Is Nothing Then
-                Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "@id", Table))
-                idx.Add(New MapField2Column("Title", "@name", Table))
-                _idx = idx
-            End If
-            Return _idx
-        End Function
+        Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column)
+            Get
+                If _idx Is Nothing Then
+                    Dim idx As New OrmObjectIndex
+                    idx.Add(New MapField2Column("ID", "@id", Table))
+                    idx.Add(New MapField2Column("Title", "@name", Table))
+                    _idx = idx
+                End If
+                Return _idx
+            End Get
+        End Property
 
         'Public Overrides Function GetTables() As Worm.Entities.Meta.SourceFragment()
         '    Return _tables

@@ -142,8 +142,8 @@ Namespace Expressions2
                         r = IParameterExpression.EvalResult.Found
                     ElseIf evaluatedValue IsNot Nothing Then
                         Dim vt As Type = evaluatedValue.GetType()
-                        If GetType(IKeyEntity).IsAssignableFrom(vt) Then
-                            If Equals(CType(evaluatedValue, IKeyEntity).Identifier, filterValue) Then
+                        If GetType(ISinglePKEntity).IsAssignableFrom(vt) Then
+                            If Equals(CType(evaluatedValue, ISinglePKEntity).Identifier, filterValue) Then
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then

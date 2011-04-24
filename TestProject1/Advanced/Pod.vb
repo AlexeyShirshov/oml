@@ -177,6 +177,7 @@ Imports Worm
             Implements IEntitySchema
 
             Private _tbl As New SourceFragment("dbo", "table1")
+            Private _m As OrmObjectIndex
 
             Public ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment Implements Worm.Entities.Meta.IEntitySchema.Table
                 Get
@@ -184,13 +185,17 @@ Imports Worm
                 End Get
             End Property
 
-            Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) Implements Worm.Entities.Meta.IPropertyMap.GetFieldColumnMap
-                Dim m As New OrmObjectIndex
-                m("ID") = New MapField2Column("ID", "id", _tbl, Field2DbRelations.PrimaryKey)
-                m("Title") = New MapField2Column("Title", "name", _tbl)
-                m("Code") = New MapField2Column("Code", "code", _tbl)
-                Return m
-            End Function
+            Public ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column) Implements Worm.Entities.Meta.IPropertyMap.FieldColumnMap
+                Get
+                    If _m Is Nothing Then
+                        _m = New OrmObjectIndex
+                        _m("ID") = New MapField2Column("ID", "id", _tbl, Field2DbRelations.PrimaryKey)
+                        _m("Title") = New MapField2Column("Title", "name", _tbl)
+                        _m("Code") = New MapField2Column("Code", "code", _tbl)
+                    End If
+                    Return _m
+                End Get
+            End Property
         End Class
     End Class
 

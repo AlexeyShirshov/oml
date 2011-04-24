@@ -1281,7 +1281,7 @@ Public Class TestManagerRS
                 Dim schema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetType(Table1))
 
                 mgr.QueryObjects(Of Table1)(cmd, l, s, _
-                    schema, schema.GetFieldColumnMap)
+                    schema, schema.FieldColumnMap)
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(1, l(0).ID)
@@ -1330,7 +1330,7 @@ Public Class TestManagerRS
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(CInt(CType(obj, IKeyEntity).Identifier), CType(obj, KeyEntity))
+        _new_objects.Add(CInt(CType(obj, ISinglePKEntity).Identifier), CType(obj, KeyEntity))
     End Sub
 
     Public Function GetIdentity(ByVal type As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
@@ -1358,6 +1358,6 @@ Public Class TestManagerRS
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(CInt(CType(obj, IKeyEntity).Identifier))
+        _new_objects.Remove(CInt(CType(obj, ISinglePKEntity).Identifier))
     End Sub
 End Class

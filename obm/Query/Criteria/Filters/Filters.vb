@@ -190,7 +190,7 @@ Namespace Criteria.Core
                 Else
                     Try
                         If executor Is Nothing Then
-                            map = oschema.GetFieldColumnMap(Template.PropertyAlias)
+                            map = oschema.FieldColumnMap(Template.PropertyAlias)
                         Else
                             map = executor.GetFieldColumnMap(oschema, t)(Template.PropertyAlias)
                         End If
@@ -246,7 +246,7 @@ Namespace Criteria.Core
 
             Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, almgr, pd, Nothing, False, Nothing)
 
-            Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
+            Dim map As MapField2Column = oschema.FieldColumnMap()(Template.PropertyAlias)
             Dim rt As Type = Template.ObjectSource.GetRealType(schema)
 
             Dim v As IEvaluableValue = TryCast(val(), IEvaluableValue)
