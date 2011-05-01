@@ -154,7 +154,7 @@ Namespace Database
 
                     Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                     Dim cols As Generic.List(Of SelectExpression) = Nothing
-                    Using obj.GetSyncRoot()
+                    Using obj.LockEntity()
                         Dim cmdtext As String = Nothing
                         Try
                             cmdtext = mgr.SQLGenerator.Insert(mgr.MappingEngine, obj, mgr.GetContextInfo, params, cols)
@@ -294,7 +294,7 @@ Namespace Database
                 'Dim t As Type = obj.GetType
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-                Using obj.GetSyncRoot()
+                Using obj.LockEntity()
                     Dim cmdtext As String = mgr.SQLGenerator.Delete(mgr.MappingEngine, obj, params, mgr.GetContextInfo)
                     If cmdtext.Length > 0 Then
                         Dim [error] As Boolean = True
@@ -1626,58 +1626,46 @@ l1:
             Next
 
             Dim ex As New List(Of _IEntity)
-            For Each os As EntityUnion In odic.Keys
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
+            Dim update As New Specialized.OrderedDictionary
+            For Each os As EntityUnion In New ArrayList(odic.Keys)
                 Dim p As Pair(Of _IEntity) = CType(odic(os), Pair(Of _IEntity))
                 Dim obj As _IEntity = p.First
                 Dim pk_count As Integer
                 pkdic.TryGetValue(os, pk_count)
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
-                If pk_count > 0 Then
-                    If ce IsNot Nothing Then
-                        ce.PKLoaded(pk_count)
+                If pk_count > 0 AndAlso ce IsNot Nothing Then
+                    ce.PKLoaded(pk_count)
 
-                        Dim c As OrmCache = TryCast(_cache, OrmCache)
-                        If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
-                            ex.Add(obj)
-                        End If
-
+                    If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
+                        ex.Add(obj)
+                    Else
                         'Threading.Monitor.Enter(dic)
                         'lock = True
-                        Dim fromRS As Boolean = True
                         Dim dic As IDictionary = Nothing
-                        objDic.TryGetValue(os, dic)
-                        If dic IsNot Nothing Then
-                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS, True, types(os))
-                            Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
+                        If objDic.TryGetValue(os, dic) AndAlso dic IsNot Nothing Then
+                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, True, True, types(os))
+                            Dim differsFromCacheVersion As Boolean = Not Object.ReferenceEquals(robj, ce)
 
-                            odic(os) = New Pair(Of _IEntity)(obj, robj)
-
-                            obj = robj
-                            ce = CType(obj, _ICachedEntity)
                             'SyncLock dic
-                            If fromCache Then
+                            If differsFromCacheVersion Then
+
+                                obj = robj
+                                ce = CType(obj, _ICachedEntity)
+
                                 If obj.ObjectState = ObjectState.Created Then
-                                    'Using obj.GetSyncRoot
                                     ex.Add(obj)
-                                    'End Using
                                 ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
                                     ex.Add(obj)
                                 End If
-                                'Else
-                                '    If fromRS Then
-                                '        'Else
-                                '        '    If obj.ObjectState = ObjectState.Created Then
-                                '        '        ce.CreateCopyForSaveNewEntry(Me, oldpk)
-                                '        '        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
-                                '        '    End If
-                                '    End If
                             End If
                             'End SyncLock
+
+                            odic(os) = New Pair(Of _IEntity)(obj, robj)
+
                         End If
                     End If
-                    'ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso obj.ObjectState = ObjectState.Created Then
-                    '    ce.CreateCopyForSaveNewEntry(Me, Nothing)
                 End If
             Next
 
@@ -1693,6 +1681,10 @@ l1:
                 '    Next
                 '    l.Clear()
             End If
+
+            'For Each de As DictionaryEntry In update
+            '    odic(de.Key) = de.Value
+            'Next
 
             For i As Integer = 0 To selectList.Count - 1
                 Dim se As SelectExpression = selectList(i)
@@ -1761,7 +1753,7 @@ l1:
 #End If
                         Next
 
-                        Using obj.GetSyncRoot
+                        Using obj.LockEntity
                             obj.BeginLoading()
                             ParseValueFromStorage(isNull, att, obj, m, propertyAlias, oschema, map, sv, ce, fac)
 
@@ -2017,7 +2009,7 @@ l1:
                 If ce IsNot Nothing AndAlso modificationSync Then oldpk = ce.GetPKValues()
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
-                    d = entity.GetSyncRoot
+                    d = entity.LockEntity
                 End If
                 Using d
                     If entity IsNot Nothing Then entity.BeginLoading()
@@ -2037,14 +2029,27 @@ l1:
 l1:
                                 'Dim l As List(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(original_type, oschema)
                                 propertyAlias = MappingEngine.GetSinglePK(original_type, oschema)
+l2:
                                 pk = True
                                 m = propertyMap(propertyAlias)
                             ElseIf String.IsNullOrEmpty(propertyAlias) Then
                                 Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, GetContextInfo)))
                             End If
 
-                            If Not pk AndAlso Not propertyMap.TryGetValue(propertyAlias, m) AndAlso selectList.Count = 1 AndAlso (se.GetIntoEntityUnion Is Nothing OrElse se.GetIntoEntityUnion.GetRealType(MappingEngine) IsNot original_type) Then
-                                GoTo l1
+                            If Not pk Then
+                                Dim hasProp As Boolean = propertyMap.TryGetValue(propertyAlias, m)
+                                If hasProp Then
+                                    'Dim realMap As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                                    'If Not m.IsPK AndAlso propertyMap IsNot realMap Then
+                                    '    For Each cm As MapField2Column In realMap
+                                    '        If cm.PropertyAlias = propertyAlias AndAlso cm.IsPK Then
+                                    '            GoTo l2
+                                    '        End If
+                                    '    Next
+                                    'End If
+                                ElseIf selectList.Count = 1 AndAlso (se.GetIntoEntityUnion Is Nothing OrElse se.GetIntoEntityUnion.GetRealType(MappingEngine) IsNot original_type) Then
+                                    GoTo l1
+                                End If
                             End If
 
                             If attr = Field2DbRelations.None Then
@@ -2055,6 +2060,15 @@ l1:
                                 attr = m.Attributes
                             End If
                             se._realAtt = attr
+                            If m Is Nothing Then
+                                'Dim lp As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(original_type, _schema.Version, True, True)
+                                'Dim ep As EntityPropertyAttribute = lp.Find(Function(item) item.PropertyAlias = propertyAlias)
+                                m = New MapField2Column(propertyAlias, String.Empty, Nothing)
+                                m.Schema = oschema
+                                'If ep Is Nothing Then
+                                '    m.PropertyInfo = ep._pi
+                                'End If
+                            End If
                             se._m = m
                         End If
 
@@ -2093,39 +2107,58 @@ l1:
                         'Threading.Monitor.Enter(dic)
                         'lock = True
 
-                        If entityDictionary IsNot Nothing AndAlso (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
-                            robj = NormalizeObject(ce, entityDictionary, Not modificationSync OrElse ce.ObjectState = ObjectState.Created, True, oschema)
-                            Dim differsFromCacheVersion As Boolean = Not Object.ReferenceEquals(robj, ce)
+                        If entityDictionary IsNot Nothing Then
+                            If modificationSync Then
+                                robj = NormalizeObject(ce, entityDictionary, False, True, oschema)
+                                Dim differsFromCacheVersion As Boolean = Not Object.ReferenceEquals(robj, ce)
 
-                            ce = CType(robj, _ICachedEntity)
-                            'SyncLock entityDictionary
+                                If differsFromCacheVersion Then
+                                    If ce.ObjectState = ObjectState.Modified Then
+                                        Throw New OrmManagerException("Modified object must be in cache")
+                                    End If
 
-                            If differsFromCacheVersion Then
-                                If modificationSync Then
+                                    If robj IsNot Nothing Then
+                                        ce = CType(robj, _ICachedEntity)
+                                        If Not ce.IsPKLoaded Then ce.PKLoaded(pk_count)
+                                    Else
+                                        robj = ce
+                                    End If
 
-                                End If
-
-                                If robj.ObjectState = ObjectState.Created Then
-                                    'Using robj.GetSyncRoot
-                                    Return robj
-                                    'End Using
-                                ElseIf robj.ObjectState = ObjectState.Modified OrElse robj.ObjectState = ObjectState.Deleted Then
-                                    Return robj
-                                    'Else
-                                    '    existing = True
+                                    If robj.ObjectState = ObjectState.Created Then
+                                        ce.CreateCopyForSaveNewEntry(Me, oldpk)
+                                        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                    End If
+                                Else
                                 End If
                             Else
-                                If modificationSync AndAlso robj.ObjectState = ObjectState.Created Then
-                                    ce.CreateCopyForSaveNewEntry(Me, oldpk)
-                                    'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                If (Not _op OrElse Not Cache.ListConverter.IsWeak OrElse (rownum >= _start AndAlso rownum < (_start + _length))) Then
+                                    robj = NormalizeObject(ce, entityDictionary, True, True, oschema)
+                                    Dim differsFromCacheVersion As Boolean = Not Object.ReferenceEquals(robj, ce)
+
+                                    'SyncLock entityDictionary
+
+                                    If differsFromCacheVersion Then
+                                        ce = CType(robj, _ICachedEntity)
+
+                                        If robj.ObjectState = ObjectState.Created Then
+                                            'Using robj.GetSyncRoot
+                                            Return robj
+                                            'End Using
+                                        ElseIf robj.ObjectState = ObjectState.Modified OrElse robj.ObjectState = ObjectState.Deleted Then
+                                            Return robj
+                                            'Else
+                                            '    existing = True
+                                        End If
+                                    Else
+                                    End If
+                                    'End SyncLock
+
+                                    'If check_pk Then
+                                    '    robj = Nothing
+                                    '    ce = CType(entity, _ICachedEntity)
+                                    'End If
                                 End If
                             End If
-                            'End SyncLock
-
-                            'If check_pk Then
-                            '    robj = Nothing
-                            '    ce = CType(entity, _ICachedEntity)
-                            'End If
                         End If
                     End If
                 End If
@@ -2137,7 +2170,7 @@ l1:
 
                 If pk_count < selectList.Count Then
 
-                    If entity IsNot Nothing Then lock = entity.GetSyncRoot
+                    If entity IsNot Nothing Then lock = entity.LockEntity
 #If TRACELOADING Then
                     If existing AndAlso obj.IsLoading Then
                         Throw New OrmManagerException(obj.ObjName & "is already loading" & CType(obj, Entity)._lstack) 
@@ -2218,7 +2251,7 @@ l1:
             Finally
                 If entity IsNot Nothing Then
                     If lock Is Nothing Then
-                        lock = entity.GetSyncRoot
+                        lock = entity.LockEntity
                     End If
                     entity.EndLoading()
                 End If
@@ -2796,7 +2829,7 @@ l1:
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
                     If sb.Length > SQLGenerator.QueryLength Then
-                        l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                         sb.Length = 0
                     Else
                         sb.Append(" or ")
@@ -2816,8 +2849,7 @@ l1:
 
                             sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
-                            sb.Insert(0, " and (")
-                            l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
+                            l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                             sb.Length = 0
                             sb2.Length = 0
                             sb2.Append("(")
@@ -2829,16 +2861,15 @@ l1:
                         Dim f As New cc.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
                         sb.Append(f.MakeQueryStmt(MappingEngine, Nothing, SQLGenerator, Nothing, GetContextInfo, almgr, params))
 
-                        sb.Insert(0, " and (")
-                        l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                         sb.Length = 0
                     End If
                 End If
 
                 If sb.Length > 0 Then
-                    sb.Length -= 4
+                    If sb.ToString.EndsWith(" or ") Then sb.Length -= 4
                     If sb.Length > 0 Then
-                        l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
+                        l.Add(New Pair(Of String, Integer)(sb.ToString, params.Params.Count))
                     End If
                 End If
 
@@ -3486,55 +3517,55 @@ l2:
 
 #End If
 
-        Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
-            Invariant()
+        'Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
+        '    Invariant()
 
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
-            End If
+        '    If obj Is Nothing Then
+        '        Throw New ArgumentNullException("obj")
+        '    End If
 
-            Dim original_type As Type = obj.GetType
+        '    Dim original_type As Type = obj.GetType
 
-            'Dim filter As New cc.EntityFilter(original_type, "ID", _
-            '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
-            Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            For Each p As PKDesc In obj.GetPKValues
-                c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
-            Next
-            Dim filter As IFilter = c.Condition
+        '    'Dim filter As New cc.EntityFilter(original_type, "ID", _
+        '    '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
+        '    Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+        '    For Each p As PKDesc In obj.GetPKValues
+        '        c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
+        '    Next
+        '    Dim filter As IFilter = c.Condition
 
-            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim arr As New List(Of EntityExpression) '= MappingEngine.GetSortedFieldList(original_type)
-                Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
-                For Each m As MapField2Column In oschema.FieldColumnMap
-                    arr.Add(New EntityExpression(m.PropertyAlias, original_type))
-                Next
+        '    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+        '        Dim arr As New List(Of EntityExpression) '= MappingEngine.GetSortedFieldList(original_type)
+        '        Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
+        '        For Each m As MapField2Column In oschema.FieldColumnMap
+        '            arr.Add(New EntityExpression(m.PropertyAlias, original_type))
+        '        Next
 
-                With cmd
-                    .CommandType = System.Data.CommandType.Text
+        '        With cmd
+        '            .CommandType = System.Data.CommandType.Text
 
-                    Dim almgr As AliasMgr = AliasMgr.Create
-                    Dim params As New ParamMgr(SQLGenerator, "p")
-                    Dim sb As New StringBuilder
-                    sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetContextInfo))
-                    SQLGenerator.AppendWhere(MappingEngine, original_type, filter, almgr, sb, GetContextInfo, params)
+        '            Dim almgr As AliasMgr = AliasMgr.Create
+        '            Dim params As New ParamMgr(SQLGenerator, "p")
+        '            Dim sb As New StringBuilder
+        '            sb.Append(SQLGenerator.Select(MappingEngine, original_type, almgr, params, arr, Nothing, GetContextInfo))
+        '            SQLGenerator.AppendWhere(MappingEngine, original_type, filter, almgr, sb, GetContextInfo, params)
 
-                    params.AppendParams(.Parameters)
-                    .CommandText = sb.ToString
-                End With
+        '            params.AppendParams(.Parameters)
+        '            .CommandText = sb.ToString
+        '        End With
 
-                Dim newObj As _ICachedEntity = CType(CreateObject(obj.GetPKValues, original_type), _ICachedEntity)
-                newObj.SetObjectState(ObjectState.NotLoaded)
-                Dim b As ConnAction = TestConn(cmd)
-                Try
-                    LoadSingleObject(cmd, arr.ConvertAll(Function(e) New SelectExpression(e)), _
-                                     newObj, False, False, Nothing)
-                    newObj.SetObjectState(ObjectState.Clone)
-                    Return newObj
-                Finally
-                    CloseConn(b)
-                End Try
-            End Using
-        End Function
+        '        Dim newObj As _ICachedEntity = CType(CreateObject(obj.GetPKValues, original_type), _ICachedEntity)
+        '        newObj.SetObjectState(ObjectState.NotLoaded)
+        '        Dim b As ConnAction = TestConn(cmd)
+        '        Try
+        '            LoadSingleObject(cmd, arr.ConvertAll(Function(e) New SelectExpression(e)), _
+        '                             newObj, False, False, Nothing)
+        '            newObj.SetObjectState(ObjectState.Clone)
+        '            Return newObj
+        '        Finally
+        '            CloseConn(b)
+        '        End Try
+        '    End Using
+        'End Function
     End Class
 End Namespace

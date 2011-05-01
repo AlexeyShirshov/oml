@@ -28,7 +28,7 @@ Module Module2
 
     <Entities.Meta.Entity("dbo", "junk", "1")> _
     Public Class TestEditTable
-        Inherits Entities.KeyEntity
+        Inherits Entities.SinglePKEntity
 
         Private _dt As Date
         Public ReadOnly Property Dt() As Date
@@ -63,7 +63,7 @@ Module Module2
             End Get
         End Property
 
-        Protected Sub OnDeleted(ByVal o As Entities.KeyEntity, ByVal e As EventArgs)
+        Protected Sub OnDeleted(ByVal o As Entities.SinglePKEntity, ByVal e As EventArgs)
             _deleted = True
         End Sub
 
@@ -323,7 +323,7 @@ Module Module2
                                             Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                             If Not done Then
                                                 Debug.Assert(st.Saver.AffectedObjects.Count = 0)
-                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t, TryCast(mgr.MappingEngine.GetEntitySchema(t.GetType), ICacheBehavior))
+                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t.GetType, t, TryCast(mgr.MappingEngine.GetEntitySchema(t.GetType), ICacheBehavior))
                                                 Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Entities.ObjectState.NotFoundInSource)
                                                 Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
                                             End If

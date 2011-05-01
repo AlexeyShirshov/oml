@@ -125,7 +125,7 @@ Namespace Cache
             If cb Is Nothing Then
                 cb = TryCast(obj.GetEntitySchema(mpe), ICacheBehavior)
             End If
-            Dim sc As ObjectModification = ShadowCopy(obj, cb)
+            Dim sc As ObjectModification = ShadowCopy(obj.GetType, obj, cb)
             If sc IsNot Nothing Then
                 Dim st As String = String.Empty
 #If DEBUG Then
@@ -278,19 +278,19 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function ShadowCopy(ByVal obj As IKeyProvider, ByVal cb As ICacheBehavior) As ObjectModification
+        Public Function ShadowCopy(ByVal objectType As Type, ByVal kp As IKeyProvider, ByVal cb As ICacheBehavior) As ObjectModification
             Using SyncRoot
-                If obj Is Nothing Then
+                If kp Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim name As String = GetModificationKey(obj, cb)
+                Dim name As String = GetModificationKey(objectType, kp, cb)
                 Return CType(_modifiedobjects(name), ObjectModification)
             End Using
         End Function
 
-        Public Function ShadowCopy(ByVal obj As IKeyProvider) As ObjectModification
-            Return ShadowCopy(obj, Nothing)
+        Public Function ShadowCopy(ByVal objectType As Type, ByVal obj As IKeyProvider) As ObjectModification
+            Return ShadowCopy(objectType, obj, Nothing)
         End Function
 
         Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String)
@@ -304,8 +304,8 @@ Namespace Cache
         '    Return GetModificationKey(obj, mpe, context, oschema)
         'End Function
 
-        Protected Function GetModificationKey(ByVal obj As IKeyProvider, ByVal cb As ICacheBehavior) As String
-            Return ObjectMappingEngine.GetEntityTypeKey(obj.GetType, cb).ToString & ":" & obj.UniqueString
+        Protected Function GetModificationKey(ByVal objectType As Type, ByVal kp As IKeyProvider, ByVal cb As ICacheBehavior) As String
+            Return ObjectMappingEngine.GetEntityTypeKey(objectType, cb).ToString & ":" & kp.UniqueString
         End Function
 
         Protected Friend Function RegisterModification(ByVal mgr As OrmManager, ByVal obj As _ICachedEntity, _
@@ -320,7 +320,7 @@ Namespace Cache
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim key As String = GetModificationKey(obj, cb)
+                Dim key As String = GetModificationKey(obj.GetType, obj, cb)
                 'Using SyncHelper.AcquireDynamicLock(name)
                 'Assert(mgr IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(key), "Key " & key & " already in collection")
@@ -406,7 +406,7 @@ Namespace Cache
                 End If
 
                 If _modifiedobjects.Count > 0 Then
-                    Dim key As String = GetModificationKey(obj, cb)
+                    Dim key As String = GetModificationKey(obj.GetType, obj, cb)
                     _modifiedobjects.Remove(key)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
@@ -580,7 +580,7 @@ Namespace Cache
         End Function
 
         Public Function GetKeyFromPK(Of T As {New, ISinglePKEntity})(ByVal id As Object) As Integer
-            Dim o As T = KeyEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
+            Dim o As T = SinglePKEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
             Return o.Key
         End Function
 
@@ -616,7 +616,7 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return dic.Contains(New CacheKey(KeyEntity.CreateKeyEntity(id, t, Me, mpe)))
+            Return dic.Contains(New CacheKey(SinglePKEntity.CreateKeyEntity(id, t, Me, mpe)))
         End Function
 
         Public Property NewObjectManager() As INewObjectsStore
@@ -649,7 +649,7 @@ Namespace Cache
             If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
                 a = NewObjectManager.GetNew(type, id.GetPKs)
                 If a IsNot Nothing Then Return a
-                oc = ShadowCopy(id, cb)
+                oc = ShadowCopy(type, id, cb)
                 If oc IsNot Nothing Then
                     Dim oldpk() As PKDesc = oc.OlPK
                     If oldpk IsNot Nothing Then
@@ -660,7 +660,7 @@ Namespace Cache
             End If
 
             If a Is Nothing Then
-                If oc Is Nothing Then oc = ShadowCopy(id, cb)
+                If oc Is Nothing Then oc = ShadowCopy(type, id, cb)
                 If oc IsNot Nothing Then
                     Return AddObjectInternal(oc.Obj, id, entityDictionary)
                 End If
@@ -682,7 +682,7 @@ Namespace Cache
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
 
-            Dim o As ISinglePKEntity = KeyEntity.CreateKeyEntity(id, type, Me, mpe)
+            Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, Me, mpe)
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)

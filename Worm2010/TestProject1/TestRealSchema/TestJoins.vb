@@ -179,7 +179,7 @@ Public Class TestJoinsRS
             mgr.Cache.NewObjectManager.AddNew(t1)
             t1.Name = "bjkb"
             t1.CreatedAt = CDate("2006-01-01")
-            Dim r As New KeyEntity.RelatedObject(t1, New String() {"ID"}, t2, New String() {"ID"})
+            Dim r As New SinglePKEntity.RelatedObject(t1, New String() {"ID"}, t2, New String() {"ID"})
             t2.Tbl = t1
             mgr.BeginTransaction()
             Try

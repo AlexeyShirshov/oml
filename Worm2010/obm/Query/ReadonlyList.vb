@@ -127,7 +127,9 @@ Public Class ReadOnlyList(Of T As {Entities.ISinglePKEntity})
     End Function
 
     Public Overrides Function Clone() As Object
-        Return New ReadOnlyList(Of T)(_rt, _l)
+        Dim l As New List(Of T)
+        l.AddRange(_l)
+        Return New ReadOnlyList(Of T)(_rt, l)
     End Function
 
 End Class
@@ -146,12 +148,12 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
     Public Sub New(ByVal t As Type)
         MyBase.new()
-        _rt = RealType
+        _rt = t
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal col As IEnumerable(Of T))
         MyBase.New(col)
-        _rt = RealType
+        _rt = t
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
@@ -161,12 +163,12 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
     Public Sub New(ByVal t As Type, ByVal list As List(Of T))
         MyBase.New(list)
-        _rt = RealType
+        _rt = t
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal list As ReadOnlyEntityList(Of T))
         MyBase.New(list)
-        _rt = RealType
+        _rt = t
     End Sub
 
     Public Overridable Function Distinct() As ReadOnlyEntityList(Of T)

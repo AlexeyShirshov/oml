@@ -166,14 +166,14 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
 
-    Friend Sub LoadObject(ByVal obj As Global.Worm.Entities.KeyEntity)
+    Friend Sub LoadObject(ByVal obj As Global.Worm.Entities.SinglePKEntity)
         Dim args() As Object = New Object() {obj}
-        m_privateObject.Invoke("LoadObject", New System.Type() {GetType(Global.Worm.Entities.KeyEntity)}, args)
+        m_privateObject.Invoke("LoadObject", New System.Type() {GetType(Global.Worm.Entities.SinglePKEntity)}, args)
     End Sub
 
-    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal obj As Global.Worm.Entities.KeyEntity, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal obj As Global.Worm.Entities.SinglePKEntity, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
         Dim args() As Object = New Object() {cmd, arr, obj, check_pk, load, modifiedloaded}
-        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Global.Worm.Entities.KeyEntity), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
+        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Global.Worm.Entities.SinglePKEntity), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
     End Sub
 
     Friend Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Global.System.Type, ByVal dr As Global.System.Data.IDataReader) As Integer
@@ -182,9 +182,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
 
-    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
+    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Entities.SinglePKEntity, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
         Dim args() As Object = New Object() {obj, dr, arr, check_pk, displacement}
-        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Boolean), GetType(Integer)}, args)
+        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Entities.SinglePKEntity), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Entities.Meta.EntityPropertyAttribute)), GetType(Boolean), GetType(Integer)}, args)
     End Sub
 
     Friend Function TestConn(ByVal cmd As Global.System.Data.Common.DbCommand) As Global.TestProject1.Worm_Orm_OrmReadOnlyDBManager_ConnActionAccessor
@@ -220,19 +220,19 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
 
-    Friend Sub SaveObject(ByVal obj As Global.Worm.Entities.KeyEntity)
+    Friend Sub SaveObject(ByVal obj As Global.Worm.Entities.SinglePKEntity)
         Dim args() As Object = New Object() {obj}
-        m_privateObject.Invoke("SaveObject", New System.Type() {GetType(Global.Worm.Entities.KeyEntity)}, args)
+        m_privateObject.Invoke("SaveObject", New System.Type() {GetType(Global.Worm.Entities.SinglePKEntity)}, args)
     End Sub
 
-    Friend Sub DeleteObject(ByVal obj As Global.Worm.Entities.KeyEntity)
+    Friend Sub DeleteObject(ByVal obj As Global.Worm.Entities.SinglePKEntity)
         Dim args() As Object = New Object() {obj}
-        m_privateObject.Invoke("DeleteObject", New System.Type() {GetType(Global.Worm.Entities.KeyEntity)}, args)
+        m_privateObject.Invoke("DeleteObject", New System.Type() {GetType(Global.Worm.Entities.SinglePKEntity)}, args)
     End Sub
 
-    'Friend Sub M2MSave(ByVal obj As Global.Worm.Entities.KeyEntity, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Worm.Entities.CachedM2MRelation)
+    'Friend Sub M2MSave(ByVal obj As Global.Worm.Entities.SinglePKEntity, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Worm.Entities.CachedM2MRelation)
     '    Dim args() As Object = New Object() {obj, t, direct, el}
-    '    m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Entities.KeyEntity), GetType(Global.System.Type), GetType(Boolean), GetType(Worm.Entities.CachedM2MRelation)}, args)
+    '    m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Entities.SinglePKEntity), GetType(Global.System.Type), GetType(Boolean), GetType(Worm.Entities.CachedM2MRelation)}, args)
     'End Sub
 
     Friend Function GetSearchSection() As String

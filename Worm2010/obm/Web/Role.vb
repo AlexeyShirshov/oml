@@ -190,8 +190,9 @@ Namespace Web
             'Using mgr As OrmManager = UserMapper.CreateManager
             Dim r As ISinglePKEntity = GetRoleByName(roleName, False)
             Using mt As New ModificationsTracker(UserMapper.CreateManager)
-                DeleteRole(mt, r, Not throwOnPopulatedRole)
+                Dim d As Boolean = DeleteRole(mt, r, Not throwOnPopulatedRole)
                 mt.AcceptModifications()
+                Return d
             End Using
         End Function
 
@@ -250,12 +251,12 @@ Namespace Web
             Return cmd.ToList()
         End Function
 
-        Protected Overridable Overloads Sub DeleteRole(ByVal mt As ModificationsTracker, ByVal role As ISinglePKEntity, ByVal cascade As Boolean)
+        Protected Overridable Overloads Function DeleteRole(ByVal mt As ModificationsTracker, ByVal role As ISinglePKEntity, ByVal cascade As Boolean) As Boolean
             If cascade Then
                 Throw New NotSupportedException("Cascade delete is not supported")
             End If
-            CType(role, ICachedEntity).Delete(mt.Saver.Manager)
-        End Sub
+            Return CType(role, ICachedEntity).Delete(mt.Saver.Manager)
+        End Function
 
     End Class
 End Namespace

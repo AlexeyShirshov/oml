@@ -413,7 +413,8 @@ Namespace Entities
 
             Dim idx As Integer = map.IndexOf(propertyAlias)
             If idx < 0 Then
-                Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
+                'Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
+                Return False
             End If
             Dim old As Boolean = _members_load_state(idx, map, mpe)
             _members_load_state(idx, map, mpe) = loaded
@@ -499,7 +500,7 @@ Namespace Entities
 
         Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
             Dim oschema As IEntitySchema = GetEntitySchema(mgr.MappingEngine)
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(oschema, ICacheBehavior))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(oschema, ICacheBehavior))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -542,7 +543,7 @@ Namespace Entities
                     ObjectState <> Entities.ObjectState.None AndAlso ObjectState <> Entities.ObjectState.Modified AndAlso ObjectState <> Entities.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & ObjectState.ToString)
                 If Not IsLoaded AndAlso _
                    (ObjectState = Entities.ObjectState.None OrElse ObjectState = Entities.ObjectState.Modified OrElse ObjectState = Entities.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & ObjectState.ToString)
-                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)) Is Nothing Then
+                If ObjectState = Entities.ObjectState.Modified AndAlso mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior)) Is Nothing Then
                     'Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
                     SetObjectStateClear(Entities.ObjectState.None)
                     Load()
@@ -634,10 +635,11 @@ Namespace Entities
                             '_valProcs = False
                             Dim dic As IDictionary = mc.GetDictionary(Me.GetType, TryCast(GetEntitySchema(mc.MappingEngine), ICacheBehavior))
                             Dim kw As CacheKey = New CacheKey(Me)
-                            Dim o As CachedEntity = CType(dic(kw), CachedEntity)
-                            If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
-                                dic(kw) = Me
-                            End If
+                            'Dim o As CachedEntity = CType(dic(kw), CachedEntity)
+                            'If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
+                            '    dic(kw) = Me
+                            'End If
+                            CacheBase.AddObjectInternal(Me, kw, dic)
                             If updateCache AndAlso c IsNot Nothing Then
                                 'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
                                 c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
@@ -1019,7 +1021,7 @@ l1:
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     Else
                         'Using mc As IGetManager = GetMgr()
-                        obj = mgr.NormalizeObject(Me, mgr.GetDictionary(Me.GetType), True, oschema)
+                        obj = mgr.NormalizeObject(Me, mgr.GetDictionary(Me.GetType), True, True, oschema)
                         'End Using
 
                         If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
@@ -1111,7 +1113,7 @@ l1:
                 Throw New InvalidOperationException(String.Format("Cannot get entity schema for type {0}", Me.GetType))
             End If
 
-            Return mpe.GetPKs(Me, oschema)
+            Return ObjectMappingEngine.GetPKs(Me, oschema)
         End Function
 
         Protected ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy
@@ -1207,7 +1209,7 @@ l1:
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1288,7 +1290,7 @@ l1:
                 Using SyncHelper(True)
                     If ObjectState = Entities.ObjectState.Modified Then
                         'Using mc As IGetManager = GetMgr()
-                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+                        Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                         'If mo Is Nothing Then mo = _mo
                         If mo IsNot Nothing Then
                             If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -1335,7 +1337,7 @@ l1:
                         End If
                     End If
 
-                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+                    Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                     If mo IsNot Nothing Then
                         If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
                             Throw New OrmObjectException(ObjName & " object in readonly state")
@@ -1481,6 +1483,9 @@ l1:
                     Throw New OrmObjectException
                 End If
 #End If
+                If Not mc.Cache.IsInCachePrecise(Me, mc.MappingEngine) Then
+                    Throw New OrmObjectException("Object in different cache", Me)
+                End If
                 r = mc.UpdateObject(Me)
 #If TraceSetState Then
             Else
@@ -1501,7 +1506,7 @@ l1:
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj.GetType, obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -1785,8 +1790,8 @@ l1:
 
 #End Region
 
-        Public Overridable Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
-            Return mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+        Public Overridable Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification 'Implements _ICachedEntity.ShadowCopy
+            Return mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Function
 
         Private _us As String

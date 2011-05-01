@@ -653,7 +653,7 @@ Imports Worm
     End Sub
 
     Private _id As Integer = -100
-    Private _l As New Dictionary(Of Integer, KeyEntity)
+    Private _l As New Dictionary(Of Integer, SinglePKEntity)
 
     Private Function GetIdentity() As Integer
         Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
@@ -666,13 +666,13 @@ Imports Worm
     End Function
 
     Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
-        Dim o As KeyEntity = Nothing
+        Dim o As SinglePKEntity = Nothing
         _l.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
     Private Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
-        _l.Add(CInt(CType(obj, KeyEntity).Identifier), CType(obj, KeyEntity))
+        _l.Add(CInt(CType(obj, SinglePKEntity).Identifier), CType(obj, SinglePKEntity))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
@@ -1209,7 +1209,13 @@ Imports Worm
             Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, mgr)
             Dim rel As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
             'mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), col4)
-            Assert.AreEqual(15, rel.Load(Of Entity, Entity4)(col, False, mgr).Count)
+            Dim l As ReadOnlyList(Of Entity4) = rel.Load(Of Entity, Entity4)(col, False, mgr)
+            Assert.AreEqual(15, l.Count)
+            For Each item As Entity4 In l
+                Assert.IsNotNull(item)
+                Assert.IsFalse(item.InternalProperties.IsLoaded)
+                Assert.AreEqual(ObjectState.NotLoaded, item.InternalProperties.ObjectState)
+            Next
 
             Dim e1 As Entity = New QueryCmd().GetByID(Of Entity)(1, mgr)
             Dim e2 As Entity = New QueryCmd().GetByID(Of Entity)(2, mgr)

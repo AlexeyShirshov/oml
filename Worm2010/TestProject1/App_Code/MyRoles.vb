@@ -40,7 +40,7 @@ Public Class MyRoles
                 Return Nothing
             End If
         End If
-        Return CType(col(0), KeyEntity)
+        Return CType(col(0), SinglePKEntity)
     End Function
 
     Protected Overrides Function GetRoleType() As System.Type

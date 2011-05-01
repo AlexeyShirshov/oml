@@ -151,7 +151,7 @@ Public Class ObjectMappingEngine
         Return map
     End Function
 
-    Private Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String, _
+    Friend Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String, _
         ByVal raw As Boolean, ByVal includeBase As Boolean) As List(Of EntityPropertyAttribute)
         Dim l As New List(Of EntityPropertyAttribute)
 
@@ -169,10 +169,10 @@ Public Class ObjectMappingEngine
                 Next
             End If
 
-            If columns.Length = 0 AndAlso raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+            If columns.Length = 0 AndAlso raw AndAlso pi.CanRead AndAlso (pi.CanWrite OrElse GetType(IOptimizedValues).IsAssignableFrom(t)) Then
                 Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                 Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                    If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+                    If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase), GetType(SinglePKEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                         Continue For
                     ElseIf pi.DeclaringType Is bd.DeclaringType Then
                         Exit Do
@@ -209,7 +209,7 @@ Public Class ObjectMappingEngine
 
         If includeBase Then
             For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-                If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, pi.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+                If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase), GetType(SinglePKEntity)}, pi.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                     Continue For
                 End If
 
@@ -229,7 +229,7 @@ Public Class ObjectMappingEngine
                 If columns.Length = 0 AndAlso raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                     Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(KeyEntityBase), GetType(KeyEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase), GetType(SinglePKEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                             Continue For
                         ElseIf pi.DeclaringType Is bd.DeclaringType Then
                             Exit Do
@@ -739,7 +739,7 @@ Public Class ObjectMappingEngine
         End If
 
         If GetType(ISinglePKEntity).IsAssignableFrom(ot) Then
-            Return CType(o, KeyEntity).Identifier
+            Return CType(o, SinglePKEntity).Identifier
         ElseIf GetType(ICachedEntity).IsAssignableFrom(ot) Then
             Dim pks() As PKDesc = CType(o, ICachedEntity).GetPKValues
             If pks.Length <> 1 Then
@@ -1515,31 +1515,31 @@ Public Class ObjectMappingEngine
         End If
 
         If ea.Type Is Nothing Then
-        If tp.BaseType IsNot Nothing AndAlso tp.BaseType IsNot GetType(Object) _
-            AndAlso ea.InheritBaseTable AndAlso tp.BaseType IsNot GetType(KeyEntity) AndAlso tp.BaseType IsNot GetType(KeyEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) Then
-            Dim ownTable As SourceFragment = ea._tbl
-            If ownTable Is Nothing Then
-                ownTable = New SourceFragment(ea.TableSchema, ea.TableName)
-            End If
+            If tp.BaseType IsNot Nothing AndAlso tp.BaseType IsNot GetType(Object) _
+                AndAlso ea.InheritBaseTable AndAlso tp.BaseType IsNot GetType(SinglePKEntity) AndAlso tp.BaseType IsNot GetType(SinglePKEntityBase) AndAlso tp.BaseType IsNot GetType(CachedEntity) AndAlso tp.BaseType IsNot GetType(CachedLazyLoad) Then
+                Dim ownTable As SourceFragment = ea._tbl
+                If ownTable Is Nothing Then
+                    ownTable = New SourceFragment(ea.TableSchema, ea.TableName)
+                End If
 
-            Dim bsch As IEntitySchema = Nothing
-            If idic IsNot Nothing Then
-                bsch = CType(idic(tp.BaseType), IEntitySchema)
-            End If
-            If bsch Is Nothing Then
-                bsch = GetEntitySchema(tp.BaseType, mpe, idic, names)
-            End If
-            schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
-                GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), bsch, mpeVersion)
-        Else
-            Dim tbl As SourceFragment = ea._tbl
-            If tbl Is Nothing Then
-                tbl = New SourceFragment(ea.TableSchema, ea.TableName)
-            End If
+                Dim bsch As IEntitySchema = Nothing
+                If idic IsNot Nothing Then
+                    bsch = CType(idic(tp.BaseType), IEntitySchema)
+                End If
+                If bsch Is Nothing Then
+                    bsch = GetEntitySchema(tp.BaseType, mpe, idic, names)
+                End If
+                schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
+                    GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), bsch, mpeVersion)
+            Else
+                Dim tbl As SourceFragment = ea._tbl
+                If tbl Is Nothing Then
+                    tbl = New SourceFragment(ea.TableSchema, ea.TableName)
+                End If
 
-            schema = New SimpleObjectSchema(tbl)
-            ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True))
-        End If
+                schema = New SimpleObjectSchema(tbl)
+                ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True))
+            End If
         Else
         Try
             schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
@@ -1852,7 +1852,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function ApplyFilter(Of T As KeyEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
+    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
         r = True
         Dim f As Criteria.Core.IEntityFilter = TryCast(filter, Criteria.Core.IEntityFilter)
         If f Is Nothing Then
@@ -2745,7 +2745,7 @@ Public Class ObjectMappingEngine
         End If
     End Sub
 
-    Public Function GetPKs(ByVal obj As Object, ByVal oschema As IEntitySchema) As PKDesc()
+    Public Shared Function GetPKs(ByVal obj As Object, ByVal oschema As IEntitySchema) As PKDesc()
         Dim l As New List(Of PKDesc)
 
         For Each mp As MapField2Column In oschema.FieldColumnMap

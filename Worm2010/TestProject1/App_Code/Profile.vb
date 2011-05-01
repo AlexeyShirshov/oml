@@ -122,7 +122,7 @@ End Class
 
 <Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _lastActivity As Date
     Private _isAnonymous As Boolean
@@ -367,7 +367,7 @@ End Class
 
 <Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _role As String
 

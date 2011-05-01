@@ -134,7 +134,7 @@ Namespace Entities
 #End If
         End Function
 
-        Public Function GetSyncRoot() As System.IDisposable Implements _IEntity.GetSyncRoot
+        Public Function GetSyncRoot() As System.IDisposable Implements _IEntity.LockEntity
             Return SyncHelper(False)
         End Function
 
@@ -410,7 +410,7 @@ Namespace Entities
         End Sub
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
-            Using [to].GetSyncRoot
+            Using [to].LockEntity
                 [to].BeginLoading()
                 CopyProperties([from], [to], GetEntitySchema(GetMappingEngine()))
                 [to].EndLoading()

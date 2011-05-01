@@ -25,7 +25,7 @@ End Class
 
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
-    Inherits KeyEntity
+    Inherits SinglePKEntity
     Implements IOptimizedValues, IComparable
 
     Private _name As String

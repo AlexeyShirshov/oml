@@ -660,6 +660,17 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                     If Not GetType(AnonymousEntity).IsAssignableFrom(_q.CreateType.GetRealType(_mgr.MappingEngine)) Then
                         oschema = dbm.MappingEngine.GetEntitySchema(_q.CreateType.GetRealType(_mgr.MappingEngine), False)
+                        For Each m As MapField2Column In oschema.FieldColumnMap
+                            Dim fm As MapField2Column = Nothing
+                            If fields.TryGetValue(m.PropertyAlias, fm) Then
+                                If fm.Attributes = Field2DbRelations.None Then
+                                    fm.Attributes = m.Attributes
+                                End If
+                                If fm.PropertyInfo Is Nothing Then
+                                    fm.PropertyInfo = m.PropertyInfo
+                                End If
+                            End If
+                        Next
                     End If
                 End If
 

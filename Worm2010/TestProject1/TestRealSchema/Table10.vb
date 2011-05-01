@@ -4,7 +4,7 @@ Imports Worm.Cache
 
 <Entity(GetType(Table10Implementation), "1")> _
 Public Class Table10
-    Inherits KeyEntity
+    Inherits SinglePKEntity
     Implements IOptimizedValues
 
     Private _tbl1 As Table1

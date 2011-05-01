@@ -80,30 +80,30 @@
     </TypeIdentifier>
     <Lollipop Orientation="Left" Position="0.243" />
   </Class>
-  <Class Name="Worm.Entities.KeyEntityBase">
+  <Class Name="Worm.Entities.SinglePKEntityBase">
     <Position X="9.25" Y="0.5" Width="1.5" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
       <Compartment Name="Methods" Collapsed="true" />
     </Compartments>
     <NestedTypes>
-      <Class Name="Worm.Entities.KeyEntityBase.M2MClass" Collapsed="true">
+      <Class Name="Worm.Entities.SinglePKEntityBase.M2MClass" Collapsed="true">
         <TypeIdentifier>
-          <NewMemberFileName>Entity\KeyEntity.vb</NewMemberFileName>
+          <NewMemberFileName>Entity\SinglePKEntity.vb</NewMemberFileName>
         </TypeIdentifier>
       </Class>
     </NestedTypes>
     <TypeIdentifier>
       <HashCode>iCAAIUgAAASABAAEgCIAACCEAAgEQKBQgAAiRiADBkg=</HashCode>
-      <FileName>Entity\KeyEntity.vb</FileName>
+      <FileName>Entity\SinglePKEntity.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Worm.Entities.KeyEntity" Collapsed="true">
+  <Class Name="Worm.Entities.SinglePKEntity" Collapsed="true">
     <Position X="9.25" Y="3.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAQgAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAEAAAA=</HashCode>
-      <FileName>Entity\KeyEntity.vb</FileName>
+      <FileName>Entity\SinglePKEntity.vb</FileName>
     </TypeIdentifier>
     <Lollipop Orientation="Left" Position="0.246" />
   </Class>
@@ -153,7 +153,7 @@
     <Position X="9.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAgAAAAAAAAAABAAEAAAACAAAAQAAAAAAAEAABA=</HashCode>
-      <FileName>Entity\KeyEntity.vb</FileName>
+      <FileName>Entity\SinglePKEntity.vb</FileName>
     </TypeIdentifier>
   </Enum>
   <Font Name="Tahoma" Size="8.25" />

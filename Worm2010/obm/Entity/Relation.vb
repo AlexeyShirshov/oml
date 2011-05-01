@@ -623,7 +623,7 @@ Namespace Entities
                                 col.AddRange(mgr.ConvertIds2Objects(SubType, _mainList, False))
                                 If OrmManager.CanSortOnClient(SubType, col, _sort, sr) Then
                                     If sr Is Nothing Then
-                                        c = New OrmComparer(Of KeyEntity)(SubType, _sort)
+                                        c = New OrmComparer(Of SinglePKEntity)(SubType, _sort)
                                     Else
                                         c = sr.CreateSortComparer(_sort)
                                     End If
@@ -704,7 +704,7 @@ Namespace Entities
                                 Return False
                             End If
                             If sr Is Nothing Then
-                                c = New OrmComparer(Of KeyEntity)(SubType, _sort)
+                                c = New OrmComparer(Of SinglePKEntity)(SubType, _sort)
                             Else
                                 c = sr.CreateSortComparer(_sort)
                             End If
@@ -785,7 +785,7 @@ Namespace Entities
                 End If
                 Dim c As IComparer = Nothing
                 If sr Is Nothing Then
-                    c = New OrmComparer(Of KeyEntity)(SubType, _sort)
+                    c = New OrmComparer(Of SinglePKEntity)(SubType, _sort)
                 Else
                     c = sr.CreateSortComparer(_sort)
                 End If
@@ -808,7 +808,7 @@ Namespace Entities
                 If OrmManager.CanSortOnClient(SubType, Added, _sort, sr) Then
                     Dim c As IComparer = Nothing
                     If sr Is Nothing Then
-                        c = New OrmComparer(Of KeyEntity)(SubType, _sort)
+                        c = New OrmComparer(Of SinglePKEntity)(SubType, _sort)
                     Else
                         c = sr.CreateSortComparer(_sort)
                     End If

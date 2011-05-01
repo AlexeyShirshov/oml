@@ -4,7 +4,7 @@ Imports Worm.Entities.Meta
 
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3
-    Inherits KeyEntity
+    Inherits SinglePKEntity
     Implements IOptimizedValues
 
     Private _name As String
