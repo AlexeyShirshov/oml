@@ -359,7 +359,7 @@ Namespace Database
                 Throw New ArgumentNullException("obj")
             End If
 
-            Using obj.GetSyncRoot()
+            Using obj.LockEntity()
                 Dim ins_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.ObjectState = ObjectState.Created Then
@@ -1016,7 +1016,7 @@ l2:
             selectedProperties = Nothing
             updated_fields = Nothing
 
-            Using obj.GetSyncRoot()
+            Using obj.LockEntity()
                 Dim upd_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.OriginalCopy IsNot Nothing Then
@@ -1312,7 +1312,7 @@ l2:
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Using obj.GetSyncRoot()
+            Using obj.LockEntity()
                 Dim del_cmd As New StringBuilder
                 dbparams = Nothing
 

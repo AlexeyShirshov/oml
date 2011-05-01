@@ -759,19 +759,19 @@ Partial Public MustInherit Class OrmManager
     Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return NormalizeObject(o, GetDictionary(type))
+        Return GetOrAdd2Cache(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
         Dim o As T = CreateObject(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+        Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
         Dim o As T = CreateEntity(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+        Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type) As ISinglePKEntity
@@ -796,7 +796,7 @@ Partial Public MustInherit Class OrmManager
         '        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), IOrmBase)
         Dim o As ISinglePKEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(NormalizeObject(o, GetDictionary(type)), ISinglePKEntity)
+        Return CType(GetOrAdd2Cache(o, GetDictionary(type)), ISinglePKEntity)
     End Function
 
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As ISinglePKEntity
@@ -824,7 +824,7 @@ Partial Public MustInherit Class OrmManager
         'Return o
         Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+        Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     Public Function GetKeyEntityFromCacheOrCreate(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal add2CacheOnCreate As Boolean) As T
@@ -1546,11 +1546,11 @@ l1:
     'End Function
 
     Public Function CreateKeyEntity(ByVal id As Object, ByVal t As Type) As ISinglePKEntity
-        Return KeyEntity.CreateKeyEntity(id, t, _cache, _schema)
+        Return SinglePKEntity.CreateKeyEntity(id, t, _cache, _schema)
     End Function
 
     Public Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object) As T
-        Return KeyEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
+        Return SinglePKEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
     End Function
 
     Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
@@ -1577,12 +1577,12 @@ l1:
         Return Entity.CreateEntity(Of T)(_cache, _schema)
     End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
-        ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
-        Return NormalizeObject(obj, dic, True, fromDb, oschema)
-    End Function
+    'Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
+    '    ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
+    '    Return NormalizeObject(obj, dic, True, fromDb, oschema)
+    'End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+    Public Function GetOrAdd2Cache(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Return NormalizeObject(obj, dic, True, False, MappingEngine.GetEntitySchema(obj.GetType))
     End Function
 
@@ -1814,8 +1814,8 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            Using obj.GetSyncRoot
-                If Cache.ShadowCopy(obj, cb) IsNot Nothing Then
+            Using obj.LockEntity
+                If Cache.ShadowCopy(t, obj, cb) IsNot Nothing Then
                     Return False
                 End If
 
@@ -1841,7 +1841,7 @@ l1:
             End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(obj, cb) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(t, obj, cb) Is Nothing)
         End Using
         Return True
     End Function
@@ -3281,12 +3281,12 @@ l1:
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Dim oldObj As ICachedEntity = Nothing
+        Dim hasErrors As Boolean = True
         Try
             If _cache.IsReadonly Then
                 Throw New OrmManagerException("Cache is readonly")
             End If
 
-            Dim b As Boolean = True
             Dim v As _ICachedEntityEx = TryCast(obj, _ICachedEntityEx)
             If v IsNot Nothing Then
                 Select Case obj.ObjectState
@@ -3316,6 +3316,7 @@ l1:
                 If state = ObjectState.Deleted Then
                     sa = SaveAction.Delete
                 End If
+
                 Dim old_state As ObjectState = state
                 Dim hasNew As Boolean = False
                 Dim err As Boolean = True, ttt As Boolean
@@ -3379,6 +3380,7 @@ l1:
                     Dim saved As Boolean = obj.Save(Me)
                     If Not saved Then
                         ttt = True
+                        hasErrors = False
                         Return True
                     End If
 
@@ -3472,10 +3474,11 @@ l1:
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        oldObj = obj.AcceptChanges(False, KeyEntity.IsGoodState(state))
+                        oldObj = obj.AcceptChanges(False, SinglePKEntity.IsGoodState(state))
                     End If
 
                     err = False
+                    hasErrors = False
                 Finally
                     If err Then
                         If sa = SaveAction.Insert AndAlso Not ttt Then
@@ -3491,7 +3494,7 @@ l1:
             End Using
         Finally
             '            If obj.ObjSaved AndAlso AcceptChanges Then
-            If AcceptChanges Then
+            If AcceptChanges AndAlso Not hasErrors Then
                 obj.UpdateCache(Me, oldObj)
             End If
         End Try
@@ -3504,7 +3507,7 @@ l1:
             Throw New ArgumentNullException("obj")
         End If
 
-        Using obj.GetSyncRoot()
+        Using obj.LockEntity()
             If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                 If Not InsertObject(obj) Then
                     Return Nothing
@@ -3567,7 +3570,7 @@ l1:
     Protected Friend MustOverride Function GetStaticKey() As String
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
-    Public MustOverride Function GetEntityCloneFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
+    'Public MustOverride Function GetEntityCloneFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     'Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     'Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 

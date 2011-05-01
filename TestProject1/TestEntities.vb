@@ -23,7 +23,7 @@ Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
 Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")> _
 Public Class Entity
-    Inherits KeyEntity
+    Inherits SinglePKEntity
     Implements IEnt
 
     Public Sub New()
@@ -379,7 +379,7 @@ End Class
 Entity(GetType(EntitySchema4v1Implementation), "joins"), _
 Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _name As String
 
@@ -601,7 +601,7 @@ End Class
 
 <Entity(GetType(EntitySchema5v1Implementation), "1")> _
 Public Class Entity5
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _name As String
     Private _mark() As Byte

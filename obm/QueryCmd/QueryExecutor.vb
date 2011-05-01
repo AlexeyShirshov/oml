@@ -388,7 +388,9 @@ l2:
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType) Implements IExecutor.ExecSimple
             Dim olds As Boolean = query.CacheSort
+            Dim oldm As Boolean = query._notSimpleMode
             query.CacheSort = True
+            query._notSimpleMode = True
             Try
                 Dim cis As New CIStore
                 Dim res As IList(Of ReturnType) = _Exec(mgr, query, Function() GetProcessorS(Of ReturnType)(mgr, query), _
@@ -403,6 +405,7 @@ l2:
                     Return res
                 End If
             Finally
+                query._notSimpleMode = oldm
                 query._cacheSort = olds
             End Try
         End Function

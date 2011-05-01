@@ -48,7 +48,7 @@ Imports Worm
 
     <Entity("dbo", "EntBase", "1")> _
     Public MustInherit Class Base
-        Inherits KeyEntity
+        Inherits SinglePKEntity
 
         Private _id As Integer
         Private _dt As Date
@@ -248,7 +248,7 @@ Imports Worm
     End Sub
 
     <TestMethod()> _
-   Public Sub TestEntManualLoad()
+    Public Sub TestEntManualLoad()
         Dim q As New QueryCmd(New CreateManager(Function() _
             TestManager.CreateManager(New ObjectMappingEngine("1"))))
 
@@ -318,7 +318,7 @@ End Class
 
     <Entity(GetType(Base.SchemaBase), "1")> _
     Public Class Base
-        Inherits KeyEntity
+        Inherits SinglePKEntity
 
         Private _id As Integer
         Public Property ID() As Integer

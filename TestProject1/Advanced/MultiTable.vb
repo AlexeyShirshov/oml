@@ -14,7 +14,7 @@ Imports Worm.Query
 <Entity(GetType(MultiTableEn), "en")> _
 <Entity(GetType(MultiTableRu), "ru")> _
 Public Class MultiTable
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _title As String
 

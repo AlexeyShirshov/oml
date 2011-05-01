@@ -40,12 +40,12 @@ Namespace Entities
     ''' <remarks>
     ''' Класс является потокобезопасным как на чтение так и на запись.
     ''' Предоставляет следующий функционал:
-    ''' XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="KeyEntity.ReadXml" /> и <see cref="KeyEntity.WriteXml"/>.
+    ''' XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="SinglePKEntity.ReadXml" /> и <see cref="SinglePKEntity.WriteXml"/>.
     ''' <code lang="vb">Это код</code>
     ''' <example>Это пример</example>
     ''' </remarks>
     <Serializable()> _
-    Public MustInherit Class KeyEntityBase
+    Public MustInherit Class SinglePKEntityBase
         Inherits CachedEntity
         Implements _ISinglePKEntity
 
@@ -54,9 +54,9 @@ Namespace Entities
 #If OLDM2M Then
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class M2MClass
-            Private _o As KeyEntityBase
+            Private _o As SinglePKEntityBase
 
-            Friend Sub New(ByVal o As KeyEntityBase)
+            Friend Sub New(ByVal o As SinglePKEntityBase)
                 _o = o
             End Sub
 
@@ -291,7 +291,7 @@ Namespace Entities
         Public Class InternalClass2
             Inherits InternalClass
 
-            Public Sub New(ByVal o As KeyEntityBase)
+            Public Sub New(ByVal o As SinglePKEntityBase)
                 MyBase.New(o)
             End Sub
 
@@ -585,7 +585,7 @@ Namespace Entities
         Public Overloads Overrides Function Equals(ByVal obj As Object) As System.Boolean
             If obj Is Nothing Then Return False
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
-                Return Equals(CType(obj, KeyEntity))
+                Return Equals(CType(obj, SinglePKEntity))
             Else
                 Return False 'Identifier.Equals(obj)
             End If
@@ -595,7 +595,7 @@ Namespace Entities
         '    Return Me.Identifier = other_id
         'End Function
 
-        Public Overridable Overloads Function Equals(ByVal obj As KeyEntity) As Boolean
+        Public Overridable Overloads Function Equals(ByVal obj As SinglePKEntity) As Boolean
             If obj Is Nothing Then Return False
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
                 Return Me.Identifier.Equals(obj.Identifier)
@@ -667,7 +667,7 @@ Namespace Entities
         End Sub
 #End Region
 
-        Public Shared Shadows Operator <>(ByVal obj1 As KeyEntityBase, ByVal obj2 As KeyEntityBase) As Boolean
+        Public Shared Shadows Operator <>(ByVal obj1 As SinglePKEntityBase, ByVal obj2 As SinglePKEntityBase) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return False
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -676,7 +676,7 @@ Namespace Entities
             Return Not obj1.Equals(obj2)
         End Operator
 
-        Public Shared Shadows Operator =(ByVal obj1 As KeyEntityBase, ByVal obj2 As KeyEntityBase) As Boolean
+        Public Shared Shadows Operator =(ByVal obj1 As SinglePKEntityBase, ByVal obj2 As SinglePKEntityBase) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return True
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -691,15 +691,15 @@ Namespace Entities
 
         Protected Overrides Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
             If mgr Is Nothing Then
-                CType(en, KeyEntityBase).Init(Identifier, Nothing, Nothing)
+                CType(en, SinglePKEntityBase).Init(Identifier, Nothing, Nothing)
             Else
-                CType(en, KeyEntityBase).Init(Identifier, mgr.Cache, mgr.MappingEngine)
+                CType(en, SinglePKEntityBase).Init(Identifier, mgr.Cache, mgr.MappingEngine)
             End If
         End Sub
 
         Protected Overrides Sub PKLoaded(ByVal pkCount As Integer)
             If pkCount <> 1 Then
-                Throw New OrmObjectException(String.Format("KeyEntity derived class must have only one PK. The value is {0}", pkCount))
+                Throw New OrmObjectException(String.Format("SinglePKEntity derived class must have only one PK. The value is {0}", pkCount))
             End If
             MyBase.PKLoaded(pkCount)
         End Sub
@@ -1192,8 +1192,8 @@ Namespace Entities
     End Class
 
     <Serializable()> _
-    Public MustInherit Class KeyEntity
-        Inherits KeyEntityBase
+    Public MustInherit Class SinglePKEntity
+        Inherits SinglePKEntityBase
         Implements IPropertyLazyLoad
 
         Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
@@ -1215,7 +1215,7 @@ Namespace Entities
         'Public Function Write() As System.IDisposable Implements IPropertyLazyLoad.Write
 
         'End Function
-        Public Shared Shadows Operator <>(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+        Public Shared Shadows Operator <>(ByVal obj1 As SinglePKEntity, ByVal obj2 As SinglePKEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return False
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -1224,7 +1224,7 @@ Namespace Entities
             Return Not obj1.Equals(obj2)
         End Operator
 
-        Public Shared Shadows Operator =(ByVal obj1 As KeyEntity, ByVal obj2 As KeyEntity) As Boolean
+        Public Shared Shadows Operator =(ByVal obj1 As SinglePKEntity, ByVal obj2 As SinglePKEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return True
                 'Throw New MediaObjectModelException("obj1 parameter cannot be nothing")
@@ -1278,7 +1278,7 @@ Namespace Entities
 
     '    <Serializable()> _
     '    Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
-    '        Inherits KeyEntity
+    '        Inherits SinglePKEntity
     '        Implements IComparable(Of T), IPropertyConverter, IComparable
 
     '        Private _id As Object

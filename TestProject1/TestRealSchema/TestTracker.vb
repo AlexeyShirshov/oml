@@ -15,14 +15,14 @@ Public Class TestTracker
     Implements INewObjectsStore
 
     Private _id As Integer = -100
-    Private _new_objects As New Dictionary(Of Integer, KeyEntity)
+    Private _new_objects As New Dictionary(Of Integer, SinglePKEntity)
 
     Public Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(CInt(CType(obj, KeyEntity).Identifier), CType(obj, KeyEntity))
+        _new_objects.Add(CInt(CType(obj, SinglePKEntity).Identifier), CType(obj, SinglePKEntity))
     End Sub
 
     Public Function GetIdentity() As Integer
@@ -36,7 +36,7 @@ Public Class TestTracker
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
-        Dim o As KeyEntity = Nothing
+        Dim o As SinglePKEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
@@ -51,8 +51,8 @@ Public Class TestTracker
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(CInt(CType(obj, KeyEntity).Identifier))
-        Debug.WriteLine("removed: " & CType(obj, KeyEntity).Identifier.ToString)
+        _new_objects.Remove(CInt(CType(obj, SinglePKEntity).Identifier))
+        Debug.WriteLine("removed: " & CType(obj, SinglePKEntity).Identifier.ToString)
     End Sub
 
     Protected Sub Objr(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inloaq As Boolean)

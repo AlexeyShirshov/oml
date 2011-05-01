@@ -83,7 +83,7 @@ Imports Worm.Criteria
 
     <Entity("1", Tablename:="dbo.guid_table")> _
     Public Class RawObj
-        Inherits KeyEntityBase
+        Inherits SinglePKEntityBase
 
         Private _id As Guid
 
@@ -157,9 +157,10 @@ Imports Worm.Criteria
         Assert.IsTrue(t.InternalProperties.IsLoaded)
         Assert.IsTrue(t.InternalProperties.IsPropertyLoaded("Code"))
         Assert.AreEqual(ObjectState.None, t.InternalProperties.ObjectState)
-        Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
-        Assert.AreEqual(oldCode, CType(t.InternalProperties.OriginalCopy, RawObj).Code)
+        Assert.IsNull(t.InternalProperties.OriginalCopy)
+        'Assert.IsNotNull(t.InternalProperties.OriginalCopy)
+        'Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
+        'Assert.AreEqual(oldCode, CType(t.InternalProperties.OriginalCopy, RawObj).Code)
 
         t.Code += 2
 
@@ -178,8 +179,9 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(ObjectState.None, t.InternalProperties.ObjectState)
-                Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-                Assert.AreEqual(oldCode + 2, CType(t.InternalProperties.OriginalCopy, RawObj).Code)
+                Assert.IsNull(t.InternalProperties.OriginalCopy)
+                'Assert.IsNotNull(t.InternalProperties.OriginalCopy)
+                'Assert.AreEqual(oldCode + 2, CType(t.InternalProperties.OriginalCopy, RawObj).Code)
 
                 Assert.AreEqual(oldCode + 2, t.Code)
                 Assert.AreEqual(oldCode + 2, q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)(mgr).Code)

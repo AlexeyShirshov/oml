@@ -248,18 +248,18 @@ Namespace Xml
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Dim oo As T = obj
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            Using obj.GetSyncRoot()
+            Using obj.LockEntity()
                 obj.BeginLoading()
                 Dim pk() As PKDesc = orm.GetPKValues
                 If LoadPK(oschema, node, orm) Then
-                    obj = CType(NormalizeObject(orm, dic, True, oschema), T)
+                    obj = CType(NormalizeObject(orm, dic, True, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then
                         orm.CreateCopyForSaveNewEntry(Me, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 
                     'If withLoad Then
-                    Using obj.GetSyncRoot()
+                    Using obj.LockEntity()
                         'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
                         'If obj.IsLoaded Then obj.IsLoaded = False
                         LoadData(oschema, node, obj)
@@ -335,8 +335,8 @@ Namespace Xml
             End If
         End Function
 
-        Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
-            Throw New NotImplementedException
-        End Function
+        'Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
+        '    Throw New NotImplementedException
+        'End Function
     End Class
 End Namespace

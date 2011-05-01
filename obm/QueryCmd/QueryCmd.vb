@@ -463,6 +463,7 @@ Namespace Query
         Friend _optimizeIn As IFilter
         Friend _optimizeOr As List(Of Criteria.PredicateLink)
         Private _newMaps As IDictionary
+        Friend _notSimpleMode As Boolean
 
 #Region " Cache "
         '<NonSerialized()> _
@@ -547,11 +548,13 @@ Namespace Query
 
             Dim need2Load As Boolean = False
             Dim l As New List(Of EntityExpression)
-            For Each s As SelectExpression In SelectList
-                If TypeOf s.Expression Is EntityExpression Then
-                    l.Add(CType(s.Expression, EntityExpression))
-                End If
-            Next
+            If SelectList IsNot Nothing Then
+                For Each s As SelectExpression In SelectList
+                    If TypeOf s.Expression Is EntityExpression Then
+                        l.Add(CType(s.Expression, EntityExpression))
+                    End If
+                Next
+            End If
 
             If CreateManager Is Nothing Then
                 need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager)
@@ -952,6 +955,24 @@ Namespace Query
             'Return fs.ToArray
         End Sub
 
+        Private Shared Sub Prepare(ByVal outer As QueryCmd, ByVal root As QueryCmd, ByVal executor As IExecutor, _
+                    ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+                    ByVal stmt As StmtGenerator)
+
+            Dim isanonym As Boolean = root.IsAnonymous(mpe)
+
+            For Each q As QueryCmd In New StmtQueryIterator(root)
+                Dim old As QueryCmd = q._outer
+                Try
+                    q._outer = outer
+                    q.Prepare(executor, mpe, filterInfo, stmt, isanonym)
+                Finally
+                    q._outer = old
+                End Try
+            Next
+
+        End Sub
+
         Private Sub AddExpression2SelectList(ByVal se As SelectExpression, ByVal mpe As ObjectMappingEngine)
             _sl.Add(se)
             If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
@@ -1027,7 +1048,7 @@ Namespace Query
 
                             Dim col As List(Of SelectExpression) = GetSelectList(de.Key)
                             If col.Count > 0 Then
-                                If AutoFields AndAlso _outer Is Nothing Then
+                                If AutoFields AndAlso _outer Is Nothing AndAlso Not _notSimpleMode Then
                                     Dim createType As EntityUnion = Nothing
                                     If Not _createTypes.TryGetValue(de.Key, createType) Then
 l2:
@@ -1128,10 +1149,10 @@ l1:
                 Dim anq As QueryCmd = _from.AnyQuery
                 If anq IsNot Nothing Then
                     Try
-                        anq._outer = Me
-                        Prepare(anq, executor, mpe, contextInfo, stmt)
+                        'anq._outer = Me
+                        Prepare(Me, anq, executor, mpe, contextInfo, stmt)
                     Finally
-                        anq._outer = Nothing
+                        'anq._outer = Nothing
                     End Try
                 End If
             End If

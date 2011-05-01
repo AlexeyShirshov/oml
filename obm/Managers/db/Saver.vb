@@ -262,7 +262,7 @@ Namespace Database
                 AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
                 If o.HasChanges Then
-                    Dim mo As ObjectModification = o.ShadowCopy(_mgr)
+                    Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o)
                     'Dim oc As ICachedEntity = o.OriginalCopy
                     If o.ObjectState = ObjectState.Deleted Then
                         _deleted.Add(o)
@@ -527,8 +527,8 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
+                                    Dim mo As ICachedEntity = o.AcceptChanges(False, SinglePKEntity.IsGoodState(p.First))
+                                    Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     If o.UpdateCtx.UpdatedFields IsNot Nothing Then
@@ -556,8 +556,8 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, KeyEntity.IsGoodState(p.First))
-                                    Debug.Assert(o.ShadowCopy(_mgr) Is Nothing)
+                                    Dim mo As ICachedEntity = o.AcceptChanges(False, SinglePKEntity.IsGoodState(p.First))
+                                    Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o) Is Nothing)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
@@ -945,11 +945,12 @@ l1:
 #If DEBUG Then
                         If o.HasChanges Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                            If o.ShadowCopy(_mgr) IsNot Nothing Then
-                                If _mgr.Cache.ShadowCopy(o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)).Reason = ObjectModification.ReasonEnum.Delete Then
+                            Dim sc As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior))
+                            If sc IsNot Nothing Then
+                                If sc.Reason = ObjectModification.ReasonEnum.Delete Then
                                     Debug.Assert(_saver._deleted.Contains(o))
                                     Debug.Assert(Not _saver._updated.Contains(o))
-                                ElseIf o.ShadowCopy(_mgr).Reason = ObjectModification.ReasonEnum.Edit Then
+                                ElseIf sc.Reason = ObjectModification.ReasonEnum.Edit Then
                                     'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
                                     Debug.Assert(Not _saver._deleted.Contains(o))
                                     Debug.Assert(_saver._updated.Contains(o) OrElse (GetType(IRelations).IsAssignableFrom(o.GetType) AndAlso CType(o, IRelations).HasChanges))

@@ -79,7 +79,7 @@ Namespace Entities
         ''' </summary>
         ''' <returns>Возвращает объект в конструкторе которого создана блокировка на сущность. Блокировка снимается в методе <see cref="IDisposable.Dispose"/></returns>
         ''' <remarks>Необходимо использовать блокировку при дуступе к внутреним метаданными сущности, таким как <see cref="IEntity.ObjectState"/></remarks>
-        Function GetSyncRoot() As IDisposable
+        Function LockEntity() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
@@ -119,7 +119,7 @@ Namespace Entities
         Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
         Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
-        Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
+        'Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
         Sub FillChangedObjectList(ByVal objectList As Generic.List(Of _ICachedEntity))
         Function GetChangedObjectList() As Generic.List(Of _ICachedEntity)
     End Interface
@@ -241,7 +241,7 @@ Namespace Entities
     End Interface
 
     <Obsolete()>
-    Public Interface IOrmEditable(Of T As {KeyEntity})
+    Public Interface IOrmEditable(Of T As {SinglePKEntity})
         Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface
 

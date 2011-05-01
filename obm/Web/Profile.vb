@@ -254,7 +254,7 @@ Namespace Web
                 Dim [end] As Integer = Math.Min((pageIndex - 1) * pageSize, col.Count)
                 Dim oschema As IEntitySchema = schema.GetEntitySchema(GetUserType)
                 For i As Integer = start To [end] - 1
-                    Dim u As KeyEntity = CType(col(i), KeyEntity)
+                    Dim u As SinglePKEntity = CType(col(i), SinglePKEntity)
                     If schema Is Nothing Then
                         schema = CType(u, ISinglePKEntity).GetMappingEngine
                     End If

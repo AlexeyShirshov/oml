@@ -5,7 +5,7 @@ Imports Worm.Entities
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
-    Inherits KeyEntity
+    Inherits SinglePKEntity
     Implements IOptimizedValues, IEntityFactory
 
     Private _obj As ISinglePKEntity
@@ -77,7 +77,7 @@ Public Class Table3
         ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Ref"
-                RefObject = CType(value, KeyEntity)
+                RefObject = CType(value, SinglePKEntity)
             Case "Code"
                 Code = CByte(value)
             Case "Version"

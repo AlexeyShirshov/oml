@@ -4,7 +4,7 @@ Imports Worm.Entities.Meta
 
 <Entity("dbo", "table1", "1")> _
 Public Class SimpleObj
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _title As String
 
@@ -36,7 +36,7 @@ End Class
 
 <Entity("dbo", "table1", "1")> _
 Public Class SimpleObjWithoutLazyLoad
-    Inherits KeyEntityBase
+    Inherits SinglePKEntityBase
 
     Private _title As String
 
@@ -75,7 +75,7 @@ End Class
 
 <Entity("dbo", "table2", "1")> _
 Public Class SimpleObj2
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _s As SimpleObjWithoutLazyLoad
 
@@ -122,7 +122,7 @@ End Class
 
 <Entity("dbo", "table2", "1")> _
 Public Class SimpleObj3
-    Inherits KeyEntityBase
+    Inherits SinglePKEntityBase
 
     Private _s As SimpleObjWithoutLazyLoad
 
@@ -161,7 +161,7 @@ End Class
 
 <Entity("dbo", "table2", "1")> _
 Public Class SimpleObj4
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _s As Pod.cls4
 

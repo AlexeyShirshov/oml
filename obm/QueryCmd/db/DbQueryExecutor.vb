@@ -1454,7 +1454,10 @@ l1:
                         ob = query._sl
                     End If
                     For Each se As SelectExpression In ob
-                        selSb.Append(CType(query, IExecutionContext).FindColumn(mpe, se.GetIntoPropertyAlias)).Append(",")
+                        For Each cs As String In CType(query, IExecutionContext).FindColumn(mpe, se.GetIntoPropertyAlias)
+                            selSb.Append(cs)
+                        Next
+                        selSb.Append(",")
                     Next
                     If ob.Count > 0 Then
                         selSb.Length -= 1

@@ -629,7 +629,7 @@ Namespace Entities
                     Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
 
-                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+                Dim mo As ObjectModification = mgr.Cache.ShadowCopy(obj.GetType, obj, TryCast(obj.GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     'Using mc As IGetManager = obj.GetMgr()
@@ -748,7 +748,7 @@ Namespace Entities
         End Sub
 
         Public Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
@@ -821,7 +821,7 @@ Namespace Entities
                 End If
             End If
 
-            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+            Dim mo As ObjectModification = mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
             If mo IsNot Nothing Then
                 'Using mc As IGetManager = GetMgr()
                 If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mgr.CurrentUser) Then
@@ -877,8 +877,8 @@ Namespace Entities
             End If
         End Function
 
-        Public Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification Implements _ICachedEntity.ShadowCopy
-            Return mgr.Cache.ShadowCopy(Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
+        Public Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification 'Implements _ICachedEntity.ShadowCopy
+            Return mgr.Cache.ShadowCopy(Me.GetType, Me, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         End Function
 
         Protected Overridable Sub SetPK(ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)

@@ -87,7 +87,7 @@ Imports Worm.Expressions2
                     New SelectExpression(t, "id", "ID") _
                 })
             q.From(t)
-            Assert.IsNotNull(q)
+            'Assert.IsNotNull(q)
 
             q.Filter = Ctor.prop(GetType(Entity4), "ID").eq(1)
 

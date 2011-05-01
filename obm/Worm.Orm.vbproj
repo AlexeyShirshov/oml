@@ -274,7 +274,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Entity\KeyEntity.vb" />
+    <Compile Include="Entity\SinglePKEntity.vb" />
     <Compile Include="other.vb" />
     <Compile Include="SearchConfiguration.vb" />
     <Compile Include="StmtGenerators\db\SQL2005Generator.vb" />

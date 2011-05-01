@@ -3,7 +3,7 @@ Imports Worm.Entities.Meta
 
 <Entity("1", Tablename:="dbo.guid_table")> _
 Public Class GuidPK
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _code As Integer
     Private _id As Guid

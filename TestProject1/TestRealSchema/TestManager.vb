@@ -1318,19 +1318,19 @@ Public Class TestManagerRS
 
     End Sub
 
-    Private Function GetList(Of T As {KeyEntity})(ByVal col As ICollection(Of T)) As IList(Of T)
+    Private Function GetList(Of T As {SinglePKEntity})(ByVal col As ICollection(Of T)) As IList(Of T)
         Return CType(col, Global.System.Collections.Generic.IList(Of T))
     End Function
 
     Private _id As Integer = -100
-    Private _new_objects As New Dictionary(Of Integer, KeyEntity)
+    Private _new_objects As New Dictionary(Of Integer, SinglePKEntity)
 
     Public Sub AddNew(ByVal obj As _ICachedEntity) Implements INewObjectsStore.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(CInt(CType(obj, ISinglePKEntity).Identifier), CType(obj, KeyEntity))
+        _new_objects.Add(CInt(CType(obj, ISinglePKEntity).Identifier), CType(obj, SinglePKEntity))
     End Sub
 
     Public Function GetIdentity(ByVal type As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
@@ -1344,7 +1344,7 @@ Public Class TestManagerRS
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
-        Dim o As KeyEntity = Nothing
+        Dim o As SinglePKEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function

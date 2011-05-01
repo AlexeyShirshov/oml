@@ -719,7 +719,7 @@ l1:
                 'Dim t As Type = os.GetRealType(mgr.MappingEngine)
                 Dim i As IList = ToList(mgr)
                 CType(i, ILoadableList).LoadObjects()
-                'If GetType(KeyEntity).IsAssignableFrom(t) Then
+                'If GetType(SinglePKEntity).IsAssignableFrom(t) Then
 
                 'Else
                 'End If
@@ -756,7 +756,7 @@ l1:
                 'Dim t As Type = os.GetRealType(mgr.MappingEngine)
                 Dim i As IList = ToList(mgr)
                 CType(i, ILoadableList).LoadObjects(start, length)
-                'If GetType(KeyEntity).IsAssignableFrom(t) Then
+                'If GetType(SinglePKEntity).IsAssignableFrom(t) Then
 
                 'Else
                 'End If

@@ -5,7 +5,7 @@ Imports Worm.Criteria.Joins
 
 <Entity(GetType(CompositeSchema), "1")> _
 Public Class Composite
-    Inherits KeyEntity
+    Inherits SinglePKEntity
 
     Private _m As String
     Private _m2 As String
