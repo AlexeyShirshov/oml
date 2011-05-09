@@ -559,7 +559,7 @@ Public Class TestManagerRS
                 Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
                 Assert.AreEqual(3, c2.Count)
 
-                r1.RejectChanges()
+                mgr.RejectChanges(r1)
 
                 c2 = t1.GetCmd(GetType(Table33)).WithLoad(True).ToList(Of Table33)(mgr)
                 Assert.AreEqual(3, c2.Count)

@@ -89,7 +89,7 @@ Namespace Cache
         End Function
 
         Public Sub AddNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.AddNew
-            Dim pk As New PKWrapper(obj.GetPKValues)
+            Dim pk As New PKWrapper(OrmManager.GetPKValues(obj, Nothing))
             GetDic(obj.GetType).Add(pk, obj)
         End Sub
 
@@ -151,7 +151,7 @@ Namespace Cache
         End Sub
 
         Public Sub RemoveNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.RemoveNew
-            RemoveNew(obj.GetType, obj.GetPKValues)
+            RemoveNew(obj.GetType, OrmManager.GetPKValues(obj, Nothing))
         End Sub
 
         Public Overloads Function GetNew(ByVal t As System.Type) As System.Collections.Generic.IList(Of Entities._ICachedEntity) Implements INewObjectsStoreEx.GetNewObjects

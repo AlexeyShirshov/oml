@@ -6,6 +6,7 @@ Imports Worm.Criteria.Joins
 <Entity(GetType(CompositeSchema), "1")> _
 Public Class Composite
     Inherits SinglePKEntity
+    Implements ICopyProperties
 
     Private _m As String
     Private _m2 As String
@@ -67,8 +68,8 @@ Public Class Composite
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As IEntitySchema)
-        With CType([from], Composite)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Composite)._id = ._id
             CType([to], Composite)._m = ._m
             CType([to], Composite)._m2 = ._m2

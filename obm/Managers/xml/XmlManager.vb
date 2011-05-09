@@ -250,11 +250,11 @@ Namespace Xml
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Using obj.LockEntity()
                 obj.BeginLoading()
-                Dim pk() As PKDesc = orm.GetPKValues
+                Dim pk() As PKDesc = GetPKValues(orm, oschema)
                 If LoadPK(oschema, node, orm) Then
                     obj = CType(NormalizeObject(orm, dic, True, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then
-                        orm.CreateCopyForSaveNewEntry(Me, pk)
+                        CreateCopyForSaveNewEntry(orm, oschema, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 
@@ -283,6 +283,7 @@ Namespace Xml
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             For Each m As MapField2Column In map
                 If m.IsPK Then
                     Dim attr As String = m.SourceFieldExpression
@@ -294,7 +295,7 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
 
-                        MappingEngine.AssignValue2PK(obj, False, oschema, map, obj, m, m.PropertyAlias, nodes.Current.Value)
+                        MappingEngine.AssignValue2PK(obj, False, oschema, map, ll, m, m.PropertyAlias, nodes.Current.Value)
                         'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         sn = True
                         cnt += 1
@@ -310,6 +311,7 @@ Namespace Xml
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Dim cnt As Integer
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             For Each m As MapField2Column In map
                 If Not m.IsPK Then
                     Dim attr As String = m.SourceFieldExpression
@@ -320,23 +322,23 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        ParseValueFromStorage(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, TryCast(obj, _ICachedEntity), Nothing)
+                        ParseValueFromStorage(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, ll, Nothing)
                         'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
                         sn = True
                         cnt += 1
                     Loop
                 Else
-                    If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then SetLoaded(ll, m.PropertyAlias, True, map, MappingEngine)
                 End If
             Next
-            If orm IsNot Nothing Then
-                orm.CheckIsAllLoaded(MappingEngine, cnt, map)
+            If ll IsNot Nothing Then
+                CheckIsAllLoaded(ll, MappingEngine, cnt, map)
             End If
         End Function
 
-        'Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
-        '    Throw New NotImplementedException
-        'End Function
+        Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace

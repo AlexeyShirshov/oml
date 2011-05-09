@@ -787,11 +787,11 @@ l1:
 
         Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, _
             ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
-            ByVal selectedProperties As List(Of EntityExpression)) As ExecutorCtx
+            ByVal selectedProperties As List(Of EntityExpression),
+            ByVal originalCopy As ICachedEntity) As ExecutorCtx
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
-            Dim originalCopy As ICachedEntity = obj.OriginalCopy
             Dim exec As New ExecutorCtx(rt, TryCast(oschema, IEntitySchema))
             'Dim ie As ICollection = mpe.GetProperties(rt, TryCast(oschema, IEntitySchema))
             'If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
@@ -1006,8 +1006,9 @@ l2:
         End Sub
 
         Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, _
-            ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
-            ByRef selectedProperties As Generic.List(Of SelectExpression), ByRef updated_fields As IList(Of EntityFilter)) As String
+            ByVal filterInfo As Object, ByVal originalCopy As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+            ByRef selectedProperties As Generic.List(Of SelectExpression),
+            ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -1019,7 +1020,7 @@ l2:
             Using obj.LockEntity()
                 Dim upd_cmd As New StringBuilder
                 dbparams = Nothing
-                If obj.OriginalCopy IsNot Nothing Then
+                If originalCopy IsNot Nothing Then
                     'If obj.ObjectState = ObjectState.Modified Then
                     'If obj.OriginalCopy Is Nothing Then
                     '    Throw New ObjectStateException(obj.ObjName & "Object in state modified have to has an original copy")
@@ -1048,7 +1049,7 @@ l2:
                         Next
                     End If
 
-                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps)
+                    Dim exec As Query.IExecutionContext = GetChangedFields(mpe, obj, esch, updated_tables, syncUpdateProps, originalCopy)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -1168,7 +1169,7 @@ l2:
                             sel_sb.Append(SelectWithJoin(mpe, rt, mpe.GetTables(esch), newAlMgr, params, _
                                 Nothing, True, Nothing, Nothing, syncUpdateProps, esch, filterInfo))
                             Dim cn As New Condition.ConditionConstructor
-                            For Each p As PKDesc In obj.GetPKValues
+                            For Each p As PKDesc In OrmManager.GetPKValues(obj, oschema)
                                 Dim clm As String = esch.FieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
                                 cn.AddFilter(New dc.TableFilter(mpe.GetPropertyTable(esch, p.PropertyAlias), clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
@@ -1339,7 +1340,7 @@ l2:
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
 
-                    For Each p As PKDesc In obj.GetPKValues
+                    For Each p As PKDesc In OrmManager.GetPKValues(obj, oschema)
                         Dim dbt As String = "int"
                         'Dim c As EntityPropertyAttribute = mpe.GetColumnByPropertyAlias(type, p.PropertyAlias, oschema)
                         'If c Is Nothing Then

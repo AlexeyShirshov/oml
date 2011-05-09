@@ -577,7 +577,7 @@ Namespace Query
 
         Public Shared Function LoadObjects(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-            If length = 0 Then Return entityList
+            If length = 0 OrElse entityList.Count = 0 Then Return entityList
 
             If entityList Is Nothing Then
                 Throw New ArgumentNullException("entityList")
@@ -619,14 +619,16 @@ Namespace Query
             ByVal length As Integer, ByVal properties As List(Of EntityExpression), ByVal mgr As OrmManager) As Boolean
 
             Dim cache As CacheBase = Nothing
+            Dim mpe As ObjectMappingEngine = Nothing
             If mgr IsNot Nothing Then
                 cache = mgr.Cache
+                mpe = mgr.MappingEngine
             End If
 
             If properties Is Nothing OrElse properties.Count = 0 Then
                 Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
             Else
-                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties, mpe), entityList.RealType)
             End If
         End Function
 
@@ -651,7 +653,7 @@ Namespace Query
             Dim i As New Dictionary(Of String, List(Of Object))
 
             For Each o As ICachedEntity In e2load
-                Dim pk As PKDesc() = o.GetPKValues
+                Dim pk As PKDesc() = OrmManager.GetPKValues(o, Nothing)
                 If pk.Length = 1 Then
                     pa = pk(0).PropertyAlias
                     ids.Add(pk(0).Value)
@@ -1632,9 +1634,9 @@ l1:
                     cl.Add(se)
                     Dim m As MapField2Column = oschema.FieldColumnMap(prop)
                     se.Attributes = se.Attributes Or m.Attributes
-                    If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(mpe) Is GetType(AnonymousCachedEntity)) Then
-                        se.Attributes = se.Attributes And Not Field2DbRelations.PK
-                    End If
+                    'If hasPK AndAlso (isAnonym OrElse CreateType Is Nothing OrElse CreateType.GetRealType(mpe) Is GetType(AnonymousCachedEntity)) Then
+                    '    se.Attributes = se.Attributes And Not Field2DbRelations.PK
+                    'End If
                 Next
             Else
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
@@ -3763,7 +3765,7 @@ l1:
                 'Else
                 vals = New PKDesc() {New PKDesc(pa, v)}
                 'End If
-                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, Nothing, contextInfo)
+                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing)
                 If v IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
@@ -4437,40 +4439,62 @@ l1:
 
 #End Region
 
+        Friend Function GetFieldsIdx() As Collections.IndexedCollection(Of String, MapField2Column)
+            Dim c As New OrmObjectIndex
+
+            'For Each p As SelectExpression In q.SelectList
+            '    c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
+            'Next
+
+            If _sl IsNot Nothing Then
+                SelectExpression.GetMapping(c, _sl)
+            Else
+                SelectExpression.GetMapping(c, SelectList)
+            End If
+            'If q.Aggregates IsNot Nothing Then
+            '    For Each p As AggregateBase In q.Aggregates
+            '        c.Add(New MapField2Column(p.Alias, p.Alias, Nothing))
+            '    Next
+            'End If
+
+            Return c
+        End Function
+
         Private Function GetPOCOSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef hasPK As Boolean) As IEntitySchema
             hasPK = False
             Dim s As IEntitySchema = mpe.GetPOCOEntitySchema(t)
             If s Is Nothing Then
-                Dim tbl As SourceFragment = _from.Table
-                If tbl Is Nothing AndAlso SelectList IsNot Nothing Then
-                    For Each se As SelectExpression In SelectList
-                        For Each e As IExpression In se.GetExpressions
-                            Dim te As TableExpression = TryCast(e, TableExpression)
-                            If te IsNot Nothing Then
-                                tbl = te.SourceFragment
-                                GoTo exit_for
-                            Else
-                                Dim ee As EntityExpression = TryCast(e, EntityExpression)
-                                If ee IsNot Nothing Then
-                                    Dim rt As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
-                                    If rt IsNot t Then
-                                        Dim esch As IEntitySchema = mpe.GetEntitySchema(rt)
-                                        If esch IsNot Nothing Then
-                                            tbl = esch.Table
-                                            GoTo exit_for
-                                        End If
-                                    End If
-                                End If
-                            End If
-                        Next
-                    Next
-exit_for:
-                End If
-                If tbl Is Nothing Then
-                    Throw New QueryCmdException(String.Format("Cannot create schema for type {0}. QueryCmd has empty FromClause or else entity has no EntityAttribute", t), Me)
-                End If
-                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl})
+                s = New SimpleObjectSchema(GetFieldsIdx())
+                '                Dim tbl As SourceFragment = _from.Table
+                '                If tbl Is Nothing AndAlso SelectList IsNot Nothing Then
+                '                    For Each se As SelectExpression In SelectList
+                '                        For Each e As IExpression In se.GetExpressions
+                '                            Dim te As TableExpression = TryCast(e, TableExpression)
+                '                            If te IsNot Nothing Then
+                '                                tbl = te.SourceFragment
+                '                                GoTo exit_for
+                '                            Else
+                '                                Dim ee As EntityExpression = TryCast(e, EntityExpression)
+                '                                If ee IsNot Nothing Then
+                '                                    Dim rt As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
+                '                                    If rt IsNot t Then
+                '                                        Dim esch As IEntitySchema = mpe.GetEntitySchema(rt)
+                '                                        If esch IsNot Nothing Then
+                '                                            tbl = esch.Table
+                '                                            GoTo exit_for
+                '                                        End If
+                '                                    End If
+                '                                End If
+                '                            End If
+                '                        Next
+                '                    Next
+                'exit_for:
+                '                End If
+                '                If tbl Is Nothing Then
+                '                    Throw New QueryCmdException(String.Format("Cannot create schema for type {0}. QueryCmd has empty FromClause or else entity has no EntityAttribute", t), Me)
+                '                End If
+                '                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl, .RawProperties = True})
             End If
             For Each m As MapField2Column In s.FieldColumnMap
                 If m.IsPK Then
@@ -4483,20 +4507,30 @@ exit_for:
 
         Protected Friend Function GetSchemaForSelectType(ByVal mpe As ObjectMappingEngine) As IEntitySchema
             Dim t As Type = GetSelectedType(mpe)
-            If CreateType Is Nothing OrElse CreateType.GetRealType(mpe).IsAssignableFrom(t) Then
-                If t Is Nothing Then
-                    Throw New QueryCmdException("Neither Into clause not specified nor ToAnonymous used", Me)
+            'If CreateType Is Nothing OrElse t Is Nothing Then
+            '    Throw New QueryCmdException("Neither Into clause not specified nor ToAnonymous used", Me)
+            'End If
+
+            Dim ct As EntityUnion = CreateType
+            If t Is Nothing Then
+                If ct IsNot Nothing Then
+                    Return mpe.GetEntitySchema(ct.GetRealType(mpe), False)
                 End If
-                Return mpe.GetEntitySchema(t, False)
             Else
-                If _poco Is Nothing Then
-                    Return Nothing
-                Else
-                    For Each de As DictionaryEntry In _poco
-                        Return CType(de.Value, IEntitySchema)
-                    Next
-                    Throw New QueryCmdException("impossible", Me)
+                If ct Is Nothing OrElse ct.GetRealType(mpe).IsAssignableFrom(t) Then
+                    Return mpe.GetEntitySchema(t, False)
+                ElseIf ct IsNot Nothing AndAlso t.IsAssignableFrom(ct.GetRealType(mpe)) Then
+                    Return mpe.GetEntitySchema(ct.GetRealType(mpe), False)
                 End If
+            End If
+
+            If _poco Is Nothing Then
+                Return Nothing
+            Else
+                For Each de As DictionaryEntry In _poco
+                    Return CType(de.Value, IEntitySchema)
+                Next
+                Throw New QueryCmdException("impossible", Me)
             End If
         End Function
 
@@ -5168,7 +5202,7 @@ exit_for:
                 If obj IsNot Nothing Then
                     list.Add(obj)
                 ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), T)
+                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), T)
                     If obj IsNot Nothing Then list.Add(obj)
                 End If
             Next
@@ -5182,7 +5216,7 @@ exit_for:
                 If obj IsNot Nothing Then
                     list.Add(obj)
                 ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues), ISinglePKEntity)
+                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), ISinglePKEntity)
                     If obj IsNot Nothing Then list.Add(obj)
                 End If
             Next

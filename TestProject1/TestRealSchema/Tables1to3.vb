@@ -5,7 +5,7 @@ Imports Worm.Entities.Meta
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3
     Inherits SinglePKEntity
-    Implements IOptimizedValues
+    Implements IOptimizedValues, ICopyProperties
 
     Private _name As String
     Private _table1 As Table1
@@ -40,8 +40,8 @@ Public Class Tables1to3
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType([from], Tables1to3)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Tables1to3)._id = ._id
             CType([to], Tables1to3)._name = ._name
             CType([to], Tables1to3)._table1 = ._table1

@@ -165,8 +165,8 @@ Imports Worm.Criteria
         t.Code += 2
 
         Assert.AreEqual(ObjectState.None, t.InternalProperties.ObjectState)
-        Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
+        Assert.IsNull(t.InternalProperties.OriginalCopy)
+        'Assert.AreEqual(ObjectState.Clone, t.InternalProperties.OriginalCopy.ObjectState)
         Assert.AreEqual(oldCode, q.Top(1).SelectEntity(GetType(RawObj), True).Single(Of RawObj)().Code)
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
@@ -224,9 +224,9 @@ Imports Worm.Criteria
 
         Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
 
-        Dim t2 As RawObj = CType(t.Clone, RawObj)
+        'Dim t2 As RawObj = CType(t.Clone, RawObj)
 
-        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
+        'Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
     End Sub
 
     <TestMethod()> _
@@ -239,9 +239,9 @@ Imports Worm.Criteria
 
         Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
 
-        Dim t2 As RawObj2 = CType(t.Clone, RawObj2)
+        'Dim t2 As RawObj2 = CType(t.Clone, RawObj2)
 
-        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
+        'Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
     End Sub
 
     <TestMethod()> _
@@ -275,7 +275,7 @@ Imports Worm.Criteria
 
         Dim l As IList(Of Pod.cls) = q.ToPOCOList(Of Pod.cls)()
 
-        Dim ce As _ICachedEntity = c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0))
+        Dim ce As IUndoChanges = CType(c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0)), IUndoChanges)
 
         Dim o As Pod.cls = l(0)
 

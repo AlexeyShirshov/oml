@@ -2,6 +2,9 @@
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 Imports Worm.Expressions2
+Imports System.Reflection
+Imports Worm.Entities.Meta
+Imports Worm.Collections
 
 Namespace Entities.Meta
 
@@ -94,6 +97,7 @@ Namespace Entities.Meta
         Private _newattributes As Field2DbRelations
         Private _tbl As SourceFragment
         Private _sf As New List(Of SourceField)
+        Private _pt As Type
 
         Friend PropertyInfo As Reflection.PropertyInfo
         Friend Index As Integer = -1
@@ -179,6 +183,18 @@ Namespace Entities.Meta
             End Set
         End Property
 
+        Public Property PropertyType() As Type
+            Get
+                If _pt Is Nothing Then
+                    Return PropertyInfo.PropertyType
+                End If
+                Return _pt
+            End Get
+            Set(ByVal value As Type)
+                _pt = value
+            End Set
+        End Property
+
         Public Property Attributes() As Field2DbRelations
             Get
                 Return _newattributes
@@ -261,6 +277,27 @@ Namespace Entities.Meta
                 Return (Attributes And Field2DbRelations.Factory) = Field2DbRelations.Factory
             End Get
         End Property
+
+        Friend Sub ApplyForeignKey(ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByVal names As IDictionary)
+            If SourceFields.Count = 1 AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey) AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType, mpe) AndAlso mpe IsNot Nothing Then
+                Dim oschema As IEntitySchema = CType(idic(PropertyType), IEntitySchema)
+                If oschema Is Nothing Then
+                    oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
+                End If
+                If oschema IsNot Nothing Then
+                    Dim pk As MapField2Column = Nothing
+                    For Each pm As MapField2Column In oschema.FieldColumnMap
+                        If pm.IsPK Then
+                            If pk IsNot Nothing Then
+                                Throw New NotSupportedException("Multiple pks not supported")
+                            End If
+                            pk = pm
+                        End If
+                    Next
+                    SourceFields(0).PrimaryKey = pk.PropertyAlias
+                End If
+            End If
+        End Sub
     End Class
 
     Public Class RelationDesc

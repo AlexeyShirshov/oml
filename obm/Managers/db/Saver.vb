@@ -259,26 +259,29 @@ Namespace Database
             If Not _objects.Contains(o) Then
                 added = True
                 _objects.Add(o)
-                AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
+                Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
+                If uc IsNot Nothing Then
+                    AddHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
-                If o.HasChanges Then
-                    Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o)
-                    'Dim oc As ICachedEntity = o.OriginalCopy
-                    If o.ObjectState = ObjectState.Deleted Then
-                        _deleted.Add(o)
-                        Debug.Assert(o IsNot Nothing)
-                        If mo IsNot Nothing Then
-                            Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Delete OrElse mo.Reason = ObjectModification.ReasonEnum.Edit)
-                        End If
-                    ElseIf o.ObjectState = ObjectState.Modified Then
-                        _updated.Add(o)
-                        Debug.Assert(o IsNot Nothing)
-                        If mo IsNot Nothing Then
-                            Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Edit)
-                        End If
+                    If OrmManager.HasBodyChanges(uc) Then
+                        'Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o)
+                        ''Dim oc As ICachedEntity = o.OriginalCopy
+                        'If o.ObjectState = ObjectState.Deleted Then
+                        '    _deleted.Add(o)
+                        '    Debug.Assert(o IsNot Nothing)
+                        '    If mo IsNot Nothing Then
+                        '        Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Delete OrElse mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        '    End If
+                        'ElseIf o.ObjectState = ObjectState.Modified Then
+                        '    _updated.Add(o)
+                        '    Debug.Assert(o IsNot Nothing)
+                        '    If mo IsNot Nothing Then
+                        '        Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        '    End If
+                        'End If
                     End If
-                End If
 #End If
+                End If
             End If
             RaiseEvent OnAdded(Me, o, added)
             Return added
@@ -357,7 +360,11 @@ l1:
                 Dim args As New CancelEventArgs(o)
                 RaiseEvent ObjectSaving(Me, args)
                 If Not args.Cancel Then
-                    If CanSaveObj(o, col2save) Then
+                    If Not CanSaveObj(o, col2save) Then
+                        RaiseEvent ObjectPostponed(Me, o)
+                        need2save.Add(o)
+                        Return False
+                    Else
                         owr = New ObjectWrap(Of ICachedEntity)(o)
                         _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                         Dim os As ObjectState = o.ObjectState
@@ -383,10 +390,6 @@ l1:
                             saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
                             RaiseEvent ObjectSaved(Me, o)
                         End If
-                    Else
-                        RaiseEvent ObjectPostponed(Me, o)
-                        need2save.Add(o)
-                        Return False
                     End If
                 End If
                 Return args.Cancel
@@ -435,13 +438,17 @@ l1:
                 Try
                     RaiseEvent BeginSave(Me, _objects.Count)
                     For Each o As _ICachedEntity In _objects
-                        RemoveHandler o.OriginalCopyRemoved, AddressOf ObjRejected
+                        Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
+                        If uc IsNot Nothing Then
+                            RemoveHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
+                        End If
 
                         Dim pp As Pair(Of ICachedEntity) = Nothing
                         If o.ObjectState = ObjectState.Created Then
                             rejectList.Add(o)
                         ElseIf o.ObjectState = ObjectState.Modified Then
-                            pp = New Pair(Of ICachedEntity)(o, CType(o.CreateClone, ICachedEntity))
+                            pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, Nothing), ICachedEntity))
+                            pp.Second.SetObjectState(o.ObjectState)
                             copies.Add(pp)
                         End If
                         If SaveObj(o, need2save, saved) Then
@@ -527,8 +534,8 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, SinglePKEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
+                                    Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
+                                    'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     If o.UpdateCtx.UpdatedFields IsNot Nothing Then
@@ -546,7 +553,7 @@ l1:
                                     '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                     '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                     CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
-                                        AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks, False, False)
+                                        AddressOf OrmManager.ClearCacheFlags, Nothing, _callbacks, False, False)
                                 Next
                                 For Each o As _ICachedEntity In val
                                     o.UpdateCacheAfterUpdate(CType(_mgr.Cache, OrmCache))
@@ -556,8 +563,8 @@ l1:
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = o.AcceptChanges(False, SinglePKEntity.IsGoodState(p.First))
-                                    Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o) Is Nothing)
+                                    Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
+                                    'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o) Is Nothing)
                                     RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
@@ -588,13 +595,13 @@ l1:
             For Each o As _ICachedEntity In rejectList
                 RaiseEvent ObjectRejecting(Me, o)
                 _dontTrackRemoved = True
-                o.RejectChanges(_mgr)
+                _mgr.RejectChanges(o)
                 _dontTrackRemoved = False
                 RaiseEvent ObjectRejected(Me, o, Not need2save.Contains(o))
             Next
             For Each o As Pair(Of ICachedEntity) In copies
-                o.First.CopyBody(o.Second, o.First)
-                o.First.SetObjectState(o.Second.GetOldState)
+                OrmManager.CopyBody(o.Second, o.First, Nothing)
+                o.First.SetObjectState(o.Second.ObjectState)
                 Dim orm As _ISinglePKEntity = TryCast(o.First, _ISinglePKEntity)
                 If orm IsNot Nothing Then
                     orm.RejectM2MIntermidiate()
@@ -794,7 +801,11 @@ l1:
         End Sub
 
         Private Sub ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
-            RemoveHandler sender.ChangesAccepted, AddressOf ChangesAccepted
+            Dim uc As IUndoChanges = TryCast(sender, IUndoChanges)
+            If uc IsNot Nothing Then
+                RemoveHandler uc.ChangesAccepted, AddressOf ChangesAccepted
+            End If
+
             Dim o As Object = _syncObj(sender)
             _syncObj.Remove(sender)
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
@@ -819,7 +830,7 @@ l1:
             Dim acc As Boolean = ro.ObjectState <> ObjectState.Modified
             _mgr.Cache.SyncPOCO(ro, mpe, oschema, obj)
             'Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj, _mgr), _ICachedEntity)
-            ro.AcceptChanges(False, True)
+            _mgr.AcceptChanges(ro, False, True)
             ro.Delete(_mgr)
             Add(ro)
         End Sub
@@ -943,23 +954,24 @@ l1:
                         End If
                     Else
 #If DEBUG Then
-                        If o.HasChanges Then
+                        Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
+                        If uc IsNot Nothing AndAlso OrmManager.HasChanges(uc) Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                            Dim sc As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior))
-                            If sc IsNot Nothing Then
-                                If sc.Reason = ObjectModification.ReasonEnum.Delete Then
-                                    Debug.Assert(_saver._deleted.Contains(o))
-                                    Debug.Assert(Not _saver._updated.Contains(o))
-                                ElseIf sc.Reason = ObjectModification.ReasonEnum.Edit Then
-                                    'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
-                                    Debug.Assert(Not _saver._deleted.Contains(o))
-                                    Debug.Assert(_saver._updated.Contains(o) OrElse (GetType(IRelations).IsAssignableFrom(o.GetType) AndAlso CType(o, IRelations).HasChanges))
-                                    'End If
-                                End If
-                            End If
+                            'Dim sc As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior))
+                            'If sc IsNot Nothing Then
+                            '    If sc.Reason = ObjectModification.ReasonEnum.Delete Then
+                            '        Debug.Assert(_saver._deleted.Contains(o))
+                            '        Debug.Assert(Not _saver._updated.Contains(o))
+                            '    ElseIf sc.Reason = ObjectModification.ReasonEnum.Edit Then
+                            '        'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                            '        Debug.Assert(Not _saver._deleted.Contains(o))
+                            '        Debug.Assert(_saver._updated.Contains(o) OrElse (GetType(IRelations).IsAssignableFrom(o.GetType) AndAlso CType(o, IRelations).HasChanges))
+                            '        'End If
+                            '    End If
+                            'End If
                         End If
 #End If
-                        o.RejectChanges(_mgr)
+                        _mgr.RejectChanges(o)
                     End If
                 Next
             End If

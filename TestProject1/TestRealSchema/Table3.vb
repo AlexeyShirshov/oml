@@ -6,7 +6,7 @@ Imports Worm.Entities
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
     Inherits SinglePKEntity
-    Implements IOptimizedValues, IEntityFactory
+    Implements IOptimizedValues, IEntityFactory, ICopyProperties
 
     Private _obj As ISinglePKEntity
     Private _code As Byte
@@ -42,8 +42,8 @@ Public Class Table3
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType([from], Table3)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Table3)._id = ._id
             CType([to], Table3)._obj = ._obj
             CType([to], Table3)._code = ._code
@@ -175,7 +175,9 @@ Public Class Table3
     End Property
 
     Protected Sub NodeChanged(ByVal sender As Object, ByVal e As System.Xml.XmlNodeChangedEventArgs)
-        StartUpdate()
+        Using Write("XML")
+
+        End Using
     End Sub
 
     Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IEntityFactory.CreateContainingEntity

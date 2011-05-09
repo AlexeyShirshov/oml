@@ -5,7 +5,7 @@ Imports Worm.Cache
 <Entity(GetType(Table10Implementation), "1")> _
 Public Class Table10
     Inherits SinglePKEntity
-    Implements IOptimizedValues
+    Implements IOptimizedValues, ICopyProperties
 
     Private _tbl1 As Table1
 
@@ -38,7 +38,7 @@ Public Class Table10
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
         CType([to], Table10)._tbl1 = _tbl1
         CType([to], Table10)._id = _id
     End Sub
@@ -79,7 +79,7 @@ Public Class Table10
         End Set
     End Property
 
-   
+
 End Class
 
 Public Class Table10Implementation

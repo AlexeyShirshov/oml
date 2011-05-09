@@ -96,10 +96,10 @@ Imports Worm.Database
     <TestMethod()> Public Sub TestVeryPlainObjectSave()
         Dim t As New Modification.RawObj
 
-        Assert.IsFalse(t.InternalProperties.IsLoaded)
-        Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
-        Assert.IsFalse(t.InternalProperties.IsPropertyLoaded("Code"))
-        Assert.IsFalse(t.InternalProperties.IsPropertyLoaded("Identifier"))
+        'Assert.IsFalse(t.InternalProperties.IsLoaded)
+        'Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
+        'Assert.IsFalse(t.InternalProperties.IsPropertyLoaded("Code"))
+        'Assert.IsFalse(t.InternalProperties.IsPropertyLoaded("Identifier"))
         Assert.AreEqual(Guid.Empty, t.Identifier)
 
         AddHandler t.ManagerRequired, AddressOf ManagerRequired

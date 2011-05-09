@@ -5,6 +5,7 @@ Imports Worm.Database.OrmReadOnlyDBManager
 Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm.Entities.Meta
+Imports Worm.Entities
 
 Module Module2
 
@@ -29,6 +30,7 @@ Module Module2
     <Entities.Meta.Entity("dbo", "junk", "1")> _
     Public Class TestEditTable
         Inherits Entities.SinglePKEntity
+        Implements IOptimizePK
 
         Private _dt As Date
         Public ReadOnly Property Dt() As Date
@@ -90,7 +92,7 @@ Module Module2
             End Set
         End Property
 
-        Public Overrides Function GetPKValues() As Worm.Entities.Meta.PKDesc()
+        Public Function GetPKValues() As Worm.Entities.Meta.PKDesc() Implements IOptimizePK.GetPKValues
             Return New PKDesc() {New PKDesc("ID", _id)}
         End Function
 
@@ -147,6 +149,10 @@ Module Module2
         '        ._code = from._code
         '    End With
         'End Sub
+
+        Public Sub SetPK(ByVal pk() As Worm.Entities.Meta.PKDesc) Implements Worm.Entities.IOptimizePK.SetPK
+            _id = CInt(pk(0).Value)
+        End Sub
     End Class
 
     Private _cache As New OrmCache
@@ -323,9 +329,9 @@ Module Module2
                                             Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Entities.ObjectState.Deleted)
                                             If Not done Then
                                                 Debug.Assert(st.Saver.AffectedObjects.Count = 0)
-                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t.GetType, t, TryCast(mgr.MappingEngine.GetEntitySchema(t.GetType), ICacheBehavior))
-                                                Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Entities.ObjectState.NotFoundInSource)
-                                                Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
+                                                'Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t.GetType, t, TryCast(mgr.MappingEngine.GetEntitySchema(t.GetType), ICacheBehavior))
+                                                'Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Entities.ObjectState.NotFoundInSource)
+                                                'Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
                                             End If
                                             'End If
                                         End Using
@@ -434,7 +440,7 @@ Module Module2
                                             Else
                                                 Dim str As String = Guid.NewGuid.ToString
                                                 t.Name = str
-                                                If t.InternalProperties.HasBodyChanges Then
+                                                If OrmManager.HasBodyChanges(t) Then
                                                     t.SaveChanges(True)
                                                 End If
                                             End If

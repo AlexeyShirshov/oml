@@ -47,7 +47,8 @@ Namespace Entities.Meta
         Private _t As Type
 
         Friend Sub New(ByVal type As Type, ByVal ownTable As SourceFragment, ByVal ownProperties As List(Of EntityPropertyAttribute), _
-                       ByVal baseSchema As IEntitySchema, ByVal version As String)
+            ByVal baseSchema As IEntitySchema, ByVal version As String, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
+            ByVal names As IDictionary)
 
             _t = type
 
@@ -57,7 +58,7 @@ Namespace Entities.Meta
             tables.Add(ownTable)
             _tables = tables.ToArray
 
-            ObjectMappingEngine.ApplyAttributes2Schema(Me, ownProperties)
+            ObjectMappingEngine.ApplyAttributes2Schema(Me, ownProperties, mpe, idic, names)
 
             If baseSchema IsNot Nothing Then
                 Dim l As New List(Of MapField2Column)
@@ -118,7 +119,7 @@ Namespace Entities.Meta
                 If left Is Table AndAlso right Is _bpkTable Then
                     Dim j As JoinCondition = JCtor.join(right)
                     If _basePKs.Length = 1 Then
-                        Return j.on(right, _basePKs(0).PropertyAlias).eq(left, _ownPKs(0).PropertyAlias)
+                        Return j.on(right, _baseSchema.FieldColumnMap(_basePKs(0).PropertyAlias).SourceFieldExpression).eq(left, FieldColumnMap(_ownPKs(0).PropertyAlias).SourceFieldExpression)
                     Else
                         Dim joina As JoinAttribute = Array.Find(_joins, Function(ja As JoinAttribute) _
                             ja.TableSchema = left.Schema AndAlso ja.TableName = left.Name AndAlso _
@@ -138,9 +139,9 @@ Namespace Entities.Meta
                         Dim jl As JoinLink = Nothing
                         For i As Integer = 0 To pks.Length - 1
                             If jl Is Nothing Then
-                                jl = j.on(right, fks(i)).eq(left, pks(i))
+                                jl = j.on(right, _baseSchema.FieldColumnMap(fks(i)).SourceFieldExpression).eq(left, FieldColumnMap(pks(i)).SourceFieldExpression)
                             Else
-                                jl = jl.and(right, fks(i)).eq(left, pks(i))
+                                jl = jl.and(right, _baseSchema.FieldColumnMap(fks(i)).SourceFieldExpression).eq(left, FieldColumnMap(pks(i)).SourceFieldExpression)
                             End If
                         Next
 
@@ -153,7 +154,7 @@ Namespace Entities.Meta
                 ElseIf right Is Table AndAlso left Is _bpkTable Then
                     Dim j As JoinCondition = JCtor.join(right)
                     If _basePKs.Length = 1 Then
-                        Return j.on(right, _ownPKs(0).PropertyAlias).eq(left, _basePKs(0).PropertyAlias)
+                        Return j.on(right, FieldColumnMap(_ownPKs(0).PropertyAlias).SourceFieldExpression).eq(left, _baseSchema.FieldColumnMap(_basePKs(0).PropertyAlias).SourceFieldExpression)
                     Else
                         Dim joina As JoinAttribute = Array.Find(_joins, Function(ja As JoinAttribute) _
                             ja.TableSchema = left.Schema AndAlso ja.TableName = left.Name AndAlso _
@@ -173,9 +174,9 @@ Namespace Entities.Meta
                         Dim jl As JoinLink = Nothing
                         For i As Integer = 0 To pks.Length - 1
                             If jl Is Nothing Then
-                                jl = j.on(left, fks(i)).eq(right, pks(i))
+                                jl = j.on(left, _baseSchema.FieldColumnMap(fks(i)).SourceFieldExpression).eq(right, FieldColumnMap(pks(i)).SourceFieldExpression)
                             Else
-                                jl = jl.and(left, fks(i)).eq(right, pks(i))
+                                jl = jl.and(left, _baseSchema.FieldColumnMap(fks(i)).SourceFieldExpression).eq(right, FieldColumnMap(pks(i)).SourceFieldExpression)
                             End If
                         Next
 

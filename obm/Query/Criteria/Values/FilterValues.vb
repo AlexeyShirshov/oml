@@ -484,7 +484,7 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
-                                Dim pks() As PKDesc = CType(evaluatedValue, ICachedEntity).GetPKValues
+                                Dim pks() As PKDesc = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
                                 If pks.Length <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
@@ -500,7 +500,7 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(valt) Then
-                                Dim pks() As PKDesc = CType(filterValue, ICachedEntity).GetPKValues
+                                Dim pks() As PKDesc = OrmManager.GetPKValues(CType(filterValue, ICachedEntity), Nothing)
                                 If pks.Length <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If

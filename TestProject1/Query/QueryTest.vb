@@ -626,16 +626,17 @@ Imports Worm.Expressions2
     <TestMethod()> Public Sub TestEntity()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(NonCache)). _
-            Where(Ctor.prop(GetType(NonCache), "Code").eq(5))
+                Where(Ctor.prop(GetType(NonCache), "Code").eq(5))
 
             Dim l As ReadOnlyObjectList(Of NonCache) = q.ToObjectList(Of NonCache)(mgr)
 
             Assert.AreEqual(2, l.Count)
 
+            Assert.AreEqual(ObjectState.None, CType(l(0), IEntity).ObjectState)
             Assert.IsTrue(CType(l(0), IEntity).IsLoaded)
 
-            Assert.IsTrue(CType(l(0), IEntity).IsPropertyLoaded("Code"))
-            Assert.IsTrue(CType(l(0), IEntity).IsPropertyLoaded("ID"))
+            'Assert.IsTrue(CType(l(0), IEntity).IsPropertyLoaded("Code"))
+            'Assert.IsTrue(CType(l(0), IEntity).IsPropertyLoaded("ID"))
 
             Assert.AreEqual(5, l(0).Code)
             Assert.AreEqual(5, l(1).Code)
@@ -985,7 +986,7 @@ Imports Worm.Expressions2
     End Sub
 
     <TestMethod()> _
-    Public Sub TestFromInto()
+    Public Sub TestFromInto0()
 
         Dim cache As New ReadonlyCache
 
@@ -995,6 +996,23 @@ Imports Worm.Expressions2
         Dim t As New SourceFragment("dbo", "table1")
 
         q.From(t).Select(FCtor.column(t, "id").into("ID")).Into(GetType(Table1))
+
+        Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
+
+        Assert.AreEqual(3, r.Count)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestFromInto()
+
+        Dim cache As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache))
+
+        Dim t As New SourceFragment("dbo", "table1")
+
+        q.From(t).Select(FCtor.column(t, "id").into("ID"))
 
         Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 

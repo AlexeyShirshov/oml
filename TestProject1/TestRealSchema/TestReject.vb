@@ -23,7 +23,7 @@ Public Class TestReject
                 t1.SaveChanges(False)
                 Assert.IsFalse(mgr.IsInCachePrecise(t1))
 
-                t1.AcceptChanges()
+                mgr.AcceptChanges(t1)
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
                 Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
             Finally
@@ -47,7 +47,7 @@ Public Class TestReject
                 Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)
 
                 Assert.AreNotEqual(-100, t1.Identifier)
-                t1.RejectChanges()
+                mgr.RejectChanges(t1)
                 Assert.AreEqual(-100, t1.Identifier)
                 Assert.IsFalse(mgr.IsInCachePrecise(t1))
                 Assert.AreEqual(ObjectState.Created, t1.InternalProperties.ObjectState)
@@ -70,7 +70,7 @@ Public Class TestReject
                 t1.SaveChanges(False)
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
 
-                t1.AcceptChanges()
+                mgr.AcceptChanges(t1)
                 Assert.IsFalse(mgr.IsInCachePrecise(t1))
             Finally
                 mgr.Rollback()
@@ -94,7 +94,7 @@ Public Class TestReject
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
                 Assert.AreEqual(ObjectState.Deleted, t1.InternalProperties.ObjectState)
 
-                t1.RejectChanges()
+                mgr.RejectChanges(t1)
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
                 Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
             Finally
@@ -126,7 +126,7 @@ Public Class TestReject
                 Assert.IsFalse(mgr.IsInCachePrecise(t1))
                 Assert.AreEqual(ObjectState.Deleted, t2.InternalProperties.ObjectState)
                 Assert.IsTrue(mgr.IsInCachePrecise(t2))
-                t2.RejectChanges()
+                mgr.RejectChanges(t2)
                 Assert.AreEqual(ObjectState.None, t2.InternalProperties.ObjectState)
             End Try
         End Using

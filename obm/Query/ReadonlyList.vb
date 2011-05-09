@@ -208,7 +208,7 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
             If cmgr IsNot Nothing Then
                 Dim cmd As New Query.QueryCmd(cmgr)
-                Return cmd.From(_rt).LoadObjects(Me, start, length)
+                Return cmd.SelectEntity(_rt, True).LoadObjects(Me, start, length)
             Else
                 Return LoadObjects(start, length, OrmManager.CurrentManager)
             End If
