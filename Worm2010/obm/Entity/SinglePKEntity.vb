@@ -350,7 +350,6 @@ Namespace Entities
             MyBase._Init(cache, mpe)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, GetEntitySchema(mpe).FieldColumnMap, mpe)
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -542,12 +541,6 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overrides ReadOnly Property HasChanges() As Boolean
-            Get
-                Return MyBase.HasChanges OrElse _HasChanges
-            End Get
-        End Property
-
         'Public Overrides ReadOnly Property InternalProperties() As InternalClass
         '    Get
         '        Return New InternalClass2(Me)
@@ -719,7 +712,7 @@ Namespace Entities
                     l.Add(e)
                 Next
                 For Each e As ICachedEntity In GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
-                    If e.HasChanges AndAlso Not l.Contains(e) Then
+                    If OrmManager.HasChanges(e) AndAlso Not l.Contains(e) Then
                         l.Add(e)
                     End If
                 Next
@@ -731,7 +724,7 @@ Namespace Entities
         End Function
 
         Protected Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation Implements IRelations.NormalizeRelation
-            Using GetSyncRoot()
+            Using LockEntity()
                 If _relations.Count > 0 Then
                     For Each rl As Relation In _relations
                         If rl.MainType Is newRel.MainType AndAlso rl.MainId.Equals(newRel.MainId) AndAlso Object.Equals(rl.Relation.Entity, newRel.Relation.Entity) AndAlso Object.Equals(rl.Relation.Key, newRel.Relation.Key) AndAlso Object.Equals(rl.Relation.Column, newRel.Relation.Column) Then
@@ -766,7 +759,7 @@ Namespace Entities
         End Function
 
         Protected Sub AddRel(ByVal rel As Relation)
-            Using GetSyncRoot()
+            Using LockEntity()
                 For Each rl As Relation In _relations
                     If rel.Equals(rl) Then
                         Return
@@ -1037,7 +1030,7 @@ Namespace Entities
         End Property
 
         Public Function GetRelation(ByVal desc As RelationDesc) As Entities.Relation Implements IRelations.GetRelation
-            Using GetSyncRoot()
+            Using LockEntity()
                 For Each rl As Relation In _relations
                     If rl.Relation.Equals(desc) Then
                         Return rl
@@ -1072,7 +1065,7 @@ Namespace Entities
 
         Public Function GetRelation(ByVal en As String, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Dim el As Relation = Nothing
-            Using GetSyncRoot()
+            Using LockEntity()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
                     If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
@@ -1120,7 +1113,7 @@ Namespace Entities
 
         Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Dim el As Relation = Nothing
-            Using GetSyncRoot()
+            Using LockEntity()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
                     If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
@@ -1194,27 +1187,37 @@ Namespace Entities
     <Serializable()> _
     Public MustInherit Class SinglePKEntity
         Inherits SinglePKEntityBase
-        Implements IPropertyLazyLoad
+        Implements IPropertyLazyLoad, IUndoChanges
+
+        Private _loaded As Boolean
+        Private _loaded_members As BitArray
+
+        <NonSerialized()> _
+        Private _readRaw As Boolean
+        <NonSerialized()> _
+        Private _copy As ICachedEntity
+        '<NonSerialized()> _
+        'Private _old_state As ObjectState
+
+        'Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements IUndoChanges.ChangesAccepted
+        Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements IUndoChanges.OriginalCopyRemoved
+
+        Protected Friend Sub RaiseCopyRemoved() Implements IUndoChanges.RaiseOriginalCopyRemoved
+            RaiseEvent OriginalCopyRemoved(Me)
+        End Sub
 
         Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
-            Return _Read(propertyAlias)
+            Return OrmManager.RegisterRead(Me, propertyAlias)
         End Function
 
         Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
-            Return _Read(propertyAlias, checkEntity)
+            Return OrmManager.RegisterRead(Me, propertyAlias, checkEntity)
         End Function
 
-        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Write
-            Return _Write(propertyAlias)
+        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IUndoChanges.Write
+            Return OrmManager.RegisterChange(Me, propertyAlias)
         End Function
 
-        'Public Function Read() As System.IDisposable Implements IPropertyLazyLoad.Read
-
-        'End Function
-
-        'Public Function Write() As System.IDisposable Implements IPropertyLazyLoad.Write
-
-        'End Function
         Public Shared Shadows Operator <>(ByVal obj1 As SinglePKEntity, ByVal obj2 As SinglePKEntity) As Boolean
             If obj1 Is Nothing Then
                 If obj2 Is Nothing Then Return False
@@ -1232,6 +1235,74 @@ Namespace Entities
             End If
             Return obj1.Equals(obj2)
         End Operator
+
+        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
+            MyBase.Init(id, cache, mpe)
+            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
+            For Each m As MapField2Column In oschema.FieldColumnMap
+                If m.IsPK Then
+                    OrmManager.SetLoaded(Me, m.PropertyAlias, True, oschema.FieldColumnMap, mpe)
+                    Exit For
+                End If
+            Next
+        End Sub
+
+        Protected Overrides Property IsLoaded As Boolean Implements IPropertyLazyLoad.IsLoaded
+            Get
+                Return _loaded
+            End Get
+            Set(ByVal value As Boolean)
+                _loaded = value
+            End Set
+        End Property
+
+        Public Property PropertyLoadState As System.Collections.BitArray Implements IPropertyLazyLoad.PropertyLoadState
+            Get
+                Return _loaded_members
+            End Get
+            Set(ByVal value As System.Collections.BitArray)
+                _loaded_members = value
+            End Set
+        End Property
+
+        Public Property LazyLoadDisabled As Boolean Implements IPropertyLazyLoad.LazyLoadDisabled
+            Get
+                Return _readRaw
+            End Get
+            Set(ByVal value As Boolean)
+                _readRaw = value
+            End Set
+        End Property
+
+        Public ReadOnly Property DontRaisePropertyChange As Boolean Implements IUndoChanges.DontRaisePropertyChange
+            Get
+                Return False
+            End Get
+        End Property
+
+        'Protected Overridable Sub RemoveOriginalCopy(ByVal cache As CacheBase) Implements IUndoChanges.RemoveOriginalCopy
+        '    _copy = Nothing
+        'End Sub
+
+        Protected Property OriginalCopy() As ICachedEntity Implements IUndoChanges.OriginalCopy
+            Get
+                Return _copy
+            End Get
+            Set(ByVal value As ICachedEntity)
+                _copy = value
+            End Set
+        End Property
+
+        'Public Property OldObjectState As ObjectState Implements IUndoChanges.OldObjectState
+        '    Get
+        '        Return _old_state
+        '    End Get
+        '    Set(ByVal value As ObjectState)
+        '        _old_state = value
+        '    End Set
+        'End Property
+
+
     End Class
 
     Public Enum ObjectState
@@ -1246,10 +1317,10 @@ Namespace Entities
         ''' Попытка загрузить данный обьект из БД не удалась. Это может быть из-за того, что, например, он был удален.
         ''' </summary>
         NotFoundInSource
-        ''' <summary>
-        ''' Объект является копией редактируемого объекта
-        ''' </summary>
-        Clone
+        ' ''' <summary>
+        ' ''' Объект является копией редактируемого объекта
+        ' ''' </summary>
+        'Clone
         Deleted
         ''' <summary>
         ''' Специальное состояние, между Created и None, когда объект ожидается что есть в базе, но еще не загружен

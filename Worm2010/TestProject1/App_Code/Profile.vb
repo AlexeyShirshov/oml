@@ -123,6 +123,7 @@ End Class
 <Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
     Inherits SinglePKEntity
+    Implements ICopyProperties
 
     Private _lastActivity As Date
     Private _isAnonymous As Boolean
@@ -160,8 +161,8 @@ Public Class MyUser
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType(from, MyUser)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], MyUser)._id = ._id
             CType([to], MyUser)._lastActivity = ._lastActivity
             CType([to], MyUser)._field = ._field
@@ -368,6 +369,7 @@ End Class
 <Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
     Inherits SinglePKEntity
+    Implements ICopyProperties
 
     Private _role As String
 
@@ -396,7 +398,7 @@ Public Class MyRole
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
         CType([to], MyRole)._role = _role
         CType([to], MyRole)._id = _id
     End Sub

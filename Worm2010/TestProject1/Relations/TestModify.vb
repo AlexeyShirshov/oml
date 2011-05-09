@@ -89,7 +89,7 @@ Imports Worm.Database
             .ToList(Of Entity4).Count)
     End Sub
 
-    <TestMethod()> Public Sub TestRemoveToList()
+    <TestMethod()> Public Sub TestRemoveFromList()
         Dim e As Entity = CreateCmd.GetByID(Of Entity)(1)
         Dim e4 As Entity4 = CreateCmd.GetByID(Of Entity4)(4)
 

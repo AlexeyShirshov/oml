@@ -339,7 +339,7 @@ Imports Worm
             c3 = e2.GetCmd(GetType(Entity)).ToList(Of Entity)(mgr)
             Assert.AreEqual(0, c3.Count)
 
-            e.RejectChanges()
+            mgr.RejectChanges(e)
 
             c = e.GetCmd(GetType(Entity4)).WithLoad(True).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
             Assert.AreEqual(11, c.Count)
@@ -580,7 +580,7 @@ Imports Worm
                 Assert.IsTrue(e.ID <> -100)
             Finally
                 Assert.IsNotNull(e.InternalProperties.OriginalCopy)
-                e.RejectChanges()
+                mgr.RejectChanges(e)
                 Assert.IsNull(e.InternalProperties.OriginalCopy)
 
                 Assert.AreEqual(-100, e.Identifier)
@@ -1006,7 +1006,7 @@ Imports Worm
                 c2 = e4.GetCmd(GetType(Entity)).WithLoad(True).ToList(Of Entity)(mgr)
                 Assert.AreEqual(4, c2.Count)
 
-                e.RejectChanges()
+                mgr.RejectChanges(e)
 
                 c = e.GetCmd(GetType(Entity4)).WithLoad(True).ToList(Of Entity4)(mgr)
                 Assert.AreEqual(4, c.Count)

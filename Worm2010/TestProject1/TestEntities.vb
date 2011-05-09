@@ -380,6 +380,7 @@ Entity(GetType(EntitySchema4v1Implementation), "joins"), _
 Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
     Inherits SinglePKEntity
+    Implements ICopyProperties
 
     Private _name As String
 
@@ -411,8 +412,8 @@ Public Class Entity4
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType([from], Entity4)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Entity4)._name = ._name
             CType([to], Entity4)._id = ._id
         End With
@@ -602,6 +603,7 @@ End Class
 <Entity(GetType(EntitySchema5v1Implementation), "1")> _
 Public Class Entity5
     Inherits SinglePKEntity
+    Implements ICopyProperties
 
     Private _name As String
     Private _mark() As Byte
@@ -634,8 +636,8 @@ Public Class Entity5
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType([from], Entity5)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Entity5)._name = ._name
             CType([to], Entity5)._mark = ._mark
             CType([to], Entity5)._id = ._id

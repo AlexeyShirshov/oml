@@ -26,7 +26,7 @@ End Class
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
     Inherits SinglePKEntity
-    Implements IOptimizedValues, IComparable
+    Implements IOptimizedValues, IComparable, ICopyProperties
 
     Private _name As String
     Private _code As Nullable(Of Integer)
@@ -63,8 +63,8 @@ Public Class Table1
         End Set
     End Property
 
-    Protected Overrides Sub CopyProperties(ByVal from As Worm.Entities._IEntity, ByVal [to] As Worm.Entities._IEntity, ByVal oschema As Worm.Entities.Meta.IEntitySchema)
-        With CType(from, Table1)
+    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
+        With Me
             CType([to], Table1)._id = ._id
             CType([to], Table1)._code = ._code
             CType([to], Table1)._dt = ._dt

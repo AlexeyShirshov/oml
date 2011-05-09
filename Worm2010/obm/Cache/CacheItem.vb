@@ -21,7 +21,7 @@ Namespace Cache
         End Sub
 
         Friend Sub New(ByVal col As ICollection, ByVal cache As CacheBase)
-            _col = col
+            _col = CType(cache.ListConverter.ToWeakList(col), System.Collections.ICollection)
             '_cache = cache
             If col IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub

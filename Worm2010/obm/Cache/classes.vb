@@ -17,7 +17,7 @@ Namespace Cache
         End Sub
 
         Public Sub New(ByVal o As ICachedEntity)
-            _id = o.GetPKValues
+            _id = OrmManager.GetPKValues(o, Nothing)
             _t = o.GetType
         End Sub
 
@@ -207,7 +207,7 @@ Namespace Cache
         Private _key As Integer
 
         Public Sub New(ByVal o As ICachedEntity)
-            MyBase.New(o.GetPKValues)
+            MyBase.New(OrmManager.GetPKValues(o, Nothing))
             _key = o.Key
         End Sub
 
@@ -327,6 +327,8 @@ Namespace Cache
 
     <Serializable()> _
     Public Class WeakEntityList
+        Implements ICollection(Of WeakEntityReference), ICollection
+
         Private _l As Generic.List(Of WeakEntityReference)
         Private _t As Type
 
@@ -379,7 +381,7 @@ Namespace Cache
             Next
         End Sub
 
-        Public ReadOnly Property Count() As Integer
+        Public ReadOnly Property Count() As Integer Implements System.Collections.Generic.ICollection(Of WeakEntityReference).Count
             Get
                 Return _l.Count
             End Get
@@ -396,6 +398,62 @@ Namespace Cache
                 Return _t
             End Get
         End Property
+
+        Public Sub Add(ByVal item As WeakEntityReference) Implements System.Collections.Generic.ICollection(Of WeakEntityReference).Add
+            Throw New NotImplementedException
+        End Sub
+
+        Private Sub _Clear() Implements System.Collections.Generic.ICollection(Of WeakEntityReference).Clear
+            Throw New NotImplementedException
+        End Sub
+
+        Public Function Contains(ByVal item As WeakEntityReference) As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityReference).Contains
+            Throw New NotImplementedException
+        End Function
+
+        Public Sub CopyTo(ByVal array() As WeakEntityReference, ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of WeakEntityReference).CopyTo
+            Throw New NotImplementedException
+        End Sub
+
+        Public ReadOnly Property IsReadOnly As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityReference).IsReadOnly
+            Get
+                Return True
+            End Get
+        End Property
+
+        Private Function _Remove(ByVal item As WeakEntityReference) As Boolean Implements System.Collections.Generic.ICollection(Of WeakEntityReference).Remove
+            Throw New NotImplementedException
+        End Function
+
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of WeakEntityReference) Implements System.Collections.Generic.IEnumerable(Of WeakEntityReference).GetEnumerator
+            Return _l.GetEnumerator
+        End Function
+
+        Private Sub _CopyTo(ByVal array As System.Array, ByVal index As Integer) Implements System.Collections.ICollection.CopyTo
+            Throw New NotImplementedException
+        End Sub
+
+        Private ReadOnly Property _Count As Integer Implements System.Collections.ICollection.Count
+            Get
+                Return Count
+            End Get
+        End Property
+
+        Public ReadOnly Property IsSynchronized As Boolean Implements System.Collections.ICollection.IsSynchronized
+            Get
+                Return False
+            End Get
+        End Property
+
+        Public ReadOnly Property SyncRoot As Object Implements System.Collections.ICollection.SyncRoot
+            Get
+                Return Nothing
+            End Get
+        End Property
+
+        Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
+        End Function
     End Class
 
     <Serializable()> _

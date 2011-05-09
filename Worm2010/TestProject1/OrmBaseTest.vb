@@ -327,7 +327,7 @@ Imports Worm.Expressions2
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As List(Of SelectExpression) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
-            Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, params, sel, upd))
+            Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, o.InternalProperties.OriginalCopy, params, sel, upd))
 
             Dim o2 As New Entity2(2, mgr.Cache, schemaV1)
 
@@ -346,7 +346,8 @@ Imports Worm.Expressions2
 "select @dbot1_rownum = @@rowcount, @lastErr = @@error" & vbCrLf & _
 "if @dbot1_rownum = 0 and @lastErr = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
 
-            Assert.AreEqual(expected, gen.Update(schemaV1, o2, Nothing, params, sel, upd))
+            Assert.IsNotNull(o2.InternalProperties.OriginalCopy)
+            Assert.AreEqual(expected, gen.Update(schemaV1, o2, Nothing, o2.InternalProperties.OriginalCopy, params, sel, upd))
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params
@@ -388,7 +389,7 @@ Imports Worm.Expressions2
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As List(Of SelectExpression) = Nothing
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
-            Dim actual As String = gen.Update(schemaV1, o, Nothing, params, sel, upd)
+            Dim actual As String = gen.Update(schemaV1, o, Nothing, o.InternalProperties.OriginalCopy, params, sel, upd)
             Assert.AreEqual(expected, actual, String.Compare(expected, actual).ToString)
 
             Dim i As Integer = 0
@@ -512,7 +513,7 @@ End Class
             Dim expected As String = "wrtbg"
             e.Title = "345"
             Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
-            e.RejectChanges()
+            mgr.RejectChanges(e)
 
             Assert.AreEqual(expected, e.Title)
         End Using

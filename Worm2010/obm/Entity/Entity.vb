@@ -8,25 +8,37 @@ Namespace Entities
     Public Class Entity
         Implements _IEntity
 
-        Private Class ChangedEventHelper
+        Friend Class ChangedEventHelper
             Implements IDisposable
 
             Private _value As Object
             Private _fieldName As String
-            Private _obj As Entity
+            Private _obj As _IEntity
             Private _d As IDisposable
 
-            Public Sub New(ByVal obj As Entity, ByVal propertyAlias As String, ByVal d As IDisposable)
+            Public Sub New(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal d As IDisposable)
                 _fieldName = propertyAlias
                 _obj = obj
-                _value = obj.GetValue(propertyAlias)
+                _value = GetValue()
                 _d = d
             End Sub
 
             Public Sub Dispose() Implements IDisposable.Dispose
                 _d.Dispose()
-                _obj.RaisePropertyChanged(_fieldName, _value)
+                RaisePropertyChanged()
             End Sub
+
+            Private Function GetValue() As Object
+                Return ObjectMappingEngine.GetPropertyValue(_obj, _fieldName, _obj.GetEntitySchema(_obj.GetMappingEngine))
+            End Function
+
+            Protected Sub RaisePropertyChanged()
+                Dim value As Object = GetValue()
+                If Not Object.Equals(value, _value) Then
+                    _obj.RaisePropertyChanged(New PropertyChangedEventArgs(_fieldName, _value, value))
+                End If
+            End Sub
+
         End Class
 
         Private _state As ObjectState = ObjectState.Created
@@ -35,12 +47,10 @@ Namespace Entities
         Private _loading As Boolean
         <NonSerialized()> _
         Private _mgrStr As String
-        <NonSerialized()> _
-        Protected _dontRaisePropertyChange As Boolean
-        <NonSerialized()> _
-        Private _old_state As ObjectState
-        <NonSerialized()> _
-        Protected _readRaw As Boolean
+        '<NonSerialized()> _
+        'Protected _dontRaisePropertyChange As Boolean
+        '<NonSerialized()> _
+        'Protected _readRaw As Boolean
         <NonSerialized()> _
         Private _cm As ICreateManager
         <NonSerialized()> _
@@ -54,10 +64,13 @@ Namespace Entities
 #End If
 
 #Region " Loading "
-        Protected ReadOnly Property IsLoading() As Boolean Implements _IEntity.IsLoading
+        Protected Property IsLoading() As Boolean Implements _IEntity.IsLoading
             Get
                 Return _loading
             End Get
+            Set(ByVal value As Boolean)
+                _loading = value
+            End Set
         End Property
 
 #If TRACELOADING Then
@@ -82,14 +95,17 @@ Namespace Entities
 #End If
         End Sub
 
-        Protected Overridable Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean Implements IEntity.IsPropertyLoaded
-            Return True
-        End Function
+        'Protected Overridable Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean Implements IEntity.IsPropertyLoaded
+        '    Return True
+        'End Function
 
-        Protected Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
+        Protected Overridable Property IsLoaded() As Boolean Implements IEntity.IsLoaded
             Get
                 Return True
             End Get
+            Set(ByVal value As Boolean)
+                Throw New NotSupportedException
+            End Set
         End Property
 
         Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
@@ -134,102 +150,95 @@ Namespace Entities
 #End If
         End Function
 
-        Public Function GetSyncRoot() As System.IDisposable Implements _IEntity.LockEntity
+        Public Function LockEntity() As System.IDisposable Implements _IEntity.LockEntity
             Return SyncHelper(False)
         End Function
 
-        Protected Sub RaisePropertyChanged(ByVal propertyAlias As String, ByVal oldValue As Object)
-            Dim value As Object = GetValue(propertyAlias)
-            If Not Object.Equals(value, oldValue) Then
-                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyAlias, oldValue, value))
-            End If
-        End Sub
+        'Protected Overridable Sub PrepareRead(ByVal propertyAlias As String, ByRef d As IDisposable)
+        'End Sub
 
-        Protected Overridable Sub PrepareRead(ByVal propertyAlias As String, ByRef d As IDisposable)
-        End Sub
+        'Protected Overridable Sub PrepareUpdate(ByVal mgr As OrmManager)
+        'End Sub
 
-        Protected Overridable Sub PrepareUpdate(ByVal mgr As OrmManager)
-        End Sub
+        'Protected Sub StartUpdate()
+        '    If Not _loading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
+        '        If _state = Entities.ObjectState.Clone Then
+        '            Throw New OrmObjectException(ObjName & ": Altering clone is not allowed")
+        '        End If
 
-        Protected Sub StartUpdate()
-            If Not _loading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
-                If _state = Entities.ObjectState.Clone Then
-                    Throw New OrmObjectException(ObjName & ": Altering clone is not allowed")
-                End If
+        '        If _state = Entities.ObjectState.Deleted Then
+        '            Throw New OrmObjectException(ObjName & ": Altering deleted object is not allowed")
+        '        End If
 
-                If _state = Entities.ObjectState.Deleted Then
-                    Throw New OrmObjectException(ObjName & ": Altering deleted object is not allowed")
-                End If
+        '        Using mc As IGetManager = GetMgr()
+        '            If mc Is Nothing Then
+        '                Return
+        '            End If
 
-                Using mc As IGetManager = GetMgr()
-                    If mc Is Nothing Then
-                        Return
-                    End If
+        '            PrepareUpdate(mc.Manager)
+        '        End Using
+        '        'ElseIf ObjectState = Orm.ObjectState.Created Then
+        '        '    _PrepareLoadingUpdate()
+        '    End If
+        'End Sub
 
-                    PrepareUpdate(mc.Manager)
-                End Using
-                'ElseIf ObjectState = Orm.ObjectState.Created Then
-                '    _PrepareLoadingUpdate()
-            End If
-        End Sub
+        'Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        '    If checkEntity Then
+        '        Using mc As IGetManager = GetMgr()
+        '            If mc IsNot Nothing Then
+        '                Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+        '                Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
+        '                Dim o As ICachedEntity = TryCast(ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
+        '                If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
+        '                    Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
+        '                    If ov IsNot Nothing Then
+        '                        Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType)
+        '                        If eo.CreateManager Is Nothing Then eo.SetCreateManager(CreateManager)
+        '                        ov.SetValueOptimized(propertyAlias, schema, eo)
+        '                    Else
+        '                        Throw New OrmObjectException("Check read requires IOptimizedValues")
+        '                    End If
+        '                End If
+        '            End If
+        '        End Using
+        '    End If
+        '    Return SyncHelper(reader, propertyAlias)
+        'End Function
 
-        Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
-            If checkEntity Then
-                Using mc As IGetManager = GetMgr()
-                    If mc IsNot Nothing Then
-                        Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
-                        Dim schema As IEntitySchema = mpe.GetEntitySchema(Me.GetType)
-                        Dim o As ICachedEntity = TryCast(ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, schema), ICachedEntity)
-                        If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
-                            Dim ov As IOptimizedValues = TryCast(Me, IOptimizedValues)
-                            If ov IsNot Nothing Then
-                                Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues, o.GetType)
-                                If eo.CreateManager Is Nothing Then eo.SetCreateManager(CreateManager)
-                                ov.SetValueOptimized(propertyAlias, schema, eo)
-                            Else
-                                Throw New OrmObjectException("Check read requires IOptimizedValues")
-                            End If
-                        End If
-                    End If
-                End Using
-            End If
-            Return SyncHelper(reader, propertyAlias)
-        End Function
+        'Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
+        '    Dim err As Boolean = True
+        '    Dim d As IDisposable = New BlankSyncHelper(Nothing)
+        '    Try
+        '        If reader Then
+        '            PrepareRead(propertyAlias, d)
+        '        Else
+        '            d = SyncHelper(True)
+        '            StartUpdate()
+        '            If Not _dontRaisePropertyChange AndAlso Not _loading Then
+        '                d = New ChangedEventHelper(Me, propertyAlias, d)
+        '            End If
+        '        End If
+        '        err = False
+        '    Finally
+        '        If err Then
+        '            If d IsNot Nothing Then d.Dispose()
+        '        End If
+        '    End Try
 
-        Private Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
-            Dim err As Boolean = True
-            Dim d As IDisposable = New BlankSyncHelper(Nothing)
-            Try
-                If reader Then
-                    PrepareRead(propertyAlias, d)
-                Else
-                    d = SyncHelper(True)
-                    StartUpdate()
-                    If Not _dontRaisePropertyChange AndAlso Not _loading Then
-                        d = New ChangedEventHelper(Me, propertyAlias, d)
-                    End If
-                End If
-                err = False
-            Finally
-                If err Then
-                    If d IsNot Nothing Then d.Dispose()
-                End If
-            End Try
+        '    Return d
+        'End Function
 
-            Return d
-        End Function
+        'Friend Function _Read(ByVal propertyAlias As String) As IDisposable
+        '    Return SyncHelper(True, propertyAlias)
+        'End Function
 
-        Friend Function _Read(ByVal propertyAlias As String) As IDisposable
-            Return SyncHelper(True, propertyAlias)
-        End Function
+        'Friend Function _Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        '    Return SyncHelper(True, propertyAlias, checkEntity)
+        'End Function
 
-        Friend Function _Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
-            Return SyncHelper(True, propertyAlias, checkEntity)
-        End Function
-
-        Friend Function _Write(ByVal propertyAlias As String) As IDisposable
-            Return SyncHelper(False, propertyAlias)
-        End Function
+        'Friend Function _Write(ByVal propertyAlias As String) As IDisposable
+        '    Return SyncHelper(False, propertyAlias)
+        'End Function
 
 #End Region
 
@@ -247,7 +256,9 @@ Namespace Entities
         Protected Function GetMgr() As IGetManager Implements _IEntity.GetMgr
             Dim mgr As OrmManager = GetCurrent()
             If mgr Is Nothing Then
-                If _cm Is Nothing Then
+                If _cm IsNot Nothing Then
+                    Return New GetManagerDisposable(_cm.CreateManager, _schema)
+                Else
                     Dim a As New ManagerRequiredArgs
                     RaiseEvent ManagerRequired(Me, a)
                     mgr = a.Manager
@@ -260,8 +271,6 @@ Namespace Entities
                             Return New ManagerWrapper(mgr, _schema)
                         End If
                     End If
-                Else
-                    Return New GetManagerDisposable(_cm.CreateManager, _schema)
                 End If
             Else
                 'don't dispose
@@ -322,21 +331,7 @@ Namespace Entities
         End Property
 
         Protected Overridable Function DumpState() As String
-            Dim mpe As ObjectMappingEngine = GetMappingEngine()
-            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
-            Dim sb As New StringBuilder
-            Dim olr As Boolean = _readRaw
-            _readRaw = True
-            Try
-                For Each m As MapField2Column In map
-                    sb.Append(m.PropertyAlias).Append("=")
-                    sb.Append(ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo)).Append(";")
-                Next
-            Finally
-                _readRaw = olr
-            End Try
-            Return sb.ToString
+            Return OrmManager.DumpState(Me)
         End Function
 
         Protected ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
@@ -345,7 +340,7 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Sub SetObjectStateClear(ByVal value As ObjectState)
+        Protected Sub SetObjectStateClear(ByVal value As ObjectState) Implements _IEntity.SetObjectStateClear
             _state = value
         End Sub
 
@@ -366,22 +361,22 @@ Namespace Entities
             End Using
         End Sub
 
-        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As Entity = CreateSelfInitPK()
-            Using SyncHelper(True)
-#If TraceSetState Then
-                o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
-#Else
-                o.SetObjectStateClear(_state)
-#End If
-                CopyBody(Me, o)
-            End Using
-            Return o
-        End Function
+        '        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
+        '            Dim o As Entity = CreateSelfInitPK()
+        '            Using SyncHelper(True)
+        '#If TraceSetState Then
+        '                o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
+        '#Else
+        '                o.SetObjectStateClear(_state)
+        '#End If
+        '                CopyBody(Me, o)
+        '            End Using
+        '            Return o
+        '        End Function
 
-        Protected Overridable Function CreateSelf() As Entity
-            Return CType(Activator.CreateInstance(Me.GetType), Entity)
-        End Function
+        'Protected Overridable Function CreateSelf() As Entity
+        '    Return CType(Activator.CreateInstance(Me.GetType), Entity)
+        'End Function
 
         Protected Overridable Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
             If mgr Is Nothing Then
@@ -391,44 +386,44 @@ Namespace Entities
             End If
         End Sub
 
-        Protected Function CreateSelfInitPK() As Entity
-            Dim e As Entity = CreateSelf()
-            Using gm As IGetManager = GetMgr()
-                InitNewEntity(If(gm Is Nothing, Nothing, gm.Manager), e)
-            End Using
-            Return e
-        End Function
+        'Protected Function CreateSelfInitPK() As Entity
+        '    Dim e As Entity = CreateSelf()
+        '    Using gm As IGetManager = GetMgr()
+        '        InitNewEntity(If(gm Is Nothing, Nothing, gm.Manager), e)
+        '    End Using
+        '    Return e
+        'End Function
 
-        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, _
-            ByVal oschema As IEntitySchema)
+        'Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, _
+        '    ByVal oschema As IEntitySchema)
 
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+        '    Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
-            For Each m As MapField2Column In map
-                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(from, m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
-            Next
-        End Sub
+        '    For Each m As MapField2Column In map
+        '        ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(from, m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+        '    Next
+        'End Sub
 
-        Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
-            Using [to].LockEntity
-                [to].BeginLoading()
-                CopyProperties([from], [to], GetEntitySchema(GetMappingEngine()))
-                [to].EndLoading()
-            End Using
-        End Sub
+        'Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
+        '    Using [to].LockEntity
+        '        [to].BeginLoading()
+        '        CopyProperties([from], [to], GetEntitySchema(GetMappingEngine()))
+        '        [to].EndLoading()
+        '    End Using
+        'End Sub
 
-        Protected Function CreateClone() As Entity Implements IEntity.CreateClone
-            Dim clone As Entity = CreateSelfInitPK()
-            clone.SetObjectState(Entities.ObjectState.NotLoaded)
-            CopyBody(Me, clone)
-            clone._old_state = ObjectState
-            clone.SetObjectState(Entities.ObjectState.Clone)
-            Return clone
-        End Function
+        'Protected Function CreateClone() As Entity Implements IEntity.CreateClone
+        '    Dim clone As Entity = CreateSelfInitPK()
+        '    clone.SetObjectState(Entities.ObjectState.NotLoaded)
+        '    CopyBody(Me, clone)
+        '    clone._old_state = ObjectState
+        '    clone.SetObjectState(Entities.ObjectState.Clone)
+        '    Return clone
+        'End Function
 
-        Private Function GetOldState() As ObjectState Implements _IEntity.GetOldState
-            Return _old_state
-        End Function
+        'Private Function GetOldState() As ObjectState Implements _IEntity.GetOldState
+        '    Return _old_state
+        'End Function
 
         Friend Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
             Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
@@ -528,9 +523,9 @@ Namespace Entities
         End Function
 #End Region
 
-        Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
-            Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, GetEntitySchema(GetMappingEngine))
-        End Function
+        'Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
+        '    Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, GetEntitySchema(GetMappingEngine))
+        'End Function
 
         Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
             If oschema Is Nothing Then
@@ -582,6 +577,11 @@ Namespace Entities
                 Return mpe.GetEntitySchema(Me.GetType, True)
             End If
         End Function
+
+        Protected Sub RaisePropertyChanged(ByVal propertyChangedEventArgs As PropertyChangedEventArgs) Implements _IEntity.RaisePropertyChanged
+            RaiseEvent PropertyChanged(Me, propertyChangedEventArgs)
+        End Sub
+
     End Class
 
     'Public Class EntityLazyLoad

@@ -154,7 +154,7 @@ Imports Worm
 
     End Class
 
-    <Entity("dbo", "table1", "1")> _
+    <Entity("dbo", "table1", "1", Rawproperties:=True)> _
     Public Class cls4
         Inherits cls2
 

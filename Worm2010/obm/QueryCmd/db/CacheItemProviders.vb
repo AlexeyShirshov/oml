@@ -115,7 +115,7 @@ Namespace Query.Database
                 If oschema IsNot Nothing Then
                     fields = oschema.FieldColumnMap
                 Else
-                    fields = GetFieldsIdx(_q)
+                    fields = _q.GetFieldsIdx()
                 End If
 
                 Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
@@ -165,24 +165,6 @@ Namespace Query.Database
 
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
-            End Function
-
-            Protected Shared Function GetFieldsIdx(ByVal q As QueryCmd) As Collections.IndexedCollection(Of String, MapField2Column)
-                Dim c As New OrmObjectIndex
-
-                'For Each p As SelectExpression In q.SelectList
-                '    c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
-                'Next
-
-                SelectExpression.GetMapping(c, q._sl)
-
-                'If q.Aggregates IsNot Nothing Then
-                '    For Each p As AggregateBase In q.Aggregates
-                '        c.Add(New MapField2Column(p.Alias, p.Alias, Nothing))
-                '    Next
-                'End If
-
-                Return c
             End Function
 
             'Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
@@ -240,7 +222,7 @@ Namespace Query.Database
                 If oschema IsNot Nothing Then
                     fields = oschema.FieldColumnMap
                 Else
-                    fields = GetFieldsIdx(_q)
+                    fields = _q.GetFieldsIdx()
                 End If
 
                 'Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
@@ -657,7 +639,7 @@ Namespace Query.Database
                 If oschema IsNot Nothing Then
                     fields = oschema.FieldColumnMap
                 Else
-                    fields = GetFieldsIdx(_q)
+                    fields = _q.GetFieldsIdx()
                     If Not GetType(AnonymousEntity).IsAssignableFrom(_q.CreateType.GetRealType(_mgr.MappingEngine)) Then
                         oschema = dbm.MappingEngine.GetEntitySchema(_q.CreateType.GetRealType(_mgr.MappingEngine), False)
                         For Each m As MapField2Column In oschema.FieldColumnMap

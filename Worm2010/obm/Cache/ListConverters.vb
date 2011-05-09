@@ -56,7 +56,7 @@ Namespace Cache
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso Not created Then
-                c.LoadObjects(start, length)
+                c.LoadObjects(start, length, mc)
                 Dim s As Boolean = True
                 c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), ReadOnlyEntityList(Of T))
                 If Not s Then
@@ -76,7 +76,7 @@ Namespace Cache
                     'Dim slt As Double = (er.FetchTime.TotalMilliseconds / er.Count)
                     'Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (er.Count - l) * 1.1)
                     If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.RowCount, l) Then
-                        c.LoadObjects()
+                        c.LoadObjects(mc)
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
                         Return c

@@ -1597,7 +1597,7 @@ l1:
         Dim ck As CacheKey = New CacheKey(obj)
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
         If e Is Nothing Then
-            obj.Load(Me)
+            Me.Load(obj)
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
         End If
         Return e
@@ -1609,9 +1609,9 @@ l1:
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
         If e Is Nothing OrElse Not e.IsLoaded Then
             If e Is Nothing Then
-                obj.Load(Me)
+                Me.Load(obj)
             Else
-                e.Load(Me)
+                Me.Load(e)
             End If
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
         End If
@@ -1815,9 +1815,9 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.LockEntity
-                If Cache.ShadowCopy(t, obj, cb) IsNot Nothing Then
-                    Return False
-                End If
+                'If Cache.ShadowCopy(t, obj, cb) IsNot Nothing Then
+                '    Return False
+                'End If
 
                 dic.Remove(id)
 
@@ -1841,7 +1841,7 @@ l1:
             End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(t, obj, cb) Is Nothing)
+            'Debug.Assert(Cache.ShadowCopy(t, obj, cb) Is Nothing)
         End Using
         Return True
     End Function
@@ -1920,7 +1920,7 @@ l1:
         ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues))) _
+                If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing)))) _
                     AndAlso Not entityDictionary.ContainsKey(o) Then
                     entityDictionary.Add(o, Nothing)
                 End If
@@ -1930,13 +1930,14 @@ l1:
 
     Private Shared Sub InsertObject(Of T As ICachedEntity)(ByVal cache As CacheBase, _
         ByVal check_loaded As Boolean, ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity, _
-        ByVal properties As List(Of EntityExpression))
+        ByVal properties As List(Of EntityExpression), ByVal mpe As ObjectMappingEngine,
+        ByVal map As Collections.IndexedCollection(Of String, MapField2Column))
 
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
+                If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing))) Then
                     For Each p As EntityExpression In properties
-                        If Not o.IsPropertyLoaded(p.ObjectProperty.PropertyAlias) AndAlso Not entityDictionary.ContainsKey(o) Then
+                        If Not IsPropertyLoaded(o, p.ObjectProperty.PropertyAlias, map, mpe) AndAlso Not entityDictionary.ContainsKey(o) Then
                             entityDictionary.Add(o, Nothing)
                             Exit For
                         End If
@@ -1988,12 +1989,21 @@ l1:
     ''' <remarks></remarks>
     Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, _
         ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer, _
-        ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression)) As ICollection(Of ICachedEntity)
+        ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression), ByVal mpe As ObjectMappingEngine) As ICollection(Of ICachedEntity)
 
         Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
+        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+        If mpe IsNot Nothing Then
+            map = mpe.GetEntitySchema(objs.RealType).FieldColumnMap
+        End If
         For i As Integer = start To start + length - 1
             Dim o As ICachedEntity = objs(i)
-            InsertObject(Of T)(cache, check_loaded, entityDictionary, o, properties)
+            Dim ll As IPropertyLazyLoad = TryCast(o, IPropertyLazyLoad)
+            If ll IsNot Nothing Then
+                InsertObject(Of T)(cache, check_loaded, entityDictionary, o, properties, mpe, map)
+            Else
+                InsertObject(Of T)(cache, check_loaded, entityDictionary, o)
+            End If
         Next
         Return entityDictionary.Keys
     End Function
@@ -3320,6 +3330,7 @@ l1:
                 Dim old_state As ObjectState = state
                 Dim hasNew As Boolean = False
                 Dim err As Boolean = True, ttt As Boolean
+                Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
                 Try
                     Dim processedType As New List(Of Type)
 
@@ -3474,7 +3485,7 @@ l1:
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        oldObj = obj.AcceptChanges(False, SinglePKEntity.IsGoodState(state))
+                        oldObj = Me.AcceptChanges(obj, False, SinglePKEntity.IsGoodState(state))
                     End If
 
                     err = False
@@ -3482,7 +3493,7 @@ l1:
                 Finally
                     If err Then
                         If sa = SaveAction.Insert AndAlso Not ttt Then
-                            obj.RejectChanges(Me)
+                            Me.RejectChanges(uc)
                         End If
 
                         state = old_state
@@ -3512,8 +3523,8 @@ l1:
                 If Not InsertObject(obj) Then
                     Return Nothing
                 End If
-            ElseIf obj.ObjectState = ObjectState.Clone Then
-                Throw New InvalidOperationException("Object with state " & obj.ObjectState.ToString & " cann't be added to cashe")
+                'ElseIf obj.ObjectState = ObjectState.Clone Then
+                '    Throw New InvalidOperationException("Object with state " & obj.ObjectState.ToString & " cann't be added to cashe")
             End If
         End Using
 
@@ -3570,7 +3581,7 @@ l1:
     Protected Friend MustOverride Function GetStaticKey() As String
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
-    'Public MustOverride Function GetEntityCloneFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
+    Public MustOverride Function GetEntityCloneFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     'Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     'Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
@@ -3606,20 +3617,20 @@ l1:
     Protected Friend Sub RegisterInCashe(ByVal obj As _ICachedEntity)
         If Not IsInCachePrecise(obj) Then
             Add2Cache(obj)
-            If obj.OriginalCopy() IsNot Nothing Then
-                'Dim c As OrmCache = TryCast(_cache, OrmCache)
-                'If c IsNot Nothing Then
-                '    c.RegisterExistingModification(obj)
-                'End If
-                Dim r As ObjectModification.ReasonEnum
-                Select Case obj.ObjectState
-                    Case ObjectState.Deleted
-                        r = ObjectModification.ReasonEnum.Delete
-                    Case ObjectState.Modified
-                        r = ObjectModification.ReasonEnum.Edit
-                End Select
-                _cache.RegisterModification(Me, obj, r, TryCast(MappingEngine.GetEntitySchema(obj.GetType), ICacheBehavior))
-            End If
+            'If obj.OriginalCopy() IsNot Nothing Then
+            '    'Dim c As OrmCache = TryCast(_cache, OrmCache)
+            '    'If c IsNot Nothing Then
+            '    '    c.RegisterExistingModification(obj)
+            '    'End If
+            '    Dim r As ObjectModification.ReasonEnum
+            '    Select Case obj.ObjectState
+            '        Case ObjectState.Deleted
+            '            r = ObjectModification.ReasonEnum.Delete
+            '        Case ObjectState.Modified
+            '            r = ObjectModification.ReasonEnum.Edit
+            '    End Select
+            '    _cache.RegisterModification(Me, obj, r, TryCast(MappingEngine.GetEntitySchema(obj.GetType), ICacheBehavior))
+            'End If
         End If
     End Sub
 
@@ -4010,7 +4021,7 @@ l1:
 
         Dim jf As New JoinFilter(joinOS, schema.GetSinglePK(type2join), selectType, field, oper)
 
-        Dim t As EntityUnion = joinos
+        Dim t As EntityUnion = joinOS
         If switchTable Then
             t = selectType
         End If
@@ -4021,7 +4032,7 @@ l1:
     Public Sub ParseValueFromStorage(ByVal isNull As Boolean, ByVal att As Field2DbRelations, _
             ByVal obj As Object, ByVal m As MapField2Column, ByVal propertyAlias As String, _
             ByVal oschema As IEntitySchema, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), _
-            ByVal sv As PKDesc(), ByVal ce As _ICachedEntity, ByVal fac As List(Of Pair(Of String, PKDesc())))
+            ByVal sv As PKDesc(), ByVal ll As IPropertyLazyLoad, ByVal fac As List(Of Pair(Of String, PKDesc())))
         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
         Dim value As Object = sv(0).Value
         If pi Is Nothing Then
@@ -4030,7 +4041,7 @@ l1:
             Else
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
             End If
-            If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, map, MappingEngine)
+            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
         Else
             Dim propType As Type = pi.PropertyType
             'If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -4083,12 +4094,12 @@ l1:
                     '    End If
                     '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                     'Else
-                    ObjectMappingEngine.AssignValue2Property(propType, MappingEngine, Cache, sv, obj, map, propertyAlias, ce, m, oschema, AddressOf RaiseObjectLoaded)
+                    ObjectMappingEngine.AssignValue2Property(propType, MappingEngine, Cache, sv, obj, map, propertyAlias, ll, m, oschema, AddressOf RaiseObjectLoaded)
                     'End If
                 End If
             ElseIf isNull Then
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
-                If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
             End If
         End If
     End Sub
@@ -4127,7 +4138,7 @@ l1:
 
                 If Not modificationSync AndAlso ce IsNot Nothing Then
                     If obj.ObjectState <> ObjectState.NotFoundInSource AndAlso obj.ObjectState <> ObjectState.None Then
-                        If load Then ce.AcceptChanges(True, True)
+                        If load Then AcceptChanges(ce, True, True)
                     End If
                 End If
             Finally
@@ -4306,7 +4317,7 @@ l1:
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
         Dim pks() As PKDesc = Nothing
         If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
-            pks = CType(obj, ICachedEntity).GetPKValues
+            pks = GetPKValues(CType(obj, ICachedEntity), oschema)
         Else
             Dim l As New List(Of PKDesc)
             For Each m As MapField2Column In oschema.FieldColumnMap
@@ -4327,6 +4338,806 @@ l1:
         FindObjectsToLoad(original_type, oschema, selOS, c, eudic, js, selDic, propertyAlias)
         Return c
     End Function
+
+    Public Sub Load(ByVal e As _IEntity, ByVal oschema As IEntitySchema, Optional ByVal propertyAlias As String = Nothing)
+        Dim kp As IKeyProvider = TryCast(e, IKeyProvider)
+        If kp IsNot Nothing Then
+            'Dim mo As ObjectModification = Cache.ShadowCopy(e.GetType, kp, TryCast(oschema, ICacheBehavior))
+            ''If mo Is Nothing Then mo = _mo
+            'If mo IsNot Nothing Then
+            '    If mo.User IsNot Nothing Then
+            '        'Using mc As IGetManager = GetMgr()
+            '        If Not mo.User.Equals(CurrentUser) Then
+            '            Throw New OrmObjectException(e.ObjName & "Object in readonly state")
+            '        End If
+            '        'End Using
+            '    Else
+            '        If e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Modified Then
+            '            Throw New OrmObjectException(e.ObjName & "Cannot load object while its state is deleted or modified!")
+            '        End If
+            '    End If
+            'End If
+        End If
+        If e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Modified Then
+            Throw New OrmObjectException(e.ObjName & "Cannot load object while its state is deleted or modified!")
+        End If
+
+        Dim olds As ObjectState = e.ObjectState
+        Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
+        If ce IsNot Nothing Then
+            Dim robj As CachedEntity = CType(NormalizeObject(ce, GetDictionary(e.GetType), False, False, oschema), CachedEntity)
+            If robj IsNot Nothing AndAlso Not ReferenceEquals(robj, e) Then
+                Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    If ll IsNot Nothing AndAlso ll.IsLoaded Then
+l1:
+                        OrmManager.CopyBody(robj, e, oschema)
+                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                        For Each m As MapField2Column In map
+                            SetLoaded(ll, m.PropertyAlias, True, map, MappingEngine)
+                        Next
+                        CheckIsAllLoaded(ll, MappingEngine, map.Count, map)
+                    Else
+                        Load(robj, oschema)
+                        GoTo l1
+                    End If
+                ElseIf ll IsNot Nothing Then
+                    Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                    If IsPropertyLoaded(robj, propertyAlias, map, MappingEngine) Then
+                        Dim m As MapField2Column = Nothing
+                        map.TryGetValue(propertyAlias, m)
+                        ObjectMappingEngine.SetPropertyValue(e, propertyAlias, ObjectMappingEngine.GetPropertyValue(robj, propertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+                        SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                    Else
+                        Load(robj, propertyAlias)
+                        GoTo l1
+                    End If
+                Else
+                    Load(robj, propertyAlias)
+                    GoTo l1
+                End If
+            Else
+                LoadObject(e, propertyAlias)
+            End If
+        Else
+            LoadObject(e, propertyAlias)
+        End If
+
+        Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
+        If uc IsNot Nothing AndAlso olds = Entities.ObjectState.Created AndAlso e.ObjectState = Entities.ObjectState.Modified Then
+            AcceptChanges(uc, True, True)
+        ElseIf e.IsLoaded Then
+            e.SetObjectState(Entities.ObjectState.None)
+        End If
+    End Sub
+
+    Public Sub Load(ByVal e As _IEntity, Optional ByVal propertyAlias As String = Nothing)
+        Dim oschema As IEntitySchema = e.GetEntitySchema(MappingEngine)
+        Load(e, oschema, propertyAlias)
+    End Sub
+
+#Region " Undo helpers "
+    Public Shared Function GetChangeDescription(ByVal sb As StringBuilder, ByVal e As IEntity) As String
+        Dim mpe As ObjectMappingEngine = e.GetMappingEngine
+        Dim oschema As IEntitySchema = e.GetEntitySchema(mpe)
+
+        If e.ObjectState = Entities.ObjectState.Modified Then
+            Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
+            If uc IsNot Nothing Then
+                For Each pa As String In GetChanges(e, uc.OriginalCopy, oschema)
+                    sb.Append(vbTab).Append(pa).Append(vbCrLf)
+                Next
+                Return sb.ToString
+            End If
+        End If
+
+        Return GetChangeDescription(sb, e, oschema, mpe)
+    End Function
+
+    Public Shared Function GetChangeDescription(ByVal sb As StringBuilder, ByVal e As Object, ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine) As String
+
+        Dim o As Object = mpe.CloneIdentity(e, oschema)
+
+        For Each pa As String In GetChanges(e, o, oschema)
+            sb.Append(vbTab).Append(pa).Append(vbCrLf)
+        Next
+
+        Return sb.ToString
+
+    End Function
+
+    Friend Shared Function GetChanges(ByVal currentVersion As Object, ByVal originalVersion As Object, ByVal oschema As IEntitySchema) As String()
+        Dim l As New List(Of String)
+        'If Not Object.Equals(obj.SpecificMappingEngine, e.SpecificMappingEngine) Then
+        '    obj.SpecificMappingEngine = e.SpecificMappingEngine()
+        'End If
+        For Each m As MapField2Column In oschema.FieldColumnMap
+            Dim original As Object = ObjectMappingEngine.GetPropertyValue(originalVersion, m.PropertyAlias, oschema, m.PropertyInfo)
+            If Not m.IsReadOnly Then
+                Dim current As Object = ObjectMappingEngine.GetPropertyValue(currentVersion, m.PropertyAlias, oschema, m.PropertyInfo)
+                If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                    (current IsNot Nothing AndAlso Not current.Equals(original)) Then
+                    l.Add(m.PropertyAlias)
+                End If
+            End If
+        Next
+        Return l.ToArray
+    End Function
+
+    Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As _ICachedEntity, ByVal mc As OrmManager)
+        mc._RemoveObjectFromCache(obj)
+        Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
+        If c IsNot Nothing Then
+            c.RegisterDelete(obj)
+        End If
+        'obj._needDelete = False
+    End Sub
+
+    Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As _ICachedEntity, ByVal cache As CacheBase, _
+        ByVal contextKey As Object)
+        'obj._needAdd = False
+        Dim nm As INewObjectsStore = cache.NewObjectManager
+        If nm IsNot Nothing Then
+            Dim mo As _ICachedEntity = TryCast(contextKey, _ICachedEntity)
+            If mo Is Nothing Then
+                Dim dic As Generic.Dictionary(Of _ICachedEntity, _ICachedEntity) = TryCast(contextKey, Generic.Dictionary(Of _ICachedEntity, _ICachedEntity))
+                If dic IsNot Nothing Then
+                    dic.TryGetValue(obj, mo)
+                End If
+            End If
+            If mo IsNot Nothing Then
+                nm.RemoveNew(mo)
+            End If
+        End If
+    End Sub
+
+    Protected Friend Shared Sub ClearCacheFlags(ByVal obj As _ICachedEntity, ByVal mc As OrmManager, _
+        ByVal contextKey As Object)
+        obj.UpdateCtx.Added = False
+        obj.UpdateCtx.Deleted = False
+    End Sub
+
+    Public Sub AcceptChanges(ByVal e As _ICachedEntity)
+        AcceptChanges(e, True, Entity.IsGoodState(e.ObjectState))
+    End Sub
+
+    Public Function AcceptChanges(ByVal e As _ICachedEntity, ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
+        Dim mo As _ICachedEntity = Nothing
+        Using e.LockEntity
+            If e.ObjectState = Entities.ObjectState.Created Then 'OrElse e.ObjectState = Entities.ObjectState.Clone OrElse _state = Orm.ObjectState.NotLoaded Then
+                Throw New OrmObjectException(e.ObjName & "accepting changes allowed in state Modified, deleted or none")
+            End If
+
+            Dim mc As OrmManager = Me
+            '_valProcs = HasM2MChanges(mc)
+
+            e.AcceptRelationalChanges(updateCache, mc)
+
+            If e.ObjectState <> Entities.ObjectState.None Then
+                mo = RemoveVersionData(e, mc.Cache, mc.MappingEngine, setState)
+                Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
+                If e.UpdateCtx.Deleted Then
+                    '_valProcs = False
+                    If updateCache AndAlso c IsNot Nothing Then
+                        c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
+                        'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
+                    End If
+                    Accept_AfterUpdateCacheDelete(e, mc)
+                    e.RaiseDeleted(EventArgs.Empty)
+                ElseIf e.UpdateCtx.Added Then
+                    '_valProcs = False
+                    Dim dic As IDictionary = mc.GetDictionary(e.GetType, TryCast(e.GetEntitySchema(mc.MappingEngine), ICacheBehavior))
+                    Dim kw As CacheKey = New CacheKey(e)
+                    'Dim o As CachedEntity = CType(dic(kw), CachedEntity)
+                    'If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
+                    '    dic(kw) = Me
+                    'End If
+                    CacheBase.AddObjectInternal(e, kw, dic)
+                    If updateCache AndAlso c IsNot Nothing Then
+                        'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
+                        c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
+                    End If
+                    Accept_AfterUpdateCacheAdd(e, mc.Cache, mo)
+                    e.RaiseAdded(EventArgs.Empty)
+                Else
+                    If updateCache Then
+                        If c IsNot Nothing Then
+                            c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, True)
+                        End If
+                        e.UpdateCacheAfterUpdate(c)
+                    End If
+                    e.RaiseUpdated(EventArgs.Empty)
+                End If
+                'ElseIf _valProcs AndAlso updateCache Then
+                '    mc.Cache.ValidateSPOnUpdate(Me, Nothing)
+            End If
+
+            e.RaiseChangesAccepted(EventArgs.Empty)
+        End Using
+
+        Return mo
+    End Function
+
+    Public Sub RejectChanges(ByVal e As _ICachedEntity)
+        Using e.LockEntity
+            e.RejectRelationChanges(Me)
+
+            If e.ObjectState = ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created Then
+                Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
+
+                Dim oc As ICachedEntity = Nothing
+                If uc IsNot Nothing Then
+                    oc = uc.OriginalCopy()
+                End If
+
+                If e.ObjectState <> Entities.ObjectState.Deleted Then
+                    If oc Is Nothing Then
+                        If e.ObjectState <> Entities.ObjectState.Created Then
+                            Throw New OrmObjectException(e.ObjName & ": When object is in modified state it has to have an original copy")
+                        End If
+                        Return
+                    End If
+                End If
+
+                Dim oschema As IEntitySchema = e.GetEntitySchema(MappingEngine)
+                'Dim mo As ObjectModification = Cache.ShadowCopy(e.GetType, e, TryCast(oschema, ICacheBehavior))
+                'If mo IsNot Nothing Then
+                '    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(CurrentUser) Then
+                '        Throw New OrmObjectException(e.ObjName & " object in readonly state")
+                '    End If
+
+                '    If e.ObjectState = Entities.ObjectState.Deleted AndAlso mo.Reason <> ObjectModification.ReasonEnum.Delete Then
+                '        'Debug.Assert(False)
+                '        'Throw New OrmObjectException
+                '        Return
+                '    End If
+
+                '    If e.ObjectState = Entities.ObjectState.Modified AndAlso (mo.Reason = ObjectModification.ReasonEnum.Delete) Then
+                '        Debug.Assert(False)
+                '        Throw New OrmObjectException
+                '    End If
+                'End If
+
+                'Debug.WriteLine(Environment.StackTrace)
+                '_needAdd = False
+                '_needDelete = False
+                e.UpdateCtx = New UpdateCtx
+
+                Dim olds As ObjectState = Entities.ObjectState.None
+                If oc IsNot Nothing Then
+                    olds = oc.ObjectState
+                End If
+
+                Dim oldkey As Integer?
+                If e.IsPKLoaded Then
+                    oldkey = e.Key
+                End If
+
+                Dim newid() As PKDesc = Nothing
+                If oc IsNot Nothing Then
+                    newid = GetPKValues(oc, oschema)
+                End If
+
+                If olds <> Entities.ObjectState.Created Then
+                    If oc IsNot Nothing Then
+                        OrmManager.CopyBody(oc, e, oschema)
+                    End If
+                    OrmManager.RemoveVersionData(e, Cache, MappingEngine, False)
+                End If
+
+                If newid IsNot Nothing Then
+                    SetPK(e, newid, oschema, MappingEngine)
+                End If
+
+#If TraceSetState Then
+                    If mo isnot Nothing then
+                        SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
+                    end if
+#Else
+                e.SetObjectStateClear(olds)
+#End If
+                If e.ObjectState = Entities.ObjectState.Created Then
+                    If oldkey.HasValue Then
+                        'Using gmc As IGetManager = GetMgr()
+                        'Dim mc As OrmManager = gmc.Manager
+                        Dim dic As IDictionary = GetDictionary(e.GetType)
+                        If dic Is Nothing Then
+                            Dim name As String = Me.GetType.Name
+                            Throw New OrmObjectException("Collection for " & name & " not exists")
+                        End If
+
+                        dic.Remove(oldkey)
+                    End If
+                    ' End Using
+
+                    'Cache.UnregisterModification(e, MappingEngine, TryCast(oschema, ICacheBehavior))
+
+                    If uc IsNot Nothing Then
+                        uc.OriginalCopy = Nothing
+                    End If
+
+                    Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
+                    If ll IsNot Nothing Then
+                        ll.IsLoaded = False
+                    End If
+                    '_loaded_members = New BitArray(_loaded_members.Count)
+                End If
+
+                'ElseIf state = Obm.ObjectState.Deleted Then
+                '    CheckCash()
+                '    using SyncHelper(false)
+                '        state = ObjectState.None
+                '        OrmCache.UnregisterModification(Me)
+                '    End SyncLock
+                'Else
+                '    Throw New OrmObjectException(ObjName & "Rejecting changes in the state " & _state.ToString & " is not allowed")
+            End If
+            'Invariant(mgr)
+        End Using
+    End Sub
+
+    Friend Shared Function RemoveVersionData(ByVal e As _ICachedEntity, ByVal cache As CacheBase, _
+        ByVal mpe As ObjectMappingEngine, ByVal setState As Boolean) As _ICachedEntity
+
+        Dim mo As _ICachedEntity = Nothing
+
+        'unreg = unreg OrElse _state <> Orm.ObjectState.Created
+        If setState Then
+            e.SetObjectStateClear(Entities.ObjectState.None)
+            'Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
+            If Not e.IsLoaded Then
+                Throw New OrmObjectException(e.ObjName & "Cannot set state None while object is not loaded")
+            End If
+        End If
+
+        Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
+        If uc IsNot Nothing Then
+            mo = CType(uc.OriginalCopy, _ICachedEntity)
+            'cache.UnregisterModification(e, mpe, TryCast(e.GetEntitySchema(mpe), ICacheBehavior))
+            uc.OriginalCopy = Nothing
+        End If
+
+        Return mo
+    End Function
+
+    Private Sub CreateClone4Edit(ByVal e As IUndoChanges, ByVal oschema As IEntitySchema)
+        If e.OriginalCopy Is Nothing Then
+            Dim clone As IEntity = MappingEngine.CloneFullEntity(e, oschema)
+            e.SetObjectState(Entities.ObjectState.Modified)
+            e.OriginalCopy = CType(clone, CachedEntity)
+            'Using mc As IGetManager = GetMgr()
+
+            'OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
+            'If Not e.IsLoading Then
+            RaiseBeginUpdate(e)
+            'End If
+        End If
+        'Cache.RegisterModification(Me, e, ObjectModification.ReasonEnum.Edit, TryCast(e.GetEntitySchema(MappingEngine), ICacheBehavior))
+        'End Using
+    End Sub
+
+    Protected Shared Sub StartUpdate(ByVal e As IUndoChanges)
+        If Not e.IsLoading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
+            'If e.ObjectState = Entities.ObjectState.Clone Then
+            '    Throw New OrmObjectException(e.ObjName & ": Altering clone is not allowed")
+            'End If
+
+            If e.ObjectState = Entities.ObjectState.Deleted Then
+                Throw New OrmObjectException(e.ObjName & ": Altering deleted object is not allowed")
+            End If
+
+            Using mc As IGetManager = e.GetMgr
+                If mc IsNot Nothing Then
+                    mc.Manager.PrepareUpdate(e)
+                End If
+            End Using
+        End If
+    End Sub
+
+    Protected Sub PrepareUpdate(ByVal e As IUndoChanges)
+        Dim oschema As IEntitySchema = Nothing
+
+        If Not e.IsLoaded Then
+            If e.ObjectState = Entities.ObjectState.None Then
+                Throw New InvalidOperationException(String.Format("Object {0} is not loaded while the state is None", e.ObjName))
+            End If
+
+            If e.ObjectState = Entities.ObjectState.NotLoaded Then
+                oschema = e.GetEntitySchema(MappingEngine)
+                Load(e, oschema, Nothing)
+                If e.ObjectState = Entities.ObjectState.NotFoundInSource Then
+                    Throw New OrmObjectException(e.ObjName & "Object is not editable 'cause it is not found in source")
+                End If
+            Else
+                Return
+            End If
+        End If
+
+        If oschema Is Nothing Then
+            oschema = e.GetEntitySchema(MappingEngine)
+        End If
+
+        'Dim mo As ObjectModification = Cache.ShadowCopy(e.GetType, e, TryCast(oschema, ICacheBehavior))
+        'If mo IsNot Nothing Then
+        '    'Using mc As IGetManager = GetMgr()
+        '    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(CurrentUser) Then
+        '        Throw New OrmObjectException(e.ObjName & "Object has already altered by another user")
+        '    End If
+        '    'End Using
+        '    If e.ObjectState = Entities.ObjectState.Deleted Then e.SetObjectState(ObjectState.Modified)
+        'Else
+        'Debug.Assert(ObjectState = Orm.ObjectState.None) ' OrElse state = Obm.ObjectState.Created)
+        'CreateModified(_id)
+        CreateClone4Edit(e, oschema)
+        'If modified.old_state = Obm.ObjectState.Created Then
+        '    _mo = mo
+        'End If
+        'End If
+
+    End Sub
+
+    Public Shared Function RegisterChange(ByVal o As IUndoChanges, ByVal propertyAlias As String) As IDisposable
+        'Using mc As IGetManager = o.GetMgr
+        '    If mc Is Nothing Then
+        '        Return New BlankSyncHelper(Nothing)
+        '    End If
+        Return ReadWritePrepare(o, False, propertyAlias)
+        'End Using
+    End Function
+
+    Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk() As PKDesc)
+        Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
+        If uc IsNot Nothing Then
+            Debug.Assert(uc.OriginalCopy Is Nothing)
+            Dim clone As IEntity = MappingEngine.CloneFullEntity(e, oschema)
+            uc.OriginalCopy = CType(clone, ICachedEntity)
+            'Using mc As IGetManager = GetMgr()
+            'Dim c As CacheBase = Cache
+            'c.RegisterModification(Me, e, pk, ObjectModification.ReasonEnum.Unknown, TryCast(oschema, ICacheBehavior))
+            'End Using
+            If pk IsNot Nothing Then SetPK(clone, pk, oschema, MappingEngine)
+        End If
+        e.SetObjectState(Entities.ObjectState.Modified)
+    End Sub
+
+#End Region
+
+#Region " ILazyLoad helpers "
+    Friend Shared Function DumpState(ByVal e As _IEntity) As String
+        Dim mpe As ObjectMappingEngine = e.GetMappingEngine()
+        Dim oschema As IEntitySchema = e.GetEntitySchema(mpe)
+        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+        Dim sb As New StringBuilder
+        Dim olr As Boolean = False
+        Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+        If ll IsNot Nothing Then
+            olr = ll.LazyLoadDisabled
+            ll.LazyLoadDisabled = True
+        End If
+        Try
+            For Each m As MapField2Column In map
+                sb.Append(m.PropertyAlias).Append("=")
+                sb.Append(ObjectMappingEngine.GetPropertyValue(e, m.PropertyAlias, oschema, m.PropertyInfo)).Append(";")
+            Next
+        Finally
+            If ll IsNot Nothing Then
+                ll.LazyLoadDisabled = olr
+            End If
+        End Try
+        Return sb.ToString
+    End Function
+
+    Private Shared Sub PrepareRead(ByVal e As _ICachedEntity, ByVal propertyAlias As String, ByRef d As System.IDisposable)
+        Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+        If ll Is Nothing OrElse Not ll.LazyLoadDisabled Then
+
+            If Not e.IsLoaded AndAlso (e.ObjectState = Entities.ObjectState.NotLoaded OrElse e.ObjectState = Entities.ObjectState.None) Then
+                If String.IsNullOrEmpty(propertyAlias) Then
+                    Using mc As IGetManager = e.GetMgr
+                        mc.Manager.Load(e, propertyAlias)
+                    End Using
+                Else
+                    If ll IsNot Nothing Then
+                        Using mc As IGetManager = e.GetMgr
+                            If mc IsNot Nothing Then
+                                Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+                                Dim oschema As IEntitySchema = e.GetEntitySchema(mpe)
+                                If Not IsPropertyLoaded(e, propertyAlias, oschema.FieldColumnMap, mpe) Then
+                                    mc.Manager.Load(e, oschema, propertyAlias)
+                                End If
+                            End If
+
+                        End Using
+                    End If
+                End If
+            End If
+
+            d = e.LockEntity
+        End If
+    End Sub
+
+    Private Shared Function ReadPrepareWithCheck(ByVal e As _ICachedEntity, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        If checkEntity Then
+            Using mc As IGetManager = e.GetMgr()
+                If mc IsNot Nothing Then
+                    Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
+                    Dim oschema As IEntitySchema = mpe.GetEntitySchema(e.GetType)
+                    Dim o As ICachedEntity = TryCast(ObjectMappingEngine.GetPropertyValue(e, propertyAlias, oschema), ICachedEntity)
+                    If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
+                        Dim ov As IOptimizedValues = TryCast(e, IOptimizedValues)
+                        If ov IsNot Nothing Then
+                            Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(GetPKValues(o, Nothing), o.GetType)
+                            If eo.CreateManager Is Nothing Then eo.SetCreateManager(e.CreateManager)
+                            ov.SetValueOptimized(propertyAlias, oschema, eo)
+                        Else
+                            Throw New OrmObjectException("Check read requires IOptimizedValues")
+                        End If
+                    End If
+                End If
+            End Using
+        End If
+        Return ReadWritePrepare(e, True, propertyAlias)
+    End Function
+
+    Private Shared Function ReadWritePrepare(ByVal e As _ICachedEntity, ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
+        Dim err As Boolean = True
+        Dim d As IDisposable = New BlankSyncHelper(Nothing)
+        Try
+            If reader Then
+                PrepareRead(e, propertyAlias, d)
+            Else
+                d = e.LockEntity
+                Dim uc As IUndoChanges = CType(e, IUndoChanges)
+                StartUpdate(uc)
+                If Not uc.DontRaisePropertyChange AndAlso Not e.IsLoading Then
+                    d = New Entity.ChangedEventHelper(e, propertyAlias, d)
+                End If
+            End If
+            err = False
+        Finally
+            If err Then
+                If d IsNot Nothing Then d.Dispose()
+            End If
+        End Try
+
+        Return d
+    End Function
+
+    Public Shared Function RegisterRead(ByVal e As IPropertyLazyLoad, ByVal propertyAlias As String) As IDisposable
+        Return ReadWritePrepare(CType(e, _ICachedEntity), True, propertyAlias)
+    End Function
+
+    Public Shared Function RegisterRead(ByVal e As IPropertyLazyLoad, ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        Return ReadPrepareWithCheck(CType(e, _ICachedEntity), propertyAlias, checkEntity)
+    End Function
+
+    Public Shared Function IsPropertyLoaded(ByVal e As _IEntity, ByVal propertyAlias As String,
+        ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+        Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+        If ll IsNot Nothing Then
+            If e Is Nothing Then
+                Throw New ArgumentNullException("e")
+            End If
+
+            If map Is Nothing Then
+                Throw New ArgumentNullException("map")
+            End If
+
+            'Dim map As Collections.IndexedCollection(Of String, MapField2Column) = e.GetEntitySchema(mpe).FieldColumnMap
+            Dim idx As Integer = map.IndexOf(propertyAlias)
+            If idx < 0 Then
+                Throw New OrmObjectException(String.Format("Property {0} not found in type {1}. Ensure it is not suppressed", propertyAlias, e.GetType))
+            End If
+            Return PropertyLoadState(ll, idx, map, mpe)
+        End If
+        Return True
+    End Function
+
+    Private Shared Sub InitLoadState(ByVal e As IPropertyLazyLoad, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
+        If e.PropertyLoadState Is Nothing Then
+            'OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version)
+            e.PropertyLoadState = New BitArray(map.Count)
+            '_sver = If(mpe Is Nothing, "w-x", mpe.Version)
+            Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
+            If ce IsNot Nothing AndAlso ce.IsPKLoaded Then
+                For i As Integer = 0 To map.Count - 1
+                    If Not e.PropertyLoadState(i) Then
+                        If map(i).IsPK Then
+                            e.PropertyLoadState(i) = True
+                        End If
+                    End If
+                Next
+            End If
+        End If
+    End Sub
+
+    Protected Shared Property PropertyLoadState(ByVal ll As IPropertyLazyLoad, ByVal idx As Integer, _
+        ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+        Get
+            InitLoadState(ll, map, mpe)
+            Return ll.PropertyLoadState(idx)
+        End Get
+        Set(ByVal value As Boolean)
+            InitLoadState(ll, map, mpe)
+            ll.PropertyLoadState(idx) = value
+        End Set
+    End Property
+
+    Friend Shared Function SetLoaded(ByVal ll As IPropertyLazyLoad, ByVal propertyAlias As String, ByVal loaded As Boolean, _
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+
+        Dim idx As Integer = map.IndexOf(propertyAlias)
+        If idx < 0 Then
+            'Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
+            Return False
+        End If
+        Dim old As Boolean = PropertyLoadState(ll, idx, map, mpe)
+        PropertyLoadState(ll, idx, map, mpe) = loaded
+        Return old
+    End Function
+
+    Friend Shared Function CheckIsAllLoaded(ByVal ll As IPropertyLazyLoad, ByVal mpe As ObjectMappingEngine, _
+            ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
+        'Using SyncHelper(False)
+        Dim allloaded As Boolean = True
+        If Not ll.IsLoaded OrElse ll.PropertyLoadState.Count <= loadedColumns Then
+            For i As Integer = 0 To map.Count - 1
+                If Not PropertyLoadState(ll, i, map, mpe) Then
+                    'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
+                    'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    allloaded = False
+                    Exit For
+                    'End If
+                End If
+            Next
+            ll.IsLoaded = allloaded
+        End If
+        Return allloaded
+        'End Using
+    End Function
+
+    Protected Shared Sub SetLoaded(ByVal ce As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal value As Boolean)
+        Dim ll As IPropertyLazyLoad = TryCast(ce, IPropertyLazyLoad)
+        If ll IsNot Nothing Then
+            Using ce.LockEntity
+                Dim oschema As IEntitySchema = ce.GetEntitySchema(mpe)
+
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+
+                If value AndAlso Not ll.IsLoaded Then
+                    For i As Integer = 0 To map.Count - 1
+                        PropertyLoadState(ll, i, map, mpe) = True
+                    Next
+                ElseIf Not value AndAlso ll.IsLoaded Then
+                    For i As Integer = 0 To map.Count - 1
+                        PropertyLoadState(ll, i, map, mpe) = False
+                    Next
+                End If
+                ll.IsLoaded = value
+                Debug.Assert(ll.IsLoaded = value)
+            End Using
+        End If
+    End Sub
+
+#End Region
+
+    Public Shared Sub SetPK(ByVal e As Object, ByVal pk As PKDesc(), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
+        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        If op IsNot Nothing Then
+            op.SetPK(pk)
+        Else
+            Using New LoadingWrapper(e)
+                Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+                If ll IsNot Nothing Then
+                    If oschema Is Nothing Then
+                        oschema = mpe.GetEntitySchema(e.GetType)
+                    End If
+
+                    If oschema Is Nothing Then
+                        Throw New ArgumentNullException("oschema")
+                    End If
+
+                    map = oschema.FieldColumnMap
+                End If
+                For Each p As PKDesc In pk
+                    ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
+                    If ll IsNot Nothing Then
+                        OrmManager.SetLoaded(ll, p.PropertyAlias, True, map, mpe)
+                    End If
+                Next
+            End Using
+        End If
+    End Sub
+
+    Public Shared Sub SetPK(ByVal o As Object, ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
+        Dim op As IOptimizePK = TryCast(o, IOptimizePK)
+        If op IsNot Nothing Then
+            op.SetPK(pk)
+        Else
+            Dim oschema As IEntitySchema = Nothing
+            Dim e As IEntity = TryCast(o, IEntity)
+            If e IsNot Nothing Then
+                oschema = e.GetEntitySchema(mpe)
+            Else
+                oschema = mpe.GetEntitySchema(o.GetType)
+            End If
+            SetPK(o, pk, oschema, mpe)
+        End If
+    End Sub
+
+    Public Shared Function GetPKValues(ByVal e As Object, ByVal oschema As IEntitySchema) As PKDesc()
+        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        If op IsNot Nothing Then
+            Return op.GetPKValues()
+        Else
+            Return ObjectMappingEngine.GetPKs(e, oschema)
+        End If
+    End Function
+
+    Public Shared Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As PKDesc()
+        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        If op IsNot Nothing Then
+            Return op.GetPKValues()
+        Else
+            If oschema Is Nothing Then
+                Dim mpe As ObjectMappingEngine = e.GetMappingEngine
+                oschema = e.GetEntitySchema(mpe)
+            End If
+            Return GetPKValues(CType(e, Object), oschema)
+        End If
+    End Function
+
+    Public Shared Function HasBodyChanges(ByVal e As IEntity) As Boolean
+        Return e.ObjectState = Entities.ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created
+    End Function
+
+    Public Shared Function HasChanges(ByVal e As IEntity) As Boolean
+        If e.ObjectState = Entities.ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created Then
+            Return True
+        Else
+            Dim r As IRelations = TryCast(e, IRelations)
+            If r IsNot Nothing Then
+                Return r.HasChanges
+            End If
+        End If
+        Return False
+    End Function
+
+    Public Shared Sub CopyBody(ByVal [from] As Object, ByVal [to] As Object, ByVal oschema As IEntitySchema)
+        Dim e As _IEntity = TryCast([to], _IEntity)
+        If e IsNot Nothing Then
+            Using e.LockEntity
+                e.BeginLoading()
+                If oschema Is Nothing Then
+                    oschema = e.GetEntitySchema(e.GetMappingEngine)
+                End If
+                CopyProperties([from], [to], oschema)
+                e.EndLoading()
+            End Using
+        Else
+            CopyProperties([from], [to], oschema)
+        End If
+    End Sub
+
+    Public Shared Sub CopyProperties(ByVal [from] As Object, ByVal [to] As Object, _
+        ByVal oschema As IEntitySchema)
+
+        Dim cp As ICopyProperties = TryCast([from], ICopyProperties)
+        If cp IsNot Nothing Then
+            cp.CopyTo([to])
+        Else
+            If oschema Is Nothing Then
+                Throw New ArgumentNullException("oschema")
+            End If
+
+            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+
+            For Each m As MapField2Column In map
+                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+            Next
+        End If
+    End Sub
 
 End Class
 

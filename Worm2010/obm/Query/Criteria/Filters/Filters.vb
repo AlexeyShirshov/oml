@@ -196,16 +196,16 @@ Namespace Criteria.Core
                         End If
                         tbl = map.Table
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.ObjectSource.ToStaticString(schema, filterInfo) & "." & Template.PropertyAlias, ex))
+                        Throw New ObjectMappingException(String.Format("There is no column for property {0} ", Template.ObjectSource.ToStaticString(schema, filterInfo) & "." & Template.PropertyAlias, ex))
                     End Try
                 End If
 
                 If almgr IsNot Nothing Then
-                    Debug.Assert(almgr.ContainsKey(tbl, Template.ObjectSource), "There is not alias for table " & tbl.RawName)
+                    Debug.Assert(almgr.ContainsKey(tbl, Template.ObjectSource), "There is no alias for table " & tbl.RawName)
                     Try
                         [alias] = almgr.GetAlias(tbl, Template.ObjectSource) & stmt.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
+                        Throw New ObjectMappingException("There is no alias for table " & tbl.RawName, ex)
                     End Try
                 End If
 

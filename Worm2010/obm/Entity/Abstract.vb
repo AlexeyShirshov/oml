@@ -51,6 +51,27 @@ Namespace Entities
         End Sub
     End Class
 
+    Public Class LoadingWrapper
+        Implements IDisposable
+
+        Private _oldL As Boolean
+        Private _e As _IEntity
+
+        Public Sub New(ByVal o As Object)
+            Dim e As _IEntity = TryCast(o, _IEntity)
+            If e IsNot Nothing Then
+                _oldL = e.IsLoading
+                _e = e
+                e.IsLoading = True
+            End If
+        End Sub
+
+        Public Sub Dispose() Implements IDisposable.Dispose
+            If _e IsNot Nothing Then _e.IsLoading = _oldL
+        End Sub
+
+    End Class
+
     Public Interface IOptimizedValues
         Sub SetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object)
         Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
@@ -63,17 +84,18 @@ Namespace Entities
         Sub Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
-        Function GetOldState() As ObjectState
         'Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
         Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
         Sub SetObjectState(ByVal o As ObjectState)
+        Sub SetObjectStateClear(ByVal o As ObjectState)
         Sub SetCreateManager(ByVal createManager As ICreateManager)
-        ReadOnly Property IsLoading() As Boolean
+        Property IsLoading() As Boolean
         Sub SetMgrString(ByVal str As String)
+        Sub RaisePropertyChanged(ByVal propertyChangedEventArgs As PropertyChangedEventArgs)
     End Interface
 
     Public Interface IEntity
-        Inherits ICloneable
+
         ''' <summary>
         ''' Объект блокировки сущности
         ''' </summary>
@@ -81,10 +103,10 @@ Namespace Entities
         ''' <remarks>Необходимо использовать блокировку при дуступе к внутреним метаданными сущности, таким как <see cref="IEntity.ObjectState"/></remarks>
         Function LockEntity() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
-        Function CreateClone() As Entity
-        Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
-        Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-        ReadOnly Property IsLoaded() As Boolean
+        'Function CreateClone() As Entity
+        'Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
+        'Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
+        Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
         Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
@@ -96,30 +118,40 @@ Namespace Entities
     Public Interface IPropertyLazyLoad
         Function Read(ByVal propertyAlias As String) As IDisposable
         Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
+        Property IsLoaded() As Boolean
+        Property PropertyLoadState As BitArray
+        Property LazyLoadDisabled As Boolean
+    End Interface
+
+    Public Interface IUndoChanges
+        Inherits _ICachedEntity
         Function Write(ByVal propertyAlias As String) As IDisposable
-        'Function Read() As IDisposable
-        'Function Write() As IDisposable
+        ReadOnly Property DontRaisePropertyChange As Boolean
+        Property OriginalCopy() As ICachedEntity
+        'Property OldObjectState As ObjectState
+        'Sub RemoveOriginalCopy(ByVal cache As CacheBase)
+        'Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
+        'Overloads Sub RejectChanges()
+        'Overloads Sub RejectChanges(ByVal mgr As OrmManager)
+        'ReadOnly Property HasChanges() As Boolean
+        'ReadOnly Property HasBodyChanges() As Boolean
+        'ReadOnly Property ChangeDescription() As String
+        Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
+        Sub RaiseOriginalCopyRemoved()
+        'Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
     End Interface
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
         Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
-        Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
-        Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
-        ReadOnly Property UpdateCtx() As UpdateCtx
+        Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal propertyAlias As String) As Boolean
-        Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
         Sub UpdateCacheAfterUpdate(ByVal c As OrmCache)
         Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
-        Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
-        Overloads Sub RejectChanges(ByVal mgr As OrmManager)
-        Overloads Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing)
-        'Function ShadowCopy(ByVal mgr As OrmManager) As ObjectModification
         Sub FillChangedObjectList(ByVal objectList As Generic.List(Of _ICachedEntity))
         Function GetChangedObjectList() As Generic.List(Of _ICachedEntity)
     End Interface
@@ -129,33 +161,38 @@ Namespace Entities
         ReadOnly Property UniqueString() As String
     End Interface
 
+    Public Interface IOptimizePK
+        Function GetPKValues() As PKDesc()
+        Sub SetPK(ByVal pk As PKDesc())
+    End Interface
+
+    Public Interface ICopyProperties
+        Sub CopyTo(ByVal dst As Object)
+    End Interface
+
     Public Interface ICachedEntity
         Inherits _IEntity, IKeyProvider
-        ReadOnly Property OriginalCopy() As ICachedEntity
-        Sub Load(ByVal propertyAlias As String)
-        Sub RemoveOriginalCopy(ByVal cache As CacheBase)
         ''' <summary>
         ''' Возвращает массив полей и значений первичный ключей
         ''' </summary>
         ''' <returns>Массив полей и значений первичный ключей</returns>
-        Function GetPKValues() As PKDesc()
+
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
-        Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
-        Sub RejectChanges()
         Sub RejectRelationChanges(ByVal mc As OrmManager)
-        ReadOnly Property HasChanges() As Boolean
-        ReadOnly Property HasBodyChanges() As Boolean
-        ReadOnly Property ChangeDescription() As String
+        Sub AcceptRelationalChanges(ByVal updateCache As Boolean, ByVal mc As OrmManager)
         Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs)
         Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
-        Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
         Function BeginEdit() As IDisposable
         Function BeginAlter() As IDisposable
         Sub CheckEditOrThrow()
         Function Delete(ByVal mgr As OrmManager) As Boolean
+        Sub RaiseChangesAccepted(ByVal args As EventArgs)
+        Sub RaiseAdded(ByVal args As EventArgs)
+        Sub RaiseDeleted(ByVal args As EventArgs)
+        Sub RaiseUpdated(ByVal args As EventArgs)
     End Interface
 
     Public Interface ICachedEntityEx

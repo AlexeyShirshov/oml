@@ -535,11 +535,28 @@ Imports System.Collections.ObjectModel
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(0), GetType(Table1))
             Assert.IsFalse(r(0).IsLoaded)
-            Assert.IsTrue(r(0).IsPropertyLoaded("Title"))
+            Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
+            Assert.IsNull(ll)
+            Using mc As IGetManager = r(0).GetMgr
+                Assert.IsNotNull(mc)
+                Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)
+                Assert.IsNotNull(oschema)
+                Assert.IsNotNull(oschema.FieldColumnMap)
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Title", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+            End Using
 
             Assert.IsInstanceOfType(r(1), GetType(Table2))
             Assert.IsFalse(r(1).IsLoaded)
-            Assert.IsTrue(r(1).IsPropertyLoaded("Money"))
+            ll = TryCast(r(1), IPropertyLazyLoad)
+            Assert.IsNull(ll)
+            Using mc As IGetManager = r(1).GetMgr
+                Assert.IsNotNull(mc)
+                Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
+                Assert.IsNotNull(oschema)
+                Assert.IsNotNull(oschema.FieldColumnMap)
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Money", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+            End Using
+
         Next
 
         q.Select(FCtor.prop(GetType(Table2), "Money").prop(GetType(Table1), "Title"))
@@ -549,11 +566,27 @@ Imports System.Collections.ObjectModel
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(1), GetType(Table1))
             Assert.IsFalse(r(1).IsLoaded)
-            Assert.IsTrue(r(1).IsPropertyLoaded("Title"))
+            Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
+            Assert.IsNull(ll)
+            Using mc As IGetManager = r(1).GetMgr
+                Assert.IsNotNull(mc)
+                Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
+                Assert.IsNotNull(oschema)
+                Assert.IsNotNull(oschema.FieldColumnMap)
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Title", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+            End Using
 
             Assert.IsInstanceOfType(r(0), GetType(Table2))
             Assert.IsFalse(r(0).IsLoaded)
-            Assert.IsTrue(r(0).IsPropertyLoaded("Money"))
+            ll = TryCast(r(0), IPropertyLazyLoad)
+            Assert.IsNull(ll)
+            Using mc As IGetManager = r(0).GetMgr
+                Assert.IsNotNull(mc)
+                Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)
+                Assert.IsNotNull(oschema)
+                Assert.IsNotNull(oschema.FieldColumnMap)
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Money", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+            End Using
         Next
 
     End Sub
@@ -586,12 +619,12 @@ Imports System.Collections.ObjectModel
         Assert.IsFalse(c.IsInCachePrecise(t, s))
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t.GetType, t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
+        'Assert.IsNotNull(c.ShadowCopy(t.GetType, t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
 
         t = q.GetByID(Of Table1)(1)
 
         Assert.IsNotNull(t.InternalProperties.OriginalCopy)
-        Assert.IsNotNull(c.ShadowCopy(t.GetType, t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
+        'Assert.IsNotNull(c.ShadowCopy(t.GetType, t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
 
         Assert.IsTrue(t.InternalProperties.IsLoaded)
         Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
