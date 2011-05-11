@@ -4365,7 +4365,7 @@ l1:
         Dim olds As ObjectState = e.ObjectState
         Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
         If ce IsNot Nothing Then
-            Dim robj As CachedEntity = CType(NormalizeObject(ce, GetDictionary(e.GetType), False, False, oschema), CachedEntity)
+            Dim robj As ICachedEntity = NormalizeObject(ce, GetDictionary(e.GetType), False, False, oschema)
             If robj IsNot Nothing AndAlso Not ReferenceEquals(robj, e) Then
                 Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
                 If String.IsNullOrEmpty(propertyAlias) Then
