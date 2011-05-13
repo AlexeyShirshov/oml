@@ -5156,10 +5156,16 @@ l1:
                         Select Case options
                             Case GetByIDOptions.EnsureExistsInStore
                                 o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                    o = Nothing
+                                End If
                             Case GetByIDOptions.GetAsIs
                                 o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
                             Case GetByIDOptions.EnsureLoadedFromStore
                                 o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                    o = Nothing
+                                End If
                             Case Else
                                 Throw New NotImplementedException
                         End Select
@@ -5168,10 +5174,16 @@ l1:
                         Select Case options
                             Case GetByIDOptions.EnsureExistsInStore
                                 o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                    o = Nothing
+                                End If
                             Case GetByIDOptions.GetAsIs
                                 o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
                             Case GetByIDOptions.EnsureLoadedFromStore
                                 o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
+                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                    o = Nothing
+                                End If
                             Case Else
                                 Throw New NotImplementedException
                         End Select
@@ -5314,6 +5326,12 @@ l1:
             End If
 
         End Function
+
+        'Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
+        '    ByVal ids As ICollection(Of Object), _
+        '    ByVal options As GetByIDOptions, mgr As OrmManager) As ReadOnlyList(Of T)
+        '    Return GetByIds(Of T)(ids, options, mgr)
+        'End Function
 
         Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
             Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs)
