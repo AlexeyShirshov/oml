@@ -1599,6 +1599,9 @@ l1:
         If e Is Nothing Then
             Me.Load(obj)
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
+            If e IsNot Nothing Then
+                Debug.Assert(e.ObjectState <> ObjectState.NotFoundInSource)
+            End If
         End If
         Return e
     End Function

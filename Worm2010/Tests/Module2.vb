@@ -246,7 +246,7 @@ Module Module2
                             End If
                         Loop While cnt < 10
                         Dim q As New QueryCmd
-                        q.GetByIds(Of TestEditTable)(l)
+                        q.GetByIds(Of TestEditTable)(l, mgr)
                         done = True
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
