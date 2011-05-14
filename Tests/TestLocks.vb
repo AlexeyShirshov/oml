@@ -13,7 +13,7 @@ Module TestLocks
                 Do
                     Dim t As TestEditTable = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
                     Do While t Is Nothing
-                        t = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), mgr)
+                        t = New QueryCmd().GetByID(Of TestEditTable)(r.Next(min, max), QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
                     Loop
                     Dim s As ObjectState = t.InternalProperties.ObjectState
                     Dim id As Integer = CInt(t.Identifier)

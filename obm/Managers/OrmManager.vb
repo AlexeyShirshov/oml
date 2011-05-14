@@ -1818,9 +1818,9 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.LockEntity
-                'If Cache.ShadowCopy(t, obj, cb) IsNot Nothing Then
-                '    Return False
-                'End If
+                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                    Return False
+                End If
 
                 dic.Remove(id)
 
@@ -1844,7 +1844,7 @@ l1:
             End Using
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            'Debug.Assert(Cache.ShadowCopy(t, obj, cb) Is Nothing)
+            Debug.Assert(obj.ObjectState <> ObjectState.Modified)
         End Using
         Return True
     End Function
@@ -3293,116 +3293,118 @@ l1:
     End Function
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
-        Dim oldObj As ICachedEntity = Nothing
-        Dim hasErrors As Boolean = True
-        Try
-            If _cache.IsReadonly Then
-                Throw New OrmManagerException("Cache is readonly")
-            End If
+        Using _cache.SyncSave
 
-            Dim v As _ICachedEntityEx = TryCast(obj, _ICachedEntityEx)
-            If v IsNot Nothing Then
-                Select Case obj.ObjectState
-                    Case ObjectState.Created, ObjectState.NotFoundInSource
-                        v.ValidateNewObject(Me)
-                    Case ObjectState.Modified
-                        v.ValidateUpdate(Me)
-                    Case ObjectState.Deleted
-                        v.ValidateDelete(Me)
-                End Select
-            End If
-
-            Dim t As Type = obj.GetType
-            Dim orm As _ISinglePKEntity = TryCast(obj, _ISinglePKEntity)
-            'Using obj.GetSyncRoot
-            Using GetSyncForSave(t, obj)
-                Dim old_id As Object = Nothing
-                Dim sa As SaveAction
-                Dim state As ObjectState = obj.ObjectState
-                If state = ObjectState.Created Then
-                    If orm IsNot Nothing Then
-                        old_id = orm.Identifier
-                    End If
-                    sa = SaveAction.Insert
+            Dim oldObj As ICachedEntity = Nothing
+            Dim hasErrors As Boolean = True
+            Try
+                If _cache.IsReadonly Then
+                    Throw New OrmManagerException("Cache is readonly")
                 End If
 
-                If state = ObjectState.Deleted Then
-                    sa = SaveAction.Delete
+                Dim v As _ICachedEntityEx = TryCast(obj, _ICachedEntityEx)
+                If v IsNot Nothing Then
+                    Select Case obj.ObjectState
+                        Case ObjectState.Created, ObjectState.NotFoundInSource
+                            v.ValidateNewObject(Me)
+                        Case ObjectState.Modified
+                            v.ValidateUpdate(Me)
+                        Case ObjectState.Deleted
+                            v.ValidateDelete(Me)
+                    End Select
                 End If
 
-                Dim old_state As ObjectState = state
-                Dim hasNew As Boolean = False
-                Dim err As Boolean = True, ttt As Boolean
-                Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
-                Try
-                    Dim processedType As New List(Of Type)
-
-                    If sa = SaveAction.Delete Then
+                Dim t As Type = obj.GetType
+                Dim orm As _ISinglePKEntity = TryCast(obj, _ISinglePKEntity)
+                'Using obj.GetSyncRoot
+                Using GetSyncForSave(t, obj)
+                    Dim old_id As Object = Nothing
+                    Dim sa As SaveAction
+                    Dim state As ObjectState = obj.ObjectState
+                    If state = ObjectState.Created Then
                         If orm IsNot Nothing Then
-                            Dim toDel As New List(Of M2MRelation)
-                            For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
+                            old_id = orm.Identifier
+                        End If
+                        sa = SaveAction.Insert
+                    End If
+
+                    If state = ObjectState.Deleted Then
+                        sa = SaveAction.Delete
+                    End If
+
+                    Dim old_state As ObjectState = state
+                    Dim hasNew As Boolean = False
+                    Dim err As Boolean = True, ttt As Boolean
+                    Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
+                    Try
+                        Dim processedType As New List(Of Type)
+
+                        If sa = SaveAction.Delete Then
+                            If orm IsNot Nothing Then
+                                Dim toDel As New List(Of M2MRelation)
+                                For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
 #If OLDM2M Then
                                 Dim acs As AcceptState2 = Nothing
 #End If
 
-                                If r.ConnectedType Is Nothing Then
-                                    Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
-                                    If r.DeleteCascade Then
+                                    If r.ConnectedType Is Nothing Then
+                                        Dim cmd As RelationCmd = CType(orm, IRelations).GetCmd(r)
+                                        If r.DeleteCascade Then
 #If OLDM2M Then
                                         M2MDelete(orm, r.Entity.GetRealType(MappingEngine), r.Key)
 #End If
 
-                                        If cmd IsNot Nothing Then
-                                            cmd.RemoveAll(Me)
+                                            If cmd IsNot Nothing Then
+                                                cmd.RemoveAll(Me)
+                                                toDel.Add(CType(cmd.Relation, M2MRelation))
+                                            End If
+                                        ElseIf cmd IsNot Nothing AndAlso cmd.Relation.HasDeleted Then
                                             toDel.Add(CType(cmd.Relation, M2MRelation))
                                         End If
-                                    ElseIf cmd IsNot Nothing AndAlso cmd.Relation.HasDeleted Then
-                                        toDel.Add(CType(cmd.Relation, M2MRelation))
-                                    End If
 #If OLDM2M Then
                                     acs = M2MSave(orm, r.Entity.GetRealType(MappingEngine), r.Key)
 #End If
 
-                                    processedType.Add(r.Entity.GetRealType(MappingEngine))
-                                End If
+                                        processedType.Add(r.Entity.GetRealType(MappingEngine))
+                                    End If
 
 #If OLDM2M Then
                                 If acs IsNot Nothing Then CType(orm, _IKeyEntity).AddAccept(acs)
 #End If
-                            Next
+                                Next
 
-                            For Each elb As M2MRelation In toDel
-                                Dim el As M2MRelation = elb.PrepareSave(Me)
-                                If el IsNot Nothing Then
-                                    M2MSave(orm, el)
-                                    'elb.Saved = True
-                                    elb._savedIds.AddRange(el.Added)
-                                    hasNew = hasNew OrElse elb.HasNew
-                                End If
-                            Next
+                                For Each elb As M2MRelation In toDel
+                                    Dim el As M2MRelation = elb.PrepareSave(Me)
+                                    If el IsNot Nothing Then
+                                        M2MSave(orm, el)
+                                        'elb.Saved = True
+                                        elb._savedIds.AddRange(el.Added)
+                                        hasNew = hasNew OrElse elb.HasNew
+                                    End If
+                                Next
 
-                            Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
+                                Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
 #If OLDM2M Then
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
                                 CType(_cache, OrmCache).ConnectedEntityEnum(Me, t, AddressOf o.Remove)
                             End If
 #End If
+                            End If
                         End If
-                    End If
 
-                    Dim saved As Boolean = obj.Save(Me)
-                    If Not saved Then
-                        ttt = True
-                        hasErrors = False
-                        Return True
-                    End If
+                        Dim saved As Boolean = obj.Save(Me)
+                        If Not saved Then
+                            ttt = True
+                            hasErrors = False
+                            Return True
+                        End If
 
-                    obj.RaiseSaved(sa)
+                        obj.RaiseSaved(sa)
 
-                    If sa = SaveAction.Insert Then
-                        If orm IsNot Nothing Then
-                            Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
+                        If sa = SaveAction.Insert Then
+                            If orm IsNot Nothing Then
+                                Dim oo As IRelation = TryCast(MappingEngine.GetEntitySchema(t), IRelation)
 #If OLDM2M Then
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
@@ -3410,11 +3412,11 @@ l1:
                             End If
 #End If
 
-                            M2MUpdate(orm, old_id)
+                                M2MUpdate(orm, old_id)
 
-                            For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
-                                Dim tt As Type = r.Entity.GetRealType(MappingEngine)
-                                If Not MappingEngine.IsMany2ManyReadonly(t, tt) Then
+                                For Each r As M2MRelationDesc In MappingEngine.GetM2MRelations(t)
+                                    Dim tt As Type = r.Entity.GetRealType(MappingEngine)
+                                    If Not MappingEngine.IsMany2ManyReadonly(t, tt) Then
 #If OLDM2M Then
 
                                     Dim acs As AcceptState2 = M2MSave(orm, tt, r.Key)
@@ -3423,24 +3425,24 @@ l1:
                                         'obj.AddAccept(acs)
                                     End If
 #End If
-                                End If
-                            Next
-
-                            For Each rl As Relation In orm.GetAllRelation
-                                Dim elb As M2MRelation = TryCast(rl, M2MRelation)
-                                If elb IsNot Nothing Then
-                                    Dim el As M2MRelation = elb.PrepareSave(Me)
-                                    If el IsNot Nothing Then
-                                        M2MSave(orm, el)
-                                        'elb.Saved = True
-                                        elb._savedIds.AddRange(el.Added)
-                                        hasNew = hasNew OrElse elb.HasNew
                                     End If
-                                End If
-                            Next
-                        End If
-                    ElseIf sa = SaveAction.Update Then
-                        If orm IsNot Nothing Then
+                                Next
+
+                                For Each rl As Relation In orm.GetAllRelation
+                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                    If elb IsNot Nothing Then
+                                        Dim el As M2MRelation = elb.PrepareSave(Me)
+                                        If el IsNot Nothing Then
+                                            M2MSave(orm, el)
+                                            'elb.Saved = True
+                                            elb._savedIds.AddRange(el.Added)
+                                            hasNew = hasNew OrElse elb.HasNew
+                                        End If
+                                    End If
+                                Next
+                            End If
+                        ElseIf sa = SaveAction.Update Then
+                            If orm IsNot Nothing Then
 #If OLDM2M Then
                             If orm.GetM2M IsNot Nothing Then
                                 For Each acp As AcceptState2 In orm.GetM2M
@@ -3469,49 +3471,50 @@ l1:
                             Next
 #End If
 
-                            For Each rl As Relation In orm.GetAllRelation
-                                Dim elb As M2MRelation = TryCast(rl, M2MRelation)
-                                If elb IsNot Nothing Then
-                                    Dim el As M2MRelation = elb.PrepareSave(Me)
-                                    If el IsNot Nothing Then
-                                        M2MSave(orm, el)
-                                        'elb.Saved = True
-                                        elb._savedIds.AddRange(el.Added)
+                                For Each rl As Relation In orm.GetAllRelation
+                                    Dim elb As M2MRelation = TryCast(rl, M2MRelation)
+                                    If elb IsNot Nothing Then
+                                        Dim el As M2MRelation = elb.PrepareSave(Me)
+                                        If el IsNot Nothing Then
+                                            M2MSave(orm, el)
+                                            'elb.Saved = True
+                                            elb._savedIds.AddRange(el.Added)
+                                        End If
+                                        hasNew = hasNew OrElse elb.HasNew
                                     End If
-                                    hasNew = hasNew OrElse elb.HasNew
-                                End If
-                            Next
-                        End If
-                    End If
-
-                    If AcceptChanges Then
-                        If hasNew Then
-                            Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
-                        End If
-                        oldObj = Me.AcceptChanges(obj, False, SinglePKEntity.IsGoodState(state))
-                    End If
-
-                    err = False
-                    hasErrors = False
-                Finally
-                    If err Then
-                        If sa = SaveAction.Insert AndAlso Not ttt Then
-                            Me.RejectChanges(uc)
+                                Next
+                            End If
                         End If
 
-                        state = old_state
-                        'Else
-                        '    obj.ObjSaved = True
-                    End If
-                End Try
-                Return hasNew
-            End Using
-        Finally
-            '            If obj.ObjSaved AndAlso AcceptChanges Then
-            If AcceptChanges AndAlso Not hasErrors Then
-                obj.UpdateCache(Me, oldObj)
-            End If
-        End Try
+                        If AcceptChanges Then
+                            If hasNew Then
+                                Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
+                            End If
+                            oldObj = Me.AcceptChanges(obj, False, SinglePKEntity.IsGoodState(state))
+                        End If
+
+                        err = False
+                        hasErrors = False
+                    Finally
+                        If err Then
+                            If sa = SaveAction.Insert AndAlso Not ttt Then
+                                Me.RejectChanges(uc)
+                            End If
+
+                            state = old_state
+                            'Else
+                            '    obj.ObjSaved = True
+                        End If
+                    End Try
+                    Return hasNew
+                End Using
+            Finally
+                '            If obj.ObjSaved AndAlso AcceptChanges Then
+                If AcceptChanges AndAlso Not hasErrors Then
+                    obj.UpdateCache(Me, oldObj)
+                End If
+            End Try
+        End Using
     End Function
 
     Public Function AddObject(ByVal obj As _ICachedEntity) As ICachedEntity

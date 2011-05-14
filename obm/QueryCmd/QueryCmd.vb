@@ -5106,11 +5106,11 @@ l1:
         End Function
 
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object) As T
-            Return GetByID(Of T)(id, GetByIDOptions.GetAsIs)
+            Return GetByID(Of T)(id, GetByIDOptions.EnsureExistsInStore)
         End Function
 
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal mgr As OrmManager) As T
-            Return GetByID(Of T)(id, GetByIDOptions.GetAsIs, mgr)
+            Return GetByID(Of T)(id, GetByIDOptions.EnsureExistsInStore, mgr)
         End Function
 
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions, ByVal mgr As OrmManager) As T

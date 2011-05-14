@@ -1114,7 +1114,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(1)
+        Dim t As Table1 = q.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs)
 
         Assert.IsNotNull(t)
         Assert.AreEqual(0, q.ExecCount)
@@ -1149,7 +1149,7 @@ Imports Worm.Expressions2
         Dim q As New QueryCmd(Function() _
             TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        Dim t As Table1 = q.GetByID(Of Table1)(-59871)
+        Dim t As Table1 = q.GetByID(Of Table1)(-59871, QueryCmd.GetByIDOptions.GetAsIs)
 
         Assert.IsNotNull(t)
         Assert.AreEqual(0, q.ExecCount)
