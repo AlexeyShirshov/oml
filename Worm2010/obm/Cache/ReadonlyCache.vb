@@ -268,7 +268,7 @@ Namespace Cache
             End Get
         End Property
 
-        Friend ReadOnly Property SyncRoot2() As IDisposable
+        Friend ReadOnly Property SyncSave() As IDisposable
             Get
 #If DebugLocks Then
                 Return New CSScopeMgr_Debug(_lock2, "d:\temp\")

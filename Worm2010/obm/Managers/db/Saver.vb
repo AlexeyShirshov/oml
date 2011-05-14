@@ -336,6 +336,7 @@ Namespace Database
                     Return True
                 End If
             Next
+            Return False
         End Function
 
         Protected Overridable Function CanSaveObj(ByVal o As _ICachedEntity, ByVal col2save As IList) As Boolean
@@ -432,7 +433,7 @@ l1:
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
 #Else
-            Using _mgr.Cache.SyncRoot2
+            Using _mgr.Cache.SyncSave
 #End If
                 _mgr.BeginTransaction()
                 Try
