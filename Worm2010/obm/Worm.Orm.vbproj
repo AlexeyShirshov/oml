@@ -67,7 +67,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DocumentationFile>Worm.Orm.xml</DocumentationFile>
-    <DefineConstants>OLDM2M = True,ExcludeFindMethods = False</DefineConstants>
+    <DefineConstants>ExcludeFindMethods</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Signed Debug|AnyCPU' ">
@@ -315,4 +315,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
+$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
+del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -22,10 +22,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Binaries", "Binaries", "{DD
 	ProjectSection(SolutionItems) = preProject
 		Binaries\CoreFramework.dll = Binaries\CoreFramework.dll
 		Binaries\CoreFramework.pdb = Binaries\CoreFramework.pdb
-		Binaries\LinqToCodedom.dll = Binaries\LinqToCodedom.dll
-		Binaries\LinqToCodedom.pdb = Binaries\LinqToCodedom.pdb
-		Binaries\Mvp.Xml.dll = Binaries\Mvp.Xml.dll
-		Binaries\Mvp.Xml.xml = Binaries\Mvp.Xml.xml
 	EndProjectSection
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Worm.Orm", "obm\Worm.Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
