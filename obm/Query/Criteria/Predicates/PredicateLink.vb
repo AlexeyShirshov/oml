@@ -295,11 +295,11 @@ Namespace Criteria
         '    Return New CustomPredicate(custom, values, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
         'End Function
 
-        Public Function [and](ByVal custom As String, ByVal exp As IGetExpression) As PredicateBase
+        Public Function [and](ByVal custom As String, ParamArray exp() As IExpression) As PredicateBase
             Return New CustomPredicate(custom, exp, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And)
         End Function
 
-        Public Function [or](ByVal custom As String, ByVal exp As IGetExpression) As PredicateBase
+        Public Function [or](ByVal custom As String, ParamArray exp() As IExpression) As PredicateBase
             Return New CustomPredicate(custom, exp, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
         End Function
 

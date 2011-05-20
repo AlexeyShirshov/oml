@@ -16,8 +16,12 @@ Namespace Expressions2
         End Function
 
         Public Function GetSelectedEntities(ByVal exp As IExpression) As ICollection(Of SelectUnion)
+            Return GetSelectedEntities(exp.GetExpressions)
+        End Function
+
+        Public Function GetSelectedEntities(ByVal exp() As IExpression) As ICollection(Of SelectUnion)
             Dim l As New List(Of SelectUnion)
-            For Each e As Expressions2.IExpression In exp.GetExpressions
+            For Each e As Expressions2.IExpression In exp
                 Dim ee As Expressions2.IEntityPropertyExpression = TryCast(e, Expressions2.IEntityPropertyExpression)
                 If ee IsNot Nothing Then
                     If Not l.Exists(Function(d) ee.ObjectProperty.Entity.Equals(d.EntityUnion)) Then

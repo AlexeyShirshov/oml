@@ -72,14 +72,6 @@
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Worm.Expressions2.CustomExpression" Collapsed="true">
-    <Position X="0.5" Y="6.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AACAAAAAgAAAQAAAgAAAAAQACAgAAAAQgAAhAAAAAAA=</HashCode>
-      <FileName>Query\Expressions\Primitive.vb</FileName>
-    </TypeIdentifier>
-    <Lollipop Position="0.2" />
-  </Class>
   <Class Name="Worm.Expressions2.BinaryExpression" Collapsed="true">
     <Position X="0.5" Y="5" Width="1.5" />
     <TypeIdentifier>
@@ -125,6 +117,13 @@
       <FileName>Query\Expressions\UnaryExpression.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Expressions2.CustomExpression" Collapsed="true">
+    <Position X="0.5" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAgAAAAAAAgAAAAAQACAgAAAAAAAAhAAAAAAA=</HashCode>
+      <FileName>Query\Expressions\Primitive.vb</FileName>
+    </TypeIdentifier>
   </Class>
   <Font Name="Segoe UI" Size="9" />
 </ClassDiagram>

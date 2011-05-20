@@ -286,7 +286,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)) _
             .Select(FCtor.count) _
-            .Where(Ctor.custom("left({0},1)", FCtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
+            .Where(Ctor.custom("left({0},1)", ECtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
 
         Dim al As New QueryAlias(inner)
 
@@ -310,7 +310,7 @@ Imports Worm.Entities
 
         inner.From(GetType(Entity4)) _
             .Select(FCtor.count) _
-            .Where(Ctor.custom("left({0},1)", FCtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
+            .Where(Ctor.custom("left({0},1)", ECtor.prop(GetType(Entity4), "Title")).eq(GetType(Entity5), "Title"))
 
         Dim al As New QueryAlias(inner)
 

@@ -177,7 +177,7 @@ Namespace Query
             Return New PredicateLink(New Condition.ConditionConstructor).and_not_exists(cmd)
         End Function
 
-        Public Shared Function custom(ByVal format As String, ByVal exp As IGetExpression) As PredicateBase
+        Public Shared Function custom(ByVal format As String, ParamArray exp() As IExpression) As PredicateBase
             Return New CustomPredicate(format, exp)
         End Function
 

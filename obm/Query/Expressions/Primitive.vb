@@ -162,22 +162,109 @@ Namespace Expressions2
         'End Function
     End Class
 
-    <Serializable()> _
-    Public Class CustomExpression
+    Public Class ExpressionsArray
         Implements IExpression
 
+        Private _v() As IExpression
+
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ParamArray exps() As IExpression)
+            _v = exps
+        End Sub
+
+        Public Overridable Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
+            Return _v
+        End Function
+
+        Public Overridable Function MakeStatement(mpe As ObjectMappingEngine, fromClause As Query.QueryCmd.FromClauseDef, stmt As StmtGenerator, paramMgr As Entities.Meta.ICreateParam, almgr As IPrepareTable, contextFilter As Object, stmtMode As MakeStatementMode, executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode And Not MakeStatementMode.AddColumnAlias, executor))
+                Next
+                Return String.Join(",", l.ToArray)
+            Else
+                Return String.Empty
+            End If
+        End Function
+
+        Public Overridable ReadOnly Property ShouldUse As Boolean Implements IExpression.ShouldUse
+            Get
+                Return _v IsNot Nothing
+            End Get
+        End Property
+
+        Public ReadOnly Property Expression As IExpression Implements IGetExpression.Expression
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public Overridable Overloads Function Equals(f As IQueryElement) As Boolean Implements IQueryElement.Equals
+            Return Equals(CType(f, ExpressionsArray))
+        End Function
+
+        Public Overloads Function Equals(ByVal f As ExpressionsArray) As Boolean
+            If _v Is Nothing Then
+                Return False
+            End If
+
+            Return GetDynamicString() = f.GetDynamicString
+        End Function
+
+        Public Overridable Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.GetDynamicString())
+                Next
+                Return String.Join(",", l.ToArray)
+            Else
+                Return String.Empty
+            End If
+        End Function
+
+        Public Overridable Function GetStaticString(mpe As ObjectMappingEngine, contextFilter As Object) As String Implements IQueryElement.GetStaticString
+            If _v IsNot Nothing Then
+                Dim l As New List(Of String)
+                For Each v As IExpression In _v
+                    l.Add(v.GetStaticString(mpe, contextFilter))
+                Next
+                Return String.Join(",", l.ToArray)
+            Else
+                Return String.Empty
+            End If
+        End Function
+
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            If _v IsNot Nothing Then
+                For Each e As IExpression In _v
+                    e.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
+                Next
+            End If
+        End Sub
+    End Class
+
+    <Serializable()> _
+    Public Class CustomExpression
+        Inherits ExpressionsArray
+
         Public Sub New(ByVal format As String)
+            MyBase.New()
             _f = format
         End Sub
 
         Public Sub New(ByVal format As String, ByVal ParamArray v() As IExpression)
+            MyBase.New(v)
             _f = format
-            _v = v
         End Sub
 
         Public Sub New(ByVal format As String, ByVal ParamArray v() As IGetExpression)
+            MyBase.New(Array.ConvertAll(v, Function(p) p.Expression))
             _f = format
-            _v = Array.ConvertAll(v, Function(p) p.Expression)
         End Sub
 
         Private _f As String
@@ -187,17 +274,16 @@ Namespace Expressions2
             End Get
         End Property
 
-        Private _v() As IExpression
         Public ReadOnly Property Values() As IExpression()
             Get
-                Return _v
+                Return MyBase.GetExpressions
             End Get
         End Property
 
-        Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
+        Public Overrides Function GetExpressions() As IExpression()
             Dim l As New List(Of IExpression)
             l.Add(Me)
-            If _v IsNot Nothing Then
+            If Values IsNot Nothing Then
                 For Each e As IExpression In Values
                     l.AddRange(e.GetExpressions)
                 Next
@@ -205,11 +291,11 @@ Namespace Expressions2
             Return l.ToArray
         End Function
 
-        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
-            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
-            If _v IsNot Nothing Then
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
+            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+            If Values IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IExpression In _v
+                For Each v As IExpression In Values
                     l.Add(v.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode And Not MakeStatementMode.AddColumnAlias, executor))
                 Next
                 Return String.Format(_f, l.ToArray)
@@ -218,19 +304,13 @@ Namespace Expressions2
             End If
         End Function
 
-        Public ReadOnly Property ShouldUse() As Boolean Implements IExpression.ShouldUse
+        Public Overrides ReadOnly Property ShouldUse() As Boolean
             Get
                 Return Not String.IsNullOrEmpty(_f)
             End Get
         End Property
 
-        Public ReadOnly Property Expression() As IExpression Implements IGetExpression.Expression
-            Get
-                Return Me
-            End Get
-        End Property
-
-        Public Overloads Function Equals(ByVal f As IQueryElement) As Boolean Implements IQueryElement.Equals
+        Public Overloads Overrides Function Equals(ByVal f As IQueryElement) As Boolean
             Return Equals(TryCast(f, CustomExpression))
         End Function
 
@@ -242,10 +322,10 @@ Namespace Expressions2
             Return _f = f._f AndAlso GetDynamicString() = f.GetDynamicString
         End Function
 
-        Public Function GetDynamicString() As String Implements IQueryElement.GetDynamicString
-            If _v IsNot Nothing Then
+        Public Overrides Function GetDynamicString() As String
+            If Values IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IExpression In _v
+                For Each v As IExpression In Values
                     l.Add(v.GetDynamicString())
                 Next
                 Return String.Format(_f, l.ToArray)
@@ -254,10 +334,10 @@ Namespace Expressions2
             End If
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            If _v IsNot Nothing Then
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            If Values IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IExpression In _v
+                For Each v As IExpression In Values
                     l.Add(v.GetStaticString(mpe, contextFilter))
                 Next
                 Return String.Format(_f, l.ToArray)
@@ -265,14 +345,6 @@ Namespace Expressions2
                 Return _f
             End If
         End Function
-
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            If _v IsNot Nothing Then
-                For Each e As IExpression In Values
-                    e.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
-                Next
-            End If
-        End Sub
     End Class
 
 End Namespace
