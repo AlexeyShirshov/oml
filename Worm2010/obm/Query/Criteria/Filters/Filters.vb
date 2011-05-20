@@ -524,7 +524,7 @@ Namespace Criteria.Core
         Private _str As String
 
         Public Sub New(ByVal format As String, ByVal value As IFilterValue, _
-                       ByVal oper As Worm.Criteria.FilterOperation, ByVal exp As IExpression)
+                       ByVal oper As Worm.Criteria.FilterOperation, ByVal exp() As IExpression)
             MyBase.New(value, New CustomValue(oper, format, exp))
             '_t = table
             '_field = field

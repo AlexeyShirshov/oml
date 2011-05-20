@@ -95,7 +95,12 @@ Namespace Query
 
             Public ReadOnly Property Expression() As Expressions2.IExpression Implements Expressions2.IGetExpression.Expression
                 Get
-                    Return GetExpressions()(0)
+                    Dim l As List(Of IExpression) = GetExpressions()
+                    If l.Count = 1 Then
+                        Return l(0)
+                    Else
+                        Return New ExpressionsArray(l.ToArray)
+                    End If
                 End Get
             End Property
         End Class
@@ -107,6 +112,15 @@ Namespace Query
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class Int
             Inherits ExpCtorBase(Of T).IntBase
+
+            Public Function Param(value As Object) As T
+                If value Is Nothing Then
+                    AppendExpression(New DBNullExpression())
+                Else
+                    AppendExpression(New ParameterExpression(value))
+                End If
+                Return CType(Me, T)
+            End Function
 
             Public Function count() As T
                 AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count))

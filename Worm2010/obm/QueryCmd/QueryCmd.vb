@@ -2581,6 +2581,11 @@ l1:
             Return Me
         End Function
 
+        Public Function OrderByNone() As QueryCmd
+            Sort = Nothing
+            Return Me
+        End Function
+
         Public Function OrderBy(ByVal value As OrderByClause) As QueryCmd
             Sort = value
             Return Me

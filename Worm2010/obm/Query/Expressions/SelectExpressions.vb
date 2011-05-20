@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Expressions2
     Public Class GroupExpression
@@ -143,6 +144,10 @@ Namespace Expressions2
             MyBase.New(list)
         End Sub
 
+        Public Sub New(s As SortExpression)
+            MyBase.New(GetList(s))
+        End Sub
+
         Public Function CanEvaluate(ByVal mpe As ObjectMappingEngine) As Boolean
             For Each s As SortExpression In Me
                 If Not s.CanEval(mpe) Then
@@ -151,6 +156,13 @@ Namespace Expressions2
             Next
             Return True
         End Function
+
+        Private Shared Function GetList(s As SortExpression) As IList(Of SortExpression)
+            Dim l As New List(Of SortExpression)
+            l.Add(s)
+            Return l
+        End Function
+
     End Class
 
 End Namespace

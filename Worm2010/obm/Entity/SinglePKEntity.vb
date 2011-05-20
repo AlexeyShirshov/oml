@@ -1274,7 +1274,7 @@ Namespace Entities
             End Set
         End Property
 
-        Public ReadOnly Property DontRaisePropertyChange As Boolean Implements IUndoChanges.DontRaisePropertyChange
+        Public Overridable ReadOnly Property DontRaisePropertyChange As Boolean Implements IUndoChanges.DontRaisePropertyChange
             Get
                 Return False
             End Get

@@ -350,6 +350,10 @@ Namespace Query
             Return f
         End Function
 
+        Public Shared Function sum(ByVal pa As String) As Int
+            Return sum(New PropertyAliasExpression(pa))
+        End Function
+
         Public Shared Function sum(ByVal table As SourceFragment, ByVal column As String) As Int
             Return sum(New TableExpression(table, column))
         End Function

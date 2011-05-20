@@ -217,33 +217,33 @@ Namespace Criteria
         Inherits PredicateBase
 
         Private _format As String
-        Private _exp As IExpression
+        Private _exp() As IExpression
 
-        Protected Friend Sub New(ByVal format As String, ByVal exp As IExpression)
+        Protected Friend Sub New(ByVal format As String, ByVal exp() As IExpression)
             MyBase.New(Nothing, Nothing)
             _format = format
             _exp = exp
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression)
-            MyBase.New(Nothing, Nothing)
-            _format = format
-            _exp = exp.Expression
-        End Sub
+        'Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression)
+        '    MyBase.New(Nothing, Nothing)
+        '    _format = format
+        '    _exp = exp.Expression
+        'End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal exp As IExpression, _
+        Protected Friend Sub New(ByVal format As String, ByVal exp() As IExpression, _
             ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             _format = format
             _exp = exp
         End Sub
 
-        Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression, _
-            ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
-            MyBase.New(con, ct)
-            _format = format
-            _exp = exp.Expression
-        End Sub
+        'Protected Friend Sub New(ByVal format As String, ByVal exp As IGetExpression, _
+        '    ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+        '    MyBase.New(con, ct)
+        '    _format = format
+        '    _exp = exp.Expression
+        'End Sub
 
         'Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
         '    MyBase.New(t, field)

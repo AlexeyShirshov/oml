@@ -44,8 +44,8 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Private _exp As IExpression
-        Public ReadOnly Property Values() As IExpression
+        Private _exp() As IExpression
+        Public ReadOnly Property Values() As IExpression()
             Get
                 Return _exp
             End Get
@@ -58,7 +58,7 @@ Namespace Criteria.Values
             _filter = True
         End Sub
 
-        Public Sub New(ByVal format As String, ByVal values As IExpression)
+        Public Sub New(ByVal format As String, ByVal values() As IExpression)
             _f = format
             _exp = values
             _filter = True
@@ -70,7 +70,7 @@ Namespace Criteria.Values
         '    _filter = True
         'End Sub
 
-        Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values As IExpression)
+        Public Sub New(ByVal oper As FilterOperation, ByVal format As String, ByVal values() As IExpression)
             MyBase.New(oper)
             _f = format
             _exp = values
@@ -79,7 +79,7 @@ Namespace Criteria.Values
         Public Overrides Function _ToString() As String Implements IQueryElement._ToString
             If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IExpression In _exp.GetExpressions
+                For Each v As IExpression In _exp
                     l.Add(v.GetDynamicString)
                 Next
                 If _filter Then
@@ -109,16 +109,13 @@ Namespace Criteria.Values
 
             'Return String.Format(_f, values.ToArray)
             If _exp IsNot Nothing Then
-                'Dim l As New List(Of String)
-                'For Each v As IFilterValue In _v
-                '    'If TypeOf v Is SelectExpressionValue Then
-                '    '    CType(v, SelectExpressionValue).AddAlias = False
-                '    'End If
-                '    Dim s As String = v.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
-                '    l.Add(s)
-                'Next
-                'Return String.Format(_f, l.ToArray)
-                Return String.Format(_f, _exp.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, MakeStatementMode.None, executor))
+                Dim l As New List(Of String)
+                For Each v As IExpression In _exp
+                    Dim s As String = v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, MakeStatementMode.None, executor)
+                    l.Add(s)
+                Next
+                Return String.Format(_f, l.ToArray)
+                'Return String.Format(_f, _exp.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, MakeStatementMode.None, executor))
             Else
                 Return _f
             End If
@@ -127,7 +124,7 @@ Namespace Criteria.Values
         Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
             If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
-                For Each v As IExpression In _exp.GetExpressions
+                For Each v As IExpression In _exp
                     l.Add(v.GetStaticString(mpe, contextFilter))
                 Next
                 If _filter Then
@@ -146,7 +143,9 @@ Namespace Criteria.Values
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             If _exp IsNot Nothing Then
-                _exp.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                For Each e As IExpression In _exp
+                    e.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                Next
             End If
         End Sub
 

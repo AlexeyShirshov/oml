@@ -121,11 +121,11 @@ Namespace Criteria
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
-        Public Function greater_than_eq(ByVal format As String, ByVal exp As IExpression) As PredicateLink
+        Public Function greater_than_eq(ByVal format As String, ByVal exp() As IExpression) As PredicateLink
             Return GetLink(CreateFilter(New CustomValue(format, exp), FilterOperation.GreaterEqualThan))
         End Function
 
-        Public Function less_than_eq(ByVal format As String, ByVal exp As IExpression) As PredicateLink
+        Public Function less_than_eq(ByVal format As String, ByVal exp() As IExpression) As PredicateLink
             Return GetLink(CreateFilter(New CustomValue(format, exp), FilterOperation.LessEqualThan))
         End Function
 
