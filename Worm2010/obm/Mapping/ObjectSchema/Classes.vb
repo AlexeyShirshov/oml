@@ -278,24 +278,40 @@ Namespace Entities.Meta
             End Get
         End Property
 
+        Private Sub InitFK(ByVal oschema As IEntitySchema)
+            If oschema IsNot Nothing Then
+                Dim pk As MapField2Column = Nothing
+                For Each pm As MapField2Column In oschema.FieldColumnMap
+                    If pm.IsPK Then
+                        If pk IsNot Nothing Then
+                            Throw New NotSupportedException("Multiple pks not supported")
+                        End If
+                        pk = pm
+                    End If
+                Next
+                SourceFields(0).PrimaryKey = pk.PropertyAlias
+            End If
+        End Sub
+
         Friend Sub ApplyForeignKey(ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByVal names As IDictionary)
             If SourceFields.Count = 1 AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey) AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType, mpe) AndAlso mpe IsNot Nothing Then
                 Dim oschema As IEntitySchema = CType(idic(PropertyType), IEntitySchema)
                 If oschema Is Nothing Then
-                    oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
-                End If
-                If oschema IsNot Nothing Then
-                    Dim pk As MapField2Column = Nothing
-                    For Each pm As MapField2Column In oschema.FieldColumnMap
-                        If pm.IsPK Then
-                            If pk IsNot Nothing Then
-                                Throw New NotSupportedException("Multiple pks not supported")
+                    'oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
+                    AddHandler mpe.EndInitSchema,
+                        Sub(dic As IDictionary)
+                            Dim _o As IEntitySchema = CType(dic(PropertyType), IEntitySchema)
+
+                            If _o Is Nothing Then
+                                _o = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
                             End If
-                            pk = pm
-                        End If
-                    Next
-                    SourceFields(0).PrimaryKey = pk.PropertyAlias
+
+                            If _o IsNot Nothing Then
+                                InitFK(_o)
+                            End If
+                        End Sub
                 End If
+                InitFK(oschema)
             End If
         End Sub
     End Class

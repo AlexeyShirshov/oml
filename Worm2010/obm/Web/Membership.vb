@@ -691,6 +691,10 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
+            If String.IsNullOrEmpty(username) Then
+                Return Nothing
+            End If
+
             Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
             If users.Count <> 1 Then
                 Throw New InvalidOperationException(String.Format("The number of users with {0} username is {1}", username, users.Count))

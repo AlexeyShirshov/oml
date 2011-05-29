@@ -81,6 +81,8 @@ Public Class ObjectMappingEngine
     Public Const DefaultVersion As String = "1"
     Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
 
+    Public Event EndInitSchema(idic As IDictionary)
+
     Public Sub New()
         MyClass.New(DefaultVersion)
     End Sub
@@ -161,6 +163,43 @@ Public Class ObjectMappingEngine
                     })
                 Next
                 m.ApplyForeignKey(mpe, idic, names)
+            End If
+        Next
+        Return map
+    End Function
+
+    Public Shared Function ApplyAttributes2Schema(map As Collections.IndexedCollection(Of String, MapField2Column), ByVal attrs As List(Of EntityPropertyAttribute),
+        ByVal mpe As ObjectMappingEngine, tbl As SourceFragment) As Collections.IndexedCollection(Of String, MapField2Column)
+
+        For Each ep As EntityPropertyAttribute In attrs
+            Dim m As MapField2Column = Nothing
+            If map.TryGetValue(ep.PropertyAlias, m) Then
+                m.PropertyInfo = ep._pi
+                If m.Attributes = Field2DbRelations.None Then
+                    m.Attributes = ep.Behavior
+                End If
+                If m.SourceFields Is Nothing OrElse m.SourceFields.Count = 0 Then
+                    For Each sf As SourceFieldAttribute In ep.SourceFields
+                        m.SourceFields.Add(New SourceField() With { _
+                            .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
+                            .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
+                            .SourceFieldExpression = sf.ColumnExpression _
+                        })
+                    Next
+                End If
+                m.ApplyForeignKey(mpe, mpe.GetIdic, mpe.GetNames)
+            ElseIf ep.SchemaVersion <> NeedEntitySchemaMapping Then
+                m = New MapField2Column(ep.PropertyAlias, tbl, ep.Behavior) With { _
+                                        .PropertyInfo = ep._pi, .Schema = Nothing}
+                map.Add(m)
+                For Each sf As SourceFieldAttribute In ep.SourceFields
+                    m.SourceFields.Add(New SourceField() With { _
+                        .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
+                        .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
+                        .SourceFieldExpression = sf.ColumnExpression _
+                    })
+                Next
+                m.ApplyForeignKey(mpe, mpe.GetIdic, mpe.GetNames)
             End If
         Next
         Return map
@@ -1497,6 +1536,7 @@ Public Class ObjectMappingEngine
                 If t.IsAssignableFrom(tp) Then GetEntitySchema(tp, Me, idic, names)
             Next
         Next
+        RaiseEvent EndInitSchema(idic)
         Return idic
     End Function
 

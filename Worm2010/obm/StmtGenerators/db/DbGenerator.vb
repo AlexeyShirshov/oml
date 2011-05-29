@@ -1082,7 +1082,7 @@ l2:
                                 If SupportIf() Then
                                     If HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch) OrElse Not lastTbl.Equals(pk_table) Then
                                         hasSyncUpdate = hasSyncUpdate OrElse HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
-                                        Dim varName As String = "@" & lastTbl.Name.Replace(".", "") & "_rownum"
+                                        Dim varName As String = "@" & lastTbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
                                         upd_cmd.Append(DeclareVariable(varName, "int")).Append(EndLine)
                                         upd_cmd.Append("select ").Append(varName).Append(" = ").Append(RowCount)
                                         upd_cmd.Append(", @lastErr = ").Append(LastError).Append(EndLine)
@@ -1128,7 +1128,7 @@ l2:
                         Next
 
                         If SupportIf() Then
-                            Dim varName As String = "@" & lastTbl.Name.Replace(".", "") & "_rownum"
+                            Dim varName As String = "@" & lastTbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
                             Dim insSb As New StringBuilder
                             If Not lastTbl.Equals(pk_table) Then
                                 CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, insSb, _
@@ -1157,7 +1157,7 @@ l2:
                                 For Each tbl As SourceFragment In syncUpdateProps _
                                     .ConvertAll(Function(e) esch.FieldColumnMap(e.ObjectProperty.PropertyAlias).Table)
 
-                                    Dim varName As String = "@" & tbl.Name.Replace(".", "") & "_rownum"
+                                    Dim varName As String = "@" & tbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
                                     upd_cmd.Append(varName).Append(" and ")
 
                                 Next

@@ -172,7 +172,17 @@ Namespace Expressions2
         End Sub
 
         Public Sub New(ParamArray exps() As IExpression)
-            _v = exps
+            If exps IsNot Nothing Then
+                Dim l As New List(Of IExpression)
+                For Each e As IExpression In exps
+                    If TypeOf e Is ExpressionsArray Then
+                        l.AddRange(e.GetExpressions)
+                    Else
+                        l.Add(e)
+                    End If
+                Next
+                _v = l.ToArray
+            End If
         End Sub
 
         Public Overridable Function GetExpressions() As IExpression() Implements IExpression.GetExpressions

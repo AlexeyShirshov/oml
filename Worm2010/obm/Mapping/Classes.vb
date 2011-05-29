@@ -50,6 +50,8 @@ Namespace Entities.Meta
             _schema = prefix
         End Sub
 
+        Public Property Hint As String
+
         'Public Property TableName() As String
         '    Get
         '        Return _table

@@ -538,6 +538,15 @@ Namespace Query
             '    Return a.less_than_eq(b)
             'End Operator
 #End Region
+
+            Public Shared Widening Operator CType(ByVal f As Int) As IExpression()
+                Return f.GetExpressions.ToArray
+            End Operator
+
+            Public Shared Widening Operator CType(ByVal f As Int) As BinaryExpression
+                Return CType(f.GetExpressions(f.GetExpressions.Count - 1), BinaryExpression)
+            End Operator
+
         End Class
     End Class
 
@@ -712,11 +721,11 @@ Namespace Query
         Class Int
             Inherits ExpCtor(Of Int).Int
 
-            Public Shared Widening Operator CType(ByVal f As Int) As IExpression()
+            Public Overloads Shared Widening Operator CType(ByVal f As Int) As IExpression()
                 Return f.GetExpressions.ToArray
             End Operator
 
-            Public Shared Widening Operator CType(ByVal f As Int) As BinaryExpression
+            Public Overloads Shared Widening Operator CType(ByVal f As Int) As BinaryExpression
                 Return CType(f.GetExpressions(f.GetExpressions.Count - 1), BinaryExpression)
             End Operator
         End Class

@@ -33,6 +33,9 @@ Namespace Query
                     Dim createType As Type = sender.CreateType.GetRealType(_mgr.MappingEngine)
                     If GetType(AnonymousCachedEntity).IsAssignableFrom(createType) Then
                         Dim oschema As IEntitySchema = sender.GetSchemaForSelectType(_mgr.MappingEngine)
+                        If oschema Is Nothing AndAlso sender._pocoType IsNot Nothing Then
+                            oschema = _mgr.MappingEngine.GetEntitySchema(sender._pocoType)
+                        End If
                         Dim l As New List(Of String)
                         If oschema Is Nothing Then
 l1:

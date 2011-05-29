@@ -223,6 +223,12 @@ Namespace Query.Database
                     fields = oschema.FieldColumnMap
                 Else
                     fields = _q.GetFieldsIdx()
+                    If fields.Count = 0 AndAlso _q._pocoType IsNot Nothing Then
+                        oschema = _mgr.MappingEngine.GetEntitySchema(_q._pocoType)
+                        If oschema IsNot Nothing Then
+                            fields = oschema.FieldColumnMap
+                        End If
+                    End If
                 End If
 
                 'Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
