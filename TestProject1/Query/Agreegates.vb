@@ -78,7 +78,7 @@ Imports Worm.Expressions2
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim q As New QueryCmd()
 
-            Dim cust As SelectExpression = FCtor.custom("isnull({0},1)", FCtor.prop(GetType(Entity4), "ID"))
+            Dim cust As SelectExpression = FCtor.custom("isnull({0},1)", ECtor.prop(GetType(Entity4), "ID"))
 
             q.Select(FCtor.max(cust).into("s")).From(GetType(Entity4))
 
@@ -207,9 +207,9 @@ Imports Worm.Expressions2
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
             'Dim o As New Grouping("left({0},1)", "Pref", FCtor.prop(t, "Title"))
-            Dim o As GroupExpression = GCtor.custom("left({0},1)", FCtor.prop(t, "Title"))
+            Dim o As GroupExpression = GCtor.custom("left({0},1)", ECtor.prop(t, "Title"))
             q.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
-                FCtor.custom("left({0},1)", FCtor.prop(t, "Title")).into("Pref"), _
+                FCtor.custom("left({0},1)", ECtor.prop(t, "Title")).into("Pref"), _
                 New SelectExpression(New Expressions2.AggregateExpression(Expressions2.AggregateExpression.AggregateFunction.Count), "Count") _
             })
             q.From(t).GroupBy(o).OrderBy(SCtor.count().desc)
@@ -232,9 +232,9 @@ Imports Worm.Expressions2
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("left({0},1)", FCtor.prop(t, "Title")).into("Pref").count().into("Count")) _
+            q.Select(FCtor.custom("left({0},1)", ECtor.prop(t, "Title")).into("Pref").count().into("Count")) _
                 .From(t) _
-                .GroupBy(GCtor.custom("left({0},1)", FCtor.prop(t, "Title"))) _
+                .GroupBy(GCtor.custom("left({0},1)", ECtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
@@ -255,9 +255,9 @@ Imports Worm.Expressions2
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("left({0},1)", FCtor.prop(t, "Title")).into("Pref").count().into("Count")) _
+            q.Select(FCtor.custom("left({0},1)", ECtor.prop(t, "Title")).into("Pref").count().into("Count")) _
                 .From(t) _
-                .GroupBy(GCtor.custom("left({0},1)", FCtor.prop(t, "Title"))) _
+                .GroupBy(GCtor.custom("left({0},1)", ECtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)
@@ -285,9 +285,9 @@ Imports Worm.Expressions2
             Dim t As Type = GetType(Entity4)
             'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd()
-            q.Select(FCtor.custom("left({0},1)", FCtor.prop(t, "Title")).into("Pref").count.into("Count")) _
+            q.Select(FCtor.custom("left({0},1)", ECtor.prop(t, "Title")).into("Pref").count.into("Count")) _
                 .From(t) _
-                .GroupBy(GCtor.custom("left({0},1)", FCtor.prop(t, "Title"))) _
+                .GroupBy(GCtor.custom("left({0},1)", ECtor.prop(t, "Title"))) _
                 .OrderBy(SCtor.count().desc)
 
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToAnonymList(mgr)

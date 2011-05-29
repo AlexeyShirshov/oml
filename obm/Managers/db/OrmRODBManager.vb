@@ -39,7 +39,7 @@ Namespace Database
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.List(Of SelectExpression) = Nothing
                 Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
-                Dim inv As Boolean
+                Dim inv As Boolean = False
                 'Using obj.GetSyncRoot()
                 Dim cmdtext As String = Nothing
                 Try
@@ -128,7 +128,11 @@ Namespace Database
                             inv = True
                         Finally
                             If tran Is Nothing Then
-                                mgr.Commit()
+                                If inv Then
+                                    mgr.Commit()
+                                Else
+                                    mgr.Rollback()
+                                End If
                             End If
                         End Try
                     End If
@@ -169,6 +173,7 @@ Namespace Database
                             Return False
                         End Try
                         If cmdtext.Length > 0 Then
+                            Dim [error] As Boolean = True
                             Dim tran As System.Data.IDbTransaction = mgr.Transaction
                             mgr.BeginTransaction()
                             Try
@@ -196,6 +201,7 @@ Namespace Database
                                             mgr.CloseConn(b)
                                         End Try
                                         'obj.AcceptChanges(cash)
+                                        [error] = False
                                     End Using
                                 Else
                                     For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, mgr.SQLGenerator.EndLine)
@@ -225,10 +231,15 @@ Namespace Database
                                         End Using
                                     Next
                                     'obj.AcceptChanges(cash)
+                                    [error] = False
                                 End If
                             Finally
                                 If tran Is Nothing Then
-                                    mgr.Commit()
+                                    If Not [error] Then
+                                        mgr.Commit()
+                                    Else
+                                        mgr.Rollback()
+                                    End If
                                 End If
                             End Try
                         End If
@@ -362,7 +373,7 @@ Namespace Database
                         End Try
 
                         If [error] Then
-                            Debug.Assert(False)
+                            'Debug.Assert(False)
                             Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
                         End If
                     End If
@@ -549,17 +560,20 @@ l1:
             Assert(_conn IsNot Nothing, "Commit operation requires connection")
 
             If _tran IsNot Nothing Then
-                _tran.Commit()
-                _tran.Dispose()
-                _tran = Nothing
+                Try
+                    _tran.Commit()
+                Finally
+                    _tran.Dispose()
+                    _tran = Nothing
 
-                Select Case _closeConnOnCommit
-                    Case ConnAction.Close
-                        _conn.Close()
-                    Case ConnAction.Destroy
-                        _conn.Dispose()
-                        _conn = Nothing
-                End Select
+                    Select Case _closeConnOnCommit
+                        Case ConnAction.Close
+                            _conn.Close()
+                        Case ConnAction.Destroy
+                            _conn.Dispose()
+                            _conn = Nothing
+                    End Select
+                End Try
             End If
         End Sub
 
@@ -571,17 +585,20 @@ l1:
             Assert(_conn IsNot Nothing, "Rollback operation requires connection")
 
             If _tran IsNot Nothing Then
-                _tran.Rollback()
-                _tran.Dispose()
-                _tran = Nothing
+                Try
+                    _tran.Rollback()
+                Finally
+                    _tran.Dispose()
+                    _tran = Nothing
 
-                Select Case _closeConnOnCommit
-                    Case ConnAction.Close
-                        _conn.Close()
-                    Case ConnAction.Destroy
-                        _conn.Dispose()
-                        _conn = Nothing
-                End Select
+                    Select Case _closeConnOnCommit
+                        Case ConnAction.Close
+                            _conn.Close()
+                        Case ConnAction.Destroy
+                            _conn.Dispose()
+                            _conn = Nothing
+                    End Select
+                End Try
             End If
         End Sub
 
@@ -1888,7 +1905,7 @@ l1:
                         If fields_idx.Count > 0 Then
                             For Each m As MapField2Column In fields_idx
                                 Dim se As New SelectExpression(original_type, m.PropertyAlias)
-                                'se.ColumnAlias = If(Not String.IsNullOrEmpty(m.ColumnExpression), m.ColumnExpression, m.PropertyAlias)
+                                se.ColumnAlias = If(Not String.IsNullOrEmpty(m.SourceFieldExpression), m.SourceFieldExpression, m.PropertyAlias)
                                 se.Attributes = m.Attributes
                                 selectList.Add(se)
                             Next

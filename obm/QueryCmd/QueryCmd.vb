@@ -457,6 +457,7 @@ Namespace Query
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
         Private _poco As IDictionary
+        Friend _pocoType As Type
         Friend _createTypes As New Dictionary(Of EntityUnion, EntityUnion)
         Private _unions As ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))
         Private _having As IGetFilter
@@ -3709,12 +3710,16 @@ l1:
                 AddPOCO(rt, selSchema)
                 'End If
             Else
+                If FromClause Is Nothing Then
+                    Me.From(selSchema.Table)
+                End If
                 For Each m As MapField2Column In selSchema.FieldColumnMap
                     If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         hasPK = True
                         Exit For
                     End If
                 Next
+                _pocoType = rt
             End If
 
             Dim l As IEnumerable = Nothing
@@ -3743,7 +3748,14 @@ l1:
             ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
             ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object, _
             Optional ByVal pref As String = Nothing)
-            Dim oschema As IEntitySchema = CType(_poco(rt), IEntitySchema)
+            Dim oschema As IEntitySchema = Nothing
+            If _poco IsNot Nothing Then
+                oschema = CType(_poco(rt), IEntitySchema)
+            End If
+            If oschema Is Nothing Then
+                oschema = mpe.GetEntitySchema(rt)
+            End If
+
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             For Each m As MapField2Column In map
                 Dim pa As String = m.PropertyAlias
@@ -3758,6 +3770,16 @@ l1:
                 End If
 
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+                If pi Is Nothing Then
+                    Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(rt, mpe.Version, True, True)
+                    For Each item As EntityPropertyAttribute In ll
+                        If item.PropertyAlias = m.PropertyAlias Then
+                            pi = item._pi
+                            m.PropertyInfo = pi
+                            Exit For
+                        End If
+                    Next
+                End If
                 Dim v As Object = ObjectMappingEngine.GetPropertyValue(e, pa, oschema, pi)
                 If v Is DBNull.Value Then
                     v = Nothing
@@ -3771,7 +3793,7 @@ l1:
                 vals = New PKDesc() {New PKDesc(pa, v)}
                 'End If
                 v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing)
-                If v IsNot Nothing AndAlso _poco.Contains(pit) Then
+                If v IsNot Nothing AndAlso _poco IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
             Next
@@ -4444,6 +4466,13 @@ l1:
 
 #End Region
 
+        Friend Function GetFieldsIdx(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
+            Dim c As New OrmObjectIndex
+            Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True)
+            ObjectMappingEngine.ApplyAttributes2Schema(c, ll, mpe, FromClause.Table)
+            Return c
+        End Function
+
         Friend Function GetFieldsIdx() As Collections.IndexedCollection(Of String, MapField2Column)
             Dim c As New OrmObjectIndex
 
@@ -4470,7 +4499,7 @@ l1:
             hasPK = False
             Dim s As IEntitySchema = mpe.GetPOCOEntitySchema(t)
             If s Is Nothing Then
-                s = New SimpleObjectSchema(GetFieldsIdx())
+                s = New SimpleObjectSchema(GetFieldsIdx(mpe, t))
                 '                Dim tbl As SourceFragment = _from.Table
                 '                If tbl Is Nothing AndAlso SelectList IsNot Nothing Then
                 '                    For Each se As SelectExpression In SelectList
@@ -4659,7 +4688,7 @@ l1:
         Private Function _FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
             For Each se As SelectExpression In _sl
                 'If se.PropType = PropType.ObjectProperty Then
-                If se.GetIntoPropertyAlias = p Then
+                If se.GetIntoPropertyAlias(True) = p Then
                     If Not String.IsNullOrEmpty(se.ColumnAlias) Then
                         Return New String() {se.ColumnAlias}
                     Else
@@ -4681,6 +4710,10 @@ l1:
                                     End If
                                 End If
                             Next
+
+                            'If _from.AnyQuery IsNot Nothing Then
+                            '    Return _from.AnyQuery.FindColumn(mpe, p)
+                            'End If
                         End If
                     End If
                     'Else
@@ -5548,9 +5581,9 @@ l1:
 
                 Dim s As SelectExpression = Nothing
                 If so IsNot Nothing Then
-                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(so, propertyAlias)).into("Pref")
+                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(so, propertyAlias)).into("Pref")
                 Else
-                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(tt, propertyAlias)).into("Pref")
+                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(tt, propertyAlias)).into("Pref")
                 End If
 
                 Try
@@ -5584,9 +5617,9 @@ l1:
                 End If
 
                 Dim s1 As SelectExpression = FCtor.custom( _
-                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, firstPropertyAlias)).into("Pref")
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(selEU, firstPropertyAlias)).into("Pref")
                 Dim s2 As SelectExpression = FCtor.custom( _
-                    String.Format(mgr.StmtGenerator.Left, "{0}", level), FCtor.prop(selEU, secondPropertyAlias)).into("Pref")
+                    String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(selEU, secondPropertyAlias)).into("Pref")
 
                 'Dim c As New QueryCmd.svct(Me)
                 'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)

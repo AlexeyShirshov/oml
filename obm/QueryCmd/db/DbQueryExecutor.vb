@@ -818,6 +818,11 @@ l1:
             End If
 
             sb.Append(" ").Append([alias])
+
+            If Not String.IsNullOrEmpty(tbl_real.Hint) Then
+                sb.Append(" ").Append(tbl_real.Hint)
+            End If
+
             If apd IsNot Nothing Then
                 sb.Append(apd())
             End If

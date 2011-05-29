@@ -1047,7 +1047,7 @@ Imports Worm.Expressions2
         Dim t As New SourceFragment("dbo", "table1")
 
         q.From(t).Select(FCtor.column(t, "id").into(GetType(Table1), "ID"). _
-            custom("case when {0} = 2 then 1 else {0} end", FCtor.column(t, "enum")).into(GetType(Table2), "ID"))
+            custom("case when {0} = 2 then 1 else {0} end", ECtor.column(t, "enum")).into(GetType(Table2), "ID"))
 
         Dim r As ReadonlyMatrix = q.ToMatrix
 

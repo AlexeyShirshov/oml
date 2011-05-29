@@ -282,12 +282,6 @@ Namespace Database.Storedprocs
         Protected _pager As IPager
         Private _key As String
 
-        'Public Enum ValidateResult
-        '    DontReset
-        '    ResetCache
-        '    ResetAll
-        'End Enum
-
         Protected Sub New(ByVal cache As Boolean)
             _cache = cache
         End Sub
@@ -296,6 +290,8 @@ Namespace Database.Storedprocs
             _cache = True
             _expireDate = Now.Add(timeout)
         End Sub
+
+        Public Property CommandTimeout As Integer?
 
         Public Property Pager() As IPager
             Get
@@ -391,6 +387,9 @@ Namespace Database.Storedprocs
             Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
+                If CommandTimeout.HasValue Then
+                    cmd.CommandTimeout = CommandTimeout.Value
+                End If
                 InitInParams(schema, cmd)
                 Dim op As IEnumerable(Of OutParam) = GetOutParams()
                 If op IsNot Nothing Then

@@ -1797,10 +1797,10 @@ l1:
             Return False
         End If
 
-        Return _RemoveObjectFromCache(obj)
+        Return _RemoveObjectFromCache(obj, False)
     End Function
 
-    Protected Friend Function _RemoveObjectFromCache(ByVal obj As _ICachedEntity) As Boolean
+    Protected Friend Function _RemoveObjectFromCache(ByVal obj As _ICachedEntity, forseDelete As Boolean) As Boolean
         'Debug.Assert(Not obj.IsLoaded)
         Dim t As System.Type = obj.GetType
 
@@ -1818,7 +1818,7 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             Using obj.LockEntity
-                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                If obj.ObjectState = ObjectState.Modified OrElse (obj.ObjectState = ObjectState.Deleted AndAlso Not forseDelete) Then
                     Return False
                 End If
 
@@ -4471,7 +4471,7 @@ l1:
     End Function
 
     Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As _ICachedEntity, ByVal mc As OrmManager)
-        mc._RemoveObjectFromCache(obj)
+        mc._RemoveObjectFromCache(obj, True)
         Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
         If c IsNot Nothing Then
             c.RegisterDelete(obj)

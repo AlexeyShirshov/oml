@@ -343,40 +343,44 @@ Namespace Expressions2
         End Sub
 
         Private _intoPA As String
-        Public Function GetIntoPropertyAlias() As String
-            Dim propertyAlias As String = _intoPA
-            If String.IsNullOrEmpty(propertyAlias) Then
-                propertyAlias = IntoPropertyAlias
-                If String.IsNullOrEmpty(propertyAlias) Then
-                    Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
-                    If ee IsNot Nothing Then
-                        propertyAlias = ee.ObjectProperty.PropertyAlias
-                    Else
-                        Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
-                        If pe IsNot Nothing Then
-                            propertyAlias = pe.PropertyAlias
-                        Else
-                            For Each e As IExpression In _exp.GetExpressions
-                                ee = TryCast(e, Expressions2.IEntityPropertyExpression)
-                                If ee IsNot Nothing Then
-                                    propertyAlias = ee.ObjectProperty.PropertyAlias
-                                    Exit For
-                                Else
-                                    pe = TryCast(e, PropertyAliasExpression)
-                                    If pe IsNot Nothing Then
-                                        propertyAlias = pe.PropertyAlias
-                                        Exit For
-                                    End If
-                                End If
-                            Next
-                        End If
-                    End If
-                End If
-                If String.IsNullOrEmpty(propertyAlias) Then
-                    propertyAlias = ColumnAlias
-                End If
-                _intoPA = propertyAlias
+        Public Function GetIntoPropertyAlias(Optional withoutColumn As Boolean = False) As String
+            If Not String.IsNullOrEmpty(_intoPA) Then
+                Return _intoPA
             End If
+
+            If Not String.IsNullOrEmpty(IntoPropertyAlias) Then
+                Return IntoPropertyAlias
+            End If
+
+            If Not String.IsNullOrEmpty(ColumnAlias) AndAlso Not withoutColumn Then
+                Return ColumnAlias
+            End If
+
+            Dim propertyAlias As String = Nothing
+            Dim ee As Expressions2.IEntityPropertyExpression = TryCast(_exp, Expressions2.IEntityPropertyExpression)
+            If ee IsNot Nothing Then
+                propertyAlias = ee.ObjectProperty.PropertyAlias
+            Else
+                Dim pe As PropertyAliasExpression = TryCast(_exp, PropertyAliasExpression)
+                If pe IsNot Nothing Then
+                    propertyAlias = pe.PropertyAlias
+                Else
+                    For Each e As IExpression In _exp.GetExpressions
+                        ee = TryCast(e, Expressions2.IEntityPropertyExpression)
+                        If ee IsNot Nothing Then
+                            propertyAlias = ee.ObjectProperty.PropertyAlias
+                            Exit For
+                        Else
+                            pe = TryCast(e, PropertyAliasExpression)
+                            If pe IsNot Nothing Then
+                                propertyAlias = pe.PropertyAlias
+                                Exit For
+                            End If
+                        End If
+                    Next
+                End If
+            End If
+            _intoPA = propertyAlias
             Return propertyAlias
         End Function
 

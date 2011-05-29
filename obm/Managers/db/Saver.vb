@@ -396,26 +396,28 @@ l1:
                 Return args.Cancel
             Catch ex As Exception
                 If owr IsNot Nothing Then
-                    Dim args As New SaveErrorEventArgs(o, ex)
-                    RaiseEvent ObjectSavingError(Me, args)
-                    Select Case args.FurtherAction
-                        Case FurtherActionEnum.Retry
-                            _lockList(owr).Dispose()
-                            _lockList.Remove(owr)
-                            GoTo l1
-                        Case FurtherActionEnum.Skip
-                            _lockList(owr).Dispose()
-                            _lockList.Remove(owr)
-                            Return True
-                        Case FurtherActionEnum.RetryLater
-                            _lockList(owr).Dispose()
-                            _lockList.Remove(owr)
-                            RaiseEvent ObjectPostponed(Me, o)
-                            need2save.Add(o)
-                            Return False
-                    End Select
+                    Dim dsp As IDisposable = Nothing
+                    If _lockList.TryGetValue(owr, dsp) Then
+                        Dim args As New SaveErrorEventArgs(o, ex)
+                        RaiseEvent ObjectSavingError(Me, args)
+                        Select Case args.FurtherAction
+                            Case FurtherActionEnum.Retry
+                                dsp.Dispose()
+                                _lockList.Remove(owr)
+                                GoTo l1
+                            Case FurtherActionEnum.Skip
+                                dsp.Dispose()
+                                _lockList.Remove(owr)
+                                Return True
+                            Case FurtherActionEnum.RetryLater
+                                dsp.Dispose()
+                                _lockList.Remove(owr)
+                                RaiseEvent ObjectPostponed(Me, o)
+                                need2save.Add(o)
+                                Return False
+                        End Select
+                    End If
                 End If
-
                 Throw New OrmManagerException("Error during save " & o.ObjName, ex)
             End Try
         End Function
@@ -583,6 +585,7 @@ l1:
                             For Each kv As KeyValuePair(Of ObjectWrap(Of ICachedEntity), IDisposable) In _lockList
                                 o = kv.Key
                                 kv.Value.Dispose()
+                                Exit For
                             Next
                             _lockList.Remove(o)
                         Loop
