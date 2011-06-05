@@ -201,7 +201,7 @@ Namespace Criteria.Core
                 End If
 
                 If almgr IsNot Nothing Then
-                    Debug.Assert(almgr.ContainsKey(tbl, Template.ObjectSource), "There is no alias for table " & tbl.RawName)
+                    'Debug.Assert(almgr.ContainsKey(tbl, Template.ObjectSource), "There is no alias for table " & tbl.RawName)
                     Try
                         [alias] = almgr.GetAlias(tbl, Template.ObjectSource) & stmt.Selector
                     Catch ex As KeyNotFoundException
@@ -392,7 +392,7 @@ Namespace Criteria.Core
                     Dim [alias] As String = String.Empty
 
                     If almgr IsNot Nothing Then
-                        Debug.Assert(almgr.ContainsKey(map.Table, _eu), "There is not alias for table " & map.Table.RawName)
+                        'Debug.Assert(almgr.ContainsKey(map.Table, _eu), "There is not alias for table " & map.Table.RawName)
                         Try
                             [alias] = almgr.GetAlias(map.Table, _eu) & stmt.Selector
                         Catch ex As KeyNotFoundException

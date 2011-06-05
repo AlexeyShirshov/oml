@@ -134,7 +134,7 @@ Namespace Misc
             Get
                 Dim count As Integer = 0
                 If Not IsLeaf Then
-                    Debug.Assert(_childs IsNot Nothing)
+                    'Debug.Assert(_childs IsNot Nothing)
                     For Each mi As DicIndexBase In _childs
                         If mi.IsLeaf Then
                             count += mi.Count

@@ -61,7 +61,7 @@ Namespace Collections
 
         Protected Function GetItemFromCollection(ByVal key As TItemKey, ByVal trowexception As Boolean) As TItem
             Using SyncHelper(True)
-                Debug.Assert(_coll IsNot Nothing)
+                'Debug.Assert(_coll IsNot Nothing)
                 'Using enumerator1 As IEnumerator(Of TItem) = DirectCast(GetEnumerator(), IEnumerator(Of TItem))
                 'Do While enumerator1.MoveNext
                 '    Dim local1 As TItem = enumerator1.Current

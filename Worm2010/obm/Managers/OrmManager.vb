@@ -1600,7 +1600,7 @@ l1:
             Me.Load(obj)
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
             If e IsNot Nothing Then
-                Debug.Assert(e.ObjectState <> ObjectState.NotFoundInSource)
+                Assert(e.ObjectState <> ObjectState.NotFoundInSource, "Object {0} cannot be in NotFoundInSource state", e.ObjName)
             End If
         End If
         Return e
@@ -1610,13 +1610,15 @@ l1:
         Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
         Dim ck As CacheKey = New CacheKey(obj)
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
-        If e Is Nothing OrElse Not e.IsLoaded Then
+        If e Is Nothing OrElse (e.ObjectState = ObjectState.NotLoaded) Then
             If e Is Nothing Then
                 Me.Load(obj)
             Else
                 Me.Load(e)
             End If
             e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
+        ElseIf Not e.IsLoaded Then
+            e = Nothing
         End If
         Return e
     End Function
@@ -1843,8 +1845,8 @@ l1:
                 _cache.RegisterRemoval(obj, MappingEngine, cb)
             End Using
 
-            Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(obj.ObjectState <> ObjectState.Modified)
+            Assert(Not IsInCachePrecise(obj), "Object {0} must not be in cache", obj.ObjName)
+            Assert(obj.ObjectState <> ObjectState.Modified, "Object {0} cannot be in Modified state", obj.ObjName)
         End Using
         Return True
     End Function
@@ -1899,17 +1901,17 @@ l1:
 
     <Conditional("DEBUG")> _
     Protected Overridable Sub Invariant()
-        Debug.Assert(Not _disposed)
+        'Debug.Assert(Not _disposed)
         If _disposed Then
-            Throw New ObjectDisposedException("MediaContent")
+            Throw New ObjectDisposedException("OrmManager")
         End If
 
-        Debug.Assert(_schema IsNot Nothing)
+        'Debug.Assert(_schema IsNot Nothing)
         If _schema Is Nothing Then
             Throw New ArgumentNullException("Schema cannot be nothing")
         End If
 
-        Debug.Assert(_cache IsNot Nothing)
+        'Debug.Assert(_cache IsNot Nothing)
         If _cache Is Nothing Then
             Throw New ArgumentNullException("OrmCache cannot be nothing")
         End If
@@ -2028,10 +2030,10 @@ l1:
         Trace.WriteLine(Now & Environment.StackTrace)
     End Sub
 
-    Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String)
-        Debug.Assert(condition, message)
-        Trace.Assert(condition, message)
-        If Not condition Then Throw New OrmManagerException(message)
+    Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String, ParamArray params As Object())
+        'Debug.Assert(condition, String.Format(message, params))
+        'Trace.Assert(condition, String.Format(message, params))
+        If Not condition Then Throw New OrmManagerException(String.Format(message, params))
     End Sub
 
 #End Region
@@ -3332,7 +3334,7 @@ l1:
                         sa = SaveAction.Delete
                     End If
 
-                    Dim old_state As ObjectState = state
+                    'Dim old_state As ObjectState = state
                     Dim hasNew As Boolean = False
                     Dim err As Boolean = True, ttt As Boolean
                     Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
@@ -3497,11 +3499,11 @@ l1:
                         hasErrors = False
                     Finally
                         If err Then
-                            If sa = SaveAction.Insert AndAlso Not ttt Then
+                            If AcceptChanges AndAlso Not ttt Then
                                 Me.RejectChanges(uc)
                             End If
 
-                            state = old_state
+                            'state = old_state
                             'Else
                             '    obj.ObjSaved = True
                         End If
@@ -3743,7 +3745,7 @@ l1:
         Dim p As T = Nothing
         If Not first Then
             Dim i As Integer = FirstDiffCharIndex(name, last.Name)
-            Debug.Assert(i <= level)
+            Assert(i <= level, "Index {0} must be less than level {1}", i, level)
 
             If last.Name = "" Then
                 p = root
@@ -4794,7 +4796,7 @@ l1:
     Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk() As PKDesc)
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
         If uc IsNot Nothing Then
-            Debug.Assert(uc.OriginalCopy Is Nothing)
+            Assert(uc.OriginalCopy Is Nothing, "OriginalCopy for {0} must not exists", e.ObjName)
             Dim clone As IEntity = MappingEngine.CloneFullEntity(e, oschema)
             uc.OriginalCopy = CType(clone, ICachedEntity)
             'Using mc As IGetManager = GetMgr()
@@ -5020,7 +5022,7 @@ l1:
                     Next
                 End If
                 ll.IsLoaded = value
-                Debug.Assert(ll.IsLoaded = value)
+                'Assert(ll.IsLoaded = value,"Object {0}")
             End Using
         End If
     End Sub

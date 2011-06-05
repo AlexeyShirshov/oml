@@ -297,7 +297,7 @@ Namespace Entities
                 If o Is Nothing Then
                     r = False
                 Else
-                    Debug.Assert(ObjectState = Entities.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
+                    Assert(ObjectState = Entities.ObjectState.Modified, "Object {0} must be in Modified state", ObjName) ' OrElse _state = Orm.ObjectState.None
                     _upd.Added = True
                 End If
             ElseIf ObjectState = Entities.ObjectState.Deleted Then
@@ -680,7 +680,7 @@ Namespace Entities
                     End If
                 End If
 
-                Debug.Assert(obj.ObjectState <> Entities.ObjectState.Modified)
+                Assert(obj.ObjectState <> Entities.ObjectState.Modified, "Object {0} cannot be in Modifed state", obj.ObjName)
                 obj.CreateClone4Delete(mgr)
                 'End If
             End Using

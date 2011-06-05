@@ -1934,6 +1934,9 @@ l1:
                     Do While dr.Read
                         LoadFromResultSet(Of T)(values, selectList, dr, entityDictionary, _loadedInLastFetch, rownum, oschema, fields_idx)
                         rownum += 1
+                        If dr.IsClosed Then
+                            Throw New OrmManagerException(String.Format("LoadFromResultSet close reader or connection. Rownum is {0}", rownum))
+                        End If
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -2018,7 +2021,7 @@ l1:
 
             Dim entity As _IEntity = TryCast(obj, _IEntity)
 
-            Debug.Assert(entity.ObjectState <> ObjectState.Deleted)
+            Assert(entity.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", entity.ObjName)
 
             entity.SetMgrString(IdentityString)
 
