@@ -32,7 +32,7 @@ Namespace Expressions2
             Dim [alias] As String = String.Empty
 
             If almgr IsNot Nothing AndAlso (stmtMode And MakeStatementMode.WithoutTables) <> MakeStatementMode.WithoutTables Then
-                Debug.Assert(almgr.ContainsKey(_sf, _eu), "There is not alias for table " & _sf.RawName)
+                'Debug.Assert(almgr.ContainsKey(_sf, _eu), "There is not alias for table " & _sf.RawName)
                 Try
                     [alias] = almgr.GetAlias(_sf, _eu) & stmt.Selector
                 Catch ex As KeyNotFoundException

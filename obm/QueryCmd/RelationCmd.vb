@@ -445,7 +445,8 @@ Namespace Query
                     Dim ideu As EntityUnion = m2mEU
                     Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS
+                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS OrElse
+                        NeedAppendMain(m2mEU)
                     If prd OrElse mt IsNot Nothing Then
                         Dim pka As String = mpe.GetSinglePK(m2mType, oschema)
                         AppendMain = True
@@ -519,7 +520,7 @@ l1:
 
                     If tu IsNot Nothing Then addf.SetUnion(tu)
 
-                    _types.Add(m2mEU, oschema)
+                    If Not _types.ContainsKey(m2mEU) Then _types.Add(m2mEU, oschema)
 
                     If QueryWithHost Then
                         Dim heu As New EntityUnion(hostType)
@@ -951,5 +952,42 @@ l1:
                 args.ReadOnlyList = nr
             End If
         End Sub
+
+        Private Function NeedAppendMain(m2mEU As EntityUnion) As Boolean
+            If Filter IsNot Nothing Then
+                For Each f As IFilter In Filter.Filter.GetAllFilters
+                    Dim ef As EntityFilter = TryCast(f, EntityFilter)
+                    If ef IsNot Nothing Then
+                        If m2mEU.Equals(ef.Template.ObjectSource) Then
+                            Return True
+                        End If
+                    Else
+                        Dim join As JoinFilter = TryCast(f, JoinFilter)
+                        If join IsNot Nothing Then
+                            If m2mEU.Equals(join.Left.Property.Entity) Then
+                                Return True
+                            ElseIf m2mEU.Equals(join.Right.Property.Entity) Then
+                                Return True
+                            End If
+                        End If
+                    End If
+                Next
+            End If
+
+            If SelectClause IsNot Nothing AndAlso SelectClause.SelectList IsNot Nothing Then
+                For Each e As IExpression In SelectClause.SelectList
+                    For Each e2 As IExpression In e.GetExpressions
+                        Dim ee As EntityExpression = TryCast(e2, EntityExpression)
+                        If ee IsNot Nothing Then
+                            If m2mEU.Equals(ee.ObjectProperty.Entity) Then
+                                Return True
+                            End If
+                        End If
+                    Next
+                Next
+            End If
+            Return False
+        End Function
+
     End Class
 End Namespace

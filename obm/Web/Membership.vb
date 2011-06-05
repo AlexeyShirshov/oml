@@ -676,8 +676,10 @@ Namespace Web
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(GetField("Email")).eq(email))
-            If users.Count <> 1 Then
+            If users.Count > 1 Then
                 Throw New InvalidOperationException(String.Format("The number of users with {0} email is {1}", email, users.Count))
+            ElseIf users.Count = 0 Then
+                Return Nothing
             End If
             Dim u As ISinglePKEntity = CType(users(0), ISinglePKEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _
@@ -696,8 +698,11 @@ Namespace Web
             End If
 
             Dim users As IList = UserMapper.FindUsers(New Ctor(UserMapper.GetUserType).prop(UserMapper.UserNameField).eq(username))
-            If users.Count <> 1 Then
+            If users.Count > 1 Then
                 Throw New InvalidOperationException(String.Format("The number of users with {0} username is {1}", username, users.Count))
+                'Return Nothing
+            ElseIf users.Count = 0 Then
+                Return Nothing
             End If
             Dim u As ISinglePKEntity = CType(users(0), ISinglePKEntity)
             If userIsOnline.HasValue AndAlso Not String.IsNullOrEmpty(UserMapper.LastActivityField) _

@@ -293,10 +293,10 @@ Namespace Cache
         '    Return ShadowCopy(objectType, obj, Nothing)
         'End Function
 
-        Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String)
-            Debug.Assert(condition, message)
-            Trace.Assert(condition, message)
-            If Not condition Then Throw New OrmCacheException(message)
+        Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String, ParamArray params As Object())
+            'Debug.Assert(condition, String.Format(message, params))
+            'Trace.Assert(condition, String.Format(message, params))
+            If Not condition Then Throw New OrmCacheException(String.Format(message, params))
         End Sub
 
         'Protected Function GetModificationKey(ByVal obj As _ICachedEntity, ByVal mpe As ObjectMappingEngine, _
@@ -767,7 +767,7 @@ Namespace Cache
         Protected Friend Shared Function AddObjectInternal(ByVal obj As Object, ByVal id As PKWrapper, ByVal dic As IDictionary) As Object
 #If DEBUG Then
             Dim e As IEntity = TryCast(obj, IEntity)
-            If e IsNot Nothing Then Debug.Assert(e.ObjectState <> ObjectState.Deleted)
+            If e IsNot Nothing Then Assert(e.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", id.UniqueString)
 #End If
             'Dim trace As Boolean = False
             SyncLock dic.SyncRoot

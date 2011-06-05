@@ -346,14 +346,14 @@ Namespace Entities
 
         Protected Overridable Sub SetObjectState(ByVal value As ObjectState) Implements _IEntity.SetObjectState
             Using SyncHelper(False)
-                Debug.Assert(_state <> Entities.ObjectState.Deleted)
+                Assert(_state <> Entities.ObjectState.Deleted, "Object {0} cannot be in Deleted state", ObjName)
                 If _state = Entities.ObjectState.Deleted Then
                     Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 End If
 
                 Dim olds As ObjectState = _state
                 _state = value
-                Debug.Assert(_state = value)
+                'Debug.Assert(_state = value)
 
 #If DEBUG Then
                 RaiseEvent ObjectStateChanged(olds)
@@ -522,6 +522,12 @@ Namespace Entities
             Return o
         End Function
 #End Region
+
+        Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String, ParamArray params As Object())
+            'Debug.Assert(condition, String.Format(message, params))
+            'Trace.Assert(condition, String.Format(message, params))
+            If Not condition Then Throw New OrmObjectException(String.Format(message, params))
+        End Sub
 
         'Protected Overridable Function GetValue(ByVal propertyAlias As String) As Object
         '    Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, GetEntitySchema(GetMappingEngine))

@@ -558,7 +558,7 @@ Namespace Criteria.Joins
             End If
 
             If String.IsNullOrEmpty([alias]) AndAlso almgr IsNot Nothing Then
-                Debug.Assert(almgr.ContainsKey(map.Table, os), "There is not alias for table " & map.Table.RawName)
+                'Debug.Assert(almgr.ContainsKey(map.Table, os), "There is not alias for table " & map.Table.RawName)
                 Try
                     [alias] = almgr.GetAlias(map.Table, os) & stmt.Selector
                 Catch ex As KeyNotFoundException
@@ -568,7 +568,7 @@ Namespace Criteria.Joins
 
 
             If String.IsNullOrEmpty(alias2) AndAlso almgr IsNot Nothing Then
-                Debug.Assert(almgr.ContainsKey(map2.Table, os2), "There is not alias for table " & map2.Table.RawName)
+                'Debug.Assert(almgr.ContainsKey(map2.Table, os2), "There is not alias for table " & map2.Table.RawName)
                 Try
                     alias2 = almgr.GetAlias(map2.Table, os2) & stmt.Selector
                 Catch ex As KeyNotFoundException

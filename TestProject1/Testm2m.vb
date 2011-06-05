@@ -5,54 +5,49 @@ Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports Worm.Query
 
 <TestClass()> Public Class Testm2m
 
-    '<TestMethod()> _
-    'Public Sub TestSelectm2m()
+    <TestMethod()> _
+    Public Sub TestM2MOuterExists()
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
-    '    Dim schema As New Worm.ObjectMappingEngine("1")
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schema)
+            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
 
-    '    Dim t As Type = GetType(Entity)
-    '    Dim t2 As Type = GetType(Entity4)
-    '    Dim gen As New SQLGenerator
-    '    Dim pmgr As New ParamMgr(gen, "p")
-    '    Dim almgr As AliasMgr = AliasMgr.Create
-    '    Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1", gen.SelectM2M(schema, t, t2, New Worm.Entities.Query.QueryAspect() {}, False, True, Nothing, pmgr, almgr, False, M2MRelationDesc.DirKey))
+            'Dim rel As M2MRelationDesc = CType(schema.GetEntitySchema(GetType(Entity)), ISchemaWithM2M).GetM2MRelations()(0)
 
-    '    Dim e As New Entity(10, Nothing, schema)
+            Dim outerAlias As New QueryAlias(GetType(Entity4))
 
-    '    Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
-    '    almgr = AliasMgr.Create
-    '    Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 where t1.ent1_id = @p1", gen.SelectM2M(schema, almgr, e, t2, Nothing, Nothing, True, False, False, params, M2MRelationDesc.DirKey))
+            Dim innerCmd As QueryCmd = o.GetCmd(GetType(Entity4)).
+                Where(Ctor.prop(GetType(Entity4), "ID").eq(outerAlias, "ID"))
 
-    '    Assert.AreEqual(1, params.Count)
+            Dim outerCmd As New QueryCmd()
+            outerCmd.SelectEntity(outerAlias).
+                Where(Ctor.exists(innerCmd))
 
-    '    almgr = AliasMgr.Create
-    '    Assert.AreEqual("select top 1 t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1", gen.SelectM2M(schema, t, t2, New Worm.Entities.Query.QueryAspect() {New TopAspect(1)}, False, True, Nothing, pmgr, almgr, False, M2MRelationDesc.DirKey))
-    'End Sub
+            Assert.AreEqual(4, outerCmd.Count(mgr))
+        End Using
+    End Sub
 
-    '<TestMethod()> _
-    'Public Sub TestSelectm2m2()
+    <TestMethod()> _
+    Public Sub TestM2MSelect()
 
-    '    Dim schema As New Worm.ObjectMappingEngine("2")
+        Dim schema As New Worm.ObjectMappingEngine("1")
 
-    '    Dim t As Type = GetType(Entity)
-    '    Dim t2 As Type = GetType(Entity4)
-    '    Dim gen As New SQLGenerator
-    '    Dim pmgr As New ParamMgr(gen, "p")
-    '    Dim almgr As AliasMgr = AliasMgr.Create
-    '    Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent1_id = t2.i", gen.SelectM2M(schema, t, t2, New Worm.Entities.Query.QueryAspect() {}, False, True, Nothing, pmgr, almgr, False, M2MRelationDesc.DirKey))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schema)
+            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
 
-    '    Dim e As New Entity(10, Nothing, schema)
+            Dim cmd As QueryCmd = o.GetCmd(GetType(Entity4)).
+                Select(FCtor.prop(GetType(Entity4), "Title"))
 
-    '    Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
-    '    almgr = AliasMgr.Create
-    '    Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent2_id = t2.i where t1.ent1_id = @p1", gen.SelectM2M(schema, almgr, e, t2, Nothing, Nothing, True, False, False, params, M2MRelationDesc.DirKey))
-
-    '    Assert.AreEqual(1, params.Count)
-    '    Assert.AreEqual(10, params(0).Value)
-    'End Sub
+            Assert.AreEqual(4, cmd.Count(mgr))
+            For Each e As Entity4 In cmd.ToList(Of Entity4)(mgr)
+                Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Title"))
+            Next
+        End Using
+    End Sub
 
     '<TestMethod()> _
     'Public Sub TestSelectm2m3()

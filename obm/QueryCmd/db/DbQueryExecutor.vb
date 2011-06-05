@@ -729,7 +729,9 @@ l1:
                 osrc_ = osrc
             End If
 
-            Debug.Assert(from IsNot Nothing, "From clause must be specified")
+            If [from] Is Nothing Then
+                Throw New ExecutorException("From clause must be specified")
+            End If
 
             Dim fromOS As IEntitySchema = Nothing
             Dim pkTable As SourceFragment = Nothing
