@@ -432,7 +432,7 @@ Namespace Query
         Protected _clientPage As Paging
         Protected _pager As IPager
         Protected _joins() As QueryJoin
-        Protected _autoJoins As Boolean
+        Protected _autoJoins As Boolean = True
         Friend _from As FromClauseDef
         Protected _hint As String
         Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
@@ -886,6 +886,10 @@ Namespace Query
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQLGenerator, connectionString))
         End Sub
 
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String, generator As Worm.Database.SQLGenerator)
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, generator, connectionString))
+        End Sub
+
         Public Sub New(ByVal cache As CacheBase, ByVal connectionString As String)
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQLGenerator, connectionString))
         End Sub
@@ -976,10 +980,10 @@ Namespace Query
 
         End Sub
 
-        Private Sub AddExpression2SelectList(ByVal se As SelectExpression, ByVal mpe As ObjectMappingEngine)
+        Private Sub AddExpression2SelectList(ByVal se As SelectExpression, ByVal mpe As ObjectMappingEngine, isAnonym As Boolean)
             _sl.Add(se)
             If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
-                If String.IsNullOrEmpty(se.IntoPropertyAlias) Then
+                If String.IsNullOrEmpty(se.IntoPropertyAlias) AndAlso Not isAnonym Then
                     'Dim t As Type = Nothing
                     'If se.ObjectProperty.Entity IsNot Nothing Then
                     '    t = se.ObjectProperty.Entity.GetRealType(mpe)
@@ -1002,7 +1006,7 @@ Namespace Query
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
                     se.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
-                    AddExpression2SelectList(se, mpe)
+                    AddExpression2SelectList(se, mpe, isAnonym)
                     Dim t As Type = Nothing
                     Dim into As EntityUnion = se.GetIntoEntityUnion
                     If into IsNot Nothing Then
@@ -1063,7 +1067,7 @@ l2:
                                                     If Not _sl.Contains(se) Then
                                                         se.Attributes = m.Attributes
                                                         cols.Add(se)
-                                                        AddExpression2SelectList(se, mpe)
+                                                        AddExpression2SelectList(se, mpe, isAnonym)
                                                     End If
                                                 End If
                                             End If
@@ -1086,7 +1090,7 @@ l2:
                                                 Array.Exists(loadProperties, Function(pr) pr = pa)) Then
 
                                                 cols.Add(se)
-                                                AddExpression2SelectList(se, mpe)
+                                                AddExpression2SelectList(se, mpe, isAnonym)
                                             End If
                                         Next
                                         GoTo l1
@@ -1094,7 +1098,7 @@ l2:
                                 End If
 
                                 For Each se As SelectExpression In col
-                                    AddExpression2SelectList(se, mpe)
+                                    AddExpression2SelectList(se, mpe, isAnonym)
                                     cols.Add(se)
                                 Next
 l1:
@@ -1104,40 +1108,42 @@ l1:
 
                     If _sl.Count = 0 Then
                         For Each se As SelectExpression In SelectList
-                            AddExpression2SelectList(se, mpe)
+                            AddExpression2SelectList(se, mpe, isAnonym)
                         Next
                     Else
                         For Each se As SelectExpression In SelectList
-                            If Not _sl.Contains(se) Then AddExpression2SelectList(se, mpe)
+                            If Not _sl.Contains(se) Then AddExpression2SelectList(se, mpe, isAnonym)
                         Next
                     End If
 
                     If AutoJoins Then
                         Dim selOS As EntityUnion = GetSelectedOS()
-                        Dim t As Type = selOS.GetRealType(mpe)
-                        Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
-                        For Each se As SelectExpression In SelectList
-                            Dim en As IEnumerable(Of SelectUnion) = GetSelectedEntities(se)
-                            For Each su As SelectUnion In en
-                                Dim os As EntityUnion = su.EntityUnion
-                                If os IsNot Nothing Then
-                                    If Not HasInQuery(os) Then
-                                        Dim jt As Type = os.GetRealType(mpe)
-                                        mpe.AppendJoin(selOS, t, selSchema, _
-                                            os, jt, _types(se.GetIntoEntityUnion), _
-                                            f, _js, filterInfo, JoinType.Join)
+                        If selOS IsNot Nothing Then
+                            Dim t As Type = selOS.GetRealType(mpe)
+                            Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
+                            For Each se As SelectExpression In SelectList
+                                Dim en As IEnumerable(Of SelectUnion) = GetSelectedEntities(se)
+                                For Each su As SelectUnion In en
+                                    Dim os As EntityUnion = su.EntityUnion
+                                    If os IsNot Nothing Then
+                                        If Not HasInQuery(os) Then
+                                            Dim jt As Type = os.GetRealType(mpe)
+                                            mpe.AppendJoin(selOS, t, selSchema, _
+                                                os, jt, _types(se.GetIntoEntityUnion), _
+                                                f, _js, filterInfo, JoinType.Join)
+                                        End If
+                                    Else
+                                        If Not HasInQuery(su.SourceFragment) Then
+                                            Throw New NotSupportedException("Cannot auto join " & se.GetDynamicString)
+                                        End If
                                     End If
-                                Else
-                                    If Not HasInQuery(su.SourceFragment) Then
-                                        Throw New NotSupportedException("Cannot auto join " & se.GetDynamicString)
-                                    End If
-                                End If
+                                Next
                             Next
-                        Next
+                        End If
                     End If
                 Else
                     For Each se As SelectExpression In SelectList
-                        AddExpression2SelectList(se, mpe)
+                        AddExpression2SelectList(se, mpe, isAnonym)
                     Next
                 End If
             End If
@@ -1364,20 +1370,22 @@ l1:
                     If tos Is Nothing Then
                         tos = selectOS
                     End If
-                    t = tos.GetRealType(mpe)
-                    selSchema = _types(tos)
+                    If tos IsNot Nothing AndAlso SelectedEntities IsNot Nothing Then
+                        t = tos.GetRealType(mpe)
+                        selSchema = _types(tos)
 
-                    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                        If Not EntityUnion.TypeEquals(mpe, tp.First, tos) AndAlso Not HasInQuery(tp.First) Then
-                            If (_appendMain Is Nothing OrElse Not _appendMain) AndAlso IsFTS Then
-                                _appendMain = True
+                        For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
+                            If Not EntityUnion.TypeEquals(mpe, tp.First, tos) AndAlso Not HasInQuery(tp.First) Then
+                                If (_appendMain Is Nothing OrElse Not _appendMain) AndAlso IsFTS Then
+                                    _appendMain = True
+                                End If
+
+                                mpe.AppendJoin(tos, t, selSchema, _
+                                    tp.First, tp.First.GetRealType(mpe), mpe.GetEntitySchema(tp.First.GetRealType(mpe)), _
+                                    filter, _js, contextInfo, JoinType.Join)
                             End If
-
-                            mpe.AppendJoin(tos, t, selSchema, _
-                                tp.First, tp.First.GetRealType(mpe), mpe.GetEntitySchema(tp.First.GetRealType(mpe)), _
-                                filter, _js, contextInfo, JoinType.Join)
-                        End If
-                    Next
+                        Next
+                    End If
                 End If
             End If
 
@@ -1484,7 +1492,7 @@ l1:
                 If AutoJoins Then
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
-                    If OrmManager.HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain, selectOS) Then
+                    If HasJoins(schema, selectType, f, Sort, filterInfo, joins, appendMain, selectOS) Then
                         _js.AddRange(joins)
                     End If
                     _appendMain = _appendMain OrElse appendMain
@@ -1499,6 +1507,118 @@ l1:
             Dim args As New QueryPreparedEventArgs
             RaiseEvent QueryPrepared(Me, args)
             _cancel = args.Cancel
+        End Sub
+
+        Protected Friend Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
+            ByRef filter As IFilter, ByVal s As OrderByClause, ByVal filterInfo As Object, ByRef joins() As QueryJoin, _
+            ByRef appendMain As Boolean, ByVal selectOS As EntityUnion) As Boolean
+            Dim l As New List(Of QueryJoin)
+            Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
+            Dim ictx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
+            If ictx IsNot Nothing AndAlso ictx.GetContextFilter(filterInfo) IsNot Nothing Then
+                appendMain = True
+            End If
+            Dim types As New List(Of Type)
+            If filter IsNot Nothing Then
+                For Each fl As IFilter In filter.Filter.GetAllFilters
+                    Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                    If f IsNot Nothing Then
+                        Dim ot As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                        If FromClause IsNot Nothing AndAlso ot.ObjectSource = FromClause.ObjectSource Then
+                            Continue For
+                        End If
+
+                        If _js.Find(Function(join) join.ObjectSource = ot.ObjectSource) Is Nothing Then
+                            Dim type2join As System.Type = ot.ObjectSource.GetRealType(schema)
+
+                            'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
+                            '    type2join = schema.GetTypeByEntityName(ot.EntityName)
+                            'End If
+
+                            AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
+                        End If
+                    Else
+                        Dim cf As CustomFilter = TryCast(fl, CustomFilter)
+                        If cf IsNot Nothing Then
+                            Dim cfv As CustomValue = CType(cf.Template, CustomValue)
+                            For Each se As SelectUnion In GetSelectedEntities(cfv.Values)
+                                If se.EntityUnion IsNot Nothing Then
+                                    AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, _
+                                        se.EntityUnion, se.EntityUnion.GetRealType(schema), selectOS)
+                                End If
+                            Next
+                        End If
+                    End If
+                Next
+            End If
+
+            If s IsNot Nothing Then
+                For Each ns As SortExpression In s
+                    For Each se As SelectUnion In GetSelectedEntities(ns)
+                        If se.EntityUnion IsNot Nothing Then
+                            Dim sortType As System.Type = se.EntityUnion.GetRealType(schema)
+                            If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
+                                Dim field As String = schema.GetJoinFieldNameByType(sortType, oschema)
+
+                                If Not String.IsNullOrEmpty(field) Then
+                                    types.Add(sortType)
+                                    l.Add(OrmManager.MakeJoin(schema, se.EntityUnion, sortType, selectOS, field, Criteria.FilterOperation.Equal, JoinType.Join))
+                                    Continue For
+                                End If
+
+                                If String.IsNullOrEmpty(field) Then
+                                    field = schema.GetJoinFieldNameByType(selectType, schema.GetEntitySchema(sortType))
+
+                                    If Not String.IsNullOrEmpty(field) Then
+                                        types.Add(sortType)
+                                        l.Add(OrmManager.MakeJoin(schema, selectOS, selectType, se.EntityUnion, field, Criteria.FilterOperation.Equal, JoinType.Join, True))
+                                        Continue For
+                                    End If
+                                End If
+
+                                If String.IsNullOrEmpty(field) Then
+                                    Dim m2m As M2MRelationDesc = schema.GetM2MRelation(sortType, selectType, True)
+                                    If m2m IsNot Nothing Then
+                                        l.AddRange(OrmManager.MakeM2MJoin(schema, m2m, sortType))
+                                    Else
+                                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Specify joins explicity", selectType, sortType))
+                                    End If
+                                End If
+
+                            ElseIf sortType Is selectType OrElse sortType Is Nothing Then
+                                appendMain = True
+                            End If
+                        End If
+                    Next
+                Next
+            End If
+            joins = l.ToArray
+            Return joins.Length > 0
+        End Function
+
+        Private Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
+            ByRef filter As IFilter, ByVal filterInfo As Object, ByRef appendMain As Boolean, _
+            ByVal l As List(Of QueryJoin), ByVal oschema As IEntitySchema, ByVal types As List(Of Type), _
+            ByVal joinOS As EntityUnion, ByVal type2join As System.Type, ByVal selectOS As EntityUnion)
+
+            'Dim type2join As System.Type = joinOS.GetRealType(schema)
+
+            If type2join Is Nothing Then
+                Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+            End If
+
+            If selectType Is type2join Then
+                appendMain = True
+            Else
+                Dim s2 As IEntitySchema = schema.GetEntitySchema(type2join)
+                If oschema.Equals(s2) OrElse oschema.GetType.FullName = s2.GetType.FullName Then
+                    appendMain = True
+                Else
+                    If Not types.Contains(type2join) Then
+                        OrmManager.AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2, joinOS, selectOS)
+                    End If
+                End If
+            End If
         End Sub
 
         Protected Friend Function Need2Join(ByVal eu As EntityUnion) As Boolean
@@ -3520,6 +3640,8 @@ l1:
         'End Function
 #End Region
 
+#Region " Count "
+
         Public Overridable Function Count(ByVal mgr As OrmManager) As Integer
             Dim s As OrderByClause = _order
             Dim p As Paging = _clientPage
@@ -3538,7 +3660,7 @@ l1:
                         End If
                         From(SelectedEntities(0).First)
                     End If
-                    Return [Select](FCtor.count).SingleSimple(Of Integer)(mgr)
+                    Return [Select](FCtor.count).SingleOrDefaultSimple(Of Integer)(mgr)
                 End Using
             Finally
                 Sort = s
@@ -3563,6 +3685,8 @@ l1:
 
             Return Count(_getMgr)
         End Function
+
+#End Region
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
             Dim c As New QueryCmd.svct(Me)

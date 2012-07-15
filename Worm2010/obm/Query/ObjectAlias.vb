@@ -273,6 +273,18 @@ Namespace Query
         Public Shared Operator <>(ByVal a As EntityUnion, ByVal b As EntityUnion) As Boolean
             Return Not Equals(a, b)
         End Operator
+
+        Public Shared Widening Operator CType(entityName As String) As EntityUnion
+            Return New EntityUnion(entityName)
+        End Operator
+
+        Public Shared Widening Operator CType(entityType As Type) As EntityUnion
+            Return New EntityUnion(entityType)
+        End Operator
+
+        Public Shared Widening Operator CType(entityAlias As QueryAlias) As EntityUnion
+            Return New EntityUnion(entityAlias)
+        End Operator
     End Class
 
     <Serializable()> _
