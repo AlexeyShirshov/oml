@@ -394,7 +394,7 @@ Namespace Query
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                 Dim appendMain_ As Boolean
-                If OrmManager.HasJoins(mpe, m2mType, f, Sort, filterInfo, joins, appendMain_, m2mEU) Then
+                If HasJoins(mpe, m2mType, f, Sort, filterInfo, joins, appendMain_, m2mEU) Then
                     For Each j As QueryJoin In joins
                         If Not HasInQueryJS(j.ObjectSource) Then
                             _js.Add(j)

@@ -163,6 +163,42 @@ Public Class TestProcs
 
     End Sub
 
+    Class sp_pager
+        Implements IPager
+
+        Public Count As Integer
+
+        Public Function GetCurrentPageOffset() As Integer Implements Worm.Query.IPager.GetCurrentPageOffset
+            Return 0
+        End Function
+
+        Public Function GetPageSize() As Integer Implements Worm.Query.IPager.GetPageSize
+            Return 0
+        End Function
+
+        Public Function GetReverse() As Boolean Implements Worm.Query.IPager.GetReverse
+            Return False
+        End Function
+
+        Public Sub SetTotalCount(cnt As Integer) Implements Worm.Query.IPager.SetTotalCount
+            Count = cnt
+        End Sub
+    End Class
+
+    <TestMethod()> _
+    Public Sub TestP2ServerPaging()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
+            Dim p As New P2OrmProc(2)
+            Dim pager As sp_pager = New sp_pager
+            p.Pager = pager
+            Dim c As Worm.ReadOnlyObjectList(Of Table1) = p.GetResult(mgr)
+
+            Assert.AreEqual(0, c.Count)
+            Assert.AreEqual(1, pager.Count)
+        End Using
+
+    End Sub
+
     <TestMethod()> _
     Public Sub TestP2OrmSimple()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))

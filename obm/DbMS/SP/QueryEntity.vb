@@ -105,6 +105,7 @@ Namespace Database.Storedprocs
             Dim start As Integer = 0
             Dim length As Integer = Integer.MaxValue
             If _pager IsNot Nothing Then
+                _pager.SetTotalCount(_count)
                 start = _pager.GetCurrentPageOffset
                 length = _pager.GetPageSize
             ElseIf Not _clientPage.IsEmpty Then

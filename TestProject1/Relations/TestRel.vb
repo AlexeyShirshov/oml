@@ -7,6 +7,7 @@ Imports Worm
 Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Entities
+Imports Worm.Entities.Meta
 
 <TestClass()> Public Class TestRel
 
@@ -246,6 +247,22 @@ Imports Worm.Entities
         Dim r As ReadOnlyList(Of _ISinglePKEntity) = Table1.Table2Relation.Load(Of Table1, _ISinglePKEntity)(t, False)
 
         Assert.AreEqual(2, r.Count)
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestJoinRelation()
+
+        Dim cache As New OrmCache
+
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
+
+        Dim rel As New RelationDesc(GetType(Table2), "Table1")
+        q1.From(GetType(Table1)).Join(
+            JCtor.join_relation(New RelationDescEx(GetType(Table1), rel))
+            ).
+        Where(Ctor.prop(GetType(Table2), "Money").greater_than(10))
+
+        q1.ToList(Of Table1)()
     End Sub
 
     '<TestMethod()> Public Sub TestLoadBatchValidate2()
