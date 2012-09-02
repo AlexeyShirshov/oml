@@ -30,6 +30,7 @@ Namespace Database
         Private _error As Boolean = True
         Private _graphDepth As Integer = 4
         Private _dontResolve As Boolean
+        Private _mode As Data.IsolationLevel?
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -254,6 +255,15 @@ Namespace Database
             End Set
         End Property
 
+        Public Property IsolationMode As Data.IsolationLevel?
+            Get
+                Return _mode
+            End Get
+            Set(value As Data.IsolationLevel?)
+                _mode = value
+            End Set
+        End Property
+
         Public Overridable Function Add(ByVal o As _ICachedEntity) As Boolean
             Dim added As Boolean
             If Not _objects.Contains(o) Then
@@ -437,7 +447,12 @@ l1:
 #Else
             Using _mgr.Cache.SyncSave
 #End If
-                _mgr.BeginTransaction()
+                If _mode.HasValue Then
+                    _mgr.BeginTransaction(_mode.Value)
+                Else
+                    _mgr.BeginTransaction()
+                End If
+
                 Try
                     RaiseEvent BeginSave(Me, _objects.Count)
                     For Each o As _ICachedEntity In _objects
