@@ -27,7 +27,7 @@ Namespace Database
         Private _removed As New List(Of ICachedEntity)
         Private _dontTrackRemoved As Boolean
         Private _startSave As Boolean
-        Private _error As Boolean = True
+        Private _error As Boolean?
         Private _graphDepth As Integer = 4
         Private _dontResolve As Boolean
         Private _mode As Data.IsolationLevel?
@@ -160,7 +160,7 @@ Namespace Database
         '    _mgr = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
         'End Sub
 
-        Public ReadOnly Property [Error]() As Boolean
+        Public ReadOnly Property [Error]() As Boolean?
             Get
                 Return _error
             End Get
@@ -436,6 +436,7 @@ l1:
             If _mgr.Cache.IsReadonly Then
                 Throw New InvalidOperationException("Cache is readonly")
             End If
+            _error = False
 
             RaiseEvent PreSave(Me)
             Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
@@ -1012,7 +1013,7 @@ l1:
                         RemoveHandler _mgr.BeginDelete, AddressOf Delete
                         RemoveHandler _mgr.BeginUpdate, AddressOf Add
 
-                        If _saver.Error Then
+                        If _saver.Error.HasValue AndAlso _saver.Error Then
                             _Rollback()
                         End If
 
