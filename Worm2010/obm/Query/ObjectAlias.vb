@@ -9,19 +9,37 @@ Namespace Query
         Private _t As Type
         Private _en As String
         Private _q As Worm.Query.QueryCmd
-        Private _uqName As String = Guid.NewGuid.GetHashCode.ToString
+        Private _uqName As String
         Private _tbl As Entities.Meta.SourceFragment
 
         Public Sub New(ByVal t As Type)
             _t = t
+            _uqName = Guid.NewGuid.GetHashCode.ToString
         End Sub
 
         Public Sub New(ByVal entityName As String)
             _en = entityName
+            _uqName = Guid.NewGuid.GetHashCode.ToString
         End Sub
 
         Public Sub New(ByVal query As Worm.Query.QueryCmd)
             _q = query
+            _uqName = Guid.NewGuid.GetHashCode.ToString
+        End Sub
+
+        Public Sub New(ByVal t As Type, name As String)
+            _t = t
+            _uqName = name
+        End Sub
+
+        Public Sub New(ByVal entityName As String, name As String)
+            _en = entityName
+            _uqName = name
+        End Sub
+
+        Public Sub New(ByVal query As Worm.Query.QueryCmd, name As String)
+            _q = query
+            _uqName = name
         End Sub
 
         Public ReadOnly Property EntityType() As Type
@@ -38,7 +56,8 @@ Namespace Query
 
         Public ReadOnly Property UniqueName() As String
             Get
-                Return _ToString() & "^" & _uqName
+                'Return _ToString() & "^" & _uqName
+                Return _uqName
             End Get
         End Property
 
@@ -49,22 +68,25 @@ Namespace Query
         End Property
 
         Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object) As String
-            Dim t As Type = GetRealType(mpe)
-            If t IsNot Nothing Then
-                Return mpe.GetEntityKey(t)
-            Else
-                Return _q.ToStaticString(mpe, contextInfo)
-            End If
+            'Dim t As Type = GetRealType(mpe)
+            'If t IsNot Nothing Then
+            'Return mpe.GetEntityKey(t)
+            Return _uqName
+            'Else
+            'Return _q.ToStaticString(mpe, contextInfo)
+            'End If
         End Function
 
         Public Function _ToString() As String
-            If _t IsNot Nothing Then
-                Return _t.ToString
-            ElseIf Not String.IsNullOrEmpty(_en) Then
-                Return _en
-            Else
-                Return _q._ToString
-            End If
+            'If _t IsNot Nothing Then
+            'Return _t.ToString
+            Return _uqName
+            'ElseIf Not String.IsNullOrEmpty(_en) Then
+            'Return _en
+            'Return _uqName
+            'Else
+            'Return _q._ToString
+            'End If
         End Function
 
         Protected Function GetRealType(ByVal schema As ObjectMappingEngine) As Type
