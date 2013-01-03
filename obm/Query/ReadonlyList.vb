@@ -1,12 +1,14 @@
-﻿Imports System.Collections.Generic
+﻿Imports comp = System.ComponentModel
+Imports System.Collections.Generic
+Imports System.Collections.Specialized
 Imports Worm.Criteria.Core
-Imports Worm.Entities.Meta
-Imports Worm.Query.Sorting
 Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Expressions2
+Imports Worm.Query.Sorting
 
 Friend Interface IListEdit
-    Inherits IReadOnlyList
+    Inherits IReadOnlyList, INotifyCollectionChanged, comp.INotifyPropertyChanged
     Overloads Sub Add(ByVal o As Entities.IEntity)
     Overloads Sub Remove(ByVal o As Entities.IEntity)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
@@ -387,14 +389,24 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
 
     Private Sub _Add(ByVal o As Entities.IEntity) Implements IListEdit.Add
         CType(_l, IList).Add(o)
+        RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, o))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
     Private Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity) Implements IListEdit.Insert
         CType(_l, IList).Insert(pos, o)
+        RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, o, pos))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
     Private Overloads Sub Remove(ByVal o As Entities.IEntity) Implements IListEdit.Remove
-        CType(_l, IList).Remove(o)
+        Dim pos As Integer = CType(_l, IList).IndexOf(o)
+        CType(_l, IList).RemoveAt(pos)
+        RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, o, pos))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
     Public Function ApplyFilter(ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
@@ -527,4 +539,8 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
             Return l
         End If
     End Function
+
+    Public Event CollectionChanged(sender As Object, e As System.Collections.Specialized.NotifyCollectionChangedEventArgs) Implements System.Collections.Specialized.INotifyCollectionChanged.CollectionChanged
+
+    Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged
 End Class
