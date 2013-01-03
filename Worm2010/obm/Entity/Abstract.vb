@@ -1,4 +1,5 @@
-﻿Imports Worm.Entities.Meta
+﻿Imports comp = System.ComponentModel
+Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Query
 
@@ -95,7 +96,7 @@ Namespace Entities
     End Interface
 
     Public Interface IEntity
-
+        Inherits comp.INotifyPropertyChanged
         ''' <summary>
         ''' Объект блокировки сущности
         ''' </summary>
@@ -109,7 +110,7 @@ Namespace Entities
         Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
-        Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
+        Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
         Property SpecificMappingEngine() As ObjectMappingEngine
         Function GetMappingEngine() As ObjectMappingEngine
         Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As IEntitySchema

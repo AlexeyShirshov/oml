@@ -57,7 +57,7 @@ Namespace Entities
         Private _schema As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
-        Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChanged
+        Public Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChangedEx
 
 #If DEBUG Then
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
@@ -585,7 +585,13 @@ Namespace Entities
         End Function
 
         Protected Sub RaisePropertyChanged(ByVal propertyChangedEventArgs As PropertyChangedEventArgs) Implements _IEntity.RaisePropertyChanged
-            RaiseEvent PropertyChanged(Me, propertyChangedEventArgs)
+            RaiseEvent PropertyChangedEx(Me, propertyChangedEventArgs)
+        End Sub
+
+        Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged
+
+        Protected Sub RaiseMVVMPropertyChanged(propName As String)
+            RaiseEvent PropertyChanged(Me, New System.ComponentModel.PropertyChangedEventArgs(propName))
         End Sub
 
     End Class

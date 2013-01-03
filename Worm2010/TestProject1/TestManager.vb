@@ -1329,7 +1329,7 @@ Imports Worm
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(2, mgr)
             Dim c As New cls(e.Str)
-            AddHandler e.PropertyChanged, AddressOf c.changed
+            AddHandler e.PropertyChangedEx, AddressOf c.changed
             e.Str = "34f0asdofmasdf"
             Assert.IsTrue(c.Invoked)
 
