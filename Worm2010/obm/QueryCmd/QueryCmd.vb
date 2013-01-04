@@ -1,17 +1,17 @@
 ﻿Imports System.Collections.Generic
-Imports Worm.Entities.Meta
-Imports Worm.Criteria.Core
-Imports Worm.Query.Sorting
-Imports Worm.Entities
-Imports Worm.Criteria.Joins
-Imports System.Reflection
-Imports Worm.Criteria.Conditions
-Imports Worm.Criteria.Values
-Imports Worm.Misc
 Imports System.Collections.ObjectModel
-Imports Worm.Cache
 Imports System.ComponentModel
+Imports System.Reflection
+Imports Worm.Cache
+Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Joins
+Imports Worm.Criteria.Values
+Imports Worm.Entities
+Imports Worm.Entities.Meta
 Imports Worm.Expressions2
+Imports Worm.Misc
+Imports Worm.Query.Sorting
 
 Namespace Query
 
@@ -407,6 +407,108 @@ Namespace Query
                 _mgr = mgr
             End Sub
         End Class
+
+        Public Class ConnectionExceptionArgs
+            Inherits EventArgs
+
+            Enum ActionEnum
+                RetryOldConnection
+                ''' <summary>
+                ''' Create new connection and retry
+                ''' </summary>
+                ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
+                RetryNewConnection
+                Rethrow
+                ''' <summary>
+                ''' Rethrow custom exception
+                ''' </summary>
+                ''' <remarks>Custom exception in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
+                RethrowCustom
+            End Enum
+
+            Property Action As ActionEnum
+
+            Property Context As Object
+
+            Private _ex As Exception
+            Public ReadOnly Property Exception() As Exception
+                Get
+                    Return _ex
+                End Get
+            End Property
+
+            Private _conn As Object
+            Public ReadOnly Property Connection() As Object
+                Get
+                    Return _conn
+                End Get
+            End Property
+
+            Private _mgr As OrmManager
+            Public ReadOnly Property OrmManager() As OrmManager
+                Get
+                    Return _mgr
+                End Get
+            End Property
+
+            Public Sub New(ex As Exception, conn As Object, mgr As OrmManager)
+                _ex = ex
+                _conn = conn
+                _mgr = mgr
+            End Sub
+        End Class
+
+        Public Class CommandExceptionArgs
+            Inherits EventArgs
+
+            Enum ActionEnum
+                RetryOldConnection
+                ''' <summary>
+                ''' Create new connection and retry
+                ''' </summary>
+                ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
+                RetryNewConnection
+                Rethrow
+                ''' <summary>
+                ''' Rethrow custom exception
+                ''' </summary>
+                ''' <remarks>Custom exception in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
+                RethrowCustom
+                RetryNewCommand
+                'RetryNewCommandOnNewConnection
+            End Enum
+
+            Property Action As ActionEnum
+
+            Property Context As Object
+
+            Private _ex As Exception
+            Public ReadOnly Property Exception() As Exception
+                Get
+                    Return _ex
+                End Get
+            End Property
+
+            Private _cmd As Object
+            Public ReadOnly Property Command() As Object
+                Get
+                    Return _cmd
+                End Get
+            End Property
+
+            Private _mgr As OrmManager
+            Public ReadOnly Property OrmManager() As OrmManager
+                Get
+                    Return _mgr
+                End Get
+            End Property
+
+            Public Sub New(ex As Exception, cmd As Object, mgr As OrmManager)
+                _ex = ex
+                _cmd = cmd
+                _mgr = mgr
+            End Sub
+        End Class
 #End Region
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
@@ -465,6 +567,9 @@ Namespace Query
         Friend _optimizeOr As List(Of Criteria.PredicateLink)
         Private _newMaps As IDictionary
         Friend _notSimpleMode As Boolean
+
+        Public Event ConnectionException(sender As QueryCmd, args As ConnectionExceptionArgs)
+        Public Event CommandException(sender As QueryCmd, args As CommandExceptionArgs)
 
 #Region " Cache "
         '<NonSerialized()> _
@@ -560,7 +665,7 @@ Namespace Query
             If CreateManager Is Nothing Then
                 need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager)
             Else
-                Using mgr As OrmManager = CreateManager.CreateManager
+                Using mgr As OrmManager = CreateManager.CreateManager(Me)
                     need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr)
                 End Using
             End If
@@ -817,7 +922,7 @@ Namespace Query
             If SpecificMappingEngine IsNot Nothing Then
                 Return SpecificMappingEngine
             ElseIf CreateManager IsNot Nothing Then
-                Using mgr As OrmManager = CreateManager.CreateManager
+                Using mgr As OrmManager = CreateManager.CreateManager(Me)
                     Return mgr.MappingEngine
                 End Using
             Else
@@ -3294,7 +3399,7 @@ l1:
         End Function
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToMatrix(mgr)
                 End Using
@@ -3307,7 +3412,7 @@ l1:
 
 #Region " ToList "
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToBaseEntity(Of T)(mgr, withLoad)
                 End Using
@@ -3399,7 +3504,7 @@ l1:
         End Function
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(mgr)
                 End Using
@@ -3419,7 +3524,7 @@ l1:
         End Function
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(Of CreateType, ReturnType)(mgr)
                 End Using
@@ -3439,7 +3544,7 @@ l1:
         End Function
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToList(Of CreateReturnType)(mgr)
                 End Using
@@ -3466,7 +3571,7 @@ l1:
         End Function
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToAnonymList(mgr)
                 End Using
@@ -3499,7 +3604,7 @@ l1:
         End Function
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToEntityList(Of T)(mgr)
                 End Using
@@ -3531,7 +3636,7 @@ l1:
         End Function
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
-            'Using mgr As OrmManager = getMgr.CreateManager
+            'Using mgr As OrmManager = getMgr.CreateManager(Me)
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
             '    Return ToOrmList(Of T)(mgr)
@@ -3560,7 +3665,7 @@ l1:
         End Function
 
         Public Function ToOrmList(Of CreateType As {New, _ISinglePKEntity}, ReturnType As _ISinglePKEntity)(ByVal getMgr As ICreateManager) As ReadOnlyList(Of ReturnType)
-            'Using mgr As OrmManager = getMgr.CreateManager
+            'Using mgr As OrmManager = getMgr.CreateManager(Me)
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
             '    Return ToOrmList(Of CreateType, ReturnType)(mgr)
@@ -3596,7 +3701,7 @@ l1:
         End Function
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
                 End Using
@@ -3624,7 +3729,7 @@ l1:
         'End Function
 
         'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
-        '    Using mgr As OrmManager = getMgr.CreateManager
+        '    Using mgr As OrmManager = getMgr.CreateManager(Me)
         '        'mgr.RaiseObjectCreation = True
         '        AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
         '        Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
@@ -3671,7 +3776,7 @@ l1:
         End Function
 
         Public Function Count(ByVal getMgr As ICreateManager) As Integer
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return Count(mgr)
                 End Using
@@ -3725,7 +3830,7 @@ l1:
         End Function
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToDictionary(Of TKey, TValue)(mgr)
                 End Using
@@ -3760,7 +3865,7 @@ l1:
         End Function
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToSimpleDictionary(Of TKey, TValue)(mgr)
                 End Using
@@ -3776,7 +3881,7 @@ l1:
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return ToObjectList(Of T)(mgr)
                 End Using
@@ -3800,7 +3905,7 @@ l1:
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
 
-            Using mgr As OrmManager = _getMgr.CreateManager
+            Using mgr As OrmManager = _getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, CreateManager, _schema)
                     Return ToPOCOList(Of T)(mgr)
                 End Using
@@ -4710,7 +4815,7 @@ l1:
             If _getMgr Is Nothing Then
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
-            Using mgr As OrmManager = CreateManager.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager(Me)
                 GetExecutor(mgr).ClearCache(mgr, Me)
             End Using
         End Sub
@@ -4720,7 +4825,7 @@ l1:
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
 
-            Using mgr As OrmManager = CreateManager.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager(Me)
                 GetExecutor(mgr).RenewCache(mgr, Me, v)
             End Using
         End Sub
@@ -4731,7 +4836,7 @@ l1:
                     Throw New QueryCmdException("OrmManager required", Me)
                 End If
 
-                Using mgr As OrmManager = CreateManager.CreateManager
+                Using mgr As OrmManager = CreateManager.CreateManager(Me)
                     Return GetExecutor(mgr).IsInCache(mgr, Me)
                 End Using
             End Get
@@ -4746,7 +4851,7 @@ l1:
         End Sub
 
         Public Sub ResetObjects(ByVal getMgr As ICreateManager)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 ResetObjects(mgr)
             End Using
         End Sub
@@ -5258,7 +5363,7 @@ l1:
 #Region " GetByID "
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager
+                Using mgr As OrmManager = _getMgr.CreateManager(Me)
                     Return GetByID(Of T)(id, options, mgr)
                 End Using
             Else
@@ -5313,44 +5418,51 @@ l1:
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
                     mgr.SetSchema(SpecificMappingEngine)
                 End If
+
                 Try
-                    If GetType(T) IsNot tp Then
-                        Select Case options
-                            Case GetByIDOptions.EnsureExistsInStore
-                                o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
-                                    o = Nothing
-                                End If
-                            Case GetByIDOptions.GetAsIs
-                                o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                            Case GetByIDOptions.EnsureLoadedFromStore
-                                o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
-                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
-                                    o = Nothing
-                                End If
-                            Case Else
-                                Throw New NotImplementedException
-                        End Select
-                    Else
-                        'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
-                        Select Case options
-                            Case GetByIDOptions.EnsureExistsInStore
-                                o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
-                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
-                                    o = Nothing
-                                End If
-                            Case GetByIDOptions.GetAsIs
-                                o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
-                            Case GetByIDOptions.EnsureLoadedFromStore
-                                o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
-                                If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
-                                    o = Nothing
-                                End If
-                            Case Else
-                                Throw New NotImplementedException
-                        End Select
-                    End If
+                    Using GetExecutor(mgr).SubscribeToErrorHandling(mgr, Me)
+
+                        If GetType(T) IsNot tp Then
+                            Select Case options
+                                Case GetByIDOptions.EnsureExistsInStore
+                                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                                    If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                        o = Nothing
+                                    End If
+                                Case GetByIDOptions.GetAsIs
+                                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                                Case GetByIDOptions.EnsureLoadedFromStore
+                                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                                    If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                        o = Nothing
+                                    End If
+                                Case Else
+                                    Throw New NotImplementedException
+                            End Select
+                        Else
+                            'o = mgr.LoadType(Of T)(id, ensureLoaded, False)
+                            Select Case options
+                                Case GetByIDOptions.EnsureExistsInStore
+                                    o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                                    If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                        o = Nothing
+                                    End If
+                                Case GetByIDOptions.GetAsIs
+                                    o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                                Case GetByIDOptions.EnsureLoadedFromStore
+                                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
+                                    If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
+                                        o = Nothing
+                                    End If
+                                Case Else
+                                    Throw New NotImplementedException
+                            End Select
+                        End If
+                    End Using
                 Finally
+                    'UnsubscribeFromCommandEvents(Query, dbm, cmdHandler)
+                    'UnsubscribeFromConnectionEvents(Query, dbm, connHandler)
+
                     mgr.SetSchema(oldSch)
                 End Try
             End Using
@@ -5480,7 +5592,7 @@ l1:
                             ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
             If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager
+                Using mgr As OrmManager = _getMgr.CreateManager(Me)
                     Return GetByIds(Of T)(ids, options, mgr)
                 End Using
             Else
@@ -5517,7 +5629,7 @@ l1:
 
         Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager
+                Using mgr As OrmManager = _getMgr.CreateManager(Me)
                     Return GetByIDDyn(Of T)(id, options, mgr)
                 End Using
             Else
@@ -5548,16 +5660,18 @@ l1:
                     mgr.SetSchema(SpecificMappingEngine)
                 End If
                 Try
-                    Select Case options
-                        Case GetByIDOptions.EnsureExistsInStore
-                            o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
-                        Case GetByIDOptions.GetAsIs
-                            o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
-                        Case GetByIDOptions.EnsureLoadedFromStore
-                            o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
-                        Case Else
-                            Throw New NotImplementedException
-                    End Select
+                    Using GetExecutor(mgr).SubscribeToErrorHandling(mgr, Me)
+                        Select Case options
+                            Case GetByIDOptions.EnsureExistsInStore
+                                o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                            Case GetByIDOptions.GetAsIs
+                                o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                            Case GetByIDOptions.EnsureLoadedFromStore
+                                o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                            Case Else
+                                Throw New NotImplementedException
+                        End Select
+                    End Using
                 Finally
                     mgr.SetSchema(oldSch)
                 End Try
@@ -5609,7 +5723,7 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, level)
                 End Using
@@ -5633,7 +5747,7 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, level)
                 End Using
@@ -5642,7 +5756,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, _
             ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, _schema)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, secondPropertyAlias, level)
                 End Using
@@ -5870,7 +5984,7 @@ l1:
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Using mgr As OrmManager = CreateManager.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager(Me)
                 SetCache(mgr, l)
             End Using
         End Sub
@@ -5914,6 +6028,41 @@ l1:
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
+
+        Property DontUseErrorHandlingInManager As Boolean
+
+        Friend Function RaiseConnectionErrorEvent(args As ConnectionExceptionArgs) As ConnectionExceptionEventHandler
+            RaiseEvent ConnectionException(Me, args)
+            If Not DontUseErrorHandlingInManager Then
+                Return ConnectionExceptionEvent
+            End If
+            Return Nothing
+        End Function
+
+        Friend Function HasConnectionErrorSubscribers() As Boolean
+            Return ConnectionExceptionEvent IsNot Nothing
+        End Function
+
+        Friend Function RaiseCommandErrorEvent(args As CommandExceptionArgs) As CommandExceptionEventHandler
+            RaiseEvent CommandException(Me, args)
+            If Not DontUseErrorHandlingInManager Then
+                Return CommandExceptionEvent
+            End If
+            Return Nothing
+        End Function
+
+        Friend Function HasCommandErrorSubscribers() As Boolean
+            Return CommandExceptionEvent IsNot Nothing
+        End Function
+
+        Friend Function ContainsConnectionExceptionSubscriber(qh As ConnectionExceptionEventHandler) As Boolean
+            Return ConnectionExceptionEvent IsNot Nothing AndAlso Array.IndexOf(ConnectionExceptionEvent.GetInvocationList, qh) >= 0
+        End Function
+
+        Friend Function ContainsCommandExceptionSubscriber(qh As CommandExceptionEventHandler) As Boolean
+            Return CommandExceptionEvent IsNot Nothing AndAlso Array.IndexOf(CommandExceptionEvent.GetInvocationList, qh) >= 0
+        End Function
+
     End Class
 
     '    Public Class OrmQueryCmd(Of T As {New, _IKeyEntity})

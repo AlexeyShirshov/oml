@@ -426,6 +426,9 @@ Namespace Database
         Protected Shared _LoadMultipleObjectsMI4clm As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
+        Public Event ConnectionException(sender As OrmReadOnlyDBManager, args As ConnectionExceptionArgs)
+        Public Event CommandException(sender As OrmReadOnlyDBManager, args As CommandExceptionArgs)
+
         Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, mpe)
             StmtGenerator = generator
@@ -605,10 +608,12 @@ l1:
         Private _idstr As String
         Protected Friend Overrides ReadOnly Property IdentityString() As String
             Get
-                If String.IsNullOrEmpty(_idstr) AndAlso Not String.IsNullOrEmpty(_connStr) Then
-                    _idstr = MyBase.IdentityString & _connStr
-                Else
-                    Return MyBase.IdentityString & _connStr
+                If String.IsNullOrEmpty(_idstr) Then
+                    If Not String.IsNullOrEmpty(_connStr) Then
+                        _idstr = MyBase.IdentityString & _connStr
+                    Else
+                        Return MyBase.IdentityString '& _connStr
+                    End If
                 End If
                 Return _idstr
             End Get
@@ -1035,10 +1040,89 @@ l1:
             Return String.Empty
         End Function
 
+        Friend Function ExecuteReaderCmd(cmd As Data.Common.DbCommand) As Data.Common.DbDataReader
+            Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,
+                                                               Function()
+                                                                   Return cmd.ExecuteReader
+                                                               End Function)
+        End Function
+
+        Friend Function ExecuteCmd(Of T)(cmd As Data.Common.DbCommand, exec As Func(Of T)) As T
+            If CommandExceptionEvent IsNot Nothing Then
+                Try
+l1:
+                    Return exec()
+                Catch ex As System.Data.SqlClient.SqlException
+                    Dim args As New CommandExceptionArgs(ex, cmd)
+                    RaiseEvent CommandException(Me, args)
+                    Select Case args.Action
+                        Case CommandExceptionArgs.ActionEnum.Rethrow
+                            CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                            Throw ex
+                        Case CommandExceptionArgs.ActionEnum.RethrowCustom
+                            Dim cex As Exception = TryCast(args.Context, Exception)
+                            If cex IsNot Nothing Then
+                                Throw cex
+                            Else
+                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                Throw ex
+                            End If
+                        Case CommandExceptionArgs.ActionEnum.RetryOldConnection
+                            GoTo l1
+                        Case CommandExceptionArgs.ActionEnum.RetryNewConnection
+                            Dim connStr As String = CStr(args.Context)
+
+                            If _tran IsNot Nothing OrElse String.IsNullOrEmpty(connStr) Then
+                                'if we have transaction we should not rollback it as long as possible
+                                'if exception will not be rethrown, connection will close and transaction rolls back
+                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                Throw ex
+                            End If
+
+                            _connStr = connStr
+                            _idstr = Nothing
+                            If _conn.State = Data.ConnectionState.Open Then
+                                _conn.Close()
+                            End If
+                            _conn.ConnectionString = _connStr
+                            TestConn(cmd)
+                            GoTo l1
+                        Case CommandExceptionArgs.ActionEnum.RetryNewCommand
+                            Dim cmdText As String = CStr(args.Context)
+                            If Not String.IsNullOrEmpty(cmdText) Then
+                                cmd.CommandText = cmdText
+                            Else
+                                'to prevent stack overflow
+                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                Throw ex
+                            End If
+                            GoTo l1
+                            'Case CommandExceptionArgs.ActionEnum.RetryNewCommandOnNewConnection
+                            '    Dim connStr As String = CStr(args.Context)
+                            '    Dim cmdText As String = CStr(args.Context)
+                            '    If _tran IsNot Nothing OrElse String.IsNullOrEmpty(connStr) Then
+                            '        'if we have transaction we should not rollback it as long as possible
+                            '        'if exception will not be rethrown, connection will close and transaction rolls back
+                            '        CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                            '        Throw ex
+                            '    End If
+                    End Select
+
+                    'note: never come here
+                    Return Nothing
+                End Try
+            Else
+                Return exec()
+            End If
+        End Function
+
         Public Function ExecuteReader(ByVal cmd As System.Data.Common.DbCommand) As System.Data.Common.DbDataReader
             Dim b As ConnAction = TestConn(cmd)
             Try
-                Return cmd.ExecuteReader
+                Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,
+                                                               Function()
+                                                                   Return cmd.ExecuteReader
+                                                               End Function)
             Finally
                 CloseConn(b)
             End Try
@@ -1047,7 +1131,9 @@ l1:
         Public Function ExecuteScalar(ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim b As ConnAction = TestConn(cmd)
             Try
-                Return cmd.ExecuteScalar
+                Return ExecuteCmd(Of Object)(cmd, Function()
+                                                      Return cmd.ExecuteScalar
+                                                  End Function)
             Finally
                 CloseConn(b)
             End Try
@@ -1056,7 +1142,10 @@ l1:
         Public Function ExecuteNonQuery(ByVal cmd As System.Data.Common.DbCommand) As Integer
             Dim b As ConnAction = TestConn(cmd)
             Try
-                Return cmd.ExecuteNonQuery
+                Return ExecuteCmd(Of Integer)(cmd, Function()
+                                                       Return cmd.ExecuteNonQuery()
+                                                   End Function)
+
             Finally
                 CloseConn(b)
             End Try
@@ -1135,7 +1224,7 @@ l1:
                     Dim b As ConnAction = TestConn(cmd)
                     Try
                         Dim et As New PerfCounter
-                        Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                        Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
                             Dim loaded As Boolean = False
                             Do While dr.Read
                                 If loaded Then
@@ -1221,7 +1310,7 @@ l1:
                 End If
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
                 Dim et As New PerfCounter
-                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
                     Dim loaded As Boolean = False
                     Do While dr.Read
                         If loaded Then
@@ -1278,7 +1367,7 @@ l1:
             Dim b As ConnAction = TestConn(cmd)
             Try
                 Dim n As Boolean = GetType(T).FullName.StartsWith("System.Nullable")
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.IDataReader = ExecuteReaderCmd(cmd)
                     Do While dr.Read
                         'l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
                         If dr.IsDBNull(0) Then
@@ -1306,7 +1395,7 @@ l1:
             Dim b As ConnAction = TestConn(cmd)
             Try
                 Dim n As Boolean = t.FullName.StartsWith("System.Nullable")
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                Using dr As System.Data.IDataReader = ExecuteReaderCmd(cmd)
                     Do While dr.Read
                         'l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
                         If dr.IsDBNull(0) Then
@@ -1531,7 +1620,7 @@ l1:
                 Next
 
                 Dim et As New PerfCounter
-                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
                     _exec = et.GetTime
 
                     Dim ft As New PerfCounter
@@ -1869,7 +1958,7 @@ l1:
                 End If
 
                 Dim et As New PerfCounter
-                Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
                     _exec = et.GetTime
 
                     Dim entityDictionary As IDictionary = Nothing
@@ -2305,7 +2394,39 @@ l2:
 
             If _conn Is Nothing Then
                 _conn = CreateConn()
-                _conn.Open()
+                If ConnectionExceptionEvent IsNot Nothing Then
+                    Try
+l1:
+                        _conn.Open()
+                    Catch ex As System.Data.SqlClient.SqlException
+                        Dim args As New ConnectionExceptionArgs(ex, _conn)
+                        RaiseEvent ConnectionException(Me, args)
+                        Select Case args.Action
+                            Case ConnectionExceptionArgs.ActionEnum.Rethrow
+                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                Throw ex
+                            Case ConnectionExceptionArgs.ActionEnum.RethrowCustom
+                                Dim cex As Exception = TryCast(args.Context, Exception)
+                                Throw cex
+                            Case ConnectionExceptionArgs.ActionEnum.RetryOldConnection
+                                GoTo l1
+                            Case ConnectionExceptionArgs.ActionEnum.RetryNewConnection
+                                Dim connStr As String = CStr(args.Context)
+                                If Not String.IsNullOrEmpty(connStr) Then
+                                    _connStr = connStr
+                                    _idstr = Nothing
+                                    _conn.ConnectionString = _connStr
+                                Else
+                                    'to prevent stack overflow
+                                    CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                    Throw ex
+                                End If
+                                GoTo l1
+                        End Select
+                    End Try
+                Else
+                    _conn.Open()
+                End If
                 r = ConnAction.Destroy
                 If cmd IsNot Nothing Then cmd.Connection = _conn
             Else
@@ -2317,7 +2438,32 @@ l2:
                 Else
                     Dim cs As System.Data.ConnectionState = _conn.State
                     If cs = System.Data.ConnectionState.Closed OrElse cs = System.Data.ConnectionState.Broken Then
-                        _conn.Open()
+                        If ConnectionExceptionEvent IsNot Nothing Then
+                            Try
+l2:
+                                _conn.Open()
+                            Catch ex As System.Data.SqlClient.SqlException
+                                Dim args As New ConnectionExceptionArgs(ex, _conn)
+                                RaiseEvent ConnectionException(Me, args)
+                                Select Case args.Action
+                                    Case ConnectionExceptionArgs.ActionEnum.Rethrow
+                                        CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                        Throw ex
+                                    Case ConnectionExceptionArgs.ActionEnum.RethrowCustom
+                                        Dim cex As Exception = TryCast(args.Context, Exception)
+                                        Throw cex
+                                    Case ConnectionExceptionArgs.ActionEnum.RetryOldConnection
+                                        GoTo l2
+                                    Case ConnectionExceptionArgs.ActionEnum.RetryNewConnection
+                                        _connStr = CStr(args.Context)
+                                        _idstr = Nothing
+                                        _conn.ConnectionString = _connStr
+                                        GoTo l2
+                                End Select
+                            End Try
+                        Else
+                            _conn.Open()
+                        End If
                         r = ConnAction.Close
                     End If
                     If cmd IsNot Nothing Then cmd.Connection = _conn

@@ -77,11 +77,19 @@ Namespace Query
             MyClass.New(New ReadonlyCache, mpe, New Worm.Database.SQLGenerator)
         End Sub
 
-        Public MustOverride Function CreateManager() As OrmManager Implements ICreateManager.CreateManager
+        Protected MustOverride Function _CreateManager() As OrmManager
+
+        Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
+            Dim m As OrmManager = _CreateManager()
+            RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+            Return m
+        End Function
 
         Public Function CreateCmd() As QueryCmd
             Return New QueryCmd(Me)
         End Function
+
+        Public Event CreateManagerEvent(sender As ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements ICreateManager.CreateManagerEvent
     End Class
 
     Public Class WormDBContext
@@ -128,7 +136,7 @@ Namespace Query
             MyBase.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQLGenerator)
         End Sub
 
-        Public Overrides Function CreateManager() As OrmManager
+        Protected Overrides Function _CreateManager() As OrmManager
             If _del IsNot Nothing Then
                 Return _del(Cache, MappingEngine, StmtGenerator)
             Else

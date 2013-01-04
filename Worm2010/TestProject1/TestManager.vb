@@ -42,10 +42,13 @@ Imports Worm
             MyBase.New(cache, schema, gen, connectionString)
         End Sub
 
-        Public Function CreateMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
-            Return CreateManager(New Worm.ObjectMappingEngine("1"))
+        Public Function CreateMgr(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
+            Dim m As OrmManager = CreateManager(New Worm.ObjectMappingEngine("1"))
+            RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+            Return m
         End Function
 
+        Public Event CreateManagerEvent(sender As Worm.ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements Worm.ICreateManager.CreateManagerEvent
     End Class
 
     Public Shared Function CreateManager(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
@@ -57,6 +60,16 @@ Imports Worm
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+#End If
+    End Function
+
+    Public Shared Function CreateManagerWrong(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine, _
+                                             ByVal gen As SQLGenerator) As OrmReadOnlyDBManager
+#If UseUserInstance Then
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+        Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
 #End If
@@ -1369,7 +1382,7 @@ Imports Worm
     End Sub
 
     <TestMethod()> _
-        Public Sub TestBeginEdit()
+    Public Sub TestBeginEdit()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity5 = New QueryCmd().GetByID(Of Entity5)(1, mgr)
             Using e.BeginEdit
@@ -1394,6 +1407,100 @@ Imports Worm
             Assert.IsTrue(e.InternalProperties.IsPropertyLoaded("Str"))
 
         End Using
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestErrorHandling()
+
+        Dim handle As Boolean
+
+        Using mgr As OrmReadOnlyDBManager = CreateManagerWrong(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator)
+            AddHandler mgr.ConnectionException,
+                Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.ConnectionExceptionArgs)
+                    Assert.IsTrue(TypeOf args.Exception Is System.Data.SqlClient.SqlException)
+                    Dim cb As New System.Data.SqlClient.SqlConnectionStringBuilder(args.Connection.ConnectionString)
+                    cb.DataSource = ".\sqlexpress"
+                    args.Context = cb.ToString
+                    args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.RetryNewConnection
+                    handle = True
+                End Sub
+
+            Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)
+
+            Assert.IsTrue(handle)
+            Assert.IsNotNull(e)
+
+        End Using
+    End Sub
+
+    <TestMethod(), ExpectedException(GetType(InvalidCastException))>
+    Public Sub TestErrorHandlingExc()
+        Using mgr As OrmReadOnlyDBManager = CreateManagerWrong(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator)
+            AddHandler mgr.ConnectionException,
+                Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.ConnectionExceptionArgs)
+                    Assert.IsTrue(TypeOf args.Exception Is System.Data.SqlClient.SqlException)
+                    args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.RethrowCustom
+                    args.Context = New InvalidCastException("my exception")
+                End Sub
+
+            Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestErrorHandlingExc2()
+        Using mgr As OrmReadOnlyDBManager = CreateManagerWrong(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator)
+            AddHandler mgr.ConnectionException,
+                Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.ConnectionExceptionArgs)
+                    Assert.IsTrue(TypeOf args.Exception Is System.Data.SqlClient.SqlException)
+                    args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.Rethrow
+                End Sub
+
+            Try
+                Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)
+            Catch ex As Data.SqlClient.SqlException
+                Assert.IsTrue(ex.StackTrace.Contains("line 1461"))
+            End Try
+        End Using
+
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestErrorHandlingNewCommand()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator)
+            Dim cmd As Data.Common.DbCommand = mgr.CreateDBCommand()
+            cmd.CommandText = "select * from "
+
+            AddHandler mgr.CommandException,
+                Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.CommandExceptionArgs)
+                    args.Action = OrmReadOnlyDBManager.CommandExceptionArgs.ActionEnum.RetryNewCommand
+                    args.Context = "select count(*) from ent1"
+                End Sub
+
+            Assert.AreEqual(13, CInt(mgr.ExecuteScalar(cmd)))
+        End Using
+
+    End Sub
+
+    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))>
+    Public Sub TestErrorHandlingNewCommandTran()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator)
+
+            Dim cmd As Data.Common.DbCommand = mgr.CreateDBCommand()
+            cmd.CommandText = "select count(*) from "
+
+            AddHandler mgr.CommandException,
+                Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.CommandExceptionArgs)
+                    args.Action = OrmReadOnlyDBManager.CommandExceptionArgs.ActionEnum.RetryNewConnection
+                    args.Context = args.Command.Connection.ConnectionString
+                End Sub
+
+            Assert.IsNotNull(mgr.BeginTransaction())
+
+            mgr.ExecuteScalar(cmd)
+        End Using
+
     End Sub
 
     Public Class cls
@@ -1450,8 +1557,11 @@ Imports Worm
     '    End Sub
     '#End Region
 
-    Public Function CreateMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
-        Return CreateManager(New Worm.ObjectMappingEngine("1"))
+    Public Function CreateMgr(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
+        Dim m As OrmManager = CreateManager(New Worm.ObjectMappingEngine("1"))
+        RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Return m
     End Function
 
+    Public Event CreateManagerEvent(sender As Worm.ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements Worm.ICreateManager.CreateManagerEvent
 End Class

@@ -442,7 +442,7 @@ Namespace Web
             Dim col As New SettingsPropertyValueCollection
             Dim oschema As IEntitySchema = Nothing
             Dim schema As ObjectMappingEngine
-            Using mgr As OrmManager = CreateManager.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager(Me)
                 schema = mgr.MappingEngine
                 oschema = schema.GetEntitySchema(GetUserType)
             End Using

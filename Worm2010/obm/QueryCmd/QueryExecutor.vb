@@ -412,5 +412,7 @@ l2:
                 query._cacheSort = olds
             End Try
         End Function
+
+        Public MustOverride Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As System.IDisposable Implements IExecutor.SubscribeToErrorHandling
     End Class
 End Namespace

@@ -128,8 +128,9 @@ Partial Public MustInherit Class OrmManager
     Public Event BeginUpdate(ByVal sender As OrmManager, ByVal o As ICachedEntity)
     Public Event BeginDelete(ByVal sender As OrmManager, ByVal o As ICachedEntity)
 
-    'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManager, ByVal r As ExecutionResult)
+
+    Public Event ManagerGoingDown(ByVal mgr As OrmManager)
 
     Public Shared ReadOnly Property ExecSource() As TraceSource
         Get
@@ -368,6 +369,7 @@ Partial Public MustInherit Class OrmManager
         SyncLock Me.GetType
             If Not Me._disposed Then
                 ResetLocalStorage()
+                RaiseEvent ManagerGoingDown(Me)
                 '#If DEBUG Then
                 '                    Assert(_next Is Nothing OrElse _next.disposed = True, "MediaContent disposing before the next")
                 '#End If

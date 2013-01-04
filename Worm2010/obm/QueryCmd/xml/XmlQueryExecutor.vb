@@ -72,5 +72,9 @@ Namespace Query.Xml
         Public Sub SetCache(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal l As System.Collections.ICollection) Implements IExecutor.SetCache
             Throw New NotImplementedException
         End Sub
+
+        Public Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As System.IDisposable Implements IExecutor.SubscribeToErrorHandling
+            Return New EmptyDisposable
+        End Function
     End Class
 End Namespace

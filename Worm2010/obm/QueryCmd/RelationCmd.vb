@@ -611,7 +611,7 @@ l1:
                 If schema Is Nothing Then
                     schema = m2mObject.GetMappingEngine
                     If schema Is Nothing AndAlso _getMgr IsNot Nothing Then
-                        Using mgr As OrmManager = _getMgr.CreateManager
+                        Using mgr As OrmManager = _getMgr.CreateManager(Me)
                             schema = mgr.MappingEngine
                         End Using
                     End If
@@ -704,7 +704,7 @@ l1:
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr)
                 End Using
@@ -741,7 +741,7 @@ l1:
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
                     LoadObjects(mgr, start, length)
                 End Using
@@ -866,7 +866,7 @@ l1:
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Using mgr As OrmManager = CreateManager.CreateManager
+            Using mgr As OrmManager = CreateManager.CreateManager(Me)
                 Reject(mgr)
             End Using
         End Sub

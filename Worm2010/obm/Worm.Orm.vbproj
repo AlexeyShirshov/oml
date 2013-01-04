@@ -178,6 +178,7 @@
     <Compile Include="DbMS\SP\QueryEntity.vb" />
     <Compile Include="DbMS\SP\QuerySP.vb" />
     <Compile Include="DbMS\SP\SPBase.vb" />
+    <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="QueryCmd\QueryExecutor.vb" />
     <Compile Include="QueryCmd\RelationCmd.vb" />
@@ -320,4 +321,9 @@
 rem $(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
 rem del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

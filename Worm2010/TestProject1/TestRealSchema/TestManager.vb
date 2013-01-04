@@ -80,6 +80,15 @@ Public Class TestManagerRS
 #End If
     End Function
 
+    Public Shared Function CreateManagerSharedWrong(ByVal schema As Worm.ObjectMappingEngine, ByVal cache As ReadonlyCache, ByVal stmt As SQLGenerator) As OrmReadOnlyDBManager
+#If UseUserInstance Then
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Return New OrmReadOnlyDBManager(cache, schema, stmt, "Data Source=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Return New OrmReadOnlyDBManager(cache, schema, stmt, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+#End If
+    End Function
+
     Public Shared Function CreateWriteManagerShared(ByVal schema As Worm.ObjectMappingEngine, ByVal cache As OrmCache) As OrmDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
@@ -89,8 +98,10 @@ Public Class TestManagerRS
 #End If
     End Function
 
-    Public Function CreateManager() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
-        Return CreateManagerShared(New Worm.ObjectMappingEngine("1"))
+    Public Function CreateManager(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
+        Dim m As OrmManager = CreateManagerShared(New Worm.ObjectMappingEngine("1"))
+        RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Return m
     End Function
 
     Public Function CreateManager(ByVal schema As Worm.ObjectMappingEngine) As OrmReadOnlyDBManager
@@ -1360,4 +1371,6 @@ Public Class TestManagerRS
 
         _new_objects.Remove(CInt(CType(obj, ISinglePKEntity).Identifier))
     End Sub
+
+    Public Event CreateManagerEvent(sender As Worm.ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements Worm.ICreateManager.CreateManagerEvent
 End Class

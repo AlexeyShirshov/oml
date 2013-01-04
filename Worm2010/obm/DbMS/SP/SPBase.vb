@@ -413,7 +413,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Function GetResult(ByVal getMgr As ICreateManager) As Object
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager, OrmReadOnlyDBManager)
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Me), OrmReadOnlyDBManager)
                 Using New SetManagerHelper(mgr, getMgr, Nothing)
                     Return GetResult(mgr)
                 End Using

@@ -45,6 +45,14 @@ Namespace Query
 
         ReadOnly Property IsInCache(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 
+        ''' <summary>
+        ''' Subscribe <paramref name="mgr"/> to <paramref name="query"/> error handling
+        ''' </summary>
+        ''' <param name="mgr"></param>
+        ''' <param name="query"></param>
+        ''' <returns>Should return IDisposable which will be used for unsubscribe action</returns>
+        ''' <remarks>Return <see cref="EmptyDisposable"/> if do nothing</remarks>
+        Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As IDisposable
     End Interface
 
     Public Interface ICreateQueryCmd

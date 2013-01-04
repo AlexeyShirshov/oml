@@ -257,7 +257,7 @@ Namespace Entities
             Dim mgr As OrmManager = GetCurrent()
             If mgr Is Nothing Then
                 If _cm IsNot Nothing Then
-                    Return New GetManagerDisposable(_cm.CreateManager, _schema)
+                    Return New GetManagerDisposable(_cm.CreateManager(Me), _schema)
                 Else
                     Dim a As New ManagerRequiredArgs
                     RaiseEvent ManagerRequired(Me, a)

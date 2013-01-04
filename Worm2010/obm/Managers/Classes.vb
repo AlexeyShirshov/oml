@@ -35,7 +35,31 @@ Public Interface IGetManager
 End Interface
 
 Public Interface ICreateManager
-    Function CreateManager() As OrmManager
+    Class CreateManagerEventArgs
+        Inherits EventArgs
+
+        Private _mgr As OrmManager
+        ReadOnly Property Manager As OrmManager
+            Get
+                Return _mgr
+            End Get
+        End Property
+
+        Private _ctx As Object
+        Public ReadOnly Property Context() As Object
+            Get
+                Return _ctx
+            End Get
+        End Property
+
+        Public Sub New(mgr As OrmManager, ctx As Object)
+            _mgr = mgr
+            _ctx = ctx
+        End Sub
+    End Class
+
+    Function CreateManager(ctx As Object) As OrmManager
+    Event CreateManagerEvent(sender As ICreateManager, args As CreateManagerEventArgs)
 End Interface
 
 Public Interface IAdminManager
@@ -229,9 +253,13 @@ Public Class CreateManager
         _del = createManDelegate
     End Sub
 
-    Public Function CreateManager() As OrmManager Implements ICreateManager.CreateManager
-        Return _del()
+    Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
+        Dim m As OrmManager = _del()
+        RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Return m
     End Function
+
+    Public Event CreateManagerEvent(sender As ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements ICreateManager.CreateManagerEvent
 End Class
 
 #If Not ExcludeFindMethods Then
