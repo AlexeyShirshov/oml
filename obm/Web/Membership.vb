@@ -550,7 +550,7 @@ Namespace Web
 
         Protected ReadOnly Property Schema() As ObjectMappingEngine
             Get
-                Using mgr As OrmManager = UserMapper.CreateManager.CreateManager
+                Using mgr As OrmManager = UserMapper.CreateManager.CreateManager(UserMapper)
                     Return mgr.MappingEngine
                 End Using
             End Get

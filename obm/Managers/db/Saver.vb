@@ -726,7 +726,7 @@ l1:
         End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager)
-            MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
+            MyClass.New(CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager), True)
             _cm = getMgr
         End Sub
 
@@ -736,7 +736,7 @@ l1:
         End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine)
-            MyClass.New(CType(getMgr.CreateManager, OrmReadOnlyDBManager), True)
+            MyClass.New(CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager), True)
             _cm = getMgr
             If Not _mgr.MappingEngine.Equals(schema) Then
                 _ss = New OrmManager.SchemaSwitcher(schema, _mgr)

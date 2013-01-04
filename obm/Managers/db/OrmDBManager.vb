@@ -23,11 +23,14 @@ Namespace Database
 
         Protected Friend Overrides ReadOnly Property IdentityString() As String
             Get
-                If String.IsNullOrEmpty(_idstr) AndAlso Not String.IsNullOrEmpty(_connStr) Then
-                    _idstr = GetType(OrmReadOnlyDBManager).ToString & _connStr
-                Else
-                    Return GetType(OrmReadOnlyDBManager).ToString & _connStr
+                If String.IsNullOrEmpty(_idstr) Then
+                    If Not String.IsNullOrEmpty(_connStr) Then
+                        _idstr = GetType(OrmReadOnlyDBManager).ToString & _connStr
+                    Else
+                        Return GetType(OrmReadOnlyDBManager).ToString '& _connStr
+                    End If
                 End If
+
                 Return _idstr
             End Get
         End Property

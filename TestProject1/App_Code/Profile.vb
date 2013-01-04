@@ -15,13 +15,16 @@ Imports Worm.Query
 Public Class GetMgr
     Implements Worm.ICreateManager
 
-    Public Function GetMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
+    Public Function GetMgr(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Dim m As OrmManager = New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
+        Dim m As OrmManager = New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
 #End If
+
+        RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Return m
     End Function
 
     Protected ReadOnly Property OrmCache() As OrmCache
@@ -36,6 +39,7 @@ Public Class GetMgr
         End Get
     End Property
 
+    Public Event CreateManagerEvent(sender As Worm.ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements Worm.ICreateManager.CreateManagerEvent
 End Class
 
 Public Class MyProfile

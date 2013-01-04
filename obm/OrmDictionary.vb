@@ -497,21 +497,21 @@ Namespace Misc
 
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Return FindElements(mgr, False, sort)
             End Using
         End Function
 
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Return FindElements(mgr, False, Nothing)
             End Using
         End Function
 
         Public Function FindElementsLoadOnlyNames(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager(Me)
                 Return FindElements(mgr, True, Nothing)
             End Using
         End Function

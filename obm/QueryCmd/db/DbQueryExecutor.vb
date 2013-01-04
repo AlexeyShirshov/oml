@@ -324,17 +324,28 @@ Namespace Query.Database
             ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReturnType
 
             Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
-            Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
-            If query.CommandTimeout.HasValue Then
-                dbm.CommandTimeout = query.CommandTimeout
-            End If
+            Dim connHandler As OrmReadOnlyDBManager.ConnectionExceptionEventHandler = Nothing
+            Dim cmdHandler As OrmReadOnlyDBManager.CommandExceptionEventHandler = Nothing
+            Try
+                connHandler = SubscribeToConnectionEvents(query, dbm)
+                cmdHandler = SubscribeCommandToEvents(query, dbm)
 
-            Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, gp, d, d2)
+                Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
-            dbm.CommandTimeout = timeout
+                If query.CommandTimeout.HasValue Then
+                    dbm.CommandTimeout = query.CommandTimeout
+                End If
 
-            Return res
+                Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, gp, d, d2)
+
+                dbm.CommandTimeout = timeout
+
+                Return res
+            Finally
+                UnsubscribeFromCommandEvents(dbm, cmdHandler)
+                UnsubscribeFromConnectionEvents(dbm, connHandler)
+            End Try
         End Function
 
         'Public Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
@@ -1484,6 +1495,150 @@ l1:
         End Sub
 #End Region
 
+        Friend Shared Function SubscribeToConnectionEvents(query As QueryCmd, mgr As OrmReadOnlyDBManager) As OrmReadOnlyDBManager.ConnectionExceptionEventHandler
+            Dim h As OrmReadOnlyDBManager.ConnectionExceptionEventHandler = Nothing
+            If query.HasConnectionErrorSubscribers Then
+
+                Dim cm As ICreateManager = query.CreateManager
+
+                h = Sub(sender, args)
+                        Dim pargs As New QueryCmd.ConnectionExceptionArgs(args.Exception, args.Connection, sender)
+
+                        Dim qh As QueryCmd.ConnectionExceptionEventHandler = query.RaiseConnectionErrorEvent(pargs)
+
+                        If qh IsNot Nothing Then
+                            Dim newErrorHandler As OrmReadOnlyDBManager.ConnectionExceptionEventHandler =
+                               Sub(mm, args_)
+
+                                   Dim pargs_ As New QueryCmd.ConnectionExceptionArgs(args_.Exception, args_.Connection, mm)
+                                   qh(Nothing, pargs_)
+
+                                   args_.Action = CType(CInt(pargs_.Action), OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum)
+                                   args_.Context = pargs_.Context
+                               End Sub
+
+                            Dim cmh As ICreateManager.CreateManagerEventEventHandler =
+                                Sub(cm_ As ICreateManager, cm_args As ICreateManager.CreateManagerEventArgs)
+
+                                    Dim q As QueryCmd = TryCast(cm_args.Context, QueryCmd)
+
+                                    If q Is Nothing OrElse Not q.ContainsConnectionExceptionSubscriber(qh) Then
+
+                                        Dim mgr_ As OrmManager = cm_args.Manager
+
+                                        AddHandler CType(mgr_, OrmReadOnlyDBManager).ConnectionException, newErrorHandler
+
+                                        Dim mgd As OrmManager.ManagerGoingDownEventHandler =
+                                            Sub(m As OrmManager)
+                                                RemoveHandler m.ManagerGoingDown, mgd
+                                                RemoveHandler CType(m, OrmReadOnlyDBManager).ConnectionException, newErrorHandler
+                                                'RemoveHandler cm.CreateManagerEvent, cmh
+                                            End Sub
+
+                                        AddHandler mgr_.ManagerGoingDown, mgd
+                                    End If
+                                End Sub
+
+                            AddHandler cm.CreateManagerEvent, cmh
+
+                        End If
+
+                        args.Action = CType(CInt(pargs.Action), OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum)
+                        args.Context = pargs.Context
+                    End Sub
+
+                AddHandler mgr.ConnectionException, h
+            End If
+
+            Return h
+        End Function
+
+        Friend Shared Sub UnsubscribeFromConnectionEvents(mgr As OrmReadOnlyDBManager, h As OrmReadOnlyDBManager.ConnectionExceptionEventHandler)
+            If h IsNot Nothing Then
+                RemoveHandler mgr.ConnectionException, h
+            End If
+        End Sub
+
+        Friend Shared Function SubscribeCommandToEvents(query As QueryCmd, mgr As OrmReadOnlyDBManager) As OrmReadOnlyDBManager.CommandExceptionEventHandler
+            Dim h As OrmReadOnlyDBManager.CommandExceptionEventHandler = Nothing
+            If query.HasCommandErrorSubscribers Then
+
+                Dim cm As ICreateManager = query.CreateManager
+
+                h = Sub(sender, args)
+                        Dim pargs As New QueryCmd.CommandExceptionArgs(args.Exception, args.Command, sender)
+
+                        Dim qh As QueryCmd.CommandExceptionEventHandler = query.RaiseCommandErrorEvent(pargs)
+
+                        If qh IsNot Nothing Then
+                            Dim newErrorHandler As OrmReadOnlyDBManager.CommandExceptionEventHandler =
+                               Sub(mm, args_)
+
+                                   Dim pargs_ As New QueryCmd.CommandExceptionArgs(args_.Exception, args_.Command, mm)
+                                   qh(Nothing, pargs_)
+
+                                   args_.Action = CType(CInt(pargs_.Action), OrmReadOnlyDBManager.CommandExceptionArgs.ActionEnum)
+                                   args_.Context = pargs_.Context
+                               End Sub
+
+                            Dim cmh As ICreateManager.CreateManagerEventEventHandler =
+                                Sub(cm_ As ICreateManager, cm_args As ICreateManager.CreateManagerEventArgs)
+
+                                    Dim q As QueryCmd = TryCast(cm_args.Context, QueryCmd)
+
+                                    If q Is Nothing OrElse Not q.ContainsCommandExceptionSubscriber(qh) Then
+
+                                        Dim mgr_ As OrmManager = cm_args.Manager
+
+                                        AddHandler CType(mgr_, OrmReadOnlyDBManager).CommandException, newErrorHandler
+
+                                        Dim mgd As OrmManager.ManagerGoingDownEventHandler =
+                                            Sub(m As OrmManager)
+                                                RemoveHandler m.ManagerGoingDown, mgd
+                                                RemoveHandler CType(m, OrmReadOnlyDBManager).CommandException, newErrorHandler
+                                                'RemoveHandler cm.CreateManagerEvent, cmh
+                                            End Sub
+
+                                        AddHandler mgr_.ManagerGoingDown, mgd
+                                    End If
+                                End Sub
+
+                            AddHandler cm.CreateManagerEvent, cmh
+
+                        End If
+
+                        args.Action = CType(CInt(pargs.Action), OrmReadOnlyDBManager.CommandExceptionArgs.ActionEnum)
+                        args.Context = pargs.Context
+                    End Sub
+
+                AddHandler mgr.CommandException, h
+            End If
+
+            Return h
+        End Function
+
+        Friend Shared Sub UnsubscribeFromCommandEvents(mgr As OrmReadOnlyDBManager, h As OrmReadOnlyDBManager.CommandExceptionEventHandler)
+            If h IsNot Nothing Then
+                RemoveHandler mgr.CommandException, h
+            End If
+        End Sub
+
+        Public Overrides Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As System.IDisposable
+            Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
+            Dim connHandler As OrmReadOnlyDBManager.ConnectionExceptionEventHandler = SubscribeToConnectionEvents(query, dbm)
+            Dim cmdHandler As OrmReadOnlyDBManager.CommandExceptionEventHandler = SubscribeCommandToEvents(query, dbm)
+
+            Return New OnExitScopeAction(
+                Sub()
+                    If connHandler IsNot Nothing Then
+                        UnsubscribeFromConnectionEvents(dbm, connHandler)
+                    End If
+
+                    If cmdHandler IsNot Nothing Then
+                        UnsubscribeFromCommandEvents(dbm, cmdHandler)
+                    End If
+                End Sub)
+        End Function
     End Class
 
 End Namespace

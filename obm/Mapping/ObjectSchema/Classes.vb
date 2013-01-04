@@ -446,7 +446,7 @@ Namespace Entities.Meta
                     End If
                     If rcmd Is Nothing Then
                         rcmd = ncmd
-                        Using mgr As OrmManager = rcmd.CreateManager.CreateManager
+                        Using mgr As OrmManager = rcmd.CreateManager.CreateManager(rcmd)
                             mpe = mgr.MappingEngine
                         End Using
                         Dim retType As Type = rcmd.RelationDesc.Entity.GetRealType(mpe)
@@ -581,7 +581,7 @@ Namespace Entities.Meta
                     End If
                     If rcmd Is Nothing Then
                         rcmd = ncmd
-                        Using mgr As OrmManager = rcmd.CreateManager.CreateManager
+                        Using mgr As OrmManager = rcmd.CreateManager.CreateManager(rcmd)
                             mpe = mgr.MappingEngine
                         End Using
                         Dim retType As Type = rcmd.RelationDesc.Entity.GetRealType(mpe)

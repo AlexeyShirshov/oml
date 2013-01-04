@@ -966,7 +966,7 @@ Imports Worm.Expressions2
             TestManagerRS.CreateManagerShared(schema, cache))
 
         Dim t As Table1 = Nothing
-        Using mgr As OrmManager = q.CreateManager.CreateManager
+        Using mgr As OrmManager = q.CreateManager.CreateManager(q)
             t = mgr.GetKeyEntityFromCacheOrCreate(Of Table1)(1)
 
             Assert.IsFalse(t.InternalProperties.IsLoaded)
@@ -1427,5 +1427,41 @@ Imports Worm.Expressions2
         For Each t As Table2 In r
             Assert.IsTrue(t.Tbl.InternalProperties.IsLoaded)
         Next
+
+    End Sub
+
+    <TestMethod()> Public Sub TestErrorHandling()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerSharedWrong(New ObjectMappingEngine("1"), New ReadonlyCache, New SQLGenerator))
+
+        AddHandler q.ConnectionException,
+            Sub(sender As QueryCmd, args As QueryCmd.ConnectionExceptionArgs)
+                args.Action = QueryCmd.ConnectionExceptionArgs.ActionEnum.RetryNewConnection
+                Dim cb As New System.Data.SqlClient.SqlConnectionStringBuilder(CType(args.Connection, Data.SqlClient.SqlConnection).ConnectionString)
+                cb.DataSource = ".\sqlexpress"
+                args.Context = cb.ToString
+            End Sub
+
+        Dim t As Table10 = q.Where(Ctor.prop(GetType(Table10), "ID").eq(3)).Single(Of Table10)()
+
+        Assert.AreEqual(2, t.Tbl.ID)
+        Assert.AreEqual("second", t.Tbl.Name)
+
+        Dim t2 As Table10 = q.Where(Ctor.prop(GetType(Table10), "ID").eq(2)).Single(Of Table10)()
+    End Sub
+
+    <TestMethod()> Public Sub TestErrorHandling2()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), New ReadonlyCache, New SQLGenerator))
+
+        AddHandler q.ConnectionException,
+            Sub(sender As QueryCmd, args As QueryCmd.ConnectionExceptionArgs)
+                'do nothing
+            End Sub
+
+        Dim t As Table10 = q.Where(Ctor.prop(GetType(Table10), "ID").eq(3)).Single(Of Table10)()
+
+        Assert.AreEqual(2, t.Tbl.ID)
+        Assert.AreEqual("second", t.Tbl.Name)
     End Sub
 End Class

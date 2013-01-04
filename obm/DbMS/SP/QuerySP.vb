@@ -43,7 +43,7 @@ Namespace Database.Storedprocs
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
             Dim et As New PerfCounter
-            Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+            Using dr As System.Data.Common.DbDataReader = mgr.ExecuteReaderCmd(cmd)
                 _exec = et.GetTime
                 Dim i As Integer = 0
                 Dim ft As New PerfCounter
