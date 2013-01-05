@@ -33,8 +33,8 @@ Imports System.Runtime
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
 
-<Assembly: AssemblyVersion("4.0.1.20")> 
-<Assembly: AssemblyFileVersion("4.0.1.4")> 
+<Assembly: AssemblyVersion("4.0.2.21")> 
+<Assembly: AssemblyFileVersion("4.0.2.5")> 
 
 '<Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
 <Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)> 

@@ -13,7 +13,7 @@ Imports Worm.Expressions2
 
     <TestMethod()> _
     Public Sub TestSelect()
-        Dim schemaV1 As New SQLGenerator
+        Dim schemaV1 As New SQL2000Generator
 
         Assert.AreEqual("SQL Server 2000", schemaV1.Name)
 
@@ -29,7 +29,7 @@ Imports Worm.Expressions2
         Dim params As New ParamMgr(schemaV1, "p")
         Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.Select(s, t, almgr, params, Nothing, Nothing, Nothing))
 
-        Dim schemaV2 As New SQLGenerator
+        Dim schemaV2 As New SQL2000Generator
         Dim s2 As New Worm.ObjectMappingEngine("2")
         almgr = AliasMgr.Create
         Dim params2 As New ParamMgr(schemaV2, "p")
@@ -46,7 +46,7 @@ Imports Worm.Expressions2
         Assert.AreEqual("select t1.id,t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(s2, t, almgr, params2, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, s2.GetTables(t).Length)
 
-        Dim schemaV3 As New SQLGenerator
+        Dim schemaV3 As New SQL2000Generator
         Dim s3 As New Worm.ObjectMappingEngine("3")
         Dim params3 As New ParamMgr(schemaV3, "p")
         almgr = AliasMgr.Create
@@ -88,7 +88,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestInsert()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim o As New Entity(10, Nothing, schemaV1)
         Dim t As Type = GetType(Entity)
 
@@ -113,7 +113,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestInsert2()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim o As New Entity2(10, Nothing, schemaV1)
         Dim t As Type = GetType(Entity)
 
@@ -203,7 +203,7 @@ Imports Worm.Expressions2
             Dim expected As String = "declare @id_ID Int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id_ID"
-            Dim gen As New SQLGenerator
+            Dim gen As New SQL2000Generator
             Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
             Assert.IsNotNull(params)
@@ -217,7 +217,7 @@ Imports Worm.Expressions2
     <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
     Public Sub TestDelete2()
         Dim schemaV1 As New Worm.ObjectMappingEngine("2")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -247,7 +247,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestDelete3()
         Dim schemaV1 As New Worm.ObjectMappingEngine("2")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(2, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -280,7 +280,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestDelete4()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity5(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity5)
@@ -317,7 +317,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestUpdate()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity(2, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity)
@@ -366,7 +366,7 @@ Imports Worm.Expressions2
     <TestMethod()> _
     Public Sub TestUpdate2()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
             Dim o As New Entity5(1, mgr.Cache, schemaV1)
             Dim t As Type = GetType(Entity5)
@@ -479,28 +479,28 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         gen.Select(schema, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect2()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         gen.Select(schema, GetType(Entity), Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestSelect3()
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         gen.Select(schema, GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect4()
         Dim schema As New Worm.ObjectMappingEngine("3")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         gen.Select(schema, GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 

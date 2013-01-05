@@ -615,7 +615,7 @@ Namespace Query.Database
         'End Sub
 
         Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal execCtx As IExecutionContext, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal from As FromClauseDef, _
+            ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal from As FromClauseDef, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal selList As IEnumerable(Of SelectExpression))
 
@@ -661,7 +661,7 @@ Namespace Query.Database
         Public Delegate Function Func(Of T)() As T
 
         Protected Shared Function FormatSearchTable(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, ByVal st As SearchFragment, _
-            ByVal s As SQLGenerator, ByVal os As IEntitySchema, ByVal params As ICreateParam, _
+            ByVal s As DbGenerator, ByVal os As IEntitySchema, ByVal params As ICreateParam, _
             ByVal selectType As Type) As Boolean
 
             Dim searcht As Type = If(st.Entity Is Nothing, selectType, st.Entity.GetRealType(mpe))
@@ -727,7 +727,7 @@ l1:
         End Function
 
         Public Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, _
             ByVal osrc As EntityUnion, ByVal q As QueryCmd, ByVal execCtx As IExecutionContext, _
             ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
             ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
@@ -952,7 +952,7 @@ l1:
         Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
             ByVal params As ICreateParam, ByVal from As FromClauseDef, _
             ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal execCtx As IExecutionContext, _
+            ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal execCtx As IExecutionContext, _
             ByVal pk As Pair(Of SourceFragment, String), _
             ByVal predi As Criteria.PredicateLink, ByVal selOS As EntityUnion)
 
@@ -1235,7 +1235,7 @@ l1:
         End Function
 
         Protected Shared Sub FormHaving(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, _
             ByVal pmgr As ICreateParam)
 
             If query.HavingFilter IsNot Nothing Then
@@ -1244,14 +1244,14 @@ l1:
         End Sub
 
         Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator)
             If query.Group IsNot Nothing Then
                 sb.Append(" ").Append(query.Group.MakeStatement(mpe, query.FromClause, s, Nothing, almgr, Nothing, MakeStatementMode.None, query))
             End If
         End Sub
 
         Protected Shared Sub FormOrderBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
             If query.Sort IsNot Nothing Then
                 's.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.FromClause, False)
@@ -1266,7 +1266,7 @@ l1:
             End If
         End Sub
 
-        Public Shared Sub MakeInnerQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
+        Public Shared Sub MakeInnerQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As DbGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal eu As EntityUnion, ByVal sb As StringBuilder, ByVal almgr As IPrepareTable)
 
@@ -1290,13 +1290,13 @@ l1:
             'almgr.Replace(mpe, schema, t, eu, sb)
         End Sub
 
-        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
+        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As DbGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam) As String
 
             Return MakeQueryStatement(mpe, filterInfo, schema, query, params, AliasMgr.Create)
         End Function
 
-        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
+        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As DbGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal almgr As IPrepareTable) As String
 
             If Not query._prepared Then
@@ -1304,7 +1304,7 @@ l1:
             End If
 
             Dim sb As New StringBuilder
-            Dim s As SQLGenerator = schema
+            Dim s As DbGenerator = schema
             'Dim almgr As IPrepareTable = AliasMgr.Create
 
             FormSingleQuery(mpe, sb, query, s, almgr, filterInfo, params)
@@ -1343,7 +1343,7 @@ l1:
         End Function
 
         Public Shared Sub FormUnions(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal sb As StringBuilder, ByVal filterInfo As Object, ByVal s As SQLGenerator, _
+            ByVal sb As StringBuilder, ByVal filterInfo As Object, ByVal s As DbGenerator, _
             ByVal param As ICreateParam)
 
             If query.Unions IsNot Nothing AndAlso query.Unions.Count > 0 Then
@@ -1414,7 +1414,7 @@ l1:
         End Function
 
         Public Shared Sub FormSingleQuery(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, _
-            ByVal query As QueryCmd, ByVal s As SQLGenerator, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
+            ByVal query As QueryCmd, ByVal s As DbGenerator, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
             ByVal params As ICreateParam)
 
             'Dim os As IEntitySchema = Nothing
@@ -1453,7 +1453,12 @@ l1:
             End If
 
             If query.TopParam IsNot Nothing Then
-                selSb.Append(s.TopStatement(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
+                Dim tstmt As ITopStatement = TryCast(s, ITopStatement)
+                If tstmt IsNot Nothing Then
+                    selSb.Append(tstmt.TopStatementPercent(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
+                Else
+                    selSb.Append(s.TopStatement(query.TopParam.Count)).Append(" ")
+                End If
             End If
 
             FormSelectList(mpe, query, selSb, s, query.FromClause, almgr, filterInfo, params, query._sl)

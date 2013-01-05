@@ -542,7 +542,7 @@ Module Module2
 
     Public Function CreateManager() As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(_cache, _schema, New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
+        Return New OrmDBManager(_cache, _schema, New SQL2000Generator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
         'Return New OrmDBManager(_cache, _schema, "data source=.\sqlexpress;Initial catalog=test;Integrated security=true;Connection timeout=60;")
     End Function
 End Module

@@ -195,7 +195,7 @@ Imports Worm.Database
         Dim cache As New OrmCache
         Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
 
-        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New SQLGenerator))
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New SQL2000Generator))
 
         Dim t1 As Table1 = q1.GetByID(Of Table1)(1)
 
@@ -233,7 +233,7 @@ Imports Worm.Database
         Dim cache As New OrmCache
         Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
 
-        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New SQLGenerator))
+        Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New SQL2000Generator))
 
         Dim t1 As Table1 = q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs)
 

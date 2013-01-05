@@ -988,15 +988,15 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String)
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQLGenerator, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQL2000Generator, connectionString))
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String, generator As Worm.Database.SQLGenerator)
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String, generator As Worm.Database.SQL2000Generator)
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, generator, connectionString))
         End Sub
 
         Public Sub New(ByVal cache As CacheBase, ByVal connectionString As String)
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQLGenerator, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQL2000Generator, connectionString))
         End Sub
 
         Public Sub New(ByVal connectionString As String)

@@ -1089,7 +1089,7 @@ Imports Worm.Expressions2
     End Sub
 
     Class myom
-        Inherits SQLGenerator
+        Inherits SQL2000Generator
 
         Public Overrides ReadOnly Property IncludeCallStack() As Boolean
             Get
@@ -1210,7 +1210,7 @@ Imports Worm.Expressions2
     End Sub
 
     <TestMethod()> _
-   Public Sub TestGetByIds3()
+    Public Sub TestGetByIds3()
         Dim c As New ReadonlyCache
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
@@ -1222,7 +1222,7 @@ Imports Worm.Expressions2
     End Sub
 
     <TestMethod()> _
-   Public Sub TestGetByIds4()
+    Public Sub TestGetByIds4()
         Dim c As New ReadonlyCache
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
@@ -1234,7 +1234,7 @@ Imports Worm.Expressions2
     End Sub
 
     <TestMethod()> _
-  Public Sub TestGetByIds5()
+    Public Sub TestGetByIds5()
         Dim c As New ReadonlyCache
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
@@ -1432,7 +1432,7 @@ Imports Worm.Expressions2
 
     <TestMethod()> Public Sub TestErrorHandling()
         Dim q As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerSharedWrong(New ObjectMappingEngine("1"), New ReadonlyCache, New SQLGenerator))
+            TestManagerRS.CreateManagerSharedWrong(New ObjectMappingEngine("1"), New ReadonlyCache, New SQL2000Generator))
 
         AddHandler q.ConnectionException,
             Sub(sender As QueryCmd, args As QueryCmd.ConnectionExceptionArgs)
@@ -1452,7 +1452,7 @@ Imports Worm.Expressions2
 
     <TestMethod()> Public Sub TestErrorHandling2()
         Dim q As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), New ReadonlyCache, New SQLGenerator))
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), New ReadonlyCache, New SQL2000Generator))
 
         AddHandler q.ConnectionException,
             Sub(sender As QueryCmd, args As QueryCmd.ConnectionExceptionArgs)

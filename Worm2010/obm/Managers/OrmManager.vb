@@ -5043,6 +5043,52 @@ l1:
         End If
     End Sub
 
+    Public Shared Function PrepareConcurrencyException(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity) As OrmManagerException
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        Dim sb As New StringBuilder
+        Dim t As Type = obj.GetType
+        sb.Append("Concurrency violation error during save object ")
+        sb.Append(t.Name).Append(". Key values {")
+        Dim cm As Boolean = False
+        For Each m As MapField2Column In mpe.GetEntitySchema(t).FieldColumnMap
+            Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+            If m.IsPK OrElse m.IsRowVersion Then
+
+                Dim s As String = m.SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(t, mpe, c.PropertyAlias, False, Nothing)
+                If cm Then
+                    sb.Append(", ")
+                Else
+                    cm = True
+                End If
+                sb.Append(s).Append(" = ")
+
+                Dim o As Object = pi.GetValue(obj, Nothing)
+
+                If GetType(Array).IsAssignableFrom(o.GetType) Then
+                    sb.Append("{")
+                    Dim y As Boolean = False
+                    For Each item As Object In CType(o, Array) 'CType(o, Object())
+                        If y Then
+                            sb.Append(", ")
+                        Else
+                            y = True
+                        End If
+                        sb.Append(item)
+                    Next
+                    sb.Append("}")
+                Else
+                    sb.Append(o.ToString)
+                End If
+            End If
+        Next
+        sb.Append("}")
+
+        Return New OrmManagerException(sb.ToString)
+    End Function
+
 End Class
 
 'End Namespace

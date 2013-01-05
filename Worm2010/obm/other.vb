@@ -213,6 +213,7 @@ Public Module helper
             Return CInt(ms.Length)
         End Using
     End Function
+
 End Module
 
 Public Class ObjectWrap(Of T)

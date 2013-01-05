@@ -50,7 +50,7 @@ Imports Worm.Query
     <TestMethod()> Public Sub TestGroupExpression()
         Dim mpe As New ObjectMappingEngine
         Dim contextFilter As Object = Nothing
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
 
@@ -74,7 +74,7 @@ Imports Worm.Query
     <TestMethod()> Public Sub TestGroupExpressionComplex()
         Dim mpe As New ObjectMappingEngine
         Dim contextFilter As Object = Nothing
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
 
@@ -127,7 +127,7 @@ Imports Worm.Query
     <TestMethod()> Public Sub TestSortExpression()
         Dim mpe As New ObjectMappingEngine
         Dim contextFilter As Object = Nothing
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
 
@@ -150,7 +150,7 @@ Imports Worm.Query
     <TestMethod()> Public Sub TestAggregateExpression()
         Dim mpe As New ObjectMappingEngine
         Dim contextFilter As Object = Nothing
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
 

@@ -26,7 +26,7 @@ Imports System.Text
         Assert.IsNull(j.Condition)
 
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing, Nothing, New StringBuilder)
     End Sub
 
@@ -36,7 +36,7 @@ Imports System.Text
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing, Nothing, New StringBuilder)
     End Sub
 
@@ -48,7 +48,7 @@ Imports System.Text
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing, Nothing, New StringBuilder)
     End Sub
 
@@ -74,7 +74,7 @@ Imports System.Text
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t, Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Dim sb As New StringBuilder
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
@@ -95,7 +95,7 @@ Imports System.Text
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t, Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Dim sb As New StringBuilder
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
@@ -119,7 +119,7 @@ Imports System.Text
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t, Nothing)
         almgr.AddTable(t2, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Dim sb As New StringBuilder
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
@@ -150,7 +150,7 @@ Imports System.Text
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetTables(t)(0), Nothing)
         almgr.AddTable(tbl, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Dim sb As New StringBuilder
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
@@ -182,7 +182,7 @@ Imports System.Text
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(tbl, Nothing)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Dim sb As New StringBuilder
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
@@ -253,7 +253,7 @@ End Class
         Dim c As New Condition(f, Nothing, ConditionOperator.Or)
 
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
@@ -265,7 +265,7 @@ End Class
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, Nothing)
     End Sub
 
@@ -277,7 +277,7 @@ End Class
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
@@ -299,7 +299,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         almgr.AddTable(tbl, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
@@ -316,7 +316,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         almgr.AddTable(tbl, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
@@ -357,7 +357,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         almgr.AddTable(tbl, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
@@ -402,7 +402,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity)).Table, Nothing)
         almgr.AddTable(schema.GetEntitySchema(GetType(Entity4)).Table, Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
@@ -456,7 +456,7 @@ End Class
         Dim schema As New Worm.ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
@@ -476,7 +476,7 @@ End Class
         Assert.AreEqual("TestProject1.EntityIDGreaterEqualThan", f.Template.GetStaticString(Nothing, Nothing))
 
         Assert.AreEqual(1, f.GetAllFilters.Length)
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         f.MakeSingleQueryStmt(Nothing, gen, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
@@ -484,7 +484,7 @@ End Class
     Public Sub TestMakeSQLStmt5()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
         Dim schema As New Worm.ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         f.MakeSingleQueryStmt(schema, gen, Nothing, Nothing, Nothing)
     End Sub
 

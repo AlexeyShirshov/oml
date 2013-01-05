@@ -132,7 +132,7 @@ Namespace Query.Database
             Protected Overridable Function _MakeStatement() As String
                 Dim fi As Object = _mgr.GetContextInfo
                 Dim i As Integer = 0
-                Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
+                Dim stmtGen As DbGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 _almgr = AliasMgr.Create
                 If _q._optimizeIn IsNot Nothing AndAlso _q._f IsNot Nothing Then
                     _q._f = _q._f.RemoveFilter(_q._optimizeIn)
