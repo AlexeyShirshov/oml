@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CoreFramework")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Private Persone")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("CoreFramework")]
-[assembly: AssemblyCopyright("Copyright © Private Persone 2007")]
+[assembly: AssemblyCopyright("Copyright © AlexeyShirshov 2007")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.1.20")]
+[assembly: AssemblyFileVersion("1.0.1.1")]

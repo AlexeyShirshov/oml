@@ -2,7 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-namespace CommandLine.Utility
+namespace CoreFramework.CommandLine
 {
     /// <summary>
     /// Arguments class
