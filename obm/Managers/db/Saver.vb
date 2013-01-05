@@ -706,7 +706,7 @@ l1:
         End Sub
 
         Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal connString As String)
-            MyClass.New(New CreateManager(Function() New OrmDBManager(cache, mpe, New SQLGenerator, connString)))
+            MyClass.New(New CreateManager(Function() New OrmDBManager(cache, mpe, New SQL2000Generator, connString)))
         End Sub
 
         Public Sub New(ByVal mgr As OrmReadOnlyDBManager)

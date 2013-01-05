@@ -23,7 +23,7 @@ Imports Worm.Expressions2
         Dim f As IEntityFilter = CType(cr.Filter, IEntityFilter)
 
         Dim schema As New ObjectMappingEngine("1")
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim almgr As AliasMgr = AliasMgr.Create
         Dim pmgr As New ParamMgr(gen, "p")
 
@@ -48,7 +48,7 @@ Imports Worm.Expressions2
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
@@ -70,7 +70,7 @@ Imports Worm.Expressions2
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0), Nothing)
@@ -91,7 +91,7 @@ Imports Worm.Expressions2
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
@@ -112,7 +112,7 @@ Imports Worm.Expressions2
 
         Dim schema As New ObjectMappingEngine("1")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Dim gen As New SQLGenerator
+        Dim gen As New SQL2000Generator
         Dim pmgr As New ParamMgr(gen, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))

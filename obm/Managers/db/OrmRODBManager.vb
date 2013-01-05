@@ -101,7 +101,7 @@ Namespace Database
                                             Continue For
                                         End If
                                     ElseIf prev_error Then
-                                        Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
+                                        Throw OrmManager.PrepareConcurrencyException(mgr.MappingEngine, obj)
                                     End If
 
                                     prev_error = False
@@ -267,36 +267,43 @@ Namespace Database
 
                 Dim tt As Type = obj.GetType
                 Dim p As New ParamMgr(mgr.SQLGenerator, "p")
-                Dim cmd_text As String = mgr.SQLGenerator.SaveM2M(mgr.MappingEngine, obj, mgr.MappingEngine.GetM2MRelationForEdit(tt, t, direct), el, p)
 
-                If Not String.IsNullOrEmpty(cmd_text) Then
-                    Dim [error] As Boolean = True
-                    Dim tran As System.Data.Common.DbTransaction = mgr.Transaction
-                    mgr.BeginTransaction()
-                    Try
-                        Using cmd As New System.Data.SqlClient.SqlCommand(cmd_text)
-                            With cmd
-                                .CommandType = System.Data.CommandType.Text
-                                p.AppendParams(.Parameters)
-                            End With
+                If mgr.SQLGenerator.SupportMultiline Then
 
-                            Dim r As ConnAction = mgr.TestConn(cmd)
-                            Try
-                                Dim i As Integer = cmd.ExecuteNonQuery()
-                                [error] = i = 0
-                            Finally
-                                mgr.CloseConn(r)
-                            End Try
-                        End Using
-                    Finally
-                        If tran Is Nothing Then
-                            If [error] Then
-                                mgr.Rollback()
-                            Else
-                                mgr.Commit()
+                    Dim cmd_text As String = mgr.SQLGenerator.SaveM2M(mgr.MappingEngine, obj, mgr.MappingEngine.GetM2MRelationForEdit(tt, t, direct), el, p)
+
+                    If Not String.IsNullOrEmpty(cmd_text) Then
+                        Dim [error] As Boolean = True
+                        Dim tran As System.Data.Common.DbTransaction = mgr.Transaction
+                        mgr.BeginTransaction()
+                        Try
+                            Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
+                                With cmd
+                                    .CommandText = cmd_text
+                                    .CommandType = System.Data.CommandType.Text
+                                    p.AppendParams(.Parameters)
+                                End With
+
+                                Dim r As ConnAction = mgr.TestConn(cmd)
+                                Try
+                                    Dim i As Integer = cmd.ExecuteNonQuery()
+                                    [error] = i = 0
+                                Finally
+                                    mgr.CloseConn(r)
+                                End Try
+                            End Using
+                        Finally
+                            If tran Is Nothing Then
+                                If [error] Then
+                                    mgr.Rollback()
+                                Else
+                                    mgr.Commit()
+                                End If
                             End If
-                        End If
-                    End Try
+                        End Try
+                    End If
+                Else
+                    Throw New NotSupportedException
                 End If
             End Sub
 
@@ -374,7 +381,7 @@ Namespace Database
 
                         If [error] Then
                             'Debug.Assert(False)
-                            Throw mgr.SQLGenerator.PrepareConcurrencyException(mgr.MappingEngine, obj)
+                            Throw PrepareConcurrencyException(mgr.MappingEngine, obj)
                         End If
                     End If
                 End Using
@@ -429,13 +436,13 @@ Namespace Database
         Public Event ConnectionException(sender As OrmReadOnlyDBManager, args As ConnectionExceptionArgs)
         Public Event CommandException(sender As OrmReadOnlyDBManager, args As CommandExceptionArgs)
 
-        Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal generator As SQL2000Generator, ByVal connectionString As String)
             MyBase.New(cache, mpe)
             StmtGenerator = generator
             _connStr = connectionString
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQL2000Generator, ByVal connectionString As String)
             MyBase.New(mpe)
             StmtGenerator = generator
             _connStr = connectionString
@@ -443,13 +450,13 @@ Namespace Database
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
             MyBase.New(mpe)
-            StmtGenerator = New SQLGenerator
+            StmtGenerator = New SQL2000Generator
             _connStr = connectionString
         End Sub
 
         Public Sub New(ByVal connectionString As String)
             MyBase.New(DefaultMappingEngine)
-            StmtGenerator = New SQLGenerator
+            StmtGenerator = New SQL2000Generator
             _connStr = connectionString
         End Sub
 
@@ -488,9 +495,9 @@ l1:
             End Set
         End Property
 
-        Public ReadOnly Property SQLGenerator() As SQLGenerator
+        Public ReadOnly Property SQLGenerator() As DbGenerator
             Get
-                Return CType(StmtGenerator, Database.SQLGenerator)
+                Return CType(StmtGenerator, Database.DbGenerator)
             End Get
         End Property
 
@@ -1052,7 +1059,7 @@ l1:
                 Try
 l1:
                     Return exec()
-                Catch ex As System.Data.SqlClient.SqlException
+                Catch ex As System.Data.Common.DbException
                     Dim args As New CommandExceptionArgs(ex, cmd)
                     RaiseEvent CommandException(Me, args)
                     Select Case args.Action
@@ -1338,7 +1345,7 @@ l1:
                     Loop
 
                     If dr.RecordsAffected = 0 Then
-                        Throw SQLGenerator.PrepareConcurrencyException(MappingEngine, ce)
+                        Throw PrepareConcurrencyException(MappingEngine, ce)
                     ElseIf dr.RecordsAffected < 0 Then
                         If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object
@@ -2398,7 +2405,7 @@ l2:
                     Try
 l1:
                         _conn.Open()
-                    Catch ex As System.Data.SqlClient.SqlException
+                    Catch ex As System.Data.Common.DbException
                         Dim args As New ConnectionExceptionArgs(ex, _conn)
                         RaiseEvent ConnectionException(Me, args)
                         Select Case args.Action
@@ -2442,7 +2449,7 @@ l1:
                             Try
 l2:
                                 _conn.Open()
-                            Catch ex As System.Data.SqlClient.SqlException
+                            Catch ex As System.Data.Common.DbException
                                 Dim args As New ConnectionExceptionArgs(ex, _conn)
                                 RaiseEvent ConnectionException(Me, args)
                                 Select Case args.Action

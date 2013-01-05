@@ -5,7 +5,7 @@ Imports System.Collections.Generic
 Namespace Database
 
     Public Class MSSQL2005Generator
-        Inherits SQLGenerator
+        Inherits SQL2000Generator
 
         'Public Sub New(ByVal version As String)
         '    MyBase.New(version)
@@ -27,7 +27,7 @@ Namespace Database
             Return "top (" & top & ") "
         End Function
 
-        Protected Friend Overrides Function TopStatement(ByVal top As Integer, ByVal percent As Boolean, ByVal ties As Boolean) As String
+        Public Overrides Function TopStatementPercent(ByVal top As Integer, ByVal percent As Boolean, ByVal ties As Boolean) As String
             Dim sb As New StringBuilder
             sb.Append("top (").Append(top).Append(") ")
             If percent Then

@@ -23,8 +23,8 @@
 
             Property Context As Object
 
-            Private _ex As Exception
-            Public ReadOnly Property Exception() As Exception
+            Private _ex As Data.Common.DbException
+            Public ReadOnly Property Exception() As Data.Common.DbException
                 Get
                     Return _ex
                 End Get
@@ -37,7 +37,7 @@
                 End Get
             End Property
 
-            Public Sub New(ex As Exception, conn As System.Data.Common.DbConnection)
+            Public Sub New(ex As Data.Common.DbException, conn As System.Data.Common.DbConnection)
                 _ex = ex
                 _conn = conn
             End Sub
@@ -67,8 +67,8 @@
 
             Property Context As Object
 
-            Private _ex As Exception
-            Public ReadOnly Property Exception() As Exception
+            Private _ex As Data.Common.DbException
+            Public ReadOnly Property Exception() As Data.Common.DbException
                 Get
                     Return _ex
                 End Get
@@ -81,7 +81,7 @@
                 End Get
             End Property
 
-            Public Sub New(ex As Exception, cmd As System.Data.Common.DbCommand)
+            Public Sub New(ex As Data.Common.DbException, cmd As System.Data.Common.DbCommand)
                 _ex = ex
                 _cmd = cmd
             End Sub

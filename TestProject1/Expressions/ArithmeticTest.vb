@@ -48,7 +48,7 @@ Imports Worm.Database
 
     <TestMethod()> Public Sub TestAdd()
         Dim mpe As New ObjectMappingEngine
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim e As BinaryExpression = ECtor.Param(1).Add(2)
         Dim r As Object = Nothing
         e.Eval(mpe, Nothing, Nothing, r)
@@ -72,7 +72,7 @@ Imports Worm.Database
 
     <TestMethod()> Public Sub TestComplex()
         Dim mpe As New ObjectMappingEngine
-        Dim stmt As New SQLGenerator
+        Dim stmt As New SQL2000Generator
         Dim e As BinaryExpression = ECtor.Param(1).Add(20).Subtruct(5).Multiply(1).Divide(2)
         Dim r As Object = Nothing
         e.Eval(mpe, Nothing, Nothing, r)

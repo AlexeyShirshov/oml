@@ -99,7 +99,7 @@ Imports Worm.Entities.Meta
                 l.Add(i)
             Loop While i < 10000
             Dim almgr As AliasMgr = AliasMgr.Create
-            Dim params As New ParamMgr(CType(mgr.SQLGenerator, SQLGenerator), "p")
+            Dim params As New ParamMgr(CType(mgr.SQLGenerator, SQL2000Generator), "p")
             almgr.AddTable(mgr.MappingEngine.GetTables(GetType(Entity))(0), Nothing)
             pa.GetFilters(l, "ID", almgr, params, GetType(Entity), False)
 

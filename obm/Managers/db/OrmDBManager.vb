@@ -13,11 +13,11 @@ Namespace Database
         Private _upd As New DBUpdater
         Private _idstr As String
 
-        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As SQL2000Generator, ByVal connectionString As String)
             MyBase.New(cache, mpe, stmtGen, connectionString)
         End Sub
 
-        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal stmtgen As SQLGenerator, ByVal connectionString As String)
+        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal stmtgen As SQL2000Generator, ByVal connectionString As String)
             MyBase.New(mpe, stmtgen, connectionString)
         End Sub
 

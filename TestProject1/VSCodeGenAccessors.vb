@@ -113,9 +113,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         End Get
     End Property
 
-    Friend Shared Function CreatePrivate(ByVal schema As Global.Worm.Database.SQLGenerator, ByVal connectionString As String) As Global.Worm.Database.OrmReadOnlyDBManager
+    Friend Shared Function CreatePrivate(ByVal schema As Global.Worm.Database.SQL2000Generator, ByVal connectionString As String) As Global.Worm.Database.OrmReadOnlyDBManager
         Dim args() As Object = New Object() {schema, connectionString}
-        Dim priv_obj As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject(GetType(Global.Worm.Database.OrmReadOnlyDBManager), New System.Type() {GetType(Global.Worm.Database.SQLGenerator), GetType(String)}, args)
+        Dim priv_obj As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject(GetType(Global.Worm.Database.OrmReadOnlyDBManager), New System.Type() {GetType(Global.Worm.Database.SQL2000Generator), GetType(String)}, args)
         Return CType(priv_obj.Target, Global.Worm.Database.OrmReadOnlyDBManager)
     End Function
 

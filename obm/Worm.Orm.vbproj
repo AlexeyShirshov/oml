@@ -252,10 +252,12 @@
     <Compile Include="Entity\Relation.vb" />
     <Compile Include="Query\WormContext.vb" />
     <Compile Include="StmtGenerators\db\DbGenerator.vb" />
+    <Compile Include="StmtGenerators\db\MSSQL\SQL2000Generator.vb" />
     <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
     <Compile Include="Query\Criteria\Filters\Filters.vb" />
     <Compile Include="Mapping\MappingEngine.vb" />
-    <Compile Include="StmtGenerators\db\SQL2008Generator.vb" />
+    <Compile Include="StmtGenerators\db\MSSQL\SQL2008Generator.vb" />
+    <Compile Include="StmtGenerators\db\Params.vb" />
     <Compile Include="StmtGenerators\StmtGenerator.vb" />
     <Compile Include="StmtGenerators\xml\XmlGenerator.vb" />
     <Compile Include="Web\HttpCacheDic.vb" />
@@ -278,7 +280,7 @@
     <Compile Include="Entity\SinglePKEntity.vb" />
     <Compile Include="other.vb" />
     <Compile Include="SearchConfiguration.vb" />
-    <Compile Include="StmtGenerators\db\SQL2005Generator.vb" />
+    <Compile Include="StmtGenerators\db\MSSQL\SQL2005Generator.vb" />
     <Compile Include="DbMS\SP\ScalarSP.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />
@@ -323,7 +325,7 @@ rem del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

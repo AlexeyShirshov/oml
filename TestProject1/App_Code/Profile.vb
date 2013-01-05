@@ -18,7 +18,7 @@ Public Class GetMgr
     Public Function GetMgr(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Dim m As OrmManager = New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Dim m As OrmManager = New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQL2000Generator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
         Dim m As OrmManager = New OrmDBManager(OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
 #End If

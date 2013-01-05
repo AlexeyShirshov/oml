@@ -47,7 +47,7 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyClass.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQLGenerator)
+            MyClass.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQL2000Generator)
         End Sub
 
         Public Sub New(ByVal createDelegate As CreateManagerDelegate)
@@ -59,7 +59,7 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal createDelegate As CreateManagerDelegate, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyClass.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQLGenerator)
+            MyClass.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQL2000Generator)
             _del = createDelegate
         End Sub
 
@@ -74,7 +74,7 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine)
-            MyClass.New(New ReadonlyCache, mpe, New Worm.Database.SQLGenerator)
+            MyClass.New(New ReadonlyCache, mpe, New Worm.Database.SQL2000Generator)
         End Sub
 
         Protected MustOverride Function _CreateManager() As OrmManager
@@ -105,7 +105,7 @@ Namespace Query
             MyClass.New(connectionString, cache, New ObjectMappingEngine("1"))
         End Sub
 
-        Public Sub New(ByVal connectionString As String, ByVal stmtGen As Worm.Database.SQLGenerator)
+        Public Sub New(ByVal connectionString As String, ByVal stmtGen As Worm.Database.SQL2000Generator)
             MyBase.New(stmtGen)
             _conn = connectionString
         End Sub
@@ -116,10 +116,10 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyClass.New(connectionString, cache, New ObjectMappingEngine("1"), New Worm.Database.SQLGenerator)
+            MyClass.New(connectionString, cache, New ObjectMappingEngine("1"), New Worm.Database.SQL2000Generator)
         End Sub
 
-        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As Worm.Database.SQLGenerator)
+        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As Worm.Database.SQL2000Generator)
             MyBase.New(cache, mpe, stmtGen)
             _conn = connectionString
         End Sub
@@ -133,14 +133,14 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal createDelegate As CreateManagerDelegate, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyBase.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQLGenerator)
+            MyBase.New(cache, New ObjectMappingEngine("1"), New Worm.Database.SQL2000Generator)
         End Sub
 
         Protected Overrides Function _CreateManager() As OrmManager
             If _del IsNot Nothing Then
                 Return _del(Cache, MappingEngine, StmtGenerator)
             Else
-                Return New Worm.Database.OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, Worm.Database.SQLGenerator), _conn)
+                Return New Worm.Database.OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, Worm.Database.SQL2000Generator), _conn)
             End If
         End Function
 
