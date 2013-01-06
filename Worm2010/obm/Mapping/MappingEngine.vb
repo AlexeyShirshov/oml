@@ -1638,7 +1638,18 @@ Public Class ObjectMappingEngine
         End If
 
         Try
-            If idic IsNot Nothing Then idic.Add(tp, schema)
+            If idic IsNot Nothing Then
+                If idic.Contains(tp) Then
+                    Dim addedSchema As IEntitySchema = CType(idic(tp), IEntitySchema)
+                    If schema.GetType.IsAssignableFrom(addedSchema.GetType) Then
+                        Return schema
+                    ElseIf addedSchema.GetType.IsAssignableFrom(schema.GetType) Then
+                        idic(tp) = schema
+                    End If
+                End If
+
+                idic.Add(tp, schema)
+            End If
         Catch ex As ArgumentException
             Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
         End Try
