@@ -64,6 +64,18 @@ Namespace Database
                     _o = value
                 End Set
             End Property
+
+            Friend _new2Save As New List(Of Pair(Of ICachedEntity, Action(Of ICachedEntity)))
+
+            Public Sub AddEntityToSaveGraph(e As ICachedEntity, modifier As Action(Of ICachedEntity))
+                If e Is Nothing Then
+                    Throw New ArgumentNullException("e")
+                End If
+                If Not _new2Save.Exists(Function(item) item.First.Equals(e)) Then
+                    _new2Save.Add(New Pair(Of ICachedEntity, Action(Of ICachedEntity))(e, modifier))
+                End If
+            End Sub
+
         End Class
 
         Public Class CannotSaveEventArgs
@@ -124,6 +136,8 @@ Namespace Database
                 _ex = exception
             End Sub
         End Class
+
+        Friend _dontCheckOnAdd As Boolean
 
         Public Event PreSave(ByVal sender As ObjectListSaver)
         Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
@@ -376,6 +390,19 @@ l1:
                         need2save.Add(o)
                         Return False
                     Else
+
+                        For Each ns As Pair(Of ICachedEntity, Action(Of ICachedEntity)) In args._new2Save
+                            need2save.Add(ns.First)
+                            If ns.Second IsNot Nothing Then
+                                _dontCheckOnAdd = True
+                                Try
+                                    ns.Second()(ns.First)
+                                Finally
+                                    _dontCheckOnAdd = False
+                                End Try
+                            End If
+                        Next
+
                         owr = New ObjectWrap(Of ICachedEntity)(o)
                         _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                         Dim os As ObjectState = o.ObjectState
@@ -860,16 +887,20 @@ l1:
                 Throw New ArgumentNullException("object")
             End If
 
-            Dim t As Type = obj.GetType
-            Dim mpe As Worm.ObjectMappingEngine = _mgr.MappingEngine
-            Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
-            If oschema Is Nothing Then
-                oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
-                mpe.AddEntitySchema(t, oschema)
+            Dim ro As _ICachedEntity = TryCast(obj, _ICachedEntity)
+            If ro Is Nothing Then
+                Dim t As Type = obj.GetType
+                Dim mpe As Worm.ObjectMappingEngine = _mgr.MappingEngine
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(t, False)
+                If oschema Is Nothing Then
+                    oschema = ObjectMappingEngine.GetEntitySchema(t, mpe, Nothing, Nothing)
+                    mpe.AddEntitySchema(t, oschema)
+                End If
+                ro = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj, _mgr), _ICachedEntity)
+                _syncObj(ro) = obj
+                AddHandler ro.ChangesAccepted, AddressOf ChangesAccepted
             End If
-            Dim ro As _ICachedEntity = CType(_mgr.Cache.SyncPOCO(mpe, oschema, obj, _mgr), _ICachedEntity)
-            _syncObj(ro) = obj
-            AddHandler ro.ChangesAccepted, AddressOf ChangesAccepted
+
             Add(ro)
         End Sub
 
@@ -878,11 +909,13 @@ l1:
                 Throw New ArgumentNullException("object")
             End If
 
-            If Saver.StartSaving Then
-                Throw New InvalidOperationException("Cannot add object during save")
-            End If
+            If Not _saver._dontCheckOnAdd Then
+                If Saver.StartSaving Then
+                    Throw New InvalidOperationException("Cannot add object during save")
+                End If
 
-            _saver.Add(obj)
+                _saver.Add(obj)
+            End If
         End Sub
 
         Private Sub Delete(ByVal sender As OrmManager, ByVal obj As ICachedEntity)

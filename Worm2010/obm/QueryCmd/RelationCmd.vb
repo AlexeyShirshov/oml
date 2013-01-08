@@ -803,16 +803,32 @@ l1:
 
         Public Sub Add(ByVal o As ICachedEntity)
             If o IsNot Nothing Then
-                Relation.Host.Add(o, Relation.Key)
+                Relation.Host.Add(o, Relation)
                 If Not IsM2M Then
-                    Using gm As IGetManager = o.GetMgr
-                        Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                    Dim mpe As ObjectMappingEngine = o.GetMappingEngine()
+                    If mpe Is Nothing Then
+                        mpe = Relation.Host.GetMappingEngine
+                    End If
+
+                    Dim schema As IEntitySchema = Nothing
+                    If mpe IsNot Nothing Then
+                        schema = mpe.GetEntitySchema(o.GetType)
+                    End If
+
+                    Try
                         Try
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, mpe.GetEntitySchema(o.GetType))
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, schema)
                         Catch ex As InvalidCastException
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, mpe.GetEntitySchema(o.GetType))
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, schema)
                         End Try
-                    End Using
+                    Catch ex As ArgumentNullException When ex.Message = "oschema"
+                        schema = o.GetEntitySchema(mpe)
+                        Try
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, schema)
+                        Catch ex2 As InvalidCastException
+                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, schema)
+                        End Try
+                    End Try
                 End If
             End If
         End Sub
@@ -832,16 +848,32 @@ l1:
         'End Sub
 
         Public Sub Remove(ByVal o As ICachedEntity)
-            Relation.Host.Remove(o, Relation.Key)
+            Relation.Host.Remove(o, Relation)
             If Not IsM2M Then
-                Using gm As IGetManager = o.GetMgr
-                    Dim mpe As ObjectMappingEngine = gm.Manager.MappingEngine
+                Dim mpe As ObjectMappingEngine = o.GetMappingEngine()
+                If mpe Is Nothing Then
+                    mpe = Relation.Host.GetMappingEngine
+                End If
+
+                Dim schema As IEntitySchema = Nothing
+                If mpe IsNot Nothing Then
+                    schema = mpe.GetEntitySchema(o.GetType)
+                End If
+
+                Try
                     Try
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, mpe.GetEntitySchema(o.GetType))
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, schema)
                     Catch ex As InvalidCastException
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, mpe.GetEntitySchema(o.GetType))
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
                     End Try
-                End Using
+                Catch ex As ArgumentNullException When ex.Message = "oschema"
+                    schema = o.GetEntitySchema(mpe)
+                    Try
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, schema)
+                    Catch ex2 As InvalidCastException
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
+                    End Try
+                End Try
             End If
         End Sub
 
@@ -917,7 +949,9 @@ l1:
 
                 Dim toAdd As New List(Of IEntity)
                 For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Added, Filter)
-                    toAdd.Add(a)
+                    If Not nr.Contains(a) Then
+                        toAdd.Add(a)
+                    End If
                 Next
 
                 If Sort IsNot Nothing Then

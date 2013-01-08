@@ -229,13 +229,17 @@ Namespace Entities
 
         Sub Add(ByVal o As ICachedEntity)
         Sub Add(ByVal o As ICachedEntity, ByVal key As String)
+        Sub Add(ByVal o As ICachedEntity, ByVal relation As Relation)
         Sub Remove(ByVal o As ICachedEntity)
         Sub Remove(ByVal o As ICachedEntity, ByVal key As String)
+        Sub Remove(ByVal o As ICachedEntity, ByVal relation As Relation)
 
         Sub Cancel(ByVal t As Type)
         Sub Cancel(ByVal t As Type, ByVal key As String)
+        Sub Cancel(ByVal t As Type, ByVal relation As Relation)
         Sub Cancel(ByVal en As String)
         Sub Cancel(ByVal en As String, ByVal key As String)
+        Sub Cancel(ByVal en As String, ByVal relation As Relation)
         Sub Cancel(ByVal desc As RelationDesc)
 
         Function GetRelationDesc(ByVal t As Type) As RelationDesc

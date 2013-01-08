@@ -835,11 +835,10 @@ Namespace Entities
         End Function
 
         Protected Sub _Add(ByVal obj As ICachedEntity) Implements IRelations.Add
-            _Add(obj, Nothing)
+            _Add(obj, CStr(Nothing))
         End Sub
 
-        Protected Sub _Add(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Add
-            Dim el As Relation = GetRelation(obj.GetType, key)
+        Protected Sub _Add(ByVal obj As ICachedEntity, ByVal el As Relation) Implements IRelations.Add
             Using el.SyncRoot
                 If Not el.Added.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
@@ -902,6 +901,11 @@ Namespace Entities
             End Using
         End Sub
 
+        Protected Sub _Add(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Add
+            Dim el As Relation = GetRelation(obj.GetType, key)
+            _Add(obj, el)
+        End Sub
+
         'Protected Sub _Delete(ByVal t As Type) Implements IM2M.Delete
         '    Using mc As IGetManager = GetMgr
         '        mc.Manager.M2MDelete(_o, t, M2MRelation.DirKey)
@@ -916,11 +920,10 @@ Namespace Entities
         'End Sub
 
         Protected Sub _DeleteM2M(ByVal obj As ICachedEntity) Implements IRelations.Remove
-            _DeleteM2M(obj, Nothing)
+            _DeleteM2M(obj, CStr(Nothing))
         End Sub
 
-        Protected Sub _DeleteM2M(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Remove
-            Dim el As Relation = GetRelation(obj.GetType, key)
+        Protected Sub _DeleteM2M(ByVal obj As ICachedEntity, ByVal el As Relation) Implements IRelations.Remove
             Using el.SyncRoot
                 If Not el.Deleted.Contains(obj) Then
                     If TypeOf el Is M2MRelation Then
@@ -983,8 +986,17 @@ Namespace Entities
             End Using
         End Sub
 
+        Protected Sub _DeleteM2M(ByVal obj As ICachedEntity, ByVal key As String) Implements IRelations.Remove
+            Dim el As Relation = GetRelation(obj.GetType, key)
+            _DeleteM2M(obj, el)
+        End Sub
+
         Protected Sub _Cancel(ByVal en As String) Implements IRelations.Cancel
-            _Cancel(en, Nothing)
+            _Cancel(en, CStr(Nothing))
+        End Sub
+
+        Protected Sub _Cancel(ByVal en As String, ByVal el As Relation) Implements IRelations.Cancel
+            el.Reject(Nothing)
         End Sub
 
         Protected Sub _Cancel(ByVal en As String, ByVal key As String) Implements IRelations.Cancel
@@ -995,12 +1007,16 @@ Namespace Entities
             End Using
 #Else
             Dim el As Relation = GetRelation(en, key)
-            el.Reject(Nothing)
+            _Cancel(en, el)
 #End If
         End Sub
 
         Protected Sub _Cancel(ByVal t As Type) Implements IRelations.Cancel
-            _Cancel(t, Nothing)
+            _Cancel(t, CStr(Nothing))
+        End Sub
+
+        Protected Sub _Cancel(ByVal t As Type, ByVal el As Relation) Implements IRelations.Cancel
+            el.Reject(Nothing)
         End Sub
 
         Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IRelations.Cancel
@@ -1011,7 +1027,7 @@ Namespace Entities
             End Using
 #Else
             Dim el As Relation = GetRelation(t, key)
-            el.Reject(Nothing)
+            _Cancel(t, el)
 #End If
         End Sub
 
