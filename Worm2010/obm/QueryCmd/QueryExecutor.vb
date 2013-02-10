@@ -255,12 +255,12 @@ l2:
                     m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
                 AddressOf cis.GetMatrix)
 
-            If mgr.LastExecutionResult.CacheHit Then
-                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
-                Return args.Matrix
-            Else
-                Return res
-            End If
+            'If mgr.LastExecutionResult.CacheHit Then
+            Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+            Return args.Matrix
+            'Else
+            'Return res
+            'End If
         End Function
 
         Public Function Exec(Of ReturnType As ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
@@ -288,12 +288,12 @@ l2:
                     End If
                 End If
 
-                If mgr.LastExecutionResult.CacheHit Then
-                    Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
-                    Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
-                Else
-                    Return res
-                End If
+                'If mgr.LastExecutionResult.CacheHit Then
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
+                'Else
+                'Return res
+                'End If
             Finally
                 c.RemoveEvent()
             End Try
@@ -327,12 +327,12 @@ l2:
                     End If
                 End If
 
-                If mgr.LastExecutionResult.CacheHit Then
-                    Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
-                    Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
-                Else
-                    Return res
-                End If
+                'If mgr.LastExecutionResult.CacheHit Then
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
+                'Else
+                'Return res
+                'End If
             Finally
                 c.RemoveEvent()
             End Try
@@ -350,12 +350,12 @@ l2:
                         m.GetFromCache2(dic, sync, id, True, p2), _
                     AddressOf cis.GetObjectList(Of ReturnType))
 
-                If mgr.LastExecutionResult.CacheHit Then
-                    Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
-                    Return CType(args.ReadOnlyList, ReadOnlyObjectList(Of ReturnType))
-                Else
-                    Return res
-                End If
+                'If mgr.LastExecutionResult.CacheHit Then
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Return CType(args.ReadOnlyList, ReadOnlyObjectList(Of ReturnType))
+                'Else
+                'Return res
+                'End If
             Finally
                 c.RemoveEvent()
             End Try
@@ -401,12 +401,12 @@ l2:
                         m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
                     AddressOf cis.GetList(Of ReturnType))
 
-                If mgr.LastExecutionResult.CacheHit Then
-                    Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, CType(res, ICollection), cis.ci)
-                    Return CType(args.SimpleList, IList(Of ReturnType))
-                Else
-                    Return res
-                End If
+                'If mgr.LastExecutionResult.CacheHit Then
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, CType(res, ICollection), cis.ci)
+                Return CType(args.SimpleList, IList(Of ReturnType))
+                'Else
+                'Return res
+                'End If
             Finally
                 query._notSimpleMode = oldm
                 query._cacheSort = olds

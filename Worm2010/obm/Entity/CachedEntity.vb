@@ -1707,6 +1707,16 @@ l1:
         Public Sub RaiseUpdated(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseUpdated
             RaiseEvent Updated(Me, args)
         End Sub
+
+        Public Sub RejectChanges() Implements _ICachedEntity.RejectChanges
+            Using mc As IGetManager = GetMgr()
+                If mc Is Nothing Then
+                    OrmManager.RejectChanges(Me, GetMappingEngine, Nothing)
+                Else
+                    mc.Manager.RejectChanges(Me)
+                End If
+            End Using
+        End Sub
     End Class
 
     <Serializable()> _

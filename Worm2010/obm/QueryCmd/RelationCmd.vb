@@ -629,7 +629,8 @@ l1:
                 End If
 
                 If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
-                    field = schema.GetJoinFieldNameByType(filteredType, schema.GetEntitySchema(selectedType))
+                    Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
+                    field = schema.GetJoinFieldNameByType(filteredType, oschema)
                     needReplace = New RelationDesc(selectOS, field)
                 ElseIf Not TypeOf _rel.Relation Is M2MRelationDesc Then
                     field = _rel.Relation.Column
@@ -938,7 +939,21 @@ l1:
             Return cnt
         End Function
 
-        Protected Overridable Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
+        Private _includeModified As Boolean
+        Public Overrides Property IncludeModifiedObjects As Boolean
+            Get
+                Return _includeModified
+            End Get
+            Set(value As Boolean)
+                _includeModified = value
+            End Set
+        End Property
+
+        Protected Overrides Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
+            If _includeModified Then
+                MyBase._ModifyResult(sender, args)
+            End If
+
             If Relation.HasChanges AndAlso Not args.IsSimple Then
 
                 Dim nr As IListEdit = CType(args.ReadOnlyList.Clone, IListEdit)

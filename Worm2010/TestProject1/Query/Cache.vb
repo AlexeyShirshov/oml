@@ -602,8 +602,8 @@ Imports System.Collections.ObjectModel
 
         Assert.IsTrue(c.IsInCachePrecise(t, s))
 
-        Assert.IsFalse(t.InternalProperties.IsLoaded)
-        Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
+        'Assert.IsFalse(t.InternalProperties.IsLoaded)
+        'Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
 
         t.Name = "353"
 

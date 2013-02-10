@@ -181,7 +181,10 @@ Public Class TestReject
             Finally
                 mgr.Rollback()
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
-                Assert.AreEqual(a, t1.Version)
+                For i As Integer = 0 To a.Length - 1
+                    Assert.AreEqual(a(i), t1.Version(i))
+                Next
+
                 Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)
 
                 Assert.IsTrue(mgr.IsInCachePrecise(t2))

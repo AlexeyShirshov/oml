@@ -973,29 +973,36 @@ Namespace Query
 
 #Region " Ctors "
         Public Sub New()
+
         End Sub
 
         Public Sub New(ByVal getMgr As CreateManagerDelegate)
+            Me.new()
             _getMgr = New CreateManager(getMgr)
         End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager)
+            Me.new()
             _getMgr = getMgr
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
+            Me.new()
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(mpe, connectionString))
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String)
+            Me.new()
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQL2000Generator, connectionString))
         End Sub
 
         Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String, generator As Worm.Database.SQL2000Generator)
+            Me.new()
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, generator, connectionString))
         End Sub
 
         Public Sub New(ByVal cache As CacheBase, ByVal connectionString As String)
+            Me.new()
             _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQL2000Generator, connectionString))
         End Sub
 
@@ -1672,7 +1679,8 @@ l1:
                                 End If
 
                                 If String.IsNullOrEmpty(field) Then
-                                    field = schema.GetJoinFieldNameByType(selectType, schema.GetEntitySchema(sortType))
+                                    Dim sortSchema As IEntitySchema = schema.GetEntitySchema(sortType)
+                                    field = schema.GetJoinFieldNameByType(selectType, sortSchema)
 
                                     If Not String.IsNullOrEmpty(field) Then
                                         types.Add(sortType)
@@ -6062,6 +6070,85 @@ l1:
         Friend Function ContainsCommandExceptionSubscriber(qh As CommandExceptionEventHandler) As Boolean
             Return CommandExceptionEvent IsNot Nothing AndAlso Array.IndexOf(CommandExceptionEvent.GetInvocationList, qh) >= 0
         End Function
+
+        Public Overridable Property IncludeModifiedObjects As Boolean
+            Get
+                Return Array.IndexOf(ModifyResultEvent.GetInvocationList, CType(AddressOf _ModifyResult, ModifyResultEventHandler)) >= 0
+            End Get
+            Set(value As Boolean)
+                If value Then
+                    AddHandler ModifyResult, AddressOf _ModifyResult
+                Else
+                    RemoveHandler ModifyResult, AddressOf _ModifyResult
+                End If
+            End Set
+        End Property
+
+        Protected Overridable Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
+            If args.OrmManager.Cache.NewObjectManager IsNot Nothing AndAlso Not args.IsSimple Then
+
+                Dim nr As IListEdit = Nothing
+                For Each o As IEntity In args.ReadOnlyList
+                    If o.ObjectState = ObjectState.Deleted Then
+                        If nr Is Nothing Then
+                            nr = CType(args.ReadOnlyList.Clone, IListEdit)
+                        End If
+                        nr.Remove(o)
+                    End If
+                Next
+
+                Dim toAdd As New List(Of IEntity)
+                Dim nex As INewObjectsStoreEx = TryCast(args.OrmManager.Cache.NewObjectManager, INewObjectsStoreEx)
+                If nex IsNot Nothing Then
+                    Dim s As IList(Of _ICachedEntity) = nex.GetNewObjects(args.ReadOnlyList.RealType)
+                    If s IsNot Nothing AndAlso s.Count > 0 Then
+                        If nr Is Nothing Then
+                            nr = CType(args.ReadOnlyList.Clone, IListEdit)
+                        End If
+                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, Filter)
+                            If Not nr.Contains(a) Then
+                                toAdd.Add(a)
+                            End If
+                        Next
+                    End If
+                End If
+
+                If nr Is Nothing OrElse (nr.Count = 0 AndAlso toAdd.Count = 0) Then
+                    Return
+                End If
+
+                If Sort IsNot Nothing Then
+                    Dim c As New Sorting.EntityComparer(Sort)
+                    Dim newres As ArrayList = ArrayList.Adapter(nr)
+                    For Each o As IEntity In toAdd
+                        Dim pos As Integer = newres.BinarySearch(o, c)
+                        If pos < 0 Then
+                            nr.Insert(Not pos, o)
+                        Else
+                            nr.Insert(pos, o)
+                            'Throw New QueryCmdException("Object in added list already in query", Me)
+                        End If
+                    Next
+                    If TopParam IsNot Nothing Then
+                        Dim cnt As Integer = nr.Count
+                        For i As Integer = TopParam.Count To cnt - 1
+                            nr.List.RemoveAt(i)
+                        Next
+                    End If
+                Else
+                    For i As Integer = 0 To toAdd.Count - 1
+                        If TopParam IsNot Nothing Then
+                            If TopParam.Count + i <= nr.Count Then
+                                Exit For
+                            End If
+                        End If
+                        nr.Add(toAdd(i))
+                    Next
+                End If
+
+                args.ReadOnlyList = nr
+            End If
+        End Sub
 
     End Class
 

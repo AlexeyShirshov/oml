@@ -4463,8 +4463,12 @@ l1:
     End Function
 
     Public Sub RejectChanges(ByVal e As _ICachedEntity)
+        RejectChanges(e, MappingEngine, Cache)
+    End Sub
+
+    Public Shared Sub RejectChanges(ByVal e As _ICachedEntity, mpe As ObjectMappingEngine, cache As CacheBase)
         Using e.LockEntity
-            e.RejectRelationChanges(Me)
+            e.RejectRelationChanges(Nothing)
 
             If e.ObjectState = ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created Then
                 Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
@@ -4472,6 +4476,11 @@ l1:
                 Dim oc As ICachedEntity = Nothing
                 If uc IsNot Nothing Then
                     oc = uc.OriginalCopy()
+                End If
+
+                Dim nm As INewObjectsStore = cache.NewObjectManager
+                If nm IsNot Nothing Then
+                    nm.RemoveNew(e)
                 End If
 
                 If e.ObjectState <> Entities.ObjectState.Deleted Then
@@ -4483,7 +4492,7 @@ l1:
                     End If
                 End If
 
-                Dim oschema As IEntitySchema = e.GetEntitySchema(MappingEngine)
+                Dim oschema As IEntitySchema = e.GetEntitySchema(mpe)
                 'Dim mo As ObjectModification = Cache.ShadowCopy(e.GetType, e, TryCast(oschema, ICacheBehavior))
                 'If mo IsNot Nothing Then
                 '    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(CurrentUser) Then
@@ -4526,11 +4535,11 @@ l1:
                     If oc IsNot Nothing Then
                         OrmManager.CopyBody(oc, e, oschema)
                     End If
-                    OrmManager.RemoveVersionData(e, Cache, MappingEngine, False)
+                    OrmManager.RemoveVersionData(e, cache, mpe, False)
                 End If
 
                 If newid IsNot Nothing Then
-                    SetPK(e, newid, oschema, MappingEngine)
+                    SetPK(e, newid, oschema, mpe)
                 End If
 
 #If TraceSetState Then
@@ -4542,11 +4551,14 @@ l1:
 #End If
                 If e.ObjectState = Entities.ObjectState.Created Then
                     If oldkey.HasValue Then
-                        'Using gmc As IGetManager = GetMgr()
-                        'Dim mc As OrmManager = gmc.Manager
-                        Dim dic As IDictionary = GetDictionary(e.GetType)
+                        If cache Is Nothing Then
+                            Throw New InvalidOperationException("Cache required")
+                        End If
+
+                        Dim dic As IDictionary = cache.GetOrmDictionary(e.GetType, mpe)
+
                         If dic Is Nothing Then
-                            Dim name As String = Me.GetType.Name
+                            Dim name As String = e.GetType.Name
                             Throw New OrmObjectException("Collection for " & name & " not exists")
                         End If
 
@@ -4560,7 +4572,7 @@ l1:
                         uc.OriginalCopy = Nothing
                     End If
 
-                    Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
+                    Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
                     If ll IsNot Nothing Then
                         ll.IsLoaded = False
                     End If
@@ -4614,6 +4626,7 @@ l1:
             'OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
             'If Not e.IsLoading Then
             RaiseBeginUpdate(e)
+            Cache.RaiseBeginUpdate(e)
             'End If
         End If
         'Cache.RegisterModification(Me, e, ObjectModification.ReasonEnum.Edit, TryCast(e.GetEntitySchema(MappingEngine), ICacheBehavior))
