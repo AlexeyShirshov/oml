@@ -311,7 +311,7 @@ Namespace Database
             Return added
         End Function
 
-        Public Sub AddRange(ByVal col As ICollection(Of _ICachedEntity))
+        Public Sub AddRange(ByVal col As IEnumerable(Of _ICachedEntity))
             '_objects.AddRange(col)
             'For Each o As OrmBase In col
             '    AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
@@ -830,7 +830,7 @@ l1:
             Return mgr.CreateBatchSaver(Of ObjectListSaver)(_created)
         End Function
 
-        Public Overridable Sub AddRange(ByVal objs As ICollection(Of _ICachedEntity))
+        Public Overridable Sub AddRange(ByVal objs As IEnumerable(Of _ICachedEntity))
             If objs Is Nothing Then
                 Throw New ArgumentNullException("objects")
             End If

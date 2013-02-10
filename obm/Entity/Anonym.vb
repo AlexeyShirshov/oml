@@ -1046,14 +1046,15 @@ Namespace Entities
             RaiseEvent Updated(Me, args)
         End Sub
 
-        'Public Property OldObjectState As ObjectState Implements IUndoChanges.OldObjectState
-        '    Get
-        '        Return _old_state
-        '    End Get
-        '    Set(ByVal value As ObjectState)
-        '        _old_state = value
-        '    End Set
-        'End Property
+        Public Sub RejectChanges() Implements _ICachedEntity.RejectChanges
+            Using mc As IGetManager = GetMgr()
+                If mc Is Nothing Then
+                    OrmManager.RejectChanges(Me, GetMappingEngine, Nothing)
+                Else
+                    mc.Manager.RejectChanges(Me)
+                End If
+            End Using
+        End Sub
 
     End Class
 End Namespace

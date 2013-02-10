@@ -197,8 +197,9 @@ Namespace Query.Database
             End Sub
 
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
-                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, GetEntities())
-                Return New CachedItemBase(args.ReadOnlyList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
+                'Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, GetEntities())
+                'Return New CachedItemBase(args.ReadOnlyList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
+                Return New CachedItemBase(GetEntities, _mgr.Cache)
             End Function
         End Class
 
@@ -391,8 +392,9 @@ Namespace Query.Database
             End Function
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As UpdatableCachedItem
-                Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, col)
-                Return New UpdatableCachedItem(args.ReadOnlyList, _mgr) With {.CustomInfo = args.CustomInfo}
+                'Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, col)
+                'Return New UpdatableCachedItem(args.ReadOnlyList, _mgr) With {.CustomInfo = args.CustomInfo}
+                Return New UpdatableCachedItem(col, _mgr)
             End Function
 
             'Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)

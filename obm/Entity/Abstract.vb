@@ -132,7 +132,6 @@ Namespace Entities
         'Property OldObjectState As ObjectState
         'Sub RemoveOriginalCopy(ByVal cache As CacheBase)
         'Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
-        'Overloads Sub RejectChanges()
         'Overloads Sub RejectChanges(ByVal mgr As OrmManager)
         'ReadOnly Property HasChanges() As Boolean
         'ReadOnly Property HasBodyChanges() As Boolean
@@ -150,6 +149,7 @@ Namespace Entities
         Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal propertyAlias As String) As Boolean
         Function Save(ByVal mc As OrmManager) As Boolean
+        Sub RejectChanges()
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
         Sub UpdateCacheAfterUpdate(ByVal c As OrmCache)
         Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
