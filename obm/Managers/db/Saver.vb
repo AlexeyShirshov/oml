@@ -157,6 +157,7 @@ Namespace Database
         Public Event BeginRejecting(ByVal sender As ObjectListSaver)
         Public Event BeginAccepting(ByVal sender As ObjectListSaver)
         Public Event OnAdded(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal added As Boolean)
+        Public Event OnRemoved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
 
         'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
         '    _mgr = mgr
@@ -319,6 +320,15 @@ Namespace Database
             For Each o As _ICachedEntity In col
                 Add(o)
             Next
+        End Sub
+
+        Public Sub Remove(o As _ICachedEntity)
+            _objects.Remove(o)
+            Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
+            If uc IsNot Nothing Then
+                RemoveHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
+            End If
+            RaiseEvent OnRemoved(Me, o)
         End Sub
 
         Protected Sub ObjRejected(ByVal o As ICachedEntity)
@@ -915,6 +925,20 @@ l1:
                 End If
 
                 _saver.Add(obj)
+            End If
+        End Sub
+
+        Public Overridable Sub Remove(ByVal obj As _ICachedEntity)
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            If Not _saver._dontCheckOnAdd Then
+                If Saver.StartSaving Then
+                    Throw New InvalidOperationException("Cannot remove object during save")
+                End If
+
+                _saver.Remove(obj)
             End If
         End Sub
 
