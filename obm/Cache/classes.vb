@@ -3,15 +3,16 @@ Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Query.Sorting
 Imports Worm.Expressions2
+Imports System.Linq
 
 Namespace Cache
 
     <Serializable()> _
     Public Class EntityProxy
-        Private _id() As PKDesc
+        Private _id As IEnumerable(Of PKDesc)
         Private _t As Type
 
-        Public Sub New(ByVal id() As PKDesc, ByVal type As Type)
+        Public Sub New(ByVal id As IEnumerable(Of PKDesc), ByVal type As Type)
             _id = id
             _t = type
         End Sub
@@ -31,7 +32,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public ReadOnly Property PK() As PKDesc()
+        Public ReadOnly Property PK() As IEnumerable(Of PKDesc)
             Get
                 Return _id
             End Get
@@ -48,9 +49,9 @@ Namespace Cache
             Return _t Is obj._t AndAlso IdEquals(obj.PK)
         End Function
 
-        Protected Function IdEquals(ByVal ids() As PKDesc) As Boolean
-            If _id.Length <> ids.Length Then Return False
-            For i As Integer = 0 To _id.Length - 1
+        Protected Function IdEquals(ByVal ids As IEnumerable(Of PKDesc)) As Boolean
+            If _id.Count <> ids.Count Then Return False
+            For i As Integer = 0 To _id.Count - 1
                 Dim p As PKDesc = _id(i)
                 Dim p2 As PKDesc = ids(i)
                 If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
@@ -234,7 +235,7 @@ Namespace Cache
             _ref.Target = Nothing
         End Sub
 
-        Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk() As PKDesc, ByVal type As Type, _
+        Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
             Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, cache, mpe), _ICachedEntity)
 

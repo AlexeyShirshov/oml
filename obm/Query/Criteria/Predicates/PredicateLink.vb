@@ -97,6 +97,22 @@ Namespace Criteria
             Return New Condition.ConditionConstructor
         End Function
 
+        Public Function [and](v As Object) As PredicateBase
+            Return [and](New ScalarValue(v))
+        End Function
+
+        Public Function [and](v As IFilterValue) As PredicateBase
+            Return New UnaryPredicate(v, _con, ConditionOperator.And)
+        End Function
+
+        Public Function [or](v As Object) As PredicateBase
+            Return [or](New ScalarValue(v))
+        End Function
+
+        Public Function [or](v As IFilterValue) As PredicateBase
+            Return New UnaryPredicate(v, _con, ConditionOperator.Or)
+        End Function
+
         Public Function [and](ByVal t As Type, ByVal propertyAlias As String) As PropertyPredicate
             If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("propertyAlias")
@@ -315,7 +331,15 @@ Namespace Criteria
             Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).exists(t, joinFilter.Filter)
         End Function
 
+        Public Function and_exists(ByVal t As EntityUnion, ByVal joinFilter As IGetFilter) As PredicateLink
+            Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).exists(t, joinFilter.Filter)
+        End Function
+
         Public Function and_not_exists(ByVal t As Type, ByVal joinFilter As IGetFilter) As PredicateLink
+            Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).not_exists(t, joinFilter.Filter)
+        End Function
+
+        Public Function and_not_exists(ByVal t As EntityUnion, ByVal joinFilter As IGetFilter) As PredicateLink
             Return New UnaryPredicate(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).not_exists(t, joinFilter.Filter)
         End Function
 
@@ -379,7 +403,7 @@ Namespace Criteria
             End If
         End Function
 
-        Protected ReadOnly Property ConditionCtor() As Condition.ConditionConstructor
+        Public ReadOnly Property ConditionCtor() As Condition.ConditionConstructor
             Get
                 Return _con
             End Get

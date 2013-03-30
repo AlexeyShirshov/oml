@@ -2,6 +2,7 @@
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Namespace Criteria.Core
     Public Interface IGetFilter
@@ -11,13 +12,12 @@ Namespace Criteria.Core
 
     Public Interface IFilter
         Inherits IGetFilter, ICloneable, IQueryElement
-        'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal executor As Query.IExecutionContext, _
             ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As IFilter()
         Function Equals(ByVal f As IFilter) As Boolean
-        Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
+        Function ReplaceFilter(ByVal oldValue As IFilter, ByVal newValue As IFilter) As IFilter
         Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter
         Overloads Function Clone() As IFilter
         Function RemoveFilter(ByVal f As IFilter) As IFilter
@@ -39,8 +39,23 @@ Namespace Criteria.Core
         ReadOnly Property Value() As IFilterValue
     End Interface
 
+    Public Interface IEvaluableFilter
+        Function Eval(ByVal mpe As ObjectMappingEngine, d As GetObj4IEntityFilterDelegate,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult
+    End Interface
+
+    Public Interface IApplyFilter
+        ReadOnly Property Filter As IFilter
+        ReadOnly Property Joins As Criteria.Joins.QueryJoin()
+        ReadOnly Property RootObjectUnion As EntityUnion
+    End Interface
+
+    Public Delegate Function GetObj4IEntityFilterDelegate(f As IEntityFilterBase) As Pair(Of _IEntity, IEntitySchema)
+
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult
+        Inherits IEvaluableFilter
+        Function EvalObj(ByVal mpe As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         'Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String

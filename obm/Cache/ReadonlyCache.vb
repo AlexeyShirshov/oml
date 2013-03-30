@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Cache
     Public Enum CacheListBehavior
@@ -20,6 +21,7 @@ Namespace Cache
         Public ReadOnly DateTimeCreated As Date
 
         Private _filters As IDictionary
+        Private _nonExist As New Dictionary(Of Type, HashSet(Of PKWrapper))
         Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _lock As New Object
         Private _lock2 As New Object
@@ -635,7 +637,7 @@ Namespace Cache
             End Set
         End Property
 
-        Public Function IsNewObject(ByVal t As Type, ByVal id() As PKDesc) As Boolean
+        Public Function IsNewObject(ByVal t As Type, ByVal id As IEnumerable(Of PKDesc)) As Boolean
             Return NewObjectManager IsNot Nothing AndAlso NewObjectManager.GetNew(t, id) IsNot Nothing
         End Function
 
@@ -675,6 +677,7 @@ Namespace Cache
 
             If a Is Nothing AndAlso addIfNotFound Then
                 a = AddObjectInternal(obj, id, entityDictionary)
+                RemoveNonExistent(type, id)
             End If
 
             Return a
@@ -703,7 +706,7 @@ Namespace Cache
         End Function
 
         Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
-            ByVal pk() As PKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
+            ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
             Dim o As T = CachedEntity.CreateObject(Of T)(pk, Me, mpe)
 
@@ -715,7 +718,7 @@ Namespace Cache
         End Function
 
         Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
-            ByVal pk() As PKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
+            ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
             Dim o As T = CachedEntity.CreateEntity(Of T)(pk, Me, mpe)
 
@@ -726,7 +729,7 @@ Namespace Cache
                 CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, False), T)
         End Function
 
-        Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type, _
+        Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
             Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
             Dim pkw As PKWrapper = Nothing
@@ -745,7 +748,7 @@ Namespace Cache
             Return CType(FindObjectInCache(type, o, pkw, cb, GetOrmDictionary(type, cb), addOnCreate, False), ICachedEntity)
         End Function
 
-        Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type, _
+        Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
             Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
             Dim pkw As PKWrapper = Nothing
@@ -817,8 +820,8 @@ Namespace Cache
             '    Dim pkd As New PKDesc(e.PropertyAlias, ObjectMappingEngine.GetPropertyValue(o, e.PropertyAlias, oschema))
             '    pk.Add(pkd)
             'Next
-            Dim pks() As PKDesc = ObjectMappingEngine.GetPKs(o, oschema)
-            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), Me, mpe)
+            Dim pks As IEnumerable(Of PKDesc) = ObjectMappingEngine.GetPKs(o, oschema)
+            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
             Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
             If cc IsNot Nothing Then
                 CType(c, AnonymousCachedEntity).SetKey(cc.Key)
@@ -860,6 +863,31 @@ Namespace Cache
 
 #End Region
 
+        Public Sub AddNonExistentObject(t As Type, key As PKWrapper)
+            Dim s As HashSet(Of PKWrapper) = Nothing
+            SyncLock _nonExist
+                If Not _nonExist.TryGetValue(t, s) Then
+                    s = New HashSet(Of PKWrapper)
+                    _nonExist(t) = s
+                End If
+            End SyncLock
+            s.Add(key)
+        End Sub
+
+        Public Function CheckNonExistent(t As Type, ck As PKWrapper) As Boolean
+            Dim s As HashSet(Of PKWrapper) = Nothing
+            If _nonExist.TryGetValue(t, s) Then
+                Return s.Contains(ck)
+            End If
+            Return False
+        End Function
+
+        Friend Sub RemoveNonExistent(t As Type, ck As PKWrapper)
+            Dim s As HashSet(Of PKWrapper) = Nothing
+            If _nonExist.TryGetValue(t, s) Then
+                s.Remove(ck)
+            End If
+        End Sub
     End Class
 
     Public Class ReadonlyCache

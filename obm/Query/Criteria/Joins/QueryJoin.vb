@@ -218,8 +218,8 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        Public Sub ReplaceFilter(ByVal replacement As Core.IFilter, ByVal replacer As Core.IFilter)
-            _condition = _condition.ReplaceFilter(replacement, replacer)
+        Public Sub ReplaceFilter(ByVal oldValue As Core.IFilter, ByVal newValue As Core.IFilter)
+            _condition = _condition.ReplaceFilter(oldValue, newValue)
         End Sub
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString

@@ -1175,6 +1175,22 @@ Imports Worm.Expressions2
     End Sub
 
     <TestMethod()> _
+    Public Sub TestGetByIdPerf()
+        Dim c As New ReadonlyCache
+
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+
+        For i = 0 To 10000
+            Dim t As Table1 = q.GetByID(Of Table1)(New Random().Next, QueryCmd.GetByIDOptions.EnsureExistsInStore)
+
+            Assert.IsNull(t)
+        Next
+        't = q.GetByID(Of Table1)(1)
+        'Assert.AreEqual(0, q.ExecCount)
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestGetByIds1()
         Dim c As New ReadonlyCache
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))

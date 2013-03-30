@@ -6,6 +6,7 @@ Imports System.ComponentModel
 Imports System.Collections.Generic
 Imports System.Xml
 Imports Worm.Query
+Imports System.Linq
 
 Namespace Entities
     <Serializable()> _
@@ -94,7 +95,7 @@ Namespace Entities
                     Dim dt As Type = _dst.GetType
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IEntitySchema = mpe.GetEntitySchema(dt)
-                    Dim pk As Boolean, pk_old As PKDesc() = OrmManager.GetPKValues(_dst, oschema)
+                    Dim pk As Boolean, pk_old As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(_dst, oschema)
                     For i As Integer = 0 To _srcProps.Length - 1
                         Dim srcProp As String = _srcProps(i)
                         Dim dstProp As String = _dstProps(i)
@@ -712,10 +713,10 @@ Namespace Entities
         End Sub
 
 
-        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
+        Protected Overridable Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
             _Init(cache, mpe)
             OrmManager.SetPK(Me, pk, mpe)
-            PKLoaded(pk.Length)
+            PKLoaded(pk.Count)
         End Sub
 
 #Region " Xml Serialization "
@@ -782,7 +783,7 @@ l1:
                 Dim oschema As IEntitySchema = GetEntitySchema(mpe)
                 Dim elems As New Generic.List(Of Pair(Of String, Object))
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
-                Dim objs As New List(Of Pair(Of String, PKDesc()))
+                Dim objs As New List(Of Pair(Of String, IEnumerable(Of PKDesc)))
 
                 For Each m As MapField2Column In oschema.FieldColumnMap
                     Dim pi As Reflection.PropertyInfo = m.PropertyInfo
@@ -794,9 +795,9 @@ l1:
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, PKDesc())(propertyAlias, OrmManager.GetPKValues(CType(v, _ICachedEntity), Nothing)))
+                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, OrmManager.GetPKValues(CType(v, _ICachedEntity), Nothing)))
                                 Else
-                                    objs.Add(New Pair(Of String, PKDesc())(propertyAlias, Nothing))
+                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, Nothing))
                                 End If
                             ElseIf tt.IsArray Then
                                 elems.Add(New Pair(Of String, Object)(propertyAlias, pi.GetValue(Me, Nothing)))
@@ -832,7 +833,7 @@ l1:
                     .WriteEndElement()
                 Next
 
-                For Each p As Pair(Of String, PKDesc()) In objs
+                For Each p As Pair(Of String, IEnumerable(Of PKDesc)) In objs
                     .WriteStartElement(p.First)
                     If p.Second IsNot Nothing Then
                         For Each pk As PKDesc In p.Second
@@ -1560,9 +1561,9 @@ l1:
             If Me.GetType IsNot obj.GetType Then
                 Return False
             End If
-            Dim pks() As PKDesc = OrmManager.GetPKValues(Me, Nothing)
-            Dim pks2() As PKDesc = OrmManager.GetPKValues(obj, Nothing)
-            For i As Integer = 0 To pks.Length - 1
+            Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(Me, Nothing)
+            Dim pks2 As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(obj, Nothing)
+            For i As Integer = 0 To pks.count - 1
                 Dim pk As PKDesc = pks(i)
                 If pk.PropertyAlias <> pks2(i).PropertyAlias OrElse Not pk.Value.Equals(pks2(i).Value) Then
                     Return False

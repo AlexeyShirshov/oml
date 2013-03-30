@@ -6,6 +6,8 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 Imports Worm.Query.Sorting
+Imports Worm.Criteria.Joins
+Imports Worm.Query
 
 Friend Interface IListEdit
     Inherits IReadOnlyList, INotifyCollectionChanged, comp.INotifyPropertyChanged
@@ -409,11 +411,38 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
+    Public Function ApplyFilter(ByVal filter As IGetFilter, joins As QueryJoin(), objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
+            End Using
+        Else
+            Return Me
+        End If
+    End Function
+
     Public Function ApplyFilter(ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.ApplyFilter(Of T)(Me, filter, evaluated)
+                Return mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
+            End Using
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Function ApplyFilter(ByVal filter As IGetFilter, joins As QueryJoin(), objEU As EntityUnion) As ReadOnlyObjectList(Of T)
+        If _l.Count > 0 Then
+            Dim evaluated As Boolean
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
+                If Not evaluated Then
+                    Throw New InvalidOperationException("Filter is not applyable")
+                End If
+                Return r
             End Using
         Else
             Return Me
@@ -425,7 +454,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
             Dim evaluated As Boolean
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, evaluated)
+                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
                 If Not evaluated Then
                     Throw New InvalidOperationException("Filter is not applyable")
                 End If

@@ -248,7 +248,15 @@ Namespace Criteria
             Return exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
         End Function
 
+        Public Function exists(ByVal t As EntityUnion, ByVal f As IGetFilter) As PredicateLink
+            Return exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
+        End Function
+
         Public Function not_exists(ByVal t As Type, ByVal f As IGetFilter) As PredicateLink
+            Return not_exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
+        End Function
+
+        Public Function not_exists(ByVal t As EntityUnion, ByVal f As IGetFilter) As PredicateLink
             Return not_exists(New QueryCmd().SelectEntity(t).From(t).Where(f))
         End Function
 

@@ -6,6 +6,7 @@ Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports System.Linq
 
 Module Module2
 
@@ -92,7 +93,7 @@ Module Module2
             End Set
         End Property
 
-        Public Function GetPKValues() As Worm.Entities.Meta.PKDesc() Implements IOptimizePK.GetPKValues
+        Public Function GetPKValues() As IEnumerable(Of Worm.Entities.Meta.PKDesc) Implements IOptimizePK.GetPKValues
             Return New PKDesc() {New PKDesc("ID", _id)}
         End Function
 
@@ -150,7 +151,7 @@ Module Module2
         '    End With
         'End Sub
 
-        Public Sub SetPK(ByVal pk() As Worm.Entities.Meta.PKDesc) Implements Worm.Entities.IOptimizePK.SetPK
+        Public Sub SetPK(ByVal pk As IEnumerable(Of Worm.Entities.Meta.PKDesc)) Implements Worm.Entities.IOptimizePK.SetPK
             _id = CInt(pk(0).Value)
         End Sub
     End Class

@@ -9,6 +9,8 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Values
 
 <TestClass()> Public Class TestCriteria
 
@@ -149,5 +151,16 @@ Imports Worm.Expressions2
         Dim s5 As SortExpression = SCtor.prop(t, "sdgfn").Order("desc")
         Assert.AreEqual(t, CType(s3.Operand, EntityExpression).ObjectProperty.Entity.GetRealType(mpe))
         Assert.AreEqual(SortExpression.SortType.Desc, s5.Order)
+    End Sub
+
+    <TestMethod()>
+    Public Sub TestEval()
+        Dim mpe As New ObjectMappingEngine
+        Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, CType(Ctor.param(1).eq(2).ConditionCtor.Condition, IEvaluableFilter).Eval(mpe, Nothing, Nothing, Nothing))
+
+        Assert.AreEqual(IEvaluableValue.EvalResult.Found, CType(Ctor.param(2).eq(2).and(1).eq(1).ConditionCtor.Condition, IEvaluableFilter).Eval(mpe, Nothing, Nothing, Nothing))
+
+        Dim t As Type = GetType(Type)
+        Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, CType(Ctor.param(1).eq(t, "x").ConditionCtor.Condition, IEvaluableFilter).Eval(mpe, Nothing, Nothing, Nothing))
     End Sub
 End Class

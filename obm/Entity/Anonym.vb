@@ -2,6 +2,7 @@
 Imports System.ComponentModel
 Imports Worm.Entities.Meta
 Imports Worm.Cache
+Imports System.Linq
 
 Namespace Entities
 
@@ -251,7 +252,7 @@ Namespace Entities
             Return False
         End Function
 
-        Public Overloads Sub Init(ByVal pk() As Meta.PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
+        Public Overloads Sub Init(ByVal pk As IEnumerable(Of Meta.PKDesc), ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
             MyBase.Init(cache, schema)
             Dim spk As New List(Of String)
             For Each p As PKDesc In pk
@@ -259,7 +260,7 @@ Namespace Entities
                 Me(p.PropertyAlias) = p.Value
             Next
             _pk = spk.ToArray
-            PKLoaded(pk.Length)
+            PKLoaded(pk.Count)
         End Sub
 
         Public ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
@@ -498,17 +499,17 @@ Namespace Entities
         '    c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         '    If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         'End Sub
-        Protected Overridable Sub SetPK(ByVal pk As PKDesc()) Implements IOptimizePK.SetPK
+        Protected Overridable Sub SetPK(ByVal pk As IEnumerable(Of PKDesc)) Implements IOptimizePK.SetPK
             Dim spk As New List(Of String)
             For Each p As PKDesc In pk
                 spk.Add(p.PropertyAlias)
                 Me(p.PropertyAlias) = p.Value
             Next
             _pk = spk.ToArray
-            PKLoaded(pk.Length)
+            PKLoaded(pk.Count)
         End Sub
 
-        Public Function GetPKValues() As Meta.PKDesc() Implements IOptimizePK.GetPKValues
+        Public Function GetPKValues() As IEnumerable(Of Meta.PKDesc) Implements IOptimizePK.GetPKValues
             If _pk Is Nothing Then
                 Throw New OrmObjectException("PK is not loaded")
             End If
@@ -516,7 +517,7 @@ Namespace Entities
             For Each pk As String In _pk
                 l.Add(New PKDesc(pk, Me(pk)))
             Next
-            Return l.ToArray
+            Return l
         End Function
 
         'Public ReadOnly Property HasBodyChanges() As Boolean Implements IUndoChanges.HasBodyChanges

@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports System.Linq
 
 Namespace Criteria.Values
 
@@ -452,6 +453,11 @@ Namespace Criteria.Values
         Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             Dim r As IEvaluableValue.EvalResult
 
+            Dim fv As IEvaluableValue = TryCast(evaluatedValue, IEvaluableValue)
+            If fv IsNot Nothing Then
+                evaluatedValue = fv.Value
+            End If
+
             Dim filterValue As Object = GetValue(evaluatedValue, template, r)
             If r <> IEvaluableValue.EvalResult.Unknown Then
                 Return r
@@ -483,8 +489,8 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
-                                Dim pks() As PKDesc = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
-                                If pks.Length <> 1 Then
+                                Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
+                                If pks.count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
                                 If Equals(pks(0).Value, filterValue) Then
@@ -499,8 +505,8 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(valt) Then
-                                Dim pks() As PKDesc = OrmManager.GetPKValues(CType(filterValue, ICachedEntity), Nothing)
-                                If pks.Length <> 1 Then
+                                Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(filterValue, ICachedEntity), Nothing)
+                                If pks.Count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
                                 If Equals(pks(0).Value, evaluatedValue) Then
@@ -605,9 +611,12 @@ Namespace Criteria.Values
                         r = IEvaluableValue.EvalResult.Unknown
                 End Select
             Catch ex As InvalidCastException
-                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}. Operation {5}. Stack {6}", _
-                    template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, _
-                    If(template.ObjectSource.AnyType Is Nothing, template.ObjectSource.AnyEntityName, template.ObjectSource.AnyType.ToString), template.Operation, ex.StackTrace, ex))
+                If template IsNot Nothing Then
+                    'CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                    Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}. Operation {5}. Stack {6}", _
+                        template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, _
+                        If(template.ObjectSource.AnyType Is Nothing, template.ObjectSource.AnyEntityName, template.ObjectSource.AnyType.ToString), template.Operation, ex.StackTrace), ex)
+                End If
             End Try
             Return r
         End Function

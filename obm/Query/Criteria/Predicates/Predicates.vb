@@ -8,6 +8,7 @@ Imports System.Collections.Generic
 Imports Worm.Query
 Imports Worm.Entities.Meta
 Imports Worm.Expressions2
+Imports Worm.Expressions
 
 Namespace Criteria
 
@@ -293,13 +294,22 @@ Namespace Criteria
 
     Public Class UnaryPredicate
         Inherits PredicateBase
-        'Private _con As Condition.ConditionConstructor
-        'Private _ct As Worm.Criteria.Conditions.ConditionOperator
+
+        Private _v As IFilterValue
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
             '_con = con
             '_ct = ct
+        End Sub
+
+        Protected Friend Sub New(v As IFilterValue)
+            _v = v
+        End Sub
+
+        Protected Friend Sub New(v As IFilterValue, ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+            MyBase.New(con, ct)
+            _v = v
         End Sub
 
         'Protected Overrides Function GetLink(ByVal fl As IFilter) As CriteriaLink
@@ -343,7 +353,7 @@ Namespace Criteria
         'End Function
 
         Protected Overrides Function CreateFilter(ByVal v As IFilterValue, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.IFilter
-            Throw New NotImplementedException
+            Return New ExpressionFilter(New UnaryExp(_v), New UnaryExp(v), oper)
         End Function
 
         Protected Overrides Function GetLink(ByVal fl As Worm.Criteria.Core.IFilter) As Worm.Criteria.PredicateLink
@@ -355,13 +365,41 @@ Namespace Criteria
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal op As ObjectProperty, ByVal fo As FilterOperation) As Core.IFilter
-            Throw New NotImplementedException
+            Return New EntityFilter(op, _v, fo)
         End Function
 
         Protected Overrides Function CreateJoinFilter(ByVal t As SourceFragment, ByVal column As String, ByVal fo As FilterOperation) As Core.IFilter
-            Throw New NotImplementedException
+            Return New TableFilter(t, column, _v, fo)
         End Function
     End Class
+
+    'Public Class BinaryPredicate
+    '    Inherits PredicateBase
+
+    '    Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+    '        MyBase.New(con, ct)
+    '    End Sub
+
+    '    Protected Friend Sub New(left As unaryexp)
+
+    '    End Sub
+
+    '    Protected Overrides Function CreateFilter(v As Values.IFilterValue, oper As FilterOperation) As Core.IFilter
+
+    '    End Function
+
+    '    Protected Overloads Overrides Function CreateJoinFilter(t As Entities.Meta.SourceFragment, column As String, fo As FilterOperation) As Core.IFilter
+
+    '    End Function
+
+    '    Protected Overloads Overrides Function CreateJoinFilter(op As Query.ObjectProperty, fo As FilterOperation) As Core.IFilter
+
+    '    End Function
+
+    '    Protected Overrides Function GetLink(fl As Core.IFilter) As PredicateLink
+
+    '    End Function
+    'End Class
 
     Module FilterHlp
         Public Function Invert(ByVal fo As FilterOperation) As FilterOperation

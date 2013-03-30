@@ -10,6 +10,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Query
 Imports Worm.Expressions2
 Imports Worm.Cache
+Imports System.Linq
 
 'Namespace Schema
 
@@ -794,8 +795,8 @@ Public Class ObjectMappingEngine
         If GetType(ISinglePKEntity).IsAssignableFrom(ot) Then
             Return CType(o, SinglePKEntity).Identifier
         ElseIf GetType(ICachedEntity).IsAssignableFrom(ot) Then
-            Dim pks() As PKDesc = OrmManager.GetPKValues(CType(o, ICachedEntity), s)
-            If pks.Length <> 1 Then
+            Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(o, ICachedEntity), s)
+            If pks.Count <> 1 Then
                 Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", ot))
             End If
             Return pks(0).Value
@@ -1775,6 +1776,10 @@ Public Class ObjectMappingEngine
         Return GetEntitySchema(t, True)
     End Function
 
+    Public Function GetEntitySchema(ByVal eu As EntityUnion) As IEntitySchema
+        Return GetEntitySchema(eu.GetRealType(Me), True)
+    End Function
+
     Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
         Return GetEntitySchema(GetTypeByEntityName(entityName), True)
     End Function
@@ -1936,7 +1941,12 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
+    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter,ByRef r As Boolean) As ICollection(Of T)
+        Return ApplyFilter(Of T)(col, filter, Nothing, Nothing, r)
+    End Function
+
+    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef r As Boolean) As ICollection(Of T)
         r = True
         Dim f As Criteria.Core.IEntityFilter = TryCast(filter, Criteria.Core.IEntityFilter)
         If f Is Nothing Then
@@ -1948,7 +1958,7 @@ Public Class ObjectMappingEngine
                 If oschema Is Nothing Then
                     oschema = Me.GetEntitySchema(o.GetType)
                 End If
-                Dim er As Criteria.Values.IEvaluableValue.EvalResult = f.Eval(Me, o, oschema)
+                Dim er As Criteria.Values.IEvaluableValue.EvalResult = f.EvalObj(Me, o, oschema, joins, objEU)
                 Select Case er
                     Case Criteria.Values.IEvaluableValue.EvalResult.Found
                         l.Add(o)
@@ -2830,7 +2840,7 @@ Public Class ObjectMappingEngine
         End If
     End Sub
 
-    Public Shared Function GetPKs(ByVal obj As Object, ByVal oschema As IEntitySchema) As PKDesc()
+    Public Shared Function GetPKs(ByVal obj As Object, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
         If oschema Is Nothing Then
             Throw New ArgumentNullException("oschema")
         End If
@@ -2842,7 +2852,22 @@ Public Class ObjectMappingEngine
                 l.Add(New PKDesc(mp.PropertyAlias, ObjectMappingEngine.GetPropertyValue(obj, mp.PropertyAlias, oschema, mp.PropertyInfo)))
             End If
         Next
-        Return l.ToArray
+        Return l
+    End Function
+
+    Public Shared Function GetPKs(ByVal oschema As IEntitySchema) As IEnumerable(Of MapField2Column)
+        If oschema Is Nothing Then
+            Throw New ArgumentNullException("oschema")
+        End If
+
+        Dim l As New List(Of MapField2Column)
+
+        For Each mp As MapField2Column In oschema.FieldColumnMap
+            If mp.IsPK Then
+                l.Add(mp)
+            End If
+        Next
+        Return l
     End Function
 
     Public Overridable Function CreateEntity(ByVal t As Type) As Object

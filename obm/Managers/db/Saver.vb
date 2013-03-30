@@ -394,6 +394,10 @@ Namespace Database
 l1:
                 Dim args As New CancelEventArgs(o)
                 RaiseEvent ObjectSaving(Me, args)
+                Dim adv As IAdvSave = TryCast(o, IAdvSave)
+                If adv IsNot Nothing Then
+                    adv.Saving(Me)
+                End If
                 If Not args.Cancel Then
                     If Not CanSaveObj(o, col2save) Then
                         RaiseEvent ObjectPostponed(Me, o)
@@ -1101,5 +1105,9 @@ l1:
 #End Region
 
     End Class
+
+    Public Interface IAdvSave
+        Sub Saving(saver As ObjectListSaver)
+    End Interface
 
 End Namespace
