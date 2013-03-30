@@ -10,6 +10,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Conditions
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm.Criteria.Joins
 
 <TestClass()> _
 Public Class TestJoinsRS
@@ -27,15 +28,15 @@ Public Class TestJoinsRS
             Dim t1 As New Table1(1, mgr.Cache, mgr.MappingEngine)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 2
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 3
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
         End Using
     End Sub
 
@@ -52,15 +53,15 @@ Public Class TestJoinsRS
             Dim t1 As New Table1(1, mgr.Cache, mgr.MappingEngine)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 20
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.CreatedAt = CDate("2007-01-01")
             t1.Code = 30
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
         End Using
     End Sub
 
@@ -77,17 +78,17 @@ Public Class TestJoinsRS
 
             Dim t1 As New Table2(1, mgr.Cache, mgr.MappingEngine)
             t1.Money = 4
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Tbl = tbl
             t1.Money = 4
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
         End Using
     End Sub
 
@@ -104,17 +105,17 @@ Public Class TestJoinsRS
 
             Dim t1 As New Table2(1, mgr.Cache, mgr.MappingEngine)
             t1.Money = 4
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Tbl = tbl
             t1.Money = 4
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t1, Nothing))
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
         End Using
     End Sub
 
@@ -125,10 +126,28 @@ Public Class TestJoinsRS
             Dim t As Type = GetType(Table2)
             Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
-            Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t)))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.EvalObj(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
 
             t2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
-            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t)))
+            Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestJoinEval2()
+        Dim tm As New TestManagerRS
+        Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
+            Dim t As Type = GetType(Table2)
+            Dim c As EntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), EntityFilter)
+            Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
+            Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
+
+            Dim joins() As QueryJoin = JCtor.join(GetType(Table1)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1").
+                and(Ctor.prop(GetType(Table1), "Code").eq(100))
+
+            t2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
+            Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t),
+                                                                         joins, GetType(Table2)))
         End Using
     End Sub
 

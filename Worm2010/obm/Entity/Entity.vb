@@ -1,6 +1,8 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Query
+Imports System.Collections.Generic
+Imports System.Linq
 
 Namespace Entities
 
@@ -472,7 +474,7 @@ Namespace Entities
             Return o
         End Function
 
-        Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
             If GetType(ISinglePKEntity).IsAssignableFrom(GetType(T)) Then
                 Return CType(CreateKeyEntity(pk(0).Value, GetType(T), cache, schema), T)
             Else
@@ -480,16 +482,16 @@ Namespace Entities
             End If
         End Function
 
-        Public Shared Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
-            If GetType(ISinglePKEntity).IsAssignableFrom(type) Then
-                Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
-            ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
-                Return CreateEntity(pk, type, cache, mpe)
-            ElseIf GetType(IEntity).IsAssignableFrom(type) Then
-                Return CreateEntity(type, cache, mpe)
+        Public Shared Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
+            If GetType(ISinglePKEntity).IsAssignableFrom(Type) Then
+                Return CreateKeyEntity(pk(0).Value, Type, Cache, mpe)
+            ElseIf GetType(ICachedEntity).IsAssignableFrom(Type) Then
+                Return CreateEntity(pk, Type, Cache, mpe)
+            ElseIf GetType(IEntity).IsAssignableFrom(Type) Then
+                Return CreateEntity(Type, Cache, mpe)
             Else
-                Dim e As Object = Activator.CreateInstance(type)
-                Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
+                Dim e As Object = Activator.CreateInstance(Type)
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(Type)
                 For Each p As PKDesc In pk
                     ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
                 Next
@@ -497,13 +499,13 @@ Namespace Entities
             End If
         End Function
 
-        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
+        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
             Dim o As New T
             o.Init(pk, cache, mpe)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
+        Public Shared Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
             Dim e As Object = Activator.CreateInstance(t)
             Dim o As _ICachedEntity = CType(e, _ICachedEntity)
             o.Init(pk, cache, mpe)

@@ -12,6 +12,7 @@ Imports Worm.Misc
 Imports Worm.Query
 Imports Worm.Expressions2
 Imports cc = Worm.Criteria.Core
+Imports System.Linq
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
@@ -73,7 +74,7 @@ Partial Public MustInherit Class OrmManager
     Protected Friend _op As Boolean
     Protected Friend _rev As Boolean
     Protected _er As ExecutionResult
-    Friend _externalFilter As IFilter
+    Friend _externalFilter As IApplyFilter
     Protected Friend _loadedInLastFetch As Integer
     Friend _list As String
     Private _listeners As New List(Of TraceListener)
@@ -752,28 +753,34 @@ Partial Public MustInherit Class OrmManager
     '    Return o
     'End Function
 
-    Public Function GetEntityFromCacheOrDB(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrDB(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheAsIsOrLoadFromDB(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetOrAdd2Cache(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
+    Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IEnumerable(Of PKDesc)) As T
         Dim o As T = CreateObject(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
+    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IEnumerable(Of PKDesc)) As T
         Dim o As T = CreateEntity(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+    End Function
+
+    Public Function GetEntityFromCacheLoadedOrDB(pk() As PKDesc, type As Type) As ICachedEntity
+        Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return GetFromCacheLoadedOrLoadFromDB(o, GetDictionary(type))
     End Function
 
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type) As ISinglePKEntity
@@ -1555,19 +1562,19 @@ l1:
         Return SinglePKEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
     End Function
 
-    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
+    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
         Return CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
     End Function
 
-    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As Object
+    Public Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As Object
         Return CachedEntity.CreateObject(pk, type, _cache, _schema)
     End Function
 
-    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
+    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
         Return CachedEntity.CreateEntity(Of T)(pk, _cache, _schema)
     End Function
 
-    Public Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type) As _ICachedEntity
+    Public Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type) As _ICachedEntity
         Return CachedEntity.CreateEntity(pk, t, _cache, _schema)
     End Function
 
@@ -1597,12 +1604,19 @@ l1:
     Public Function GetFromCacheAsIsOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
         Dim ck As CacheKey = New CacheKey(obj)
-        Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
+        Dim t As Type = obj.GetType
+        Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(t, obj, ck, cb, dic, False, False), _ICachedEntity)
         If e Is Nothing Then
+            If _cache.CheckNonExistent(t, ck) Then
+                Return Nothing
+            End If
+
             Me.Load(obj)
-            e = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
+            e = CType(_cache.FindObjectInCache(t, obj, ck, cb, dic, False, False), _ICachedEntity)
             If e IsNot Nothing Then
                 Assert(e.ObjectState <> ObjectState.NotFoundInSource, "Object {0} cannot be in NotFoundInSource state", e.ObjName)
+            Else
+                _cache.AddNonExistentObject(t, ck)
             End If
         End If
         Return e
@@ -1752,6 +1766,7 @@ l1:
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             CacheBase.AddObjectInternal(obj, id, dic)
+            _cache.RemoveNonExistent(t, id)
         End Using
     End Sub
 
@@ -2604,9 +2619,19 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), IListEdit)
     End Function
 
-    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter) As ReadOnlyObjectList(Of T)
+    'Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter) As ReadOnlyObjectList(Of T)
+    '    Dim evaluated As Boolean
+    '    Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, evaluated)
+    '    If Not evaluated Then
+    '        Throw New InvalidOperationException("Filter is not applyable")
+    '    End If
+    '    Return r
+    'End Function
+
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As ReadOnlyObjectList(Of T)
         Dim evaluated As Boolean
-        Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, evaluated)
+        Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, joins, objEU, evaluated)
         If Not evaluated Then
             Throw New InvalidOperationException("Filter is not applyable")
         End If
@@ -2614,6 +2639,19 @@ l1:
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+        Return ApplyFilter(Of T)(col, filter, Nothing, Nothing, evaluated)
+    End Function
+
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IApplyFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+        If filter Is Nothing Then
+            evaluated = True
+            Return col
+        End If
+        Return ApplyFilter(Of T)(col, filter.Filter, filter.Joins, filter.RootObjectUnion, evaluated)
+    End Function
+
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         If filter Is Nothing Then
             evaluated = True
             Return col
@@ -2631,7 +2669,7 @@ l1:
                 If oschema Is Nothing Then
                     oschema = _schema.GetEntitySchema(o.GetType)
                 End If
-                Dim er As IEvaluableValue.EvalResult = f.Eval(_schema, o, oschema)
+                Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
                 Select Case er
                     Case IEvaluableValue.EvalResult.Found
                         If i >= _start Then
@@ -2659,7 +2697,22 @@ l1:
         Return r
     End Function
 
+    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IReadOnlyList
+        Dim evaluated As Boolean
+        Dim r As IReadOnlyList = ApplyFilter(t, col, filter, joins, objEU, evaluated)
+        If Not evaluated Then
+            Throw New InvalidOperationException("Filter is not applyable")
+        End If
+        Return r
+    End Function
+
     Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter, ByRef evaluated As Boolean) As IReadOnlyList
+        Return ApplyFilter(t, col, filter, Nothing, Nothing, evaluated)
+    End Function
+
+    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef evaluated As Boolean) As IReadOnlyList
         If filter Is Nothing Then
             evaluated = True
             If GetType(IReadOnlyList).IsAssignableFrom(col.GetType) Then
@@ -2685,7 +2738,7 @@ l1:
                 If oschema Is Nothing Then
                     oschema = _schema.GetEntitySchema(o.GetType)
                 End If
-                Dim er As IEvaluableValue.EvalResult = f.Eval(_schema, o, oschema)
+                Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
                 Select Case er
                     Case IEvaluableValue.EvalResult.Found
                         If i >= _start Then
@@ -4219,7 +4272,7 @@ l1:
         ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema) As Condition.ConditionConstructor
 
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-        Dim pks() As PKDesc = Nothing
+        Dim pks As IEnumerable(Of PKDesc) = Nothing
         If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
             pks = GetPKValues(CType(obj, ICachedEntity), oschema)
         Else
@@ -4231,7 +4284,7 @@ l1:
             Next
             pks = l.ToArray
         End If
-        If pks.Length = 0 Then
+        If pks.Count = 0 Then
             Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
         End If
 
@@ -4437,6 +4490,7 @@ l1:
                     '    dic(kw) = Me
                     'End If
                     CacheBase.AddObjectInternal(e, kw, dic)
+                    c.RemoveNonExistent(e.GetType, kw)
                     If updateCache AndAlso c IsNot Nothing Then
                         'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
                         c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
@@ -4526,7 +4580,7 @@ l1:
                     oldkey = e.Key
                 End If
 
-                Dim newid() As PKDesc = Nothing
+                Dim newid As IEnumerable(Of PKDesc) = Nothing
                 If oc IsNot Nothing Then
                     newid = GetPKValues(oc, oschema)
                 End If
@@ -4702,7 +4756,7 @@ l1:
         'End Using
     End Function
 
-    Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk() As PKDesc)
+    Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk As IEnumerable(Of PKDesc))
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
         If uc IsNot Nothing Then
             Assert(uc.OriginalCopy Is Nothing, "OriginalCopy for {0} must not exists", e.ObjName)
@@ -4938,7 +4992,7 @@ l1:
 
 #End Region
 
-    Public Shared Sub SetPK(ByVal e As Object, ByVal pk As PKDesc(), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
+    Public Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         If op IsNot Nothing Then
             op.SetPK(pk)
@@ -4967,7 +5021,7 @@ l1:
         End If
     End Sub
 
-    Public Shared Sub SetPK(ByVal o As Object, ByVal pk As PKDesc(), ByVal mpe As ObjectMappingEngine)
+    Public Shared Sub SetPK(ByVal o As Object, ByVal pk As IEnumerable(Of PKDesc), ByVal mpe As ObjectMappingEngine)
         Dim op As IOptimizePK = TryCast(o, IOptimizePK)
         If op IsNot Nothing Then
             op.SetPK(pk)
@@ -4983,7 +5037,7 @@ l1:
         End If
     End Sub
 
-    Public Shared Function GetPKValues(ByVal e As Object, ByVal oschema As IEntitySchema) As PKDesc()
+    Public Shared Function GetPKValues(ByVal e As Object, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         If op IsNot Nothing Then
             Return op.GetPKValues()
@@ -4992,7 +5046,7 @@ l1:
         End If
     End Function
 
-    Public Shared Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As PKDesc()
+    Public Shared Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         If op IsNot Nothing Then
             Return op.GetPKValues()

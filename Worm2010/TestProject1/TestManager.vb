@@ -7,6 +7,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm
+Imports System.Linq
 
 <TestClass()> Public Class TestManager
     Implements INewObjectsStore, Worm.ICreateManager
@@ -678,7 +679,7 @@ Imports Worm
         Return New PKDesc() {New PKDesc("id", _id)}
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id As IEnumerable(Of Meta.PKDesc)) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As SinglePKEntity = Nothing
         _l.TryGetValue(CInt(id(0).Value), o)
         Return o
@@ -1525,7 +1526,7 @@ Imports Worm
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements INewObjectsStore.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
 
     End Sub
 

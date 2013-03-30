@@ -5,6 +5,7 @@ Imports Worm.Entities
 Imports cc = Worm.Criteria.Conditions
 Imports Worm.Criteria.Values
 Imports Worm.Criteria
+Imports Worm.Query
 
 Namespace Criteria.Conditions
 
@@ -16,6 +17,7 @@ Namespace Criteria.Conditions
     <Serializable()> _
     Public Class Condition
         Implements ITemplateFilter
+        Implements IEvaluableFilter
 
         <Serializable()> _
         Public Class ConditionConstructor
@@ -255,18 +257,18 @@ Namespace Criteria.Conditions
             Return Equals(TryCast(f, Condition))
         End Function
 
-        Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
-            If replacement.Equals(_left) Then
-                Return CreateMe(replacer, _right, _oper)
-            ElseIf replacement.Equals(_right) Then
-                Return CreateMe(_left, replacer, _oper)
+        Public Function ReplaceFilter(ByVal oldValue As IFilter, ByVal newValue As IFilter) As IFilter Implements IFilter.ReplaceFilter
+            If oldValue.Equals(_left) Then
+                Return CreateMe(newValue, _right, _oper)
+            ElseIf oldValue.Equals(_right) Then
+                Return CreateMe(_left, newValue, _oper)
             Else
-                Dim r As IFilter = _left.ReplaceFilter(replacement, replacer)
+                Dim r As IFilter = _left.ReplaceFilter(oldValue, newValue)
 
                 If r IsNot Nothing Then
                     Return CreateMe(r, _right, _oper)
                 Else
-                    r = _right.ReplaceFilter(replacement, replacer)
+                    r = _right.ReplaceFilter(oldValue, newValue)
 
                     If r IsNot Nothing Then
                         Return CreateMe(_left, r, _oper)
@@ -366,6 +368,81 @@ Namespace Criteria.Conditions
             End If
             Return New Condition(_left, _right, _oper)
         End Function
+
+        Public Function Eval(mpe As ObjectMappingEngine, d As Core.GetObj4IEntityFilterDelegate,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements Core.IEvaluableFilter.Eval
+            If mpe Is Nothing Then
+                Throw New ArgumentNullException("mpe")
+            End If
+
+            Dim b As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Unknown
+
+            Dim lef As IEvaluableFilter = TryCast(_left, IEvaluableFilter)
+            If lef IsNot Nothing Then
+                If d Is Nothing Then
+                    Throw New ArgumentNullException("d")
+                End If
+                'Dim p As Pair(Of _IEntity, IEntitySchema) = d(lef)
+                'If p IsNot Nothing Then
+                b = lef.Eval(mpe, d, joins, objEU)
+                'End If
+                'Else
+                'Dim le As IEvaluableFilter = TryCast(_left, IEvaluableFilter)
+                'If le IsNot Nothing Then
+                '    b = le.Eval(mpe, d, joins, objEU)
+                'End If
+            End If
+
+            If _right IsNot Nothing Then
+                If _oper = ConditionOperator.And Then
+                    If b = IEvaluableValue.EvalResult.Found Then
+                        b = IEvaluableValue.EvalResult.Unknown
+                        Dim ref As IEvaluableFilter = TryCast(_right, IEvaluableFilter)
+                        If ref IsNot Nothing Then
+                            If d Is Nothing Then
+                                Throw New ArgumentNullException("d")
+                            End If
+                            'Dim p As Pair(Of _IEntity, IEntitySchema) = d(ref)
+                            'If p IsNot Nothing Then
+                            b = ref.Eval(mpe, d, joins, objEU)
+                            'End If
+                            'Else
+                            '    Dim re As IEvaluableFilter = TryCast(_right, IEvaluableFilter)
+                            '    If re IsNot Nothing Then
+                            '        b = re.Eval(mpe, d, joins, objEU)
+                            '    End If
+                        End If
+                    End If
+                ElseIf _oper = ConditionOperator.Or Then
+                    If b <> IEvaluableValue.EvalResult.Unknown Then
+                        Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Unknown
+                        Dim ref As IEntityFilter = TryCast(_right, IEntityFilter)
+                        If ref IsNot Nothing Then
+                            If d Is Nothing Then
+                                Throw New ArgumentNullException("d")
+                            End If
+                            Dim p As Pair(Of _IEntity, IEntitySchema) = d(ref)
+                            If p IsNot Nothing Then
+                                r = ref.EvalObj(mpe, p.First, p.Second, joins, objEU)
+                            End If
+                        Else
+                            Dim re As IEvaluableFilter = TryCast(_right, IEvaluableFilter)
+                            If re IsNot Nothing Then
+                                r = re.Eval(mpe, d, joins, objEU)
+                            End If
+                        End If
+                        If r <> IEvaluableValue.EvalResult.Unknown Then
+                            If b <> IEvaluableValue.EvalResult.Found Then
+                                b = r
+                            End If
+                        Else
+                            b = r
+                        End If
+                    End If
+                End If
+            End If
+            Return b
+        End Function
     End Class
 
     <Serializable()> _
@@ -415,18 +492,24 @@ Namespace Criteria.Conditions
             'End Function
 
             Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
-                Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
-                If Con._right IsNot Nothing Then
-                    Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
-                    If r = EntityFilter.EmptyHash Then
-                        If Con._oper <> ConditionOperator.And Then
-                            l = r
+                If Con._right IsNot Nothing AndAlso Con._oper = ConditionOperator.Or Then
+                    Dim l As String = Con.Left.GetFilterTemplate._ToString
+                    Dim r As String = Con.Right.GetFilterTemplate._ToString
+                    Return l & Con.Condition2String() & r
+                Else
+                    Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
+                    If Con._right IsNot Nothing Then
+                        Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
+                        If r = EntityFilter.EmptyHash Then
+                            If Con._oper <> ConditionOperator.And Then
+                                l = r
+                            End If
+                        Else
+                            l = l & Con.Condition2String() & r
                         End If
-                    Else
-                        l = l & Con.Condition2String() & r
                     End If
+                    Return l
                 End If
-                Return l
             End Function
 
             'Protected MustOverride Function CreateCon(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As EntityCondition
@@ -454,7 +537,8 @@ Namespace Criteria.Conditions
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Overloads Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult Implements IEntityFilter.EvalObj
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -463,22 +547,15 @@ Namespace Criteria.Conditions
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim b As IEvaluableValue.EvalResult = Left.Eval(schema, obj, oschema)
+            Dim b As IEvaluableValue.EvalResult = Left.EvalObj(schema, obj, oschema, joins, objEU)
             If _right IsNot Nothing Then
                 If _oper = ConditionOperator.And Then
                     If b = IEvaluableValue.EvalResult.Found Then
-                        b = Right.Eval(schema, obj, oschema)
+                        b = Right.EvalObj(schema, obj, oschema, joins, objEU)
                     End If
                 ElseIf _oper = ConditionOperator.Or Then
-                    If b <> IEvaluableValue.EvalResult.Unknown Then
-                        Dim r As IEvaluableValue.EvalResult = Right.Eval(schema, obj, oschema)
-                        If r <> IEvaluableValue.EvalResult.Unknown Then
-                            If b <> IEvaluableValue.EvalResult.Found Then
-                                b = r
-                            End If
-                        Else
-                            b = r
-                        End If
+                    If b = IEvaluableValue.EvalResult.NotFound Then
+                        b = Right.EvalObj(schema, obj, oschema, joins, objEU)
                     End If
                 End If
             End If
@@ -524,18 +601,24 @@ Namespace Criteria.Conditions
         'End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
-            Dim l As String = Left.MakeHash
-            If _right IsNot Nothing Then
-                Dim r As String = Right.MakeHash
-                If r = EntityFilter.EmptyHash Then
-                    If _oper <> ConditionOperator.And Then
-                        l = r
+            If _right IsNot Nothing AndAlso _oper = ConditionOperator.Or Then
+                Dim l As String = Left.Template._ToString
+                Dim r As String = Right.Template._ToString
+                Return l & Condition2String() & r
+            Else
+                Dim l As String = Left.MakeHash
+                If _right IsNot Nothing Then
+                    Dim r As String = Right.MakeHash
+                    If r = EntityFilter.EmptyHash Then
+                        If _oper <> ConditionOperator.And Then
+                            l = r
+                        End If
+                    Else
+                        l = l & Condition2String() & r
                     End If
-                Else
-                    l = l & Condition2String() & r
                 End If
+                Return l
             End If
-            Return l
         End Function
 
         Public Property PrepareValue() As Boolean Implements Core.IEntityFilter.PrepareValue

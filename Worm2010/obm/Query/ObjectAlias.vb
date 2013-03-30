@@ -196,6 +196,12 @@ Namespace Query
             Throw New NotSupportedException
         End Function
 
+        Public ReadOnly Property IsDefault As Boolean
+            Get
+                Return EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(EntityName)
+            End Get
+        End Property
+
         Public ReadOnly Property AnyType() As Type
             Get
                 If _t Is Nothing AndAlso _a IsNot Nothing Then

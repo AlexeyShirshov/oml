@@ -5,6 +5,7 @@ Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 Imports Worm.Expressions2
+Imports Worm.Query
 
 Partial Public Class OrmManager
 #If OLDM2M Then
@@ -339,22 +340,58 @@ Partial Public Class OrmManager
 
     'End Class
 
+    Public Class ApplyFilterHelper
+        Implements IApplyFilter
+
+        Private _f As IGetFilter
+        Private _j As Criteria.Joins.QueryJoin()
+        Private _eu As EntityUnion
+
+        Public Sub New(f As IFilter)
+            _f = f
+        End Sub
+
+        Public Sub New(f As IFilter, joins() As Criteria.Joins.QueryJoin, objEU As EntityUnion)
+            _f = f
+            _j = joins
+            _eu = objEU
+        End Sub
+
+        Public ReadOnly Property Filter As Criteria.Core.IFilter Implements Criteria.Core.IApplyFilter.Filter
+            Get
+                Return _f.Filter
+            End Get
+        End Property
+
+        Public ReadOnly Property Joins As Criteria.Joins.QueryJoin() Implements Criteria.Core.IApplyFilter.Joins
+            Get
+                Return _j
+            End Get
+        End Property
+
+        Public ReadOnly Property RootObjectUnion As Query.EntityUnion Implements Criteria.Core.IApplyFilter.RootObjectUnion
+            Get
+                Return _eu
+            End Get
+        End Property
+    End Class
+
     Public Class ApplyCriteria
         Implements IDisposable
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _f As IFilter
+        Private _f As IApplyFilter
         Private _mgr As OrmManager
 
-        Public Sub New(ByVal f As IFilter)
-            Throw New NotImplementedException
+        Public Sub New(ByVal f As IApplyFilter)
+            Throw New NotSupportedException
             _mgr = OrmManager.CurrentManager
             _f = _mgr._externalFilter
             _mgr._externalFilter = f
         End Sub
 
         Public Sub New(ByVal c As IGetFilter)
-            MyClass.new(GetFilter(c))
+            MyClass.new(New ApplyFilterHelper(GetFilter(c)))
         End Sub
 
         Protected Shared Function GetFilter(ByVal c As IGetFilter) As IFilter
@@ -364,13 +401,13 @@ Partial Public Class OrmManager
             Return Nothing
         End Function
 
-        Public Sub New(ByVal mgr As OrmManager, ByVal f As IFilter)
+        Public Sub New(ByVal mgr As OrmManager, ByVal f As IApplyFilter)
             _mgr = mgr
             _f = mgr._externalFilter
             mgr._externalFilter = f
         End Sub
 
-        Protected Friend ReadOnly Property oldfilter() As IFilter
+        Protected Friend ReadOnly Property oldfilter() As IApplyFilter
             Get
                 Return _f
             End Get

@@ -318,11 +318,11 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        Public Function ReplaceFilter(ByVal replacement As Core.IFilter, ByVal replacer As Core.IFilter) As Core.IFilter Implements Core.IFilter.ReplaceFilter
-            If Not Equals(replacement) Then
+        Public Function ReplaceFilter(ByVal oldValue As Core.IFilter, ByVal newValue As Core.IFilter) As Core.IFilter Implements Core.IFilter.ReplaceFilter
+            If Not Equals(oldValue) Then
                 Return Nothing
             End If
-            Return replacer
+            Return newValue
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean

@@ -250,7 +250,7 @@ Namespace Xml
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Using obj.LockEntity()
                 obj.BeginLoading()
-                Dim pk() As PKDesc = GetPKValues(orm, oschema)
+                Dim pk As IEnumerable(Of PKDesc) = GetPKValues(orm, oschema)
                 If LoadPK(oschema, node, orm) Then
                     obj = CType(NormalizeObject(orm, dic, True, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then

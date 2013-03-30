@@ -4,6 +4,8 @@ Imports Worm.Entities
 Imports System.Collections.Generic
 Imports Worm.Entities.Meta
 Imports Worm.Expressions2
+Imports Worm.Criteria.Joins
+Imports Worm.Query
 
 Namespace Cache
 
@@ -224,12 +226,15 @@ Namespace Cache
     <Serializable()> _
     Public Class UpdatableCachedItem
         Inherits CachedItemBase
+        Implements IApplyFilter
 
         'Protected _st As SortType
         'Protected _obj As Object
         'Protected _mark As Object
         'Protected _cache As OrmBase
         Protected _f As IFilter
+        Protected _joins As QueryJoin()
+        Protected _eu As EntityUnion
         'Protected Friend _expires As Date
         'Protected _sortExpires As Date
         'Protected _execTime As TimeSpan
@@ -420,11 +425,41 @@ Namespace Cache
             End Set
         End Property
 
-        'Friend ReadOnly Property Obj() As Object
-        '    Get
-        '        Return _obj
-        '    End Get
-        'End Property
+        Public Property Joins() As QueryJoin()
+            Get
+                Return _joins
+            End Get
+            Friend Set(ByVal value As QueryJoin())
+                _joins = value
+            End Set
+        End Property
+
+        Public Property QueryEU() As EntityUnion
+            Get
+                Return _eu
+            End Get
+            Friend Set(ByVal value As EntityUnion)
+                _eu = value
+            End Set
+        End Property
+
+        Private ReadOnly Property _Filter As Criteria.Core.IFilter Implements Criteria.Core.IApplyFilter.Filter
+            Get
+                Return Filter
+            End Get
+        End Property
+
+        Private ReadOnly Property _JoinsImpl As Criteria.Joins.QueryJoin() Implements Criteria.Core.IApplyFilter.Joins
+            Get
+                Return Joins
+            End Get
+        End Property
+
+        Private ReadOnly Property _RootObjectUnion As Query.EntityUnion Implements Criteria.Core.IApplyFilter.RootObjectUnion
+            Get
+                Return QueryEU
+            End Get
+        End Property
     End Class
 
 #If OLDM2M Then

@@ -16,6 +16,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Query
 Imports Worm.Expressions2
 Imports Worm
+Imports System.Linq
 
 <TestClass()> _
 Public Class TestManagerRS
@@ -1354,13 +1355,13 @@ Public Class TestManagerRS
         Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As SinglePKEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements INewObjectsStore.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
         _new_objects.Remove(CInt(id(0).Value))
     End Sub
 

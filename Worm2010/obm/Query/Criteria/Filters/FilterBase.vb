@@ -83,13 +83,13 @@ Namespace Criteria.Core
             Return Equals(TryCast(f, FilterBase))
         End Function
 
-        Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
-            Return ReplaceFilter(TryCast(replacement, FilterBase), TryCast(replacer, FilterBase))
+        Public Function ReplaceFilter(ByVal oldValue As IFilter, ByVal newValue As IFilter) As IFilter Implements IFilter.ReplaceFilter
+            Return ReplaceFilter(TryCast(oldValue, FilterBase), TryCast(newValue, FilterBase))
         End Function
 
-        Public Function ReplaceFilter(ByVal replacement As FilterBase, ByVal replacer As FilterBase) As FilterBase
-            If Equals(replacement) Then
-                Return replacer
+        Public Function ReplaceFilter(ByVal oldValue As FilterBase, ByVal newValue As FilterBase) As FilterBase
+            If Equals(oldValue) Then
+                Return newValue
             End If
             Return Nothing
         End Function

@@ -338,7 +338,7 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
+        Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
             Throw New NotSupportedException
         End Sub
 

@@ -25,7 +25,7 @@ Namespace Cache
         ''' <returns>Экземпляр нового объекта данного типа по первичному ключу или Nothing, 
         ''' если не найден</returns>
         ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
-        Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
+        Function GetNew(ByVal t As Type, ByVal pk As IEnumerable(Of PKDesc)) As _ICachedEntity
         ''' <summary>
         ''' Добавляет объект в хранилище новых объектов
         ''' </summary>
@@ -45,7 +45,7 @@ Namespace Cache
         ''' <param name="t">Тип объекта</param>
         ''' <param name="pk">Набор полей и значений первичного ключа</param>
         ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
-        Sub RemoveNew(ByVal t As Type, ByVal pk() As PKDesc)
+        Sub RemoveNew(ByVal t As Type, ByVal pk As IEnumerable(Of PKDesc))
     End Interface
 
     Public Interface INewObjectsStoreEx
@@ -93,7 +93,7 @@ Namespace Cache
             GetDic(obj.GetType).Add(pk, obj)
         End Sub
 
-        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk() As Entities.Meta.PKDesc) As Entities._ICachedEntity Implements INewObjectsStore.GetNew
+        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk As IEnumerable(Of Entities.Meta.PKDesc)) As Entities._ICachedEntity Implements INewObjectsStore.GetNew
             Dim pks As New PKWrapper(pk)
             Dim o As _ICachedEntity = Nothing
             GetDic(t).TryGetValue(pks, o)
@@ -146,7 +146,7 @@ Namespace Cache
             End If
         End Function
 
-        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk() As Entities.Meta.PKDesc) Implements INewObjectsStore.RemoveNew
+        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk As IEnumerable(Of Entities.Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
             GetDic(t).Remove(New PKWrapper(pk))
         End Sub
 

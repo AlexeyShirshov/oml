@@ -5,6 +5,8 @@ Imports Worm.Entities
 Imports Worm.Expressions
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports Worm.Criteria.Joins
+Imports System.Linq
 
 Namespace Criteria.Core
 
@@ -66,11 +68,53 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        'Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema) As IEvaluableValue.EvalResult Implements IEntityFilter.EvalObj
+        '    Dim evval As IEvaluableValue = TryCast(val(), IEvaluableValue)
+        '    If evval IsNot Nothing Then
+        '        If schema Is Nothing Then
+        '            Throw New ArgumentNullException("schema")
+        '        End If
+
+        '        If obj Is Nothing Then
+        '            Throw New ArgumentNullException("obj")
+        '        End If
+
+        '        Dim t As Type = obj.GetType
+        '        If oschema Is Nothing Then
+        '            oschema = schema.GetEntitySchema(t)
+        '        End If
+
+        '        Dim rt As Type = Template.ObjectSource.GetRealType(schema)
+        '        If rt Is t Then
+        '            Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
+        '            Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, Template.PropertyAlias, oschema, Nothing) 'schema.GetFieldValue(obj, _fieldname)
+        '            r = evval.Eval(v, schema, Template)
+        '            'If v IsNot Nothing Then
+        '            '    r = evval.Eval(v, Template)
+        '            'Else
+        '            '    If evval.Value Is Nothing Then
+        '            '        r = IEvaluableValue.EvalResult.Found
+        '            '    End If
+        '            'End If
+
+        '            Return r
+        '        Else
+        '            Dim o As _IEntity = schema.GetJoinObj(oschema, obj, rt)
+        '            If o IsNot Nothing Then
+        '                Return Eval(schema, o, schema.GetEntitySchema(rt))
+        '            End If
+        '        End If
+        '    End If
+
+        '    Return IEvaluableValue.EvalResult.Unknown
+        'End Function
+
+        Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult Implements IEntityFilter.EvalObj
             Dim evval As IEvaluableValue = TryCast(val(), IEvaluableValue)
             If evval IsNot Nothing Then
-                If schema Is Nothing Then
-                    Throw New ArgumentNullException("schema")
+                If mpe Is Nothing Then
+                    Throw New ArgumentNullException("mpe")
                 End If
 
                 If obj Is Nothing Then
@@ -79,14 +123,14 @@ Namespace Criteria.Core
 
                 Dim t As Type = obj.GetType
                 If oschema Is Nothing Then
-                    oschema = schema.GetEntitySchema(t)
+                    oschema = mpe.GetEntitySchema(t)
                 End If
 
-                Dim rt As Type = Template.ObjectSource.GetRealType(schema)
+                Dim rt As Type = Template.ObjectSource.GetRealType(mpe)
                 If rt Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
                     Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, Template.PropertyAlias, oschema, Nothing) 'schema.GetFieldValue(obj, _fieldname)
-                    r = evval.Eval(v, schema, Template)
+                    r = evval.Eval(v, mpe, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)
                     'Else
@@ -97,9 +141,140 @@ Namespace Criteria.Core
 
                     Return r
                 Else
-                    Dim o As _IEntity = schema.GetJoinObj(oschema, obj, rt)
+                    Dim o As _IEntity = Nothing
+                    If objEU IsNot Nothing Then
+                        Dim roots As New Dictionary(Of EntityUnion, _IEntity)
+                        roots.Add(objEU, obj)
+                        Dim r As Pair(Of _IEntity, IEvaluableValue.EvalResult) = GetRoot(Template.ObjectSource, roots, joins, mpe, obj, objEU, oschema)
+                        If r.First Is Nothing Then
+                            If r.Second = IEvaluableValue.EvalResult.NotFound Then
+                                Return IEvaluableValue.EvalResult.NotFound
+                            End If
+                        Else
+                            o = r.First
+                        End If
+                    End If
+                    '                    Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
+                    '                    Dim pks As IEnumerable(Of MapField2Column) = ObjectMappingEngine.GetPKs(lschema)
+                    '                    Dim o As _IEntity = Nothing
+                    '                    If joins IsNot Nothing Then
+                    '                        Dim join As QueryJoin = joins.FirstOrDefault(Function(it) it.ObjectSource = Template.ObjectSource)
+                    '                        Dim pk As New List(Of PKDesc)
+                    '                        For Each ff As IFilter In join.Condition.GetAllFilters
+                    '                            Dim jf As JoinFilter = TryCast(ff, JoinFilter)
+                    '                            If jf IsNot Nothing Then
+                    '                                If jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = Template.ObjectSource AndAlso
+                    '                                    jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = objEU AndAlso
+                    '                                    pks.Any(Function(it) it.PropertyAlias = jf.Left.Property.PropertyAlias) Then
+
+                    '                                    Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Right.Property.PropertyAlias, oschema)
+                    '                                    Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
+                    '                                    If r IsNot Nothing Then
+                    '                                        pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                    '                                        Exit For
+                    '                                    Else
+                    '                                        pk.Add(New PKDesc(jf.Left.Property.PropertyAlias, id))
+                    '                                    End If
+
+                    '                                ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = Template.ObjectSource AndAlso
+                    '                                    jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = objEU AndAlso
+                    '                                    pks.Any(Function(it) it.PropertyAlias = jf.Right.Property.PropertyAlias) Then
+
+                    '                                    Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Left.Property.PropertyAlias, oschema)
+                    '                                    Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
+                    '                                    If r IsNot Nothing Then
+                    '                                        pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                    '                                        Exit For
+                    '                                    Else
+                    '                                        pk.Add(New PKDesc(jf.Right.Property.PropertyAlias, id))
+                    '                                    End If
+
+                    '                                End If
+                    '                            Else
+                    '                                Dim ef As IEvaluableFilter = TryCast(ff, IEvaluableFilter)
+                    '                                If ef Is Nothing Then
+                    '                                    GoTo exitFor
+                    '                                End If
+                    '                            End If
+                    '                        Next
+
+                    '                        If pk.Count > 0 Then
+                    '                            Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pk.ToArray, rt)
+                    '                            If jObj IsNot Nothing Then
+                    '                                Dim newF As IFilter = join.Condition
+                    '                                For Each jf As JoinFilter In join.Condition.GetAllFilters.OfType(Of JoinFilter).
+                    '                                    Where(Function(it) it.Left.Property.Entity IsNot Nothing AndAlso it.Right.Property.Entity IsNot Nothing)
+                    '                                    If jf.Left.Property.Entity = Template.ObjectSource Then
+                    '                                        Dim root As _IEntity = GetRoot(jf.Right.Property.Entity, roots, joins, mpe)
+                    '                                        If root Is Nothing Then
+                    '                                            GoTo exitFor
+                    '                                        End If
+                    '                                        Dim v As Object = ObjectMappingEngine.GetPropertyValue(root, jf.Right.Property.PropertyAlias,
+                    '                                                                                               mpe.GetEntitySchema(jf.Right.Property.Entity.AnyType), Nothing)
+
+                    '                                        Dim ef As IFilter = Nothing
+                    '                                        Dim spke As ISinglePKEntity = TryCast(v, ISinglePKEntity)
+                    '                                        If spke IsNot Nothing Then
+                    '                                            ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
+                    '                                        Else
+                    '                                            ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                    '                                        End If
+
+                    '                                        newF = newF.ReplaceFilter(jf, ef)
+                    '                                    ElseIf jf.Right.Property.Entity = Template.ObjectSource Then
+                    '                                        Dim root As _IEntity = GetRoot(jf.Left.Property.Entity, roots, joins, mpe)
+                    '                                        If root Is Nothing Then
+                    '                                            GoTo exitFor
+                    '                                        End If
+                    '                                        Dim v As Object = ObjectMappingEngine.GetPropertyValue(root, jf.Left.Property.PropertyAlias,
+                    '                                                                                               mpe.GetEntitySchema(jf.Left.Property.Entity.AnyType), Nothing)
+                    '                                        Dim ef As IFilter = Nothing
+                    '                                        Dim spke As ISinglePKEntity = TryCast(v, ISinglePKEntity)
+                    '                                        If spke IsNot Nothing Then
+                    '                                            ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
+                    '                                        Else
+                    '                                            ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                    '                                        End If
+                    '                                        newF = newF.ReplaceFilter(jf, ef)
+                    '                                    End If
+                    '                                Next
+
+                    '                                Dim evalNewF As IEvaluableFilter = TryCast(newF, IEvaluableFilter)
+                    '                                If evalNewF IsNot Nothing Then
+                    '                                    Dim res As IEvaluableValue.EvalResult = evalNewF.Eval(mpe,
+                    '                                                  Function(efb As IEntityFilterBase)
+                    '                                                      Dim tmpl As OrmFilterTemplate = TryCast(efb.GetFilterTemplate, OrmFilterTemplate)
+                    '                                                      Dim oo As _IEntity = Nothing
+                    '                                                      If tmpl IsNot Nothing Then
+                    '                                                          If tmpl.ObjectSource = Template.ObjectSource Then
+                    '                                                              oo = jObj
+                    '                                                          Else
+                    '                                                              roots.TryGetValue(tmpl.ObjectSource, oo)
+                    '                                                          End If
+                    '                                                      End If
+                    '                                                      Return New Pair(Of _IEntity, IEntitySchema)(oo, mpe.GetEntitySchema(tmpl.ObjectSource.AnyType))
+                    '                                                  End Function)
+                    '                                    If res = IEvaluableValue.EvalResult.Found Then
+                    '                                        roots.Add(Template.ObjectSource, jObj)
+
+                    '                                        Return Eval(mpe, jObj, lschema)
+                    '                                    End If
+
+                    '                                    Return res
+                    '                                End If
+                    '                            ElseIf join.JoinType = JoinType.RightOuterJoin Then
+                    '                                Return IEvaluableValue.EvalResult.NotFound
+                    '                            End If
+                    '                        End If
+                    'exitFor:
+                    'End If
+
+                    If o Is Nothing Then
+                        o = mpe.GetJoinObj(oschema, obj, rt)
+                    End If
+
                     If o IsNot Nothing Then
-                        Return Eval(schema, o, schema.GetEntitySchema(rt))
+                        Return Eval(mpe, o, mpe.GetEntitySchema(rt), joins, objEU)
                     End If
                 End If
             End If
@@ -332,6 +507,154 @@ Namespace Criteria.Core
 
             Return MakeQueryStmt(oschema, fromClause, stmt, executor, filterInfo, schema, almgr, pname, t)
         End Function
+
+        Public Function Eval1(mpe As ObjectMappingEngine, d As GetObj4IEntityFilterDelegate,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements IEvaluableFilter.Eval
+            If d Is Nothing Then
+                Return IEvaluableValue.EvalResult.Unknown
+            End If
+
+            Dim p As Pair(Of _IEntity, IEntitySchema) = d(Me)
+
+            If p Is Nothing Then
+                Return IEvaluableValue.EvalResult.Unknown
+            End If
+
+            Return Eval(mpe, p.First, p.Second, joins, objEU)
+        End Function
+
+        Private Shared Function GetRoot(entity As EntityUnion, roots As Dictionary(Of EntityUnion, _IEntity), joins As QueryJoin(),
+                                        mpe As ObjectMappingEngine, obj As _IEntity, objEU As EntityUnion, oschema As IEntitySchema) As Pair(Of _IEntity, IEvaluableValue.EvalResult)
+            Dim oo As _IEntity = Nothing
+            If Not roots.TryGetValue(entity, oo) Then
+                Dim rt As Type = entity.GetRealType(mpe)
+                Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
+                Dim pks As IEnumerable(Of MapField2Column) = ObjectMappingEngine.GetPKs(lschema)
+                Dim o As _IEntity = Nothing
+                If joins IsNot Nothing Then
+                    Dim join As QueryJoin = joins.FirstOrDefault(Function(it) it.ObjectSource = entity)
+                    If join Is Nothing Then
+                        Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, IEvaluableValue.EvalResult.Unknown)
+                    End If
+                    Dim pk As New List(Of PKDesc)
+                    For Each ff As IFilter In join.Condition.GetAllFilters
+                        Dim jf As JoinFilter = TryCast(ff, JoinFilter)
+                        If jf IsNot Nothing Then
+                            If jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = entity AndAlso
+                                jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = objEU AndAlso
+                                pks.Any(Function(it) it.PropertyAlias = jf.Left.Property.PropertyAlias) Then
+
+                                Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Right.Property.PropertyAlias, oschema)
+                                Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
+                                If r IsNot Nothing Then
+                                    pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                                    Exit For
+                                Else
+                                    pk.Add(New PKDesc(jf.Left.Property.PropertyAlias, id))
+                                End If
+
+                            ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = entity AndAlso
+                                jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = objEU AndAlso
+                                pks.Any(Function(it) it.PropertyAlias = jf.Right.Property.PropertyAlias) Then
+
+                                Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Left.Property.PropertyAlias, oschema)
+                                Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
+                                If r IsNot Nothing Then
+                                    pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                                    Exit For
+                                Else
+                                    pk.Add(New PKDesc(jf.Right.Property.PropertyAlias, id))
+                                End If
+
+                            End If
+                        Else
+                            Dim ef As IEvaluableFilter = TryCast(ff, IEvaluableFilter)
+                            If ef Is Nothing Then
+                                Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, IEvaluableValue.EvalResult.Unknown)
+                            End If
+                        End If
+                    Next
+
+                    If pk.Count > 0 Then
+                        Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pk.ToArray, rt)
+                        If jObj IsNot Nothing Then
+                            Dim newF As IFilter = join.Condition
+                            For Each jf As JoinFilter In join.Condition.GetAllFilters.OfType(Of JoinFilter).
+                                Where(Function(it) it.Left.Property.Entity IsNot Nothing AndAlso it.Right.Property.Entity IsNot Nothing)
+                                If jf.Left.Property.Entity = entity Then
+                                    Dim rootp As Pair(Of _IEntity, IEvaluableValue.EvalResult) = GetRoot(jf.Right.Property.Entity, roots, joins, mpe, jObj, entity, lschema)
+                                    If rootp.First Is Nothing Then
+                                        Return rootp
+                                    End If
+                                    Dim v As Object = ObjectMappingEngine.GetPropertyValue(rootp.First, jf.Right.Property.PropertyAlias,
+                                                                                           mpe.GetEntitySchema(jf.Right.Property.Entity), Nothing)
+
+                                    Dim ef As IFilter = Nothing
+                                    Dim spke As ISinglePKEntity = TryCast(v, ISinglePKEntity)
+                                    If spke IsNot Nothing Then
+                                        ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
+                                    Else
+                                        ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                    End If
+
+                                    newF = newF.ReplaceFilter(jf, ef)
+                                ElseIf jf.Right.Property.Entity = entity Then
+                                    Dim rootp As Pair(Of _IEntity, IEvaluableValue.EvalResult) = GetRoot(jf.Left.Property.Entity, roots, joins, mpe, jObj, entity, lschema)
+                                    If rootp.First Is Nothing Then
+                                        Return rootp
+                                    End If
+                                    Dim v As Object = ObjectMappingEngine.GetPropertyValue(rootp.First, jf.Left.Property.PropertyAlias,
+                                                                                           mpe.GetEntitySchema(jf.Left.Property.Entity), Nothing)
+                                    Dim ef As IFilter = Nothing
+                                    Dim spke As ISinglePKEntity = TryCast(v, ISinglePKEntity)
+                                    If spke IsNot Nothing Then
+                                        ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
+                                    Else
+                                        ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                    End If
+                                    newF = newF.ReplaceFilter(jf, ef)
+                                End If
+                            Next
+
+                            Dim evalNewF As IEvaluableFilter = TryCast(newF, IEvaluableFilter)
+                            If evalNewF IsNot Nothing Then
+                                Dim res As IEvaluableValue.EvalResult = evalNewF.Eval(mpe,
+                                              Function(efb As IEntityFilterBase)
+                                                  Dim tmpl As OrmFilterTemplate = TryCast(efb.GetFilterTemplate, OrmFilterTemplate)
+                                                  Dim o_ As _IEntity = Nothing
+                                                  Dim ss As IEntitySchema = Nothing
+                                                  If tmpl IsNot Nothing Then
+                                                      If tmpl.ObjectSource = entity Then
+                                                          o_ = jObj
+                                                          ss = lschema
+                                                      Else
+                                                          If roots.TryGetValue(tmpl.ObjectSource, o_) Then
+                                                              ss = mpe.GetEntitySchema(tmpl.ObjectSource)
+                                                          End If
+                                                      End If
+                                                  End If
+                                                  Return New Pair(Of _IEntity, IEntitySchema)(o_, ss)
+                                              End Function, joins, objEU)
+                                If res = IEvaluableValue.EvalResult.Found Then
+                                    roots.Add(entity, jObj)
+
+                                    Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(jObj, IEvaluableValue.EvalResult.Found)
+                                End If
+
+                                Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, res)
+                            End If
+                        ElseIf join.JoinType = JoinType.RightOuterJoin Then
+                            Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, IEvaluableValue.EvalResult.NotFound)
+                        End If
+                    End If
+                End If
+
+                Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, IEvaluableValue.EvalResult.Unknown)
+            End If
+
+            Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(oo, IEvaluableValue.EvalResult.Found)
+        End Function
+
     End Class
 
     <Serializable()> _
@@ -637,6 +960,7 @@ Namespace Criteria.Core
     <Serializable()> _
     Public Class ExpressionFilter
         Implements IFilter
+        Implements IEvaluableFilter
 
         Private _fo As FilterOperation
         Private _left As UnaryExp
@@ -709,9 +1033,9 @@ Namespace Criteria.Core
         '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
         'End Function
 
-        Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
-            If Equals(replacement) Then
-                Return replacer
+        Public Function ReplaceFilter(ByVal oldValue As IFilter, ByVal newValue As IFilter) As IFilter Implements IFilter.ReplaceFilter
+            If Equals(oldValue) Then
+                Return newValue
             End If
             Return Nothing
         End Function
@@ -758,6 +1082,18 @@ Namespace Criteria.Core
                 'Throw New InvalidOperationException("Cannot remove self")
             End If
             Return Me
+        End Function
+
+        Public Function Eval(mpe As ObjectMappingEngine, d As GetObj4IEntityFilterDelegate,
+                              joins() As Joins.QueryJoin, objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements IEvaluableFilter.Eval
+            If _right IsNot Nothing Then
+                Dim le As IEvaluableValue = TryCast(_left.Value, IEvaluableValue)
+                If le IsNot Nothing Then
+                    Return le.Eval(_right.Value, mpe, New OrmFilterTemplate(Nothing, FilterOperation.Equal))
+                End If
+            End If
+
+            Return IEvaluableValue.EvalResult.Unknown
         End Function
     End Class
 

@@ -2132,7 +2132,7 @@ l1:
                 Dim pk_count As Integer = 0
                 'Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 'Dim attrs(selectList.Count - 1) As Field2DbRelations
-                Dim oldpk() As PKDesc = Nothing
+                Dim oldpk As IEnumerable(Of PKDesc) = Nothing
                 If ce IsNot Nothing AndAlso modificationSync Then oldpk = GetPKValues(ce, Nothing)
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
@@ -3715,7 +3715,7 @@ l2:
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
 
             Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            Dim pks As PKDesc() = GetPKValues(obj, oschema)
+            Dim pks As IEnumerable(Of PKDesc) = GetPKValues(obj, oschema)
 
             For Each p As PKDesc In pks
                 c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))

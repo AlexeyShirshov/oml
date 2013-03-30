@@ -443,7 +443,7 @@ Namespace Entities.Meta
         'End Sub
 
         Public Function GetAlias(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As String Implements IPrepareTable.GetAlias
-            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.IsDefault Then
                 Return _defaultAliases(table)
             Else
                 Return _objectAlises(os.ObjectAlias)(table)
@@ -451,7 +451,7 @@ Namespace Entities.Meta
         End Function
 
         Public Function ContainsKey(ByVal table As Entities.Meta.SourceFragment, ByVal os As EntityUnion) As Boolean Implements IPrepareTable.ContainsKey
-            If os Is Nothing OrElse os.EntityType IsNot Nothing OrElse Not String.IsNullOrEmpty(os.EntityName) Then
+            If os Is Nothing OrElse os.IsDefault Then
                 Return _defaultAliases.ContainsKey(table)
             Else
                 Dim dic As Generic.IDictionary(Of SourceFragment, String) = Nothing

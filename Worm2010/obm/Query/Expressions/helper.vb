@@ -2,6 +2,7 @@
 Imports Worm.Query
 Imports Worm.Entities
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Expressions2
     Module Helper
@@ -151,8 +152,8 @@ Namespace Expressions2
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
-                            Dim pks() As PKDesc = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
-                            If pks.Length <> 1 Then
+                            Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
+                            If pks.Count <> 1 Then
                                 Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                             End If
                             If Equals(pks(0).Value, filterValue) Then

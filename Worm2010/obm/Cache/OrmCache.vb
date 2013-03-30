@@ -1179,7 +1179,7 @@ l1:
                         Dim r As Boolean = False
                         Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                         If f IsNot Nothing Then
-                            er = f.Eval(schema, obj, oschema)
+                            er = f.EvalObj(schema, obj, oschema, ce.Joins, ce.QueryEU)
                             r = er = IEvaluableValue.EvalResult.Unknown
                         End If
 
@@ -1259,7 +1259,7 @@ l1:
                         Dim r As Boolean = False
                         Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                         If f IsNot Nothing Then
-                            er = f.Eval(schema, oldObj, oschema)
+                            er = f.EvalObj(schema, oldObj, oschema, ce.Joins, ce.QueryEU)
                             r = er = IEvaluableValue.EvalResult.Unknown
                         End If
 

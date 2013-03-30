@@ -5,13 +5,13 @@
             Inherits EventArgs
 
             Enum ActionEnum
+                Rethrow
                 RetryOldConnection
                 ''' <summary>
                 ''' Create new connection and retry
                 ''' </summary>
                 ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
                 RetryNewConnection
-                Rethrow
                 ''' <summary>
                 ''' Rethrow custom exception
                 ''' </summary>
@@ -47,13 +47,13 @@
             Inherits EventArgs
 
             Enum ActionEnum
+                Rethrow
                 RetryOldConnection
                 ''' <summary>
                 ''' Create new connection and retry
                 ''' </summary>
                 ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
                 RetryNewConnection
-                Rethrow
                 ''' <summary>
                 ''' Rethrow custom exception
                 ''' </summary>

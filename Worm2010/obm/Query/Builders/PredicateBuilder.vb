@@ -272,6 +272,14 @@ Namespace Query
 
             Return New ColumnPredicate(_tbl, columnName)
         End Function
+
+        Public Shared Function param(v As Object) As PredicateBase
+            Return param(New Values.ScalarValue(v))
+        End Function
+
+        Public Shared Function param(v As Values.IFilterValue) As PredicateBase
+            Return New UnaryPredicate(v)
+        End Function
     End Class
 
 End Namespace

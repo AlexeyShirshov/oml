@@ -12,6 +12,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 Imports Worm.Misc
 Imports Worm.Query.Sorting
+Imports System.Linq
 
 Namespace Query
 
@@ -412,13 +413,13 @@ Namespace Query
             Inherits EventArgs
 
             Enum ActionEnum
+                Rethrow
                 RetryOldConnection
                 ''' <summary>
                 ''' Create new connection and retry
                 ''' </summary>
                 ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
                 RetryNewConnection
-                Rethrow
                 ''' <summary>
                 ''' Rethrow custom exception
                 ''' </summary>
@@ -462,13 +463,13 @@ Namespace Query
             Inherits EventArgs
 
             Enum ActionEnum
+                Rethrow
                 RetryOldConnection
                 ''' <summary>
                 ''' Create new connection and retry
                 ''' </summary>
                 ''' <remarks>New connection string in <see cref="ConnectionExceptionArgs.Context"/> property</remarks>
                 RetryNewConnection
-                Rethrow
                 ''' <summary>
                 ''' Rethrow custom exception
                 ''' </summary>
@@ -755,12 +756,12 @@ Namespace Query
 
             Dim pa As String = Nothing
             Dim ids As New List(Of Object)
-            Dim pks As New List(Of PKDesc())
+            Dim pks As New List(Of IEnumerable(Of PKDesc))
             Dim i As New Dictionary(Of String, List(Of Object))
 
             For Each o As ICachedEntity In e2load
-                Dim pk As PKDesc() = OrmManager.GetPKValues(o, Nothing)
-                If pk.Length = 1 Then
+                Dim pk As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(o, Nothing)
+                If pk.Count = 1 Then
                     pa = pk(0).PropertyAlias
                     ids.Add(pk(0).Value)
                 Else
@@ -5596,7 +5597,7 @@ l1:
         End Function
 
         Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
-                            ByVal ids As ICollection(Of Object), _
+                            ByVal ids As IEnumerable(Of Object), _
                             ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
             If _getMgr IsNot Nothing Then
@@ -5615,11 +5616,11 @@ l1:
         '    Return GetByIds(Of T)(ids, options, mgr)
         'End Function
 
-        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As IEnumerable(Of Object)) As ReadOnlyList(Of T)
             Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs)
         End Function
 
-        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As ICollection(Of Object), ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+        Public Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return GetByIds(Of T)(ids, GetByIDOptions.GetAsIs, mgr)
         End Function
 
@@ -6086,7 +6087,7 @@ l1:
 
         Protected Overridable Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
             If args.OrmManager.Cache.NewObjectManager IsNot Nothing AndAlso Not args.IsSimple Then
-
+                Dim removed As Boolean = False
                 Dim nr As IListEdit = Nothing
                 For Each o As IEntity In args.ReadOnlyList
                     If o.ObjectState = ObjectState.Deleted Then
@@ -6094,6 +6095,7 @@ l1:
                             nr = CType(args.ReadOnlyList.Clone, IListEdit)
                         End If
                         nr.Remove(o)
+                        removed = True
                     End If
                 Next
 
@@ -6105,7 +6107,7 @@ l1:
                         If nr Is Nothing Then
                             nr = CType(args.ReadOnlyList.Clone, IListEdit)
                         End If
-                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, Filter)
+                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, Filter, Joins, GetSelectedOS)
                             If Not nr.Contains(a) Then
                                 toAdd.Add(a)
                             End If
@@ -6113,7 +6115,7 @@ l1:
                     End If
                 End If
 
-                If nr Is Nothing OrElse (nr.Count = 0 AndAlso toAdd.Count = 0) Then
+                If nr Is Nothing OrElse (nr.Count = 0 AndAlso toAdd.Count = 0 AndAlso Not removed) Then
                     Return
                 End If
 

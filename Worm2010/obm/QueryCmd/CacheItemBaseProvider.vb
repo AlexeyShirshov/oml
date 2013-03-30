@@ -184,6 +184,8 @@ Namespace Query
                                     added = cache.validate_AddCalculatedType(New Type() {ft}, _key, _id, fl, MappingEngine)
                                     If uce IsNot Nothing AndAlso added Then
                                         uce.Filter = fl
+                                        uce.Joins = _q.Joins
+                                        uce.QueryEU = _q.FromClause.QueryEU
                                     End If
                                 End If
                             End If

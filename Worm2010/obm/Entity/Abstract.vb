@@ -2,6 +2,8 @@
 Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports Worm.Query
+Imports System.Collections.Generic
+Imports System.Linq
 
 Namespace Entities
 
@@ -143,7 +145,7 @@ Namespace Entities
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+        Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
         ReadOnly Property IsPKLoaded() As Boolean
         Property UpdateCtx() As UpdateCtx
@@ -163,8 +165,8 @@ Namespace Entities
     End Interface
 
     Public Interface IOptimizePK
-        Function GetPKValues() As PKDesc()
-        Sub SetPK(ByVal pk As PKDesc())
+        Function GetPKValues() As IEnumerable(Of PKDesc)
+        Sub SetPK(ByVal pk As IEnumerable(Of PKDesc))
     End Interface
 
     Public Interface ICopyProperties
@@ -388,14 +390,14 @@ Namespace Entities
     Public Class PKWrapper
         Implements IKeyProvider
 
-        Private _id As PKDesc()
+        Private _id As IEnumerable(Of PKDesc)
         Private _str As String
 
         ''' <summary>
         ''' Инициализация объекта
         ''' </summary>
         ''' <param name="pk">Массив полей и значений</param>
-        Public Sub New(ByVal pk() As PKDesc)
+        Public Sub New(ByVal pk As IEnumerable(Of PKDesc))
             _id = pk
         End Sub
 
@@ -412,12 +414,12 @@ Namespace Entities
                 Return False
             End If
 
-            Dim ids() As PKDesc = obj._id
-            If _id.Length <> ids.Length Then Return False
-            For i As Integer = 0 To _id.Length - 1
+            Dim ids As IEnumerable(Of PKDesc) = obj._id
+            If _id.Count <> ids.Count Then Return False
+            For i As Integer = 0 To _id.Count - 1
                 Dim p As PKDesc = _id(i)
                 Dim find As Boolean
-                For j As Integer = 0 To ids.Length - 1
+                For j As Integer = 0 To ids.Count - 1
                     Dim p2 As PKDesc = ids(j)
                     If p.PropertyAlias = p2.PropertyAlias Then
                         If p.Value.GetType IsNot p2.Value.GetType Then
@@ -474,7 +476,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Function GetPKs() As PKDesc()
+        Public Function GetPKs() As IEnumerable(Of PKDesc)
             Return _id
         End Function
     End Class
