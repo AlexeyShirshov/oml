@@ -19,7 +19,7 @@
         Public Function CreateDBManager() As OrmReadOnlyDBManager
 #If UseUserInstance Then
             Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-            Return New OrmReadOnlyDBManager(New OrmCache, New ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+            Return New OrmReadOnlyDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", New ObjectMappingEngine("1"), New SQL2000Generator, New OrmCache)
 #Else
             Return New OrmReadOnlyDBManager(New OrmCache, New objectmappingengine("1"), New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=test;")
 #End If
@@ -122,7 +122,7 @@
                 '    u.UnlockUser()
             End If
         End Sub
-</script>
+    </script>
 </head>
 <body>
     <%=GetTime() & "  test roles ok"%>

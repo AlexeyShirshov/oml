@@ -13,12 +13,16 @@ Namespace Database
         Private _upd As New DBUpdater
         Private _idstr As String
 
-        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As SQL2000Generator, ByVal connectionString As String)
-            MyBase.New(cache, mpe, stmtGen, connectionString)
+        Public Sub New(ByVal createConnection As Func(Of Data.Common.DbConnection), ByVal mpe As ObjectMappingEngine, ByVal stmtGen As DbGenerator, ByVal cache As OrmCache)
+            MyBase.New(createConnection, mpe, stmtGen, cache)
         End Sub
 
-        Protected Sub New(ByVal mpe As ObjectMappingEngine, ByVal stmtgen As SQL2000Generator, ByVal connectionString As String)
-            MyBase.New(mpe, stmtgen, connectionString)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal stmtGen As DbGenerator, ByVal cache As OrmCache)
+            MyBase.New(connectionString, mpe, stmtGen, cache)
+        End Sub
+
+        Protected Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal stmtgen As DbGenerator)
+            MyBase.New(connectionString, mpe, stmtgen)
         End Sub
 
         Protected Friend Overrides ReadOnly Property IdentityString() As String

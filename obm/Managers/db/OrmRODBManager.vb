@@ -422,6 +422,7 @@ Namespace Database
         Private _tran As System.Data.Common.DbTransaction
         Private _closeConnOnCommit As ConnAction
         Private _conn As System.Data.Common.DbConnection
+        Private _createConn As Func(Of System.Data.Common.DbConnection)
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
         Friend _batchSaver As ObjectListSaver
@@ -436,19 +437,31 @@ Namespace Database
         Public Event ConnectionException(sender As OrmReadOnlyDBManager, args As ConnectionExceptionArgs)
         Public Event CommandException(sender As OrmReadOnlyDBManager, args As CommandExceptionArgs)
 
-        Public Sub New(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine, ByVal generator As SQL2000Generator, ByVal connectionString As String)
+        Public Sub New(ByVal createConnection As Func(Of Data.Common.DbConnection), ByVal mpe As ObjectMappingEngine, ByVal generator As DbGenerator, ByVal cache As CacheBase)
+            MyBase.New(cache, mpe)
+            StmtGenerator = generator
+            _createConn = createConnection
+        End Sub
+
+        Public Sub New(ByVal connection As Data.Common.DbConnection, ByVal mpe As ObjectMappingEngine, ByVal generator As DbGenerator, ByVal cache As CacheBase)
+            MyBase.New(cache, mpe)
+            StmtGenerator = generator
+            _conn = connection
+        End Sub
+
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal generator As DbGenerator, ByVal cache As CacheBase)
             MyBase.New(cache, mpe)
             StmtGenerator = generator
             _connStr = connectionString
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal generator As SQL2000Generator, ByVal connectionString As String)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal generator As DbGenerator)
             MyBase.New(mpe)
             StmtGenerator = generator
             _connStr = connectionString
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine)
             MyBase.New(mpe)
             StmtGenerator = New SQL2000Generator
             _connStr = connectionString
@@ -511,7 +524,11 @@ l1:
         End Property
 
         Protected Function CreateConn() As System.Data.Common.DbConnection
-            Return SQLGenerator.CreateConnection(_connStr)
+            If _createConn IsNot Nothing Then
+                Return _createConn()
+            Else
+                Return SQLGenerator.CreateConnection(_connStr)
+            End If
         End Function
 
         Protected Overrides Sub Dispose(ByVal disposing As Boolean)
