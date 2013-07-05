@@ -130,9 +130,25 @@ Namespace Database.Storedprocs
             End Function
         End Class
 
+        Public Shared Sub Exec(ByVal getMgr As ICreateManager, ByVal name As String)
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr, Nothing)
+                    Exec(mgr, name)
+                End Using
+            End Using
+        End Sub
+
         Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String)
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing)
             p.GetResult(mgr)
+        End Sub
+
+        Public Shared Sub Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr, Nothing)
+                    Exec(mgr, name, paramNames, params)
+                End Using
+            End Using
         End Sub
 
         Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)
@@ -144,12 +160,28 @@ Namespace Database.Storedprocs
             p.GetResult(mgr)
         End Sub
 
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParamName As String) As T
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr, Nothing)
+                    Return Exec(Of T)(mgr, name, outParamName)
+                End Using
+            End Using
+        End Function
+
         Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String) As T
             Dim out As New List(Of OutParam)
             out.Add(New OutParam(outParamName, DbTypeConvertor.ToDbType(GetType(T)), 1000))
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return CType(dic(outParamName), T)
+        End Function
+
+        Public Shared Function Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParams As String) As Dictionary(Of String, Object)
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr, Nothing)
+                    Return Exec(mgr, name, outParams)
+                End Using
+            End Using
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParams As String) As Dictionary(Of String, Object)
@@ -161,6 +193,14 @@ Namespace Database.Storedprocs
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return dic
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
+                Using New SetManagerHelper(mgr, getMgr, Nothing)
+                    Return Exec(Of T)(mgr, name, outParamName, paramNames, params)
+                End Using
+            End Using
         End Function
 
         Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T

@@ -140,7 +140,7 @@ Namespace Query
             If _del IsNot Nothing Then
                 Return _del(Cache, MappingEngine, StmtGenerator)
             Else
-                Return New Worm.Database.OrmReadOnlyDBManager(Cache, MappingEngine, CType(StmtGenerator, Worm.Database.SQL2000Generator), _conn)
+                Return New Worm.Database.OrmReadOnlyDBManager(_conn, MappingEngine, CType(StmtGenerator, Worm.Database.SQL2000Generator), Cache)
             End If
         End Function
 

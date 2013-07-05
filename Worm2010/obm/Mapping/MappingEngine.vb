@@ -1522,11 +1522,11 @@ Public Class ObjectMappingEngine
             End If
 
             Dim types() As Type = Nothing
-            'Try
-            types = assembly.GetTypes
-            'Catch ex As Reflection.ReflectionTypeLoadException
-            '    Debug.WriteLine("Worm error during loading types: " & ex.ToString)
-            'End Try
+            Try
+                types = assembly.GetTypes
+            Catch ex As Reflection.ReflectionTypeLoadException
+                Debug.WriteLine("Worm error during loading types: " & ex.ToString)
+            End Try
 
             If types Is Nothing Then Continue For
 

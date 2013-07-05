@@ -543,16 +543,17 @@ l1:
                             Next
                             '_sl.AddRange(mpe.GetSortedFieldList(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
                         Else
-                            'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
-                            'Dim se As New SelectExpression(m2mEU, pk.PropertyAlias)
-                            'se.Attributes = Field2DbRelations.PK
-                            '_sl.Add(se)
-                            For Each mp As MapField2Column In oschema.FieldColumnMap
-                                If mp.IsPK Then
-                                    _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
-                                End If
-                            Next
-                            '_sl.AddRange(mpe.GetPrimaryKeys(m2mType).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, m2mEU)))
+                            If SelectedEntities IsNot Nothing AndAlso Not SelectedEntities(0).First.Equals(m2mEU) Then
+                                'se.ObjectSource = SelectTypes(0).First
+                                AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym, stmt)
+                                'Dim selt As EntityUnion = SelectTypes(0).First
+                            Else
+                                For Each mp As MapField2Column In oschema.FieldColumnMap
+                                    If mp.IsPK Then
+                                        _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
+                                    End If
+                                Next
+                            End If
                         End If
 
                         If Not _types.ContainsKey(m2mEU) Then
@@ -563,7 +564,7 @@ l1:
                     End If
 
                     addf = New EntityFilter(rel.Entity, rel.Column, _
-                        New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
+                           New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If _from Is Nothing Then _from = New FromClauseDef(m2mEU)
                 End If

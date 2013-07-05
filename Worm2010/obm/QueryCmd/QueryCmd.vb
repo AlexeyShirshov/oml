@@ -987,28 +987,33 @@ Namespace Query
             _getMgr = getMgr
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal connectionString As String)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine)
             Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(mpe, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe))
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase)
             Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, New Worm.Database.SQL2000Generator, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe, New Worm.Database.SQL2000Generator, cache))
         End Sub
 
-        Public Sub New(ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, ByVal connectionString As String, generator As Worm.Database.SQL2000Generator)
+        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, generator As Worm.Database.DbGenerator)
             Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, mpe, generator, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe, generator, cache))
         End Sub
 
-        Public Sub New(ByVal cache As CacheBase, ByVal connectionString As String)
+        Public Sub New(ByVal createConnection As Func(Of Data.Common.DbConnection), ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, generator As Worm.Database.DbGenerator)
             Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(cache, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQL2000Generator, connectionString))
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(createConnection, mpe, generator, cache))
+        End Sub
+
+        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase)
+            Me.new()
+            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQL2000Generator, cache))
         End Sub
 
         Public Sub New(ByVal connectionString As String)
-            MyClass.New(New ReadonlyCache, connectionString)
+            MyClass.New(connectionString, New ReadonlyCache)
         End Sub
 #End Region
 

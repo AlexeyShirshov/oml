@@ -739,15 +739,15 @@ l1:
         End Sub
 
         Public Sub New(ByVal connString As String)
-            MyClass.New(New OrmCache, New ObjectMappingEngine("1"), connString)
+            MyClass.New(connString, New OrmCache, New ObjectMappingEngine("1"))
         End Sub
 
-        Public Sub New(ByVal cache As OrmCache, ByVal connString As String)
-            MyClass.New(cache, New ObjectMappingEngine("1"), connString)
+        Public Sub New(ByVal connString As String, ByVal cache As OrmCache)
+            MyClass.New(connString, cache, New ObjectMappingEngine("1"))
         End Sub
 
-        Public Sub New(ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, ByVal connString As String)
-            MyClass.New(New CreateManager(Function() New OrmDBManager(cache, mpe, New SQL2000Generator, connString)))
+        Public Sub New(ByVal connString As String, ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine)
+            MyClass.New(New CreateManager(Function() New OrmDBManager(connString, mpe, New SQL2000Generator, cache)))
         End Sub
 
         Public Sub New(ByVal mgr As OrmReadOnlyDBManager)

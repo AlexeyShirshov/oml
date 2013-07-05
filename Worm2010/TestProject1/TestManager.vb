@@ -36,11 +36,11 @@ Imports System.Linq
         Implements Worm.ICreateManager
 
         Public Sub New(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine, ByVal connectionString As String)
-            MyBase.New(cache, schema, New SQL2000Generator, connectionString)
+            MyBase.New(connectionString, schema, New SQL2000Generator, cache)
         End Sub
 
         Public Sub New(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine, ByVal gen As SQL2000Generator, ByVal connectionString As String)
-            MyBase.New(cache, schema, gen, connectionString)
+            MyBase.New(connectionString, schema, gen, cache)
         End Sub
 
         Public Function CreateMgr(ctx As Object) As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
@@ -83,7 +83,7 @@ Imports System.Linq
     Public Shared Function CreateWriteManager(ByVal schema As Worm.ObjectMappingEngine, ByVal gen As SQL2000Generator) As OrmDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(New OrmCache, schema, gen, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, gen, New OrmCache)
 #Else
         Return New OrmDBManager(New OrmCache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
 #End If

@@ -18,7 +18,7 @@
         Public Function CreateDBManager() As OrmReadOnlyDBManager
 #If UseUserInstance Then
             Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-            Return New OrmReadOnlyDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), New SQLGenerator, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+            Return New OrmReadOnlyDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", New Worm.ObjectMappingEngine("1"), New SQL2000Generator, New OrmCache)
 #Else
             Return New OrmReadOnlyDBManager(New OrmCache, New Worm.ObjectMappingEngine("1"), new SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=wormtest;")
 #End If
@@ -80,7 +80,7 @@
                 lblInfo.Text = ex.ToString
             End Try
         End Sub
-</script>
+    </script>
     <title>adkljfvadfklv</title>
 </head>
 <body>
