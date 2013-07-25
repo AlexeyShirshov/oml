@@ -7,6 +7,7 @@ Imports System.Collections.Generic
 Imports System.ComponentModel
 Imports Worm.Criteria.Core
 Imports Worm.Query
+Imports System.Linq
 
 #Const TraceSetState = False
 
@@ -338,8 +339,8 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
-            Throw New NotSupportedException
+        Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
+            Init(pk.First.Value, cache, mpe)
         End Sub
 
         Protected Overrides Sub Init()
