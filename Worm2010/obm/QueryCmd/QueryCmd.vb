@@ -1661,8 +1661,11 @@ l1:
                             Dim cfv As CustomValue = CType(cf.Template, CustomValue)
                             For Each se As SelectUnion In GetSelectedEntities(cfv.Values)
                                 If se.EntityUnion IsNot Nothing Then
-                                    AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, _
-                                        se.EntityUnion, se.EntityUnion.GetRealType(schema), selectOS)
+                                    Dim seeu As EntityUnion = se.EntityUnion
+                                    If _js.Find(Function(join) join.ObjectSource = seeu) Is Nothing Then
+                                        AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, _
+                                            se.EntityUnion, se.EntityUnion.GetRealType(schema), selectOS)
+                                    End If
                                 End If
                             Next
                         End If
