@@ -1630,7 +1630,17 @@ Public Class ObjectMappingEngine
         If Not String.IsNullOrEmpty(ea.EntityName) AndAlso names IsNot Nothing Then
             If names.Contains(ea.EntityName) Then
                 Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
-                If tt.First.IsAssignableFrom(tp) OrElse (mpe IsNot Nothing AndAlso tt.Second.Version <> mpe._version) Then
+                If tt.First.IsAssignableFrom(tp) Then
+                    If mpe IsNot Nothing Then
+                        Dim existingNotMatch As Boolean = tt.Second.Version <> mpe._version
+                        Dim newNotMatch As Boolean = ea.Version <> mpe._version
+                        If existingNotMatch OrElse Not newNotMatch Then
+                            names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
+                        End If
+                    Else
+                        names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
+                    End If
+                ElseIf (mpe IsNot Nothing AndAlso tt.Second.Version <> mpe._version) Then
                     names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                 End If
             Else
@@ -1711,7 +1721,7 @@ Public Class ObjectMappingEngine
                 End If
             Next
 
-            If schema Is Nothing Then
+            If schema Is Nothing AndAlso ownEntityAttrs.Length = 0 Then
                 Dim baseEntityAttrs() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
 
                 For Each ea As EntityAttribute In baseEntityAttrs
