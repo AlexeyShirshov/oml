@@ -1,8 +1,6 @@
-Imports System
+﻿Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
-Imports System.Security.Permissions
-Imports System.Runtime
 
 ' General Information about an assembly is controlled through the following 
 ' set of attributes. Change these attribute values to modify the information
@@ -10,18 +8,17 @@ Imports System.Runtime
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Worm")> 
+<Assembly: AssemblyTitle("MySQL")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("Web object-relational mapping framework")> 
-<Assembly: AssemblyCopyright("Copyright �  2005")> 
+<Assembly: AssemblyProduct("MySQL")> 
+<Assembly: AssemblyCopyright("Copyright ©  2013")> 
 <Assembly: AssemblyTrademark("")> 
 
-<Assembly: ComVisible(False)> 
-<Assembly: CLSCompliant(False)> 
+<Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("da3d66f3-2d20-4258-b71d-1e4eb84d0f39")> 
+<Assembly: Guid("e7f1d4ea-0f8d-4ac5-850c-a269ce609cbc")> 
 
 ' Version information for an assembly consists of the following four values:
 '
@@ -32,9 +29,7 @@ Imports System.Runtime
 '
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
+' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("4.0.7.23")> 
-<Assembly: AssemblyFileVersion("4.0.7.61")> 
-
-'<Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
-<Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)> 
+<Assembly: AssemblyVersion("1.0.0.0")> 
+<Assembly: AssemblyFileVersion("1.0.0.0")> 

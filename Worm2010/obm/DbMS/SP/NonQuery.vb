@@ -195,6 +195,24 @@ Namespace Database.Storedprocs
             Return dic
         End Function
 
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, outParams As IEnumerable(Of OutParam), ByVal paramNames As String, ByVal ParamArray params() As Object) As Dictionary(Of String, Object)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim p As New NonQueryStoredProcSimple(name, ss, params, outParams)
+            Return CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+        End Function
+
+        Public Shared Function Exec(ByVal crMgr As ICreateManager, ByVal name As String, outParams As IEnumerable(Of OutParam), ByVal paramNames As String, ByVal ParamArray params() As Object) As Dictionary(Of String, Object)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim p As New NonQueryStoredProcSimple(name, ss, params, outParams)
+            Return CType(p.GetResult(crMgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+        End Function
+
         Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
             Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
                 Using New SetManagerHelper(mgr, getMgr, Nothing)
