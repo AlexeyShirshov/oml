@@ -4,7 +4,7 @@ Public Delegate Function CreateCmdDelegate() As Query.QueryCmd
 
 Public Interface IDataContext
 
-    Function Create() As QueryCmd
+    Function CreateQuery() As QueryCmd
 
 End Interface
 
@@ -21,7 +21,7 @@ Public Class DataContext
         _del = del
     End Sub
 
-    Public Function Create() As Query.QueryCmd Implements IDataContext.Create
+    Public Function CreateQuery() As Query.QueryCmd Implements IDataContext.CreateQuery
         If _del Is Nothing Then
             Throw New InvalidOperationException
         End If

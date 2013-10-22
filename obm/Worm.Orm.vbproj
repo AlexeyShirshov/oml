@@ -320,13 +320,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>rem $(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
-rem $(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
-rem del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
+    <PostBuildEvent>$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
+$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
+del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>
