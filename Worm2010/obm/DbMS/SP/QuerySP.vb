@@ -94,7 +94,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Class QueryStoredProcSimpleList(Of T)
+        MustInherit Class QueryStoredProcBaseList(Of T)
             Inherits QueryStoredProcBase
 
             Private _name As String
@@ -138,9 +138,55 @@ Namespace Database.Storedprocs
             Protected Overrides Function InitResult() As Object
                 Return New List(Of T)
             End Function
+        End Class
+
+        Class QueryStoredProcSimpleList(Of T)
+            Inherits QueryStoredProcBaseList(Of T)
+
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object)
+                MyBase.New(name, names, params)
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean)
+                MyBase.New(name, names, params, cache)
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan)
+                MyBase.New(name, names, params, timeout)
+            End Sub
 
             Protected Overloads Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
                 Dim o As T = CType(dr.GetValue(0), T)
+                Dim l As List(Of T) = CType(result, Global.System.Collections.Generic.List(Of T))
+                l.Add(o)
+            End Sub
+        End Class
+
+        Public Delegate Function TransformDataReaderDelegate(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader) As T
+
+        Class QueryStoredProcList(Of T)
+            Inherits QueryStoredProcBaseList(Of T)
+
+            Private _d As TransformDataReaderDelegate(Of T)
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, transformDelegate As TransformDataReaderDelegate(Of T))
+                MyBase.New(name, names, params)
+                _d = transformDelegate
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean, transformDelegate As TransformDataReaderDelegate(Of T))
+                MyBase.New(name, names, params, cache)
+                _d = transformDelegate
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan, transformDelegate As TransformDataReaderDelegate(Of T))
+                MyBase.New(name, names, params, timeout)
+                _d = transformDelegate
+            End Sub
+
+            Protected Overloads Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+                Dim o As T = _d(mgr, dr)
                 Dim l As List(Of T) = CType(result, Global.System.Collections.Generic.List(Of T))
                 l.Add(o)
             End Sub
@@ -156,6 +202,14 @@ Namespace Database.Storedprocs
 
         Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal timeout As TimeSpan) As List(Of T)
             Return CType(New QueryStoredProcSimpleList(Of T)(name, Nothing, Nothing, timeout).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal cache As Boolean) As List(Of T)
+            Return CType(New QueryStoredProcSimpleList(Of T)(name, Nothing, Nothing, cache).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String) As List(Of T)
+            Return CType(New QueryStoredProcSimpleList(Of T)(name, Nothing, Nothing).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
         End Function
 
         Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan) As List(Of T)
@@ -185,5 +239,102 @@ Namespace Database.Storedprocs
             End If
             Return CType(New QueryStoredProcSimpleList(Of T)(name, ss, params, timeout).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
         End Function
+
+        Public Shared Function Exec(Of T)(getMgr As ICreateManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcSimpleList(Of T)(name, ss, params, cache).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcSimpleList(Of T)(name, ss, params, timeout).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcSimpleList(Of T)(name, ss, params).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, cache, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal timeout As TimeSpan, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, timeout, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal cache As Boolean, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, cache, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, transformDelegate As TransformDataReaderDelegate(Of T)) As List(Of T)
+            Return CType(New QueryStoredProcList(Of T)(name, Nothing, Nothing, timeout, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, cache, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, timeout, transformDelegate).GetResult(mgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(getMgr As ICreateManager, ByVal name As String, ByVal cache As Boolean, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, cache, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal timeout As TimeSpan, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, timeout, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, transformDelegate As TransformDataReaderDelegate(Of T), ByVal paramNames As String, ByVal ParamArray params() As Object) As List(Of T)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return CType(New QueryStoredProcList(Of T)(name, ss, params, transformDelegate).GetResult(getMgr), Global.System.Collections.Generic.List(Of T))
+        End Function
+
     End Class
 End Namespace
