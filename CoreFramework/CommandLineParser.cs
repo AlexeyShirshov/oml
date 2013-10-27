@@ -115,5 +115,13 @@ namespace CoreFramework.CommandLine
 		{
 			return _parameters.TryGetValue(param, out value);
 		}
+
+        public IDictionary<string, string> Params
+        {
+            get
+            {
+                return _parameters;
+            }
+        }
     }
 }
