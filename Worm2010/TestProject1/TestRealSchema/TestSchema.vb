@@ -8,6 +8,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Criteria
 Imports Worm.Query
+Imports Worm
 
 <TestClass()> _
 Public Class TestSchema
@@ -37,7 +38,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.IsTrue(t1.InternalProperties.IsLoaded)
 
@@ -53,11 +54,11 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Assert.IsFalse(t2.Tbl.InternalProperties.IsLoaded)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsFalse(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(t1, t2.Tbl)
 
@@ -125,7 +126,7 @@ Public Class TestSchema
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             col.LoadObjects()
 
-            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -144,7 +145,7 @@ Public Class TestSchema
                 If Not l.Contains(j) Then l.Add(j)
             Next
 
-            Dim uol As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(l.ToArray, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim uol As ICollection(Of Table1) = New QueryCmd().GetByIds(Of Table1)(l.ToArray, GetByIDOptions.EnsureExistsInStore, mgr)
         End Using
     End Sub
 
@@ -157,7 +158,7 @@ Public Class TestSchema
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             Assert.AreEqual(0, col.LoadObjects().Count)
 
-            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            col = New QueryCmd().GetByIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, GetByIDOptions.EnsureExistsInStore, mgr)
 
             Assert.AreEqual(2, col.Count)
 

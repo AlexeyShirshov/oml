@@ -23,6 +23,8 @@ Imports System.Linq
 Partial Public MustInherit Class OrmManager
     Implements IDisposable
 
+    Private Shared _mpe As ObjectMappingEngine
+
     Protected Friend Const Const_KeyStaticString As String = " - key -"
     Protected Friend Const Const_JoinStaticString As String = " - join - "
     Protected Friend Const GetTablePostfix As String = " - GetTable"
@@ -5155,6 +5157,15 @@ l1:
 
         Return New OrmManagerException(sb.ToString)
     End Function
+
+    Public Shared ReadOnly Property DefaultMappingEngine() As ObjectMappingEngine
+        Get
+            If _mpe Is Nothing Then
+                _mpe = New ObjectMappingEngine("1")
+            End If
+            Return _mpe
+        End Get
+    End Property
 
 End Class
 

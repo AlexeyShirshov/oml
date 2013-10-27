@@ -214,11 +214,11 @@ Imports Worm.Entities.Meta
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
 
-        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, QueryCmd.GetByIDOptions.GetAsIs)}
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, GetByIDOptions.GetAsIs)}
 
         Table1.Table2Relation.Load(Of Table1, Table2)(t, False)
 
-        Assert.IsTrue(q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs).Table2s.IsInCache)
+        Assert.IsTrue(q1.GetByID(Of Table1)(1, GetByIDOptions.GetAsIs).Table2s.IsInCache)
     End Sub
 
     <TestMethod()> Public Sub TestLoadBatchLoad()
@@ -226,7 +226,7 @@ Imports Worm.Entities.Meta
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
 
-        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, QueryCmd.GetByIDOptions.GetAsIs)}
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, GetByIDOptions.GetAsIs)}
 
         Dim r As ReadOnlyList(Of Table2) = Table1.Table2Relation.Load(Of Table1, Table2)(t, True)
 
@@ -242,7 +242,7 @@ Imports Worm.Entities.Meta
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), cache, New MSSQL2005Generator))
 
-        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, QueryCmd.GetByIDOptions.GetAsIs)}
+        Dim t() As Table1 = New Table1() {q1.GetByID(Of Table1)(1, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(10, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, GetByIDOptions.GetAsIs)}
 
         Dim r As ReadOnlyList(Of _ISinglePKEntity) = Table1.Table2Relation.Load(Of Table1, _ISinglePKEntity)(t, False)
 

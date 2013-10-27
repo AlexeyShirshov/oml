@@ -331,12 +331,6 @@ Namespace Query
             End Property
         End Class
 
-        Public Enum GetByIDOptions
-            GetAsIs
-            EnsureExistsInStore
-            EnsureLoadedFromStore
-        End Enum
-
         Public Class ModifyResultArgs
 
             Private _col As ICollection
@@ -931,10 +925,13 @@ Namespace Query
             End If
         End Function
 
-        Public ReadOnly Property CreateManager() As ICreateManager
+        Public Property CreateManager() As ICreateManager
             Get
                 Return _getMgr
             End Get
+            Set(value As ICreateManager)
+                _getMgr = value
+            End Set
         End Property
 
         Protected Friend Sub RaiseExternalDictionary(ByVal args As ExternalDictionaryEventArgs)
@@ -986,35 +983,6 @@ Namespace Query
             Me.new()
             _getMgr = getMgr
         End Sub
-
-        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine)
-            Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe))
-        End Sub
-
-        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase)
-            Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe, New Worm.Database.SQL2000Generator, cache))
-        End Sub
-
-        Public Sub New(ByVal connectionString As String, ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, generator As Worm.Database.DbGenerator)
-            Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, mpe, generator, cache))
-        End Sub
-
-        Public Sub New(ByVal createConnection As Func(Of Data.Common.DbConnection), ByVal mpe As ObjectMappingEngine, ByVal cache As CacheBase, generator As Worm.Database.DbGenerator)
-            Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(createConnection, mpe, generator, cache))
-        End Sub
-
-        Public Sub New(ByVal connectionString As String, ByVal cache As CacheBase)
-            Me.new()
-            _getMgr = New CreateManager(Function() New Worm.Database.OrmReadOnlyDBManager(connectionString, Worm.Database.OrmReadOnlyDBManager.DefaultMappingEngine, New Worm.Database.SQL2000Generator, cache))
-        End Sub
-
-        Public Sub New(ByVal connectionString As String)
-            MyClass.New(connectionString, New ReadonlyCache)
-        End Sub
 #End Region
 
         Protected Friend Sub RenewMark()
@@ -1057,6 +1025,12 @@ Namespace Query
             End If
             Return isanonym
         End Function
+
+        Public Shared Sub Prepare(ByVal root As QueryCmd, ByVal executor As IExecutor, _
+            dx As IDataContext)
+
+            Prepare(root, executor, dx.MappingEngine, dx.Context, dx.StmtGenerator)
+        End Sub
 
         Public Shared Sub Prepare(ByVal root As QueryCmd, ByVal executor As IExecutor, _
             ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
@@ -1173,7 +1147,7 @@ Namespace Query
 
                             Dim col As List(Of SelectExpression) = GetSelectList(de.Key)
                             If col.Count > 0 Then
-                                If AutoFields AndAlso _outer Is Nothing AndAlso Not _notSimpleMode Then
+                                If AutoFields AndAlso _outer Is Nothing AndAlso Not _notSimpleMode AndAlso Not IsDistinct AndAlso _group Is Nothing Then
                                     Dim createType As EntityUnion = Nothing
                                     If Not _createTypes.TryGetValue(de.Key, createType) Then
 l2:
@@ -5493,37 +5467,36 @@ l1:
                 End If
             End If
 
-
             Return CType(o, T)
         End Function
 
-        Friend Sub ConvertIdsToObjects(Of T As {New, ISinglePKEntity})(ByVal rt As Type, ByVal list As IListEdit, _
-            ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
-            For Each id As Object In ids
-                Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id, True)
+        'Friend Sub ConvertIdsToObjects(Of T As {New, ISinglePKEntity})(ByVal rt As Type, ByVal list As IListEdit, _
+        '    ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
+        '    For Each id As Object In ids
+        '        Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id, True)
 
-                If obj IsNot Nothing Then
-                    list.Add(obj)
-                ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), T)
-                    If obj IsNot Nothing Then list.Add(obj)
-                End If
-            Next
-        End Sub
+        '        If obj IsNot Nothing Then
+        '            list.Add(obj)
+        '        ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
+        '            obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), T)
+        '            If obj IsNot Nothing Then list.Add(obj)
+        '        End If
+        '    Next
+        'End Sub
 
-        Friend Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit, _
-            ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
-            For Each id As Object In ids
-                Dim obj As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
+        'Friend Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit, _
+        '    ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
+        '    For Each id As Object In ids
+        '        Dim obj As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
 
-                If obj IsNot Nothing Then
-                    list.Add(obj)
-                ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                    obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), ISinglePKEntity)
-                    If obj IsNot Nothing Then list.Add(obj)
-                End If
-            Next
-        End Sub
+        '        If obj IsNot Nothing Then
+        '            list.Add(obj)
+        '        ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
+        '            obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), ISinglePKEntity)
+        '            If obj IsNot Nothing Then list.Add(obj)
+        '        End If
+        '    Next
+        'End Sub
 
         Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
                     ByVal ids As IEnumerable(Of Object), _
@@ -5546,22 +5519,22 @@ l1:
                     Select Case options
                         Case GetByIDOptions.GetAsIs
                             If GetType(T) IsNot tp Then
-                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                             Else
-                                ConvertIdsToObjects(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(tp, list, ids, mgr)
                             End If
                         Case GetByIDOptions.EnsureExistsInStore
                             If GetType(T) IsNot tp Then
-                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                             Else
-                                ConvertIdsToObjects(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(tp, list, ids, mgr)
                             End If
                             ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, False, mgr), ReadOnlyList(Of T))
                         Case GetByIDOptions.EnsureLoadedFromStore
                             If GetType(T) IsNot tp Then
-                                ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                             Else
-                                ConvertIdsToObjects(tp, list, ids, mgr)
+                                DataContext.ConvertIdsToObjects(tp, list, ids, mgr)
                             End If
                             ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, True, mgr), ReadOnlyList(Of T))
                         Case Else
@@ -6159,6 +6132,17 @@ l1:
                 args.ReadOnlyList = nr
             End If
         End Sub
+
+        '    Public Function MakeQueryStatement(mgr As OrmManager, ByVal params As ICreateParam) As String
+        '        If Not _prepared Then
+        '            QueryCmd.Prepare(Me, GetExecutor(mgr), mgr.MappingEngine, mgr.GetContextInfo, mgr.StmtGenerator)
+        '            If _cancel Then
+        '                Return Nothing
+        '            End If
+        '        End If
+
+        '        Return db
+        '    End Function
 
     End Class
 
