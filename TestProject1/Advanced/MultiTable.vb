@@ -130,13 +130,13 @@ Public Class TestMultiTable
         Dim m2 As MultiTable = Nothing
         Dim t As Table3 = Nothing
         Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("en"))
-            m2 = New QueryCmd().GetByID(Of MultiTable)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            m2 = New QueryCmd().GetByID(Of MultiTable)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             t = New QueryCmd().GetByID(Of Table3)(1, mgr)
         End Using
 
         Dim m1 As MultiTable = Nothing
         Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("ru"))
-            m1 = New QueryCmd().GetByID(Of MultiTable)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            m1 = New QueryCmd().GetByID(Of MultiTable)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.AreSame(t, New QueryCmd().GetByID(Of Table3)(1, mgr))
         End Using
 

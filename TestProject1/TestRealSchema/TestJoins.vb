@@ -11,6 +11,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm.Criteria.Joins
+Imports Worm
 
 <TestClass()> _
 Public Class TestJoinsRS
@@ -226,7 +227,7 @@ Public Class TestJoinsRS
             Dim c As ICollection(Of Table2) = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
-            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
             t1.Name = "sdfasdf"
             Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)

@@ -181,6 +181,7 @@
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
+    <Compile Include="QueryCmd\db\MSSQLQueryCmd.vb" />
     <Compile Include="QueryCmd\QueryExecutor.vb" />
     <Compile Include="QueryCmd\RelationCmd.vb" />
     <Compile Include="QueryCmd\xml\CacheItemPropviders.vb" />
@@ -326,7 +327,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

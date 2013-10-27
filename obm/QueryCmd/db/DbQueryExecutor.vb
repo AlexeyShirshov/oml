@@ -1290,6 +1290,12 @@ l1:
             'almgr.Replace(mpe, schema, t, eu, sb)
         End Sub
 
+        Public Shared Function MakeQueryStatement(dx As IDataContext, _
+                    ByVal query As QueryCmd, ByVal params As ICreateParam) As String
+
+            Return MakeQueryStatement(dx.MappingEngine, dx.Context, CType(dx.StmtGenerator, DbGenerator), query, params, AliasMgr.Create)
+        End Function
+
         Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal schema As DbGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam) As String
 

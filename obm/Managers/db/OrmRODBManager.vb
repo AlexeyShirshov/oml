@@ -428,7 +428,6 @@ Namespace Database
         Friend _batchSaver As ObjectListSaver
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
         Private _timeout As Nullable(Of Integer)
-        Private Shared _mpe As ObjectMappingEngine
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4clm As Reflection.MethodInfo = Nothing
@@ -511,15 +510,6 @@ l1:
         Public ReadOnly Property SQLGenerator() As DbGenerator
             Get
                 Return CType(StmtGenerator, Database.DbGenerator)
-            End Get
-        End Property
-
-        Public Shared ReadOnly Property DefaultMappingEngine() As ObjectMappingEngine
-            Get
-                If _mpe Is Nothing Then
-                    _mpe = New ObjectMappingEngine("1")
-                End If
-                Return _mpe
             End Get
         End Property
 
@@ -1141,15 +1131,11 @@ l1:
         End Function
 
         Public Function ExecuteReader(ByVal cmd As System.Data.Common.DbCommand) As System.Data.Common.DbDataReader
-            Dim b As ConnAction = TestConn(cmd)
-            Try
-                Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,
+            TestConn(cmd)
+            Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,
                                                                Function()
                                                                    Return cmd.ExecuteReader
                                                                End Function)
-            Finally
-                CloseConn(b)
-            End Try
         End Function
 
         Public Function ExecuteScalar(ByVal cmd As System.Data.Common.DbCommand) As Object

@@ -235,9 +235,9 @@ Imports Worm.Database
 
         Dim q1 As New QueryCmd(Function() TestManagerRS.CreateManagerShared(mpe, cache, New SQL2000Generator))
 
-        Dim t1 As Table1 = q1.GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.GetAsIs)
+        Dim t1 As Table1 = q1.GetByID(Of Table1)(1, GetByIDOptions.GetAsIs)
 
-        Dim t() As Table1 = New Table1() {t1, q1.GetByID(Of Table1)(10, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, QueryCmd.GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, QueryCmd.GetByIDOptions.GetAsIs)}
+        Dim t() As Table1 = New Table1() {t1, q1.GetByID(Of Table1)(10, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(11, GetByIDOptions.GetAsIs), q1.GetByID(Of Table1)(20, GetByIDOptions.GetAsIs)}
 
         Table1.Table2Relation.Load(Of Table1, Table2)(t, False)
 

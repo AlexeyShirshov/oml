@@ -129,7 +129,7 @@ Imports System.Linq
     Public Sub TestEditConcurent()
         Dim c As New OrmCache
         Using mgr As OrmReadOnlyDBManager = CreateManager(c, GetSchema("1"))
-            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim o As Entity4 = New QueryCmd().GetByID(Of Entity4)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
             Assert.IsTrue(o.InternalProperties.IsLoaded)
         End Using
@@ -758,7 +758,7 @@ Imports System.Linq
 
                 e2.SaveChanges(True)
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(10, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(10, GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e2)
             Finally
@@ -781,7 +781,7 @@ Imports System.Linq
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e2))
 
-                e2 = New QueryCmd().GetByID(Of Entity4)(11, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+                e2 = New QueryCmd().GetByID(Of Entity4)(11, GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e2)
             Finally
@@ -858,7 +858,7 @@ Imports System.Linq
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
                 Assert.AreEqual(ObjectState.Deleted, e.InternalProperties.ObjectState)
 
-                e = New QueryCmd().GetByID(Of Entity2)(10, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+                e = New QueryCmd().GetByID(Of Entity2)(10, GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e)
             Finally
@@ -1039,7 +1039,7 @@ Imports System.Linq
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
@@ -1077,7 +1077,7 @@ Imports System.Linq
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.Cache.NewObjectManager = Me
-            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID

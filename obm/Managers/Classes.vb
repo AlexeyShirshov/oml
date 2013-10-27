@@ -243,6 +243,7 @@ Public Class SetManagerHelper
 End Class
 
 Public Delegate Function CreateManagerDelegate() As OrmManager
+Public Delegate Function CreateManagerDelegateEx(stmt As StmtGenerator, mpe As ObjectMappingEngine, cache As Cache.CacheBase) As OrmManager
 
 Public Class CreateManager
     Implements ICreateManager
@@ -255,7 +256,16 @@ Public Class CreateManager
 
     Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
         Dim m As OrmManager = _del()
-        RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Try
+            RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
+        Catch ex As Exception
+            If m IsNot Nothing Then
+                m.Dispose()
+                m = Nothing
+                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                Throw ex
+            End If
+        End Try
         Return m
     End Function
 

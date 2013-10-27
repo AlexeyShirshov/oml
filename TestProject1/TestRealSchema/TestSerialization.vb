@@ -5,6 +5,7 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Query
+Imports Worm
 
 <TestClass()> _
 Public Class TestSerialization
@@ -12,7 +13,7 @@ Public Class TestSerialization
     <TestMethod()> _
     Public Sub TestXml()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim t As Table3 = New QueryCmd().GetByID(Of Table3)(2, QueryCmd.GetByIDOptions.EnsureLoadedFromStore, mgr)
+            Dim t As Table3 = New QueryCmd().GetByID(Of Table3)(2, GetByIDOptions.EnsureLoadedFromStore, mgr)
 
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Dim exp As String = t.Xml.OuterXml

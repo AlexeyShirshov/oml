@@ -752,7 +752,7 @@ Public Class TestManagerRS
             Dim t1 As Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
             Assert.IsNotNull(t1)
 
-            t1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            t1 = New QueryCmd().GetByID(Of Table1)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsNull(t1)
         End Using
     End Sub
@@ -867,7 +867,7 @@ Public Class TestManagerRS
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
 
-                e = New QueryCmd().GetByID(Of Composite)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+                e = New QueryCmd().GetByID(Of Composite)(1, GetByIDOptions.EnsureExistsInStore, mgr)
 
                 Assert.IsNull(e)
             Finally
@@ -1313,7 +1313,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadNonCached()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, QueryCmd.GetByIDOptions.EnsureExistsInStore, mgr)
+            Dim t As Table1 = New QueryCmd().GetByID(Of Table1)(1, GetByIDOptions.EnsureExistsInStore, mgr)
             Assert.IsNotNull(t)
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))
