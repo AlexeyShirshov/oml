@@ -247,7 +247,11 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
             If cmgr IsNot Nothing Then
                 Dim cmd As New Query.QueryCmd(cmgr)
-                Return cmd.Select(properties2Load).From(_rt).LoadObjects(Me, start, length)
+                'Dim frm As EntityUnion = _rt
+                'For Each se As SelectExpression In properties2Load
+
+                'Next
+                Return cmd.Select(properties2Load).LoadObjects(Me, start, length)
             Else
                 Return Query.QueryCmd.LoadObjects(Me, start, length, properties2Load, OrmManager.CurrentManager)
             End If
