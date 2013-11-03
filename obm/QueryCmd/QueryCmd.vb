@@ -4719,7 +4719,16 @@ l1:
             hasPK = False
             Dim s As IEntitySchema = mpe.GetPOCOEntitySchema(t)
             If s Is Nothing Then
-                s = New SimpleObjectSchema(GetFieldsIdx(mpe, t))
+                Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = GetFieldsIdx(mpe, t)
+                If fields.Count = 0 Then
+                    fields = GetFieldsIdx()
+                End If
+
+                If fields.Count = 0 Then
+                    Throw New QueryCmdException(String.Format("Unable to map {0}", t), Me)
+                End If
+
+                s = New SimpleObjectSchema(fields)
                 '                Dim tbl As SourceFragment = _from.Table
                 '                If tbl Is Nothing AndAlso SelectList IsNot Nothing Then
                 '                    For Each se As SelectExpression In SelectList
