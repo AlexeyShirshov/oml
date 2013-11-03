@@ -2119,10 +2119,11 @@ l1:
             End If
 
             Dim entity As _IEntity = TryCast(obj, _IEntity)
+            If entity IsNot Nothing Then
+                Assert(entity.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", entity.ObjName)
 
-            Assert(entity.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", entity.ObjName)
-
-            entity.SetMgrString(IdentityString)
+                entity.SetMgrString(IdentityString)
+            End If
 
             Dim original_type As Type = obj.GetType
             Dim fv As IStorageValueConverter = TryCast(obj, IStorageValueConverter)
