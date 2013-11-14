@@ -113,11 +113,18 @@ Namespace Query
         Public Class Int
             Inherits ExpCtorBase(Of T).IntBase
 
-            Public Function Param(value As Object) As T
+            Public Function param(value As Object) As T
                 If value Is Nothing Then
                     AppendExpression(New DBNullExpression())
                 Else
                     AppendExpression(New ParameterExpression(value))
+                End If
+                Return CType(Me, T)
+            End Function
+
+            Public Function literal(s As Object) As T
+                If s IsNot Nothing Then
+                    AppendExpression(LiteralExpression.Create(s))
                 End If
                 Return CType(Me, T)
             End Function

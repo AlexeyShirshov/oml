@@ -423,6 +423,24 @@ Namespace Query
             End If
             Return f
         End Function
+
+        Public Shared Function literal(s As Object) As Int
+            Dim f As New Int
+            If s IsNot Nothing Then
+                f.AppendExpression(LiteralExpression.Create(s))
+            End If
+            Return f
+        End Function
+
+        Public Shared Function param(value As Object) As Int
+            Dim f As New Int
+            If value Is Nothing Then
+                f.AppendExpression(New DBNullExpression())
+            Else
+                f.AppendExpression(New ParameterExpression(value))
+            End If
+            Return f
+        End Function
 #End Region
 
         Class Int

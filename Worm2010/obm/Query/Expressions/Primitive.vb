@@ -58,6 +58,23 @@ Namespace Expressions2
             End If
             Return _literalValue.Equals(f._literalValue)
         End Function
+
+        Shared Function Create(s As Object) As LiteralExpression
+            If s Is Nothing Then
+                Return Nothing
+            End If
+
+            If TypeOf s Is String Then
+                Return New LiteralExpression("'" & s.ToString & "'")
+            ElseIf TypeOf s Is DateTime Then
+                Return New LiteralExpression(String.Format("'{0:yyyy-MM-dd HH:ss}'"))
+            ElseIf TypeOf s Is Byte() Then
+                Throw New NotImplementedException("database specific")
+            End If
+
+            Return New LiteralExpression(s.ToString)
+        End Function
+
     End Class
 
     <Serializable()> _
