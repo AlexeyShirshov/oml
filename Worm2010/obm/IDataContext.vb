@@ -275,14 +275,17 @@ Public Class DataContext
 
     Public Sub New(stmtGen As StmtGenerator, ByVal getMgr As CreateManagerDelegateEx)
         MyBase.New(stmtGen)
+        _delEx = getMgr
     End Sub
 
     Public Sub New(stmtGen As StmtGenerator, mpe As ObjectMappingEngine, ByVal getMgr As CreateManagerDelegateEx)
         MyBase.New(stmtGen, mpe)
+        _delEx = getMgr
     End Sub
 
     Public Sub New(stmtGen As StmtGenerator, mpe As ObjectMappingEngine, cache As Cache.CacheBase, ByVal getMgr As CreateManagerDelegateEx)
         MyBase.New(stmtGen, mpe, cache)
+        _delEx = getMgr
     End Sub
 
     Public Overrides Function CreateOrmManager() As OrmManager

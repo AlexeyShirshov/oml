@@ -1120,6 +1120,10 @@ Namespace Query
                         se.IntoPropertyAlias = t.Name & "-" & se.GetIntoPropertyAlias
                         'End If
                     End If
+
+                    If String.IsNullOrEmpty(se.GetIntoPropertyAlias) AndAlso TypeOf se.Operand Is TableExpression Then
+                        se.IntoPropertyAlias = CType(se.Operand, TableExpression).SourceField
+                    End If
                     CheckFrom(se)
                 Next
             Else
