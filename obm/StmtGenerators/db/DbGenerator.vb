@@ -1538,7 +1538,7 @@ l1:
         Public Overridable Property QueryLength As Integer = 490
     End Class
 
-    Interface ITopStatement
+    Public Interface ITopStatement
         Function TopStatementPercent(ByVal top As Integer, ByVal percent As Boolean, ByVal ties As Boolean) As String
     End Interface
 
