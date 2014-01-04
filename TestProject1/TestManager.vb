@@ -8,6 +8,7 @@ Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm
 Imports System.Linq
+Imports CoreFramework.Structures
 
 <TestClass()> Public Class TestManager
     Implements INewObjectsStore, Worm.ICreateManager
@@ -59,7 +60,7 @@ Imports System.Linq
     Public Shared Function CreateManager(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine, _
                                          ByVal gen As SQL2000Generator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
-        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
@@ -69,7 +70,7 @@ Imports System.Linq
     Public Shared Function CreateManagerWrong(ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine, _
                                              ByVal gen As SQL2000Generator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
-        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
@@ -82,7 +83,7 @@ Imports System.Linq
 
     Public Shared Function CreateWriteManager(ByVal schema As Worm.ObjectMappingEngine, ByVal gen As SQL2000Generator) As OrmDBManager
 #If UseUserInstance Then
-        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, gen, New OrmCache)
 #Else
         Return New OrmDBManager(New OrmCache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")

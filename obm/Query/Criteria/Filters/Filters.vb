@@ -1045,7 +1045,7 @@ Namespace Criteria.Core
         End Function
 
         Protected Function _ToString() As String Implements IFilter._ToString
-            Return _left.ToString & _fo.ToString & _right.ToString
+            Return _left._ToString & _fo.ToString & _right._ToString
         End Function
 
         Public Overrides Function ToString() As String

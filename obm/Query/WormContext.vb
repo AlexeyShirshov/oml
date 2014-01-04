@@ -81,6 +81,7 @@ Namespace Query
 
         Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
             Dim m As OrmManager = _CreateManager()
+            m.GetCreateManager = Me
             RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
             Return m
         End Function

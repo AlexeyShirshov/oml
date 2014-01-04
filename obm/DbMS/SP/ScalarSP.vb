@@ -77,7 +77,7 @@ Namespace Database.Storedprocs
                 Dim l As New List(Of Pair(Of String, Object))
                 If _obj IsNot Nothing Then
                     For i As Integer = 0 To _obj.Length - 1
-                        l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                        l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
                     Next
                 End If
                 Return l

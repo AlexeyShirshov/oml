@@ -115,7 +115,7 @@ Namespace Database.Storedprocs
                 Dim l As New List(Of Pair(Of String, Object))
                 If _obj IsNot Nothing AndAlso _obj.Length > 0 Then
                     For i As Integer = 0 To _obj.Length - 1
-                        l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                        l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
                     Next
                 End If
                 Return l
@@ -188,7 +188,7 @@ Namespace Database.Storedprocs
             Dim ss() As String = outParams.Split(","c)
             Dim out As New List(Of OutParam)
             For Each pn As String In ss
-                out.Add(New OutParam(pn, DbTypeConvertor.ToDbType(GetType(Integer)), 1000))
+                out.Add(New OutParam(pn.Trim, DbTypeConvertor.ToDbType(GetType(Integer)), 1000))
             Next
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
@@ -210,6 +210,26 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params, outParams)
+            Return CType(p.GetResult(crMgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, cache As Boolean, outParams As IEnumerable(Of OutParam),
+                                    ByVal paramNames As String, ByVal ParamArray params() As Object) As Dictionary(Of String, Object)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim p As New NonQueryStoredProcSimple(name, ss, params, cache, outParams)
+            Return CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+        End Function
+
+        Public Shared Function Exec(ByVal crMgr As ICreateManager, ByVal name As String, cache As Boolean, outParams As IEnumerable(Of OutParam),
+                                    ByVal paramNames As String, ByVal ParamArray params() As Object) As Dictionary(Of String, Object)
+            Dim ss() As String = paramNames.Split(","c)
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim p As New NonQueryStoredProcSimple(name, ss, params, cache, outParams)
             Return CType(p.GetResult(crMgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         End Function
 

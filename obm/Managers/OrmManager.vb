@@ -81,6 +81,7 @@ Partial Public MustInherit Class OrmManager
     Friend _list As String
     Private _listeners As New List(Of TraceListener)
     Private _stmtHelper As StmtGenerator
+    Private _crMan As ICreateManager
 
 #If TraceManagerCreation Then
     Private _callstack As String
@@ -4053,7 +4054,7 @@ l1:
                     '    End If
                     '    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                     'Else
-                    ObjectMappingEngine.AssignValue2Property(propType, MappingEngine, Cache, sv, obj, map, propertyAlias, ll, m, oschema, AddressOf RaiseObjectLoaded)
+                    ObjectMappingEngine.AssignValue2Property(propType, MappingEngine, Cache, sv, obj, map, propertyAlias, ll, m, oschema, AddressOf RaiseObjectLoaded, _crMan)
                     'End If
                 End If
             ElseIf isNull Then

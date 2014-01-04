@@ -217,7 +217,7 @@ Namespace Database.Storedprocs
             Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
                 Dim l As New List(Of Pair(Of String, Object))
                 For i As Integer = 0 To _obj.Length - 1
-                    l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                    l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
                 Next
                 Return l
             End Function

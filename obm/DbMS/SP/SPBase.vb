@@ -17,6 +17,7 @@ Namespace Database.Storedprocs
         Public ReadOnly Name As String
         Public ReadOnly DbType As System.Data.DbType
         Public ReadOnly Size As Integer
+        Public Value As Object
 
         Public Sub New(ByVal name As String, ByVal type As System.Data.DbType, ByVal size As Integer)
             Me.Name = name
@@ -395,7 +396,12 @@ Namespace Database.Storedprocs
                     For Each p As OutParam In op
                         Dim pr As System.Data.Common.DbParameter = schema.CreateDBParameter()
                         pr.ParameterName = p.Name
-                        pr.Direction = System.Data.ParameterDirection.Output
+                        If p.Value IsNot Nothing Then
+                            pr.Direction = System.Data.ParameterDirection.InputOutput
+                            pr.Value = p.Value
+                        Else
+                            pr.Direction = System.Data.ParameterDirection.Output
+                        End If
                         pr.DbType = p.DbType
                         pr.Size = p.Size
                         cmd.Parameters.Add(pr)
@@ -440,8 +446,12 @@ Namespace Database.Storedprocs
                             'PutInCache(dic, id, result)
                             dic(id) = result
                             _cacheHit = False
+                        Else
+                            Debug.WriteLine(String.Format("{0} cache hit", GetName()))
                         End If
                     End Using
+                Else
+                    Debug.WriteLine(String.Format("{0} cache hit", GetName()))
                 End If
                 Return result
             Else

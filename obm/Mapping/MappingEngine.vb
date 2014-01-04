@@ -1721,45 +1721,58 @@ Public Class ObjectMappingEngine
                 End If
             Next
 
+            'If schema Is Nothing AndAlso mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing AndAlso ownEntityAttrs.Length > 0 Then
+            '    Dim ownEntityAttr As EntityAttribute = mpe._mapv(mpe._version, ownEntityAttrs, tp)
+            '    If ownEntityAttr IsNot Nothing Then
+            '        schema = CreateAndInitSchemaAndNames(tp, mpe, idic, names, ownEntityAttr)
+            '    End If
+            'End If
+            Dim baseEntityAttrs() As EntityAttribute = Nothing
             If schema Is Nothing AndAlso ownEntityAttrs.Length = 0 Then
-                Dim baseEntityAttrs() As EntityAttribute = CType(tp.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
+                baseEntityAttrs = CType(tp.GetCustomAttributes(GetType(EntityAttribute), True), EntityAttribute())
 
                 For Each ea As EntityAttribute In baseEntityAttrs
                     If mpe Is Nothing OrElse ea.Version = mpe._version Then
                         schema = CreateAndInitSchemaAndNames(tp, mpe, idic, names, ea)
                     End If
                 Next
+            End If
+
+            If schema Is Nothing Then
+                'For Each ea As EntityAttribute In entities
+                Dim ownEntityAttr As EntityAttribute = Nothing
+                If ownEntityAttrs.Length > 0 Then
+                    If mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing Then
+                        ownEntityAttr = mpe._mapv(mpe._version, ownEntityAttrs, tp)
+                    End If
+                End If
+
+                If ownEntityAttr IsNot Nothing Then
+                    schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, ownEntityAttr)
+                End If
+                'Next
 
                 If schema Is Nothing Then
-                    'For Each ea As EntityAttribute In entities
-                    Dim ownEntityAttr As EntityAttribute = Nothing
-                    If ownEntityAttrs.Length > 0 Then
+                    Dim baseEntityAttr As EntityAttribute = Nothing
+                    If baseEntityAttrs IsNot Nothing AndAlso baseEntityAttrs.Length > 0 Then
                         If mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing Then
-                            ownEntityAttr = mpe._mapv(mpe._version, ownEntityAttrs, tp)
-                        ElseIf ownEntityAttrs.Length = 1 Then
-                            ownEntityAttr = ownEntityAttrs(0)
+                            baseEntityAttr = mpe._mapv(mpe._version, baseEntityAttrs, tp)
                         End If
                     End If
-                    If ownEntityAttr IsNot Nothing Then
-                        schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, ownEntityAttr)
-                    End If
-                    'Next
 
-                    If schema Is Nothing Then
-                        Dim baseEntityAttr As EntityAttribute = Nothing
-                        If baseEntityAttrs.Length > 0 Then
-                            If mpe IsNot Nothing AndAlso mpe._mapv IsNot Nothing Then
-                                baseEntityAttr = mpe._mapv(mpe._version, baseEntityAttrs, tp)
-                            ElseIf baseEntityAttrs.Length = 1 Then
-                                baseEntityAttr = baseEntityAttrs(0)
-                            End If
-                        End If
-                        If baseEntityAttr IsNot Nothing Then
-                            schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, baseEntityAttr)
-                        End If
+                    If baseEntityAttr IsNot Nothing Then
+                        schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, baseEntityAttr)
                     End If
                 End If
             End If
+
+            'If schema Is Nothing AndAlso ownEntityAttrs.Length = 1 Then
+            '    schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, ownEntityAttrs(0))
+            'End If
+
+            'If schema Is Nothing AndAlso baseEntityAttrs IsNot Nothing AndAlso baseEntityAttrs.Length = 1 Then
+            '    schema = CreateAndInitSchemaAndNamesWithMapping(tp, mpe, idic, names, baseEntityAttrs(0))
+            'End If
         End If
         Return schema
     End Function
@@ -2455,7 +2468,7 @@ Public Class ObjectMappingEngine
     Public Shared Function AssignValue2Property(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase,
         ByVal sv As PKDesc(), ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column),
         ByVal propertyAlias As String, ByVal ll As IPropertyLazyLoad, ByVal m As MapField2Column, ByVal oschema As IEntitySchema,
-        ByVal objectLoaded As ObjectLoadedDelegate) As Object
+        ByVal objectLoaded As ObjectLoadedDelegate, crMan As ICreateManager) As Object
 
         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
         If sv Is Nothing Then
@@ -2589,7 +2602,11 @@ Public Class ObjectMappingEngine
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
                     If e IsNot Nothing Then
                         Dim eo As IEntity = TryCast(obj, IEntity)
-                        If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then e.SetCreateManager(eo.CreateManager)
+                        If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then
+                            e.SetCreateManager(eo.CreateManager)
+                        ElseIf crMan IsNot Nothing Then
+                            e.SetCreateManager(crMan)
+                        End If
                         If objectLoaded IsNot Nothing Then objectLoaded(e)
                     End If
                     If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
@@ -2756,7 +2773,7 @@ Public Class ObjectMappingEngine
     Friend Shared Sub InitPOCO(ByVal rt As Type, ByVal oschema As IEntitySchema, _
         ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
         ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object, _
-        Optional ByVal pref As String = Nothing)
+        Optional ByVal pref As String = Nothing, Optional crMan As ICreateManager = Nothing)
         Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
         For Each m As MapField2Column In map
             Dim pa As String = m.PropertyAlias
@@ -2777,7 +2794,7 @@ Public Class ObjectMappingEngine
             End If
 
             Dim pit As Type = pi.PropertyType
-            v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, New PKDesc() {New PKDesc(pa, v)}, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing)
+            v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, New PKDesc() {New PKDesc(pa, v)}, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, crMan)
             If v IsNot Nothing AndAlso IsEntityType(pit, mpe) Then
                 Dim schema As IEntitySchema = mpe.GetEntitySchema(rt, False)
                 If schema Is Nothing Then
@@ -2785,7 +2802,7 @@ Public Class ObjectMappingEngine
                     mpe.AddEntitySchema(pit, schema)
                 End If
 
-                InitPOCO(pit, schema, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
+                InitPOCO(pit, schema, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias, crMan)
             End If
         Next
     End Sub

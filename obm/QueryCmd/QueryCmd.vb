@@ -1655,6 +1655,9 @@ l1:
                 For Each ns As SortExpression In s
                     For Each se As SelectUnion In GetSelectedEntities(ns)
                         If se.EntityUnion IsNot Nothing Then
+                            If _js.Find(Function(join) join.ObjectSource = se.EntityUnion) IsNot Nothing Then
+                                Continue For
+                            End If
                             Dim sortType As System.Type = se.EntityUnion.GetRealType(schema)
                             If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
                                 Dim field As String = schema.GetJoinFieldNameByType(sortType, oschema)
@@ -4016,7 +4019,7 @@ l1:
                 'Else
                 vals = New PKDesc() {New PKDesc(pa, v)}
                 'End If
-                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing)
+                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, CreateManager)
                 If v IsNot Nothing AndAlso _poco IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
