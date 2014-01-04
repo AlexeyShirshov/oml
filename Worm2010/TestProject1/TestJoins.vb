@@ -7,6 +7,7 @@ Imports Worm.Criteria.Conditions
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Joins
 Imports System.Text
+Imports CoreFramework.Structures
 
 <TestClass()> Public Class TestJoins
 

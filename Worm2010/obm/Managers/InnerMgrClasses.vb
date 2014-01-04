@@ -492,6 +492,15 @@ Partial Public Class OrmManager
         Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
     End Class
 
+    Public Property GetCreateManager As ICreateManager
+        Get
+            Return _crMan
+        End Get
+        Friend Set(value As ICreateManager)
+            _crMan = value
+        End Set
+    End Property
+
     Protected Delegate Function LoadObjectFromStorageDelegate(ByVal obj As Object, _
             ByVal selectList As IList(Of SelectExpression), _
             ByVal entityDictionary As IDictionary, ByVal modificationSync As Boolean, ByRef lock As IDisposable, _

@@ -9,6 +9,7 @@ Imports Worm.Database.Storedprocs
 Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports CoreFramework.Structures
 
 <TestClass()> _
 Public Class TestProcs

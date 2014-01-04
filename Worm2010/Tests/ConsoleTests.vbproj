@@ -91,10 +91,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
     </Reference>
@@ -102,6 +98,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Xml" />
+    <Reference Include="Worm.Orm, Version=4.0.8.24, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\obm\bin\Debug\Worm.Orm.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Import Include="Microsoft.VisualBasic" />
@@ -171,10 +171,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
-      <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
-      <Name>Worm.Orm</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TestProject1\UnitTesting.vbproj">
       <Project>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</Project>
       <Name>UnitTesting</Name>

@@ -89,10 +89,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cf54b99ac03d848c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Binaries\CoreFramework.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>True</SpecificVersion>
     </Reference>
@@ -101,10 +97,11 @@
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Web" />
+    <Reference Include="Worm.Orm">
+      <HintPath>..\obm\bin\Debug\Worm.Orm.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Import Include="CoreFramework.Structures" />
-    <Import Include="CoreFramework.Threading" />
     <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
   </ItemGroup>
@@ -190,10 +187,6 @@
     <ProjectReference Include="..\ASPNETHosting\ASPNETHosting.vbproj">
       <Project>{7D8F3864-281D-495E-B0E4-5731FC31D007}</Project>
       <Name>ASPNETHosting</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
-      <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
-      <Name>Worm.Orm</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

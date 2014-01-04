@@ -256,6 +256,7 @@ Public Class CreateManager
 
     Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
         Dim m As OrmManager = _del()
+        m.GetCreateManager = Me
         Try
             RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(m, ctx))
         Catch ex As Exception

@@ -232,6 +232,8 @@ Namespace Database
             End Set
         End Property
 
+        Property AcceptOuterTransaction As Boolean
+
         Public Sub Commit()
             _save = True
         End Sub
@@ -477,10 +479,10 @@ l1:
             If _mgr.Cache.IsReadonly Then
                 Throw New InvalidOperationException("Cache is readonly")
             End If
-            _error = False
+            _error = True
 
             RaiseEvent PreSave(Me)
-            Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
+            Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing AndAlso Not AcceptOuterTransaction
             Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
             Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
             _startSave = True
@@ -817,8 +819,9 @@ l1:
             End Get
         End Property
 
-        Public Sub AcceptModifications()
+        Public Sub AcceptModifications(Optional acceptOuterTransaction As Boolean = False)
             _saver.Commit()
+            _saver.AcceptOuterTransaction = acceptOuterTransaction
         End Sub
 
         Public Sub OmitModifications()
@@ -872,7 +875,7 @@ l1:
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
             ObjectMappingEngine.InitPOCO( _
                 o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
-                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.GetContextInfo)
+                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.GetContextInfo, crMan:=_mgr.GetCreateManager)
         End Sub
 
         Public Overridable Sub Delete(ByVal obj As Object)

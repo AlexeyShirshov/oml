@@ -290,9 +290,13 @@ Public Class DataContext
 
     Public Overrides Function CreateOrmManager() As OrmManager
         If _del IsNot Nothing Then
-            Return _del()
+            Dim m As OrmManager = _del()
+            m.GetCreateManager = Me
+            Return m
         ElseIf _delEx IsNot Nothing Then
-            Return _delEx(StmtGenerator, MappingEngine, Cache)
+            Dim m As OrmManager = _delEx(StmtGenerator, MappingEngine, Cache)
+            m.GetCreateManager = Me
+            Return m
         Else
             Throw New DataContextException("Manager is required")
         End If
