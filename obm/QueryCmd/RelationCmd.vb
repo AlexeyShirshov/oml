@@ -560,6 +560,10 @@ l1:
                             _types.Add(m2mEU, oschema)
                         End If
                     Else
+                        If Not _types.ContainsKey(m2mEU) Then
+                            _types.Add(m2mEU, oschema)
+                        End If
+
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                     End If
 
