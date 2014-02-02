@@ -7,6 +7,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Query.QueryCmd
 Imports Worm.Cache
 Imports Worm.Expressions2
+Imports System.Linq
 
 'Imports Worm.Database.Sorting
 
@@ -951,7 +952,7 @@ l1:
 
         Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal query As QueryCmd, _
             ByVal params As ICreateParam, ByVal from As FromClauseDef, _
-            ByVal j As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
+            ByVal joins As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
             ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal execCtx As IExecutionContext, _
             ByVal pk As Pair(Of SourceFragment, String), _
             ByVal predi As Criteria.PredicateLink, ByVal selOS As EntityUnion)
@@ -960,6 +961,8 @@ l1:
             Dim selectedType As Type = Nothing
             Dim selSchema As IEntitySchema = Nothing
             Dim setted As Boolean
+
+            Dim j = OrderJoins(selOS, joins, mpe)
 
             For i As Integer = 0 To j.Count - 1
                 Dim join As QueryJoin = CType(j(i), QueryJoin)
@@ -1649,6 +1652,80 @@ l1:
                         UnsubscribeFromCommandEvents(dbm, cmdHandler)
                     End If
                 End Sub)
+        End Function
+
+        Private Shared Function OrderJoins(root As EntityUnion, js As IEnumerable(Of QueryJoin), mpe As ObjectMappingEngine) As IEnumerable(Of QueryJoin)
+            For Each j In js
+                Dim fr = GetFieldRef(j, root, mpe)
+                If fr IsNot Nothing Then
+                    Dim l As New List(Of QueryJoin)
+
+                    l.Add(j)
+
+                    If fr.Property.Entity Is Nothing Then
+                        l.AddRange(OrderJoins(fr.Column.First, From k In js
+                                   Where Not k.Equals(j), mpe))
+                    Else
+                        l.AddRange(OrderJoins(fr.Property.Entity, From k In js
+                                   Where Not k.Equals(j), mpe))
+                    End If
+
+                    Return l
+                End If
+            Next
+
+            Return js
+        End Function
+
+        Private Shared Function OrderJoins(root As SourceFragment, js As IEnumerable(Of QueryJoin), mpe As ObjectMappingEngine) As IEnumerable(Of QueryJoin)
+            For Each j In js
+                Dim fr = GetFieldRef(j, root)
+                If fr IsNot Nothing Then
+                    Dim l As New List(Of QueryJoin)
+
+                    l.Add(j)
+
+                    If fr.Property.Entity Is Nothing Then
+                        l.AddRange(OrderJoins(fr.Column.First, From k In js
+                                   Where Not k.Equals(j), mpe))
+                    Else
+                        l.AddRange(OrderJoins(fr.Property.Entity, From k In js
+                                   Where Not k.Equals(j), mpe))
+                    End If
+
+                    Return l
+                End If
+            Next
+
+            Return js
+        End Function
+
+        Private Shared Function GetFieldRef(j As QueryJoin, root As EntityUnion, mpe As ObjectMappingEngine) As FieldReference
+            For Each jf In j.Condition.GetAllFilters.OfType(Of JoinFilter)()
+                If jf.Left.Property.Entity = root Then
+                    Return jf.Right
+                ElseIf jf.Right.Property.Entity = root Then
+                    Return jf.Left
+                ElseIf jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
+                    Return jf.Right
+                ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
+                    Return jf.Left
+                End If
+            Next
+
+            Return Nothing
+        End Function
+
+        Private Shared Function GetFieldRef(j As QueryJoin, root As SourceFragment) As FieldReference
+            For Each jf In j.Condition.GetAllFilters.OfType(Of JoinFilter)()
+                If jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First.Equals(root) Then
+                    Return jf.Right
+                ElseIf jf.Right.Column IsNot Nothing AndAlso jf.Right.Column.First.Equals(root) Then
+                    Return jf.Left
+                End If
+            Next
+
+            Return Nothing
         End Function
     End Class
 
