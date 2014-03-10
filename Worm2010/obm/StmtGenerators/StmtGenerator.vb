@@ -50,6 +50,15 @@ Public MustInherit Class StmtGenerator
     Public MustOverride Function FormatOrderBy(ByVal t As SortExpression.SortType, ByVal fields As String, ByVal collation As String) As String
     Public MustOverride Function FormatAggregate(ByVal t As AggregateExpression.AggregateFunction, ByVal fields As String, ByVal custom As String, ByVal distinct As Boolean) As String
 
+    Public Overridable Function MakeRowNumber(mpe As ObjectMappingEngine, q As QueryCmd) As String
+        Return String.Empty
+    End Function
+
+    Public Overridable Sub FormatRowNumber(mpe As ObjectMappingEngine, q As QueryCmd, ByVal filterInfo As Object, _
+            ByVal params As ICreateParam, ByVal almgr As IPrepareTable, sb As StringBuilder)
+
+    End Sub
+
     Public MustOverride ReadOnly Property SupportParams() As Boolean
 
     Public Overridable ReadOnly Property IncludeCallStack() As Boolean
@@ -61,6 +70,12 @@ Public MustInherit Class StmtGenerator
     Public Overridable ReadOnly Property SupportRowNumber() As Boolean
         Get
             Return False
+        End Get
+    End Property
+
+    Public Overridable ReadOnly Property SupportTopParam() As Boolean
+        Get
+            Return True
         End Get
     End Property
 
