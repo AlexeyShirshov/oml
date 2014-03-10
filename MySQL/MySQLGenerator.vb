@@ -164,4 +164,26 @@ Public Class MySQLGenerator
     Public Overrides Function TopStatement(top As Integer) As String
         Throw New NotImplementedException
     End Function
+
+    Public Overrides ReadOnly Property SupportTopParam As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property SupportRowNumber As Boolean
+        Get
+            Return True
+        End Get
+    End Property
+
+    Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, q As Query.QueryCmd, filterInfo As Object, params As ICreateParam, almgr As IPrepareTable, sb As StringBuilder)
+        If q.TopParam IsNot Nothing Then
+            Dim stmt = " limit {0} offset {1}"
+            Dim off = "0"
+
+            'q.RowNumberFilter
+            sb.AppendFormat(stmt, q.TopParam.Count, off)
+        End If
+    End Sub
 End Class

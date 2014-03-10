@@ -1,6 +1,10 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
+Imports Worm.Expressions2
+Imports Worm.Entities.Meta
+Imports Worm.Query
+Imports Worm.Query.Database
 
 Namespace Database
 
@@ -44,6 +48,50 @@ Namespace Database
                 Return True
             End Get
         End Property
+
+        Public Overrides Function MakeRowNumber(mpe As ObjectMappingEngine, query As Query.QueryCmd) As String
+            Dim selSb As New StringBuilder
+            selSb.Append(",row_number() over (")
+            If query.Sort IsNot Nothing Then
+                selSb.Append(DbQueryExecutor.RowNumberOrder)
+                'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+            Else
+                selSb.Append("order by ")
+                Dim ob As List(Of SelectExpression) = query._sl.FindAll(Function(se) (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK)
+                If ob.Count = 0 Then
+                    ob = query._sl
+                End If
+                For Each se As SelectExpression In ob
+                    For Each cs As String In CType(query, IExecutionContext).FindColumn(mpe, se.GetIntoPropertyAlias)
+                        selSb.Append(cs)
+                    Next
+                    selSb.Append(",")
+                Next
+                If ob.Count > 0 Then
+                    selSb.Length -= 1
+                End If
+            End If
+            selSb.Append(") as ").Append(QueryCmd.RowNumerColumn)
+
+            Return selSb.ToString
+        End Function
+
+        Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, query As QueryCmd, ByVal filterInfo As Object, _
+            ByVal params As ICreateParam, ByVal almgr As IPrepareTable, sb As StringBuilder)
+            'Throw New NotImplementedException
+            Dim rs As String = sb.ToString
+            sb.Length = 0
+            sb.Append("select *")
+            'For Each col As String In columnAliases
+            '    If String.IsNullOrEmpty(col) Then
+            '        Throw New ExecutorException("Column alias is required")
+            '    End If
+            '    sb.Append(col).Append(",")
+            'Next
+            'sb.Length -= 1
+            sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
+            sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, Me, query, filterInfo, almgr, params))
+        End Sub
 
         Protected Overrides Function DeclareOutput(ByVal sb As System.Text.StringBuilder, _
             ByVal pks As IEnumerable(Of Pair(Of String, Pair(Of String)))) As String

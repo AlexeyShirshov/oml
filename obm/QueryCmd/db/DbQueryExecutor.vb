@@ -35,7 +35,7 @@ Namespace Query.Database
     Partial Public Class DbQueryExecutor
         Inherits QueryExecutor
 
-        Private Const RowNumberOrder As String = "qiervfnkasdjvn"
+        Public Const RowNumberOrder As String = "qiervfnkasdjvn"
 
         Private _proc As BaseProvider
         'Private _procT As BaseProvider
@@ -1320,7 +1320,7 @@ l1:
 
             FormUnions(mpe, query, sb, filterInfo, s, params)
 
-            If query.RowNumberFilter Is Nothing Then
+            If query.RowNumberFilter Is Nothing OrElse sb.ToString.IndexOf(RowNumberOrder) < 0 Then
                 FormOrderBy(mpe, query, almgr, sb, s, filterInfo, params)
             Else
                 Dim r As New StringBuilder
@@ -1328,20 +1328,8 @@ l1:
                 sb.Replace(RowNumberOrder, r.ToString)
             End If
 
-            If query.RowNumberFilter IsNot Nothing Then
-                'Throw New NotImplementedException
-                Dim rs As String = sb.ToString
-                sb.Length = 0
-                sb.Append("select *")
-                'For Each col As String In columnAliases
-                '    If String.IsNullOrEmpty(col) Then
-                '        Throw New ExecutorException("Column alias is required")
-                '    End If
-                '    sb.Append(col).Append(",")
-                'Next
-                'sb.Length -= 1
-                sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
-                sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params))
+            If query.RowNumberFilter IsNot Nothing OrElse (Not s.SupportTopParam AndAlso query.TopParam IsNot Nothing) Then
+                s.FormatRowNumber(mpe, query, filterInfo, params, almgr, sb)
             End If
 
             If Not String.IsNullOrEmpty(s.PlanHint) AndAlso Not String.IsNullOrEmpty(query.Hint) Then
@@ -1465,7 +1453,7 @@ l1:
                 Dim tstmt As ITopStatement = TryCast(s, ITopStatement)
                 If tstmt IsNot Nothing Then
                     selSb.Append(tstmt.TopStatementPercent(query.TopParam.Count, query.TopParam.Percent, query.TopParam.Ties)).Append(" ")
-                Else
+                ElseIf s.SupportTopParam Then
                     selSb.Append(s.TopStatement(query.TopParam.Count)).Append(" ")
                 End If
             End If
@@ -1475,27 +1463,7 @@ l1:
                 If Not s.SupportRowNumber Then
                     Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
                 End If
-                selSb.Append(",row_number() over (")
-                If query.Sort IsNot Nothing Then
-                    selSb.Append(RowNumberOrder)
-                    'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
-                Else
-                    selSb.Append("order by ")
-                    Dim ob As List(Of SelectExpression) = query._sl.FindAll(Function(se) (se.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK)
-                    If ob.Count = 0 Then
-                        ob = query._sl
-                    End If
-                    For Each se As SelectExpression In ob
-                        For Each cs As String In CType(query, IExecutionContext).FindColumn(mpe, se.GetIntoPropertyAlias)
-                            selSb.Append(cs)
-                        Next
-                        selSb.Append(",")
-                    Next
-                    If ob.Count > 0 Then
-                        selSb.Length -= 1
-                    End If
-                End If
-                selSb.Append(") as ").Append(QueryCmd.RowNumerColumn)
+                selSb.Append(s.MakeRowNumber(mpe, query))
             End If
 
             selSb.Append(" from ")
