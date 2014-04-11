@@ -1674,10 +1674,10 @@ l1:
                     Return jf.Right
                 ElseIf jf.Right.Property.Entity = root Then
                     Return jf.Left
-                ElseIf jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
-                    Return jf.Right
-                ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
-                    Return jf.Left
+                    'ElseIf jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
+                    '    Return jf.Right
+                    'ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity.GetRealType(mpe) = root.GetRealType(mpe) Then
+                    '    Return jf.Left
                 End If
             Next
 
