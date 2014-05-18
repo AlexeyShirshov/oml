@@ -21,7 +21,7 @@
     <SccProvider>SAK</SccProvider>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Worm.snk</AssemblyOriginatorKeyFile>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -37,6 +37,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -97,7 +98,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

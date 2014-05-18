@@ -8,30 +8,32 @@ namespace CoreFramework.Threading
     public class RWScopeMgr : IDisposable
     {
         protected bool _reader;
-        protected ReaderWriterLock _rw;
+        protected ReaderWriterLockSlim _rw;
         private Boolean disposedValue = false;        // To detect redundant calls
-        private System.Threading.LockCookie _downgrade_cookie;
-        private Boolean _downgrade;
+        /// <summary>
+        /// Acquare lock.
+        /// </summary>
+        /// <param name="reader">If true, acquares not upgradable reader lock</param>
+        /// <param name="rw"></param>
+        public RWScopeMgr(bool reader, ReaderWriterLockSlim rw) : 
+            this(reader, rw, false)
+        {
+        }
 
-        public RWScopeMgr(bool reader, ReaderWriterLock rw)
+        public RWScopeMgr(bool reader, ReaderWriterLockSlim rw, bool upgradable)
         {
             _reader = reader;
             _rw = rw;
             if (reader)
             {
-                rw.AcquireReaderLock(System.Threading.Timeout.Infinite);
+                if (upgradable)
+                    rw.EnterUpgradeableReadLock();
+                else
+                    rw.EnterReadLock();
             }
             else
             {
-                if (rw.IsReaderLockHeld)
-                {
-                    _downgrade_cookie = rw.UpgradeToWriterLock(System.Threading.Timeout.Infinite);
-                    _downgrade = true;
-                }
-                else
-                {
-                    rw.AcquireWriterLock(System.Threading.Timeout.Infinite);
-                }
+                rw.EnterWriteLock();
             }
         }
 
@@ -41,39 +43,36 @@ namespace CoreFramework.Threading
             {
                 if (_rw != null)
                 {
-                    if (_reader)
+                    if (_rw.IsReadLockHeld)
                     {
-                        _rw.ReleaseReaderLock();
+                        _rw.ExitReadLock();
+                    }
+                    else if (_rw.IsUpgradeableReadLockHeld)
+                    {
+                        _rw.ExitUpgradeableReadLock();
                     }
                     else
                     {
-                        if (_downgrade)
-                        {
-                            _downgrade = false;
-                            _rw.DowngradeFromWriterLock(ref _downgrade_cookie);
-                        }
-                        else
-                        {
-                            _rw.ReleaseWriterLock();
-                        }
+                        _rw.ExitWriteLock();
                     }
+                    _rw = null;
                 }
             }
             this.disposedValue = true;
         }
 
-        public static RWScopeMgr AcquareReaderLock(ReaderWriterLock rw)
+        public static RWScopeMgr AcquareReaderLock(ReaderWriterLockSlim rw)
         {
-            RWScopeMgr mgr = new RWScopeMgr(true, rw);
-            rw.AcquireReaderLock(System.Threading.Timeout.Infinite);
-            return mgr;
+            return new RWScopeMgr(true, rw);
         }
 
-        public static RWScopeMgr AcquareWriterLock(ReaderWriterLock rw)
+        public static RWScopeMgr AcquareWriterLock(ReaderWriterLockSlim rw)
         {
-            RWScopeMgr mgr = new RWScopeMgr(false, rw);
-            rw.AcquireWriterLock(System.Threading.Timeout.Infinite);
-            return mgr;
+            return new RWScopeMgr(false, rw);
+        }
+        public static RWScopeMgr AcquareUpgradableReaderLock(ReaderWriterLockSlim rw)
+        {
+            return new RWScopeMgr(true, rw, true);
         }
 
         public void Dispose()
@@ -86,10 +85,11 @@ namespace CoreFramework.Threading
     public class CSScopeMgr : IDisposable
     {
         private object _lock_obj;
-
+        private bool _flag;
         public CSScopeMgr(object lock_obj)
         {
-            System.Threading.Monitor.Enter(lock_obj);
+            _flag = false;
+            System.Threading.Monitor.Enter(lock_obj, ref _flag);
             _lock_obj = lock_obj;
         }
 
@@ -97,7 +97,66 @@ namespace CoreFramework.Threading
 
         public void Dispose()
         {
-            System.Threading.Monitor.Exit(_lock_obj);
+            if (_flag)
+                System.Threading.Monitor.Exit(_lock_obj);
+        }
+
+        #endregion
+    }
+
+    public class SpinLockRef
+    {
+        private SpinLock _sl = new SpinLock();
+
+        public bool IsHeldByCurrentThread
+        {
+            get
+            {
+                return _sl.IsHeldByCurrentThread;
+            }
+        }
+
+        public bool IsHeld
+        {
+            get
+            {
+                return _sl.IsHeld;
+            }
+        }
+
+        public void Enter(ref bool lockTaken)
+        {
+            _sl.Enter(ref lockTaken);
+        }
+
+        public void Exit()
+        {
+            _sl.Exit();
+        }
+    }
+
+    public class CSScopeMgrLite : IDisposable
+    {
+        private SpinLockRef _sl;
+        private bool _flag;
+        public CSScopeMgrLite(SpinLockRef sl)
+        {
+            _sl = sl;
+            _flag = false;
+            if (!_sl.IsHeldByCurrentThread)
+            {
+                //bool flag = false;
+                _sl.Enter(ref _flag);
+                //_flag = flag;
+            }
+        }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            if (_flag)
+                _sl.Exit();
         }
 
         #endregion
