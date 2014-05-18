@@ -104,7 +104,7 @@ Namespace Entities
         ''' </summary>
         ''' <returns>Возвращает объект в конструкторе которого создана блокировка на сущность. Блокировка снимается в методе <see cref="IDisposable.Dispose"/></returns>
         ''' <remarks>Необходимо использовать блокировку при дуступе к внутреним метаданными сущности, таким как <see cref="IEntity.ObjectState"/></remarks>
-        Function LockEntity() As IDisposable
+        Function AcquareLock() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         'Function CreateClone() As Entity
         'Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)

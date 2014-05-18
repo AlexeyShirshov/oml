@@ -57,7 +57,7 @@
     <CodeAnalysisRules>
     </CodeAnalysisRules>
     <UseVSHostingProcess>true</UseVSHostingProcess>
-    <DefineConstants>ExcludeFindMethods</DefineConstants>
+    <DefineConstants>ExcludeFindMethods, LoadDataParallel</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -182,6 +182,7 @@
     <Compile Include="DbMS\SP\QuerySP.vb" />
     <Compile Include="DbMS\SP\SPBase.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
+    <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
     <Compile Include="QueryCmd\db\MSSQLQueryCmd.vb" />
@@ -330,7 +331,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

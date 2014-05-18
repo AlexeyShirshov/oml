@@ -13,6 +13,7 @@ Imports Worm.Query
 Imports Worm.Expressions2
 Imports cc = Worm.Criteria.Core
 Imports System.Linq
+Imports System.Threading
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
@@ -368,9 +369,10 @@ Partial Public MustInherit Class OrmManager
     '    End Set
     'End Property
 
+    Private Shared _disposeLock As New SpinLockRef
     ' IDisposable
     Protected Overridable Overloads Sub Dispose(ByVal disposing As Boolean)
-        SyncLock Me.GetType
+        Using New CSScopeMgrLite(_disposeLock)
             If Not Me._disposed Then
                 ResetLocalStorage()
                 RaiseEvent ManagerGoingDown(Me)
@@ -384,7 +386,7 @@ Partial Public MustInherit Class OrmManager
                 Throw New OrmManagerException("Manager finalize stack: " & _callstack)
             End If
 #End If
-        End SyncLock
+        End Using
     End Sub
 
 #Region " IDisposable Support "
@@ -1617,7 +1619,9 @@ l1:
             Me.Load(obj)
             e = CType(_cache.FindObjectInCache(t, obj, ck, cb, dic, False, False), _ICachedEntity)
             If e IsNot Nothing Then
-                Assert(e.ObjectState <> ObjectState.NotFoundInSource, "Object {0} cannot be in NotFoundInSource state", e.ObjName)
+                If e.ObjectState = ObjectState.NotFoundInSource Then
+                    Assert(e.ObjectState <> ObjectState.NotFoundInSource, "Object {0} cannot be in NotFoundInSource state", e.ObjName)
+                End If
             Else
                 _cache.AddNonExistentObject(t, ck)
             End If
@@ -1839,7 +1843,7 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            Using obj.LockEntity
+            Using obj.AcquareLock
                 If obj.ObjectState = ObjectState.Modified OrElse (obj.ObjectState = ObjectState.Deleted AndAlso Not forseDelete) Then
                     Return False
                 End If
@@ -1865,8 +1869,15 @@ l1:
                 _cache.RegisterRemoval(obj, MappingEngine, cb)
             End Using
 
-            Assert(Not IsInCachePrecise(obj), "Object {0} must not be in cache", obj.ObjName)
-            Assert(obj.ObjectState <> ObjectState.Modified, "Object {0} cannot be in Modified state", obj.ObjName)
+            Dim f = Not IsInCachePrecise(obj)
+            If Not f Then
+                Assert(f, "Object {0} must not be in cache", obj.ObjName)
+            End If
+
+            If obj.ObjectState = ObjectState.Modified Then
+                Assert(obj.ObjectState <> ObjectState.Modified, "Object {0} cannot be in Modified state", obj.ObjName)
+            End If
+
         End Using
         Return True
     End Function
@@ -3584,7 +3595,7 @@ l1:
             Throw New ArgumentNullException("obj")
         End If
 
-        Using obj.LockEntity()
+        Using obj.AcquareLock()
             If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                 If Not InsertObject(obj) Then
                     Return Nothing
@@ -4463,7 +4474,7 @@ l1:
 
     Public Function AcceptChanges(ByVal e As _ICachedEntity, ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
         Dim mo As _ICachedEntity = Nothing
-        Using e.LockEntity
+        Using e.AcquareLock
             If e.ObjectState = Entities.ObjectState.Created Then 'OrElse e.ObjectState = Entities.ObjectState.Clone OrElse _state = Orm.ObjectState.NotLoaded Then
                 Throw New OrmObjectException(e.ObjName & "accepting changes allowed in state Modified, deleted or none")
             End If
@@ -4524,7 +4535,7 @@ l1:
     End Sub
 
     Public Shared Sub RejectChanges(ByVal e As _ICachedEntity, mpe As ObjectMappingEngine, cache As CacheBase)
-        Using e.LockEntity
+        Using e.AcquareLock
             e.RejectRelationChanges(Nothing)
 
             If e.ObjectState = ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created Then
@@ -4762,7 +4773,10 @@ l1:
     Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk As IEnumerable(Of PKDesc))
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
         If uc IsNot Nothing Then
-            Assert(uc.OriginalCopy Is Nothing, "OriginalCopy for {0} must not exists", e.ObjName)
+            If uc.OriginalCopy IsNot Nothing Then
+                Assert(uc.OriginalCopy Is Nothing, "OriginalCopy for {0} must not exists", e.ObjName)
+            End If
+
             Dim clone As IEntity = MappingEngine.CloneFullEntity(e, oschema)
             uc.OriginalCopy = CType(clone, ICachedEntity)
             'Using mc As IGetManager = GetMgr()
@@ -4815,7 +4829,7 @@ l1:
                         Using mc As IGetManager = e.GetMgr
                             If mc IsNot Nothing Then
                                 Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
-                                Dim oschema As IEntitySchema = e.GetEntitySchema(mpe)
+                                Dim oschema As IEntitySchema = e.GetEntitySchema(e.GetMappingEngine)
                                 If Not IsPropertyLoaded(e, propertyAlias, oschema.FieldColumnMap, mpe) Then
                                     mc.Manager.Load(e, oschema, propertyAlias)
                                 End If
@@ -4826,7 +4840,7 @@ l1:
                 End If
             End If
 
-            d = e.LockEntity
+            'd = e.AcquareLock
         End If
     End Sub
 
@@ -4860,7 +4874,7 @@ l1:
             If reader Then
                 PrepareRead(e, propertyAlias, d)
             Else
-                d = e.LockEntity
+                d = e.AcquareLock
                 Dim uc As IUndoChanges = CType(e, IUndoChanges)
                 StartUpdate(uc)
                 If Not uc.DontRaisePropertyChange AndAlso Not e.IsLoading Then
@@ -4909,19 +4923,23 @@ l1:
 
     Private Shared Sub InitLoadState(ByVal e As IPropertyLazyLoad, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
         If e.PropertyLoadState Is Nothing Then
-            'OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version)
-            e.PropertyLoadState = New BitArray(map.Count)
-            '_sver = If(mpe Is Nothing, "w-x", mpe.Version)
-            Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
-            If ce IsNot Nothing AndAlso ce.IsPKLoaded Then
-                For i As Integer = 0 To map.Count - 1
-                    If Not e.PropertyLoadState(i) Then
-                        If map(i).IsPK Then
-                            e.PropertyLoadState(i) = True
-                        End If
+            Using SyncHelper.AcquireDynamicLockSlim(e)
+                If e.PropertyLoadState Is Nothing Then
+                    'OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version)
+                    e.PropertyLoadState = New BitArray(map.Count)
+                    '_sver = If(mpe Is Nothing, "w-x", mpe.Version)
+                    Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
+                    If ce IsNot Nothing AndAlso ce.IsPKLoaded Then
+                        For i As Integer = 0 To map.Count - 1
+                            If Not e.PropertyLoadState(i) Then
+                                If map(i).IsPK Then
+                                    e.PropertyLoadState(i) = True
+                                End If
+                            End If
+                        Next
                     End If
-                Next
-            End If
+                End If
+            End Using
         End If
     End Sub
 
@@ -4933,7 +4951,9 @@ l1:
         End Get
         Set(ByVal value As Boolean)
             InitLoadState(ll, map, mpe)
-            ll.PropertyLoadState(idx) = value
+            SyncLock ll
+                ll.PropertyLoadState(idx) = value
+            End SyncLock
         End Set
     End Property
 
@@ -4955,16 +4975,20 @@ l1:
         'Using SyncHelper(False)
         Dim allloaded As Boolean = True
         If Not ll.IsLoaded OrElse ll.PropertyLoadState.Count <= loadedColumns Then
-            For i As Integer = 0 To map.Count - 1
-                If Not PropertyLoadState(ll, i, map, mpe) Then
-                    'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
-                    'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    allloaded = False
-                    Exit For
-                    'End If
+            Using SyncHelper.AcquireDynamicLockSlim(ll)
+                If Not ll.IsLoaded OrElse ll.PropertyLoadState.Count <= loadedColumns Then
+                    For i As Integer = 0 To map.Count - 1
+                        If Not PropertyLoadState(ll, i, map, mpe) Then
+                            'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
+                            'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                            allloaded = False
+                            Exit For
+                            'End If
+                        End If
+                    Next
+                    ll.IsLoaded = allloaded
                 End If
-            Next
-            ll.IsLoaded = allloaded
+            End Using
         End If
         Return allloaded
         'End Using
@@ -4973,7 +4997,7 @@ l1:
     Protected Shared Sub SetLoaded(ByVal ce As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal value As Boolean)
         Dim ll As IPropertyLazyLoad = TryCast(ce, IPropertyLazyLoad)
         If ll IsNot Nothing Then
-            Using ce.LockEntity
+            Using SyncHelper.AcquireDynamicLockSlim(ll)
                 Dim oschema As IEntitySchema = ce.GetEntitySchema(mpe)
 
                 Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
@@ -4989,6 +5013,7 @@ l1:
                 End If
                 ll.IsLoaded = value
                 'Assert(ll.IsLoaded = value,"Object {0}")
+                'End Using
             End Using
         End If
     End Sub
@@ -5081,7 +5106,7 @@ l1:
     Public Shared Sub CopyBody(ByVal [from] As Object, ByVal [to] As Object, ByVal oschema As IEntitySchema)
         Dim e As _IEntity = TryCast([to], _IEntity)
         If e IsNot Nothing Then
-            Using e.LockEntity
+            Using e.AcquareLock
                 e.BeginLoading()
                 If oschema Is Nothing Then
                     oschema = e.GetEntitySchema(e.GetMappingEngine)

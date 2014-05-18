@@ -86,7 +86,7 @@ Imports CoreFramework.Structures
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, gen, New OrmCache)
 #Else
-        Return New OrmDBManager(New OrmCache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+        Return New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=test", schema, gen, New OrmCache)
 #End If
     End Function
 

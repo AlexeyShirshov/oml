@@ -35,12 +35,13 @@ Namespace Collections
         Private _dic As IDictionary(Of TItemKey, TItem)
         Private _coll As IList(Of TItem)
         'Private _keyCount As Integer
-        Private _threshold As Integer = 5
-        'Private _rw As System.Threading.ReaderWriterLock
-
+        Private _threshold As Integer = 500
+        'Private _rw As System.Threading.ReaderWriterLockSlim
+        Private _sl As SpinLockRef
         Public Sub New()
             _coll = GetCollection()
-            '_rw = New System.Threading.ReaderWriterLock()
+            '_rw = New System.Threading.ReaderWriterLockSlim(Threading.LockRecursionPolicy.SupportsRecursion)
+            _sl = New SpinLockRef
         End Sub
 
         Public Sub New(ByVal threshold As Integer)
@@ -51,9 +52,9 @@ Namespace Collections
         Public Overridable Function SyncHelper(ByVal reader As Boolean) As IDisposable
             'Return New RWScopeMgr(reader, _rw)
 #If DebugLocks Then
-            Return New CSScopeMgr_Debug(Me, "d:\temp")
+                        Return New CSScopeMgr_Debug(Me, "d:\temp")
 #Else
-            Return New CSScopeMgr(Me)
+            Return New CSScopeMgrLite(_sl)
 #End If
         End Function
 
@@ -132,7 +133,7 @@ Namespace Collections
 
         Protected Sub Clear1() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of TItemKey, TItem)).Clear
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     _coll.Clear()
@@ -145,7 +146,7 @@ Namespace Collections
 
         Protected Function Contains1(ByVal item As System.Collections.Generic.KeyValuePair(Of TItemKey, TItem)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of TItemKey, TItem)).Contains
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Return GetItemFromCollection(item.Key, False) IsNot Nothing
@@ -178,7 +179,7 @@ Namespace Collections
 
         Protected Function Remove1(ByVal item As System.Collections.Generic.KeyValuePair(Of TItemKey, TItem)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of TItemKey, TItem)).Remove
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Return _coll.Remove(item.Value)
@@ -191,7 +192,7 @@ Namespace Collections
 
         Protected Sub Add2(ByVal key As TItemKey, ByVal value As TItem) Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Add
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Dim item As TItem = GetItemFromCollection(key, False)
@@ -225,7 +226,7 @@ Namespace Collections
         Default Public Overloads Property Item(ByVal key As TItemKey) As TItem Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Item
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Return GetItemFromCollection(key, True)
@@ -236,9 +237,20 @@ Namespace Collections
             End Get
             Set(ByVal value As TItem)
                 Using SyncHelper(False)
-                    CreateDictionary()
-                    If _dic IsNot Nothing Then
-                        _dic.Item(key) = value
+                    If _coll IsNot Nothing Then
+                        For Each l As TItem In _coll
+                            If GetKeyForItem(l).Equals(key) Then
+                                Remove(l)
+                                Add(value)
+                                Return
+                            End If
+                        Next
+                        Add(value)
+                    Else
+                        CreateDictionary()
+                        If _dic IsNot Nothing Then
+                            _dic.Item(key) = value
+                        End If
                     End If
                 End Using
             End Set
@@ -247,7 +259,7 @@ Namespace Collections
         Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of TItemKey) Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Keys
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Dim l As New List(Of TItemKey)
@@ -280,7 +292,7 @@ Namespace Collections
 
         Public Function TryGetValue(ByVal key As TItemKey, ByRef value As TItem) As Boolean Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).TryGetValue
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _dic IsNot Nothing Then
                     Return _dic.TryGetValue(key, value)
@@ -294,7 +306,7 @@ Namespace Collections
         Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TItem) Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Values
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Return _coll
@@ -311,7 +323,7 @@ Namespace Collections
 
         Public Sub Add(ByVal item As TItem) Implements System.Collections.Generic.ICollection(Of TItem).Add
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     _coll.Add(item)
@@ -327,7 +339,7 @@ Namespace Collections
 
         Public Sub Clear() Implements System.Collections.Generic.ICollection(Of TItem).Clear
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     _coll.Clear()
@@ -339,7 +351,7 @@ Namespace Collections
 
         Public Function Contains(ByVal item As TItem) As Boolean Implements System.Collections.Generic.ICollection(Of TItem).Contains
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Return _coll.Contains(item)
@@ -351,7 +363,7 @@ Namespace Collections
 
         Public Sub CopyTo(ByVal array() As TItem, ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of TItem).CopyTo
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     _coll.CopyTo(array, arrayIndex)
@@ -381,7 +393,7 @@ Namespace Collections
 
         Public Function Remove(ByVal item As TItem) As Boolean Implements System.Collections.Generic.ICollection(Of TItem).Remove
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Return _coll.Remove(item)
@@ -395,18 +407,23 @@ Namespace Collections
 
         Public Function IndexOf(ByVal item As TItemKey) As Integer
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
-                    Using e As IEnumerator(Of TItem) = _coll.GetEnumerator
-                        Dim i As Integer = 0
-                        Do While e.MoveNext
-                            If GetKeyForItem(e.Current).Equals(item) Then
-                                Return i
-                            End If
-                            i += 1
-                        Loop
-                    End Using
+                    'Using e As IEnumerator(Of TItem) = _coll.GetEnumerator
+                    '    Dim i As Integer = 0
+                    '    Do While e.MoveNext
+                    '        If GetKeyForItem(e.Current).Equals(item) Then
+                    '            Return i
+                    '        End If
+                    '        i += 1
+                    '    Loop
+                    'End Using
+                    For i = 0 To _coll.Count - 1
+                        If GetKeyForItem(_coll(i)).Equals(item) Then
+                            Return i
+                        End If
+                    Next
                 Else
                     Using e As IEnumerator(Of KeyValuePair(Of TItemKey, TItem)) = _dic.GetEnumerator
                         Dim i As Integer = 0
@@ -427,7 +444,7 @@ Namespace Collections
 
         Public Function IndexOf(ByVal item As TItem) As Integer Implements System.Collections.Generic.IList(Of TItem).IndexOf
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     Return _coll.IndexOf(item)
@@ -454,7 +471,7 @@ Namespace Collections
         Default Public Overloads Property Item(ByVal index As Integer) As TItem Implements System.Collections.Generic.IList(Of TItem).Item
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Return _coll.Item(index)
@@ -474,7 +491,7 @@ Namespace Collections
             End Get
             Set(ByVal value As TItem)
                 Using SyncHelper(False)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         _coll.Item(index) = value
@@ -494,7 +511,7 @@ Namespace Collections
 
         Public Sub RemoveAt(ByVal index As Integer) Implements System.Collections.Generic.IList(Of TItem).RemoveAt
             Using SyncHelper(False)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     _coll.RemoveAt(index)
@@ -511,7 +528,7 @@ Namespace Collections
 
         Public Sub CopyToArray(ByVal array As System.Array, ByVal index As Integer) Implements System.Collections.ICollection.CopyTo
             Using SyncHelper(True)
-                Invariant()
+                'Invariant()
 
                 If _coll IsNot Nothing Then
                     CType(_coll, ICollection).CopyTo(array, index)
@@ -578,7 +595,7 @@ Namespace Collections
         Protected ReadOnly Property Keys1() As System.Collections.ICollection Implements System.Collections.IDictionary.Keys
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Dim l As New ArrayList
@@ -601,7 +618,7 @@ Namespace Collections
         Protected ReadOnly Property [ICollection_Values]() As System.Collections.ICollection Implements System.Collections.IDictionary.Values
             Get
                 Using SyncHelper(True)
-                    Invariant()
+                    'Invariant()
 
                     If _coll IsNot Nothing Then
                         Return CType(_coll, System.Collections.ICollection)
@@ -700,16 +717,16 @@ Namespace Collections
 
 #End Region
 
-        <Conditional("DEBUG")> _
-        Protected Sub Invariant()
-            If _coll Is Nothing AndAlso _dic Is Nothing Then
-                Throw New IndexedCollectionException("Invalid state. Both nulls.")
-            End If
+        '<Conditional("DEBUG")> _
+        'Protected Sub Invariant()
+        '    If _coll Is Nothing AndAlso _dic Is Nothing Then
+        '        Throw New IndexedCollectionException("Invalid state. Both nulls.")
+        '    End If
 
-            If _coll IsNot Nothing AndAlso _dic IsNot Nothing AndAlso _coll.Count <> _threshold Then
-                Throw New IndexedCollectionException("Invalid state. Boths not nulls.")
-            End If
-        End Sub
+        '    If _coll IsNot Nothing AndAlso _dic IsNot Nothing AndAlso _coll.Count <> _threshold Then
+        '        Throw New IndexedCollectionException("Invalid state. Boths not nulls.")
+        '    End If
+        'End Sub
 
         Public Sub CopyTo(ByVal col As IndexedCollection(Of TItemKey, TItem))
             For Each i As TItem In Me

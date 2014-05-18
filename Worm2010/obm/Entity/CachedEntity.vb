@@ -1343,7 +1343,10 @@ l1:
                 If o Is Nothing Then
                     r = False
                 Else
-                    Assert(ObjectState = Entities.ObjectState.Modified, "Object {0} must be in Modified state", ObjName) ' OrElse _state = Orm.ObjectState.None
+                    If ObjectState <> Entities.ObjectState.Modified Then
+                        Assert(ObjectState = Entities.ObjectState.Modified, "Object {0} must be in Modified state", ObjName) ' OrElse _state = Orm.ObjectState.None
+                    End If
+
                     _upd.Added = True
                 End If
             ElseIf ObjectState = Entities.ObjectState.Deleted Then
@@ -1405,8 +1408,10 @@ l1:
                         Return False
                     End If
                 End If
+                If obj.ObjectState = Entities.ObjectState.Modified Then
+                    Assert(obj.ObjectState <> Entities.ObjectState.Modified, "Object {0} cannot be in Modified state", obj.ObjName)
+                End If
 
-                Assert(obj.ObjectState <> Entities.ObjectState.Modified, "Object {0} cannot be in Modified state", obj.ObjName)
                 obj.CreateClone4Delete(mgr)
                 'OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
                 'Dim modified As OrmBase = CloneMe()

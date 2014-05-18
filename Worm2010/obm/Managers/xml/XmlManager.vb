@@ -248,7 +248,7 @@ Namespace Xml
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Dim oo As T = obj
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            Using obj.LockEntity()
+            Using obj.AcquareLock()
                 obj.BeginLoading()
                 Dim pk As IEnumerable(Of PKDesc) = GetPKValues(orm, oschema)
                 If LoadPK(oschema, node, orm) Then
@@ -259,7 +259,7 @@ Namespace Xml
                     End If
 
                     'If withLoad Then
-                    Using obj.LockEntity()
+                    Using obj.AcquareLock()
                         'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
                         'If obj.IsLoaded Then obj.IsLoaded = False
                         LoadData(oschema, node, obj)

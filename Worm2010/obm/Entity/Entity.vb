@@ -56,7 +56,7 @@ Namespace Entities
         <NonSerialized()> _
         Private _cm As ICreateManager
         <NonSerialized()> _
-        Private _schema As ObjectMappingEngine
+        Private _mpe As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         Public Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChangedEx
@@ -152,7 +152,7 @@ Namespace Entities
 #End If
         End Function
 
-        Public Function LockEntity() As System.IDisposable Implements _IEntity.LockEntity
+        Public Function AcquareLock() As System.IDisposable Implements _IEntity.AcquareLock
             Return SyncHelper(False)
         End Function
 
@@ -259,7 +259,7 @@ Namespace Entities
             Dim mgr As OrmManager = GetCurrent()
             If mgr Is Nothing Then
                 If _cm IsNot Nothing Then
-                    Return New GetManagerDisposable(_cm.CreateManager(Me), _schema)
+                    Return New GetManagerDisposable(_cm.CreateManager(Me), _mpe)
                 Else
                     Dim a As New ManagerRequiredArgs
                     RaiseEvent ManagerRequired(Me, a)
@@ -268,21 +268,21 @@ Namespace Entities
                         Return Nothing
                     Else
                         If a.DisposeMgr Then
-                            Return New GetManagerDisposable(mgr, _schema)
+                            Return New GetManagerDisposable(mgr, _mpe)
                         Else
-                            Return New ManagerWrapper(mgr, _schema)
+                            Return New ManagerWrapper(mgr, _mpe)
                         End If
                     End If
                 End If
             Else
                 'don't dispose
-                Return New ManagerWrapper(mgr, _schema)
+                Return New ManagerWrapper(mgr, _mpe)
             End If
         End Function
 
         Protected Function GetMappingEngine() As ObjectMappingEngine Implements _IEntity.GetMappingEngine
-            If _schema IsNot Nothing Then
-                Return _schema
+            If _mpe IsNot Nothing Then
+                Return _mpe
             Else
                 Dim mgr As OrmManager = GetCurrent()
                 If mgr IsNot Nothing Then
@@ -315,10 +315,10 @@ Namespace Entities
 
         Public Property SpecificMappingEngine() As ObjectMappingEngine Implements _IEntity.SpecificMappingEngine
             Get
-                Return _schema
+                Return _mpe
             End Get
             Set(ByVal value As ObjectMappingEngine)
-                _schema = value
+                _mpe = value
             End Set
         End Property
 
@@ -348,7 +348,10 @@ Namespace Entities
 
         Protected Overridable Sub SetObjectState(ByVal value As ObjectState) Implements _IEntity.SetObjectState
             Using SyncHelper(False)
-                Assert(_state <> Entities.ObjectState.Deleted, "Object {0} cannot be in Deleted state", ObjName)
+                If _state = Entities.ObjectState.Deleted Then
+                    Assert(_state <> Entities.ObjectState.Deleted, "Object {0} cannot be in Deleted state", ObjName)
+                End If
+
                 If _state = Entities.ObjectState.Deleted Then
                     Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
                 End If
@@ -407,7 +410,7 @@ Namespace Entities
         'End Sub
 
         'Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
-        '    Using [to].LockEntity
+        '    Using [to].AcquareLock
         '        [to].BeginLoading()
         '        CopyProperties([from], [to], GetEntitySchema(GetMappingEngine()))
         '        [to].EndLoading()
@@ -437,11 +440,11 @@ Namespace Entities
         Public Function CreateCmd() As QueryCmd
             If _cm IsNot Nothing Then
                 Dim q As QueryCmd = New QueryCmd(_cm)
-                q.SpecificMappingEngine = _schema
+                q.SpecificMappingEngine = _mpe
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create()
-                q.SpecificMappingEngine = _schema
+                q.SpecificMappingEngine = _mpe
                 Return q
             End If
         End Function
@@ -450,11 +453,11 @@ Namespace Entities
             If _cm IsNot Nothing Then
                 Dim q As New QueryCmd(_cm)
                 q.Name = name
-                q.SpecificMappingEngine = _schema
+                q.SpecificMappingEngine = _mpe
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create(name)
-                q.SpecificMappingEngine = _schema
+                q.SpecificMappingEngine = _mpe
                 Return q
             End If
         End Function
@@ -575,7 +578,7 @@ Namespace Entities
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
 
             _state = Entities.ObjectState.Created
-            _schema = schema
+            _mpe = schema
         End Sub
 
         Protected Overridable Function GetEntitySchema(ByVal mpe As ObjectMappingEngine) As Meta.IEntitySchema Implements _IEntity.GetEntitySchema
