@@ -77,7 +77,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, stmt, cache)
 #Else
-        Return New OrmReadOnlyDBManager(cache, schema, stmt, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Return New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
 #End If
     End Function
 
@@ -86,7 +86,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager("Data Source=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, stmt, cache)
 #Else
-        Return New OrmReadOnlyDBManager(cache, schema, stmt, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Return New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
 #End If
     End Function
 
@@ -95,7 +95,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, cache)
 #Else
-        Return New OrmDBManager(cache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Return New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, cache)
 #End If
     End Function
 
@@ -110,7 +110,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmReadOnlyDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, GetCache)
 #Else
-        Dim mgr As New OrmReadOnlyDBManager(getCache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Dim mgr As New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetCache)
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr
@@ -121,7 +121,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, GetRWCache)
 #Else
-        Dim mgr As New OrmDBManager(getrwCache, schema, New SQLGenerator, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Dim mgr As New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetRWCache)
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr

@@ -13,6 +13,8 @@ Imports System.Collections.ObjectModel
 Imports Worm.Misc
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports System.Threading.Tasks
+Imports System.Threading
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -165,7 +167,7 @@ Namespace Database
 
                     Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                     Dim cols As Generic.List(Of SelectExpression) = Nothing
-                    Using obj.LockEntity()
+                    Using obj.AcquareLock()
                         Dim cmdtext As String = Nothing
                         Try
                             cmdtext = mgr.SQLGenerator.Insert(mgr.MappingEngine, obj, mgr.GetContextInfo, params, cols)
@@ -319,7 +321,7 @@ Namespace Database
                 'Dim t As Type = obj.GetType
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-                Using obj.LockEntity()
+                Using obj.AcquareLock()
                     Dim cmdtext As String = mgr.SQLGenerator.Delete(mgr.MappingEngine, obj, params, mgr.GetContextInfo)
                     If cmdtext.Length > 0 Then
                         Dim [error] As Boolean = True
@@ -1252,7 +1254,7 @@ l1:
                                         _rownum As Integer,
                                         _baseIdx As Integer)
 
-                                        Return LoadObjectFromDataReader(_obj, dr, _selectList,
+                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
                                             _entityDictionary, _modificationSync, _lock, _oschema,
                                             _propertyMap, _rownum, _baseIdx)
 
@@ -1338,7 +1340,7 @@ l1:
                                 _rownum As Integer,
                                 _baseIdx As Integer)
 
-                                Return LoadObjectFromDataReader(_obj, dr, _selectList,
+                                Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
                                     _entityDictionary, _modificationSync, _lock, _oschema,
                                     _propertyMap, _rownum, _baseIdx)
 
@@ -1879,7 +1881,7 @@ l1:
 #End If
                         Next
 
-                        Using obj.LockEntity
+                        Using obj.AcquareLock
                             obj.BeginLoading()
                             ParseValueFromStorage(isNull, att, obj, m, propertyAlias, oschema, map, sv, ll, fac)
 
@@ -2028,15 +2030,32 @@ l1:
                     'Else
                     '    arr = MappingEngine.GetSortedFieldList(original_type, oschema)
                     'End If
-                    Dim rownum As Integer = 0
                     Dim ft As New PerfCounter
+#If LoadDataParallel Then
+                    Dim sdf As New ienum_dra(dr)
+                    Dim po As New ParallelOptions() With {.MaxDegreeOfParallelism = 2}
+                    'Dim processed = 0
+                    Dim sl As New SpinLockRef
+                    Dim lr = Parallel.ForEach(sdf, po,
+                                         Sub(dra, ls, tc)
+                                             LoadFromResultSet(Of T)(values, selectList, dra, sl, entityDictionary, _loadedInLastFetch, dra.RowNum, oschema, fields_idx)
+                                             'Interlocked.Increment(processed)
+                                         End Sub)
+
+                    While sdf.rowNum < _loadedInLastFetch
+                        Thread.Sleep(0)
+                    End While
+#Else
+                    Dim rownum As Integer = 0
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(values, selectList, dr, entityDictionary, _loadedInLastFetch, rownum, oschema, fields_idx)
+                        LoadFromResultSet(Of T)(values, selectList, New DataReaderAbstraction(dr, rownum, dr), entityDictionary, _loadedInLastFetch, rownum, oschema, fields_idx)
                         rownum += 1
                         If dr.IsClosed Then
                             Throw New OrmManagerException(String.Format("LoadFromResultSet close reader or connection. Rownum is {0}", rownum))
                         End If
                     Loop
+#End If
+
                     _fetch = ft.GetTime
                 End Using
             Finally
@@ -2047,9 +2066,105 @@ l1:
             End Try
         End Sub
 
+        Class ienum_dra
+            Implements IEnumerable(Of IDataReaderAbstraction)
+
+            Private _dr As System.Data.Common.DbDataReader
+            Public rowNum As Integer = 0
+
+            Public Sub New(dr As System.Data.Common.DbDataReader)
+                _dr = dr
+            End Sub
+
+            Class fsdf
+                Implements IEnumerator(Of IDataReaderAbstraction)
+
+                Private _outer As ienum_dra
+
+                Public Sub New(outer As ienum_dra)
+                    _outer = outer
+                End Sub
+
+                Public ReadOnly Property Current As IDataReaderAbstraction Implements IEnumerator(Of IDataReaderAbstraction).Current
+                    Get
+                        Return New DataReaderAbstraction(_outer._dr, _outer.rowNum - 1, _outer)
+                    End Get
+                End Property
+
+                Public ReadOnly Property Current1 As Object Implements IEnumerator.Current
+                    Get
+                        Return Current
+                    End Get
+                End Property
+
+                Public Function MoveNext() As Boolean Implements IEnumerator.MoveNext
+                    Dim r = _outer._dr.Read
+                    If r Then
+                        _outer.rowNum += 1
+                    End If
+                    Return r
+                End Function
+
+                Public Sub Reset() Implements IEnumerator.Reset
+
+                End Sub
+
+#Region "IDisposable Support"
+                Private disposedValue As Boolean ' To detect redundant calls
+
+                ' IDisposable
+                Protected Overridable Sub Dispose(disposing As Boolean)
+                    If Not Me.disposedValue Then
+                        If disposing Then
+                            ' TODO: dispose managed state (managed objects).
+                        End If
+
+                        ' TODO: free unmanaged resources (unmanaged objects) and override Finalize() below.
+                        ' TODO: set large fields to null.
+                    End If
+                    Me.disposedValue = True
+                End Sub
+
+                ' TODO: override Finalize() only if Dispose(ByVal disposing As Boolean) above has code to free unmanaged resources.
+                'Protected Overrides Sub Finalize()
+                '    ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+                '    Dispose(False)
+                '    MyBase.Finalize()
+                'End Sub
+
+                ' This code added by Visual Basic to correctly implement the disposable pattern.
+                Public Sub Dispose() Implements IDisposable.Dispose
+                    ' Do not change this code.  Put cleanup code in Dispose(disposing As Boolean) above.
+                    Dispose(True)
+                    GC.SuppressFinalize(Me)
+                End Sub
+#End Region
+
+            End Class
+            Public Function GetEnumerator() As IEnumerator(Of IDataReaderAbstraction) Implements IEnumerable(Of IDataReaderAbstraction).GetEnumerator
+                Return New fsdf(Me)
+            End Function
+
+            Public Function GetEnumerator1() As IEnumerator Implements IEnumerable.GetEnumerator
+                Return GetEnumerator()
+            End Function
+        End Class
+
+        'Private Iterator Function GetDataReader(dr As System.Data.Common.DbDataReader) As IEnumerable(Of IDataReaderAbstraction)
+        '    Do While dr.Read
+        '        'If dr.IsClosed Then
+        '        '    Throw New OrmManagerException(String.Format("LoadFromResultSet close reader or connection. Rownum is {0}", rownum))
+        '        'End If
+        '        If dr.IsClosed Then
+        '            Return
+        '        End If
+
+        '        Yield New DataReaderAbstraction(dr)
+        '    Loop
+        'End Function
         Protected Friend Sub LoadFromResultSet(Of T As {New})( _
             ByVal values As IList, ByVal selectList As IList(Of SelectExpression), _
-            ByVal dr As System.Data.Common.DbDataReader, _
+            ByVal dr As IDataReaderAbstraction, valuesLock As SpinLockRef,
             ByVal entityDictionary As IDictionary, ByRef loaded As Integer, ByVal rownum As Integer, _
             ByVal oschema As IEntitySchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
@@ -2058,7 +2173,7 @@ l1:
                 Dim obj As New T
                 Dim entity As _IEntity = TryCast(obj, _IEntity)
                 If entity IsNot Nothing Then RaiseObjectCreated(entity)
-                Dim ro As Object = LoadObjectFromDataReader(obj, dr, selectList, entityDictionary, False, lock, oschema, fields_idx, rownum)
+                Dim ro As Object = LoadObjectFromDataReader(obj, dr, selectList, True, entityDictionary, False, lock, oschema, fields_idx, rownum)
                 If entity IsNot Nothing Then
                     AfterLoadingProcess(entity, CType(ro, _IEntity))
                 End If
@@ -2070,10 +2185,28 @@ l1:
 #End If
                 Dim orm As _ICachedEntity = TryCast(ro, _ICachedEntity)
                 If orm Is Nothing OrElse orm.IsPKLoaded Then
+#If LoadDataParallel Then
+                    Using New CSScopeMgrLite(valuesLock)
+                        If values.Count <= rownum Then
+                            For i = values.Count To rownum - 1
+                                values.Add(Nothing)
+                            Next
+                            values.Add(ro)
+                        Else
+                            values(rownum) = ro
+                        End If
+
+                        If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
+                            loaded += 1
+                        End If
+                    End Using
+#Else
                     values.Add(ro)
+
                     If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
                         loaded += 1
                     End If
+#End If
                 End If
             Finally
                 If lock IsNot Nothing Then
@@ -2107,20 +2240,35 @@ l1:
         ''' 2.2.1 Если это загрузка объекта при модификации, сохраняем копию старого объекта
         ''' 3. Если первчиный ключ не загружен, но это загрузка объекта при модификации, сохраняем копию старого объекта
         ''' </remarks>
-        Protected Function LoadObjectFromDataReader(ByVal obj As Object, ByVal dr As System.Data.Common.DbDataReader, _
-            ByVal selectList As IList(Of SelectExpression), _
+        Protected Function LoadObjectFromDataReader(ByVal obj As Object, ByVal dr As IDataReaderAbstraction, _
+            ByVal selectList As IList(Of SelectExpression), parallel As Boolean,
             ByVal entityDictionary As IDictionary, ByVal modificationSync As Boolean, ByRef lock As IDisposable, _
             ByVal oschema As IEntitySchema,
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
             ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As Object
 
-            If selectList.Count > dr.FieldCount Then
-                Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", dr.FieldCount, selectList.Count))
+#If LoadDataParallel Then
+            Dim fldCount = 0
+            If parallel Then
+                'SyncLock dr.LockObject
+                fldCount = dr.FieldCount
+                'End SyncLock
+            Else
+                fldCount = dr.FieldCount
+            End If
+#Else
+            Dim fldCount = dr.FieldCount
+#End If
+
+            If selectList.Count > fldCount Then
+                Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", fldCount, selectList.Count))
             End If
 
             Dim entity As _IEntity = TryCast(obj, _IEntity)
             If entity IsNot Nothing Then
-                Assert(entity.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", entity.ObjName)
+                If entity.ObjectState = ObjectState.Deleted Then
+                    Assert(entity.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", entity.ObjName)
+                End If
 
                 entity.SetMgrString(IdentityString)
             End If
@@ -2140,7 +2288,7 @@ l1:
                 If ce IsNot Nothing AndAlso modificationSync Then oldpk = GetPKValues(ce, Nothing)
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
-                    d = entity.LockEntity
+                    d = entity.AcquareLock
                 End If
                 Using d
                     If entity IsNot Nothing Then entity.BeginLoading()
@@ -2207,16 +2355,46 @@ l2:
                             pk_count += 1
                             If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
                                 Dim te As TableExpression = CType(se.Expression, TableExpression)
+#If LoadDataParallel Then
+                                If parallel Then
+                                    Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                        If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                            idx = dr.GetOrdinal(te.SourceField)
+                                        End If
+                                    End Using
+                                Else
+                                    If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                        idx = dr.GetOrdinal(te.SourceField)
+                                    End If
+                                End If
+#Else
                                 If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                     idx = dr.GetOrdinal(te.SourceField)
                                 End If
+#End If
                             End If
-                            Dim value As Object = dr.GetValue(idx)
+                            Dim value As Object = Nothing
+                            Dim isnull As Boolean = False
+#If LoadDataParallel Then
+                            If parallel Then
+                                'SyncLock dr.LockObject
+                                value = dr.GetValue(idx)
+                                isnull = dr.IsDBNull(idx)
+                                'End SyncLock
+                            Else
+                                value = dr.GetValue(idx)
+                                isnull = dr.IsDBNull(idx)
+                            End If
+#Else
+                            value = dr.GetValue(idx)
+                            isnull = dr.IsDBNull(idx)
+#End If
+
                             If fv IsNot Nothing Then
                                 value = fv.CreateValue(oschema, m, propertyAlias, value)
                             End If
 
-                            MappingEngine.AssignValue2PK(obj, dr.IsDBNull(idx), oschema, propertyMap, ll, m, propertyAlias, value)
+                            MappingEngine.AssignValue2PK(obj, isnull, oschema, propertyMap, ll, m, propertyAlias, value)
                         End If
                     Next
                 End Using
@@ -2303,7 +2481,7 @@ l2:
 
                 If pk_count < selectList.Count Then
 
-                    If entity IsNot Nothing Then lock = entity.LockEntity
+                    If entity IsNot Nothing Then lock = entity.AcquareLock
 #If TRACELOADING Then
                     If existing AndAlso obj.IsLoading Then
                         Throw New OrmManagerException(obj.ObjName & "is already loading" & CType(obj, Entity)._lstack) 
@@ -2328,18 +2506,47 @@ l2:
                             Dim sv(m.SourceFields.Count - 1) As PKDesc
                             If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
                                 Dim te As TableExpression = CType(se.Expression, TableExpression)
+#If LoadDataParallel Then
+                                If parallel Then
+                                    Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                        If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                            idx = dr.GetOrdinal(te.SourceField)
+                                        End If
+                                    End Using
+                                Else
+                                    If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                        idx = dr.GetOrdinal(te.SourceField)
+                                    End If
+                                End If
+#Else
                                 If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                     idx = dr.GetOrdinal(te.SourceField)
                                 End If
+#End If
                             End If
                             Dim isNull As Boolean = True
                             For k As Integer = 0 To sv.Length - 1
-                                Dim value As Object = dr.GetValue(idx)
+                                Dim value As Object = Nothing
+                                Dim fldNull = False
+#If LoadDataParallel Then
+                                If parallel Then
+                                    'SyncLock dr.LockObject
+                                    value = dr.GetValue(idx)
+                                    fldNull = dr.IsDBNull(idx + k)
+                                    'End SyncLock
+                                Else
+                                    value = dr.GetValue(idx)
+                                    fldNull = dr.IsDBNull(idx + k)
+                                End If
+#Else
+                                value = dr.GetValue(idx)
+                                fldNull = dr.IsDBNull(idx + k)
+#End If
                                 If fv IsNot Nothing Then
                                     value = fv.CreateValue(oschema, m, propertyAlias, value)
                                 End If
                                 sv(k) = New PKDesc(m.SourceFields(k).PrimaryKey, value)
-                                If isNull AndAlso Not dr.IsDBNull(idx + k) Then
+                                If isNull AndAlso Not fldNull Then
                                     isNull = False
                                 End If
                                 'If String.IsNullOrEmpty(propertyAlias) Then
@@ -2384,7 +2591,7 @@ l2:
             Finally
                 If entity IsNot Nothing Then
                     If lock Is Nothing Then
-                        lock = entity.LockEntity
+                        lock = entity.AcquareLock
                     End If
                     entity.EndLoading()
                 End If

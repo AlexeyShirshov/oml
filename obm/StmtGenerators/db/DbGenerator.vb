@@ -508,7 +508,7 @@ Namespace Database
                 Throw New DbGeneratorException("Generator doesn't support multiline statements")
             End If
 
-            Using obj.LockEntity()
+            Using obj.AcquareLock()
                 Dim del_cmd As New StringBuilder
                 dbparams = Nothing
 
@@ -667,7 +667,7 @@ Namespace Database
                 Throw New ArgumentNullException("obj")
             End If
 
-            Using obj.LockEntity()
+            Using obj.AcquareLock()
                 Dim ins_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.ObjectState = ObjectState.Created Then
@@ -859,7 +859,7 @@ l1:
 
             Dim le As ILastError = TryCast(Me, ILastError)
 
-            Using obj.LockEntity()
+            Using obj.AcquareLock()
                 Dim upd_cmd As New StringBuilder
                 dbparams = Nothing
                 If originalCopy IsNot Nothing Then

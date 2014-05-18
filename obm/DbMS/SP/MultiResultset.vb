@@ -5,6 +5,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports System.Threading
 
 Namespace Database.Storedprocs
 
@@ -31,6 +32,7 @@ Namespace Database.Storedprocs
             Private _cm As Collections.IndexedCollection(Of String, MapField2Column)
             'Private _cols As List(Of EntityPropertyAttribute)
             Private _entityDictionary As IDictionary
+            Private _sl As SpinLockRef
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
@@ -40,6 +42,7 @@ Namespace Database.Storedprocs
                 Dim original_type As Type = GetType(T)
                 If _l Is Nothing Then
                     _l = New List(Of T)
+                    _sl = New SpinLockRef
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     _oschema = mpe.GetEntitySchema(original_type)
                     _cm = _oschema.FieldColumnMap
@@ -47,7 +50,7 @@ Namespace Database.Storedprocs
                     _entityDictionary = mgr.GetDictionary(original_type)
                 End If
                 Dim loaded As Integer
-                mgr.LoadFromResultSet(Of T)(_l, GetColumns, dr, _entityDictionary, loaded, _l.Count, _oschema, _cm)
+                mgr.LoadFromResultSet(Of T)(_l, GetColumns, New DataReaderAbstraction(dr, _l.Count, dr), _sl, _entityDictionary, loaded, _l.Count, _oschema, _cm)
                 _loaded += loaded
             End Sub
 
@@ -112,7 +115,7 @@ Namespace Database.Storedprocs
 #End Region
 
         Protected Sub New(ByVal cache As Boolean)
-            MyBase.new(cache)
+            MyBase.New(cache)
         End Sub
 
         Protected Sub New(ByVal timeout As TimeSpan)
@@ -120,7 +123,7 @@ Namespace Database.Storedprocs
         End Sub
 
         Protected Sub New()
-            MyBase.new(True)
+            MyBase.New(True)
         End Sub
 
         Protected MustOverride Function CreateDescriptor(ByVal resultsetIdx As Integer) As IResultSetDescriptor

@@ -8,6 +8,7 @@ Imports System.ComponentModel
 Imports Worm.Criteria.Core
 Imports Worm.Query
 Imports System.Linq
+Imports System.Threading
 
 #Const TraceSetState = False
 
@@ -318,6 +319,8 @@ Namespace Entities
         <NonSerialized()> _
         Protected Friend _relations As New List(Of Relation)
 
+        <NonSerialized()> _
+        Private Shared _relationLock As New SpinLockRef
 #Region " Protected functions "
 
         Protected Overridable ReadOnly Property _HasChanges() As Boolean Implements IRelations.HasChanges
@@ -434,7 +437,7 @@ Namespace Entities
             For Each rl As Relation In _relations
                 Dim el As M2MRelation = TryCast(rl, M2MRelation)
 
-                SyncLock "1efb139gf8bh"
+                Using New CSScopeMgrLite(_relationLock)
                     If el IsNot Nothing Then
                         For Each o As ISinglePKEntity In rl.Added
                             'Dim otherKey As String = el.Key
@@ -489,7 +492,7 @@ Namespace Entities
                             End If
                         End If
                     End If
-                End SyncLock
+                End Using
             Next
         End Sub
 
@@ -725,7 +728,7 @@ Namespace Entities
         End Function
 
         Protected Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation Implements IRelations.NormalizeRelation
-            Using LockEntity()
+            Using AcquareLock()
                 If _relations.Count > 0 Then
                     For Each rl As Relation In _relations
                         If rl.MainType Is newRel.MainType AndAlso rl.MainId.Equals(newRel.MainId) AndAlso Object.Equals(rl.Relation.Entity, newRel.Relation.Entity) AndAlso Object.Equals(rl.Relation.Key, newRel.Relation.Key) AndAlso Object.Equals(rl.Relation.Column, newRel.Relation.Column) Then
@@ -760,7 +763,7 @@ Namespace Entities
         End Function
 
         Protected Sub AddRel(ByVal rel As Relation)
-            Using LockEntity()
+            Using AcquareLock()
                 For Each rl As Relation In _relations
                     If rel.Equals(rl) Then
                         Return
@@ -850,7 +853,7 @@ Namespace Entities
                         'End If
                         'Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         Dim el2 As M2MRelation = CType(el, M2MRelation).GetRevert(Nothing, ke)
-                        SyncLock "1efb139gf8bh"
+                        Using New CSScopeMgrLite(_relationLock)
                             If Not el2.Added.Contains(Me) Then
                                 If el.Deleted.Contains(obj) Then
                                     el.Deleted.Remove(obj)
@@ -874,9 +877,9 @@ Namespace Entities
                                     End If
                                 End If
                             End If
-                        End SyncLock
+                        End Using
                     Else
-                        SyncLock "1efb139gf8bh"
+                        Using New CSScopeMgrLite(_relationLock)
                             If el.Deleted.Contains(obj) Then
                                 el.Deleted.Remove(obj)
                             Else
@@ -896,7 +899,7 @@ Namespace Entities
                                     End If
                                 End Using
                             End If
-                        End SyncLock
+                        End Using
                     End If
                 End If
             End Using
@@ -935,7 +938,7 @@ Namespace Entities
                         'End If
                         'Dim el2 As M2MRelation = CType(ke.GetRelation(New M2MRelationDesc(Me.GetType, otherKey)), M2MRelation)
                         Dim el2 As M2MRelation = CType(el, M2MRelation).GetRevert(Nothing, ke)
-                        SyncLock "1efb139gf8bh"
+                        Using New CSScopeMgrLite(_relationLock)
                             If Not el2.Deleted.Contains(Me) Then
                                 If el.Added.Contains(obj) Then
                                     el.Added.Remove(obj)
@@ -959,9 +962,9 @@ Namespace Entities
                                     End If
                                 End If
                             End If
-                        End SyncLock
+                        End Using
                     Else
-                        SyncLock "1efb139gf8bh"
+                        Using New CSScopeMgrLite(_relationLock)
                             If el.Added.Contains(obj) Then
                                 el.Added.Remove(obj)
                             Else
@@ -981,7 +984,7 @@ Namespace Entities
                                     End Using
                                 End If
                             End If
-                        End SyncLock
+                        End Using
                     End If
                 End If
             End Using
@@ -1047,7 +1050,7 @@ Namespace Entities
         End Property
 
         Public Function GetRelation(ByVal desc As RelationDesc) As Entities.Relation Implements IRelations.GetRelation
-            Using LockEntity()
+            Using AcquareLock()
                 For Each rl As Relation In _relations
                     If rl.Relation.Equals(desc) Then
                         Return rl
@@ -1082,7 +1085,7 @@ Namespace Entities
 
         Public Function GetRelation(ByVal en As String, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Dim el As Relation = Nothing
-            Using LockEntity()
+            Using AcquareLock()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
                     If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
@@ -1130,7 +1133,7 @@ Namespace Entities
 
         Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Entities.Relation Implements IRelations.GetRelation
             Dim el As Relation = Nothing
-            Using LockEntity()
+            Using AcquareLock()
                 For Each rl As Relation In _relations
                     Dim e As M2MRelation = TryCast(rl, M2MRelation)
                     If e IsNot Nothing AndAlso M2MRelationDesc.CompareKeys(e.Key, key) Then
