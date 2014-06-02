@@ -349,8 +349,14 @@ Namespace Cache
             Else
                 Dim l As New Generic.List(Of WeakEntityReference)
                 Dim t As Type = Nothing
-                For Each o As ICachedEntity In objects
-                    If t Is Nothing Then t = o.GetType
+                For Each e In objects
+                    If t Is Nothing AndAlso e IsNot Nothing Then
+                        t = e.GetType
+                        If Not GetType(ICachedEntity).IsAssignableFrom(t) Then
+                            Return objects
+                        End If
+                    End If
+                    Dim o = CType(e, ICachedEntity)
                     l.Add(New WeakEntityReference(o))
                 Next
                 Return New WeakEntityList(l, t)
