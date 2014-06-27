@@ -161,6 +161,14 @@ Namespace Query
             Return New PredicateLink(New Condition.ConditionConstructor).and_not_exists(t, gf.Filter)
         End Function
 
+        Public Shared Function exists(ByVal e As EntityUnion, ByVal gf As IGetFilter) As PredicateLink
+            Return New PredicateLink(New Condition.ConditionConstructor).and_exists(e, gf.Filter)
+        End Function
+
+        Public Shared Function not_exists(ByVal e As EntityUnion, ByVal gf As IGetFilter) As PredicateLink
+            Return New PredicateLink(New Condition.ConditionConstructor).and_not_exists(e, gf.Filter)
+        End Function
+
         'Public Shared Function exists(ByVal t As Type, ByVal gf As IGetFilter, ByVal joins() As QueryJoin) As PredicateLink
         '    Return New PredicateLink(New Condition.ConditionConstructor).and_exists(t, gf.Filter, joins)
         'End Function
