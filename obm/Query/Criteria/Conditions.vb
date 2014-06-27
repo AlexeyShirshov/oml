@@ -176,7 +176,18 @@ Namespace Criteria.Conditions
             If _right Is Nothing Then
                 Return _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
             End If
-            Return "(" & _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname) & ")"
+            Dim left = _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
+            Dim right = _right.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
+
+            If Not String.IsNullOrEmpty(left) AndAlso Not String.IsNullOrEmpty(right) Then
+                Return "(" & left & Condition2String() & right & ")"
+            ElseIf Not String.IsNullOrEmpty(left) Then
+                Return left
+            ElseIf Not String.IsNullOrEmpty(right) Then
+                Return right
+            Else
+                Return String.Empty
+            End If
         End Function
 
         Protected Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition

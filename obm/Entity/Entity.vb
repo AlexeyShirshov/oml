@@ -437,7 +437,7 @@ Namespace Entities
 #End Region
 
 #Region " CreateCmd "
-        Public Function CreateCmd() As QueryCmd
+        Public Function CreateCmd() As QueryCmd 'Implements IDataContext.CreateQuery
             If _cm IsNot Nothing Then
                 Dim q As QueryCmd = New QueryCmd(_cm)
                 q.SpecificMappingEngine = _mpe
@@ -486,15 +486,15 @@ Namespace Entities
         End Function
 
         Public Shared Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
-            If GetType(ISinglePKEntity).IsAssignableFrom(Type) Then
-                Return CreateKeyEntity(pk(0).Value, Type, Cache, mpe)
-            ElseIf GetType(ICachedEntity).IsAssignableFrom(Type) Then
-                Return CreateEntity(pk, Type, Cache, mpe)
-            ElseIf GetType(IEntity).IsAssignableFrom(Type) Then
-                Return CreateEntity(Type, Cache, mpe)
+            If GetType(ISinglePKEntity).IsAssignableFrom(type) Then
+                Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
+            ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
+                Return CreateEntity(pk, type, cache, mpe)
+            ElseIf GetType(IEntity).IsAssignableFrom(type) Then
+                Return CreateEntity(type, cache, mpe)
             Else
-                Dim e As Object = Activator.CreateInstance(Type)
-                Dim oschema As IEntitySchema = mpe.GetEntitySchema(Type)
+                Dim e As Object = Activator.CreateInstance(type)
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
                 For Each p As PKDesc In pk
                     ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
                 Next
@@ -598,6 +598,20 @@ Namespace Entities
         Protected Sub RaiseMVVMPropertyChanged(propName As String)
             RaiseEvent PropertyChanged(Me, New System.ComponentModel.PropertyChangedEventArgs(propName))
         End Sub
+
+        'Public Function CreateManager1(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
+
+        'End Function
+
+        'Public Event CreateManagerEvent(sender As ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements ICreateManager.CreateManagerEvent
+
+        'Public ReadOnly Property Cache As CacheBase Implements IDataContext.Cache
+        '    Get
+
+        '    End Get
+        'End Property
+
+        'Public Property Context As Object Implements IDataContext.Context
 
     End Class
 

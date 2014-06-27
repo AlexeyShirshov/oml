@@ -406,6 +406,9 @@ Namespace Database
                     With cmd
                         .CommandText = mgr.SQLGenerator.Delete(mgr.MappingEngine, t, f, params)
                         .CommandType = System.Data.CommandType.Text
+                        If mgr.CommandTimeout.HasValue Then
+                            .CommandTimeout = mgr.CommandTimeout.Value
+                        End If
                         params.AppendParams(.Parameters)
                     End With
 
@@ -2032,7 +2035,8 @@ l1:
                     'End If
                     Dim ft As New PerfCounter
 #If LoadDataParallel Then
-                    Dim sdf As New ienum_dra(dr)
+                    Dim startRowNum = values.Count
+                    Dim sdf As New ienum_dra(dr, startRowNum)
                     Dim po As New ParallelOptions() With {.MaxDegreeOfParallelism = 2}
                     'Dim processed = 0
                     Dim sl As New SpinLockRef
@@ -2042,7 +2046,7 @@ l1:
                                              'Interlocked.Increment(processed)
                                          End Sub)
 
-                    While sdf.rowNum < _loadedInLastFetch
+                    While sdf.rowNum - startRowNum < _loadedInLastFetch
                         Thread.Sleep(0)
                     End While
 #Else
@@ -2074,6 +2078,11 @@ l1:
 
             Public Sub New(dr As System.Data.Common.DbDataReader)
                 _dr = dr
+            End Sub
+
+            Public Sub New(dr As System.Data.Common.DbDataReader, rowNum As Integer)
+                _dr = dr
+                Me.rowNum = rowNum
             End Sub
 
             Class fsdf

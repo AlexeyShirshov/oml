@@ -266,10 +266,14 @@ End Class
 Public Class DataContext
     Inherits DataContextBase
 
-    Private _del As CreateManagerDelegate
+    Private _del As ICreateManager
     Private _delEx As CreateManagerDelegateEx
 
     Public Sub New(ByVal getMgr As CreateManagerDelegate)
+        _del = New CreateManager(getMgr)
+    End Sub
+
+    Public Sub New(ByVal getMgr As ICreateManager)
         _del = getMgr
     End Sub
 
@@ -290,7 +294,7 @@ Public Class DataContext
 
     Public Overrides Function CreateOrmManager() As OrmManager
         If _del IsNot Nothing Then
-            Dim m As OrmManager = _del()
+            Dim m As OrmManager = _del.CreateManager(Me)
             m.GetCreateManager = Me
             Return m
         ElseIf _delEx IsNot Nothing Then
@@ -305,7 +309,7 @@ Public Class DataContext
     Public Overrides ReadOnly Property Cache As Cache.CacheBase
         Get
             If _del IsNot Nothing Then
-                Using mgr As OrmManager = _del()
+                Using mgr As OrmManager = _del.CreateManager(Me)
                     Return mgr.Cache
                 End Using
             ElseIf _delEx IsNot Nothing Then
@@ -319,7 +323,7 @@ Public Class DataContext
     Public Overrides ReadOnly Property MappingEngine As ObjectMappingEngine
         Get
             If _del IsNot Nothing Then
-                Using mgr As OrmManager = _del()
+                Using mgr As OrmManager = _del.CreateManager(Me)
                     Return mgr.MappingEngine
                 End Using
             ElseIf _delEx IsNot Nothing Then
@@ -334,7 +338,7 @@ Public Class DataContext
     Public Overrides ReadOnly Property StmtGenerator As StmtGenerator
         Get
             If _del IsNot Nothing Then
-                Using mgr As OrmManager = _del()
+                Using mgr As OrmManager = _del.CreateManager(Me)
                     Return mgr.StmtGenerator
                 End Using
             ElseIf _delEx IsNot Nothing Then

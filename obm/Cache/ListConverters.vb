@@ -478,14 +478,16 @@ Namespace Cache
             Dim wm As WeakEntityMatrix = CType(weak_list, WeakEntityMatrix)
             Dim r As New List(Of ReadOnlyCollection(Of _IEntity))
             Dim dic As New Dictionary(Of Type, IListEdit)
+            Dim dicCache As New Dictionary(Of Type, IDictionary)
             For i As Integer = start To Math.Min(start + length, wm.Count) - 1
                 Dim wl As WeakEntityList = wm(i)
                 Dim row As New List(Of _IEntity)
-                Dim odic As IDictionary = Nothing
                 For j As Integer = 0 To wl.List.Count - 1
                     Dim wr As WeakEntityReference = wl.List(j)
-                    If odic Is Nothing Then
+                    Dim odic As IDictionary = Nothing
+                    If Not dicCache.TryGetValue(wr.EntityType, odic) Then
                         odic = mgr.Cache.GetOrmDictionary(wr.EntityType, mgr.MappingEngine)
+                        dicCache(wr.EntityType) = odic
                     End If
                     Dim o As ICachedEntity = wr.GetObject(mgr, odic)
                     If o IsNot Nothing Then
