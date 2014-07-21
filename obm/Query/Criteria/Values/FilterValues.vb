@@ -783,10 +783,16 @@ Namespace Criteria.Values
 
         Public Overrides Function _ToString() As String
             If String.IsNullOrEmpty(_str) Then
+                If Value Is Nothing Then
+                    Return "nothing"
+                End If
                 Dim l As New List(Of String)
                 For Each o As Object In Value
                     l.Add(o.ToString)
                 Next
+                If l.Count = 0 Then
+                    Return "empty"
+                End If
                 l.Sort()
                 Dim sb As New StringBuilder
                 For Each s As String In l
@@ -806,6 +812,10 @@ Namespace Criteria.Values
             'Else
             '    r = IEvaluableValue.EvalResult.NotFound
             'End If
+
+            If Value Is Nothing Then
+                Return IEvaluableValue.EvalResult.Found
+            End If
 
             Select Case template.Operation
                 Case FilterOperation.In
@@ -867,7 +877,11 @@ Namespace Criteria.Values
                 sb.Append(pname).Append(",")
                 idx += 1
             Next
-            sb.Length -= 1
+            If sb.Length = 0 Then
+                sb.Append("NULL")
+            Else
+                sb.Length -= 1
+            End If
             sb.Insert(0, "(").Append(")")
             Return sb.ToString
         End Function
@@ -875,9 +889,9 @@ Namespace Criteria.Values
         Public Overrides ReadOnly Property ShouldUse() As Boolean
             Get
                 If Value IsNot Nothing Then
-                    For Each s As Object In Value
-                        Return True
-                    Next
+                    'For Each s As Object In Value
+                    Return True
+                    'Next
                 End If
                 Return False
             End Get
