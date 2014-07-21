@@ -343,6 +343,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Implements IListEdit, ComponentModel.ITypedList
 
     Protected _l As List(Of T)
+    Friend _sl As New SpinLockRef
 
     Private ReadOnly Property _List() As IList Implements IListEdit.List
         Get
@@ -390,26 +391,35 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     End Sub
 
     Public Sub Sort(ByVal cs As IComparer(Of T))
-        _l.Sort(cs)
+        Using New CSScopeMgrLite(_sl)
+            _l.Sort(cs)
+        End Using
     End Sub
 
     Private Sub _Add(ByVal o As Entities.IEntity) Implements IListEdit.Add
-        CType(_l, IList).Add(o)
+        Using New CSScopeMgrLite(_sl)
+            CType(_l, IList).Add(o)
+        End Using
         RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, o))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
     Private Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity) Implements IListEdit.Insert
-        CType(_l, IList).Insert(pos, o)
+        Using New CSScopeMgrLite(_sl)
+            CType(_l, IList).Insert(pos, o)
+        End Using
         RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, o, pos))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
     Private Overloads Sub Remove(ByVal o As Entities.IEntity) Implements IListEdit.Remove
-        Dim pos As Integer = CType(_l, IList).IndexOf(o)
-        CType(_l, IList).RemoveAt(pos)
+        Dim pos As Integer = 0
+        Using New CSScopeMgrLite(_sl)
+            pos = CType(_l, IList).IndexOf(o)
+            CType(_l, IList).RemoveAt(pos)
+        End Using
         RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, o, pos))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
@@ -475,8 +485,10 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
 
     Public Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
-            Dim lst As List(Of T) = _l.GetRange(index, count)
-            Return New ReadOnlyObjectList(Of T)(lst)
+            Using New CSScopeMgrLite(_sl)
+                Dim lst As List(Of T) = _l.GetRange(index, count)
+                Return New ReadOnlyObjectList(Of T)(lst)
+            End Using
         Else
             Return Me
         End If
@@ -499,7 +511,9 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     End Function
 
     Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-        Return New ReadOnlyObjectList(Of T)(_l)
+        Using New CSScopeMgrLite(_sl)
+            Return New ReadOnlyObjectList(Of T)(_l)
+        End Using
     End Function
 
     Public Overridable ReadOnly Property RealType() As System.Type Implements IReadOnlyList.RealType
@@ -516,22 +530,24 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         Dim r As IListEdit = Nothing
         Dim mpe As ObjectMappingEngine = Nothing
         Dim oschema As IEntitySchema = Nothing
-        For i As Integer = 0 To Me.Count - 1
-            If start <= i AndAlso start + length > i Then
-                Dim o As T = Me(i)
-                If mpe Is Nothing Then
-                    mpe = o.GetMappingEngine
-                    oschema = mpe.GetEntitySchema(o.GetType)
-                End If
-                Dim obj As IEntity = CType(ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema), IEntity)
-                If obj IsNot Nothing Then
-                    If r Is Nothing Then
-                        r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
+        Using New CSScopeMgrLite(_sl)
+            For i As Integer = 0 To Me.Count - 1
+                If start <= i AndAlso start + length > i Then
+                    Dim o As T = Me(i)
+                    If mpe Is Nothing Then
+                        mpe = o.GetMappingEngine
+                        oschema = mpe.GetEntitySchema(o.GetType)
                     End If
-                    r.Add(obj)
+                    Dim obj As IEntity = CType(ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema), IEntity)
+                    If obj IsNot Nothing Then
+                        If r Is Nothing Then
+                            r = OrmManager._CreateReadOnlyList(GetType(EntityType), obj.GetType)
+                        End If
+                        r.Add(obj)
+                    End If
                 End If
-            End If
-        Next
+            Next
+        End Using
         Return CType(r, ReadOnlyList(Of EntityType))
     End Function
 
@@ -539,36 +555,42 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         Dim r As IListEdit = New ReadOnlyEntityList(Of AnonymousCachedEntity)
         Dim mpe As ObjectMappingEngine = Nothing
         Dim oschema As IEntitySchema = Nothing
-        For i As Integer = 0 To Me.Count - 1
-            If start <= i AndAlso start + length > i Then
-                Dim o As T = Me(i)
-                If mpe Is Nothing Then
-                    mpe = o.GetMappingEngine
-                    oschema = mpe.GetEntitySchema(o.GetType)
+        Using New CSScopeMgrLite(_sl)
+            For i As Integer = 0 To Me.Count - 1
+                If start <= i AndAlso start + length > i Then
+                    Dim o As T = Me(i)
+                    If mpe Is Nothing Then
+                        mpe = o.GetMappingEngine
+                        oschema = mpe.GetEntitySchema(o.GetType)
+                    End If
+                    Dim obj As New AnonymousCachedEntity
+                    For Each propertyAlias As String In propertyAliases
+                        Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema)
+                        obj(propertyAlias) = propValue
+                    Next
+                    r.Add(obj)
                 End If
-                Dim obj As New AnonymousCachedEntity
-                For Each propertyAlias As String In propertyAliases
-                    Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, propertyAlias, oschema)
-                    obj(propertyAlias) = propValue
-                Next
-                r.Add(obj)
-            End If
-        Next
+            Next
+        End Using
         Return CType(r, ReadOnlyEntityList(Of AnonymousCachedEntity))
     End Function
 
     Public Function Cast(Of CastType)() As IList(Of CastType)
         If GetType(Entities._IEntity).IsAssignableFrom(GetType(CastType)) Then
             Dim l As IListEdit = CType(OrmManager.CreateReadOnlyList(GetType(CastType), RealType), IListEdit)
-            For Each e As Object In Me
-                l.Add(CType(e, _IEntity))
-            Next
+            Using New CSScopeMgrLite(_sl)
+                For Each e As Object In Me
+                    l.Add(CType(e, _IEntity))
+                Next
+            End Using
             Return CType(l, IList(Of CastType))
         Else
             Dim l As New List(Of CastType)
-            For Each e As Object In Me
-                l.Add(CType(e, CastType))
-            Next
+            Using New CSScopeMgrLite(_sl)
+                For Each e As Object In Me
+                    l.Add(CType(e, CastType))
+                Next
+            End Using
             Return l
         End If
     End Function

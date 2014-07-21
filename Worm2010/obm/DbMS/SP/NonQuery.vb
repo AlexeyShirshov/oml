@@ -139,8 +139,10 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String)
+            'Using New SetManagerHelper(mgr, mgr.GetCreateManager, Nothing)
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing)
             p.GetResult(mgr)
+            'End Using
         End Sub
 
         Public Shared Sub Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)

@@ -2679,25 +2679,27 @@ l1:
             Dim l As IListEdit = _CreateReadOnlyList(GetType(T))
             Dim oschema As IEntitySchema = Nothing
             Dim i As Integer = 0
-            For Each o As T In col
-                If oschema Is Nothing Then
-                    oschema = _schema.GetEntitySchema(o.GetType)
-                End If
-                Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
-                Select Case er
-                    Case IEvaluableValue.EvalResult.Found
-                        If i >= _start Then
-                            l.Add(o)
-                        End If
-                    Case IEvaluableValue.EvalResult.Unknown
-                        evaluated = False
+            Using New CSScopeMgrLite(col._sl)
+                For Each o As T In col
+                    If oschema Is Nothing Then
+                        oschema = _schema.GetEntitySchema(o.GetType)
+                    End If
+                    Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
+                    Select Case er
+                        Case IEvaluableValue.EvalResult.Found
+                            If i >= _start Then
+                                l.Add(o)
+                            End If
+                        Case IEvaluableValue.EvalResult.Unknown
+                            evaluated = False
+                            Exit For
+                    End Select
+                    If i >= (_start + _length) Then
                         Exit For
-                End Select
-                If i >= (_start + _length) Then
-                    Exit For
-                End If
-                i += 1
-            Next
+                    End If
+                    i += 1
+                Next
+            End Using
             Return CType(l, Global.Worm.ReadOnlyObjectList(Of T))
         End If
     End Function
