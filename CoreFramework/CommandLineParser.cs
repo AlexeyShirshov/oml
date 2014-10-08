@@ -123,5 +123,16 @@ namespace CoreFramework.CommandLine
                 return _parameters;
             }
         }
+
+        public bool Exists(string paramName)
+        {
+            return _parameters.ContainsKey(paramName);
+        }
+
+        public bool IsSet(string paramName)
+        {
+            string value;
+            return _parameters.TryGetValue(paramName, out value) && !string.IsNullOrEmpty(value);
+        }
     }
 }
