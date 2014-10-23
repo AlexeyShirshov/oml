@@ -11,7 +11,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Query
 Imports Worm.Expressions2
 Imports Worm
-
+Imports System.Collections
 Public Interface IEnt
     Inherits _ISinglePKEntity
 
@@ -574,16 +574,16 @@ Public Class EntitySchema4v2Implementation
         Return _tables
     End Function
 
-    Public Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IContextObjectSchema.GetContextFilter
-        If filter_info Is Nothing Then
+    Public Function GetFilter(ByVal contextInfo As IDictionary) As Worm.Criteria.Core.IFilter Implements IContextObjectSchema.GetContextFilter
+        If contextInfo Is Nothing Then
             Return Nothing
         End If
 
-        If filter_info.GetType IsNot GetType(String) Then
-            Throw New OrmObjectException("Invalid filter_info type " & filter_info.GetType.Name)
+        If contextInfo.GetType IsNot GetType(String) Then
+            Throw New OrmObjectException("Invalid filter_info type " & contextInfo.GetType.Name)
         End If
 
-        Return New TableFilter(GetTables()(Tables2.Main), "s", New ScalarValue(filter_info), Worm.Criteria.FilterOperation.Equal)
+        Return New TableFilter(GetTables()(Tables2.Main), "s", New ScalarValue(contextInfo), Worm.Criteria.FilterOperation.Equal)
     End Function
 
     Public Overrides Function GetM2MRelations() As M2MRelationDesc()

@@ -27,7 +27,7 @@ Namespace Xml
         End Sub
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal sb As StringBuilder, ByVal filter_info As Object) As Boolean
+            ByVal sb As StringBuilder, ByVal contextInfo As IDictionary) As Boolean
 
             Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
@@ -35,27 +35,27 @@ Namespace Xml
             If t IsNot Nothing Then
                 Dim schema As IContextObjectSchema = TryCast(mpe.GetEntitySchema(t), IContextObjectSchema)
                 If schema IsNot Nothing Then
-                    con.AddFilter(schema.GetContextFilter(filter_info))
+                    con.AddFilter(schema.GetContextFilter(contextInfo))
                 End If
             End If
 
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Nothing, Me, Nothing, filter_info, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(mpe, Nothing, Me, Nothing, contextInfo, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False
         End Function
 
-        Public Function SelectID(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type) As String
+        Public Function SelectID(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal contextInfo As IDictionary) As String
             Dim selectcmd As New StringBuilder
             Dim s As IEntitySchema = mpe.GetEntitySchema(original_type)
-            selectcmd.Append(GetTableName(s.Table))
+            selectcmd.Append(GetTableName(s.Table, contextInfo))
             Return selectcmd.ToString
         End Function
 
-        Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment) As String
+        Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment, ByVal contextInfo As IDictionary) As String
             If String.IsNullOrEmpty(t.Schema) Then
                 Return t.Name
             Else
@@ -128,11 +128,14 @@ Namespace Xml
             End Select
         End Function
 
-        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal filterInfo As Object, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As System.Text.StringBuilder, ByVal _t As System.Type, ByVal _tbl As Entities.Meta.SourceFragment, ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
+        Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                      ByVal contextInfo As IDictionary, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As System.Text.StringBuilder, ByVal _t As System.Type, ByVal _tbl As Entities.Meta.SourceFragment, ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Worm.Query.QueryCmd.FromClauseDef, ByVal filterInfo As Object, ByVal query As Query.QueryCmd, ByVal params As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Worm.Query.QueryCmd.FromClauseDef,
+                                                     ByVal contextInfo As IDictionary, ByVal query As Query.QueryCmd,
+                                                     ByVal params As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
             Throw New NotImplementedException
         End Function
 

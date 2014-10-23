@@ -550,6 +550,7 @@ Namespace Query
         Private _execCnt As Integer
         '<NonSerialized()> _
         Private _schema As ObjectMappingEngine
+        Private _context As IDictionary
         Friend _cacheSort As Boolean
         Private _autoFields As Boolean = True
         Private _timeout As Nullable(Of Integer)
@@ -1033,7 +1034,7 @@ Namespace Query
         End Sub
 
         Public Shared Sub Prepare(ByVal root As QueryCmd, ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
             ByVal stmt As StmtGenerator)
 
             Dim isanonym As Boolean = root.IsAnonymous(mpe)
@@ -1042,7 +1043,7 @@ Namespace Query
             For Each q As QueryCmd In New StmtQueryIterator(root)
                 'Dim j As New List(Of Worm.Criteria.Joins.QueryJoin)
                 'Dim c As List(Of SelectExpression) = Nothing
-                q.Prepare(executor, mpe, filterInfo, stmt, isanonym)
+                q.Prepare(executor, mpe, contextInfo, stmt, isanonym)
                 'If f IsNot Nothing Then
                 '    fs.Add(f)
                 'End If
@@ -1055,7 +1056,7 @@ Namespace Query
         End Sub
 
         Private Shared Sub Prepare(ByVal outer As QueryCmd, ByVal root As QueryCmd, ByVal executor As IExecutor, _
-                    ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+                    ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
                     ByVal stmt As StmtGenerator)
 
             Dim isanonym As Boolean = root.IsAnonymous(mpe)
@@ -1064,7 +1065,7 @@ Namespace Query
                 Dim old As QueryCmd = q._outer
                 Try
                     q._outer = outer
-                    q.Prepare(executor, mpe, filterInfo, stmt, isanonym)
+                    q.Prepare(executor, mpe, contextInfo, stmt, isanonym)
                 Finally
                     q._outer = old
                 End Try
@@ -1094,7 +1095,7 @@ Namespace Query
         End Sub
 
         Protected Sub PrepareSelectList(ByVal executor As IExecutor, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean, ByVal mpe As ObjectMappingEngine, _
-                                        ByRef f As IFilter, ByVal filterInfo As Object)
+                                        ByRef f As IFilter, ByVal filterInfo As IDictionary)
             If isAnonym Then
                 For Each se As SelectExpression In SelectList
                     se.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
@@ -1246,7 +1247,7 @@ l1:
         End Sub
 
         Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByRef filter As IFilter, ByVal selectOS As EntityUnion, _
             ByVal isAnonym As Boolean)
 
@@ -1488,7 +1489,7 @@ l1:
             _f = filter
         End Sub
 
-        Private Function AddParentTypeToQuery(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object, _
+        Private Function AddParentTypeToQuery(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
             ByRef f As IFilter, ByVal child2parentRelation As Dictionary(Of String, Pair(Of String, EntityUnion)), _
             ByVal de As KeyValuePair(Of EntityUnion, IEntitySchema), ByVal parentType As Type, _
             ByVal childType As Type, ByVal childPropertyAlias As String) As Boolean
@@ -1522,7 +1523,7 @@ l1:
         Friend _cancel As Boolean
 
         Public Sub Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Worm.Criteria.Values.IQueryElement.Prepare
 
             _sl = New List(Of SelectExpression)
@@ -1606,12 +1607,12 @@ l1:
         End Sub
 
         Protected Friend Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
-            ByRef filter As IFilter, ByVal s As OrderByClause, ByVal filterInfo As Object, ByRef joins() As QueryJoin, _
+            ByRef filter As IFilter, ByVal s As OrderByClause, ByVal contextInfo As IDictionary, ByRef joins() As QueryJoin, _
             ByRef appendMain As Boolean, ByVal selectOS As EntityUnion) As Boolean
             Dim l As New List(Of QueryJoin)
             Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
             Dim ictx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
-            If ictx IsNot Nothing AndAlso ictx.GetContextFilter(filterInfo) IsNot Nothing Then
+            If ictx IsNot Nothing AndAlso ictx.GetContextFilter(contextInfo) IsNot Nothing Then
                 appendMain = True
             End If
             Dim types As New List(Of Type)
@@ -1631,7 +1632,7 @@ l1:
                             '    type2join = schema.GetTypeByEntityName(ot.EntityName)
                             'End If
 
-                            AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
+                            AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
                         End If
                     Else
                         Dim cf As CustomFilter = TryCast(fl, CustomFilter)
@@ -1641,7 +1642,7 @@ l1:
                                 If se.EntityUnion IsNot Nothing Then
                                     Dim seeu As EntityUnion = se.EntityUnion
                                     If _js.Find(Function(join) join.ObjectSource = seeu) Is Nothing Then
-                                        AppendJoin(schema, selectType, filter, filterInfo, appendMain, l, oschema, types, _
+                                        AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, _
                                             se.EntityUnion, se.EntityUnion.GetRealType(schema), selectOS)
                                     End If
                                 End If
@@ -1700,7 +1701,7 @@ l1:
         End Function
 
         Private Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
-            ByRef filter As IFilter, ByVal filterInfo As Object, ByRef appendMain As Boolean, _
+            ByRef filter As IFilter, ByVal contextInfo As IDictionary, ByRef appendMain As Boolean, _
             ByVal l As List(Of QueryJoin), ByVal oschema As IEntitySchema, ByVal types As List(Of Type), _
             ByVal joinOS As EntityUnion, ByVal type2join As System.Type, ByVal selectOS As EntityUnion)
 
@@ -1718,7 +1719,7 @@ l1:
                     appendMain = True
                 Else
                     If Not types.Contains(type2join) Then
-                        OrmManager.AppendJoin(schema, selectType, filter, filterInfo, l, oschema, types, type2join, s2, joinOS, selectOS)
+                        OrmManager.AppendJoin(schema, selectType, filter, contextInfo, l, oschema, types, type2join, s2, joinOS, selectOS)
                     End If
                 End If
             End If
@@ -1899,7 +1900,7 @@ l1:
 
         Public Shared Function GetStaticKey(ByVal root As QueryCmd, ByVal mgrKey As String, ByVal cb As Cache.CacheListBehavior, _
             ByVal fromKey As String, ByVal mpe As ObjectMappingEngine, _
-            ByRef dic As IDictionary, ByVal fi As Object) As String
+            ByRef dic As IDictionary, ByVal contextInfo As IDictionary) As String
             Dim key As New StringBuilder
 
             Dim ca As CacheDictionaryRequiredEventArgs = Nothing
@@ -1921,7 +1922,7 @@ l1:
                 '    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
                 'End If
 
-                If Not q.GetStaticKey(key, cb_, mpe, fi) Then
+                If Not q.GetStaticKey(key, cb_, mpe, contextInfo) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
                         q.RaiseCacheDictionaryRequired(ca)
@@ -1933,7 +1934,7 @@ l1:
                             End If
                         End If
                     End If
-                    q.GetStaticKey(key, Cache.CacheListBehavior.CacheAll, mpe, fi)
+                    q.GetStaticKey(key, Cache.CacheListBehavior.CacheAll, mpe, contextInfo)
                     cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
@@ -1959,7 +1960,7 @@ l1:
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, _
             ByVal cb As Cache.CacheListBehavior, _
-            ByVal mpe As ObjectMappingEngine, ByVal fi As Object) As Boolean
+            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As Boolean
 
             If Not _prepared Then
                 Throw New QueryCmdException("Command not prepared", Me)
@@ -1973,7 +1974,7 @@ l1:
             If f IsNot Nothing Then
                 Select Case cb
                     Case Cache.CacheListBehavior.CacheAll
-                        sb2.Append(f.GetStaticString(mpe, fi)).Append("$")
+                        sb2.Append(f.GetStaticString(mpe, contextInfo)).Append("$")
                         'Case Cache.CacheListBehavior.CacheOrThrowException
                         '    If TryCast(f, IEntityFilter) IsNot Nothing Then
                         '        sb2.Append(f.GetStaticString(mpe)).Append("$")
@@ -1987,7 +1988,7 @@ l1:
                         '    End If
                     Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.GetStaticString(mpe, fi)).Append("$")
+                            sb2.Append(f.GetStaticString(mpe, contextInfo)).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
                                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
@@ -2015,7 +2016,7 @@ l1:
                                     Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
                             End Select
                         End If
-                        sb2.Append(join.GetStaticString(mpe, fi))
+                        sb2.Append(join.GetStaticString(mpe, contextInfo))
                     End If
                 Next
             End If
@@ -2042,9 +2043,9 @@ l1:
                     'Else
                     '    sb.Append(mpe.GetEntityKey(fi, t))
                     'End If
-                    sb.Append(_from.ObjectSource.ToStaticString(mpe, fi))
+                    sb.Append(_from.ObjectSource.ToStaticString(mpe, contextInfo))
                 Else
-                    sb.Append(_from.Query.ToStaticString(mpe, fi))
+                    sb.Append(_from.Query.ToStaticString(mpe, contextInfo))
                 End If
             Else
                 Throw New NotSupportedException
@@ -2067,7 +2068,7 @@ l1:
             sb.Append(sb2.ToString)
 
             If _rn IsNot Nothing Then
-                sb.Append(_rn.ToStaticString(mpe, fi))
+                sb.Append(_rn.ToStaticString(mpe, contextInfo))
             End If
 
             If _top IsNot Nothing Then
@@ -2084,30 +2085,30 @@ l1:
                     it = l
                 End If
                 For Each c As SelectExpression In it
-                    If Not GetStaticKeyFromProp(sb, cb, c, mpe, fi) Then
+                    If Not GetStaticKeyFromProp(sb, cb, c, mpe, contextInfo) Then
                         Return False
                     End If
                 Next
                 sb.Append("$")
             ElseIf SelectedEntities IsNot Nothing Then
                 For Each t As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                    sb.Append(t.First.ToStaticString(mpe, fi))
+                    sb.Append(t.First.ToStaticString(mpe, contextInfo))
                 Next
                 sb.Append("$")
             End If
 
             If _group IsNot Nothing Then
-                sb.Append(_group.GetStaticString(mpe, fi)).Append("$")
+                sb.Append(_group.GetStaticString(mpe, contextInfo)).Append("$")
             End If
 
             If _having IsNot Nothing Then
-                sb.Append(_having.Filter.GetStaticString(mpe, fi)).Append("$")
+                sb.Append(_having.Filter.GetStaticString(mpe, contextInfo)).Append("$")
             End If
 
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing OrElse cb <> Cache.CacheListBehavior.CacheAll Then
                     For Each n As SortExpression In Sort
-                        sb.Append(n.GetStaticString(mpe, fi))
+                        sb.Append(n.GetStaticString(mpe, contextInfo))
                     Next
                     sb.Append("$")
                 End If
@@ -2117,7 +2118,7 @@ l1:
         End Function
 
         Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, _
-            ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As Boolean
+            ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As Boolean
             'If c.IsCustom OrElse c.Query IsNot Nothing Then
             '    Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
             '    If Not Cache.IsCalculated(dp) Then
@@ -2132,7 +2133,7 @@ l1:
             '        End Select
             '    End If
             'End If
-            sb.Append(c.GetStaticString(mpe, contextFilter))
+            sb.Append(c.GetStaticString(mpe, contextInfo))
             Return True
         End Function
 
@@ -2222,10 +2223,10 @@ l1:
             Throw New NotSupportedException
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
             Dim sb As New StringBuilder
             Dim l As List(Of SelectExpression) = Nothing
-            GetStaticKey(sb, Cache.CacheListBehavior.CacheAll, mpe, contextFilter)
+            GetStaticKey(sb, Cache.CacheListBehavior.CacheAll, mpe, contextInfo)
             'If SelectTypes IsNot Nothing Then
             '    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
             '        sb.Append(tp.First.ToStaticString)
@@ -2537,6 +2538,14 @@ l1:
             RemoveHandler e.OnRestoreDefaults, AddressOf OnRestoreDefaults
         End Sub
 
+        Public Property ContextInfo As IDictionary
+            Get
+                Return _context
+            End Get
+            Set(value As IDictionary)
+                _context = value
+            End Set
+        End Property
         Public Property Pager() As IPager
             Get
                 Return _pager
@@ -3398,7 +3407,7 @@ l1:
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToMatrix(mgr)
                 End Using
             End Using
@@ -3411,7 +3420,7 @@ l1:
 #Region " ToList "
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToBaseEntity(Of T)(mgr, withLoad)
                 End Using
             End Using
@@ -3503,7 +3512,7 @@ l1:
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToList(mgr)
                 End Using
             End Using
@@ -3523,7 +3532,7 @@ l1:
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToList(Of CreateType, ReturnType)(mgr)
                 End Using
             End Using
@@ -3543,7 +3552,7 @@ l1:
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToList(Of CreateReturnType)(mgr)
                 End Using
             End Using
@@ -3570,7 +3579,7 @@ l1:
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToAnonymList(mgr)
                 End Using
             End Using
@@ -3591,7 +3600,7 @@ l1:
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManager = getMgr()
             Try
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToEntityList(Of T)(mgr)
                 End Using
             Finally
@@ -3603,7 +3612,7 @@ l1:
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToEntityList(Of T)(mgr)
                 End Using
             End Using
@@ -3644,7 +3653,7 @@ l1:
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToOrmListDyn(Of T)(mgr)
                 End Using
             End Using
@@ -3700,7 +3709,7 @@ l1:
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
                 End Using
             End Using
@@ -3775,7 +3784,7 @@ l1:
 
         Public Function Count(ByVal getMgr As ICreateManager) As Integer
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return Count(mgr)
                 End Using
             End Using
@@ -3829,7 +3838,7 @@ l1:
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToDictionary(Of TKey, TValue)(mgr)
                 End Using
             End Using
@@ -3864,7 +3873,7 @@ l1:
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToSimpleDictionary(Of TKey, TValue)(mgr)
                 End Using
             End Using
@@ -3880,7 +3889,7 @@ l1:
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return ToObjectList(Of T)(mgr)
                 End Using
             End Using
@@ -3904,7 +3913,7 @@ l1:
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, CreateManager, _schema)
+                Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                     Return ToPOCOList(Of T)(mgr)
                 End Using
             End Using
@@ -3964,7 +3973,7 @@ l1:
             For Each e As _IEntity In l
                 Dim ctd As ComponentModel.ICustomTypeDescriptor = CType(e, ComponentModel.ICustomTypeDescriptor)
                 Dim ro As New T
-                InitPOCO(rt, ctd, mpe, e, ro, mgr.Cache, mgr.GetContextInfo)
+                InitPOCO(rt, ctd, mpe, e, ro, mgr.Cache, mgr.ContextInfo)
                 r.Add(ro)
             Next
 
@@ -4908,6 +4917,7 @@ l1:
                 ._timeout = _timeout
                 ._poco = _poco
                 ._autoFields = _autoFields
+                ._context = _context
             End With
         End Sub
 
@@ -5363,8 +5373,8 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            Return ToStaticString(mpe, contextFilter)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            Return ToStaticString(mpe, contextInfo)
         End Function
 
 #Region " GetByID "
@@ -5420,7 +5430,7 @@ l1:
             'Return Where(f).Single(Of T)()
 
             Dim o As ISinglePKEntity = Nothing
-            Using New SetManagerHelper(mgr, CreateManager, _schema)
+            Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
                     mgr.SetSchema(SpecificMappingEngine)
@@ -5525,7 +5535,7 @@ l1:
             Dim ro As New ReadOnlyList(Of T)
             Dim list As IListEdit = ro
 
-            Using New SetManagerHelper(mgr, CreateManager, _schema)
+            Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
                     mgr.SetSchema(SpecificMappingEngine)
@@ -5660,7 +5670,7 @@ l1:
             Dim tp As Type = selou.GetRealType(mgr.MappingEngine)
 
             Dim o As ISinglePKEntity = Nothing
-            Using New SetManagerHelper(mgr, CreateManager, _schema)
+            Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
                     mgr.SetSchema(SpecificMappingEngine)
@@ -5730,7 +5740,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return BuildDictionary(Of T)(mgr, level)
                 End Using
             End Using
@@ -5754,7 +5764,7 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, level)
                 End Using
             End Using
@@ -5763,7 +5773,7 @@ l1:
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, _
             ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema)
+                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
                     Return BuildDictionary(Of T)(mgr, propertyAlias, secondPropertyAlias, level)
                 End Using
             End Using

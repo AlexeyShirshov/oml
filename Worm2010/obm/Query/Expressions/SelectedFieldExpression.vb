@@ -334,12 +334,12 @@ Namespace Expressions2
         '    Return New Cache.EmptyDependentTypes
         'End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Expressions2.IExpression.GetStaticString
-            Return _exp.GetStaticString(mpe, contextFilter)
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Expressions2.IExpression.GetStaticString
+            Return _exp.GetStaticString(mpe, contextInfo)
         End Function
 
-        Public Sub Prepare(ByVal executor As IExecutor, ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Expressions2.IExpression.Prepare
-            _exp.Prepare(executor, mpe, filterInfo, stmt, isAnonym)
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Expressions2.IExpression.Prepare
+            _exp.Prepare(executor, mpe, contextInfo, stmt, isAnonym)
         End Sub
 
         Private _intoPA As String
@@ -417,13 +417,13 @@ Namespace Expressions2
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
+            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As IExecutionContext) As String Implements Expressions2.IExpression.MakeStatement
 
             If Not String.IsNullOrEmpty(_falias) AndAlso ((stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias) Then
-                Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode And Not MakeStatementMode.AddColumnAlias, executor) & " as " & _falias
+                Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode And Not MakeStatementMode.AddColumnAlias, executor) & " as " & _falias
             Else
-                Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                Return _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
             End If
         End Function
 
@@ -467,7 +467,7 @@ Namespace Expressions2
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
+            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim al As String = String.Empty
@@ -532,11 +532,11 @@ Namespace Expressions2
             Return _pa
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Return _pa
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
 

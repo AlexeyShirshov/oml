@@ -347,20 +347,25 @@ Namespace Database
                     Return o
                 End If
             Next
-            Throw New InvalidOperationException("Cannot find object")
+            'Throw New InvalidOperationException("Cannot find object")
+            Return Nothing
         End Function
 
         Protected Sub ObjectAcceptedHandler(ByVal sender As ObjectListSaver, ByVal obj As ICachedEntity) Handles Me.ObjectAccepted
             Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
-            _lockList(o).Dispose()
-            _lockList.Remove(o)
+            If o IsNot Nothing Then
+                _lockList(o).Dispose()
+                _lockList.Remove(o)
+            End If
         End Sub
 
         Protected Sub ObjectRejectedHandler(ByVal sender As ObjectListSaver, ByVal obj As ICachedEntity, ByVal inLockList As Boolean) Handles Me.ObjectRejected
             If inLockList Then
                 Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
-                _lockList(o).Dispose()
-                _lockList.Remove(o)
+                If o IsNot Nothing Then
+                    _lockList(o).Dispose()
+                    _lockList.Remove(o)
+                End If
             End If
         End Sub
 
@@ -489,168 +494,168 @@ l1:
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
 #Else
-            Using _mgr.Cache.SyncSave
+            'Using _mgr.Cache.SyncSave
 #End If
-                If _mode.HasValue Then
-                    _mgr.BeginTransaction(_mode.Value)
-                Else
-                    _mgr.BeginTransaction()
-                End If
+            If _mode.HasValue Then
+                _mgr.BeginTransaction(_mode.Value)
+            Else
+                _mgr.BeginTransaction()
+            End If
 
-                Try
-                    RaiseEvent BeginSave(Me, _objects.Count)
-                    For Each o As _ICachedEntity In _objects
-                        Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
-                        If uc IsNot Nothing Then
-                            RemoveHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
-                        End If
-
-                        Dim pp As Pair(Of ICachedEntity) = Nothing
-                        If o.ObjectState = ObjectState.Created Then
-                            rejectList.Add(o)
-                        ElseIf o.ObjectState = ObjectState.Modified Then
-                            pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, Nothing), ICachedEntity))
-                            pp.Second.SetObjectState(o.ObjectState)
-                            copies.Add(pp)
-                        End If
-                        If SaveObj(o, need2save, saved) Then
-                            rejectList.Remove(o)
-                            If pp IsNot Nothing Then
-                                copies.Remove(pp)
-                            End If
-                        End If
-                        'Try
-                        '    Dim args As New CancelEventArgs(o)
-                        '    RaiseEvent ObjectSaving(Me, args)
-                        '    If Not args.Cancel Then
-                        '        _lockList.Add(New ObjectWrap(Of OrmBase)(o), _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
-                        '        Dim os As ObjectState = o.ObjectState
-                        '        If o.SaveChanges(False) Then
-                        '            need2save.Add(o)
-                        '        Else
-                        '            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
-                        '            RaiseEvent ObjectSaved(o)
-                        '        End If
-                        '    End If
-
-                        'Catch ex As Exception
-                        '    Throw New OrmManagerException("Error during save " & o.ObjName, ex)
-                        'End Try
-                    Next
-
-                    For i As Integer = 0 To _graphDepth
-                        Dim ns As New List(Of ICachedEntity)(need2save)
-                        need2save.Clear()
-                        For Each o As _ICachedEntity In ns
-                            If SaveObj(o, need2save, saved, ns) Then
-                                rejectList.Remove(o)
-                                Dim idx As Integer = -1
-                                For j As Integer = 0 To copies.Count - 1
-                                    Dim p As Pair(Of ICachedEntity) = copies(j)
-                                    If p.First.Equals(o) Then
-                                        idx = j
-                                        Exit For
-                                    End If
-                                Next
-                                If idx >= 0 Then
-                                    copies.RemoveAt(idx)
-                                End If
-                            End If
-                        Next
-                        If need2save.Count = 0 Then
-                            Exit For
-                        End If
-                    Next
-                    If need2save.Count > 0 Then
-                        Dim args As New CannotSaveEventArgs(need2save)
-                        RaiseEvent CannotSave(Me, args)
-                        If Not args.Skip Then
-                            Throw New OrmManagerException(String.Format("Cannot save object graph"))
-                        End If
+            Try
+                RaiseEvent BeginSave(Me, _objects.Count)
+                For Each o As _ICachedEntity In _objects
+                    Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
+                    If uc IsNot Nothing Then
+                        RemoveHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
                     End If
 
-                    RaiseEvent EndSave(Me)
-                    _error = False
-                Finally
-                    _startSave = False
-                    Try
-                        If _error Then
-                            If Not hasTransaction Then
-                                _mgr.Rollback()
-                            End If
-
-                            RaiseEvent BeginRejecting(Me)
-                            Rollback(saved, rejectList, copies, need2save)
-                            RaiseEvent SaveFailed(Me)
-                        Else
-                            If Not hasTransaction Then
-                                _mgr.Commit()
-                                _commited = True
-                            End If
-
-                            RaiseEvent BeginAccepting(Me)
-                            If _acceptInBatch Then
-                                'Dim l As New Dictionary(Of OrmBase, OrmBase)
-                                Dim l2 As New Dictionary(Of Type, List(Of Pair(Of _ICachedEntity)))
-                                Dim val As New List(Of ICachedEntity)
-                                For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
-                                    Dim o As _ICachedEntity = p.Second
-                                    RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
-                                    'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
-                                    'l.Add(o, mo)
-                                    RaiseEvent ObjectAccepted(Me, o)
-                                    If o.UpdateCtx.UpdatedFields IsNot Nothing Then
-                                        val.Add(o)
-                                    End If
-                                    Dim ls As List(Of Pair(Of _ICachedEntity)) = Nothing
-                                    If Not l2.TryGetValue(o.GetType, ls) Then
-                                        ls = New List(Of Pair(Of _ICachedEntity))
-                                        l2.Add(o.GetType, ls)
-                                    End If
-                                    ls.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
-                                Next
-                                For Each t As Type In l2.Keys
-                                    Dim ls As List(Of Pair(Of _ICachedEntity)) = l2(t)
-                                    '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
-                                    '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
-                                    CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
-                                        AddressOf OrmManager.ClearCacheFlags, Nothing, _callbacks, False, False)
-                                Next
-                                For Each o As _ICachedEntity In val
-                                    o.UpdateCacheAfterUpdate(CType(_mgr.Cache, OrmCache))
-                                Next
-                            Else
-                                Dim svd As New List(Of Pair(Of _ICachedEntity))
-                                For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
-                                    Dim o As _ICachedEntity = p.Second
-                                    RaiseEvent ObjectAccepting(Me, o)
-                                    Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
-                                    'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o) Is Nothing)
-                                    RaiseEvent ObjectAccepted(Me, o)
-                                    svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
-                                Next
-                                For Each p As Pair(Of _ICachedEntity) In svd
-                                    Dim o As _ICachedEntity = p.First
-                                    o.UpdateCache(_mgr, p.Second)
-                                Next
-                            End If
-
-                            RaiseEvent SaveSuccessed(Me)
+                    Dim pp As Pair(Of ICachedEntity) = Nothing
+                    If o.ObjectState = ObjectState.Created Then
+                        rejectList.Add(o)
+                    ElseIf o.ObjectState = ObjectState.Modified Then
+                        pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, Nothing), ICachedEntity))
+                        pp.Second.SetObjectState(o.ObjectState)
+                        copies.Add(pp)
+                    End If
+                    If SaveObj(o, need2save, saved) Then
+                        rejectList.Remove(o)
+                        If pp IsNot Nothing Then
+                            copies.Remove(pp)
                         End If
-                    Finally
-                        Do While _lockList.Count > 0
-                            Dim o As ObjectWrap(Of ICachedEntity) = Nothing
-                            For Each kv As KeyValuePair(Of ObjectWrap(Of ICachedEntity), IDisposable) In _lockList
-                                o = kv.Key
-                                kv.Value.Dispose()
-                                Exit For
+                    End If
+                    'Try
+                    '    Dim args As New CancelEventArgs(o)
+                    '    RaiseEvent ObjectSaving(Me, args)
+                    '    If Not args.Cancel Then
+                    '        _lockList.Add(New ObjectWrap(Of OrmBase)(o), _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
+                    '        Dim os As ObjectState = o.ObjectState
+                    '        If o.SaveChanges(False) Then
+                    '            need2save.Add(o)
+                    '        Else
+                    '            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+                    '            RaiseEvent ObjectSaved(o)
+                    '        End If
+                    '    End If
+
+                    'Catch ex As Exception
+                    '    Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                    'End Try
+                Next
+
+                For i As Integer = 0 To _graphDepth
+                    Dim ns As New List(Of ICachedEntity)(need2save)
+                    need2save.Clear()
+                    For Each o As _ICachedEntity In ns
+                        If SaveObj(o, need2save, saved, ns) Then
+                            rejectList.Remove(o)
+                            Dim idx As Integer = -1
+                            For j As Integer = 0 To copies.Count - 1
+                                Dim p As Pair(Of ICachedEntity) = copies(j)
+                                If p.First.Equals(o) Then
+                                    idx = j
+                                    Exit For
+                                End If
                             Next
-                            _lockList.Remove(o)
-                        Loop
-                    End Try
+                            If idx >= 0 Then
+                                copies.RemoveAt(idx)
+                            End If
+                        End If
+                    Next
+                    If need2save.Count = 0 Then
+                        Exit For
+                    End If
+                Next
+                If need2save.Count > 0 Then
+                    Dim args As New CannotSaveEventArgs(need2save)
+                    RaiseEvent CannotSave(Me, args)
+                    If Not args.Skip Then
+                        Throw New OrmManagerException(String.Format("Cannot save object graph"))
+                    End If
+                End If
+
+                RaiseEvent EndSave(Me)
+                _error = False
+            Finally
+                _startSave = False
+                Try
+                    If _error Then
+                        If Not hasTransaction Then
+                            _mgr.Rollback()
+                        End If
+
+                        RaiseEvent BeginRejecting(Me)
+                        Rollback(saved, rejectList, copies, need2save)
+                        RaiseEvent SaveFailed(Me)
+                    Else
+                        If Not hasTransaction Then
+                            _mgr.Commit()
+                            _commited = True
+                        End If
+
+                        RaiseEvent BeginAccepting(Me)
+                        If _acceptInBatch Then
+                            'Dim l As New Dictionary(Of OrmBase, OrmBase)
+                            Dim l2 As New Dictionary(Of Type, List(Of Pair(Of _ICachedEntity)))
+                            Dim val As New List(Of ICachedEntity)
+                            For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
+                                Dim o As _ICachedEntity = p.Second
+                                RaiseEvent ObjectAccepting(Me, o)
+                                Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
+                                'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior)) Is Nothing)
+                                'l.Add(o, mo)
+                                RaiseEvent ObjectAccepted(Me, o)
+                                If o.UpdateCtx.UpdatedFields IsNot Nothing Then
+                                    val.Add(o)
+                                End If
+                                Dim ls As List(Of Pair(Of _ICachedEntity)) = Nothing
+                                If Not l2.TryGetValue(o.GetType, ls) Then
+                                    ls = New List(Of Pair(Of _ICachedEntity))
+                                    l2.Add(o.GetType, ls)
+                                End If
+                                ls.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
+                            Next
+                            For Each t As Type In l2.Keys
+                                Dim ls As List(Of Pair(Of _ICachedEntity)) = l2(t)
+                                '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
+                                '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
+                                CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
+                                    AddressOf OrmManager.ClearCacheFlags, Nothing, _callbacks, False, False)
+                            Next
+                            For Each o As _ICachedEntity In val
+                                o.UpdateCacheAfterUpdate(CType(_mgr.Cache, OrmCache))
+                            Next
+                        Else
+                            Dim svd As New List(Of Pair(Of _ICachedEntity))
+                            For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
+                                Dim o As _ICachedEntity = p.Second
+                                RaiseEvent ObjectAccepting(Me, o)
+                                Dim mo As ICachedEntity = _mgr.AcceptChanges(o, False, SinglePKEntity.IsGoodState(p.First))
+                                'Debug.Assert(_mgr.Cache.ShadowCopy(o.GetType, o) Is Nothing)
+                                RaiseEvent ObjectAccepted(Me, o)
+                                svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
+                            Next
+                            For Each p As Pair(Of _ICachedEntity) In svd
+                                Dim o As _ICachedEntity = p.First
+                                o.UpdateCache(_mgr, p.Second)
+                            Next
+                        End If
+
+                        RaiseEvent SaveSuccessed(Me)
+                    End If
+                Finally
+                    Do While _lockList.Count > 0
+                        Dim o As ObjectWrap(Of ICachedEntity) = Nothing
+                        For Each kv As KeyValuePair(Of ObjectWrap(Of ICachedEntity), IDisposable) In _lockList
+                            o = kv.Key
+                            kv.Value.Dispose()
+                            Exit For
+                        Next
+                        _lockList.Remove(o)
+                    Loop
                 End Try
-            End Using
+            End Try
+            'End Using
         End Sub
 
         Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
@@ -875,7 +880,7 @@ l1:
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
             ObjectMappingEngine.InitPOCO( _
                 o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
-                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.GetContextInfo, crMan:=_mgr.GetCreateManager)
+                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.ContextInfo, crMan:=_mgr.GetCreateManager)
         End Sub
 
         Public Overridable Sub Delete(ByVal obj As Object)

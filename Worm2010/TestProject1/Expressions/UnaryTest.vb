@@ -7,6 +7,7 @@ Imports Worm
 Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports System.Collections
 
 <TestClass()> Public Class UnaryTest
 
@@ -49,7 +50,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestLiteral()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -63,7 +64,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestParameter()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -78,7 +79,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestEntityExp()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -96,7 +97,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestUnary()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -117,7 +118,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestUnaryNot()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -138,7 +139,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestCustom()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create

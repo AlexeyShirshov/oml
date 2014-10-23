@@ -169,7 +169,7 @@ Namespace Query
             End If
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("mpe")
             End If
@@ -178,7 +178,7 @@ Namespace Query
             If t IsNot Nothing Then
                 Return mpe.GetEntityKey(t)
             Else
-                Return _a.ToStaticString(mpe, contextFilter)
+                Return _a.ToStaticString(mpe, contextInfo)
             End If
         End Function
 
@@ -288,9 +288,10 @@ Namespace Query
             End If
         End Function
 
-        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine,
+                           ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _a IsNot Nothing AndAlso _a.Query IsNot Nothing Then
-                _a.Query.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _a.Query.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
 

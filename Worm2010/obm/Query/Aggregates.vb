@@ -46,7 +46,7 @@ Namespace Query
 
         Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
         Public ReadOnly Property AggFunc() As AggregateFunction
             Get
@@ -91,8 +91,8 @@ Namespace Query
         End Function
 
         Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
-        Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
     End Class
 
     '<Serializable()> _
@@ -233,7 +233,9 @@ Namespace Query
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                           ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable,
+                                           ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
             Throw New NotImplementedException
         End Function
 
@@ -241,11 +243,11 @@ Namespace Query
             Throw New NotImplementedException
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
             Throw New NotImplementedException
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
+        Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             Throw New NotImplementedException
         End Sub
     End Class

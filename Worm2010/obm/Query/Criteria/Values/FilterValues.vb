@@ -105,14 +105,14 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             'Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, stmt, almgr, _v)
 
             'Return String.Format(_f, values.ToArray)
             If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In _exp
-                    Dim s As String = v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, MakeStatementMode.None, executor)
+                    Dim s As String = v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextInfo, MakeStatementMode.None, executor)
                     l.Add(s)
                 Next
                 Return String.Format(_f, l.ToArray)
@@ -122,11 +122,11 @@ Namespace Criteria.Values
             End If
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In _exp
-                    l.Add(v.GetStaticString(mpe, contextFilter))
+                    l.Add(v.GetStaticString(mpe, contextInfo))
                 Next
                 If _filter Then
                     Return String.Format(_f, l.ToArray)
@@ -142,10 +142,10 @@ Namespace Criteria.Values
             End If
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             If _exp IsNot Nothing Then
                 For Each e As IExpression In _exp
-                    e.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                    e.Prepare(executor, schema, contextInfo, stmt, isAnonym)
                 Next
             End If
         End Sub
@@ -190,15 +190,18 @@ Namespace Criteria.Values
             Return _alias
         End Function
 
-        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                 ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable,
+                                 ByVal prepare As PrepareValueDelegate, ByVal contextInfo As IDictionary, ByVal inSelect As Boolean,
+                                 ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return [Alias]
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Return "compval"
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
 
@@ -376,7 +379,7 @@ Namespace Criteria.Values
 
         Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IEvaluableValue.GetParam
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IEvaluableValue.GetParam
 
             Dim v As Object = _v
             If prepare IsNot Nothing Then
@@ -627,11 +630,11 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Return "scalarval"
         End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
 
@@ -649,7 +652,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements IFilterValue.GetParam
             Return _pname
         End Function
 
@@ -663,11 +666,12 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Return "litval"
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine,
+                           ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             'do nothing
         End Sub
     End Class
@@ -847,7 +851,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
             Dim sb As New StringBuilder
             Dim idx As Integer
@@ -960,7 +964,7 @@ Namespace Criteria.Values
 
         Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
             If paramMgr Is Nothing Then
                 Throw New ArgumentNullException("paramMgr")
@@ -977,22 +981,22 @@ Namespace Criteria.Values
 
             'Return _l & " and " & _r
 
-            Return left.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor) & _
+            Return left.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, contextInfo, inSelect, executor) & _
                 " and " & _
-                right.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, filterInfo, inSelect, executor)
+                right.GetParam(schema, fromClause, stmt, paramMgr, almgr, prepare, contextInfo, inSelect, executor)
         End Function
 
         Public Overrides Function _ToString() As String
             Return Value.First._ToString & "__$__" & Value.Second._ToString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return Value.First.GetStaticString(mpe, contextFilter) & "between" & Value.Second.GetStaticString(mpe, contextFilter)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return Value.First.GetStaticString(mpe, contextInfo) & "between" & Value.Second.GetStaticString(mpe, contextInfo)
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
-            Value.First.Prepare(executor, schema, filterInfo, stmt, isAnonym)
-            Value.Second.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
+            Value.First.Prepare(executor, schema, contextInfo, stmt, isAnonym)
+            Value.Second.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub
 
         Public Shadows ReadOnly Property Value() As Pair(Of IFilterValue)
@@ -1192,7 +1196,7 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
-                          ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
+                          ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -1216,7 +1220,7 @@ Namespace Criteria.Values
             'End If
 
             'QueryCmd.Prepare(_q, Nothing, schema, filterInfo, stmt)
-            sb.Append(stmt.MakeQueryStatement(schema, fromClause, filterInfo, _q, paramMgr, almgr))
+            sb.Append(stmt.MakeQueryStatement(schema, fromClause, contextInfo, _q, paramMgr, almgr))
             'End Using
 
             sb.Append(")")
@@ -1224,8 +1228,8 @@ Namespace Criteria.Values
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-            Return _q.ToStaticString(mpe, contextFilter)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString(mpe, contextInfo)
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
@@ -1241,9 +1245,9 @@ Namespace Criteria.Values
             Return qp
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             _q.AutoFields = False
-            _q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+            _q.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub
 
         Public ReadOnly Property ShouldUse() As Boolean Implements IFilterValue.ShouldUse

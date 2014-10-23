@@ -85,19 +85,19 @@ Namespace Expressions2
             Return s
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Dim s As String = BinaryType & GetCase() & "(" & Left.GetStaticString(mpe, contextFilter)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+            Dim s As String = BinaryType & GetCase() & "(" & Left.GetStaticString(mpe, contextInfo)
             If Right IsNot Nothing Then
-                s &= "," & Right.GetStaticString(mpe, contextFilter)
+                s &= "," & Right.GetStaticString(mpe, contextInfo)
             End If
             s &= ")"
             Return s
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            Left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            Left.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             If Right IsNot Nothing Then
-                Right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                Right.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
 
@@ -117,16 +117,19 @@ Namespace Expressions2
             Return New BinaryExpressionBase(Left, Right)
         End Function
 
-        Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                  ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                  ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary,
+                                                  ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Dim sb As New StringBuilder
             If _parentheses Then
                 sb.Append("(")
             End If
 
-            sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor))
+            sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor))
 
             If Right IsNot Nothing Then
-                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor))
+                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor))
             End If
 
             If _parentheses Then
@@ -330,14 +333,17 @@ Namespace Expressions2
             Return l
         End Function
 
-        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                                ByVal executor As Query.IExecutionContext) As String
             If Right Is Nothing Then
-                Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                Return Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
             End If
             'If typeof Left is EntityExpression
-            Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
+            Return "(" & Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor) & _
                 stmt.BinaryOperator2String(_oper) & _
-                Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & ")"
+                Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor) & ")"
         End Function
 
         'Public Overrides Function RemoveExpression(ByVal f As IComplexExpression) As IComplexExpression
@@ -556,10 +562,13 @@ Namespace Expressions2
         '    Throw New NotImplementedException
         'End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
-            Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor) & _
+        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                                ByVal executor As Query.IExecutionContext) As String
+            Return Left.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor) & _
                 " and " & _
-                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                Right.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
         End Function
 
         Protected Overrides ReadOnly Property BinaryType() As String

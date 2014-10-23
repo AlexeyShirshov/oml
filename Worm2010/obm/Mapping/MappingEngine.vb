@@ -1587,8 +1587,16 @@ Public Class ObjectMappingEngine
                 If bsch IsNot Nothing Then
                     schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
                         GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), bsch, mpeVersion, mpe, idic, names)
+                    Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
+                    If n IsNot Nothing Then
+                        n.InitSchema(mpe, tp)
+                    End If
                 Else
                     schema = New SimpleObjectSchema(ownTable)
+                    Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
+                    If n IsNot Nothing Then
+                        n.InitSchema(mpe, tp)
+                    End If
                     ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), mpe, idic, names)
                 End If
             Else
@@ -1598,12 +1606,20 @@ Public Class ObjectMappingEngine
                 End If
 
                 schema = New SimpleObjectSchema(tbl)
+                Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
+                If n IsNot Nothing Then
+                    n.InitSchema(mpe, tp)
+                End If
                 Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True)
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             End If
         Else
             Try
                 schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IEntitySchema)
+                Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
+                If n IsNot Nothing Then
+                    n.InitSchema(mpe, tp)
+                End If
                 Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True)
                 If Not ea.RawProperties AndAlso l.Count < schema.FieldColumnMap.Count Then
                     l = GetMappedProperties(tp, mpeVersion, True, True)
@@ -1612,11 +1628,6 @@ Public Class ObjectMappingEngine
             Catch ex As Exception
                 Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
             End Try
-        End If
-
-        Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
-        If n IsNot Nothing Then
-            n.InitSchema(mpe, tp)
         End If
 
         Return schema
@@ -2308,7 +2319,7 @@ Public Class ObjectMappingEngine
     Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
         ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
         ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
-        ByVal filterInfo As Object, ByVal jt As JoinType)
+        ByVal filterInfo As IDictionary, ByVal jt As JoinType)
 
         Dim jft As JoinFieldType
 
@@ -2338,7 +2349,7 @@ Public Class ObjectMappingEngine
     Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
         ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
         ByRef filter As IFilter, ByVal l As List(Of QueryJoin), ByVal jt As JoinType, _
-        ByVal filterInfo As Object, ByVal jft As JoinFieldType, ByVal propertyAlias As String)
+        ByVal filterInfo As IDictionary, ByVal jft As JoinFieldType, ByVal propertyAlias As String)
 
         Select Case jft
             Case JoinFieldType.Direct

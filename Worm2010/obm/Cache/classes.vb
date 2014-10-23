@@ -250,7 +250,7 @@ Namespace Cache
         End Function
 
         Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal dic As IDictionary) As T
-            Return GetObject(Of T)(mgr, mgr.Cache, mgr.GetContextInfo, mgr.MappingEngine, dic)
+            Return GetObject(Of T)(mgr, mgr.Cache, mgr.ContextInfo, mgr.MappingEngine, dic)
         End Function
 
         Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
@@ -266,7 +266,7 @@ Namespace Cache
         End Function
 
         Public Function GetObject(ByVal mgr As OrmManager, ByVal dic As IDictionary) As ICachedEntity
-            Return GetObject(mgr, mgr.Cache, mgr.GetContextInfo, mgr.MappingEngine, dic)
+            Return GetObject(mgr, mgr.Cache, mgr.ContextInfo, mgr.MappingEngine, dic)
         End Function
 
         Public Function GetObject(ByVal mgr As OrmManager, ByVal cache As CacheBase, _

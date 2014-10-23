@@ -47,10 +47,13 @@ Namespace Expressions2
             Return l.ToArray
         End Function
 
-        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                      ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable,
+                                      ByVal contextInfo As IDictionary,
+                                      ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
             Dim s As String = String.Empty
             If _exp IsNot Nothing Then
-                s = _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor)
+                s = _exp.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
             ElseIf _t = AggregateFunction.BigCount Or _t = AggregateFunction.Count Then
                 s = "*"
             End If
@@ -89,17 +92,17 @@ Namespace Expressions2
             Return s
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Dim s As String = _t.ToString & "$" & _distinct & _custom & "$"
             If _exp IsNot Nothing Then
-                s &= _exp.GetStaticString(mpe, contextFilter)
+                s &= _exp.GetStaticString(mpe, contextInfo)
             End If
             Return s
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
             If _exp IsNot Nothing Then
-                _exp.Prepare(executor, mpe, contextFilter, stmt, isAnonym)
+                _exp.Prepare(executor, mpe, contextInfo, stmt, isAnonym)
             End If
         End Sub
 

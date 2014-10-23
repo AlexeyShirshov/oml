@@ -43,10 +43,12 @@ Namespace Entities.Meta
         'Function GetSuppressedFields() As String()
         'Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
+    Public Interface ISerializeSave
 
+    End Interface
     Public Interface IContextObjectSchema
         Inherits IEntitySchema
-        Function GetContextFilter(ByVal context As Object) As IFilter
+        Function GetContextFilter(ByVal context As IDictionary) As IFilter
     End Interface
 
     Public Interface IOrmSorting

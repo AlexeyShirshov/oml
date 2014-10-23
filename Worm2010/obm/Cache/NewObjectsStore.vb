@@ -77,11 +77,11 @@ Namespace Cache
         Private Function GetDic(ByVal t As Type) As IDictionary(Of PKWrapper, _ICachedEntity)
             SyncLock _syncObj
                 If _dic Is Nothing Then
-                    _dic = New Dictionary(Of Type, IDictionary(Of PKWrapper, _ICachedEntity))
+                    _dic = New Concurrent.ConcurrentDictionary(Of Type, IDictionary(Of PKWrapper, _ICachedEntity))
                 End If
                 Dim d As IDictionary(Of PKWrapper, _ICachedEntity) = Nothing
                 If Not _dic.TryGetValue(t, d) Then
-                    d = New Dictionary(Of PKWrapper, _ICachedEntity)
+                    d = New Concurrent.ConcurrentDictionary(Of PKWrapper, _ICachedEntity)
                     _dic.Add(t, d)
                 End If
                 Return d

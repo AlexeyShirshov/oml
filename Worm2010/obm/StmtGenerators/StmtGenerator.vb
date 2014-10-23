@@ -10,7 +10,7 @@ Imports Worm.Expressions2
 Public MustInherit Class StmtGenerator
     'Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
 
-
+    Public Delegate Function GetCustomTableNameDelegate(source As StmtGenerator, ByVal t As SourceFragment, ByVal contextInfo As IDictionary) As String
     Public MustOverride Function ParamName(ByVal name As String, ByVal i As Integer) As String
     Public MustOverride Function TopStatement(ByVal top As Integer) As String
     Public MustOverride ReadOnly Property Left() As String
@@ -26,7 +26,7 @@ Public MustInherit Class StmtGenerator
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As SortExpression) As Worm.Entities.Query.TopAspect
 #End If
 
-    Public MustOverride Function GetTableName(ByVal t As SourceFragment) As String
+    Public MustOverride Function GetTableName(ByVal t As SourceFragment, ByVal contextInfo As IDictionary) As String
 
     Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
 
@@ -38,11 +38,12 @@ Public MustInherit Class StmtGenerator
     Public MustOverride Function Oper2String(ByVal oper As Worm.Criteria.FilterOperation) As String
 
     Public MustOverride Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
-                                   ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
+                                   ByVal contextInfo As IDictionary, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
                                    ByVal sb As StringBuilder, ByVal _t As Type, ByVal _tbl As SourceFragment, _
                                    ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
 
-    Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal filterInfo As Object, _
+    Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                                    ByVal contextInfo As IDictionary, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
 
@@ -54,7 +55,7 @@ Public MustInherit Class StmtGenerator
         Return String.Empty
     End Function
 
-    Public Overridable Sub FormatRowNumber(mpe As ObjectMappingEngine, q As QueryCmd, ByVal filterInfo As Object, _
+    Public Overridable Sub FormatRowNumber(mpe As ObjectMappingEngine, q As QueryCmd, ByVal contextInfo As IDictionary, _
             ByVal params As ICreateParam, ByVal almgr As IPrepareTable, sb As StringBuilder)
 
     End Sub

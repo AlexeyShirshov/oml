@@ -102,21 +102,21 @@ Namespace Query
             End If
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
             If _tf IsNot Nothing Then
                 Return _tf.First.RawName & "$" & _tf.Second
             ElseIf _c IsNot Nothing Then
-                Return _c.GetStaticString(mpe, contextFilter)
+                Return _c.GetStaticString(mpe, contextInfo)
             Else
-                Return _op.Entity.ToStaticString(mpe, contextFilter) & "$" & _op.PropertyAlias
+                Return _op.Entity.ToStaticString(mpe, contextInfo) & "$" & _op.PropertyAlias
             End If
         End Function
 
-        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _c IsNot Nothing Then
                 'Return _c.(mpe, contextFilter)
             Else
-                _op.Entity.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _op.Entity.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
     End Class

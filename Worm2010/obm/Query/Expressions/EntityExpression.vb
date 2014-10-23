@@ -66,7 +66,7 @@ Namespace Expressions2
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, _
+            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, _
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim map As MapField2Column = Nothing
@@ -94,7 +94,7 @@ Namespace Expressions2
                     End If
                     tbl = map.Table
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe, contextFilter) & "." & _op.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe, contextInfo) & "." & _op.PropertyAlias, ex))
                 End Try
             End If
 
@@ -127,10 +127,10 @@ Namespace Expressions2
                 If args.CustomStatement IsNot Nothing Then
                     If args.CustomStatement.FromLeft Then
                         sb.Insert(idx_beg, args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
-                            almgr, contextFilter, stmtMode, executor, sf))
+                            almgr, contextInfo, stmtMode, executor, sf))
                     Else
                         sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
-                            almgr, contextFilter, stmtMode, executor, sf))
+                            almgr, contextInfo, stmtMode, executor, sf))
                     End If
                     sb.Append(" and ")
                     lastPostfix = 5
@@ -173,12 +173,13 @@ Namespace Expressions2
             Return _op.Entity._ToString & "$" & _op.PropertyAlias
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
             Return GetDynamicString()
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextFilter As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            _op.Entity.Prepare(executor, schema, contextFilter, stmt, isAnonym)
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator,
+                           ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            _op.Entity.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub
 
         Public Property ObjectProperty() As Query.ObjectProperty Implements IEntityPropertyExpression.ObjectProperty

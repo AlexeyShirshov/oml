@@ -414,7 +414,7 @@ Namespace Criteria.Joins
             Return _ToString.GetHashCode
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements Core.IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Core.IFilter.GetStaticString
             Return _ToString()
         End Function
 
@@ -423,7 +423,7 @@ Namespace Criteria.Joins
         'End Function
 
         Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
-            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+            ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
             Dim [alias] As String = String.Empty
             Dim alias2 As String = String.Empty
@@ -488,7 +488,7 @@ Namespace Criteria.Joins
                     os = _eu2
                 End If
             ElseIf _l.CustomTemplate IsNot Nothing Then
-                [alias] = _l.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+                [alias] = _l.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -552,7 +552,7 @@ Namespace Criteria.Joins
                     os2 = _eu2
                 End If
             ElseIf _r.CustomTemplate IsNot Nothing Then
-                [alias2] = _r.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, filterInfo, False, executor)
+                [alias2] = _r.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -684,7 +684,7 @@ Namespace Criteria.Joins
             Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New ScalarValue(value.Value))
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             'do nothing
         End Sub
 

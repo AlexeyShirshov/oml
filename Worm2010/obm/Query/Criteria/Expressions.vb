@@ -69,8 +69,8 @@ Namespace Expressions
             End Get
         End Property
 
-        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return FormatOper() & "$" & _v.GetStaticString(mpe, contextFilter)
+        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+            Return FormatOper() & "$" & _v.GetStaticString(mpe, contextInfo)
         End Function
 
         Public Overrides Function ToString() As String
@@ -96,10 +96,11 @@ Namespace Expressions
             Return ToString.GetHashCode()
         End Function
 
-        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
+        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                             ByVal stmt As StmtGenerator, _
             ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
-            Return FormatOper() & FormatParam(s, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor)
+            ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Return FormatOper() & FormatParam(s, fromClause, stmt, pmgr, almgr, contextInfo, inSelect, executor)
         End Function
 
         Protected Function FormatOper() As String
@@ -125,8 +126,8 @@ Namespace Expressions
 
         Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
-            Dim strCmd As String = _v.GetParam(s, fromClause, stmt, pmgr, almgr, Nothing, filterInfo, inSelect, executor)
+            ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Dim strCmd As String = _v.GetParam(s, fromClause, stmt, pmgr, almgr, Nothing, contextInfo, inSelect, executor)
             If inSelect AndAlso Not String.IsNullOrEmpty(_alias) Then
                 strCmd &= " " & _alias
             End If
@@ -209,9 +210,9 @@ Namespace Expressions
         '            End If
         '        End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
             If _v IsNot Nothing Then
-                _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _v.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
     End Class
@@ -247,24 +248,24 @@ Namespace Expressions
 
         Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal pmgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, _
-            ByVal filterInfo As Object, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
-            Return "(" & _left.MakeStmt(s, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor) & FormatOper() & _right.MakeStmt(s, fromClause, stmt, pmgr, almgr, filterInfo, inSelect, executor) & ")"
+            ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
+            Return "(" & _left.MakeStmt(s, fromClause, stmt, pmgr, almgr, contextInfo, inSelect, executor) & FormatOper() & _right.MakeStmt(s, fromClause, stmt, pmgr, almgr, contextInfo, inSelect, executor) & ")"
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return _left.ToStaticString(mpe, contextFilter) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe, contextFilter)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return _left.ToStaticString(mpe, contextInfo) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe, contextInfo)
         End Function
 
         Public Overrides Function _ToString() As String
             Return _left._ToString & "$" & Operation.ToString & "$" & _right._ToString
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             If _left IsNot Nothing Then
-                _left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _left.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
             If _right IsNot Nothing Then
-                _right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _right.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
 

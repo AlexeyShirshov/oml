@@ -112,7 +112,7 @@ Namespace Criteria.Conditions
                 _con = con
             End Sub
 
-            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String
                 Dim sb As New StringBuilder
                 sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString(mpe, contextFilter))
                 sb.Append(_con.Condition2String())
@@ -172,12 +172,14 @@ Namespace Criteria.Conditions
         'End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                      ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal contextInfo As IDictionary,
+                                      ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
             If _right Is Nothing Then
-                Return _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
+                Return _left.MakeQueryStmt(schema, fromClause, stmt, executor, contextInfo, almgr, pname)
             End If
-            Dim left = _left.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
-            Dim right = _right.MakeQueryStmt(schema, fromClause, stmt, executor, filterInfo, almgr, pname)
+            Dim left = _left.MakeQueryStmt(schema, fromClause, stmt, executor, contextInfo, almgr, pname)
+            Dim right = _right.MakeQueryStmt(schema, fromClause, stmt, executor, contextInfo, almgr, pname)
 
             If Not String.IsNullOrEmpty(left) AndAlso Not String.IsNullOrEmpty(right) Then
                 Return "(" & left & Condition2String() & right & ")"
@@ -303,13 +305,13 @@ Namespace Criteria.Conditions
             Return _left._ToString() & Condition2String() & r
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IFilter.GetStaticString
             Dim r As String = String.Empty
             If _right IsNot Nothing Then
-                r = _right.GetStaticString(mpe, contextFilter)
+                r = _right.GetStaticString(mpe, contextInfo)
             End If
 
-            Return _left.GetStaticString(mpe, contextFilter) & Condition2String() & r
+            Return _left.GetStaticString(mpe, contextInfo) & Condition2String() & r
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
@@ -332,12 +334,12 @@ Namespace Criteria.Conditions
             Return CreateMe(_left, _right, _oper)
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _left IsNot Nothing Then
-                _left.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _left.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
             If _right IsNot Nothing Then
-                _right.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _right.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
 
