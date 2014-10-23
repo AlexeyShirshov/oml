@@ -20,9 +20,11 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter._ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                                   ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext,
+                                                   ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As IFilter() Implements IFilter.GetAllFilters
-        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IFilter.GetStaticString
+        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IFilter.GetStaticString
 
         Public Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter Implements IFilter.SetUnion
             _eu = eu
@@ -71,12 +73,12 @@ Namespace Criteria.Core
 
         Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
             ByVal stmt As StmtGenerator, ByVal pmgr As ICreateParam, ByVal inSelect As Boolean, _
-            ByVal almgr As IPrepareTable, ByVal filterContext As Object, ByVal executor As IExecutionContext) As String
+            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal executor As IExecutionContext) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, Nothing, filterContext, inSelect, executor)
+            Return Value.GetParam(schema, fromClause, stmt, pmgr, almgr, Nothing, contextInfo, inSelect, executor)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals
@@ -117,9 +119,9 @@ Namespace Criteria.Core
         '    'Return MakeQueryStmt(schema, Filter, almgr, pname)
         'End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _v IsNot Nothing Then
-                _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                _v.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
 
@@ -155,10 +157,12 @@ Namespace Criteria.Core
         '    Return replacer
         'End Function
 
-        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator,
+                                                         ByVal almgr As IPrepareTable, ByVal pname As ICreateParam,
+                                                         ByVal executor As Query.IExecutionContext) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return _templ.GetStaticString(mpe, contextFilter)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return _templ.GetStaticString(mpe, contextInfo)
         End Function
 
         Public ReadOnly Property Template() As ITemplate Implements ITemplateFilterBase.Template

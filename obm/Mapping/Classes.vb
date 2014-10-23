@@ -114,7 +114,6 @@ Namespace Entities.Meta
 
     Public Class SearchFragment
         Inherits SourceFragment
-        Implements ISearchTable
 
         Private _eu As EntityUnion
         Private _searchString As String

@@ -180,22 +180,38 @@ Public Class SetManagerHelper
     Private _gm As ICreateManager
     Private _mgr As OrmManager
     Private _schema As ObjectMappingEngine
+    Private _ctx As IDictionary
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate, ByVal schema As ObjectMappingEngine)
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As CreateManagerDelegate, ByVal schema As ObjectMappingEngine,
+                   Optional contextInfo As IDictionary = Nothing)
         _m = getMgr
         _mgr = mgr
         _schema = schema
-        Subscribe()
+        Subscribe(contextInfo)
     End Sub
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine)
+    Public Sub New(ByVal mgr As OrmManager, ByVal getMgr As ICreateManager, ByVal schema As ObjectMappingEngine,
+                   Optional contextInfo As IDictionary = Nothing)
         _gm = getMgr
         _mgr = mgr
         _schema = schema
-        Subscribe()
+        Subscribe(contextInfo)
     End Sub
 
-    Protected Sub Subscribe()
+    Protected Sub Subscribe(contextInfo As IDictionary)
+        _ctx = _mgr.ContextInfo
+        If _ctx Is Nothing OrElse contextInfo Is Nothing Then
+            _mgr.ContextInfo = contextInfo
+        Else
+            Dim dic As New System.Collections.Hashtable
+            For Each de As DictionaryEntry In _mgr.ContextInfo
+                dic.Add(de.Key, de.Value)
+            Next
+            For Each de As DictionaryEntry In contextInfo
+                dic.Add(de.Key, de.Value)
+            Next
+            _mgr.ContextInfo = dic
+        End If
         AddHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
         AddHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
     End Sub
@@ -228,6 +244,7 @@ Public Class SetManagerHelper
 
             RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
             RemoveHandler _mgr.ObjectRestoredFromCache, AddressOf ObjectRestored
+            _mgr.ContextInfo = _ctx
         End If
         Me.disposedValue = True
     End Sub

@@ -43,6 +43,7 @@ Namespace Database
         '    Return CType(MyBase.GetObjectSchema(t), IOrmObjectSchema)
         'End Function
 
+        Public Overridable Property UseSchema As Boolean = True
 #Region " engine properties "
         Public Overridable ReadOnly Property NullIsZero() As Boolean
             Get
@@ -952,11 +953,29 @@ Namespace Database
 
 #End If
 
-        Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment) As String
-            If Not String.IsNullOrEmpty(t.Schema) Then
-                Return t.Schema & Selector & t.Name
+        Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment, ByVal contextInfo As IDictionary) As String
+            Dim db = String.Empty
+            If contextInfo IsNot Nothing Then
+                Dim cd = TryCast(contextInfo("query custom table name"), GetCustomTableNameDelegate)
+                If cd IsNot Nothing Then
+                    Return cd(Me, t, contextInfo)
+                End If
+
+                Dim qdb = contextInfo("query database")
+                If qdb IsNot Nothing AndAlso Not String.IsNullOrEmpty(qdb.ToString) Then
+                    db = qdb.ToString & Selector
+                End If
+
+                Dim u = contextInfo("query schema")
+                If u IsNot Nothing AndAlso Not String.IsNullOrEmpty(u.ToString) Then
+                    Return db & u.ToString & Selector & t.Name
+                End If
+
+            End If
+            If Not String.IsNullOrEmpty(t.Schema) AndAlso UseSchema Then
+                Return db & t.Schema & Selector & t.Name
             Else
-                Return t.Name
+                Return db & t.Name
             End If
         End Function
 
@@ -976,13 +995,13 @@ Namespace Database
 
 
         Public Overrides Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
-                                   ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
+                                   ByVal contextInfo As IDictionary, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
                                    ByVal sb As StringBuilder, ByVal type As Type, ByVal sourceFragment As SourceFragment, _
                                    ByVal joins() As Joins.QueryJoin, ByVal propertyAlias As String, ByVal filter As IFilter)
             If type Is Nothing Then
                 sb.Append(SelectWithJoin(dbschema, Nothing, New SourceFragment() {sourceFragment}, _
                     almgr, paramMgr, joins, _
-                    False, Nothing, Nothing, Nothing, Nothing, filterInfo))
+                    False, Nothing, Nothing, Nothing, Nothing, contextInfo))
             Else
                 Dim arr As Generic.IList(Of EntityExpression) = Nothing
                 If Not String.IsNullOrEmpty(propertyAlias) Then
@@ -990,10 +1009,10 @@ Namespace Database
                     arr.Add(New EntityExpression(propertyAlias, type))
                 End If
                 sb.Append(SelectWithJoin(dbschema, type, almgr, paramMgr, joins, _
-                    arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))
+                    arr IsNot Nothing, Nothing, Nothing, contextInfo, arr))
             End If
 
-            AppendWhere(dbschema, type, filter, almgr, sb, filterInfo, paramMgr)
+            AppendWhere(dbschema, type, filter, almgr, sb, contextInfo, paramMgr)
         End Sub
 
 

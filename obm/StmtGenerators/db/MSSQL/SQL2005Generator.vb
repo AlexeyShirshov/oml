@@ -76,7 +76,7 @@ Namespace Database
             Return selSb.ToString
         End Function
 
-        Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, query As QueryCmd, ByVal filterInfo As Object, _
+        Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, query As QueryCmd, ByVal contextInfo As IDictionary, _
             ByVal params As ICreateParam, ByVal almgr As IPrepareTable, sb As StringBuilder)
             'Throw New NotImplementedException
             Dim rs As String = sb.ToString
@@ -90,7 +90,7 @@ Namespace Database
             'Next
             'sb.Length -= 1
             sb.Append(" from (").Append(rs).Append(") as t0t01 where ")
-            sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, Me, query, filterInfo, almgr, params))
+            sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, Me, query, contextInfo, almgr, params))
         End Sub
 
         Protected Overrides Function DeclareOutput(ByVal sb As System.Text.StringBuilder, _

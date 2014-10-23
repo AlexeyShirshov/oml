@@ -7,6 +7,7 @@ Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 Imports Worm.Query
+Imports System.Collections
 
 <TestClass()> Public Class SelectTest
 
@@ -49,7 +50,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestGroupExpression()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -73,7 +74,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestGroupExpressionComplex()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -97,7 +98,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestGroupipingSet()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New MSSQL2008Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -126,7 +127,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestSortExpression()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -149,7 +150,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestAggregateExpression()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create

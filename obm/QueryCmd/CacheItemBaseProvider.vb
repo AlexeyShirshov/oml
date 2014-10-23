@@ -329,7 +329,7 @@ Namespace Query
             '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
             'End If
 
-            _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.GetContextInfo)
+            _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.ContextInfo)
 
             If _dic Is Nothing Then
                 _dic = GetExternalDic(_key)

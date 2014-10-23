@@ -61,10 +61,10 @@ Namespace Expressions2
     End Enum
 
     Public Interface IQueryElement
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
         Function GetDynamicString() As String
         Sub Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
         Function Equals(ByVal f As IQueryElement) As Boolean
     End Interface
@@ -83,7 +83,7 @@ Namespace Expressions2
         Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                           ByVal stmt As StmtGenerator, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, _
-                          ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As IExecutionContext) As String
+                          ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, ByVal executor As IExecutionContext) As String
         ReadOnly Property ShouldUse() As Boolean
         Function GetExpressions() As IExpression()
     End Interface

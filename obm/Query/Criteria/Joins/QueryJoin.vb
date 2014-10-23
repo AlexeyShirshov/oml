@@ -77,7 +77,7 @@ Namespace Criteria.Joins
         End Function
 
         Public Function MakeSQLStmt(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal schema As StmtGenerator, ByVal executor As IExecutionContext, _
-            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, _
+            ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, _
             ByVal os As EntityUnion, ByVal sb As StringBuilder) As SourceFragment
             'If IsEmpty Then
             '    Throw New InvalidOperationException("Object must be created")
@@ -123,16 +123,16 @@ Namespace Criteria.Joins
                         almgr.AddTable(tbl, os_, pname)
                     End If
 
-                    sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl))
+                    sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl, contextInfo))
                     sb.Append(" " & almgr.GetAlias(alTable, os_)).Append(" on ")
-                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, filterInfo, almgr, pname))
+                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, contextInfo, almgr, pname))
                     Return alTable
                 Else
                     sb.Append(JoinTypeString()).Append("(")
 
                     Dim al As QueryAlias = os_.ObjectAlias
                     Dim q As QueryCmd = al.Query
-                    sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, AliasMgr.Create))
+                    sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, contextInfo, q, pname, AliasMgr.Create))
 
                     Dim tbl2 As SourceFragment = al.Tbl
                     If tbl2 Is Nothing Then
@@ -143,7 +143,7 @@ Namespace Criteria.Joins
                     Dim als As String = almgr.AddTable(tbl2, os_)
 
                     sb.Append(") as ").Append(als).Append(" on ")
-                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, New CombineExecutor(al.Query, executor), filterInfo, almgr, pname))
+                    sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, New CombineExecutor(al.Query, executor), contextInfo, almgr, pname))
                     'almgr.Replace(mpe, schema, tbl2, os_, sb)
                     Return tbl2
                 End If
@@ -158,7 +158,7 @@ Namespace Criteria.Joins
                     almgr.AddTable(tbl, os_, pname)
                 End If
 
-                sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl))
+                sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl, contextInfo))
                 sb.Append(" ").Append(almgr.GetAlias(alTable, os_))
                 Return alTable
             ElseIf os_ IsNot Nothing AndAlso os_.IsQuery Then
@@ -166,7 +166,7 @@ Namespace Criteria.Joins
 
                 Dim al As QueryAlias = os_.ObjectAlias
                 Dim q As QueryCmd = al.Query
-                sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, filterInfo, q, pname, almgr))
+                sb.Append(schema.MakeQueryStatement(mpe, q.FromClause, contextInfo, q, pname, almgr))
 
                 Dim tbl2 As SourceFragment = al.Tbl
                 If tbl2 Is Nothing Then
@@ -222,7 +222,7 @@ Namespace Criteria.Joins
             _condition = _condition.ReplaceFilter(oldValue, newValue)
         End Sub
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String Implements IQueryElement.GetStaticString
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
                 'ElseIf _type IsNot Nothing Then
@@ -234,7 +234,7 @@ Namespace Criteria.Joins
             End If
         End Function
 
-        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String
             If _condition IsNot Nothing Then
                 Return s & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
             ElseIf _jos IsNot Nothing Then
@@ -427,7 +427,7 @@ Namespace Criteria.Joins
             Return CType(_Clone(), QueryJoin)
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _src IsNot Nothing AndAlso _src.AnyType Is Nothing AndAlso String.IsNullOrEmpty(_src.AnyEntityName) Then
                 Dim root As QueryCmd = _src.ObjectAlias.Query
                 'root._outer = New QueryCmd
@@ -436,7 +436,7 @@ Namespace Criteria.Joins
                         Dim old As Boolean = q.AutoFields
                         Try
                             q.AutoFields = False
-                            q.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+                            q.Prepare(executor, schema, contextInfo, stmt, isAnonym)
                         Finally
                             q.AutoFields = old
                         End Try

@@ -121,11 +121,12 @@ Namespace Database
             End Get
         End Property
 
-        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal filterInfo As Object, _
+        Public Overrides Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
+                                                     ByVal contextInfo As IDictionary, _
             ByVal query As Worm.Query.QueryCmd, ByVal params As ICreateParam, _
             ByVal almgr As IPrepareTable) As String
 
-            Return Worm.Query.Database.DbQueryExecutor.MakeQueryStatement(mpe, filterInfo, Me, query, params, almgr)
+            Return Worm.Query.Database.DbQueryExecutor.MakeQueryStatement(mpe, contextInfo, Me, query, params, almgr)
         End Function
 
         Public Overrides Function Oper2String(ByVal oper As Worm.Criteria.FilterOperation) As String
@@ -195,17 +196,17 @@ Namespace Database
         End Function
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal contextInfo As IDictionary, ByVal pmgr As ICreateParam) As Boolean
             Dim schema As IEntitySchema = Nothing
             If t IsNot Nothing Then
                 schema = mpe.GetEntitySchema(t)
             End If
 
-            Return AppendWhere(mpe, t, schema, filter, almgr, sb, filter_info, pmgr)
+            Return AppendWhere(mpe, t, schema, filter, almgr, sb, contextInfo, pmgr)
         End Function
 
         Public Overridable Function AppendWhere(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal schema As IEntitySchema, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal contextInfo As IDictionary, ByVal pmgr As ICreateParam, _
             Optional ByVal os As EntityUnion = Nothing) As Boolean
 
             Dim con As New Condition.ConditionConstructor
@@ -219,7 +220,7 @@ Namespace Database
             If schema IsNot Nothing AndAlso (os Is Nothing OrElse Not os.IsQuery) Then
                 Dim cs As IContextObjectSchema = TryCast(schema, IContextObjectSchema)
                 If cs IsNot Nothing Then
-                    Dim f As IFilter = cs.GetContextFilter(filter_info)
+                    Dim f As IFilter = cs.GetContextFilter(contextInfo)
                     If f IsNot Nothing Then
                         If os IsNot Nothing Then
                             f.SetUnion(os)
@@ -233,7 +234,7 @@ Namespace Database
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, New ExecutorCtx(t, schema), filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(mpe, Nothing, Me, New ExecutorCtx(t, schema), contextInfo, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -248,11 +249,12 @@ Namespace Database
         Public Function [Select](ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
             ByVal arr As Generic.IList(Of EntityExpression), _
-            ByVal additionalColumns As String, ByVal filterInfo As Object) As String
-            Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
+            ByVal additionalColumns As String, ByVal contextInfo As IDictionary) As String
+            Return SelectWithJoin(mpe, original_type, almgr, params, Nothing, True, Nothing, additionalColumns, contextInfo, arr)
         End Function
 
-        Public Overridable Function Delete(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal filter As IFilter, ByVal params As ParamMgr) As String
+        Public Overridable Function Delete(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal filter As IFilter, ByVal params As ParamMgr,
+                                           ByVal contextInfo As IDictionary) As String
             If t Is Nothing Then
                 Throw New ArgumentNullException("t parameter cannot be nothing")
             End If
@@ -262,7 +264,7 @@ Namespace Database
             End If
 
             Dim del_cmd As New StringBuilder
-            del_cmd.Append("delete from ").Append(GetTableName(mpe.GetTables(t)(0)))
+            del_cmd.Append("delete from ").Append(GetTableName(mpe.GetTables(t)(0), contextInfo))
             del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, Nothing, params))
 
             Return del_cmd.ToString
@@ -271,7 +273,7 @@ Namespace Database
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, _
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
             ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String, _
-            ByVal filterInfo As Object, ByVal selectedProperties As Generic.IList(Of EntityExpression)) As String
+            ByVal contextInfo As IDictionary, ByVal selectedProperties As Generic.IList(Of EntityExpression)) As String
 
             If original_type Is Nothing Then
                 Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
@@ -283,18 +285,18 @@ Namespace Database
 
             Dim schema As IEntitySchema = mpe.GetEntitySchema(original_type)
 
-            Return SelectWithJoin(mpe, original_type, mpe.GetTables(schema), almgr, params, joins, wideLoad, Nothing, additionalColumns, selectedProperties, schema, filterInfo)
+            Return SelectWithJoin(mpe, original_type, mpe.GetTables(schema), almgr, params, joins, wideLoad, Nothing, additionalColumns, selectedProperties, schema, contextInfo)
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal tables() As SourceFragment, _
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin, _
             ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String, _
-            ByVal selectedProperties As Generic.IList(Of EntityExpression), ByVal schema As IEntitySchema, ByVal filterInfo As Object) As String
+            ByVal selectedProperties As Generic.IList(Of EntityExpression), ByVal schema As IEntitySchema, ByVal contextInfo As IDictionary) As String
 
             Dim selectcmd As New StringBuilder
             'Dim pmgr As ParamMgr = params 'New ParamMgr()
 
-            AppendFrom(mpe, almgr, filterInfo, tables, selectcmd, params, _
+            AppendFrom(mpe, almgr, contextInfo, tables, selectcmd, params, _
                            TryCast(schema, IMultiTableObjectSchema), original_type)
             If joins IsNot Nothing Then
                 For i As Integer = 0 To joins.Length - 1
@@ -302,7 +304,7 @@ Namespace Database
 
                     If Not QueryJoin.IsEmpty(join) Then
                         'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, almgr, params, Nothing, selectcmd)
+                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, contextInfo, almgr, params, Nothing, selectcmd)
                     End If
                 Next
             End If
@@ -327,7 +329,7 @@ Namespace Database
                             selectedProperties.Add(New EntityExpression(m.PropertyAlias, original_type))
                         Next
                     End If
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
                     Dim l As New List(Of EntityExpression)
@@ -336,7 +338,7 @@ Namespace Database
                             l.Add(New EntityExpression(mp.PropertyAlias, original_type))
                         End If
                     Next
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(l).MakeStatement(mpe, Nothing, Me, params, almgr, filterInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(l).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
                 End If
             Else
                 selSb.Append("*")
@@ -356,7 +358,7 @@ Namespace Database
         ''' <param name="sch"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Friend Function AppendFrom(ByVal mpe As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
+        Protected Friend Function AppendFrom(ByVal mpe As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, _
             ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
             ByVal sch As IMultiTableObjectSchema, ByVal t As Type) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
@@ -385,18 +387,18 @@ Namespace Database
                 'almgr.Replace(mpe, Me, tbl, Nothing, selectcmd)
 
                 If i = 0 Then
-                    selectcmd.Append(GetTableName(tbl_real)).Append(" ").Append([alias])
+                    selectcmd.Append(GetTableName(tbl_real, contextInfo)).Append(" ").Append([alias])
                 End If
 
                 If sch IsNot Nothing Then
                     For j As Integer = i + 1 To tables.Length - 1
-                        Dim join As QueryJoin = CType(mpe.GetJoins(sch, tbl, tables(j), filterInfo), QueryJoin)
+                        Dim join As QueryJoin = CType(mpe.GetJoins(sch, tbl, tables(j), contextInfo), QueryJoin)
 
                         If Not QueryJoin.IsEmpty(join) Then
                             If Not almgr.ContainsKey(tables(j), Nothing) Then
                                 almgr.AddTable(tables(j), Nothing, pname)
                             End If
-                            join.MakeSQLStmt(mpe, Nothing, Me, New ExecutorCtx(t, sch), filterInfo, almgr, pname, Nothing, selectcmd)
+                            join.MakeSQLStmt(mpe, Nothing, Me, New ExecutorCtx(t, sch), contextInfo, almgr, pname, Nothing, selectcmd)
                         End If
                     Next
                 End If
@@ -407,7 +409,7 @@ Namespace Database
 
         Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As ISinglePKEntity, _
             ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation, _
-            ByVal pmgr As ParamMgr) As String
+            ByVal pmgr As ParamMgr, ByVal contextInfo As IDictionary) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -438,7 +440,7 @@ Namespace Database
             Dim pk As String = Nothing
             Dim le As ILastError = TryCast(Me, ILastError)
             If entry.HasDeleted Then
-                sb.Append("delete ").Append(al).Append(" from ").Append(GetTableName(tbl)).Append(" ").Append(al)
+                sb.Append("delete ").Append(al).Append(" from ").Append(GetTableName(tbl, contextInfo)).Append(" ").Append(al)
                 sb.Append(" where ").Append(al).Append(".").Append(param_relation.Column).Append(" = ")
                 pk = pmgr.AddParam(pk, obj.Identifier)
                 sb.Append(pk).Append(" and ").Append(al).Append(".").Append(relation.Column).Append(" in(")
@@ -469,7 +471,7 @@ Namespace Database
                     If le IsNot Nothing Then
                         sb.Append("if ").Append(le.LastError).Append(" = 0 ")
                     End If
-                    sb.Append("insert into ").Append(GetTableName(tbl)).Append("(")
+                    sb.Append("insert into ").Append(GetTableName(tbl, contextInfo)).Append("(")
                     sb.Append(param_relation.Column).Append(",").Append(relation.Column)
                     Dim consts As New List(Of String)
                     If relation.Constants IsNot Nothing Then
@@ -497,8 +499,9 @@ Namespace Database
             Return sb.ToString
         End Function
 
-        Public Overridable Function Delete(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
-            ByVal filterInfo As Object) As String
+        Public Overridable Function Delete(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity,
+                                           ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+            ByVal contextInfo As IDictionary) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -550,18 +553,18 @@ Namespace Database
                     Next
 
                     Dim exec As New ExecutorCtx(type, relSchema)
-                    GetDeletedConditions(mpe, deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
+                    GetDeletedConditions(mpe, deleted_tables, contextInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
 
                     Dim pkFilter As IFilter = deleted_tables(relSchema.Table)
                     deleted_tables.Remove(relSchema.Table)
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
-                        del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, Nothing, params))
+                        del_cmd.Append("delete from ").Append(GetTableName(de.Key, contextInfo))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(mpe, Nothing, Me, exec, contextInfo, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
-                    del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table))
-                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, Nothing, params))
+                    del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table, contextInfo))
+                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(mpe, Nothing, Me, exec, contextInfo, Nothing, params))
                     del_cmd.Append(EndLine)
 
                     del_cmd.Length -= EndLine.Length
@@ -659,7 +662,7 @@ Namespace Database
             Next
         End Sub
 
-        Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal filterInfo As Object, _
+        Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal contextInfo As IDictionary, _
     ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
     ByRef selectedProperties As List(Of SelectExpression)) As String
 
@@ -724,7 +727,7 @@ Namespace Database
                                     Throw New ObjectMappingException("DefaultValue required for operation")
                                 End If
                             ElseIf v Is DBNull.Value AndAlso pkTable IsNot tb AndAlso js IsNot Nothing Then
-                                Dim j As QueryJoin = CType(mpe.GetJoins(js, pkTable, tb, filterInfo), QueryJoin)
+                                Dim j As QueryJoin = CType(mpe.GetJoins(js, pkTable, tb, contextInfo), QueryJoin)
                                 If j.JoinType = Joins.JoinType.Join Then
                                     GoTo l1
                                 End If
@@ -771,7 +774,7 @@ l1:
 
                         Dim jn As QueryJoin = Nothing
                         If js IsNot Nothing Then
-                            jn = CType(mpe.GetJoins(js, pkTable, join_table, filterInfo), QueryJoin)
+                            jn = CType(mpe.GetJoins(js, pkTable, join_table, contextInfo), QueryJoin)
                         End If
                         If Not QueryJoin.IsEmpty(jn) Then
                             Dim f As IFilter = jn.Condition
@@ -788,7 +791,7 @@ l1:
                             ins_tables(j).Filters.AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
-                    dbparams = FormInsert(mpe, ins_tables, ins_cmd, real_t, es, selectedProps, Nothing)
+                    dbparams = FormInsert(mpe, ins_tables, ins_cmd, real_t, es, selectedProps, Nothing, contextInfo)
 
                     If True Then
                         selectedProperties = selectedProps.ConvertAll(Function(e) New SelectExpression(e))
@@ -846,7 +849,7 @@ l1:
         End Structure
 
         Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, _
-            ByVal filterInfo As Object, ByVal originalCopy As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+            ByVal contextInfo As IDictionary, ByVal originalCopy As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByRef selectedProperties As Generic.List(Of SelectExpression),
             ByRef updated_fields As IList(Of EntityFilter)) As String
 
@@ -899,7 +902,7 @@ l1:
                     Next
                     updated_fields = l
 
-                    GetUpdateConditions(mpe, obj, esch, updated_tables, filterInfo)
+                    GetUpdateConditions(mpe, obj, esch, updated_tables, contextInfo)
 
                     selectedProperties = syncUpdateProps.ConvertAll(Function(e) New SelectExpression(e))
 
@@ -931,7 +934,7 @@ l1:
 
                                         If Not lastTbl.Equals(pk_table) Then
                                             CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, upd_cmd, _
-                                                obj, params, exec, varName)
+                                                obj, params, exec, varName, contextInfo)
                                         End If
                                     Else
                                         upd_cmd.Append("set @lastErr = ").Append(le.LastError).Append(EndLine)
@@ -949,23 +952,23 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Nothing, Me, exec, filterInfo, mpe, amgr, params, rt)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, Nothing, Me, exec, contextInfo, mpe, amgr, params, rt)).Append(",")
                             Next
                             upd_cmd.Length -= 1
-                            upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
+                            upd_cmd.Append(" from ").Append(GetTableName(tbl, contextInfo)).Append(" ").Append([alias])
                             For Each join As QueryJoin In item.Value._joins
                                 If Not amgr.ContainsKey(join.Table, Nothing) Then
                                     amgr.AddTable(join.Table, Nothing, params)
                                 End If
-                                join.MakeSQLStmt(mpe, Nothing, Me, Nothing, filterInfo, amgr, params, Nothing, upd_cmd)
+                                join.MakeSQLStmt(mpe, Nothing, Me, Nothing, contextInfo, amgr, params, Nothing, upd_cmd)
                             Next
                             upd_cmd.Append(" where ")
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilter = TryCast(fl, EntityFilter)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Nothing, Me, exec, filterInfo, mpe, amgr, params, rt))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Nothing, Me, exec, contextInfo, mpe, amgr, params, rt))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, exec, filterInfo, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(mpe, Nothing, Me, exec, contextInfo, amgr, params))
                             End If
                         Next
 
@@ -974,7 +977,7 @@ l1:
                             Dim insSb As New StringBuilder
                             If Not lastTbl.Equals(pk_table) Then
                                 CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, insSb, _
-                                     obj, params, exec, varName)
+                                     obj, params, exec, varName, contextInfo)
                             End If
 
                             Dim hasCol As Boolean = HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
@@ -1009,13 +1012,13 @@ l1:
                             Dim sel_sb As New StringBuilder
                             Dim newAlMgr As AliasMgr = AliasMgr.Create
                             sel_sb.Append(SelectWithJoin(mpe, rt, mpe.GetTables(esch), newAlMgr, params, _
-                                Nothing, True, Nothing, Nothing, syncUpdateProps, esch, filterInfo))
+                                Nothing, True, Nothing, Nothing, syncUpdateProps, esch, contextInfo))
                             Dim cn As New Condition.ConditionConstructor
                             For Each p As PKDesc In OrmManager.GetPKValues(obj, oschema)
                                 Dim clm As String = esch.FieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
                                 cn.AddFilter(New dc.TableFilter(mpe.GetPropertyTable(esch, p.PropertyAlias), clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
-                            AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, filterInfo, params)
+                            AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, contextInfo, params)
                             upd_cmd.Append(sel_sb)
                             selectedProperties = syncUpdateProps.ConvertAll(Function(e) New SelectExpression(e))
                         End If
@@ -1030,7 +1033,7 @@ l1:
 
         Protected Overridable Function CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
             ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam, _
-            ByVal exec As Query.IExecutionContext, ByVal rowCnt As String) As Boolean
+            ByVal exec As Query.IExecutionContext, ByVal rowCnt As String, ByVal contextInfo As IDictionary) As Boolean
 
             Dim dic As New List(Of InsertedTable)
             Dim l As New List(Of ITemplateFilter)
@@ -1048,7 +1051,7 @@ l1:
             Dim oldl As Integer = upd_cmd.Length
             upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and @lastErr = 0 ")
             Dim newl As Integer = upd_cmd.Length
-            FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, params)
+            FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, params, contextInfo)
             If newl = upd_cmd.Length Then
                 upd_cmd.Length = oldl
                 Return False
@@ -1310,7 +1313,7 @@ l2:
         Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of InsertedTable), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema, _
             ByVal selectedProperties As List(Of EntityExpression), _
-            ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
+            ByVal params As ICreateParam, ByVal contextInfo As IDictionary) As ICollection(Of System.Data.Common.DbParameter)
 
             If params Is Nothing Then
                 params = New ParamMgr(Me, "p")
@@ -1381,9 +1384,9 @@ l2:
                     Dim notSyncInsertPK As New List(Of Pair(Of String))
 
                     If item.Filters Is Nothing OrElse item.Filters.Count = 0 Then
-                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table)).Append(" ").Append(DefaultValues)
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table, contextInfo)).Append(" ").Append(DefaultValues)
                     Else
-                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table)).Append(" (")
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Table, contextInfo)).Append(" (")
                         Dim values_sb As New StringBuilder
                         values_sb.Append(" values(")
                         For Each f As ITemplateFilter In item.Filters
@@ -1497,7 +1500,7 @@ l1:
                         Dim almgr As AliasMgr = AliasMgr.Create
                         almgr.AddTable(pk_table, "t1")
                         selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, Nothing, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(type, os)))
-                        selSb.Append(" from ").Append(GetTableName(pk_table)).Append(" t1 where ")
+                        selSb.Append(" from ").Append(GetTableName(pk_table, contextInfo)).Append(" t1 where ")
                         'almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
                         ins_cmd.Append(selSb.ToString)
 

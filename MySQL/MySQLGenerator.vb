@@ -102,14 +102,14 @@ Public Class MySQLGenerator
         Return sb.ToString
     End Function
 
-    Public Overrides Sub FormStmt(dbschema As ObjectMappingEngine, fromClause As Query.QueryCmd.FromClauseDef, filterInfo As Object,
+    Public Overrides Sub FormStmt(dbschema As ObjectMappingEngine, fromClause As Query.QueryCmd.FromClauseDef, contextInfo As IDictionary,
                                   paramMgr As Entities.Meta.ICreateParam, almgr As IPrepareTable, sb As System.Text.StringBuilder,
                                   type As System.Type, sourceFragment As Entities.Meta.SourceFragment, joins() As Criteria.Joins.QueryJoin,
                                   propertyAlias As String, filter As Criteria.Core.IFilter)
         If type Is Nothing Then
             sb.Append(SelectWithJoin(dbschema, Nothing, New SourceFragment() {sourceFragment}, _
                 almgr, paramMgr, joins, _
-                False, Nothing, Nothing, Nothing, Nothing, filterInfo))
+                False, Nothing, Nothing, Nothing, Nothing, contextInfo))
         Else
             Dim arr As Generic.IList(Of EntityExpression) = Nothing
             If Not String.IsNullOrEmpty(propertyAlias) Then
@@ -117,10 +117,10 @@ Public Class MySQLGenerator
                 arr.Add(New EntityExpression(propertyAlias, type))
             End If
             sb.Append(SelectWithJoin(dbschema, type, almgr, paramMgr, joins, _
-                arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))
+                arr IsNot Nothing, Nothing, Nothing, contextInfo, arr))
         End If
 
-        AppendWhere(dbschema, type, filter, almgr, sb, filterInfo, paramMgr)
+        AppendWhere(dbschema, type, filter, almgr, sb, contextInfo, paramMgr)
     End Sub
 
     Public Overrides ReadOnly Property FTSKey As String
@@ -135,7 +135,7 @@ Public Class MySQLGenerator
         End Get
     End Property
 
-    Public Overrides Function GetTableName(t As Entities.Meta.SourceFragment) As String
+    Public Overrides Function GetTableName(t As Entities.Meta.SourceFragment, ByVal contextInfo As IDictionary) As String
         Return t.Name
     End Function
 
@@ -177,7 +177,8 @@ Public Class MySQLGenerator
         End Get
     End Property
 
-    Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, q As Query.QueryCmd, filterInfo As Object, params As ICreateParam, almgr As IPrepareTable, sb As StringBuilder)
+    Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, q As Query.QueryCmd, contextInfo As IDictionary, params As ICreateParam,
+                                         almgr As IPrepareTable, sb As StringBuilder)
         If q.TopParam IsNot Nothing Then
             Dim stmt = " limit {0} offset {1}"
             Dim off = "0"

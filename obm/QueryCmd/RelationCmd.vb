@@ -377,7 +377,7 @@ Namespace Query
         End Sub
 
         Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As Object, _
+            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
             'If selectOS Is Nothing Then
@@ -711,7 +711,7 @@ l1:
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
+                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine, ContextInfo)
                     LoadObjects(mgr)
                 End Using
             End Using
@@ -748,7 +748,7 @@ l1:
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine)
+                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine, ContextInfo)
                     LoadObjects(mgr, start, length)
                 End Using
             End Using

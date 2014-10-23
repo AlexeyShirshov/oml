@@ -7,6 +7,7 @@ Imports Worm.Database
 Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 Imports Worm.Query
+Imports System.Collections
 
 <TestClass()> Public Class BinaryTest
 
@@ -49,7 +50,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestMinus()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -71,7 +72,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestPlus()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -93,7 +94,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestMul()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -115,7 +116,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestDiv()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -137,7 +138,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestEqual()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -161,7 +162,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestAnd()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -194,7 +195,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestReplaceExpression()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -219,7 +220,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestRemoveExpression()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -242,7 +243,7 @@ Imports Worm.Query
 
     <TestMethod()> Public Sub TestEval()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -269,7 +270,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestMakeDynString()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -287,7 +288,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestMakeDynStringComplex()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -311,7 +312,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestTestMethod()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -332,7 +333,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestTestMethodComplex()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -359,7 +360,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestTestMethod2()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create
@@ -377,7 +378,7 @@ Imports Worm.Query
     <TestMethod()> _
     Public Sub TestTestMethodComplex2()
         Dim mpe As New ObjectMappingEngine
-        Dim contextFilter As Object = Nothing
+        Dim contextFilter As IDictionary = Nothing
         Dim stmt As New SQL2000Generator
         Dim pmgr As New ParamMgr(stmt, "p")
         Dim almgr As IPrepareTable = AliasMgr.Create

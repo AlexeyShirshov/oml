@@ -32,12 +32,12 @@ Namespace Expressions2
             Return _v.GetDynamicString
         End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String Implements IQueryElement.GetStaticString
-            Return _v.GetStaticString(mpe, contextFilter)
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+            Return _v.GetStaticString(mpe, contextInfo)
         End Function
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
-            _v.Prepare(executor, schema, filterInfo, stmt, isAnonym)
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
+            _v.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub
 
         Public Function ReplaceExpression(ByVal replacement As IExpression, ByVal replacer As IExpression) As IComplexExpression Implements IComplexExpression.ReplaceExpression
@@ -64,8 +64,11 @@ Namespace Expressions2
             Return l.ToArray
         End Function
 
-        Public Overridable Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
-            Return _v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, stmtMode, executor)
+        Public Overridable Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                  ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                  ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary,
+                                                  ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+            Return _v.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
         End Function
 
         Public Property Operand() As IExpression Implements IUnaryExpression.Operand
@@ -124,16 +127,19 @@ Namespace Expressions2
             Return OperationType2String(_oper) & MyBase.GetDynamicString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return OperationType2String(_oper) & MyBase.GetStaticString(mpe, contextFilter)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return OperationType2String(_oper) & MyBase.GetStaticString(mpe, contextInfo)
         End Function
 
         Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
             Return New UnaryExpression(_oper, operand)
         End Function
 
-        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
-            Return stmt.UnaryOperator2String(_oper) & MyBase.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, filterInfo, stmtMode, executor)
+        Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                                ByVal executor As Query.IExecutionContext) As String
+            Return stmt.UnaryOperator2String(_oper) & MyBase.MakeStatement(schema, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
         End Function
 
         Public Function Eval(ByVal mpe As ObjectMappingEngine, ByVal obj As Entities._IEntity, ByVal oschema As IEntitySchema, ByRef v As Object) As Boolean Implements IEvaluable.Eval

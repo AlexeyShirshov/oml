@@ -14,7 +14,7 @@ Namespace Criteria.Core
         Inherits IGetFilter, ICloneable, IQueryElement
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal executor As Query.IExecutionContext, _
-            ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As IFilter()
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal oldValue As IFilter, ByVal newValue As IFilter) As IFilter
@@ -70,7 +70,7 @@ Namespace Criteria.Core
         ReadOnly Property Operation() As FilterOperation
         ReadOnly Property OperToString() As String
         ReadOnly Property OperToStmt(ByVal stmt As StmtGenerator) As String
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
         Function _ToString() As String
     End Interface
 

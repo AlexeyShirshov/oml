@@ -26,8 +26,11 @@ Namespace Expressions2
             MyBase.New(exp)
         End Sub
 
-        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
-            Return stmt.FormatGroupBy(_type, MyBase.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor), _custom)
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                                ByVal executor As Query.IExecutionContext) As String
+            Return stmt.FormatGroupBy(_type, MyBase.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor), _custom)
         End Function
 
         Public Overrides Function Equals(ByVal f As IQueryElement) As Boolean
@@ -46,8 +49,8 @@ Namespace Expressions2
             Return _type.ToString & "$" & _custom & "$" & MyBase.GetDynamicString()
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return _type.ToString & "$" & _custom & "$" & MyBase.GetStaticString(mpe, contextFilter)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return _type.ToString & "$" & _custom & "$" & MyBase.GetStaticString(mpe, contextInfo)
         End Function
 
         Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
@@ -76,8 +79,11 @@ Namespace Expressions2
             MyBase.New(exp)
         End Sub
 
-        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal contextFilter As Object, ByVal stmtMode As MakeStatementMode, ByVal executor As Query.IExecutionContext) As String
-            Return stmt.FormatOrderBy(_order, MyBase.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextFilter, stmtMode, executor), _collation)
+        Public Overrides Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                                ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                                ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                                ByVal executor As Query.IExecutionContext) As String
+            Return stmt.FormatOrderBy(_order, MyBase.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor), _collation)
         End Function
 
         Public Property Order() As SortType
@@ -105,8 +111,8 @@ Namespace Expressions2
             Return _order.ToString & "$" & _collation & "$" & MyBase.GetDynamicString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As Object) As String
-            Return _order.ToString & "$" & _collation & "$" & MyBase.GetStaticString(mpe, contextFilter)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+            Return _order.ToString & "$" & _collation & "$" & MyBase.GetStaticString(mpe, contextInfo)
         End Function
 
         'Public ReadOnly Property CanEvaluate() As Boolean

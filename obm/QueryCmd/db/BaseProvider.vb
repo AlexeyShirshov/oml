@@ -131,7 +131,7 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Dim fi As Object = _mgr.GetContextInfo
+                Dim fi = _mgr.ContextInfo
                 Dim i As Integer = 0
                 Dim stmtGen As DbGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 _almgr = AliasMgr.Create

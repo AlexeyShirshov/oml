@@ -24,7 +24,7 @@ Public Interface IDataContext
     ReadOnly Property StmtGenerator As StmtGenerator
     ReadOnly Property MappingEngine As ObjectMappingEngine
 
-    Property Context As Object
+    Property Context As IDictionary
 End Interface
 
 Public Enum GetByIDOptions
@@ -40,7 +40,7 @@ Public MustInherit Class DataContextBase
     Protected _stmtGen As StmtGenerator
     Protected _mpe As ObjectMappingEngine
 
-    Private _ctx As Object
+    Private _ctx As IDictionary
 
     Protected Sub New()
 
@@ -64,11 +64,11 @@ Public MustInherit Class DataContextBase
         _mpe = mpe
     End Sub
 
-    Public Property Context As Object Implements IDataContext.Context
+    Public Property Context As IDictionary Implements IDataContext.Context
         Get
             Return _ctx
         End Get
-        Set(value As Object)
+        Set(value As IDictionary)
             _ctx = value
         End Set
     End Property
