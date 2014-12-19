@@ -466,18 +466,27 @@ Namespace Entities
 
 #Region " Create methods "
         Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As ISinglePKEntity
+            If id Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             Dim o As ISinglePKEntity = CType(Activator.CreateInstance(t), ISinglePKEntity)
             o.Init(id, cache, schema)
             Return o
         End Function
 
         Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+            If id Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             Dim o As New T
             o.Init(id, cache, schema)
             Return o
         End Function
 
         Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+            If pk Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             If GetType(ISinglePKEntity).IsAssignableFrom(GetType(T)) Then
                 Return CType(CreateKeyEntity(pk(0).Value, GetType(T), cache, schema), T)
             Else
@@ -486,6 +495,9 @@ Namespace Entities
         End Function
 
         Public Shared Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
+            If pk Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             If GetType(ISinglePKEntity).IsAssignableFrom(type) Then
                 Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
             ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
@@ -503,12 +515,18 @@ Namespace Entities
         End Function
 
         Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
+            If pk Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             Dim o As New T
             o.Init(pk, cache, mpe)
             Return o
         End Function
 
         Public Shared Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
+            If pk Is Nothing Then
+                Throw New ArgumentNullException("id")
+            End If
             Dim e As Object = Activator.CreateInstance(t)
             Dim o As _ICachedEntity = CType(e, _ICachedEntity)
             o.Init(pk, cache, mpe)

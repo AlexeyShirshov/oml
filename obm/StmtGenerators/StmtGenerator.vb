@@ -9,7 +9,7 @@ Imports Worm.Expressions2
 
 Public MustInherit Class StmtGenerator
     'Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
-
+    Public Const CustomTableDelegateProperty As String = "query custom table name"
     Public Delegate Function GetCustomTableNameDelegate(source As StmtGenerator, ByVal t As SourceFragment, ByVal contextInfo As IDictionary) As String
     Public MustOverride Function ParamName(ByVal name As String, ByVal i As Integer) As String
     Public MustOverride Function TopStatement(ByVal top As Integer) As String
