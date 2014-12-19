@@ -854,7 +854,7 @@ Namespace Criteria.Values
                           ByVal contextInfo As IDictionary, ByVal inSelect As Boolean, ByVal executor As IExecutionContext) As String
 
             Dim sb As New StringBuilder
-            Dim idx As Integer
+            Dim idx As Integer = 0
             For Each o As Object In Value
                 Dim v As Object = o
                 If prepare IsNot Nothing Then

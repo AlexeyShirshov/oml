@@ -864,6 +864,9 @@ Partial Public MustInherit Class OrmManager
     End Function
 
     Public Function GetKeyEntityFromCacheOrDB(Of T As {ISinglePKEntity, New})(ByVal id As Object) As T
+        If id Is Nothing Then
+            Throw New ArgumentNullException("id")
+        End If
         Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheAsIsOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)

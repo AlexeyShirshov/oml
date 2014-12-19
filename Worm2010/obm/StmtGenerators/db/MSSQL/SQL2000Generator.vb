@@ -956,7 +956,7 @@ Namespace Database
         Public Overrides Function GetTableName(ByVal t As Entities.Meta.SourceFragment, ByVal contextInfo As IDictionary) As String
             Dim db = String.Empty
             If contextInfo IsNot Nothing Then
-                Dim cd = TryCast(contextInfo("query custom table name"), GetCustomTableNameDelegate)
+                Dim cd = TryCast(contextInfo(CustomTableDelegateProperty), GetCustomTableNameDelegate)
                 If cd IsNot Nothing Then
                     Return cd(Me, t, contextInfo)
                 End If
