@@ -21,9 +21,9 @@ Namespace Database
         Inherits OrmManager
 
         Protected Friend Enum ConnAction
-            Leave
             Destroy
             Close
+            Leave
         End Enum
 
         Public Class DBUpdater
@@ -614,16 +614,16 @@ l1:
                 Finally
                     _tran.Dispose()
                     _tran = Nothing
-
-                    Select Case _closeConnOnCommit
-                        Case ConnAction.Close
-                            _conn.Close()
-                        Case ConnAction.Destroy
-                            _conn.Dispose()
-                            _conn = Nothing
-                    End Select
                 End Try
             End If
+
+            Select Case _closeConnOnCommit
+                Case ConnAction.Close
+                    _conn.Close()
+                Case ConnAction.Destroy
+                    _conn.Dispose()
+                    _conn = Nothing
+            End Select
         End Sub
 
         Private _idstr As String
@@ -1136,7 +1136,12 @@ l1:
                 Return exec()
             End If
         End Function
-
+        ''' <summary>
+        ''' Execute command and returns data reader
+        ''' </summary>
+        ''' <param name="cmd"></param>
+        ''' <returns></returns>
+        ''' <remarks>If need opens connetion, but does not close it! Connection closes in dispose method of OrmManager.</remarks>
         Public Function ExecuteReader(ByVal cmd As System.Data.Common.DbCommand) As System.Data.Common.DbDataReader
             TestConn(cmd)
             Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,
