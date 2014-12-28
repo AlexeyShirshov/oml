@@ -2624,7 +2624,7 @@ l2:
         Protected Friend Function TestConn(ByVal cmd As System.Data.Common.DbCommand) As ConnAction
             Invariant()
 
-            Dim r As ConnAction
+            Dim r As ConnAction = ConnAction.Leave
 
             If _conn Is Nothing Then
                 _conn = CreateConn()
