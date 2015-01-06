@@ -64,6 +64,7 @@ Public Class ObjectMappingEngine
     Public Delegate Function ResolveEntityNameForHierarchy(ByVal currentVersion As String, ByVal existingType As Type, ByVal existingTypeEntityAttribute As EntityAttribute, _
                                                ByVal type2add As Type, ByVal type2addEntityAttribute As EntityAttribute) As EntityAttribute
     Public Delegate Function CreateEntityDelegate(ByVal t As Type) As Object
+    Public Delegate Function ConvertVersionToIntDelegate(version As String) As Integer
 
     Private _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
     Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
@@ -75,6 +76,7 @@ Public Class ObjectMappingEngine
     Private _idic As IDictionary
     Private _names As IDictionary
     Private _ce As CreateEntityDelegate
+    Private _c2int As ConvertVersionToIntDelegate
 
     Public ReadOnly Mark As Guid = Guid.NewGuid
 
@@ -1878,6 +1880,15 @@ Public Class ObjectMappingEngine
         End Get
         Set(ByVal value As CreateEntityDelegate)
             _ce = value
+        End Set
+    End Property
+
+    Public Property ConvertVersionToInt() As ConvertVersionToIntDelegate
+        Get
+            Return _c2int
+        End Get
+        Set(ByVal value As ConvertVersionToIntDelegate)
+            _c2int = value
         End Set
     End Property
 #End Region
