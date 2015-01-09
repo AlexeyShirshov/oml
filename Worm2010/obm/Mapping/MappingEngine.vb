@@ -207,23 +207,87 @@ Public Class ObjectMappingEngine
         Return map
     End Function
 
+    Private Shared Function MapColumn(pi As Reflection.PropertyInfo, mpeVersion As String, convertVersion As ConvertVersionToIntDelegate, columns() As EntityPropertyAttribute) As EntityPropertyAttribute
+        If columns.Length = 1 Then
+            If Not String.IsNullOrEmpty(columns(0).SchemaVersion) AndAlso columns(0).SchemaVersion <> ObjectMappingEngine.NeedEntitySchemaMapping Then
+                Select Case columns(0).SchemaVersionOperator
+                    Case SchemaVersionOperatorEnum.Equal
+                        If columns(0).SchemaVersion = mpeVersion Then
+                            Return CType(columns(0), EntityPropertyAttribute)
+                        End If
+                    Case SchemaVersionOperatorEnum.GreaterEqual
+                        Dim schemaVer As Integer = 0
+                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                            schemaVer = convertVersion(mpeVersion)
+                        End If
+                        Dim colVer As Integer = Integer.MinValue
+                        If Not Integer.TryParse(columns(0).SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(columns(0).SchemaVersion)
+                        End If
+                        If schemaVer >= colVer Then
+                            Return CType(columns(0), EntityPropertyAttribute)
+                        End If
+                    Case SchemaVersionOperatorEnum.LessThan
+                        Dim schemaVer As Integer = 0
+                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                            schemaVer = convertVersion(mpeVersion)
+                        End If
+                        Dim colVer As Integer = Integer.MaxValue
+                        If Not Integer.TryParse(columns(0).SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(columns(0).SchemaVersion)
+                        End If
+                        If schemaVer < colVer Then
+                            Return CType(columns(0), EntityPropertyAttribute)
+                        End If
+                End Select
+            Else
+                Return CType(columns(0), EntityPropertyAttribute)
+            End If
+        ElseIf columns.Length > 1 Then
+            For Each c As EntityPropertyAttribute In columns
+                Select Case c.SchemaVersionOperator
+                    Case SchemaVersionOperatorEnum.Equal
+                        If c.SchemaVersion = mpeVersion Then
+                            Return c
+                        End If
+                    Case SchemaVersionOperatorEnum.GreaterEqual
+                        Dim schemaVer As Integer = 0
+                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                            schemaVer = convertVersion(mpeVersion)
+                        End If
+                        Dim colVer As Integer = Integer.MinValue
+                        If Not Integer.TryParse(c.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(c.SchemaVersion)
+                        End If
+                        If schemaVer >= colVer Then
+                            Return CType(c, EntityPropertyAttribute)
+                        End If
+                    Case SchemaVersionOperatorEnum.LessThan
+                        Dim schemaVer As Integer = 0
+                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                            schemaVer = convertVersion(mpeVersion)
+                        End If
+                        Dim colVer As Integer = Integer.MaxValue
+                        If Not Integer.TryParse(c.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(c.SchemaVersion)
+                        End If
+                        If schemaVer < colVer Then
+                            Return CType(c, EntityPropertyAttribute)
+                        End If
+                End Select
+            Next
+        End If
+
+        Return Nothing
+    End Function
     Friend Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String, _
-        ByVal raw As Boolean, ByVal includeBase As Boolean) As List(Of EntityPropertyAttribute)
+        ByVal raw As Boolean, ByVal includeBase As Boolean, convertVersion As ConvertVersionToIntDelegate) As List(Of EntityPropertyAttribute)
         Dim l As New List(Of EntityPropertyAttribute)
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-            Dim column As EntityPropertyAttribute = Nothing
-            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-            If columns.Length = 1 Then
-                column = CType(columns(0), EntityPropertyAttribute)
-            ElseIf columns.Length > 1 Then
-                For Each c As EntityPropertyAttribute In columns
-                    If c.SchemaVersion = mpeVersion Then
-                        column = c
-                        Exit For
-                    End If
-                Next
-            End If
+
+            Dim columns() As EntityPropertyAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute())
+            Dim column As EntityPropertyAttribute = MapColumn(pi, mpeVersion, convertVersion, columns)
 
             If columns.Length = 0 AndAlso raw AndAlso pi.CanRead AndAlso (pi.CanWrite OrElse GetType(IOptimizedValues).IsAssignableFrom(t)) Then
                 Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
@@ -269,18 +333,8 @@ Public Class ObjectMappingEngine
                     Continue For
                 End If
 
-                Dim column As EntityPropertyAttribute = Nothing
-                Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), Attribute())
-                If columns.Length = 1 Then
-                    column = CType(columns(0), EntityPropertyAttribute)
-                ElseIf columns.Length > 1 Then
-                    For Each c As EntityPropertyAttribute In columns
-                        If c.SchemaVersion = mpeVersion Then
-                            column = c
-                            Exit For
-                        End If
-                    Next
-                End If
+                Dim columns() As EntityPropertyAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute())
+                Dim column As EntityPropertyAttribute = MapColumn(pi, mpeVersion, convertVersion, columns)
 
                 If columns.Length = 0 AndAlso raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
                     Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
@@ -915,7 +969,7 @@ Public Class ObjectMappingEngine
         If schema IsNot Nothing Then
             Return schema.FieldColumnMap.ContainsKey(propertyAlias)
         Else
-            For Each ep As EntityPropertyAttribute In GetMappedProperties(t, Version, False, True)
+            For Each ep As EntityPropertyAttribute In GetMappedProperties(t, Version, False, True, _c2int)
                 If ep.PropertyAlias = propertyAlias Then
                     Return True
                 End If
@@ -1567,9 +1621,12 @@ Public Class ObjectMappingEngine
         ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
         Dim schema As IEntitySchema = Nothing
         Dim mpeVersion As String = Nothing
+        Dim c2int As ObjectMappingEngine.ConvertVersionToIntDelegate = Nothing
         If mpe IsNot Nothing Then
             mpeVersion = mpe.Version
+            c2int = mpe.ConvertVersionToInt
         End If
+
 
         If ea.Type Is Nothing Then
             If tp.BaseType IsNot Nothing AndAlso tp.BaseType IsNot GetType(Object) _
@@ -1588,7 +1645,7 @@ Public Class ObjectMappingEngine
                 End If
                 If bsch IsNot Nothing Then
                     schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
-                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), bsch, mpeVersion, mpe, idic, names)
+                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int), bsch, mpeVersion, mpe, idic, names)
                     Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
@@ -1599,7 +1656,7 @@ Public Class ObjectMappingEngine
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
                     End If
-                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True), mpe, idic, names)
+                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int), mpe, idic, names)
                 End If
             Else
                 Dim tbl As SourceFragment = ea._tbl
@@ -1612,7 +1669,7 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True)
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int)
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             End If
         Else
@@ -1622,9 +1679,9 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True)
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int)
                 If Not ea.RawProperties AndAlso l.Count < schema.FieldColumnMap.Count Then
-                    l = GetMappedProperties(tp, mpeVersion, True, True)
+                    l = GetMappedProperties(tp, mpeVersion, True, True, c2int)
                 End If
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             Catch ex As Exception

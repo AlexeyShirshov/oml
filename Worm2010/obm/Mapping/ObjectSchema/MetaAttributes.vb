@@ -100,6 +100,7 @@ Namespace Entities.Meta
         Friend _raw As Boolean
 
         Private _version As String
+        Private _verOper As SchemaVersionOperatorEnum
 
         Private _sf(-1) As SourceFieldAttribute
 
@@ -178,14 +179,14 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        'Public Property Index() As Integer
-        '    Get
-        '        Return _idx
-        '    End Get
-        '    Set(ByVal value As Integer)
-        '        _idx = value
-        '    End Set
-        'End Property
+        Public Property SchemaVersionOperator() As SchemaVersionOperatorEnum
+            Get
+                Return _verOper
+            End Get
+            Set(ByVal value As SchemaVersionOperatorEnum)
+                _verOper = value
+            End Set
+        End Property
 
         Public Function CompareTo(ByVal other As EntityPropertyAttribute) As Integer Implements System.IComparable(Of EntityPropertyAttribute).CompareTo
             Return _propertyAlias.CompareTo(other._propertyAlias)
@@ -323,6 +324,13 @@ Namespace Entities.Meta
             Return c
         End Function
     End Class
+
+    <FlagsAttribute(), CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217")> _
+    Public Enum SchemaVersionOperatorEnum
+        Equal
+        GreaterEqual
+        LessThan
+    End Enum
 
     <FlagsAttribute(), CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217")> _
     Public Enum Field2DbRelations
