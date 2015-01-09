@@ -4007,7 +4007,7 @@ l1:
 
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If pi Is Nothing Then
-                    Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(rt, mpe.Version, True, True)
+                    Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(rt, mpe.Version, True, True, mpe.ConvertVersionToInt)
                     For Each item As EntityPropertyAttribute In ll
                         If item.PropertyAlias = m.PropertyAlias Then
                             pi = item._pi
@@ -4704,7 +4704,7 @@ l1:
 
         Friend Function GetFieldsIdx(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
             Dim c As New OrmObjectIndex
-            Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True)
+            Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True, mpe.ConvertVersionToInt)
             ObjectMappingEngine.ApplyAttributes2Schema(c, ll, mpe, FromClause.Table)
             Return c
         End Function
