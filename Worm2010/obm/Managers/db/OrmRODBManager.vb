@@ -1141,7 +1141,7 @@ l1:
         ''' </summary>
         ''' <param name="cmd"></param>
         ''' <returns></returns>
-        ''' <remarks>If need opens connetion, but does not close it! Connection closes in dispose method of OrmManager.</remarks>
+        ''' <remarks>If needed opens connetion, but does not close it! Connection closes in dispose method of OrmManager.</remarks>
         Public Function ExecuteReader(ByVal cmd As System.Data.Common.DbCommand) As System.Data.Common.DbDataReader
             TestConn(cmd)
             Return ExecuteCmd(Of Data.Common.DbDataReader)(cmd,

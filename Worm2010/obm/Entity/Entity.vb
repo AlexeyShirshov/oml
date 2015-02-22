@@ -309,6 +309,13 @@ Namespace Entities
             End Get
         End Property
 
+        Public ReadOnly Property CreateDataContext() As IDataContext Implements IEntity.CreateDataContext
+            Get
+                Return New DataContext(_cm)
+            End Get
+        End Property
+
+
         Protected Sub SetMgrString(ByVal str As String) Implements _IEntity.SetMgrString
             _mgrStr = str
         End Sub
