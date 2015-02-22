@@ -112,6 +112,7 @@ Namespace Entities
         Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
+        ReadOnly Property CreateDataContext() As IDataContext
         Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
         Property SpecificMappingEngine() As ObjectMappingEngine
         Function GetMappingEngine() As ObjectMappingEngine
