@@ -112,26 +112,48 @@ l2:
             End Sub
         End Class
 
-        Private Class CIStore
-            Public ci As Object
-
-            Public Function GetMatrix(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReadonlyMatrix
-                ci = ce.CustomInfo
-                Return ce.GetMatrix(m, q.propWithLoads, created, m.GetStart, m.GetLength, s)
+        Private Class CustomInfoStore
+            Public CustomInfo As Object
+            Public CacheMiss As Boolean
+            Public CacheItem As CachedItemBase
+            Public Function GetMatrix(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase,
+                                      ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult,
+                                      ByVal cacheHitOrForceLoad As Boolean) As ReadonlyMatrix
+                CustomInfo = ce.CustomInfo
+                CacheItem = ce
+                Me.CacheMiss = cacheItemProvider.CacheMiss
+                Return ce.GetMatrix(m, q.propWithLoads, cacheHitOrForceLoad, m.GetStart, m.GetLength, s)
             End Function
 
-            Public Function GetEntityList(Of ReturnType As ICachedEntity)(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReadOnlyEntityList(Of ReturnType)
-                ci = ce.CustomInfo
-                Return CType(ce, UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, created, m.GetStart, m.GetLength, s)
+            Public Function GetEntityList(Of ReturnType As ICachedEntity)(ByVal m As OrmManager, ByVal q As QueryCmd,
+                                                                          ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase,
+                                                                          ByVal ce As Cache.CachedItemBase,
+                                                                          ByVal s As Cache.IListObjectConverter.ExtractListResult,
+                                                                          ByVal cacheHitOrForceLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
+                CustomInfo = ce.CustomInfo
+                CacheItem = ce
+                Me.CacheMiss = cacheItemProvider.CacheMiss
+                Return CType(ce, UpdatableCachedItem).GetObjectList(Of ReturnType)(m, q.propWithLoad, cacheHitOrForceLoad, m.GetStart, m.GetLength, s)
             End Function
 
-            Public Function GetObjectList(Of ReturnType As _IEntity)(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReadOnlyObjectList(Of ReturnType)
-                ci = ce.CustomInfo
-                Return ce.GetObjectList(Of ReturnType)(m, True, created, m.GetStart, m.GetLength, s)
+            Public Function GetObjectList(Of ReturnType As _IEntity)(ByVal m As OrmManager, ByVal q As QueryCmd,
+                                                                     ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase,
+                                                                     ByVal ce As Cache.CachedItemBase,
+                                                                     ByVal s As Cache.IListObjectConverter.ExtractListResult,
+                                                                     ByVal cacheHitOrForceLoad As Boolean) As ReadOnlyObjectList(Of ReturnType)
+                CustomInfo = ce.CustomInfo
+                CacheItem = ce
+                Me.CacheMiss = cacheItemProvider.CacheMiss
+                Return ce.GetObjectList(Of ReturnType)(m, True, cacheHitOrForceLoad, m.GetStart, m.GetLength, s)
             End Function
 
-            Public Function GetList(Of ReturnType)(ByVal m As OrmManager, ByVal q As QueryCmd, ByVal p2 As OrmManager.ICacheItemProvoderBase, ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As IList(Of ReturnType)
-                ci = ce.CustomInfo
+            Public Function GetList(Of ReturnType)(ByVal m As OrmManager, ByVal q As QueryCmd,
+                                                   ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase,
+                                                   ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult,
+                                                   ByVal cacheHitOrForceLoad As Boolean) As IList(Of ReturnType)
+                CustomInfo = ce.CustomInfo
+                CacheItem = ce
+                Me.CacheMiss = cacheItemProvider.CacheMiss
                 Return ce.GetObjectList(Of ReturnType)(m, m.GetStart, m.GetLength)
             End Function
         End Class
@@ -141,14 +163,15 @@ l2:
 
         Protected Delegate Function InitTypesDelegate(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Boolean
 
-        Protected Delegate Function GetCeDelegate( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManager.ICacheItemProvoderBase) As Worm.Cache.CachedItemBase
+        Protected Delegate Function GetCachedItemDelegate( _
+            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String,
+            ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase) As Worm.Cache.CachedItemBase
 
-        Protected Delegate Function GetListFromCEDelegate(Of ReturnType)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As OrmManager.ICacheItemProvoderBase, _
-            ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal created As Boolean) As ReturnType
+        Protected Delegate Function GetListFromCachedItemDelegate(Of ReturnType)( _
+            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal cacheItemProvider As OrmManager.ICacheItemProvoderBase, _
+            ByVal ce As Cache.CachedItemBase, ByVal s As Cache.IListObjectConverter.ExtractListResult, ByVal cacheHitOrForceLoad As Boolean) As ReturnType
 
-        Protected Delegate Function GetProcessorDelegate() As CacheItemBaseProvider
+        Protected Delegate Function GetCacheItemProvoderDelegate() As CacheItemBaseProvider
 
         Private _prepared As Boolean
         Public Property Prepared() As Boolean
@@ -225,14 +248,14 @@ l2:
             ByVal d As InitTypesDelegate) As CacheItemBaseProvider
 
         Protected MustOverride Function _Exec(Of ReturnType)(ByVal mgr As OrmManager, _
-            ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate, _
-            ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReturnType
+            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate, _
+            ByVal cachedItem As GetCachedItemDelegate, ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
 
-        Protected MustOverride Function GetProcessorS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-        Protected MustOverride Function GetProcessor(Of ReturnType As {Entities.ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-        Protected MustOverride Function GetProcessorT(Of CreateType As {Entities.ICachedEntity, New}, ReturnType As {Entities.ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-        Protected MustOverride Function GetProcessorAnonym(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-        Protected MustOverride Function GetProcessorAnonym(Of CreateType As {New, Entities._IEntity}, ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected MustOverride Function GetCacheItemProvoderS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected MustOverride Function GetCacheItemProvoder(Of ReturnType As {Entities.ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected MustOverride Function GetCacheItemProvoderT(Of CreateType As {Entities.ICachedEntity, New}, ReturnType As {Entities.ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected MustOverride Function GetCacheItemProvoderAnonym(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected MustOverride Function GetCacheItemProvoderAnonym(Of CreateType As {New, Entities._IEntity}, ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
 
         Protected Sub RaiseOnGetCacheItem(ByVal args As IExecutor.GetCacheItemEventArgs)
             RaiseEvent OnGetCacheItem(Me, args)
@@ -242,21 +265,24 @@ l2:
             RaiseEvent OnRestoreDefaults(Me, mgr, EventArgs.Empty)
         End Sub
 
-        Protected Function GetProcessor(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Function GetCacheItemProvider(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Return GetProvider(mgr, query, Nothing)
         End Function
 
         Public Function Exec(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadonlyMatrix Implements IExecutor.Exec
-            Dim cis As New CIStore
+            Dim cis As New CustomInfoStore
 
             Dim res As ReadonlyMatrix = _Exec(Of ReadonlyMatrix)(mgr, query, _
-                Function() GetProcessor(mgr, query), _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                    m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
+                Function() GetCacheItemProvider(mgr, query), _
+                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, cacheItemProvider As OrmManager.ICacheItemProvoderBase) _
+                    m.GetFromCacheBase(dic, sync, id, Nothing, cacheItemProvider, Nothing), _
                 AddressOf cis.GetMatrix)
 
             'If mgr.LastExecutionResult.CacheHit Then
-            Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+            Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.CustomInfo, Not cis.CacheMiss)
+            If cis.CacheItem IsNot Nothing AndAlso args.IsCustomInfoSet Then
+                cis.CacheItem.CustomInfo = args.CustomInfo
+            End If
             Return args.Matrix
             'Else
             'Return res
@@ -267,11 +293,11 @@ l2:
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
-                Dim cis As New CIStore
+                Dim cis As New CustomInfoStore
                 Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
-                   Function() GetProcessor(Of ReturnType)(mgr, query), _
-                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
+                   Function() GetCacheItemProvoder(Of ReturnType)(mgr, query), _
+                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, cacheItemProvider As OrmManager.ICacheItemProvoderBase) _
+                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, cacheItemProvider), _
                    AddressOf cis.GetEntityList(Of ReturnType))
 
                 If res Is Nothing Then
@@ -289,7 +315,10 @@ l2:
                 End If
 
                 'If mgr.LastExecutionResult.CacheHit Then
-                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.CustomInfo, Not cis.CacheMiss)
+                If cis.CacheItem IsNot Nothing AndAlso args.IsCustomInfoSet Then
+                    cis.CacheItem.CustomInfo = args.CustomInfo
+                End If
                 Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
                 'Else
                 'Return res
@@ -303,11 +332,11 @@ l2:
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
-                Dim cis As New CIStore
+                Dim cis As New CustomInfoStore
                 Dim res As ReadOnlyEntityList(Of ReturnType) = _Exec(Of ReadOnlyEntityList(Of ReturnType))(mgr, query, _
-                   Function() GetProcessorT(Of CreateType, ReturnType)(mgr, query), _
-                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
+                   Function() GetCacheItemProvoderT(Of CreateType, ReturnType)(mgr, query), _
+                   Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, cacheItemProvider As OrmManager.ICacheItemProvoderBase) _
+                       m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, cacheItemProvider), _
                    AddressOf cis.GetEntityList(Of ReturnType))
 
                 If res Is Nothing Then
@@ -328,7 +357,10 @@ l2:
                 End If
 
                 'If mgr.LastExecutionResult.CacheHit Then
-                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.CustomInfo, Not cis.CacheMiss)
+                If cis.CacheItem IsNot Nothing AndAlso args.IsCustomInfoSet Then
+                    cis.CacheItem.CustomInfo = args.CustomInfo
+                End If
                 Return CType(args.ReadOnlyList, ReadOnlyEntityList(Of ReturnType))
                 'Else
                 'Return res
@@ -339,19 +371,22 @@ l2:
         End Function
 
         Private Function _ExecEntity(Of ReturnType As {Entities._IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
-            ByVal d As GetProcessorDelegate) As ReadOnlyObjectList(Of ReturnType)
+            ByVal d As GetCacheItemProvoderDelegate) As ReadOnlyObjectList(Of ReturnType)
             'If GetType(AnonymousCachedEntity).IsAssignableFrom(query.CreateType) Then
             Dim c As New cls(mgr)
             Try
                 AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
-                Dim cis As New CIStore
+                Dim cis As New CustomInfoStore
                 Dim res As ReadOnlyObjectList(Of ReturnType) = _Exec(Of ReadOnlyObjectList(Of ReturnType))(mgr, query, d, _
-                    Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
-                        m.GetFromCache2(dic, sync, id, True, p2), _
+                    Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, cacheItemProvider As OrmManager.ICacheItemProvoderBase) _
+                        m.GetFromCache2(dic, sync, id, True, cacheItemProvider), _
                     AddressOf cis.GetObjectList(Of ReturnType))
 
                 'If mgr.LastExecutionResult.CacheHit Then
-                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.ci)
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, res, cis.CustomInfo, Not cis.CacheMiss)
+                If cis.CacheItem IsNot Nothing AndAlso args.IsCustomInfoSet Then
+                    cis.CacheItem.CustomInfo = args.CustomInfo
+                End If
                 Return CType(args.ReadOnlyList, ReadOnlyObjectList(Of ReturnType))
                 'Else
                 'Return res
@@ -369,7 +404,7 @@ l2:
         End Function
 
         Public Function ExecEntity(Of ReturnType As Entities._IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
-            Return _ExecEntity(Of ReturnType)(mgr, query, Function() GetProcessorAnonym(Of ReturnType)(mgr, query))
+            Return _ExecEntity(Of ReturnType)(mgr, query, Function() GetCacheItemProvoderAnonym(Of ReturnType)(mgr, query))
         End Function
 
         Public Function ExecEntity(Of CreateType As {New, Entities._IEntity}, ReturnType As Entities._IEntity)( _
@@ -379,13 +414,13 @@ l2:
                 Try
                     AddHandler query.QueryPrepared, AddressOf c.QueryPreparedHandler
                     Return _ExecEntity(Of ReturnType)(mgr, query, _
-                            Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+                            Function() GetCacheItemProvoderAnonym(Of CreateType, ReturnType)(mgr, query))
                 Finally
                     c.RemoveEvent()
                 End Try
             Else
                 Return _ExecEntity(Of ReturnType)(mgr, query, _
-                        Function() GetProcessorAnonym(Of CreateType, ReturnType)(mgr, query))
+                        Function() GetCacheItemProvoderAnonym(Of CreateType, ReturnType)(mgr, query))
             End If
         End Function
 
@@ -395,14 +430,17 @@ l2:
             query.CacheSort = True
             query._notSimpleMode = True
             Try
-                Dim cis As New CIStore
-                Dim res As IList(Of ReturnType) = _Exec(mgr, query, Function() GetProcessorS(Of ReturnType)(mgr, query), _
+                Dim cis As New CustomInfoStore
+                Dim res As IList(Of ReturnType) = _Exec(mgr, query, Function() GetCacheItemProvoderS(Of ReturnType)(mgr, query), _
                     Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase) _
                         m.GetFromCacheBase(dic, sync, id, Nothing, p2, Nothing), _
                     AddressOf cis.GetList(Of ReturnType))
 
                 'If mgr.LastExecutionResult.CacheHit Then
-                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, CType(res, ICollection), cis.ci)
+                Dim args As QueryCmd.ModifyResultArgs = query.RaiseModifyResult(mgr, CType(res, ICollection), cis.CustomInfo, Not cis.CacheMiss)
+                If cis.CacheItem IsNot Nothing AndAlso args.IsCustomInfoSet Then
+                    cis.CacheItem.CustomInfo = args.CustomInfo
+                End If
                 Return CType(args.SimpleList, IList(Of ReturnType))
                 'Else
                 'Return res
@@ -414,5 +452,15 @@ l2:
         End Function
 
         Public MustOverride Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As System.IDisposable Implements IExecutor.SubscribeToErrorHandling
+
+        Private Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone
+        End Function
+
+        Public MustOverride Function Clone() As QueryExecutor
+
+        Public Overridable Sub CopyTo(q As QueryExecutor)
+            q._prepared = _prepared
+        End Sub
     End Class
 End Namespace

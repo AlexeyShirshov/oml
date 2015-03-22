@@ -61,7 +61,7 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("Subtract(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("Subtract(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Subtract(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -83,7 +83,7 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("Add(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("Add(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Add(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -105,7 +105,7 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("Mul(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("Mul(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Mul(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -127,7 +127,7 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("Divide(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("Divide(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Divide(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -151,7 +151,7 @@ Imports System.Collections
 
         Assert.AreEqual(a2.Expression, a2)
         Assert.AreEqual("Equal(Mod(TestProject1.Entity2$Str,x),y)", a2.GetDynamicString)
-        Assert.AreEqual("Equal(Mod(TestProject1.Entity2$Str,scalarval),scalarval)", a2.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Equal(Mod(TestProject1.Entity2$Str,scalarval),scalarval)", a2.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -181,7 +181,7 @@ Imports System.Collections
 
         Assert.AreEqual(a4.Expression, a4)
         Assert.AreEqual("And(Equal(Mod(TestProject1.Entity2$Str,x),y),GreaterEqualThan(s,5))", a4.GetDynamicString)
-        Assert.AreEqual("And(Equal(Mod(TestProject1.Entity2$Str,scalarval),scalarval),GreaterEqualThan(litval,scalarval))", a4.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("And(Equal(Mod(TestProject1.Entity2$Str,scalarval),scalarval),GreaterEqualThan(litval,scalarval))", a4.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -206,7 +206,7 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("BAnd(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim p2 As New ParameterExpression("y")
 
@@ -214,7 +214,7 @@ Imports System.Collections
 
         Assert.AreNotEqual(a2, a)
         Assert.AreEqual("BAnd(TestProject1.Entity2$Str,y)", a2.GetDynamicString)
-        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a2.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a2.GetStaticString(mpe))
 
     End Sub
 
@@ -231,13 +231,13 @@ Imports System.Collections
 
         Assert.AreEqual(a.Expression, a)
         Assert.AreEqual("BAnd(TestProject1.Entity2$Str,x)", a.GetDynamicString)
-        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str,scalarval)", a.GetStaticString(mpe))
 
         Dim a2 As IComplexExpression = a.ReplaceExpression(p, Nothing)
 
         Assert.AreNotEqual(a2, a)
         Assert.AreEqual("BAnd(TestProject1.Entity2$Str)", a2.GetDynamicString)
-        Assert.AreEqual("BAnd(TestProject1.Entity2$Str)", a2.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("BAnd(TestProject1.Entity2$Str)", a2.GetStaticString(mpe))
 
     End Sub
 

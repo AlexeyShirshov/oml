@@ -49,8 +49,8 @@ Namespace Expressions2
             Return _type.ToString & "$" & _custom & "$" & MyBase.GetDynamicString()
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return _type.ToString & "$" & _custom & "$" & MyBase.GetStaticString(mpe, contextInfo)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return _type.ToString & "$" & _custom & "$" & MyBase.GetStaticString(mpe)
         End Function
 
         Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
@@ -111,8 +111,8 @@ Namespace Expressions2
             Return _order.ToString & "$" & _collation & "$" & MyBase.GetDynamicString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return _order.ToString & "$" & _collation & "$" & MyBase.GetStaticString(mpe, contextInfo)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return _order.ToString & "$" & _collation & "$" & MyBase.GetStaticString(mpe)
         End Function
 
         'Public ReadOnly Property CanEvaluate() As Boolean
@@ -142,6 +142,11 @@ Namespace Expressions2
         End Function
     End Class
 
+    ''' <remarks>
+    ''' <h3>Потокобезопасность</h3>
+    ''' Класс не потокобезопасен
+    ''' </remarks>
+    ''' <threadsafety static="true" instance="false"/>
     <Serializable()> _
     Public Class OrderByClause
         Inherits ObjectModel.ReadOnlyCollection(Of SortExpression)
@@ -155,11 +160,13 @@ Namespace Expressions2
         End Sub
 
         Public Function CanEvaluate(ByVal mpe As ObjectMappingEngine) As Boolean
+            'SyncLock CType(Me, ICollection).SyncRoot
             For Each s As SortExpression In Me
                 If Not s.CanEval(mpe) Then
                     Return False
                 End If
             Next
+            'End SyncLock
             Return True
         End Function
 
@@ -169,6 +176,29 @@ Namespace Expressions2
             Return l
         End Function
 
+        Public Overloads Function ToString(mpe As ObjectMappingEngine) As String
+            Dim sb As New StringBuilder
+            For Each s As SortExpression In Me
+                sb.Append(s.GetStaticString(mpe)).Append(", ")
+            Next
+            If sb.Length > 0 Then
+                sb.Length -= 2
+            End If
+
+            Return sb.ToString
+        End Function
+
+        Public Overrides Function ToString() As String
+            Dim sb As New StringBuilder
+            For Each s As SortExpression In Me
+                sb.Append(s.GetDynamicString()).Append(", ")
+            Next
+            If sb.Length > 0 Then
+                sb.Length -= 2
+            End If
+
+            Return sb.ToString
+        End Function
     End Class
 
 End Namespace

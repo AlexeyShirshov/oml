@@ -63,7 +63,7 @@ Imports System.Collections
 
         Assert.AreEqual(ge.Expression, ge)
         Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID)", ge.GetDynamicString)
-        Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID)", ge.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID)", ge.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -87,7 +87,7 @@ Imports System.Collections
 
         Assert.AreEqual(ge.Expression, ge)
         Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,Add(TestProject1.Entity2$ID,e))", ge.GetDynamicString)
-        Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,Add(TestProject1.Entity2$ID,scalarval))", ge.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("None$$Comma(TestProject1.Entity2$Str,Add(TestProject1.Entity2$ID,scalarval))", ge.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -116,7 +116,7 @@ Imports System.Collections
 
         Assert.AreEqual(ge.Expression, ge)
         Assert.AreEqual("GroupingSets$$Comma(Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID),Comma(TestProject1.Entity2$Str))", ge.GetDynamicString)
-        Assert.AreEqual("GroupingSets$$Comma(Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID),Comma(TestProject1.Entity2$Str))", ge.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("GroupingSets$$Comma(Comma(TestProject1.Entity2$Str,TestProject1.Entity2$ID),Comma(TestProject1.Entity2$Str))", ge.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -139,7 +139,7 @@ Imports System.Collections
 
         Assert.AreEqual(b.Expression, b)
         Assert.AreEqual("Comma(Asc$$TestProject1.Entity2$Str,Desc$$TestProject1.Entity2$ID)", b.GetDynamicString)
-        Assert.AreEqual("Comma(Asc$$TestProject1.Entity2$Str,Desc$$TestProject1.Entity2$ID)", b.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Comma(Asc$$TestProject1.Entity2$Str,Desc$$TestProject1.Entity2$ID)", b.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -163,7 +163,7 @@ Imports System.Collections
 
         Assert.AreEqual(b.Expression, b)
         Assert.AreEqual("Comma(Comma(Average$False$TestProject1.Entity2$Str,Max$False$TestProject1.Entity2$ID),Min$False$TestProject1.Entity2$Str)", b.GetDynamicString)
-        Assert.AreEqual("Comma(Comma(Average$False$TestProject1.Entity2$Str,Max$False$TestProject1.Entity2$ID),Min$False$TestProject1.Entity2$Str)", b.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("Comma(Comma(Average$False$TestProject1.Entity2$Str,Max$False$TestProject1.Entity2$ID),Min$False$TestProject1.Entity2$Str)", b.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))

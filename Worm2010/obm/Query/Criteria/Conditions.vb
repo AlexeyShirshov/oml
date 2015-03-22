@@ -112,12 +112,12 @@ Namespace Criteria.Conditions
                 _con = con
             End Sub
 
-            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String
+            Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
                 Dim sb As New StringBuilder
-                sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString(mpe, contextFilter))
+                sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString(mpe))
                 sb.Append(_con.Condition2String())
                 If _con._right IsNot Nothing Then
-                    sb.Append(CType(_con._right, ITemplateFilter).Template.GetStaticString(mpe, contextFilter))
+                    sb.Append(CType(_con._right, ITemplateFilter).Template.GetStaticString(mpe))
                 End If
                 Return sb.ToString
             End Function
@@ -305,13 +305,13 @@ Namespace Criteria.Conditions
             Return _left._ToString() & Condition2String() & r
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
             Dim r As String = String.Empty
             If _right IsNot Nothing Then
-                r = _right.GetStaticString(mpe, contextInfo)
+                r = _right.GetStaticString(mpe)
             End If
 
-            Return _left.GetStaticString(mpe, contextInfo) & Condition2String() & r
+            Return _left.GetStaticString(mpe) & Condition2String() & r
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
@@ -392,9 +392,9 @@ Namespace Criteria.Conditions
 
             Dim lef As IEvaluableFilter = TryCast(_left, IEvaluableFilter)
             If lef IsNot Nothing Then
-                If d Is Nothing Then
-                    Throw New ArgumentNullException("d")
-                End If
+                'If d Is Nothing Then
+                '    Throw New ArgumentNullException("d")
+                'End If
                 'Dim p As Pair(Of _IEntity, IEntitySchema) = d(lef)
                 'If p IsNot Nothing Then
                 b = lef.Eval(mpe, d, joins, objEU)
@@ -412,9 +412,9 @@ Namespace Criteria.Conditions
                         b = IEvaluableValue.EvalResult.Unknown
                         Dim ref As IEvaluableFilter = TryCast(_right, IEvaluableFilter)
                         If ref IsNot Nothing Then
-                            If d Is Nothing Then
-                                Throw New ArgumentNullException("d")
-                            End If
+                            'If d Is Nothing Then
+                            '    Throw New ArgumentNullException("d")
+                            'End If
                             'Dim p As Pair(Of _IEntity, IEntitySchema) = d(ref)
                             'If p IsNot Nothing Then
                             b = ref.Eval(mpe, d, joins, objEU)
@@ -431,9 +431,9 @@ Namespace Criteria.Conditions
                         Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Unknown
                         Dim ref As IEntityFilter = TryCast(_right, IEntityFilter)
                         If ref IsNot Nothing Then
-                            If d Is Nothing Then
-                                Throw New ArgumentNullException("d")
-                            End If
+                            'If d Is Nothing Then
+                            '    Throw New ArgumentNullException("d")
+                            'End If
                             Dim p As Pair(Of _IEntity, IEntitySchema) = d(ref)
                             If p IsNot Nothing Then
                                 r = ref.EvalObj(mpe, p.First, p.Second, joins, objEU)
@@ -614,24 +614,21 @@ Namespace Criteria.Conditions
         'End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
-            If _right IsNot Nothing AndAlso _oper = ConditionOperator.Or Then
-                Dim l As String = Left.Template._ToString
-                Dim r As String = Right.Template._ToString
-                Return l & Condition2String() & r
-            Else
+            If IsHashable Then
                 Dim l As String = Left.MakeHash
-                If _right IsNot Nothing Then
+                If l <> EntityFilter.EmptyHash AndAlso _right IsNot Nothing Then
                     Dim r As String = Right.MakeHash
                     If r = EntityFilter.EmptyHash Then
-                        If _oper <> ConditionOperator.And Then
-                            l = r
-                        End If
+                        Return r
                     Else
                         l = l & Condition2String() & r
                     End If
                 End If
                 Return l
+            Else
+                Return EntityFilter.EmptyHash
             End If
+
         End Function
 
         Public Property PrepareValue() As Boolean Implements Core.IEntityFilter.PrepareValue
@@ -648,6 +645,20 @@ Namespace Criteria.Conditions
                     Right.PrepareValue = value
                 End If
             End Set
+        End Property
+
+        Public ReadOnly Property IsHashable As Boolean Implements IEntityFilterBase.IsHashable
+            Get
+                If Left.IsHashable Then
+                    If Right IsNot Nothing Then
+                        Return Right.IsHashable
+                    End If
+
+                    Return True
+                End If
+
+                Return False
+            End Get
         End Property
     End Class
 

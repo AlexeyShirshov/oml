@@ -66,7 +66,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements ITemplate.GetStaticString
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements ITemplate.GetStaticString
 
         Public ReadOnly Property OperToStmt(ByVal stmt As StmtGenerator) As String Implements ITemplate.OperToStmt
             Get
@@ -207,13 +207,14 @@ Namespace Criteria.Core
             Return _ToString.GetHashCode
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return ObjectSource.ToStaticString(mpe, contextInfo) & PropertyAlias & OperToString()
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return ObjectSource.ToStaticString(mpe) & PropertyAlias & OperToString()
         End Function
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
-            If Operation = FilterOperation.Equal Then
-                Return MakeFilter(schema, oschema, obj).MakeHash
+            Dim f = MakeFilter(schema, oschema, obj)
+            If f.IsHashable Then
+                Return f.MakeHash
             Else
                 Return EntityFilter.EmptyHash
             End If
@@ -271,7 +272,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             Return _tbl.RawName() & _col & OperToString
         End Function
 

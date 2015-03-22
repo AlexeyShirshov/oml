@@ -92,10 +92,10 @@ Namespace Expressions2
             Return s
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Dim s As String = _t.ToString & "$" & _distinct & _custom & "$"
             If _exp IsNot Nothing Then
-                s &= _exp.GetStaticString(mpe, contextInfo)
+                s &= _exp.GetStaticString(mpe)
             End If
             Return s
         End Function

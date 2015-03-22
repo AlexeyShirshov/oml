@@ -73,7 +73,7 @@ Namespace Expressions2
             Return _sf.RawName & "$" & _col
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return GetDynamicString()
         End Function
 

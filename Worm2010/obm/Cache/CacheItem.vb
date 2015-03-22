@@ -69,7 +69,7 @@ Namespace Cache
         End Function
 
         Public Overridable Function GetObjectList(Of T As {_IEntity})(ByVal mgr As OrmManager, _
-            ByVal withLoad As Boolean, ByVal created As Boolean, _
+            ByVal withLoad As Boolean, ByVal cacheHitOrForceLoad As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyObjectList(Of T)
             If Not (start = 0 AndAlso (_col.Count = length OrElse length = Integer.MaxValue)) Then
@@ -102,11 +102,11 @@ Namespace Cache
         End Function
 
         Public Overridable Function GetMatrix(ByVal mgr As OrmManager, _
-            ByVal withLoad() As Boolean, ByVal created As Boolean, _
+            ByVal withLoad() As Boolean, ByVal cacheHitOrForceLoad As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix
             Dim lc As IListObjectConverter = mgr.ListConverter
-            Return lc.FromWeakList(_col, mgr, start, length, withLoad, created, successed)
+            Return lc.FromWeakList(_col, mgr, start, length, withLoad, cacheHitOrForceLoad, successed)
             'If Not (start = 0 AndAlso (_col.Count = length OrElse length = Integer.MaxValue)) Then
             '    Dim list As IList = TryCast(_col, IList)
             '    Dim r As New List(Of T)
@@ -365,11 +365,11 @@ Namespace Cache
         'End Function
 
         Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)(ByVal mgr As OrmManager, _
-            ByVal withLoad As Boolean, ByVal created As Boolean, _
+            ByVal withLoad As Boolean, ByVal cacheHitOrForceLoad As Boolean, _
             ByVal start As Integer, ByVal length As Integer, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             Dim lc As IListObjectConverter = mgr.ListConverter
-            Return lc.FromWeakList(Of T)(_col, mgr, start, length, withLoad, created, successed)
+            Return lc.FromWeakList(Of T)(_col, mgr, start, length, withLoad, cacheHitOrForceLoad, successed)
         End Function
 
         Public Overridable Overloads Function GetObjectList(Of T As ICachedEntity)( _

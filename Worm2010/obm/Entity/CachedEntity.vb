@@ -168,15 +168,7 @@ Namespace Entities
             End Property
 
             Public Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
-                'Dim ll As IPropertyLazyLoad = TryCast(_o, IPropertyLazyLoad)
-                'If ll IsNot Nothing Then
-                'Using mc As IGetManager = _o.GetMgr
-                Dim mpe As ObjectMappingEngine = _o.GetMappingEngine
-                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = _o.GetEntitySchema(mpe).FieldColumnMap
-                Return OrmManager.IsPropertyLoaded(_o, propertyAlias, map, mpe)
-                'End Using
-                'End If
-                'Return True
+                Return OrmManager.IsPropertyLoaded(_o, propertyAlias)
             End Function
 
             Public Function GetMappingEngine() As ObjectMappingEngine
@@ -346,9 +338,14 @@ Namespace Entities
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer) Implements _ICachedEntityEx.PKLoaded
+        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntityEx.PKLoaded
             _key = GetCacheKey()
             _hasPK = True
+            For Each p In props.FieldColumnMap
+                If p.IsPK Then
+                    SetLoaded(p.PropertyAlias, True)
+                End If
+            Next
         End Sub
 
         'Private Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, _
@@ -704,19 +701,15 @@ Namespace Entities
             'End If
         End Sub
 
-        Protected Sub _Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
-            MyBase.Init(cache, schema)
-            'If schema IsNot Nothing Then
-            '    'Dim arr As Generic.List(Of EntityPropertyAttribute) = schema.GetSortedFieldList(Me.GetType)
-            '    _loaded_members = New BitArray(GetProperties(schema).Count)
-            'End If
+        Protected Sub _Init(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
+            MyBase.Init(cache, mpe)
         End Sub
 
 
         Protected Overridable Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
             _Init(cache, mpe)
             OrmManager.SetPK(Me, pk, mpe)
-            PKLoaded(pk.Count)
+            PKLoaded(pk.Count, GetEntitySchema(mpe))
         End Sub
 
 #Region " Xml Serialization "
@@ -747,7 +740,7 @@ l1:
                         Do While .Read
                             Select Case .NodeType
                                 Case XmlNodeType.Element
-                                    ReadValue(mc.Manager, .Name, reader, map, oschema, mpe)
+                                    ReadValue(mc.Manager, .Name, reader, map, oschema)
                                 Case XmlNodeType.EndElement
                                     If .Name = t.Name Then Exit Do
                             End Select
@@ -853,7 +846,7 @@ l1:
         End Sub
 
         Protected Sub ReadValue(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal reader As XmlReader, _
-            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
+            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal oschema As IEntitySchema)
             reader.Read()
             Dim m As MapField2Column = map(propertyAlias)
             Select Case reader.NodeType
@@ -861,14 +854,14 @@ l1:
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, x, oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, map, mpe)
+                    SetLoaded(propertyAlias, True)
                 Case XmlNodeType.Text
                     Dim v As String = reader.Value
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Convert.FromBase64String(v), oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, map, mpe)
+                    SetLoaded(propertyAlias, True)
                 Case XmlNodeType.EndElement
                     ObjectMappingEngine.SetPropertyValue(Me, m.PropertyAlias, Nothing, oschema, m.PropertyInfo)
-                    SetLoaded(propertyAlias, True, map, mpe)
+                    SetLoaded(propertyAlias, True)
                 Case XmlNodeType.Element
                     Dim o As Object = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
@@ -893,7 +886,7 @@ l1:
                     End If
                     'End If
                     'End Using
-                    SetLoaded(propertyAlias, True, map, mpe)
+                    SetLoaded(propertyAlias, True)
             End Select
         End Sub
 
@@ -936,7 +929,7 @@ l1:
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(.Name, True, map, mpe)
+                            SetLoaded(.Name, True)
                             pk_count += 1
                         End If
                     End If
@@ -945,7 +938,7 @@ l1:
                 Dim obj As _ICachedEntity = Me
 
                 If pk_count > 0 Then
-                    PKLoaded(pk_count)
+                    PKLoaded(pk_count, oschema)
                     'Using mc As IGetManager = GetMgr()
                     Dim c As OrmCache = TryCast(mgr.Cache, OrmCache)
                     If c IsNot Nothing AndAlso c.IsDeleted(Me) Then
@@ -1001,7 +994,7 @@ l1:
                             Dim v As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(value, type_created)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, map, mpe)
+                                SetLoaded(.Name, True)
                                 If v IsNot Nothing Then
                                     v.SetCreateManager(CreateManager)
                                     'RaiseObjectLoaded(v)
@@ -1013,7 +1006,7 @@ l1:
                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(.Name, True, map, mpe)
+                                SetLoaded(.Name, True)
                             End If
                         End If
 
@@ -1691,10 +1684,10 @@ l1:
             End Get
         End Property
 
-        Private Sub SetLoaded(ByVal propertyAlias As String, ByVal p2 As Boolean, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
+        Private Sub SetLoaded(ByVal propertyAlias As String, ByVal value As Boolean)
             Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
             If ll IsNot Nothing Then
-                OrmManager.SetLoaded(ll, propertyAlias, p2, map, mpe)
+                ll.IsPropertyLoaded(propertyAlias) = value
             End If
         End Sub
 
@@ -1731,7 +1724,7 @@ l1:
         Implements IPropertyLazyLoad, IUndoChanges
 
         Private _loaded As Boolean
-        Private _loaded_members As BitArray
+        Private _loaded_members As IDictionary(Of String, Boolean)
         'Private _sver As String
         <NonSerialized()> _
         Private _readRaw As Boolean
@@ -1739,6 +1732,8 @@ l1:
         Private _copy As ICachedEntity
         '<NonSerialized()> _
         'Private _old_state As ObjectState
+        <NonSerialized()> _
+        Private _sl As New SpinLockRef
 
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements IUndoChanges.OriginalCopyRemoved
 
@@ -1746,15 +1741,15 @@ l1:
             RaiseEvent OriginalCopyRemoved(Me)
         End Sub
 
-        Protected Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
+        Protected Overridable Function Read(ByVal propertyAlias As String) As System.IDisposable Implements IPropertyLazyLoad.Read
             Return OrmManager.RegisterRead(Me, propertyAlias)
         End Function
 
-        Protected Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
+        Protected Overridable Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As System.IDisposable Implements IPropertyLazyLoad.Read
             Return OrmManager.RegisterRead(Me, propertyAlias, checkEntity)
         End Function
 
-        Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IUndoChanges.Write
+        Protected Overridable Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IUndoChanges.Write
             Return OrmManager.RegisterChange(Me, propertyAlias)
         End Function
 
@@ -1767,14 +1762,14 @@ l1:
             End Set
         End Property
 
-        Protected Property PropertyLoadState As BitArray Implements IPropertyLazyLoad.PropertyLoadState
-            Get
-                Return _loaded_members
-            End Get
-            Set(ByVal value As BitArray)
-                _loaded_members = value
-            End Set
-        End Property
+        'Protected Property PropertyLoadState As BitArray Implements IPropertyLazyLoad.PropertyLoadState
+        '    Get
+        '        Return _loaded_members
+        '    End Get
+        '    Set(ByVal value As BitArray)
+        '        _loaded_members = value
+        '    End Set
+        'End Property
 
         Public Property LazyLoadDisabled As Boolean Implements IPropertyLazyLoad.LazyLoadDisabled
             Get
@@ -1835,5 +1830,32 @@ l1:
         '        _old_state = value
         '    End Set
         'End Property
+
+        Public Property IsPropertyLoaded(propertyAlias As String) As Boolean Implements IPropertyLazyLoad.IsPropertyLoaded
+            Get
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    Dim v As Boolean = False
+
+                    If _loaded_members.TryGetValue(propertyAlias, v) AndAlso v Then
+                        Return True
+                    End If
+
+                    Return False
+                End Using
+            End Get
+            Set(value As Boolean)
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    _loaded_members(propertyAlias) = value
+                End Using
+            End Set
+        End Property
     End Class
 End Namespace

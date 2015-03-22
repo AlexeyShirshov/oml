@@ -989,7 +989,7 @@ l1:
                     If TopParam IsNot Nothing Then
                         Dim cnt As Integer = nr.Count
                         For i As Integer = TopParam.Count To cnt - 1
-                            nr.List.RemoveAt(i)
+                            nr.RemoveAt(i)
                         Next
                     End If
                 Else

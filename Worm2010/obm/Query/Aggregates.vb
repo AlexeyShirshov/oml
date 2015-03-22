@@ -91,7 +91,7 @@ Namespace Query
         End Function
 
         Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
         Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
     End Class
 
@@ -243,7 +243,7 @@ Namespace Query
             Throw New NotImplementedException
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             Throw New NotImplementedException
         End Function
 

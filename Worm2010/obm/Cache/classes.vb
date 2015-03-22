@@ -7,6 +7,11 @@ Imports System.Linq
 
 Namespace Cache
 
+    ''' <remarks>
+    ''' <h3>Потокобезопасность</h3>
+    ''' Класс потокобезопасен
+    ''' </remarks>
+    ''' <threadsafety static="true" instance="true"/>
     <Serializable()> _
     Public Class EntityProxy
         Private _id As IEnumerable(Of PKDesc)
@@ -221,10 +226,16 @@ Namespace Cache
         End Function
     End Class
 
+    ''' <remarks>
+    ''' <h3>Потокобезопасность</h3>
+    ''' Класс потокобезопасен
+    ''' </remarks>
+    ''' <threadsafety static="true" instance="true"/>
     <Serializable()> _
     Public Class WeakEntityReference
         Private _e As EntityProxy
         Private _ref As WeakReference
+        'Private _sl As New CoreFramework.Threading.SpinLockRef 
 
         Public Sub New(ByVal o As ICachedEntity)
             _e = New EntityProxy(o)
@@ -301,7 +312,14 @@ Namespace Cache
 
         Public ReadOnly Property IsLoaded() As Boolean
             Get
-                Return _ref.IsAlive AndAlso CType(_ref.Target, ICachedEntity).IsLoaded
+                If _ref.IsAlive Then
+                    Dim o = CType(_ref.Target, ICachedEntity)
+                    If o IsNot Nothing Then
+                        Return o.IsLoaded
+                    End If
+                End If
+
+                Return False
             End Get
         End Property
 
@@ -312,10 +330,13 @@ Namespace Cache
                 End If
 
                 If _ref.IsAlive Then
-                    Return _ref.Target.Equals(obj)
-                Else
-                    Return New EntityProxy(obj).Equals(_e)
+                    Dim o = CType(_ref.Target, ICachedEntity)
+                    If o IsNot Nothing Then
+                        Return o.Equals(obj)
+                    End If
                 End If
+
+                Return New EntityProxy(obj).Equals(_e)
             End Get
         End Property
 
@@ -326,6 +347,14 @@ Namespace Cache
         End Property
     End Class
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <remarks>
+    ''' <h3>Потокобезопасность</h3>
+    ''' Класс не потокобезопасен
+    ''' </remarks>
+    ''' <threadsafety static="true" instance="false"/>
     <Serializable()> _
     Public Class WeakEntityList
         Implements ICollection(Of WeakEntityReference), ICollection

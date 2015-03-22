@@ -353,7 +353,7 @@ Namespace Entities
         Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ISinglePKEntity.Init
             MyBase._Init(cache, mpe)
             Identifier = id
-            PKLoaded(1)
+            PKLoaded(1, GetEntitySchema(mpe))
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -694,11 +694,11 @@ Namespace Entities
             End If
         End Sub
 
-        Protected Overrides Sub PKLoaded(ByVal pkCount As Integer)
+        Protected Overrides Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap)
             If pkCount <> 1 Then
                 Throw New OrmObjectException(String.Format("SinglePKEntity derived class must have only one PK. The value is {0}", pkCount))
             End If
-            MyBase.PKLoaded(pkCount)
+            MyBase.PKLoaded(pkCount, props)
         End Sub
 
 
@@ -1210,7 +1210,9 @@ Namespace Entities
         Implements IPropertyLazyLoad, IUndoChanges
 
         Private _loaded As Boolean
-        Private _loaded_members As BitArray
+        Private _loaded_members As IDictionary(Of String, Boolean)
+        <NonSerialized()> _
+        Private _sl As New SpinLockRef
 
         <NonSerialized()> _
         Private _readRaw As Boolean
@@ -1258,13 +1260,6 @@ Namespace Entities
 
         Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
             MyBase.Init(id, cache, mpe)
-            Dim oschema As IEntitySchema = GetEntitySchema(mpe)
-            For Each m As MapField2Column In oschema.FieldColumnMap
-                If m.IsPK Then
-                    OrmManager.SetLoaded(Me, m.PropertyAlias, True, oschema.FieldColumnMap, mpe)
-                    Exit For
-                End If
-            Next
         End Sub
 
         Protected Overrides Property IsLoaded As Boolean Implements IPropertyLazyLoad.IsLoaded
@@ -1276,14 +1271,14 @@ Namespace Entities
             End Set
         End Property
 
-        Public Property PropertyLoadState As System.Collections.BitArray Implements IPropertyLazyLoad.PropertyLoadState
-            Get
-                Return _loaded_members
-            End Get
-            Set(ByVal value As System.Collections.BitArray)
-                _loaded_members = value
-            End Set
-        End Property
+        'Public Property PropertyLoadState As System.Collections.BitArray Implements IPropertyLazyLoad.PropertyLoadState
+        '    Get
+        '        Return _loaded_members
+        '    End Get
+        '    Set(ByVal value As System.Collections.BitArray)
+        '        _loaded_members = value
+        '    End Set
+        'End Property
 
         Public Property LazyLoadDisabled As Boolean Implements IPropertyLazyLoad.LazyLoadDisabled
             Get
@@ -1323,6 +1318,32 @@ Namespace Entities
         'End Property
 
 
+        Public Property IsPropertyLoaded(propertyAlias As String) As Boolean Implements IPropertyLazyLoad.IsPropertyLoaded
+            Get
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    Dim v As Boolean = False
+
+                    If _loaded_members.TryGetValue(propertyAlias, v) AndAlso v Then
+                        Return True
+                    End If
+
+                    Return False
+                End Using
+            End Get
+            Set(value As Boolean)
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    _loaded_members(propertyAlias) = value
+                End Using
+            End Set
+        End Property
     End Class
 
     Public Enum ObjectState

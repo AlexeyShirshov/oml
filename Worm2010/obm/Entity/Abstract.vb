@@ -111,7 +111,7 @@ Namespace Entities
         'Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
         Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
-        ReadOnly Property CreateManager() As ICreateManager
+        ReadOnly Property GetICreateManager() As ICreateManager
         ReadOnly Property CreateDataContext() As IDataContext
         Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
         Property SpecificMappingEngine() As ObjectMappingEngine
@@ -123,7 +123,7 @@ Namespace Entities
         Function Read(ByVal propertyAlias As String) As IDisposable
         Function Read(ByVal propertyAlias As String, ByVal checkEntity As Boolean) As IDisposable
         Property IsLoaded() As Boolean
-        Property PropertyLoadState As BitArray
+        Property IsPropertyLoaded(propertyAlias As String) As Boolean
         Property LazyLoadDisabled As Boolean
     End Interface
 
@@ -147,7 +147,7 @@ Namespace Entities
     Public Interface _ICachedEntity
         Inherits ICachedEntity
         Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
-        Sub PKLoaded(ByVal pkCount As Integer)
+        Sub PKLoaded(ByVal pkCount As Integer, oschema As IPropertyMap)
         ReadOnly Property IsPKLoaded() As Boolean
         Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal propertyAlias As String) As Boolean

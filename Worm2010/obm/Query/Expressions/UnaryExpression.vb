@@ -32,8 +32,8 @@ Namespace Expressions2
             Return _v.GetDynamicString
         End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
-            Return _v.GetStaticString(mpe, contextInfo)
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return _v.GetStaticString(mpe)
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
@@ -127,8 +127,8 @@ Namespace Expressions2
             Return OperationType2String(_oper) & MyBase.GetDynamicString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return OperationType2String(_oper) & MyBase.GetStaticString(mpe, contextInfo)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return OperationType2String(_oper) & MyBase.GetStaticString(mpe)
         End Function
 
         Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression

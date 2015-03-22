@@ -61,10 +61,10 @@ Namespace Expressions2
     End Enum
 
     Public Interface IQueryElement
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
         Function GetDynamicString() As String
         Sub Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
+            ByVal mpe As ObjectMappingEngine, contextInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
         Function Equals(ByVal f As IQueryElement) As Boolean
     End Interface

@@ -94,7 +94,7 @@ Namespace Expressions2
                     End If
                     tbl = map.Table
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe, contextInfo) & "." & _op.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe) & "." & _op.PropertyAlias, ex))
                 End Try
             End If
 
@@ -173,7 +173,7 @@ Namespace Expressions2
             Return _op.Entity._ToString & "$" & _op.PropertyAlias
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return GetDynamicString()
         End Function
 

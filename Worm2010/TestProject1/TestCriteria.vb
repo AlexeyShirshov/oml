@@ -134,7 +134,7 @@ Imports Worm.Criteria.Values
         Dim mpe As New ObjectMappingEngine
 
         Dim s As SortExpression = SCtor.prop(t, "sdgfn").asc
-        Assert.AreEqual("Asc$$System.Type$sdgfn", s.GetStaticString(mpe, Nothing))
+        Assert.AreEqual("Asc$$System.Type$sdgfn", s.GetStaticString(mpe))
         Assert.AreEqual(SortExpression.SortType.Asc, s.Order)
 
         Dim s2 As SortExpression = SCtor.prop(t, "sdgfn").desc

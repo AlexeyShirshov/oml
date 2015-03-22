@@ -39,7 +39,7 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return "scalarval"
         End Function
 
@@ -205,7 +205,7 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             Return "inval"
         End Function
     End Class

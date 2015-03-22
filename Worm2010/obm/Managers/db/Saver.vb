@@ -514,7 +514,7 @@ l1:
                     If o.ObjectState = ObjectState.Created Then
                         rejectList.Add(o)
                     ElseIf o.ObjectState = ObjectState.Modified Then
-                        pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, Nothing), ICachedEntity))
+                        pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, o.GetEntitySchema(_mgr.MappingEngine)), ICachedEntity))
                         pp.Second.SetObjectState(o.ObjectState)
                         copies.Add(pp)
                     End If

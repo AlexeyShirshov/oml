@@ -194,10 +194,11 @@ Namespace Database
                                             mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
                                             If Not obj.IsPKLoaded Then
                                                 Dim cnt As Integer = 0
-                                                For Each mp As MapField2Column In mgr.MappingEngine.GetEntitySchema(obj.GetType).FieldColumnMap
+                                                Dim props = mgr.MappingEngine.GetEntitySchema(obj.GetType)
+                                                For Each mp As MapField2Column In props.FieldColumnMap
                                                     If mp.IsPK Then cnt += 1
                                                 Next
-                                                obj.PKLoaded(cnt)
+                                                obj.PKLoaded(cnt, props)
                                             End If
                                         Finally
                                             mgr.CloseConn(b)
@@ -249,7 +250,7 @@ Namespace Database
                     err = False
                 Finally
                     If Not err Then
-                        SetLoaded(obj, mgr.MappingEngine, True)
+                        SetLoaded(obj, True, mgr.MappingEngine)
                         'If obj.ObjectState = ObjectState.Modified Then
                         '    obj.SetObjectState(ObjectState.None)
                         'End If
@@ -435,6 +436,7 @@ Namespace Database
         Friend _batchSaver As ObjectListSaver
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
         Private _timeout As Nullable(Of Integer)
+        Private _rsThreads As Integer = 1
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4clm As Reflection.MethodInfo = Nothing
@@ -483,6 +485,15 @@ Namespace Database
             Get
                 Return _tsStmt
             End Get
+        End Property
+
+        Public Property LoadResultsetThreadCount As Integer
+            Get
+                Return _rsThreads
+            End Get
+            Set(value As Integer)
+                _rsThreads = value
+            End Set
         End Property
 
         Public Function CreateBatchSaver(Of T As {ObjectListSaver, New})(ByRef createdNew As Boolean) As ObjectListSaver
@@ -1747,7 +1758,7 @@ l1:
                         obj.BeginLoading()
                         'ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
                         '                 False, Nothing, c)
-                        MappingEngine.AssignValue2PK(obj, dr.IsDBNull(i), oschema, map, ll, m, propertyAlias, value)
+                        ObjectMappingEngine.AssignValue2PK(obj, dr.IsDBNull(i), oschema, map, ll, m, propertyAlias, value)
 
                         obj.EndLoading()
 
@@ -1772,7 +1783,7 @@ l1:
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
                 If pk_count > 0 AndAlso ce IsNot Nothing Then
-                    ce.PKLoaded(pk_count)
+                    ce.PKLoaded(pk_count, types(os))
 
                     If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
                         ex.Add(obj)
@@ -1908,8 +1919,8 @@ l1:
                                 Dim e As _IEntity = f.CreateContainingEntity(Me, p.First, p.Second)
                                 If e IsNot Nothing Then
                                     e.SetMgrString(IdentityString)
-                                    If obj.CreateManager IsNot Nothing Then
-                                        e.SetCreateManager(obj.CreateManager)
+                                    If obj.GetICreateManager IsNot Nothing Then
+                                        e.SetCreateManager(obj.GetICreateManager)
                                     End If
                                     RaiseObjectLoaded(e)
                                 End If
@@ -1988,10 +1999,10 @@ l1:
                     If selectType IsNot Nothing Then
                         entityDictionary = GetDictionary(selectType, TryCast(oschema, ICacheBehavior))
                     End If
-                    Dim il As IListEdit = TryCast(values, IListEdit)
-                    If il IsNot Nothing Then
-                        values = il.List
-                    End If
+                    'Dim il As IListEdit = TryCast(values, IListEdit)
+                    'If il IsNot Nothing Then
+                    '    values = il.List
+                    'End If
                     'Dim props As IDictionary = Nothing
                     'If oschema IsNot Nothing Then
                     '    props = MappingEngine.GetProperties(original_type, oschema)
@@ -2041,31 +2052,31 @@ l1:
                     '    arr = MappingEngine.GetSortedFieldList(original_type, oschema)
                     'End If
                     Dim ft As New PerfCounter
-#If LoadDataParallel Then
-                    Dim startRowNum = values.Count
-                    Dim sdf As New ienum_dra(dr, startRowNum)
-                    Dim po As New ParallelOptions() With {.MaxDegreeOfParallelism = 2}
-                    'Dim processed = 0
                     Dim sl As New SpinLockRef
-                    Dim lr = Parallel.ForEach(sdf, po,
-                                         Sub(dra, ls, tc)
-                                             LoadFromResultSet(Of T)(values, selectList, dra, sl, entityDictionary, _loadedInLastFetch, dra.RowNum, oschema, fields_idx)
-                                             'Interlocked.Increment(processed)
-                                         End Sub)
+                    If _rsThreads > 1 Then
+                        Dim startRowNum = values.Count
+                        Dim sdf As New ienum_dra(dr, startRowNum)
+                        Dim po As New ParallelOptions() With {.MaxDegreeOfParallelism = _rsThreads}
+                        'Dim processed = 0
+                        Dim lr = Parallel.ForEach(sdf, po,
+                                             Sub(dra, ls, tc)
+                                                 LoadFromResultSet(Of T)(values, selectList, dra, sl, entityDictionary, _loadedInLastFetch, dra.RowNum, oschema, fields_idx)
+                                                 'Interlocked.Increment(processed)
+                                             End Sub)
 
-                    While sdf.rowNum - startRowNum < _loadedInLastFetch
-                        Thread.Sleep(0)
-                    End While
-#Else
-                    Dim rownum As Integer = 0
-                    Do While dr.Read
-                        LoadFromResultSet(Of T)(values, selectList, New DataReaderAbstraction(dr, rownum, dr), entityDictionary, _loadedInLastFetch, rownum, oschema, fields_idx)
-                        rownum += 1
-                        If dr.IsClosed Then
-                            Throw New OrmManagerException(String.Format("LoadFromResultSet close reader or connection. Rownum is {0}", rownum))
-                        End If
-                    Loop
-#End If
+                        'While sdf.rowNum - startRowNum < _loadedInLastFetch
+                        '    Thread.Sleep(0)
+                        'End While
+                    Else
+                        Dim rownum As Integer = 0
+                        Do While dr.Read
+                            LoadFromResultSet(Of T)(values, selectList, New DataReaderAbstraction(dr, rownum, dr), sl, entityDictionary, _loadedInLastFetch, rownum, oschema, fields_idx)
+                            rownum += 1
+                            If dr.IsClosed Then
+                                Throw New OrmManagerException(String.Format("LoadFromResultSet close reader or connection. Rownum is {0}", rownum))
+                            End If
+                        Loop
+                    End If
 
                     _fetch = ft.GetTime
                 End Using
@@ -2201,28 +2212,28 @@ l1:
 #End If
                 Dim orm As _ICachedEntity = TryCast(ro, _ICachedEntity)
                 If orm Is Nothing OrElse orm.IsPKLoaded Then
-#If LoadDataParallel Then
-                    Using New CSScopeMgrLite(valuesLock)
-                        If values.Count <= rownum Then
-                            For i = values.Count To rownum - 1
-                                values.Add(Nothing)
-                            Next
-                            values.Add(ro)
-                        Else
-                            values(rownum) = ro
-                        End If
+                    If _rsThreads > 1 Then
+                        Using New CSScopeMgrLite(valuesLock)
+                            If values.Count <= rownum Then
+                                For i = values.Count To rownum - 1
+                                    values.Add(Nothing)
+                                Next
+                                values.Add(ro)
+                            Else
+                                values(rownum) = ro
+                            End If
+
+                            If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
+                                loaded += 1
+                            End If
+                        End Using
+                    Else
+                        values.Add(ro)
 
                         If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
                             loaded += 1
                         End If
-                    End Using
-#Else
-                    values.Add(ro)
-
-                    If entity IsNot Nothing AndAlso CType(ro, _IEntity).IsLoaded Then
-                        loaded += 1
                     End If
-#End If
                 End If
             Finally
                 If lock IsNot Nothing Then
@@ -2263,18 +2274,18 @@ l1:
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
             ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As Object
 
-#If LoadDataParallel Then
             Dim fldCount = 0
-            If parallel Then
-                'SyncLock dr.LockObject
-                fldCount = dr.FieldCount
-                'End SyncLock
+            If _rsThreads > 1 Then
+                If parallel Then
+                    'SyncLock dr.LockObject
+                    fldCount = dr.FieldCount
+                    'End SyncLock
+                Else
+                    fldCount = dr.FieldCount
+                End If
             Else
                 fldCount = dr.FieldCount
             End If
-#Else
-            Dim fldCount = dr.FieldCount
-#End If
 
             If selectList.Count > fldCount Then
                 Throw New OrmManagerException(String.Format("Actual field count({0}) in query does not satisfy requested fields({1})", fldCount, selectList.Count))
@@ -2328,7 +2339,7 @@ l2:
                                 pk = True
                                 m = propertyMap(propertyAlias)
                             ElseIf String.IsNullOrEmpty(propertyAlias) Then
-                                Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, ContextInfo)))
+                                Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine)))
                             End If
 
                             If Not pk Then
@@ -2371,46 +2382,48 @@ l2:
                             pk_count += 1
                             If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
                                 Dim te As TableExpression = CType(se.Expression, TableExpression)
-#If LoadDataParallel Then
-                                If parallel Then
-                                    Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                If _rsThreads > 1 Then
+                                    If parallel Then
+                                        Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                            If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                                idx = dr.GetOrdinal(te.SourceField)
+                                            End If
+                                        End Using
+                                    Else
                                         If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                             idx = dr.GetOrdinal(te.SourceField)
                                         End If
-                                    End Using
+                                    End If
                                 Else
                                     If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                         idx = dr.GetOrdinal(te.SourceField)
                                     End If
                                 End If
-#Else
-                                If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
-                                    idx = dr.GetOrdinal(te.SourceField)
-                                End If
-#End If
                             End If
+
                             Dim value As Object = Nothing
                             Dim isnull As Boolean = False
-#If LoadDataParallel Then
-                            If parallel Then
-                                'SyncLock dr.LockObject
-                                value = dr.GetValue(idx)
-                                isnull = dr.IsDBNull(idx)
-                                'End SyncLock
+
+                            If _rsThreads > 1 Then
+                                If parallel Then
+                                    'SyncLock dr.LockObject
+                                    value = dr.GetValue(idx)
+                                    isnull = dr.IsDBNull(idx)
+                                    'End SyncLock
+                                Else
+                                    value = dr.GetValue(idx)
+                                    isnull = dr.IsDBNull(idx)
+                                End If
                             Else
                                 value = dr.GetValue(idx)
                                 isnull = dr.IsDBNull(idx)
                             End If
-#Else
-                            value = dr.GetValue(idx)
-                            isnull = dr.IsDBNull(idx)
-#End If
 
                             If fv IsNot Nothing Then
                                 value = fv.CreateValue(oschema, m, propertyAlias, value)
                             End If
 
-                            MappingEngine.AssignValue2PK(obj, isnull, oschema, propertyMap, ll, m, propertyAlias, value)
+                            ObjectMappingEngine.AssignValue2PK(obj, isnull, oschema, propertyMap, ll, m, propertyAlias, value)
                         End If
                     Next
                 End Using
@@ -2422,7 +2435,7 @@ l2:
                             CreateCopyForSaveNewEntry(ce, oschema, Nothing)
                         End If
                     Else
-                        ce.PKLoaded(pk_count)
+                        ce.PKLoaded(pk_count, oschema)
 
                         Dim c As OrmCache = TryCast(_cache, OrmCache)
                         If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
@@ -2444,7 +2457,7 @@ l2:
 
                                     If robj IsNot Nothing Then
                                         ce = CType(robj, _ICachedEntity)
-                                        If Not ce.IsPKLoaded Then ce.PKLoaded(pk_count)
+                                        If Not ce.IsPKLoaded Then ce.PKLoaded(pk_count, oschema)
                                     Else
                                         robj = ce
                                     End If
@@ -2522,42 +2535,45 @@ l2:
                             Dim sv(m.SourceFields.Count - 1) As PKDesc
                             If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
                                 Dim te As TableExpression = CType(se.Expression, TableExpression)
-#If LoadDataParallel Then
-                                If parallel Then
-                                    Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                If _rsThreads > 1 Then
+                                    If parallel Then
+                                        Using SyncHelper.AcquireDynamicLockSlim(dr.LockObject)
+                                            If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
+                                                idx = dr.GetOrdinal(te.SourceField)
+                                            End If
+                                        End Using
+                                    Else
                                         If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                             idx = dr.GetOrdinal(te.SourceField)
                                         End If
-                                    End Using
+                                    End If
                                 Else
                                     If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
                                         idx = dr.GetOrdinal(te.SourceField)
                                     End If
                                 End If
-#Else
-                                If Not String.Equals(dr.GetName(idx), te.SourceField, StringComparison.InvariantCultureIgnoreCase) Then
-                                    idx = dr.GetOrdinal(te.SourceField)
-                                End If
-#End If
                             End If
+
                             Dim isNull As Boolean = True
                             For k As Integer = 0 To sv.Length - 1
                                 Dim value As Object = Nothing
                                 Dim fldNull = False
-#If LoadDataParallel Then
-                                If parallel Then
-                                    'SyncLock dr.LockObject
-                                    value = dr.GetValue(idx)
-                                    fldNull = dr.IsDBNull(idx + k)
-                                    'End SyncLock
+
+                                If _rsThreads > 1 Then
+                                    If parallel Then
+                                        'SyncLock dr.LockObject
+                                        value = dr.GetValue(idx)
+                                        fldNull = dr.IsDBNull(idx + k)
+                                        'End SyncLock
+                                    Else
+                                        value = dr.GetValue(idx)
+                                        fldNull = dr.IsDBNull(idx + k)
+                                    End If
                                 Else
                                     value = dr.GetValue(idx)
                                     fldNull = dr.IsDBNull(idx + k)
                                 End If
-#Else
-                                value = dr.GetValue(idx)
-                                fldNull = dr.IsDBNull(idx + k)
-#End If
+
                                 If fv IsNot Nothing Then
                                     value = fv.CreateValue(oschema, m, propertyAlias, value)
                                 End If
@@ -2588,7 +2604,7 @@ l2:
                     If f IsNot Nothing Then
                         For Each p As Pair(Of String, PKDesc()) In fac
                             Dim e As _IEntity = f.CreateContainingEntity(Me, p.First, p.Second)
-                            If ll IsNot Nothing Then SetLoaded(ll, p.First, True, propertyMap, MappingEngine)
+                            If ll IsNot Nothing Then SetLoaded(ll, p.First, True)
                             If e IsNot Nothing Then
                                 e.SetMgrString(IdentityString)
                                 RaiseObjectLoaded(e)
@@ -2701,6 +2717,10 @@ l2:
                         r = ConnAction.Close
                     End If
                     If cmd IsNot Nothing Then cmd.Connection = _conn
+
+#If TraceThreadAffinity Then
+                    Assert(_curThread = Thread.CurrentThread.ManagedThreadId, "Thread affinity violated")
+#End If
                 End If
             End If
 

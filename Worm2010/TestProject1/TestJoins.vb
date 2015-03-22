@@ -238,7 +238,7 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
         Dim c As New Condition(f, Nothing, ConditionOperator.Or)
 
-        Assert.AreEqual(f.Template.GetStaticString(Nothing, Nothing) & " or ", c.Template.GetStaticString(Nothing, Nothing))
+        Assert.AreEqual(f.Template.GetStaticString(Nothing) & " or ", c.Template.GetStaticString(Nothing))
         Assert.AreEqual(f.ToString & " or ", c.ToString)
         Assert.IsTrue(c.Equals(New Condition(f, Nothing, ConditionOperator.Or)))
         Assert.IsFalse(c.Equals(Nothing))
@@ -291,7 +291,7 @@ End Class
         Dim c As New Condition(f, f2, ConditionOperator.Or)
         Dim schema As New Worm.ObjectMappingEngine("1")
 
-        Assert.AreEqual(f.Template.GetStaticString(schema, Nothing) & " or " & f2.Template.GetStaticString(Nothing, Nothing), c.Template.GetStaticString(schema, Nothing))
+        Assert.AreEqual(f.Template.GetStaticString(schema) & " or " & f2.Template.GetStaticString(Nothing), c.Template.GetStaticString(schema))
         Assert.AreEqual(2, c.GetAllFilters.Length)
 
         Assert.AreEqual(f.ToString & " or " & f2.ToString, c.ToString)
@@ -474,7 +474,7 @@ End Class
     Public Sub TestMakeSQLStmt4()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
 
-        Assert.AreEqual("TestProject1.EntityIDGreaterEqualThan", f.Template.GetStaticString(Nothing, Nothing))
+        Assert.AreEqual("TestProject1.EntityIDGreaterEqualThan", f.Template.GetStaticString(Nothing))
 
         Assert.AreEqual(1, f.GetAllFilters.Length)
         Dim gen As New SQL2000Generator
@@ -563,13 +563,13 @@ End Class
         Dim cOr As New Condition.ConditionConstructor
         cOr.AddFilter(f).AddFilter(f2, ConditionOperator.Or)
 
-        Assert.AreEqual(f.ToString, CType(cAnd.Condition, IEntityFilter).MakeHash)
-        Assert.AreEqual(CType(cOr.Condition, IEntityFilter).MakeHash, EntityFilter.EmptyHash)
+        Assert.AreEqual("1TestProject1.Entity2", f.ToString)
+        Assert.AreEqual(EntityFilter.EmptyHash, CType(cOr.Condition, IEntityFilter).MakeHash)
 
         Dim o As New Entity2(1, Nothing, mpe)
         Dim oschema As IEntitySchema = mpe.GetEntitySchema(t)
 
-        Assert.AreEqual(CType(cAnd.Condition, IEntityFilter).MakeHash, CType(cAnd.Condition, IEntityFilter).GetFilterTemplate.MakeHash(mpe, oschema, o))
+        Assert.AreEqual(f.MakeHash, f.GetFilterTemplate.MakeHash(mpe, oschema, o))
         'Assert.AreEqual(EntityFilter.EmptyHash, CType(cOr.Condition, IEntityFilter).GetFilterTemplate.MakeHash(mpe, oschema, o))
     End Sub
 End Class

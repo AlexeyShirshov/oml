@@ -122,11 +122,11 @@ Namespace Criteria.Values
             End If
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If _exp IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In _exp
-                    l.Add(v.GetStaticString(mpe, contextInfo))
+                    l.Add(v.GetStaticString(mpe))
                 Next
                 If _filter Then
                     Return String.Format(_f, l.ToArray)
@@ -197,7 +197,7 @@ Namespace Criteria.Values
             Return [Alias]
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return "compval"
         End Function
 
@@ -630,7 +630,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return "scalarval"
         End Function
 
@@ -666,7 +666,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return "litval"
         End Function
 
@@ -990,8 +990,8 @@ Namespace Criteria.Values
             Return Value.First._ToString & "__$__" & Value.Second._ToString
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return Value.First.GetStaticString(mpe, contextInfo) & "between" & Value.Second.GetStaticString(mpe, contextInfo)
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return Value.First.GetStaticString(mpe) & "between" & Value.Second.GetStaticString(mpe)
         End Function
 
         Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
@@ -1228,8 +1228,8 @@ Namespace Criteria.Values
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-            Return _q.ToStaticString(mpe, contextInfo)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString(mpe)
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get

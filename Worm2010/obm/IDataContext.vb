@@ -107,7 +107,7 @@ Public MustInherit Class DataContextBase
             End Select
 
             If o IsNot Nothing Then
-                If o.CreateManager Is Nothing Then
+                If o.GetICreateManager Is Nothing Then
                     o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
                 End If
             End If
@@ -180,7 +180,7 @@ Public MustInherit Class DataContextBase
 
             For Each o As ISinglePKEntity In list
                 If o IsNot Nothing Then
-                    If o.CreateManager Is Nothing Then
+                    If o.GetICreateManager Is Nothing Then
                         o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
                     End If
                 End If
@@ -216,7 +216,7 @@ Public MustInherit Class DataContextBase
             End Select
 
             If o IsNot Nothing Then
-                If o.CreateManager Is Nothing Then
+                If o.GetICreateManager Is Nothing Then
                     o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
                 End If
             End If

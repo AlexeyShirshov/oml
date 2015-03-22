@@ -222,7 +222,9 @@ Namespace Entities
         'Private _old_state As ObjectState
 
         Private _loaded As Boolean
-        Private _loaded_members As BitArray
+        Private _loaded_members As IDictionary(Of String, Boolean)
+        <NonSerialized()> _
+        Private _sl As New SpinLockRef
 
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Added
         Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Deleted
@@ -260,7 +262,7 @@ Namespace Entities
                 Me(p.PropertyAlias) = p.Value
             Next
             _pk = spk.ToArray
-            PKLoaded(pk.Count)
+            PKLoaded(pk.Count, Nothing)
         End Sub
 
         Public ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
@@ -269,11 +271,14 @@ Namespace Entities
             End Get
         End Property
 
-        Public Sub PKLoaded(ByVal pkCount As Integer) Implements _ICachedEntity.PKLoaded
+        Public Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntity.PKLoaded
             If _pk Is Nothing Then
                 Throw New OrmObjectException("PK is not loaded")
             End If
             _hasPK = True
+            For Each p As String In _pk
+                IsPropertyLoaded(p) = True
+            Next
         End Sub
 
         Public Sub RaiseOriginalCopyRemoved() Implements IUndoChanges.RaiseOriginalCopyRemoved
@@ -509,7 +514,7 @@ Namespace Entities
                 Me(p.PropertyAlias) = p.Value
             Next
             _pk = spk.ToArray
-            PKLoaded(pk.Count)
+            PKLoaded(pk.Count, Nothing)
         End Sub
 
         Public Function GetPKValues() As IEnumerable(Of Meta.PKDesc) Implements IOptimizePK.GetPKValues
@@ -1012,14 +1017,14 @@ Namespace Entities
             End Get
         End Property
 
-        Public Property PropertyLoadState As System.Collections.BitArray Implements IPropertyLazyLoad.PropertyLoadState
-            Get
-                Return _loaded_members
-            End Get
-            Set(ByVal value As System.Collections.BitArray)
-                _loaded_members = value
-            End Set
-        End Property
+        'Public Property PropertyLoadState As System.Collections.BitArray Implements IPropertyLazyLoad.PropertyLoadState
+        '    Get
+        '        Return _loaded_members
+        '    End Get
+        '    Set(ByVal value As System.Collections.BitArray)
+        '        _loaded_members = value
+        '    End Set
+        'End Property
 
         Public Property LazyLoadDisabled As Boolean Implements IPropertyLazyLoad.LazyLoadDisabled
             Get
@@ -1062,5 +1067,31 @@ Namespace Entities
             End Using
         End Sub
 
+        Public Property IsPropertyLoaded(propertyAlias As String) As Boolean Implements IPropertyLazyLoad.IsPropertyLoaded
+            Get
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    Dim v As Boolean = False
+
+                    If _loaded_members.TryGetValue(propertyAlias, v) AndAlso v Then
+                        Return True
+                    End If
+
+                    Return False
+                End Using
+            End Get
+            Set(value As Boolean)
+                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                    If _loaded_members Is Nothing Then
+                        _loaded_members = New Dictionary(Of String, Boolean)
+                    End If
+
+                    _loaded_members(propertyAlias) = value
+                End Using
+            End Set
+        End Property
     End Class
 End Namespace

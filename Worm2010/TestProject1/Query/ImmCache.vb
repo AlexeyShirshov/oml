@@ -154,6 +154,7 @@ Imports Worm.Criteria
 
             Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
             l = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
             Assert.IsTrue(q.LastExecutionResult.CacheHit)
@@ -162,6 +163,9 @@ Imports Worm.Criteria
                 .Where(Ctor.prop(GetType(Table1), "EnumStr").eq(Enum1.sec))
 
             Assert.AreEqual(2, q2.Count(mgr))
+            Assert.IsFalse(q2.LastExecutionResult.CacheHit)
+            Assert.AreEqual(2, q2.ToList(mgr).Count)
+            Assert.IsFalse(q2.LastExecutionResult.CacheHit)
 
             mgr.BeginTransaction()
             Try
@@ -176,9 +180,12 @@ Imports Worm.Criteria
                 End Using
 
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
-                Assert.IsFalse(q.LastExecutionResult.CacheHit)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit) 'custom sort
 
                 Assert.AreEqual(3, q2.Count(mgr))
+                Assert.IsFalse(q2.LastExecutionResult.CacheHit) 'simple result (int)
+
+                Assert.AreEqual(3, q2.ToList(mgr).Count)
                 Assert.IsTrue(q2.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
@@ -393,9 +400,12 @@ Imports Worm.Criteria
             q.SelectEntity(GetType(Table1))
             q.Filter = Ctor.prop(GetType(Table2), "Money").eq(1)
             q.AutoJoins = True
-            Assert.IsNotNull(q)
 
             Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
+
+            'q.Filter = Ctor.prop(GetType(Table2), "Money").less_than_eq(1)
+
+            'Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try

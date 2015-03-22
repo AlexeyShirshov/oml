@@ -26,7 +26,7 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return "litval"
         End Function
 
@@ -166,8 +166,8 @@ Namespace Expressions2
             Return _q._ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
-            Return _q.GetStaticString(mpe, contextInfo)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return _q.GetStaticString(mpe)
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements IQueryElement.Prepare
@@ -260,11 +260,11 @@ Namespace Expressions2
             End If
         End Function
 
-        Public Overridable Function GetStaticString(mpe As ObjectMappingEngine, contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Overridable Function GetStaticString(mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If _v IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In _v
-                    l.Add(v.GetStaticString(mpe, contextInfo))
+                    l.Add(v.GetStaticString(mpe))
                 Next
                 Return String.Join(",", l.ToArray)
             Else
@@ -367,11 +367,11 @@ Namespace Expressions2
             End If
         End Function
 
-        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             If Values IsNot Nothing Then
                 Dim l As New List(Of String)
                 For Each v As IExpression In Values
-                    l.Add(v.GetStaticString(mpe, contextInfo))
+                    l.Add(v.GetStaticString(mpe))
                 Next
                 Return String.Format(_f, l.ToArray)
             Else

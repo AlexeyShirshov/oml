@@ -542,7 +542,7 @@ Imports System.Collections.ObjectModel
                 Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)
                 Assert.IsNotNull(oschema)
                 Assert.IsNotNull(oschema.FieldColumnMap)
-                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Title", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Title"))
             End Using
 
             Assert.IsInstanceOfType(r(1), GetType(Table2))
@@ -554,7 +554,7 @@ Imports System.Collections.ObjectModel
                 Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
                 Assert.IsNotNull(oschema)
                 Assert.IsNotNull(oschema.FieldColumnMap)
-                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Money", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Money"))
             End Using
 
         Next
@@ -573,7 +573,7 @@ Imports System.Collections.ObjectModel
                 Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
                 Assert.IsNotNull(oschema)
                 Assert.IsNotNull(oschema.FieldColumnMap)
-                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Title", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(1), "Title"))
             End Using
 
             Assert.IsInstanceOfType(r(0), GetType(Table2))
@@ -585,7 +585,7 @@ Imports System.Collections.ObjectModel
                 Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)
                 Assert.IsNotNull(oschema)
                 Assert.IsNotNull(oschema.FieldColumnMap)
-                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Money", oschema.FieldColumnMap, mc.Manager.MappingEngine))
+                Assert.IsTrue(OrmManager.IsPropertyLoaded(r(0), "Money"))
             End Using
         Next
 
@@ -623,11 +623,11 @@ Imports System.Collections.ObjectModel
 
         t = q.GetByID(Of Table1)(1)
 
-        Assert.IsNotNull(t.InternalProperties.OriginalCopy)
+        Assert.IsNull(t.InternalProperties.OriginalCopy)
         'Assert.IsNotNull(c.ShadowCopy(t.GetType, t, TryCast(s.GetEntitySchema(GetType(Table1)), ICacheBehavior)))
 
         Assert.IsTrue(t.InternalProperties.IsLoaded)
-        Assert.AreEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
+        Assert.AreNotEqual(ObjectState.Modified, t.InternalProperties.ObjectState)
     End Sub
 
 End Class

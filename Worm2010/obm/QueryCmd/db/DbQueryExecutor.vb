@@ -47,7 +47,7 @@ Namespace Query.Database
 #Region " Get providers "
 
         Protected Overrides Function GetProvider(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
-            ByVal d As InitTypesDelegate) As CacheItemBaseProvider
+            ByVal initTypes As InitTypesDelegate) As CacheItemBaseProvider
             If Prepared Then
                 _proc = New BaseProvider(mgr, query)
             Else
@@ -66,12 +66,12 @@ Namespace Query.Database
                     'End If
 
                     Dim r As Boolean
-                    If d Is Nothing Then
+                    If initTypes Is Nothing Then
                         If query.NeedSelectType(mgr.MappingEngine) Then
                             Throw New ExecutorException("Cannot get provider")
                         End If
                     Else
-                        r = d(mgr, query)
+                        r = initTypes(mgr, query)
                     End If
 
                     'Dim ct As EntityUnion = query.CreateType
@@ -115,12 +115,12 @@ Namespace Query.Database
 
                     If _proc.QMark <> query.Mark Then
                         Dim r As Boolean
-                        If d Is Nothing Then
+                        If initTypes Is Nothing Then
                             If query.NeedSelectType(mgr.MappingEngine) Then
                                 Throw New ExecutorException("Cannot get provider")
                             End If
                         Else
-                            r = d(mgr, query)
+                            r = initTypes(mgr, query)
                         End If
                         QueryCmd.Prepare(query, Me, mgr.MappingEngine, mgr.ContextInfo, mgr.StmtGenerator)
                         p.Reset(mgr, query)
@@ -134,7 +134,7 @@ Namespace Query.Database
                         '    p.ResetDic()
                         'End If
                     End If
-                    p.Created = False
+                    p.CacheMiss = False
                 End If
             End If
 
@@ -172,19 +172,20 @@ Namespace Query.Database
             Return r
         End Function
 
-        Protected Overrides Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Overrides Function GetCacheItemProvoderAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Return New ProviderAnonym(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))), BaseProvider))
         End Function
 
-        Protected Overrides Function GetProcessorAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Overrides Function GetCacheItemProvoderAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Return New ProviderAnonym(Of CreateType, ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))), BaseProvider))
         End Function
 
-        Protected Overrides Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Overrides Function GetCacheItemProvoder(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Return New Provider(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))), BaseProvider))
         End Function
 
-        Protected Overrides Function GetProcessorT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Overrides Function GetCacheItemProvoderT(Of CreateType As {ICachedEntity, New},
+                                                       ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Dim bp As BaseProvider = CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))), BaseProvider)
             If bp Is Nothing Then
                 Return Nothing
@@ -193,7 +194,7 @@ Namespace Query.Database
             End If
         End Function
 
-        Protected Overrides Function GetProcessorS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
+        Protected Overrides Function GetCacheItemProvoderS(Of T)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
             Return New SimpleProvider(Of T)(CType(GetProvider(mgr, query, Nothing), BaseProvider))
         End Function
 
@@ -208,8 +209,9 @@ Namespace Query.Database
         End Sub
 
         Protected Function ExecBase(Of ReturnType)(ByVal mgr As OrmManager, _
-            ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate, _
-            ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReturnType
+            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate, _
+            ByVal cachedItem As GetCachedItemDelegate,
+            ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
 
             Dim key As String = Nothing
             Dim dic As IDictionary = Nothing
@@ -224,6 +226,7 @@ Namespace Query.Database
             Dim oldRev As Boolean = mgr._rev
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
             Dim op As Boolean = mgr.IsPagingOptimized
+            Dim oldThreads As Integer? = Nothing
 
             If Not query.ClientPaging.IsEmpty Then
                 mgr._start = query.ClientPaging.Start
@@ -251,11 +254,17 @@ Namespace Query.Database
                 AddHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
             End If
 
+            Dim dbMgr = CType(mgr, OrmReadOnlyDBManager)
+            If dbMgr.LoadResultsetThreadCount <> query.LoadResultsetThreadCount Then
+                oldThreads = dbMgr.LoadResultsetThreadCount
+                dbMgr.LoadResultsetThreadCount = query.LoadResultsetThreadCount
+            End If
+
             Try
                 Dim c As New QueryCmd.svct(query)
                 Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
 
-                    Dim p As BaseProvider = CType(gp(), BaseProvider)
+                    Dim p As BaseProvider = CType(cacheItemProvoder(), BaseProvider)
                     If p Is Nothing Then
                         c.DontReset = True
                         Return Nothing
@@ -283,13 +292,12 @@ Namespace Query.Database
                     '    created = False
                     'End If
 
-                    Dim ce As Cache.CachedItemBase = d(mgr, query, dic, id, sync, p)
+                    Dim ce As Cache.CachedItemBase = cachedItem(mgr, query, dic, id, sync, p)
                     p.Clear()
                     _proc.Clear()
                     _proc.SetDependency(p)
                     Dim args As New IExecutor.GetCacheItemEventArgs
                     RaiseOnGetCacheItem(args)
-                    Dim created As Boolean = args.Created
                     'query._load = oldLoad
 
                     query.LastExecutionResult = mgr.LastExecutionResult
@@ -299,13 +307,17 @@ Namespace Query.Database
                     Dim s As Cache.IListObjectConverter.ExtractListResult
                     'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
                     'Return r
-                    Dim res As ReturnType = d2(mgr, query, p, ce, s, p.Created AndAlso created)
+                    Dim res As ReturnType = resultFromCachedItem(mgr, query, p, ce, s, Not p.CacheMiss OrElse args.ForceLoad)
 
                     'mgr.RaiseObjectCreation = oldC
 
                     Return res
                 End Using
             Finally
+                If oldThreads.HasValue Then
+                    dbMgr.LoadResultsetThreadCount = oldThreads.Value
+                End If
+
                 mgr._dont_cache_lists = oldCache
                 mgr._start = oldStart
                 mgr._length = oldLength
@@ -321,8 +333,8 @@ Namespace Query.Database
         End Function
 
         Protected Overrides Function _Exec(Of ReturnType)(ByVal mgr As OrmManager, _
-            ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate, _
-            ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReturnType
+            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate, _
+            ByVal cachedItem As GetCachedItemDelegate, ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
 
             Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
 
@@ -338,7 +350,7 @@ Namespace Query.Database
                     dbm.CommandTimeout = query.CommandTimeout
                 End If
 
-                Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, gp, d, d2)
+                Dim res As ReturnType = ExecBase(Of ReturnType)(mgr, query, cacheItemProvoder, cachedItem, resultFromCachedItem)
 
                 dbm.CommandTimeout = timeout
 
@@ -1698,6 +1710,21 @@ l1:
 
             Return Nothing
         End Function
+
+        Public Overrides Function Clone() As QueryExecutor
+            Dim q As New DbQueryExecutor()
+            'CopyTo(q)
+            Return q
+        End Function
+
+        'Public Overrides Sub CopyTo(q As QueryExecutor)
+        '    Dim dbq = TryCast(q, DbQueryExecutor)
+        '    If dbq IsNot Nothing Then
+        '        dbq._proc = _proc
+        '    End If
+        '    MyBase.CopyTo(q)
+        'End Sub
+
     End Class
 
 End Namespace

@@ -222,23 +222,23 @@ Namespace Criteria.Joins
             _condition = _condition.ReplaceFilter(oldValue, newValue)
         End Sub
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If _table IsNot Nothing Then
-                Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
+                Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
                 'ElseIf _type IsNot Nothing Then
                 '    Return gs(_type.ToString, mpe)
                 'Else
                 '    Return gs(_en, mpe)
             Else
-                Return gs(_src.ToStaticString(mpe, contextFilter), mpe, contextFilter)
+                Return gs(_src.ToStaticString(mpe), mpe)
             End If
         End Function
 
-        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine, ByVal contextFilter As IDictionary) As String
+        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine) As String
             If _condition IsNot Nothing Then
-                Return s & JoinTypeString() & _condition.GetStaticString(mpe, contextFilter)
+                Return s & JoinTypeString() & _condition.GetStaticString(mpe)
             ElseIf _jos IsNot Nothing Then
-                Return s & JoinTypeString() & _jos.ToStaticString(mpe, contextFilter) & _key
+                Return s & JoinTypeString() & _jos.ToStaticString(mpe) & _key
             Else
                 Return s & JoinTypeString()
             End If
