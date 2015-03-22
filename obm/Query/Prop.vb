@@ -102,13 +102,13 @@ Namespace Query
             End If
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
             If _tf IsNot Nothing Then
                 Return _tf.First.RawName & "$" & _tf.Second
             ElseIf _c IsNot Nothing Then
-                Return _c.GetStaticString(mpe, contextInfo)
+                Return _c.GetStaticString(mpe)
             Else
-                Return _op.Entity.ToStaticString(mpe, contextInfo) & "$" & _op.PropertyAlias
+                Return _op.Entity.ToStaticString(mpe) & "$" & _op.PropertyAlias
             End If
         End Function
 

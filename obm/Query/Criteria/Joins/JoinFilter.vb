@@ -376,7 +376,7 @@ Namespace Criteria.Joins
         End Function
 
         Private Function Equals1(ByVal f As Core.IFilter) As Boolean Implements Core.IFilter.Equals
-            Equals(TryCast(f, JoinFilter))
+            Return Equals(TryCast(f, JoinFilter))
         End Function
 
         Private Function _ToString() As String Implements Core.IFilter._ToString
@@ -414,7 +414,7 @@ Namespace Criteria.Joins
             Return _ToString.GetHashCode
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Core.IFilter.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Core.IFilter.GetStaticString
             Return _ToString()
         End Function
 

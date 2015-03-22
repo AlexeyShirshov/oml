@@ -1462,7 +1462,7 @@ Imports CoreFramework.Structures
             Try
                 Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)
             Catch ex As Data.SqlClient.SqlException
-                Assert.IsTrue(ex.StackTrace.Contains("line 1461"))
+                Assert.IsTrue(ex.StackTrace.Contains("line 1461"), ex.StackTrace)
             End Try
         End Using
 

@@ -20,31 +20,31 @@ Namespace Cache
 #Region " Classes "
 
         Private Class HashIds
-            Inherits Dictionary(Of String, Dictionary(Of String, Object))
+            Inherits Dictionary(Of String, HashSet(Of String))
 
-            Private _default As New Dictionary(Of String, Object)
+            Private _default As New HashSet(Of String)
 
-            Public Function GetIds(ByVal hash As String) As IEnumerable(Of String)
-                'If hash = EntityFilter.EmptyHash Then
-                '    Return _default
-                'Else
-                '    Dim h As List(Of String) = Nothing
-                '    If Not Me.TryGetValue(hash, h) Then
-                '        h = New List(Of String)
-                '        Me(hash) = h
-                '    End If
-                '    Return h
-                'End If
-                Return GetIds2(hash).Keys
-            End Function
+            'Public Function GetIds(ByVal hash As String) As IEnumerable(Of String)
+            '    'If hash = EntityFilter.EmptyHash Then
+            '    '    Return _default
+            '    'Else
+            '    '    Dim h As List(Of String) = Nothing
+            '    '    If Not Me.TryGetValue(hash, h) Then
+            '    '        h = New List(Of String)
+            '    '        Me(hash) = h
+            '    '    End If
+            '    '    Return h
+            '    'End If
+            '    Return GetIds2(hash)
+            'End Function
 
-            Public Function GetIds2(ByVal hash As String) As Dictionary(Of String, Object)
+            Public Function GetIds(ByVal hash As String) As HashSet(Of String)
                 If hash = EntityFilter.EmptyHash Then
                     Return _default
                 Else
-                    Dim h As Dictionary(Of String, Object) = Nothing
+                    Dim h As HashSet(Of String) = Nothing
                     If Not Me.TryGetValue(hash, h) Then
-                        h = New Dictionary(Of String, Object)
+                        h = New HashSet(Of String)
                         Me(hash) = h
                     End If
                     Return h
@@ -52,14 +52,14 @@ Namespace Cache
             End Function
 
             Public Overloads Sub Remove(ByVal hash As String, ByVal id As String)
-                GetIds2(hash).Remove(id)
+                GetIds(hash).Remove(id)
             End Sub
         End Class
 
         Private Class TemplateHashs
             Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
 
-            Private Function GetIds(ByVal key As String, ByVal filter As IFilter, ByRef def As Boolean) As Dictionary(Of String, Object)
+            Private Function GetIds(ByVal key As String, ByVal filter As IFilter, ByRef def As Boolean) As HashSet(Of String)
                 Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
                 Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
                 def = f Is Nothing
@@ -72,15 +72,18 @@ Namespace Cache
                     Me(key) = p
                 End If
                 If Not def Then
-                    Return p.First.GetIds2(f.MakeHash)
+                    Return p.First.GetIds(f.MakeHash)
                 Else
-                    Return p.First.GetIds2(EntityFilter.EmptyHash)
+                    Return p.First.GetIds(EntityFilter.EmptyHash)
                 End If
             End Function
 
-            Public Overloads Function Add(ByVal f As IFilter, ByVal key As String, ByVal id As String) As Boolean
+            Public Overloads Function Add(ByVal key As String, ByVal f As IFilter, ByVal id As String) As Boolean
                 Dim def As Boolean
-                GetIds(key, f, def)(id) = Nothing
+                Dim hs = GetIds(key, f, def)
+                If Not hs.Contains(id) Then
+                    hs.Add(id)
+                End If
                 Return Not def
             End Function
         End Class
@@ -265,7 +268,12 @@ Namespace Cache
         '    '_filters = Hashtable.Synchronized(New Hashtable)
         '    'DateTimeCreated = Now
         'End Sub
-
+        Const ImmediateDynamicLock = "BLK$E&80erfvhbdvdksv"
+        Const TrackDeleteLock = "309fjsdfas;d"
+        Const AddDeleteTypeLock = "(_H* 234ngf90ganv"
+        Const UpdateTypeLock = "%G(qjg'oqgiu13rgfasd"
+        Const InvalidateLock = "913bh5g9nh04nvgtr0924ng"
+        Const SortGroupFilterLock = "N(4nfasd*)Gf"
 #Region " general routines "
 
         'Protected Friend ReadOnly Property Filters() As IDictionary
@@ -333,7 +341,7 @@ Namespace Cache
         End Property
 
         Friend Sub BeginTrackDelete(ByVal t As Type)
-            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+            Using SyncHelper.AcquireDynamicLock(TrackDeleteLock)
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If Not _trackDelete.TryGetValue(t, p) Then
                     _trackDelete(t) = New Pair(Of Integer, List(Of Integer))(0, New List(Of Integer))
@@ -344,7 +352,7 @@ Namespace Cache
         End Sub
 
         Friend Sub EndTrackDelete(ByVal t As Type)
-            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+            Using SyncHelper.AcquireDynamicLock(TrackDeleteLock)
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then
                     If p.First = 0 Then
@@ -363,7 +371,7 @@ Namespace Cache
 
             Dim t As Type = obj.GetType
 
-            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+            Using SyncHelper.AcquireDynamicLock(TrackDeleteLock)
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then 'AndAlso Not p.Second.Contains(obj.Identifier)
                     p.Second.Add(obj.Key)
@@ -388,7 +396,7 @@ Namespace Cache
         End Function
 
         Friend Function IsDeleted(ByVal t As Type, ByVal key As Integer) As Boolean
-            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+            Using SyncHelper.AcquireDynamicLock(TrackDeleteLock)
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then
                     Dim idx As Integer = p.Second.IndexOf(key)
@@ -453,9 +461,9 @@ Namespace Cache
 
         Public Sub validate_AddDeleteType(ByVal ts As IEnumerable(Of Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(AddDeleteTypeLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+            Using SyncHelper.AcquireDynamicLock(AddDeleteTypeLock)
 #End If
                 For Each t As Type In ts
                     _addDeleteTypes.Add(t, key, id)
@@ -465,15 +473,21 @@ Namespace Cache
 
         Public Sub validate_UpdateType(ByVal ts As IEnumerable(Of Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+            Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
 #End If
                 For Each t As Type In ts
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug(SortGroupLock,"d:\temp\")
+#Else
+                    Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
                     _updateTypes.Add(t, key, id)
                     _sortedFields.Remove(t, Me)
                     _groupedFields.Remove(t, Me)
-                    _filteredFields.Remove(t, Me)
+                        _filteredFields.Remove(t, Me)
+                    End Using
                 Next
             End Using
         End Sub
@@ -485,9 +499,9 @@ Namespace Cache
             Dim r As Boolean
 
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(ImmidiateDynamicLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("BLK$E&80erfvhbdvdksv")
+            Using SyncHelper.AcquireDynamicLock(ImmediateDynamicLock)
 #End If
                 For Each t As Type In ts
                     Dim tkey As Object = t
@@ -498,7 +512,7 @@ Namespace Cache
                             tkey = c.GetEntityKey()
                         End If
                         Dim l As TemplateHashs = _immediateValidate.GetFilters(tkey)
-                        r = l.Add(f, key, id)
+                        r = l.Add(key, f, id)
                     End If
                 Next
                 'Dim h As List(Of String) = l.GetIds(key, f)
@@ -524,9 +538,9 @@ Namespace Cache
         Protected Friend Sub validate_AddDependentFilterField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(SortGroupLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+            Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
 #End If
                 If Not _updateTypes.ContainsKey(p.Second) Then
                     Dim ef As EntityField = New EntityField(p.First, p.Second)
@@ -539,9 +553,9 @@ Namespace Cache
         Protected Friend Sub validate_AddDependentSortField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(SortGroupLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+            Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
 #End If
                 If Not _updateTypes.ContainsKey(p.Second) Then
                     Dim ef As EntityField = New EntityField(p.First, p.Second)
@@ -554,9 +568,9 @@ Namespace Cache
         Protected Friend Sub validate_AddDependentGroupField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(SortGroupLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+            Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
 #End If
                 If Not _updateTypes.ContainsKey(p.Second) Then
                     Dim ef As EntityField = New EntityField(p.First, p.Second)
@@ -609,9 +623,9 @@ Namespace Cache
                 Throw New ArgumentNullException("t")
             End If
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(InvalidateLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+            Using SyncHelper.AcquireDynamicLock(InvalidateLock)
 #End If
 
                 Return _invalidate.TryGetValue(t, l)
@@ -626,9 +640,9 @@ Namespace Cache
             If fields IsNot Nothing Then
                 Dim t As Type = obj.GetType
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(InvalidateLock,"d:\temp\")
 #Else
-                Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+                Using SyncHelper.AcquireDynamicLock(InvalidateLock)
 #End If
 
                     Dim l As List(Of String) = Nothing
@@ -653,9 +667,9 @@ Namespace Cache
             End If
 
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(InvalidateLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+            Using SyncHelper.AcquireDynamicLock(InvalidateLock)
 #End If
 
                 Dim l As List(Of String) = Nothing
@@ -816,9 +830,9 @@ Namespace Cache
 
                 If wasAdded OrElse wasDeleted Then
 #If DebugLocks Then
-                        Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+                        Using SyncHelper.AcquireDynamicLock_Debug(AddDeleteTypeLock,"d:\temp\")
 #Else
-                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+                    Using SyncHelper.AcquireDynamicLock(AddDeleteTypeLock)
 #End If
                         If _addDeleteTypes.Remove(t, Me) Then
                             Return False
@@ -830,15 +844,21 @@ Namespace Cache
             If _invalidate.Count > 0 Then
 
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(InvalidateLock,"d:\temp\")
 #Else
-                Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+                Using SyncHelper.AcquireDynamicLock(InvalidateLock)
 #End If
                     For Each t As Type In _invalidate.Keys
                         If ts.Contains(t) Then
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+                            Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
+#End If
                             If _updateTypes.Remove(t, Me) Then
                                 Return False
-                            End If
+                                End If
+                            End Using
                         End If
                     Next
 
@@ -906,9 +926,9 @@ Namespace Cache
             Dim oneLoop As Boolean
 
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(ImmidiateDynamicLock,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("BLK$E&80erfvhbdvdksv")
+            Using SyncHelper.AcquireDynamicLock(ImmediateDynamicLock)
 #End If
                 Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
 
@@ -934,18 +954,18 @@ Namespace Cache
                         If Not oneLoop Then
                             If obj.UpdateCtx.Added OrElse obj.UpdateCtx.Deleted Then
 #If DebugLocks Then
-                                Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+                                Using SyncHelper.AcquireDynamicLock_Debug(AddDeleteTypeLock,"d:\temp\")
 #Else
-                                Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+                                Using SyncHelper.AcquireDynamicLock(AddDeleteTypeLock)
 #End If
                                     _addDeleteTypes.Remove(tt, Me)
                                 End Using
                             ElseIf obj.UpdateCtx.UpdatedFields IsNot Nothing Then
                                 Dim removed As Boolean
 #If DebugLocks Then
-                                Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
 #Else
-                                Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+                                Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
 #End If
                                     removed = _updateTypes.Remove(tt, Me)
                                 End Using
@@ -953,9 +973,15 @@ Namespace Cache
                                 If Not removed Then
                                     For Each f As EntityFilter In obj.UpdateCtx.UpdatedFields
                                         Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
-                                        _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
-                                        _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
-                                        _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+                                        Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
+                                            _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                            _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                            _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                        End Using
                                     Next
                                 End If
                             End If
@@ -978,18 +1004,18 @@ Namespace Cache
                     End If
                     If obj.UpdateCtx.Added OrElse obj.UpdateCtx.Deleted Then
 #If DebugLocks Then
-                                Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+                                Using SyncHelper.AcquireDynamicLock_Debug(AddDeleteTypeLock,"d:\temp\")
 #Else
-                        Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+                        Using SyncHelper.AcquireDynamicLock(AddDeleteTypeLock)
 #End If
                             _addDeleteTypes.Remove(tt, Me)
                         End Using
                     ElseIf obj.UpdateCtx.UpdatedFields IsNot Nothing Then
                         Dim removed As Boolean
 #If DebugLocks Then
-                                Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
 #Else
-                        Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+                        Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
 #End If
                             removed = _updateTypes.Remove(tt, Me)
                         End Using
@@ -997,9 +1023,15 @@ Namespace Cache
                         If Not removed Then
                             For Each f As EntityFilter In obj.UpdateCtx.UpdatedFields
                                 Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+                                Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
                                 _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
                                 _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
-                                _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                    _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                End Using
                             Next
                         End If
                     End If
@@ -1147,10 +1179,10 @@ l1:
                                   ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary, _
                                   ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2, _
                                   ByVal forseEval As Boolean, ByVal mgr As OrmManager)
-            Dim h As String = EntityFilter.EmptyHash
+            Dim hash As String = EntityFilter.EmptyHash
             If p.Value.Second IsNot Nothing Then
                 Try
-                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                    hash = p.Value.Second.MakeHash(schema, oschema, obj)
                 Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
                     Return
                 Catch ex As InvalidOperationException When ex.Message.StartsWith("Type is not specified in filter")
@@ -1158,7 +1190,7 @@ l1:
                 End Try
             End If
             Dim hid As HashIds = p.Value.First
-            Dim ids As IEnumerable(Of String) = hid.GetIds(h)
+            Dim ids As IEnumerable(Of String) = hid.GetIds(hash)
             Dim rm As New List(Of String)
             For Each id As String In ids
                 Dim ce As UpdatableCachedItem = TryCast(dic(id), UpdatableCachedItem)
@@ -1230,16 +1262,16 @@ l1:
             Next
 
             If obj.UpdateCtx.UpdatedFields IsNot Nothing AndAlso oldObj IsNot Nothing Then
-                h = EntityFilter.EmptyHash
+                hash = EntityFilter.EmptyHash
                 If p.Value.Second IsNot Nothing Then
                     Try
-                        h = p.Value.Second.MakeHash(schema, oschema, oldObj)
+                        hash = p.Value.Second.MakeHash(schema, oschema, oldObj)
                     Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
                         Return
                     End Try
                 End If
                 hid = p.Value.First
-                ids = hid.GetIds(h)
+                ids = hid.GetIds(hash)
 
                 For Each id As String In ids
                     Dim ce As UpdatableCachedItem = TryCast(dic(id), UpdatableCachedItem)
@@ -1283,7 +1315,7 @@ l1:
             End If
 
             For Each id As String In rm
-                hid.Remove(h, id)
+                hid.Remove(hash, id)
                 'ids.Remove(id)
                 RemoveEntry(p.Key, id)
                 'dic.Remove(id)

@@ -295,14 +295,14 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
 
-                        MappingEngine.AssignValue2PK(obj, False, oschema, map, ll, m, m.PropertyAlias, nodes.Current.Value)
+                        ObjectMappingEngine.AssignValue2PK(obj, False, oschema, map, ll, m, m.PropertyAlias, nodes.Current.Value)
                         'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                         sn = True
                         cnt += 1
                     Loop
                 End If
             Next
-            obj.PKLoaded(cnt)
+            obj.PKLoaded(cnt, oschema)
             Return cnt > 0
         End Function
 
@@ -329,7 +329,7 @@ Namespace Xml
                         cnt += 1
                     Loop
                 Else
-                    If ll IsNot Nothing Then SetLoaded(ll, m.PropertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then SetLoaded(ll, m.PropertyAlias, True)
                 End If
             Next
             If ll IsNot Nothing Then

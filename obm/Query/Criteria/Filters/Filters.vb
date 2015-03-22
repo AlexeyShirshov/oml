@@ -371,7 +371,7 @@ Namespace Criteria.Core
                         End If
                         tbl = map.Table
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException(String.Format("There is no column for property {0} ", Template.ObjectSource.ToStaticString(schema, contextInfo) & "." & Template.PropertyAlias, ex))
+                        Throw New ObjectMappingException(String.Format("There is no column for property {0} ", Template.ObjectSource.ToStaticString(schema) & "." & Template.PropertyAlias, ex))
                     End Try
                 End If
 
@@ -464,7 +464,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
-            If Template.Operation = FilterOperation.Equal Then
+            If IsHashable Then
                 Return _ToString()
             Else
                 Return EmptyHash
@@ -657,6 +657,33 @@ Namespace Criteria.Core
             Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(oo, IEvaluableValue.EvalResult.Found)
         End Function
 
+        Public ReadOnly Property IsHashable As Boolean Implements IEntityFilterBase.IsHashable
+            Get
+                If Value IsNot Nothing Then
+
+                    If Template.Operation = FilterOperation.Equal Then
+                        Return GetType(ScalarValue).IsAssignableFrom(Value.GetType)
+                    End If
+
+                    'If Template.Operation >= FilterOperation.Equal AndAlso Template.Operation <= FilterOperation.LessThan Then
+                    '    Return GetType(ScalarValue).IsAssignableFrom(Value.GetType)
+                    'End If
+
+
+                    'If Template.Operation = FilterOperation.In OrElse Template.Operation = FilterOperation.NotIn Then
+                    '    Return GetType(InValue).IsAssignableFrom(Value.GetType)
+                    'End If
+
+                    'If Template.Operation = FilterOperation.Between Then
+                    '    Return GetType(BetweenValue).IsAssignableFrom(Value.GetType)
+                    'End If
+                End If
+
+
+                Return False
+
+            End Get
+        End Property
     End Class
 
     <Serializable()> _
@@ -920,13 +947,13 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             'Dim o As Object = _t
             'If o Is Nothing Then
             '    o = _tbl.TableName
             'End If
             'Return String.Format(_format, o.ToString, _field) & TemplateBase.Oper2String(_oper)
-            Return Value.GetStaticString(mpe, contextInfo) & Template.GetStaticString(mpe, contextInfo)
+            Return Value.GetStaticString(mpe) & Template.GetStaticString(mpe)
         End Function
 
         'Protected Sub CopyTo(ByVal obj As CustomFilter)
@@ -1047,8 +1074,8 @@ Namespace Criteria.Core
             Return Nothing
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IFilter.GetStaticString
-            Return _left.ToStaticString(mpe, contextInfo) & _fo.ToString & _right.ToStaticString(mpe, contextInfo)
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
+            Return _left.ToStaticString(mpe) & _fo.ToString & _right.ToStaticString(mpe)
         End Function
 
         Protected Function _ToString() As String Implements IFilter._ToString
@@ -1071,7 +1098,7 @@ Namespace Criteria.Core
         '    End Get
         'End Property
 
-        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _left IsNot Nothing Then
                 _left.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
@@ -1140,12 +1167,12 @@ Namespace Criteria.Core
             'End If
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             Dim v As INonTemplateValue = TryCast(val, INonTemplateValue)
             If v Is Nothing Then
                 Throw New NotImplementedException("Value is not implement INonTemplateValue")
             End If
-            Return v.GetStaticString(mpe, contextInfo) & "$" & Worm.Criteria.Core.TemplateBase.OperToStringInternal(_oper)
+            Return v.GetStaticString(mpe) & "$" & Worm.Criteria.Core.TemplateBase.OperToStringInternal(_oper)
         End Function
 
         Protected Overrides Function _Clone() As Object
@@ -1222,11 +1249,11 @@ Namespace Criteria.Core
             Return _exp.GetDynamicString & TemplateBase.OperToStringInternal(_fo)
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String 'Implements Values.IQueryElement.GetStaticString
-            Return _exp.GetStaticString(mpe, contextInfo) & TemplateBase.OperToStringInternal(_fo)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String 'Implements Values.IQueryElement.GetStaticString
+            Return _exp.GetStaticString(mpe) & TemplateBase.OperToStringInternal(_fo)
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
             _exp.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             MyBase.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub
@@ -1288,11 +1315,11 @@ Namespace Criteria.Core
             Return _cmd._ToString & TemplateBase.OperToStringInternal(_fo)
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String 'Implements Values.IQueryElement.GetStaticString
-            Return _cmd.GetStaticString(mpe, contextInfo) & TemplateBase.OperToStringInternal(_fo)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String 'Implements Values.IQueryElement.GetStaticString
+            Return _cmd.GetStaticString(mpe) & TemplateBase.OperToStringInternal(_fo)
         End Function
 
-        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
+        Public Overrides Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) 'Implements Values.IQueryElement.Prepare
             _cmd.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             MyBase.Prepare(executor, schema, contextInfo, stmt, isAnonym)
         End Sub

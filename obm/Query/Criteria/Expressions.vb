@@ -69,8 +69,8 @@ Namespace Expressions
             End Get
         End Property
 
-        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
-            Return FormatOper() & "$" & _v.GetStaticString(mpe, contextInfo)
+        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return FormatOper() & "$" & _v.GetStaticString(mpe)
         End Function
 
         Public Overrides Function ToString() As String
@@ -252,8 +252,8 @@ Namespace Expressions
             Return "(" & _left.MakeStmt(s, fromClause, stmt, pmgr, almgr, contextInfo, inSelect, executor) & FormatOper() & _right.MakeStmt(s, fromClause, stmt, pmgr, almgr, contextInfo, inSelect, executor) & ")"
         End Function
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return _left.ToStaticString(mpe, contextInfo) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe, contextInfo)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return _left.ToStaticString(mpe) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe)
         End Function
 
         Public Overrides Function _ToString() As String

@@ -25,8 +25,8 @@
     
     Protected Function CreateDBManager() As OrmReadOnlyDBManager
 #If UseUserInstance Then
-        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;"
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
+        Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Database=wormtest;"
         Return New OrmReadOnlyDBManager(_wc, New ObjectMappingEngine("1"), New SQLGenerator, conn)
 #Else
         Return New OrmReadOnlyDBManager(_wc, New ObjectMappingEngine("1"), New SQLGenerator, "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=wormtest;")

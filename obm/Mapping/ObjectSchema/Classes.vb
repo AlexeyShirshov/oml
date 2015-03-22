@@ -6,6 +6,8 @@ Imports System.Reflection
 Imports Worm.Entities.Meta
 Imports Worm.Collections
 
+#Const CustomIndexedCollection = True
+
 Namespace Entities.Meta
 
     Public Structure DBType
@@ -1075,6 +1077,7 @@ Namespace Entities.Meta
     ''' Наследник абстрактного класс <see cref="Collections.IndexedCollection(Of string, MapField2Column)"/>, реализующий метод <see cref="Collections.IndexedCollection(Of string, MapField2Column).GetKeyForItem" />
     ''' </remarks>
     Public Class OrmObjectIndex
+#If CustomIndexedCollection Then
         Inherits Collections.IndexedCollection(Of String, MapField2Column)
 
         ''' <summary>
@@ -1086,5 +1089,8 @@ Namespace Entities.Meta
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
             Return item.PropertyAlias
         End Function
+#Else
+        Inherits System.Collections.Concurrent.ConcurrentDictionary(Of String, MapField2Column)
+#End If
     End Class
 End Namespace

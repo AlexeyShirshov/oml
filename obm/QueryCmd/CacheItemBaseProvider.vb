@@ -11,7 +11,7 @@ Namespace Query
     Public MustInherit Class CacheItemBaseProvider
         Implements ICacheItemProvoderBase
 
-        Private _created As Boolean
+        Private _cacheMiss As Boolean
         Private _renew As Boolean
 
         Private _m As Guid
@@ -67,12 +67,12 @@ Namespace Query
         '    Reset(mgr, j, f, sl, q)
         'End Sub
 
-        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.Created
+        Public Overridable Property CacheMiss() As Boolean Implements ICacheItemProvoderBase.CacheMiss
             Get
-                Return _created
+                Return _cacheMiss
             End Get
             Set(ByVal Value As Boolean)
-                _created = Value
+                _cacheMiss = Value
             End Set
         End Property
 
@@ -329,7 +329,7 @@ Namespace Query
             '    fromKey = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, _q.GetSelectedType(mgr.MappingEngine))
             'End If
 
-            _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic, mgr.ContextInfo)
+            _key = QueryCmd.GetStaticKey(_q, _mgr.GetStaticKey(), _mgr.Cache.CacheListBehavior, fromKey, _mgr.MappingEngine, _dic)
 
             If _dic Is Nothing Then
                 _dic = GetExternalDic(_key)
@@ -339,7 +339,7 @@ Namespace Query
             End If
 
             If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
-                _id = QueryCmd.GetDynamicKey(_q)
+                _id = QueryCmd.GetDynamicKey(_q, _mgr.MappingEngine)
                 _sync = _id & _mgr.GetStaticKey()
             End If
 
@@ -466,7 +466,7 @@ Namespace Query
 
         Public Overridable Sub CopyTo(ByVal cp As CacheItemBaseProvider)
             With cp
-                ._created = _created
+                ._cacheMiss = _cacheMiss
                 ._dic = _dic
                 ._dp = _dp
                 ._id = _id

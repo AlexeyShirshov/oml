@@ -334,8 +334,8 @@ Namespace Expressions2
         '    Return New Cache.EmptyDependentTypes
         'End Function
 
-        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Expressions2.IExpression.GetStaticString
-            Return _exp.GetStaticString(mpe, contextInfo)
+        Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Expressions2.IExpression.GetStaticString
+            Return _exp.GetStaticString(mpe)
         End Function
 
         Public Sub Prepare(ByVal executor As IExecutor, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Expressions2.IExpression.Prepare
@@ -532,7 +532,7 @@ Namespace Expressions2
             Return _pa
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return _pa
         End Function
 

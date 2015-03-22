@@ -67,7 +67,7 @@ Namespace Query
             End Get
         End Property
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As Object) As String
+        Public Function ToStaticString(mpe As ObjectMappingEngine) As String
             'Dim t As Type = GetRealType(mpe)
             'If t IsNot Nothing Then
             'Return mpe.GetEntityKey(t)
@@ -169,7 +169,7 @@ Namespace Query
             End If
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("mpe")
             End If
@@ -178,7 +178,7 @@ Namespace Query
             If t IsNot Nothing Then
                 Return mpe.GetEntityKey(t)
             Else
-                Return _a.ToStaticString(mpe, contextInfo)
+                Return _a.ToStaticString(mpe)
             End If
         End Function
 

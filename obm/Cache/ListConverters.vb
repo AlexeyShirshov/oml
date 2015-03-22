@@ -21,12 +21,12 @@ Namespace Cache
         Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, _
             ByVal withLoad() As Boolean, _
-            ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadonlyMatrix
+            ByVal cacheHitOrForceLoad As Boolean, ByRef successed As ExtractListResult) As ReadonlyMatrix
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
         Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
         Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mgr As OrmManager, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal cacheHitOrForceLoad As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As OrderByClause) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity, ByVal mc As OrmManager)
@@ -40,7 +40,7 @@ Namespace Cache
         Implements IListObjectConverter
 
         Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mc As OrmManager, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal cacheHitOrForceLoad As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = Nothing
             Try
@@ -55,7 +55,7 @@ Namespace Cache
                 c = CType(OrmManager._CreateReadOnlyList(GetType(T), rt, l), ReadOnlyEntityList(Of T))
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
-            If withLoad AndAlso Not created Then
+            If withLoad AndAlso cacheHitOrForceLoad Then
                 c.LoadObjects(start, length, mc)
                 Dim s As Boolean = True
                 c = CType(mc.ApplyFilter(Of T)(c, mc._externalFilter, s), ReadOnlyEntityList(Of T))
@@ -224,7 +224,9 @@ Namespace Cache
             Return c
         End Function
 
-        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer,
+                                     ByVal withLoad() As Boolean, ByVal cacheHitOrForceLoad As Boolean,
+                                     ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
             Dim m As ReadonlyMatrix = CType(weak_list, ReadonlyMatrix)
             If Not (start = 0 AndAlso (m.Count = length OrElse length = Integer.MaxValue)) Then
                 Dim l As New List(Of ObjectModel.ReadOnlyCollection(Of _IEntity))
@@ -271,7 +273,7 @@ Namespace Cache
         Implements IListObjectConverter
 
         Public Function FromWeakList(Of T As ICachedEntity)(ByVal weak_list As Object, ByVal mc As OrmManager, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal cacheHitOrForceLoad As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
             If weak_list Is Nothing Then Return Nothing
@@ -300,7 +302,7 @@ Namespace Cache
                                 OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                             End If
                         Next
-                        If withLoad AndAlso Not created Then
+                        If withLoad AndAlso cacheHitOrForceLoad Then
                             c.LoadObjects()
                         End If
                     End If
@@ -473,7 +475,8 @@ Namespace Cache
             Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects), ReadOnlyEntityList(Of T))
         End Function
 
-        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean,
+                                     ByVal cacheHitOrForceLoad As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadonlyMatrix Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim wm As WeakEntityMatrix = CType(weak_list, WeakEntityMatrix)
             Dim r As New List(Of ReadOnlyCollection(Of _IEntity))

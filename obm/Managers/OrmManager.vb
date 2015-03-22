@@ -18,7 +18,7 @@ Imports System.Threading
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
 #Const TraceManagerCreation = False
-
+'#Const TraceThreadAffinity = True
 'Namespace Managers
 
 Partial Public MustInherit Class OrmManager
@@ -86,6 +86,10 @@ Partial Public MustInherit Class OrmManager
 
 #If TraceManagerCreation Then
     Private _callstack As String
+#End If
+
+#If TraceThreadAffinity Then
+    Protected _curThread As Integer
 #End If
 
     Protected Friend Function GetRev() As Boolean
@@ -196,7 +200,9 @@ Partial Public MustInherit Class OrmManager
         _callstack = Environment.StackTrace
 #End If
         'Thread.SetData(LocalStorage, Me)
-
+#If TraceThreadAffinity Then
+        _curThread = Thread.CurrentThread.ManagedThreadId
+#End If
         CurrentManager = Me
         '_cs = Environment.StackTrace.ToString
         'If prev IsNot Nothing Then
@@ -1012,7 +1018,7 @@ Partial Public MustInherit Class OrmManager
         Dim ce As UpdatableCachedItem = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), UpdatableCachedItem)
         RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
-        Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
+        Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.CacheMiss, GetStart, GetLength, s)
         succeeded = True
 
         If s = IListObjectConverter.ExtractListResult.NeedLoad Then
@@ -1020,7 +1026,7 @@ Partial Public MustInherit Class OrmManager
 l1:
             del.Renew = True
             ce = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), UpdatableCachedItem)
-            r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, GetStart, GetLength, s)
+            r = ce.GetObjectList(Of T)(Me, withLoad, del.CacheMiss, GetStart, GetLength, s)
             Assert(s = IListObjectConverter.ExtractListResult.Successed, "Withload should always successed")
         End If
 
@@ -1030,7 +1036,7 @@ l1:
         End If
 
         If _externalFilter IsNot Nothing Then
-            If Not del.Created Then
+            If Not del.CacheMiss Then
                 Dim psort As OrderByClause = del.Sort
 
                 If ce.SortEquals(psort, MappingEngine, ContextInfo) OrElse psort Is Nothing Then
@@ -1076,7 +1082,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.GetStaticString(_schema, ContextInfo) & GetStaticKey() & _schema.GetEntityKey(t)
+        Return filter.GetStaticString(_schema) & GetStaticKey() & _schema.GetEntityKey(t)
     End Function
 
 #If Not ExcludeFindMethods Then
@@ -1382,32 +1388,32 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Delegate Function ValDelegate(ByRef ce As CachedItemBase, _
+    Protected Friend Delegate Function ValidateDelegate(ByRef ce As CachedItemBase, _
         ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
     Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
+        ByVal withLoad As Boolean, ByVal cacheItemProvider As ICacheItemProvoderBase) As CachedItemBase
 
-        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, Nothing)
+        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), cacheItemProvider, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItemBase
+        ByVal withLoad As Boolean, ByVal cacheItemProvider As ICacheItemProvoderBase) As CachedItemBase
 
-        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), del, AddressOf _ValCE(Of T))
+        Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), cacheItemProvider, AddressOf ValidateCacheItem(Of T))
     End Function
 
     Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal ctx As TypeWrap(Of Object), ByVal del As ICacheItemProvoderBase, _
-        ByVal vdel As ValDelegate) As CachedItemBase
+        ByVal ctx As TypeWrap(Of Object), ByVal cacheItemProvider As ICacheItemProvoderBase, _
+        ByVal validate As ValidateDelegate) As CachedItemBase
 
         Invariant()
 
         Dim v As ICacheValidator = Nothing
 
         If Not _dont_cache_lists Then
-            v = TryCast(del, ICacheValidator)
+            v = TryCast(cacheItemProvider, ICacheValidator)
         End If
 
         Dim renew As Boolean = v IsNot Nothing AndAlso Not v.ValidateBeforCacheProbe()
@@ -1417,14 +1423,14 @@ l1:
         'Dim f As IOrmFilter = del.Filter
 
         Dim ce As CachedItemBase = Nothing
-        del.Created = False
+        cacheItemProvider.CacheMiss = False
 
-        If renew OrElse del.Renew OrElse _dont_cache_lists Then
-            ce = del.GetCacheItem(ctx)
+        If renew OrElse cacheItemProvider.Renew OrElse _dont_cache_lists Then
+            ce = cacheItemProvider.GetCacheItem(ctx)
             If Not _dont_cache_lists Then
                 dic(id) = ce
             End If
-            del.Created = True
+            cacheItemProvider.CacheMiss = True
         Else
             ce = CType(dic(id), CachedItemBase)
             If ce Is Nothing Then
@@ -1432,44 +1438,44 @@ l1:
                 Using SyncHelper.AcquireDynamicLock(sync)
                     ce = CType(dic(id), CachedItemBase)
                     Dim emp As Boolean = ce Is Nothing
-                    If emp OrElse del.Renew OrElse _dont_cache_lists Then
-                        ce = del.GetCacheItem(ctx)
+                    If emp OrElse cacheItemProvider.Renew OrElse _dont_cache_lists Then
+                        ce = cacheItemProvider.GetCacheItem(ctx)
                         If Not _dont_cache_lists OrElse Not emp Then
                             dic(id) = ce
                         End If
-                        del.Created = True
+                        cacheItemProvider.CacheMiss = True
                     End If
                 End Using
             End If
         End If
 
-        If del.Renew Then
-            If Not _dont_cache_lists Then del.CreateDepends(ce)
-            _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not del.Created, _loadedInLastFetch)
+        If cacheItemProvider.Renew Then
+            If Not _dont_cache_lists Then cacheItemProvider.CreateDepends(ce)
+            _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not cacheItemProvider.CacheMiss, _loadedInLastFetch)
             Return ce
         End If
 
-        If del.Created Then
-            If Not _dont_cache_lists Then del.CreateDepends(ce)
-        ElseIf vdel IsNot Nothing Then
-            If Not vdel(ce, del, dic, id, sync, v) Then
+        If cacheItemProvider.CacheMiss Then
+            If Not _dont_cache_lists Then cacheItemProvider.CreateDepends(ce)
+        ElseIf validate IsNot Nothing Then
+            If Not validate(ce, cacheItemProvider, dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
 
         Dim l As Nullable(Of Integer) = Nothing
-        If del.Created Then
+        If cacheItemProvider.CacheMiss Then
             l = _loadedInLastFetch
         End If
-        _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not del.Created, l)
+        _er = New ExecutionResult(ce.GetCount(Cache), ce.ExecutionTime, ce.FetchTime, Not cacheItemProvider.CacheMiss, l)
         Return ce
     End Function
 
-    Private Function _ValCE(Of T As ICachedEntity)(ByRef ce As CachedItemBase, _
-        ByVal del_ As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
+    Private Function ValidateCacheItem(Of T As ICachedEntity)(ByRef ce As CachedItemBase, _
+        ByVal cacheItemProvider As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
-        Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
+        Dim del As ICacheItemProvoder(Of T) = CType(cacheItemProvider, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
 
         If ce._expires = Date.MinValue Then
             ce._expires = _expiresPattern
@@ -1959,34 +1965,37 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub InsertObject(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal check_loaded As Boolean, _
-        ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity)
+    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal check_loaded As Boolean, _
+        ByVal entityDictionary As ISet(Of ICachedEntity), ByVal o As ICachedEntity)
         If o IsNot Nothing Then
-            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing)))) _
-                    AndAlso Not entityDictionary.ContainsKey(o) Then
-                    entityDictionary.Add(o, Nothing)
+            Using o.AcquareLock
+                If (Not check_loaded OrElse Not o.IsLoaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
+                    If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing)))) _
+                        AndAlso Not entityDictionary.Contains(o) Then
+                        entityDictionary.Add(o)
+                    End If
                 End If
-            End If
+            End Using
         End If
     End Sub
 
-    Private Shared Sub InsertObject(Of T As ICachedEntity)(ByVal cache As CacheBase, _
-        ByVal check_loaded As Boolean, ByVal entityDictionary As Dictionary(Of ICachedEntity, Object), ByVal o As ICachedEntity, _
-        ByVal properties As List(Of EntityExpression), ByVal mpe As ObjectMappingEngine,
-        ByVal map As Collections.IndexedCollection(Of String, MapField2Column))
+    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase, _
+        ByVal check_loaded As Boolean, ByVal entityDictionary As ISet(Of ICachedEntity), ByVal o As ICachedEntity, _
+        ByVal properties As List(Of EntityExpression))
 
         If o IsNot Nothing Then
-            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing))) Then
-                    For Each p As EntityExpression In properties
-                        If Not IsPropertyLoaded(o, p.ObjectProperty.PropertyAlias, map, mpe) AndAlso Not entityDictionary.ContainsKey(o) Then
-                            entityDictionary.Add(o, Nothing)
-                            Exit For
-                        End If
-                    Next
+            Using o.AcquareLock
+                If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
+                    If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing))) Then
+                        For Each p As EntityExpression In properties
+                            If Not IsPropertyLoaded(o, p.ObjectProperty.PropertyAlias) AndAlso Not entityDictionary.Contains(o) Then
+                                entityDictionary.Add(o)
+                                Exit For
+                            End If
+                        Next
+                    End If
                 End If
-            End If
+            End Using
         End If
     End Sub
 
@@ -2003,19 +2012,21 @@ l1:
     ''' <remarks></remarks>
     Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal objs As ReadOnlyEntityList(Of T), _
         ByVal start As Integer, ByVal length As Integer, _
-        Optional ByVal check_loaded As Boolean = True) As ICollection(Of ICachedEntity)
+        Optional ByVal check_loaded As Boolean = True) As IEnumerable(Of ICachedEntity)
 
-        Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
-        If length > objs.Count - start Then
-            length = objs.Count - start
-        End If
+        Dim entityDictionary As New HashSet(Of ICachedEntity)
+        Using New CSScopeMgrLite(objs._sl)
+            If length > objs.Count - start Then
+                length = objs.Count - start
+            End If
 
-        For i As Integer = start To start + length - 1
-            Dim o As ICachedEntity = objs(i)
-            InsertObject(Of T)(cache, check_loaded, entityDictionary, o)
-        Next
+            For i As Integer = start To start + length - 1
+                Dim o As ICachedEntity = objs(i)
+                AddObjectForLoading(Of T)(cache, check_loaded, entityDictionary, o)
+            Next
+        End Using
 
-        Return entityDictionary.Keys
+        Return entityDictionary
     End Function
 
     ''' <summary>
@@ -2032,23 +2043,21 @@ l1:
     ''' <remarks></remarks>
     Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, _
         ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer, _
-        ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression), ByVal mpe As ObjectMappingEngine) As ICollection(Of ICachedEntity)
+        ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression)) As IEnumerable(Of ICachedEntity)
 
-        Dim entityDictionary As New Dictionary(Of ICachedEntity, Object)
-        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
-        If mpe IsNot Nothing Then
-            map = mpe.GetEntitySchema(objs.RealType).FieldColumnMap
-        End If
-        For i As Integer = start To start + length - 1
-            Dim o As ICachedEntity = objs(i)
-            Dim ll As IPropertyLazyLoad = TryCast(o, IPropertyLazyLoad)
-            If ll IsNot Nothing Then
-                InsertObject(Of T)(cache, check_loaded, entityDictionary, o, properties, mpe, map)
-            Else
-                InsertObject(Of T)(cache, check_loaded, entityDictionary, o)
-            End If
-        Next
-        Return entityDictionary.Keys
+        Dim entityDictionary As New HashSet(Of ICachedEntity)
+        Using New CSScopeMgrLite(objs._sl)
+            For i As Integer = start To start + length - 1
+                Dim o As ICachedEntity = objs(i)
+                Dim ll As IPropertyLazyLoad = TryCast(o, IPropertyLazyLoad)
+                If ll IsNot Nothing Then
+                    AddObjectForLoading(Of T)(cache, check_loaded, entityDictionary, o, properties)
+                Else
+                    AddObjectForLoading(Of T)(cache, check_loaded, entityDictionary, o)
+                End If
+            Next
+        End Using
+        Return entityDictionary
     End Function
 
     Public Shared Sub WriteWarning(ByVal message As String)
@@ -2673,14 +2682,26 @@ l1:
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter,
                               joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+        Return ApplyFilter(Of T)(col, filter, joins, objEU, _schema, evaluated, _start, _length)
+    End Function
+
+    Public Shared Function ApplyFilter(Of T As {_IEntity})(
+                                                          ByVal col As ReadOnlyObjectList(Of T),
+                                                          ByVal filter As IGetFilter,
+                                                          joins() As Joins.QueryJoin,
+                                                          objEU As EntityUnion,
+                                                          mpe As ObjectMappingEngine,
+                                                          ByRef evaluated As Boolean,
+                                                          Optional start As Integer = 0,
+                                                          Optional length As Integer = Integer.MaxValue) As ReadOnlyObjectList(Of T)
         If filter Is Nothing Then
             evaluated = True
-            Return col
+            Return CType(col.Clone, Global.Worm.ReadOnlyObjectList(Of T))
         End If
 
         Dim f As IEntityFilter = TryCast(If(filter Is Nothing, Nothing, filter.Filter), IEntityFilter)
         If f Is Nothing Then
-            Return col
+            Return CType(col.Clone, Global.Worm.ReadOnlyObjectList(Of T))
         Else
             evaluated = True
             Dim l As IListEdit = _CreateReadOnlyList(GetType(T))
@@ -2689,19 +2710,22 @@ l1:
             Using New CSScopeMgrLite(col._sl)
                 For Each o As T In col
                     If oschema Is Nothing Then
-                        oschema = _schema.GetEntitySchema(o.GetType)
+                        If mpe Is Nothing Then
+                            Throw New ArgumentNullException("mpe")
+                        End If
+                        oschema = mpe.GetEntitySchema(o.GetType)
                     End If
-                    Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
+                    Dim er As IEvaluableValue.EvalResult = f.EvalObj(mpe, o, oschema, joins, objEU)
                     Select Case er
                         Case IEvaluableValue.EvalResult.Found
-                            If i >= _start Then
+                            If i >= start Then
                                 l.Add(o)
                             End If
                         Case IEvaluableValue.EvalResult.Unknown
                             evaluated = False
                             Exit For
                     End Select
-                    If i >= (_start + _length) Then
+                    If i >= (start + length) Then
                         Exit For
                     End If
                     i += 1
@@ -2780,15 +2804,9 @@ l1:
         End If
     End Function
 
-    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As ICollection(Of T), _
-        ByVal s As OrderByClause, ByVal getObj As entityComparer.GetObjectDelegate) As ICollection(Of T)
+    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As IEnumerable(Of T), _
+        ByVal s As OrderByClause, ByVal getObj As entityComparer.GetObjectDelegate, mpe As ObjectMappingEngine) As IEnumerable(Of T)
         If c.Count > 0 Then
-            Dim mpe As ObjectMappingEngine = Nothing
-            For Each e As _IEntity In c
-                mpe = e.GetMappingEngine
-                If mpe IsNot Nothing Then Exit For
-            Next
-
             If s IsNot Nothing Then
                 'For Each ns As SortExpression In s
                 '    If Not ns.CanEvaluate Then
@@ -2796,47 +2814,59 @@ l1:
                 '    End If
                 'Next
                 If Not s.CanEvaluate(mpe) Then
-                    Throw New ObjectMappingException(String.Format("Sort is not evaluable"))
+                    Throw New ObjectMappingException(String.Format("Sort {0} is not evaluable", s.ToString(mpe)))
                 End If
-
-                Dim l As New List(Of T)(c)
-                l.Sort(New EntityComparer(Of T)(s, getObj))
-                c = l
-            End If
-        End If
-        Return c
-    End Function
-
-    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As ICollection(Of T), ByVal s As OrderByClause) As ICollection(Of T)
-        Return ApplySort(c, s, Nothing)
-    End Function
-
-    Public Shared Function ApplySortT(ByVal c As ICollection, ByVal s As OrderByClause) As ICollection
-        If c.Count > 0 Then
-            Dim mpe As ObjectMappingEngine = Nothing
-            For Each e As _IEntity In c
-                mpe = e.GetMappingEngine
-                If mpe IsNot Nothing Then Exit For
-            Next
-
-            If s IsNot Nothing Then
-                'For Each ns As SortExpression In s
-                '    If Not ns.CanEvaluate Then
-                '        Throw New ObjectMappingException(String.Format("Sort expression of {0} is not supported", ns.Operand.GetType))
-                '    End If
-                'Next
-                If Not s.CanEvaluate(mpe) Then
-                    Throw New ObjectMappingException(String.Format("Sort is not evaluable"))
+                Dim sync As IDisposable = Nothing
+                Dim rl = TryCast(c, IReadOnlyList)
+                If rl Is Nothing Then
+                    sync = New CSScopeMgr(CType(c, ICollection).SyncRoot)
+                Else
+                    sync = rl.AcquareLock
                 End If
-
-                Dim l As New ArrayList(c)
-                If l.Count > 0 Then
-                    l.Sort(New EntityComparer(s))
+                Using sync
+                    Dim l As New List(Of T)(c)
+                    l.Sort(New EntityComparer(Of T)(s, getObj))
                     c = l
-                End If
+                End Using
             End If
         End If
-        Return c
+        Return New List(Of T)(c)
+    End Function
+
+    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As IEnumerable(Of T), ByVal s As OrderByClause, mpe As ObjectMappingEngine) As IEnumerable(Of T)
+        Return ApplySort(c, s, Nothing, mpe)
+    End Function
+
+    Public Shared Function ApplySortT(ByVal c As ICollection, ByVal s As OrderByClause, mpe As ObjectMappingEngine) As ICollection
+        If c.Count > 0 Then
+
+            If s IsNot Nothing Then
+                'For Each ns As SortExpression In s
+                '    If Not ns.CanEvaluate Then
+                '        Throw New ObjectMappingException(String.Format("Sort expression of {0} is not supported", ns.Operand.GetType))
+                '    End If
+                'Next
+                If Not s.CanEvaluate(mpe) Then
+                    Throw New ObjectMappingException(String.Format("Sort {0} is not evaluable", s.ToString(mpe)))
+                End If
+
+                Dim sync As IDisposable = Nothing
+                Dim rl = TryCast(c, IReadOnlyList)
+                If rl Is Nothing Then
+                    sync = New CSScopeMgr(c.SyncRoot)
+                Else
+                    sync = rl.AcquareLock
+                End If
+                Using sync
+                    Dim l As New ArrayList(c)
+                    If l.Count > 0 Then
+                        l.Sort(New EntityComparer(s))
+                        c = l
+                    End If
+                End Using
+            End If
+        End If
+        Return New ArrayList(c)
     End Function
 
     Public Shared Function GetK(ByVal cnt As Integer) As Double
@@ -2847,7 +2877,7 @@ l1:
         Dim tt As TimeSpan = TimeSpan.FromMilliseconds((fetchTime + execTime).TotalMilliseconds * GetK(totalCount))
         'Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
         'Dim tt As TimeSpan = TimeSpan.FromMilliseconds(fetchTime.TotalMilliseconds * 40) + execTime
-        Dim slt As Double = 0.00050000000000000001 '(fetchTime.TotalMilliseconds / totalCount)
+        Dim slt As Double = 0.0005 '(fetchTime.TotalMilliseconds / totalCount)
         Dim ttl As TimeSpan = TimeSpan.FromSeconds(slt * (totalCount - loadedCount))
         Return tt > ttl
     End Function
@@ -4019,7 +4049,7 @@ l1:
             Else
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
             End If
-            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
         Else
             Dim propType As Type = pi.PropertyType
             'If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -4038,7 +4068,7 @@ l1:
             If Not isNull AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                 If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                     fac.Add(New Pair(Of String, PKDesc())(propertyAlias, sv))
-                    'If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True, map, MappingEngine)
+                    'If ce IsNot Nothing Then ce.SetLoaded(propertyAlias, True, True)
                     '    'obj.CreateObject(c.FieldName, value)
                     '    obj.SetValue(pi, c, )
                     '    obj.SetLoaded(c, True, True)
@@ -4077,7 +4107,7 @@ l1:
                 End If
             ElseIf isNull Then
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
             End If
         End If
     End Sub
@@ -4352,7 +4382,7 @@ l1:
                         OrmManager.CopyBody(robj, e, oschema)
                         Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
                         For Each m As MapField2Column In map
-                            SetLoaded(ll, m.PropertyAlias, True, map, MappingEngine)
+                            SetLoaded(ll, m.PropertyAlias, True)
                         Next
                         CheckIsAllLoaded(ll, MappingEngine, map.Count, map)
                     Else
@@ -4361,11 +4391,11 @@ l1:
                     End If
                 ElseIf ll IsNot Nothing Then
                     Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
-                    If IsPropertyLoaded(robj, propertyAlias, map, MappingEngine) Then
+                    If IsPropertyLoaded(robj, propertyAlias) Then
                         Dim m As MapField2Column = Nothing
                         map.TryGetValue(propertyAlias, m)
                         ObjectMappingEngine.SetPropertyValue(e, propertyAlias, ObjectMappingEngine.GetPropertyValue(robj, propertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
-                        SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                        SetLoaded(ll, propertyAlias, True)
                     Else
                         Load(robj, propertyAlias)
                         GoTo l1
@@ -4833,20 +4863,17 @@ l1:
                     End Using
                 Else
                     If ll IsNot Nothing Then
-                        Using mc As IGetManager = e.GetMgr
-                            If mc IsNot Nothing Then
-                                Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
-                                Dim oschema As IEntitySchema = e.GetEntitySchema(e.GetMappingEngine)
-                                If Not IsPropertyLoaded(e, propertyAlias, oschema.FieldColumnMap, mpe) Then
+                        If Not ll.IsPropertyLoaded(propertyAlias) Then
+                            Using mc As IGetManager = e.GetMgr
+                                If mc IsNot Nothing Then
+                                    Dim oschema As IEntitySchema = e.GetEntitySchema(e.GetMappingEngine)
                                     mc.Manager.Load(e, oschema, propertyAlias)
                                 End If
-                            End If
-
-                        End Using
+                            End Using
+                        End If
                     End If
                 End If
             End If
-
             'd = e.AcquareLock
         End If
     End Sub
@@ -4862,7 +4889,7 @@ l1:
                         Dim ov As IOptimizedValues = TryCast(e, IOptimizedValues)
                         If ov IsNot Nothing Then
                             Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(GetPKValues(o, Nothing), o.GetType)
-                            If eo.CreateManager Is Nothing Then eo.SetCreateManager(e.CreateManager)
+                            If eo.GetICreateManager Is Nothing Then eo.SetCreateManager(e.GetICreateManager)
                             ov.SetValueOptimized(propertyAlias, oschema, eo)
                         Else
                             Throw New OrmObjectException("Check read requires IOptimizedValues")
@@ -4906,74 +4933,48 @@ l1:
         Return ReadPrepareWithCheck(CType(e, _ICachedEntity), propertyAlias, checkEntity)
     End Function
 
-    Public Shared Function IsPropertyLoaded(ByVal e As _IEntity, ByVal propertyAlias As String,
-        ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+    Public Shared Function IsPropertyLoaded(ByVal e As _IEntity, ByVal propertyAlias As String) As Boolean
         Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
         If ll IsNot Nothing Then
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
             End If
 
-            If map Is Nothing Then
-                Throw New ArgumentNullException("map")
-            End If
-
-            'Dim map As Collections.IndexedCollection(Of String, MapField2Column) = e.GetEntitySchema(mpe).FieldColumnMap
-            Dim idx As Integer = map.IndexOf(propertyAlias)
-            If idx < 0 Then
-                Throw New OrmObjectException(String.Format("Property {0} not found in type {1}. Ensure it is not suppressed", propertyAlias, e.GetType))
-            End If
-            Return PropertyLoadState(ll, idx, map, mpe)
+            Return ll.IsPropertyLoaded(propertyAlias)
         End If
         Return True
     End Function
 
-    Private Shared Sub InitLoadState(ByVal e As IPropertyLazyLoad, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
-        If e.PropertyLoadState Is Nothing Then
-            Using SyncHelper.AcquireDynamicLockSlim(e)
-                If e.PropertyLoadState Is Nothing Then
-                    'OrElse _sver <> If(mpe Is Nothing, "w-x", mpe.Version)
-                    e.PropertyLoadState = New BitArray(map.Count)
-                    '_sver = If(mpe Is Nothing, "w-x", mpe.Version)
-                    Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
-                    If ce IsNot Nothing AndAlso ce.IsPKLoaded Then
-                        For i As Integer = 0 To map.Count - 1
-                            If Not e.PropertyLoadState(i) Then
-                                If map(i).IsPK Then
-                                    e.PropertyLoadState(i) = True
-                                End If
-                            End If
-                        Next
-                    End If
-                End If
-            End Using
-        End If
-    End Sub
+    'Private Shared Sub InitLoadState(ByVal e As IPropertyLazyLoad, ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine)
+    '    Using SyncHelper.AcquireDynamicLockSlim(e)
+    '        Dim ce As _ICachedEntity = TryCast(e, _ICachedEntity)
+    '        If ce IsNot Nothing AndAlso ce.IsPKLoaded Then
+    '            For i As Integer = 0 To map.Count - 1
+    '                If map(i).IsPK Then
+    '                    e.IsPropertyLoaded(map(i).PropertyAlias) = True
+    '                End If
+    '            Next
+    '        End If
+    '    End Using
+    'End Sub
 
-    Protected Shared Property PropertyLoadState(ByVal ll As IPropertyLazyLoad, ByVal idx As Integer, _
-        ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
-        Get
-            InitLoadState(ll, map, mpe)
-            Return ll.PropertyLoadState(idx)
-        End Get
-        Set(ByVal value As Boolean)
-            InitLoadState(ll, map, mpe)
-            SyncLock ll
-                ll.PropertyLoadState(idx) = value
-            End SyncLock
-        End Set
-    End Property
+    'Protected Shared Property PropertyLoadState(ByVal ll As IPropertyLazyLoad, ByVal idx As Integer, _
+    '    ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
+    '    Get
+    '        InitLoadState(ll, map, mpe)
+    '        Return ll.PropertyLoadState(idx)
+    '    End Get
+    '    Set(ByVal value As Boolean)
+    '        InitLoadState(ll, map, mpe)
+    '        SyncLock ll
+    '            ll.PropertyLoadState(idx) = value
+    '        End SyncLock
+    '    End Set
+    'End Property
 
-    Friend Shared Function SetLoaded(ByVal ll As IPropertyLazyLoad, ByVal propertyAlias As String, ByVal loaded As Boolean, _
-            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal mpe As ObjectMappingEngine) As Boolean
-
-        Dim idx As Integer = map.IndexOf(propertyAlias)
-        If idx < 0 Then
-            'Throw New OrmObjectException(String.Format("There is no property in type {0} with alias {1}", Me.GetType, propertyAlias))
-            Return False
-        End If
-        Dim old As Boolean = PropertyLoadState(ll, idx, map, mpe)
-        PropertyLoadState(ll, idx, map, mpe) = loaded
+    Friend Shared Function SetLoaded(ByVal ll As IPropertyLazyLoad, ByVal propertyAlias As String, ByVal loaded As Boolean) As Boolean
+        Dim old As Boolean = ll.IsPropertyLoaded(propertyAlias)
+        ll.IsPropertyLoaded(propertyAlias) = loaded
         Return old
     End Function
 
@@ -4981,27 +4982,22 @@ l1:
             ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
         'Using SyncHelper(False)
         Dim allloaded As Boolean = True
-        If Not ll.IsLoaded OrElse ll.PropertyLoadState.Count <= loadedColumns Then
-            Using SyncHelper.AcquireDynamicLockSlim(ll)
-                If Not ll.IsLoaded OrElse ll.PropertyLoadState.Count <= loadedColumns Then
-                    For i As Integer = 0 To map.Count - 1
-                        If Not PropertyLoadState(ll, i, map, mpe) Then
-                            'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
-                            'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                            allloaded = False
-                            Exit For
-                            'End If
-                        End If
-                    Next
-                    ll.IsLoaded = allloaded
-                End If
-            End Using
-        End If
+        For i As Integer = 0 To map.Count - 1
+            If Not ll.IsPropertyLoaded(map(i).PropertyAlias) Then
+                'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
+                'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                allloaded = False
+                Exit For
+                'End If
+            End If
+        Next
+        ll.IsLoaded = allloaded
+
         Return allloaded
-        'End Using
+
     End Function
 
-    Protected Shared Sub SetLoaded(ByVal ce As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal value As Boolean)
+    Protected Shared Sub SetLoaded(ByVal ce As _ICachedEntity, ByVal value As Boolean, mpe As ObjectMappingEngine)
         Dim ll As IPropertyLazyLoad = TryCast(ce, IPropertyLazyLoad)
         If ll IsNot Nothing Then
             Using SyncHelper.AcquireDynamicLockSlim(ll)
@@ -5011,11 +5007,11 @@ l1:
 
                 If value AndAlso Not ll.IsLoaded Then
                     For i As Integer = 0 To map.Count - 1
-                        PropertyLoadState(ll, i, map, mpe) = True
+                        ll.IsPropertyLoaded(map(i).PropertyAlias) = True
                     Next
                 ElseIf Not value AndAlso ll.IsLoaded Then
                     For i As Integer = 0 To map.Count - 1
-                        PropertyLoadState(ll, i, map, mpe) = False
+                        ll.IsPropertyLoaded(map(i).PropertyAlias) = False
                     Next
                 End If
                 ll.IsLoaded = value
@@ -5029,27 +5025,20 @@ l1:
 
     Public Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
         If op IsNot Nothing Then
             op.SetPK(pk)
+            If ll IsNot Nothing Then
+                For Each p In pk
+                    ll.IsPropertyLoaded(p.PropertyAlias) = True
+                Next
+            End If
         Else
             Using New LoadingWrapper(e)
-                Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
-                Dim map As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
-                If ll IsNot Nothing Then
-                    If oschema Is Nothing Then
-                        oschema = mpe.GetEntitySchema(e.GetType)
-                    End If
-
-                    If oschema Is Nothing Then
-                        Throw New ArgumentNullException("oschema")
-                    End If
-
-                    map = oschema.FieldColumnMap
-                End If
                 For Each p As PKDesc In pk
                     ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
                     If ll IsNot Nothing Then
-                        OrmManager.SetLoaded(ll, p.PropertyAlias, True, map, mpe)
+                        ll.IsPropertyLoaded(p.PropertyAlias) = True
                     End If
                 Next
             End Using

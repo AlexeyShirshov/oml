@@ -85,10 +85,10 @@ Namespace Expressions2
             Return s
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IQueryElement.GetStaticString
-            Dim s As String = BinaryType & GetCase() & "(" & Left.GetStaticString(mpe, contextInfo)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Dim s As String = BinaryType & GetCase() & "(" & Left.GetStaticString(mpe)
             If Right IsNot Nothing Then
-                s &= "," & Right.GetStaticString(mpe, contextInfo)
+                s &= "," & Right.GetStaticString(mpe)
             End If
             s &= ")"
             Return s

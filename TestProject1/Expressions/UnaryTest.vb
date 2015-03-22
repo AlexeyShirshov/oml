@@ -58,7 +58,7 @@ Imports System.Collections
 
         Assert.AreEqual(l.Expression, l)
         Assert.AreEqual("x", l.GetDynamicString)
-        Assert.AreEqual("litval", l.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("litval", l.GetStaticString(mpe))
         Assert.AreEqual("x", l.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
@@ -73,7 +73,7 @@ Imports System.Collections
 
         Assert.AreEqual(p.Expression, p)
         Assert.AreEqual("x", p.GetDynamicString)
-        Assert.AreEqual("scalarval", p.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("scalarval", p.GetStaticString(mpe))
         Assert.AreEqual("@p1", p.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
@@ -88,7 +88,7 @@ Imports System.Collections
 
         Assert.AreEqual(p.Expression, p)
         Assert.AreEqual("TestProject1.Entity2$Str", p.GetDynamicString)
-        Assert.AreEqual("TestProject1.Entity2$Str", p.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("TestProject1.Entity2$Str", p.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -109,7 +109,7 @@ Imports System.Collections
         Assert.AreEqual(u.GetExpressions(0), u)
         Assert.AreEqual(u.GetExpressions(1), p)
         Assert.AreEqual("negTestProject1.Entity2$Str", u.GetDynamicString)
-        Assert.AreEqual("negTestProject1.Entity2$Str", u.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("negTestProject1.Entity2$Str", u.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -130,7 +130,7 @@ Imports System.Collections
         Assert.AreEqual(u.GetExpressions(0), u)
         Assert.AreEqual(u.GetExpressions(1), p)
         Assert.AreEqual("notTestProject1.Entity2$Str", u.GetDynamicString)
-        Assert.AreEqual("notTestProject1.Entity2$Str", u.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("notTestProject1.Entity2$Str", u.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
@@ -151,7 +151,7 @@ Imports System.Collections
         Assert.AreEqual(u.GetExpressions(0), u)
         Assert.AreEqual(u.GetExpressions(1), p)
         Assert.AreEqual("isnull(TestProject1.Entity2$Str)", u.GetDynamicString)
-        Assert.AreEqual("isnull(TestProject1.Entity2$Str)", u.GetStaticString(mpe, contextFilter))
+        Assert.AreEqual("isnull(TestProject1.Entity2$Str)", u.GetStaticString(mpe))
 
         Dim tbl As SourceFragment = CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables(1)
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))

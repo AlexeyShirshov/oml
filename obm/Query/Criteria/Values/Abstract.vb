@@ -5,10 +5,10 @@ Imports Worm.Query
 
 Namespace Criteria.Values
     Public Interface IQueryElement
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
         Function _ToString() As String
         Sub Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
+            ByVal schema As ObjectMappingEngine, contextInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
     End Interface
 

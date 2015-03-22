@@ -59,6 +59,7 @@ Namespace Criteria.Core
         Function GetFilterTemplate() As IOrmFilterTemplate
         'Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String
+        ReadOnly Property IsHashable As Boolean
     End Interface
 
     Public Interface IEntityFilter
@@ -70,7 +71,7 @@ Namespace Criteria.Core
         ReadOnly Property Operation() As FilterOperation
         ReadOnly Property OperToString() As String
         ReadOnly Property OperToStmt(ByVal stmt As StmtGenerator) As String
-        Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
         Function _ToString() As String
     End Interface
 

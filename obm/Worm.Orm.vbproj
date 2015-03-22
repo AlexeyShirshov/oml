@@ -57,7 +57,7 @@
     <CodeAnalysisRules>
     </CodeAnalysisRules>
     <UseVSHostingProcess>true</UseVSHostingProcess>
-    <DefineConstants>ExcludeFindMethods, LoadDataParallel</DefineConstants>
+    <DefineConstants>ExcludeFindMethods, TraceThreadAffinity=false</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -67,7 +67,7 @@
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DocumentationFile>Worm.Orm.xml</DocumentationFile>
-    <DefineConstants>ExcludeFindMethods</DefineConstants>
+    <DefineConstants>ExcludeFindMethods,LoadDataParallel</DefineConstants>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Signed Debug|AnyCPU' ">

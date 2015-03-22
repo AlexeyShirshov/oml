@@ -2552,18 +2552,18 @@ Public Class ObjectMappingEngine
         Dim pi As Reflection.PropertyInfo = m.PropertyInfo
         If sv Is Nothing Then
             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
-            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
         Else
             Dim value As Object = sv(0).Value
 
             If value.GetType Is propType Then
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
             ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
                 Dim o As New System.Xml.XmlDocument
                 o.LoadXml(CStr(value))
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 Return o
             ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
                 Dim svalue As String = CStr(value).Trim
@@ -2573,7 +2573,7 @@ Public Class ObjectMappingEngine
                     value = [Enum].Parse(propType, svalue, True)
                 End If
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 Return value
             ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
                 Dim t As Type = propType.GetGenericArguments()(0)
@@ -2605,18 +2605,18 @@ Public Class ObjectMappingEngine
                 Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
                     Nothing, Nothing, New Object() {v})
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v2, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 Return v2
             ElseIf (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
                 Try
                     Dim v As Object = Convert.ChangeType(value, propType)
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                     Return v
                 Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                     Dim v As Object = Convert.ChangeType(value, propType)
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                     Return v
                 End Try
             ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
@@ -2629,7 +2629,7 @@ Public Class ObjectMappingEngine
                     value = ms.ToArray
                 End Using
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
             Else
                 If GetType(_IEntity).IsAssignableFrom(propType) OrElse ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
                     Dim type_created As Type = propType
@@ -2681,14 +2681,14 @@ Public Class ObjectMappingEngine
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
                     If e IsNot Nothing Then
                         Dim eo As IEntity = TryCast(obj, IEntity)
-                        If eo IsNot Nothing AndAlso eo.CreateManager IsNot Nothing Then
-                            e.SetCreateManager(eo.CreateManager)
+                        If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
+                            e.SetCreateManager(eo.GetICreateManager)
                         ElseIf crMan IsNot Nothing Then
                             e.SetCreateManager(crMan)
                         End If
                         If objectLoaded IsNot Nothing Then objectLoaded(e)
                     End If
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                     Return o
                     'ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
                     '    Dim o As Object = Activator.CreateInstance(propType)
@@ -2699,11 +2699,11 @@ Public Class ObjectMappingEngine
                     '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
                     '    End If
                     '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                    '    If ce IsNot Nothing Then OrmManager.SetLoaded(ce, propertyAlias, True, True, map, MappingEngine)
+                    '    If ce IsNot Nothing Then OrmManager.SetLoaded(ce, propertyAlias, True, True)
                     '    Return o
                 Else
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, map, MappingEngine)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 End If
             End If
             Return value
@@ -2892,7 +2892,7 @@ Public Class ObjectMappingEngine
         End Get
     End Property
 
-    Public Sub AssignValue2PK(ByVal obj As Object, ByVal isNull As Boolean, ByVal oschema As IEntitySchema, _
+    Public Shared Sub AssignValue2PK(ByVal obj As Object, ByVal isNull As Boolean, ByVal oschema As IEntitySchema, _
         ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
         ByVal ll As IPropertyLazyLoad, ByVal m As MapField2Column, ByVal propertyAlias As String, _
         ByVal value As Object)
@@ -2902,13 +2902,13 @@ Public Class ObjectMappingEngine
             Try
                 If pi Is Nothing Then
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 Else
                     Dim propType As Type = pi.PropertyType
                     If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                         Dim v As Object = Convert.ChangeType(value, propType)
                         ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                     ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                         Dim dt As DateTime = CDate(value)
                         Dim l As Long = dt.ToBinary
@@ -2917,7 +2917,7 @@ Public Class ObjectMappingEngine
                             sw.Write(l)
                             sw.Flush()
                             ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
-                            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                         End Using
                     Else
                         'If c.FieldName = "ID" Then
@@ -2925,7 +2925,7 @@ Public Class ObjectMappingEngine
                         'Else
                         ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
                         'End If
-                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                     End If
                 End If
             Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
@@ -2936,12 +2936,12 @@ Public Class ObjectMappingEngine
                     sw.Write(l)
                     sw.Flush()
                     ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
                 End Using
             Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
                 Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                 ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True, propertyMap, Me)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
             End Try
         End If
     End Sub

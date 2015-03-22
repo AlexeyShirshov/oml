@@ -74,8 +74,8 @@ Imports Worm.Query
             Assert.IsFalse(mgr.LastExecutionResult.CacheHit)
 
             r = q.ToOrmList(Of Entity)(mgr)
-            Assert.AreEqual(1, r.Count)
             Assert.IsTrue(mgr.LastExecutionResult.CacheHit)
+            Assert.AreEqual(1, r.Count)
 
             Threading.Thread.Sleep(1100)
 

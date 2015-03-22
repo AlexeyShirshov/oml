@@ -963,22 +963,22 @@ Public Class TestManagerRS
     Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt() As Table10 = New Table10() {New QueryCmd().GetByID(Of Table10)(2, mgr), New QueryCmd().GetByID(Of Table10)(1, mgr), New QueryCmd().GetByID(Of Table10)(3, mgr)}
-            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1"))
+            Dim c As IEnumerable(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1"), mgr.MappingEngine)
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").desc, mgr.MappingEngine)
             Assert.AreEqual(3, GetList(Of Table10)(c)(0).Identifier)
             'Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             'Assert.AreEqual(1, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID"))
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID"), mgr.MappingEngine)
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID").desc)
+            c = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table10), "Table1").prop(GetType(Table10), "ID").desc, mgr.MappingEngine)
             Assert.AreEqual(2, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(1, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
@@ -989,12 +989,12 @@ Public Class TestManagerRS
     Public Sub TestSortEx()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt() As Table10 = New Table10() {New QueryCmd().GetByID(Of Table10)(2, mgr), New QueryCmd().GetByID(Of Table10)(1, mgr), New QueryCmd().GetByID(Of Table10)(3, mgr)}
-            Dim c As ICollection(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table1), "Title"))
+            Dim c As IEnumerable(Of Table10) = Worm.OrmManager.ApplySort(tt, SCtor.prop(GetType(Table1), "Title"), mgr.MappingEngine)
             Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
             Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
             Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
 
-            Dim c2 As System.Collections.ICollection = Worm.OrmManager.ApplySortT(tt, SCtor.prop(GetType(Table1), "Title"))
+            Dim c2 As System.Collections.ICollection = Worm.OrmManager.ApplySortT(tt, SCtor.prop(GetType(Table1), "Title"), mgr.MappingEngine)
             Dim l2 As System.Collections.IList = CType(c2, System.Collections.IList)
             Assert.AreEqual(1, CType(l2(0), Table10).Identifier)
             Assert.AreEqual(2, CType(l2(1), Table10).Identifier)
@@ -1330,7 +1330,7 @@ Public Class TestManagerRS
 
     End Sub
 
-    Private Function GetList(Of T As {SinglePKEntity})(ByVal col As ICollection(Of T)) As IList(Of T)
+    Private Function GetList(Of T As {SinglePKEntity})(ByVal col As IEnumerable(Of T)) As IList(Of T)
         Return CType(col, Global.System.Collections.Generic.IList(Of T))
     End Function
 

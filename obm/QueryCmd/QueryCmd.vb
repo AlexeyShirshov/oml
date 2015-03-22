@@ -362,7 +362,8 @@ Namespace Query
                 End Set
             End Property
 
-            Private _o As Object
+            Public Shared EmptyCustomInfo As New Object
+            Private _o As Object = EmptyCustomInfo
             Public Property CustomInfo() As Object
                 Get
                     Return _o
@@ -372,6 +373,11 @@ Namespace Query
                 End Set
             End Property
 
+            Public ReadOnly Property IsCustomInfoSet As Boolean
+                Get
+                    Return Not EmptyCustomInfo.Equals(_o)
+                End Get
+            End Property
             Private _executed As Boolean
             Private _mgr As OrmManager
 
@@ -563,6 +569,12 @@ Namespace Query
         Friend _optimizeOr As List(Of Criteria.PredicateLink)
         Private _newMaps As IDictionary
         Friend _notSimpleMode As Boolean
+        Private _rsCnt As Integer = 0
+        Private _exec As IExecutor
+
+        Private _oldStart As Integer
+        Private _oldLength As Integer
+        Private _oldRev As Boolean
 
         Public Event ConnectionException(sender As QueryCmd, args As ConnectionExceptionArgs)
         Public Event CommandException(sender As QueryCmd, args As CommandExceptionArgs)
@@ -659,10 +671,10 @@ Namespace Query
             End If
 
             If CreateManager Is Nothing Then
-                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager)
+                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager.Cache)
             Else
                 Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                    need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr)
+                    need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr.Cache)
                 End Using
             End If
 
@@ -718,19 +730,12 @@ Namespace Query
         End Function
 
         Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer, _
-            ByVal length As Integer, ByVal properties As List(Of EntityExpression), ByVal mgr As OrmManager) As Boolean
-
-            Dim cache As CacheBase = Nothing
-            Dim mpe As ObjectMappingEngine = Nothing
-            If mgr IsNot Nothing Then
-                cache = mgr.Cache
-                mpe = mgr.MappingEngine
-            End If
+            ByVal length As Integer, ByVal properties As List(Of EntityExpression), ByVal cache As CacheBase) As Boolean
 
             If properties Is Nothing OrElse properties.Count = 0 Then
                 Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
             Else
-                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties, mpe), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties), entityList.RealType)
             End If
         End Function
 
@@ -745,7 +750,7 @@ Namespace Query
             Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
         End Function
 
-        Private Function PrepareLoad2Load(ByVal e2load As ICollection(Of ICachedEntity), ByVal realType As Type) As Boolean
+        Private Function PrepareLoad2Load(ByVal e2load As IEnumerable(Of ICachedEntity), ByVal realType As Type) As Boolean
 
             If e2load.Count = 0 Then Return False
 
@@ -904,7 +909,14 @@ Namespace Query
                 _name = value
             End Set
         End Property
-
+        Public Property LoadResultsetThreadCount() As Integer
+            Get
+                Return _rsCnt
+            End Get
+            Set(ByVal value As Integer)
+                _rsCnt = value
+            End Set
+        End Property
         Public Property LastExecutionResult() As OrmManager.ExecutionResult
             Get
                 Return _er
@@ -944,7 +956,6 @@ Namespace Query
         'End Sub
 
         '<NonSerialized()> _
-        Private _exec As IExecutor
 
         Public Function GetExecutor(ByVal mgr As OrmManager) As IExecutor
             'If _dontcache Then
@@ -1011,7 +1022,7 @@ Namespace Query
             End Sub
 
             Public Sub cl_paging(ByVal sender As IExecutor, ByVal args As IExecutor.GetCacheItemEventArgs)
-                args.Created = False
+                args.ForceLoad = True
                 SetCT2Nothing()
                 RemoveHandler sender.OnGetCacheItem, AddressOf Me.cl_paging
             End Sub
@@ -1900,7 +1911,7 @@ l1:
 
         Public Shared Function GetStaticKey(ByVal root As QueryCmd, ByVal mgrKey As String, ByVal cb As Cache.CacheListBehavior, _
             ByVal fromKey As String, ByVal mpe As ObjectMappingEngine, _
-            ByRef dic As IDictionary, ByVal contextInfo As IDictionary) As String
+            ByRef dic As IDictionary) As String
             Dim key As New StringBuilder
 
             Dim ca As CacheDictionaryRequiredEventArgs = Nothing
@@ -1922,7 +1933,7 @@ l1:
                 '    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
                 'End If
 
-                If Not q.GetStaticKey(key, cb_, mpe, contextInfo) Then
+                If Not q.GetStaticKey(key, cb_, mpe) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
                         q.RaiseCacheDictionaryRequired(ca)
@@ -1934,7 +1945,7 @@ l1:
                             End If
                         End If
                     End If
-                    q.GetStaticKey(key, Cache.CacheListBehavior.CacheAll, mpe, contextInfo)
+                    q.GetStaticKey(key, Cache.CacheListBehavior.CacheAll, mpe)
                     cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
@@ -1958,9 +1969,18 @@ l1:
             RaiseEvent CacheDictionaryRequired(Me, ca)
         End Sub
 
+        ''' <summary>
+        ''' Статические строки всех запчастей QueryCmd (фильтры, джоины и проч.)
+        ''' </summary>
+        ''' <param name="sb"></param>
+        ''' <param name="cb"></param>
+        ''' <param name="mpe"></param>
+        ''' <param name="contextInfo"></param>
+        ''' <returns></returns>
+        ''' <remarks></remarks>
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, _
             ByVal cb As Cache.CacheListBehavior, _
-            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As Boolean
+            ByVal mpe As ObjectMappingEngine) As Boolean
 
             If Not _prepared Then
                 Throw New QueryCmdException("Command not prepared", Me)
@@ -1974,7 +1994,7 @@ l1:
             If f IsNot Nothing Then
                 Select Case cb
                     Case Cache.CacheListBehavior.CacheAll
-                        sb2.Append(f.GetStaticString(mpe, contextInfo)).Append("$")
+                        sb2.Append(f.GetStaticString(mpe)).Append("$")
                         'Case Cache.CacheListBehavior.CacheOrThrowException
                         '    If TryCast(f, IEntityFilter) IsNot Nothing Then
                         '        sb2.Append(f.GetStaticString(mpe)).Append("$")
@@ -1988,7 +2008,7 @@ l1:
                         '    End If
                     Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.GetStaticString(mpe, contextInfo)).Append("$")
+                            sb2.Append(f.GetStaticString(mpe)).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
                                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
@@ -2016,7 +2036,7 @@ l1:
                                     Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
                             End Select
                         End If
-                        sb2.Append(join.GetStaticString(mpe, contextInfo))
+                        sb2.Append(join.GetStaticString(mpe))
                     End If
                 Next
             End If
@@ -2043,9 +2063,9 @@ l1:
                     'Else
                     '    sb.Append(mpe.GetEntityKey(fi, t))
                     'End If
-                    sb.Append(_from.ObjectSource.ToStaticString(mpe, contextInfo))
+                    sb.Append(_from.ObjectSource.ToStaticString(mpe))
                 Else
-                    sb.Append(_from.Query.ToStaticString(mpe, contextInfo))
+                    sb.Append(_from.Query.ToStaticString(mpe))
                 End If
             Else
                 Throw New NotSupportedException
@@ -2068,7 +2088,7 @@ l1:
             sb.Append(sb2.ToString)
 
             If _rn IsNot Nothing Then
-                sb.Append(_rn.ToStaticString(mpe, contextInfo))
+                sb.Append(_rn.ToStaticString(mpe))
             End If
 
             If _top IsNot Nothing Then
@@ -2085,30 +2105,30 @@ l1:
                     it = l
                 End If
                 For Each c As SelectExpression In it
-                    If Not GetStaticKeyFromProp(sb, cb, c, mpe, contextInfo) Then
+                    If Not GetStaticKeyFromProp(sb, cb, c, mpe) Then
                         Return False
                     End If
                 Next
                 sb.Append("$")
             ElseIf SelectedEntities IsNot Nothing Then
                 For Each t As Pair(Of EntityUnion, Boolean?) In SelectedEntities
-                    sb.Append(t.First.ToStaticString(mpe, contextInfo))
+                    sb.Append(t.First.ToStaticString(mpe))
                 Next
                 sb.Append("$")
             End If
 
             If _group IsNot Nothing Then
-                sb.Append(_group.GetStaticString(mpe, contextInfo)).Append("$")
+                sb.Append(_group.GetStaticString(mpe)).Append("$")
             End If
 
             If _having IsNot Nothing Then
-                sb.Append(_having.Filter.GetStaticString(mpe, contextInfo)).Append("$")
+                sb.Append(_having.Filter.GetStaticString(mpe)).Append("$")
             End If
 
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing OrElse cb <> Cache.CacheListBehavior.CacheAll Then
                     For Each n As SortExpression In Sort
-                        sb.Append(n.GetStaticString(mpe, contextInfo))
+                        sb.Append(n.GetStaticString(mpe))
                     Next
                     sb.Append("$")
                 End If
@@ -2118,7 +2138,7 @@ l1:
         End Function
 
         Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, _
-            ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As Boolean
+            ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine) As Boolean
             'If c.IsCustom OrElse c.Query IsNot Nothing Then
             '    Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
             '    If Not Cache.IsCalculated(dp) Then
@@ -2133,11 +2153,11 @@ l1:
             '        End Select
             '    End If
             'End If
-            sb.Append(c.GetStaticString(mpe, contextInfo))
+            sb.Append(c.GetStaticString(mpe))
             Return True
         End Function
 
-        Public Shared Function GetDynamicKey(ByVal root As QueryCmd) As String
+        Public Shared Function GetDynamicKey(ByVal root As QueryCmd, mpe As ObjectMappingEngine) As String
             Dim id As New StringBuilder
 
             Dim i As Integer = 0
@@ -2149,14 +2169,19 @@ l1:
                 'If fs.Length > i Then
                 '    f = fs(i)
                 'End If
-                q.GetDynamicKey(id)
+                q.GetDynamicKey(id, mpe)
                 i += 1
             Next
 
             Return id.ToString '& GetType(T).ToString
         End Function
 
-        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder)
+        ''' <summary>
+        ''' Динамические строк (включающие значения) всех запчастей QueryCmd
+        ''' </summary>
+        ''' <param name="sb"></param>
+        ''' <remarks></remarks>
+        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, mpe As ObjectMappingEngine)
             If Not _prepared Then
                 Throw New QueryCmdException("Command not prepared", Me)
             End If
@@ -2212,10 +2237,20 @@ l1:
                 Throw New NotSupportedException
             End If
 
-            sb.Append("$")
+            sb.Append("fr$")
 
             If _rn IsNot Nothing Then
-                sb.Append(_rn.ToString)
+                sb.Append(_rn.ToString).Append("rn$")
+            End If
+
+            If _order IsNot Nothing Then
+                If mpe Is Nothing Then
+                    mpe = GetMappingEngine()
+                End If
+
+                If mpe Is Nothing OrElse Not _order.CanEvaluate(mpe) Then
+                    sb.Append(_order.ToString).Append("s$")
+                End If
             End If
         End Sub
 
@@ -2223,10 +2258,10 @@ l1:
             Throw New NotSupportedException
         End Function
 
-        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             Dim sb As New StringBuilder
             Dim l As List(Of SelectExpression) = Nothing
-            GetStaticKey(sb, Cache.CacheListBehavior.CacheAll, mpe, contextInfo)
+            GetStaticKey(sb, Cache.CacheListBehavior.CacheAll, mpe)
             'If SelectTypes IsNot Nothing Then
             '    For Each tp As Pair(Of ObjectSource, Boolean?) In SelectTypes
             '        sb.Append(tp.First.ToStaticString)
@@ -2515,10 +2550,6 @@ l1:
             '    RenewMark()
             'End Set
         End Property
-
-        Private _oldStart As Integer
-        Private _oldLength As Integer
-        Private _oldRev As Boolean
 
         Friend Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As OrmManager.ExecutionResult)
             _pager.SetTotalCount(er.RowCount)
@@ -4884,7 +4915,6 @@ l1:
                 ._clientPage = _clientPage
                 ._distinct = _distinct
                 ._dontcache = _dontcache
-                ._exec = _exec
                 ._sel = _sel
                 ._filter = _filter
                 ._group = _group
@@ -4919,6 +4949,9 @@ l1:
                 ._autoFields = _autoFields
                 ._context = _context
             End With
+            If _exec IsNot Nothing Then
+                o._exec = CType(_exec.Clone, IExecutor)
+            End If
         End Sub
 
         Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
@@ -5369,12 +5402,12 @@ l1:
 
         Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
             Dim sb As New StringBuilder
-            GetDynamicKey(sb)
+            GetDynamicKey(sb, Nothing)
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            Return ToStaticString(mpe, contextInfo)
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            Return ToStaticString(mpe)
         End Function
 
 #Region " GetByID "
@@ -5485,7 +5518,7 @@ l1:
             End Using
 
             If o IsNot Nothing Then
-                If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
+                If o.GetICreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                     o.SetCreateManager(_getMgr)
                 End If
                 If o.SpecificMappingEngine Is Nothing Then
@@ -5587,7 +5620,7 @@ l1:
 
                     For Each o As ISinglePKEntity In list
                         If o IsNot Nothing Then
-                            If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
+                            If o.GetICreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                                 o.SetCreateManager(_getMgr)
                             End If
                             If o.SpecificMappingEngine Is Nothing Then
@@ -5694,7 +5727,7 @@ l1:
             End Using
 
             If o IsNot Nothing Then
-                If o.CreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
+                If o.GetICreateManager Is Nothing AndAlso _getMgr IsNot Nothing Then
                     o.SetCreateManager(_getMgr)
                 End If
                 If o.SpecificMappingEngine Is Nothing Then
@@ -6009,38 +6042,38 @@ l1:
             CType(GetExecutor(mgr), QueryExecutor).SetCache(mgr, Me, l)
         End Sub
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix, ByVal ci As Object) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, True) With {.Matrix = m, .CustomInfo = ci}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix, ByVal ci As Object, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.Matrix = m, .CustomInfo = ci}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList, ByVal ci As Object) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, True) With {.ReadOnlyList = l, .CustomInfo = ci}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList, ByVal ci As Object, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.ReadOnlyList = l, .CustomInfo = ci}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection, ByVal ci As Object) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, True) With {.SimpleList = l, .CustomInfo = ci}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection, ByVal ci As Object, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.SimpleList = l, .CustomInfo = ci}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, False) With {.Matrix = m}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal m As ReadonlyMatrix, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.Matrix = m}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, False) With {.ReadOnlyList = l}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As IReadOnlyList, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.ReadOnlyList = l}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
 
-        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection) As ModifyResultArgs
-            Dim r As New ModifyResultArgs(mgr, False) With {.SimpleList = l}
+        Protected Friend Function RaiseModifyResult(ByVal mgr As OrmManager, ByVal l As ICollection, fromCache As Boolean) As ModifyResultArgs
+            Dim r As New ModifyResultArgs(mgr, fromCache) With {.SimpleList = l}
             RaiseEvent ModifyResult(Me, r)
             Return r
         End Function
@@ -6141,7 +6174,7 @@ l1:
                     If TopParam IsNot Nothing Then
                         Dim cnt As Integer = nr.Count
                         For i As Integer = TopParam.Count To cnt - 1
-                            nr.List.RemoveAt(i)
+                            nr.RemoveAt(i)
                         Next
                     End If
                 Else

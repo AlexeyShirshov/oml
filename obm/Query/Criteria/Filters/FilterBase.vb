@@ -24,7 +24,7 @@ Namespace Criteria.Core
                                                    ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext,
                                                    ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As IFilter() Implements IFilter.GetAllFilters
-        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String Implements IFilter.GetStaticString
+        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
 
         Public Function SetUnion(ByVal eu As Query.EntityUnion) As IFilter Implements IFilter.SetUnion
             _eu = eu
@@ -119,7 +119,7 @@ Namespace Criteria.Core
         '    'Return MakeQueryStmt(schema, Filter, almgr, pname)
         'End Function
 
-        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
+        Public Overridable Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
             If _v IsNot Nothing Then
                 _v.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
@@ -161,8 +161,8 @@ Namespace Criteria.Core
                                                          ByVal almgr As IPrepareTable, ByVal pname As ICreateParam,
                                                          ByVal executor As Query.IExecutionContext) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
-        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary) As String
-            Return _templ.GetStaticString(mpe, contextInfo)
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return _templ.GetStaticString(mpe)
         End Function
 
         Public ReadOnly Property Template() As ITemplate Implements ITemplateFilterBase.Template

@@ -4,16 +4,17 @@ Imports System.Collections.Generic
 
 Namespace Query
     Public Interface IExecutor
+        Inherits ICloneable
         Class GetCacheItemEventArgs
             Inherits EventArgs
 
-            Private _notCreated As Boolean
-            Public Property Created() As Boolean
+            Private _forceLoad As Boolean
+            Public Property ForceLoad() As Boolean
                 Get
-                    Return Not _notCreated
+                    Return _forceLoad
                 End Get
                 Set(ByVal value As Boolean)
-                    _notCreated = Not value
+                    _forceLoad = value
                 End Set
             End Property
         End Class

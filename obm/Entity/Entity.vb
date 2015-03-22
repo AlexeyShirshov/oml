@@ -303,7 +303,7 @@ Namespace Entities
             _cm = createManager
         End Sub
 
-        Public ReadOnly Property CreateManager() As ICreateManager Implements IEntity.CreateManager
+        Public ReadOnly Property CreateManager() As ICreateManager Implements IEntity.GetICreateManager
             Get
                 Return _cm
             End Get

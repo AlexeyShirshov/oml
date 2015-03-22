@@ -272,7 +272,7 @@ Partial Public Class OrmManager
 
     Public Interface ICacheItemProvoderBase
         'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
-        Property Created() As Boolean
+        Property CacheMiss() As Boolean
         Property Renew() As Boolean
         ReadOnly Property SmartSort() As Boolean
         ReadOnly Property Sort() As OrderByClause
@@ -447,7 +447,7 @@ Partial Public Class OrmManager
             End Set
         End Property
 
-        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.Created
+        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.CacheMiss
             Get
                 Return _created
             End Get

@@ -76,5 +76,9 @@ Namespace Query.Xml
         Public Function SubscribeToErrorHandling(mgr As OrmManager, query As QueryCmd) As System.IDisposable Implements IExecutor.SubscribeToErrorHandling
             Return New EmptyDisposable
         End Function
+
+        Public Function Clone() As Object Implements ICloneable.Clone
+            Return New XmlQueryExecutor
+        End Function
     End Class
 End Namespace

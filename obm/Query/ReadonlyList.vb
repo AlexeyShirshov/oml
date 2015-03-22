@@ -13,8 +13,8 @@ Friend Interface IListEdit
     Inherits IReadOnlyList, INotifyCollectionChanged, comp.INotifyPropertyChanged
     Overloads Sub Add(ByVal o As Entities.IEntity)
     Overloads Sub Remove(ByVal o As Entities.IEntity)
+    Overloads Sub RemoveAt(idx As Integer)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Entities.IEntity)
-    ReadOnly Property List() As IList
 End Interface
 
 Public Interface ILoadableList
@@ -27,6 +27,8 @@ Public Interface IReadOnlyList
     Inherits IList, ICloneable
     Function CloneEmpty() As IReadOnlyList
     ReadOnly Property RealType() As Type
+    Function AcquareLock() As IDisposable
+
 End Interface
 
 <Serializable()> _
@@ -70,13 +72,15 @@ Public Class ReadOnlyList(Of T As {Entities.ISinglePKEntity})
     End Function
 
     Public Function DistinctEntity() As ReadOnlyList(Of T)
-        Dim l As New Dictionary(Of T, T)
-        For Each o As T In Me
-            If Not l.ContainsKey(o) Then
-                l.Add(o, o)
-            End If
-        Next
-        Return New ReadOnlyList(Of T)(l.Keys)
+        Dim l As New HashSet(Of T)
+        Using New CSScopeMgrLite(_sl)
+            For Each o As T In Me
+                If Not l.Contains(o) Then
+                    l.Add(o)
+                End If
+            Next
+        End Using
+        Return New ReadOnlyList(Of T)(l)
     End Function
 
     Public Function LoadChildren(Of ReturnType As Entities._ISinglePKEntity)(ByVal rd As RelationDesc, ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
@@ -122,7 +126,7 @@ Public Class ReadOnlyList(Of T As {Entities.ISinglePKEntity})
             ro._rt = _rt
             Return ro
         Else
-            Return Me
+            Return CType(Me.Clone, Global.Worm.ReadOnlyList(Of T))
         End If
     End Function
 
@@ -132,12 +136,19 @@ Public Class ReadOnlyList(Of T As {Entities.ISinglePKEntity})
 
     Public Overrides Function Clone() As Object
         Dim l As New List(Of T)
-        l.AddRange(_l)
+        Using New CSScopeMgrLite(_sl)
+            l.AddRange(_l)
+        End Using
         Return New ReadOnlyList(Of T)(_rt, l)
     End Function
 
 End Class
 
+''' <remarks>
+''' <h3>Потокобезопасность</h3>
+''' Класс потокобезопасен
+''' </remarks>
+''' <threadsafety static="true" instance="true"/>
 <Serializable()> _
 Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     Inherits ReadOnlyObjectList(Of T)
@@ -146,12 +157,12 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     Protected _rt As Type
 
     Public Sub New()
-        MyBase.new()
+        MyBase.New()
         _rt = GetType(T)
     End Sub
 
     Public Sub New(ByVal t As Type)
-        MyBase.new()
+        MyBase.New()
         _rt = t
     End Sub
 
@@ -176,13 +187,15 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     End Sub
 
     Public Overridable Function Distinct() As ReadOnlyEntityList(Of T)
-        Dim l As New Dictionary(Of T, T)
-        For Each o As T In Me
-            If Not l.ContainsKey(o) Then
-                l.Add(o, o)
-            End If
-        Next
-        Return New ReadOnlyEntityList(Of T)(l.Keys)
+        Dim l As New HashSet(Of T)
+        Using New CSScopeMgrLite(_sl)
+            For Each o As T In Me
+                If Not l.Contains(o) Then
+                    l.Add(o)
+                End If
+            Next
+        End Using
+        Return New ReadOnlyEntityList(Of T)(l)
     End Function
 
     Public Overridable Overloads Function LoadObjects() As ReadOnlyEntityList(Of T)
@@ -197,15 +210,6 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         Return Query.QueryCmd.LoadObjects(Me, start, length, True, mgr)
     End Function
 
-    Private Function GetCMgr() As ICreateManager
-        For Each o As T In _l
-            If o.CreateManager IsNot Nothing Then
-                Return o.CreateManager
-            End If
-        Next
-        Return Nothing
-    End Function
-
     Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         If _l.Count > 0 Then
             Dim cmgr As ICreateManager = GetCMgr()
@@ -216,9 +220,8 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
             Else
                 Return LoadObjects(start, length, OrmManager.CurrentManager)
             End If
-        Else
-            Return Me
         End If
+        Return CType(Me.Clone, Global.Worm.ReadOnlyEntityList(Of T))
     End Function
 
     Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal ParamArray properties2Load() As String) As ReadOnlyEntityList(Of T)
@@ -236,9 +239,8 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
             Else
                 Return Query.QueryCmd.LoadObjects(Me, start, length, f, OrmManager.CurrentManager)
             End If
-        Else
-            Return Me
         End If
+        Return CType(Me.Clone, Global.Worm.ReadOnlyEntityList(Of T))
     End Function
 
     Public Overridable Overloads Function LoadObjects(ByVal start As Integer, ByVal length As Integer, ByVal properties2Load As ObjectModel.ReadOnlyCollection(Of SelectExpression)) As ReadOnlyEntityList(Of T)
@@ -255,9 +257,8 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
             Else
                 Return Query.QueryCmd.LoadObjects(Me, start, length, properties2Load, OrmManager.CurrentManager)
             End If
-        Else
-            Return Me
         End If
+        Return CType(Me.Clone, Global.Worm.ReadOnlyEntityList(Of T))
     End Function
 
     Private Sub _LoadObjects(ByVal start As Integer, ByVal length As Integer) Implements ILoadableList.LoadObjects
@@ -276,31 +277,33 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
         Dim prop_objs(parentPropertyAliases.Length - 1) As IListEdit
         Dim mpe As ObjectMappingEngine = Nothing
         Dim oschema As IEntitySchema = Nothing
-        For i As Integer = 0 To Me.Count - 1
-            If start <= i AndAlso start + length > i Then
-                Dim o As T = Me(i)
-                If mpe Is Nothing Then
-                    mpe = o.GetMappingEngine
-                    If mpe Is Nothing AndAlso OrmManager.CurrentManager IsNot Nothing Then
-                        mpe = OrmManager.CurrentManager.MappingEngine
-                    End If
-                    oschema = mpe.GetEntitySchema(o.GetType)
-                End If
-                For j As Integer = 0 To parentPropertyAliases.Length - 1
-                    Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, parentPropertyAliases(j), oschema)
-                    Dim obj As IEntity = TryCast(propValue, IEntity)
-                    If obj Is Nothing AndAlso propValue IsNot Nothing Then
-                        Throw New ArgumentException("Property " & parentPropertyAliases(j) & " is not entity")
-                    End If
-                    If obj IsNot Nothing Then
-                        If prop_objs(j) Is Nothing Then
-                            prop_objs(j) = OrmManager._CreateReadOnlyList(obj.GetType)
+        Using New CSScopeMgrLite(_sl)
+            For i As Integer = 0 To Me.Count - 1
+                If start <= i AndAlso start + length > i Then
+                    Dim o As T = Me(i)
+                    If mpe Is Nothing Then
+                        mpe = o.GetMappingEngine
+                        If mpe Is Nothing AndAlso OrmManager.CurrentManager IsNot Nothing Then
+                            mpe = OrmManager.CurrentManager.MappingEngine
                         End If
-                        prop_objs(j).Add(obj)
+                        oschema = mpe.GetEntitySchema(o.GetType)
                     End If
-                Next
-            End If
-        Next
+                    For j As Integer = 0 To parentPropertyAliases.Length - 1
+                        Dim propValue As Object = ObjectMappingEngine.GetPropertyValue(o, parentPropertyAliases(j), oschema)
+                        Dim obj As IEntity = TryCast(propValue, IEntity)
+                        If obj Is Nothing AndAlso propValue IsNot Nothing Then
+                            Throw New ArgumentException("Property " & parentPropertyAliases(j) & " is not entity")
+                        End If
+                        If obj IsNot Nothing Then
+                            If prop_objs(j) Is Nothing Then
+                                prop_objs(j) = OrmManager._CreateReadOnlyList(obj.GetType)
+                            End If
+                            prop_objs(j).Add(obj)
+                        End If
+                    Next
+                End If
+            Next
+        End Using
 
         For Each po As IList In prop_objs
             If po IsNot Nothing AndAlso po.Count > 0 Then
@@ -313,12 +316,16 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     End Sub
 
     Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyEntityList(Of T)
+
         If _l.Count > 0 Then
-            Dim lst As List(Of T) = _l.GetRange(index, count)
-            Return New ReadOnlyEntityList(Of T)(lst)
+            Using New CSScopeMgrLite(_sl)
+                Dim lst As List(Of T) = _l.GetRange(index, count)
+                Return New ReadOnlyEntityList(Of T)(lst)
+            End Using
         Else
-            Return Me
+            Return CType(Me.Clone, Global.Worm.ReadOnlyEntityList(Of T))
         End If
+
     End Function
 
     Friend Overrides Function CloneEmpty() As IReadOnlyList
@@ -326,7 +333,9 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
     End Function
 
     Public Overrides Function Clone() As Object
-        Return New ReadOnlyEntityList(Of T)(_l)
+        Using New CSScopeMgrLite(_sl)
+            Return New ReadOnlyEntityList(Of T)(_l)
+        End Using
     End Function
 
     Public Overrides ReadOnly Property RealType() As System.Type
@@ -337,20 +346,36 @@ Public Class ReadOnlyEntityList(Of T As Entities.ICachedEntity)
 
 End Class
 
+''' <summary>
+''' 
+''' </summary>
+''' <typeparam name="T"></typeparam>
+''' <remarks>
+''' <h3>Потокобезопасность</h3>
+''' Класс потокобезопасен
+''' </remarks>
+''' <threadsafety static="true" instance="true"/>
 <Serializable()> _
 Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
     Implements IListEdit, ComponentModel.ITypedList
 
     Protected _l As List(Of T)
+    <NonSerialized> _
     Friend _sl As New SpinLockRef
 
-    Private ReadOnly Property _List() As IList Implements IListEdit.List
-        Get
-            Return _l
-        End Get
-    End Property
-
+    'Private ReadOnly Property _List() As IList Implements IListEdit.List
+    '    Get
+    '        Return _l
+    '    End Get
+    'End Property
+    ''' <summary>
+    ''' Необходимо использовать только для вновь созданных <see cref="ReadOnlyObjectList(Of T)" />
+    ''' Возвращает не потокобезопасный <see cref="List(Of T)"/>
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
     Protected Friend ReadOnly Property List() As List(Of T)
         Get
             Return _l
@@ -375,7 +400,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     End Sub
 
     Public Sub New(ByVal t As Type)
-        MyClass.new()
+        MyClass.New()
     End Sub
 
     Public Sub New(ByVal t As Type, ByVal col As IEnumerable(Of T))
@@ -425,62 +450,104 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
     End Sub
 
+    Private Overloads Sub RemoveAt(idx As Integer) Implements IListEdit.RemoveAt
+        Dim o = Nothing
+        Using New CSScopeMgrLite(_sl)
+            If idx >= _l.Count Then
+                Return
+            End If
+            o = _l(idx)
+            CType(_l, IList).RemoveAt(idx)
+        End Using
+        RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, o, idx))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Count"))
+        RaiseEvent PropertyChanged(Me, New comp.PropertyChangedEventArgs("Item[]"))
+    End Sub
+
     Public Function ApplyFilter(ByVal filter As IGetFilter, joins As QueryJoin(), objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
-            End Using
-        Else
-            Return Me
+            If filter IsNot Nothing AndAlso filter.Filter IsNot Nothing Then
+                Using mc = GetIGetMgr()
+                    If mc IsNot Nothing Then
+                        Return mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
+                    Else
+                        Return OrmManager.ApplyFilter(Of T)(Me, filter, joins, objEU, GetMappingEngine, evaluated)
+                    End If
+                End Using
+            End If
         End If
+        Return CType(Clone(), Global.Worm.ReadOnlyObjectList(Of T))
     End Function
 
     Public Function ApplyFilter(ByVal filter As IGetFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
-            End Using
-        Else
-            Return Me
+            If filter IsNot Nothing AndAlso filter.Filter IsNot Nothing Then
+                Using mc = GetIGetMgr()
+                    If mc IsNot Nothing Then
+                        Return mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
+                    Else
+                        Return OrmManager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, GetMappingEngine, evaluated)
+                    End If
+                End Using
+
+            End If
         End If
+        Return CType(Clone(), Global.Worm.ReadOnlyObjectList(Of T))
     End Function
 
     Public Function ApplyFilter(ByVal filter As IGetFilter, joins As QueryJoin(), objEU As EntityUnion) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
-            Dim evaluated As Boolean
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
-                If Not evaluated Then
-                    Throw New InvalidOperationException("Filter is not applyable")
-                End If
-                Return r
-            End Using
-        Else
-            Return Me
+            If filter IsNot Nothing AndAlso filter.Filter IsNot Nothing Then
+                Using mc = GetIGetMgr()
+                    Dim evaluated As Boolean
+                    Dim r As ReadOnlyObjectList(Of T) = Nothing
+                    If mc IsNot Nothing Then
+                        r = mc.Manager.ApplyFilter(Of T)(Me, filter, joins, objEU, evaluated)
+                    Else
+                        Return OrmManager.ApplyFilter(Of T)(Me, filter, joins, objEU, GetMappingEngine, evaluated)
+                    End If
+                    If Not evaluated Then
+                        Throw New InvalidOperationException(String.Format("Filter {0} is not applyable", filter.Filter._ToString))
+                    End If
+                    Return r
+                End Using
+            End If
         End If
+        Return CType(Clone(), Global.Worm.ReadOnlyObjectList(Of T))
     End Function
 
     Public Function ApplyFilter(ByVal filter As IGetFilter) As ReadOnlyObjectList(Of T)
         If _l.Count > 0 Then
-            Dim evaluated As Boolean
-            Dim o As T = _l(0)
-            Using mc As IGetManager = o.GetMgr()
-                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
-                If Not evaluated Then
-                    Throw New InvalidOperationException("Filter is not applyable")
-                End If
-                Return r
-            End Using
-        Else
-            Return Me
+            If filter IsNot Nothing AndAlso filter.Filter IsNot Nothing Then
+                Using mc = GetIGetMgr()
+                    Dim evaluated As Boolean
+                    Dim r As ReadOnlyObjectList(Of T) = Nothing
+                    If mc IsNot Nothing Then
+                        r = mc.Manager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, evaluated)
+                    Else
+                        r = OrmManager.ApplyFilter(Of T)(Me, filter, Nothing, Nothing, GetMappingEngine, evaluated)
+                    End If
+                    If Not evaluated Then
+                        Throw New InvalidOperationException(String.Format("Filter {0} is not applyable", filter.Filter._ToString))
+                    End If
+                    Return r
+                End Using
+            End If
         End If
+        Return CType(Clone(), Global.Worm.ReadOnlyObjectList(Of T))
     End Function
 
-    Public Function ApplySort(ByVal s As OrderByClause) As ICollection(Of T)
-        Return OrmManager.ApplySort(Of T)(Me, s)
+    Public Function ApplySort(ByVal s As OrderByClause) As IEnumerable(Of T)
+        If _l.Count > 0 AndAlso s IsNot Nothing AndAlso s.Count > 0 Then
+            Dim mpe As ObjectMappingEngine = GetMappingEngine()
+            If mpe IsNot Nothing Then
+                Return OrmManager.ApplySort(Of T)(Me, s, mpe)
+            Else
+                Throw New InvalidOperationException(String.Format("Sort {0} is not applyable", s.ToString()))
+            End If
+        End If
+
+        Return CType(Me.Clone, Global.System.Collections.Generic.IEnumerable(Of T))
     End Function
 
     Public Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyObjectList(Of T)
@@ -490,16 +557,18 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
                 Return New ReadOnlyObjectList(Of T)(lst)
             End Using
         Else
-            Return Me
+            Return CType(Me.Clone, Global.Worm.ReadOnlyObjectList(Of T))
         End If
     End Function
 
     Public Function GetItemProperties(ByVal listAccessors() As System.ComponentModel.PropertyDescriptor) As System.ComponentModel.PropertyDescriptorCollection Implements System.ComponentModel.ITypedList.GetItemProperties
-        If GetType(Entities.AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso Count > 0 Then
-            Return CType(Me(0), ComponentModel.ICustomTypeDescriptor).GetProperties
-        Else
-            Return Nothing
-        End If
+        Using New CSScopeMgrLite(_sl)
+            If GetType(Entities.AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso Count > 0 Then
+                Return CType(Me(0), ComponentModel.ICustomTypeDescriptor).GetProperties
+            Else
+                Return Nothing
+            End If
+        End Using
     End Function
 
     Public Function GetListName(ByVal listAccessors() As System.ComponentModel.PropertyDescriptor) As String Implements System.ComponentModel.ITypedList.GetListName
@@ -523,7 +592,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     End Property
 
     Public Function SelectEntity(Of EntityType As ISinglePKEntity)(ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
-        Return SelectEntity(Of EntityType)(0, Count, propertyAlias)
+        Return SelectEntity(Of EntityType)(0, Integer.MaxValue, propertyAlias)
     End Function
 
     Public Function SelectEntity(Of EntityType As ISinglePKEntity)(ByVal start As Integer, ByVal length As Integer, ByVal propertyAlias As String) As ReadOnlyList(Of EntityType)
@@ -598,4 +667,33 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Public Event CollectionChanged(sender As Object, e As System.Collections.Specialized.NotifyCollectionChangedEventArgs) Implements System.Collections.Specialized.INotifyCollectionChanged.CollectionChanged
 
     Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged
+
+    Protected Function GetIGetMgr() As IGetManager
+        Using New CSScopeMgrLite(_sl)
+            For Each o As T In _l
+                Return o.GetMgr
+            Next
+            Return Nothing
+        End Using
+    End Function
+
+    Protected Function GetCMgr() As ICreateManager
+        Using New CSScopeMgrLite(_sl)
+            For Each o As T In _l
+                Return o.GetICreateManager
+            Next
+            Return Nothing
+        End Using
+    End Function
+    Protected Function GetMappingEngine() As ObjectMappingEngine
+        Using New CSScopeMgrLite(_sl)
+            For Each o As T In _l
+                Return o.GetMappingEngine
+            Next
+            Return Nothing
+        End Using
+    End Function
+    Public Function AcquareLock() As IDisposable Implements IReadOnlyList.AcquareLock
+        Return New CSScopeMgrLite(_sl)
+    End Function
 End Class

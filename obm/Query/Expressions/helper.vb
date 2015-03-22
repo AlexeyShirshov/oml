@@ -375,7 +375,7 @@ Namespace Expressions2
                     If cexp IsNot Nothing Then
                         Return cexp.Eval(mpe, obj, oschema, v)
                     Else
-                        Throw New NotSupportedException(String.Format("Expression {0} is not evaluable", exp.GetStaticString(mpe, Nothing)))
+                        Throw New NotSupportedException(String.Format("Expression {0} is not evaluable", exp.GetStaticString(mpe)))
                     End If
                 End If
             End If
