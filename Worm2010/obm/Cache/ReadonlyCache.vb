@@ -864,29 +864,33 @@ Namespace Cache
 #End Region
 
         Public Sub AddNonExistentObject(t As Type, key As PKWrapper)
-            Dim s As HashSet(Of PKWrapper) = Nothing
-            SyncLock _nonExist
+            SyncLock CType(_nonExist, ICollection).SyncRoot
+                Dim s As HashSet(Of PKWrapper) = Nothing
                 If Not _nonExist.TryGetValue(t, s) Then
                     s = New HashSet(Of PKWrapper)
                     _nonExist(t) = s
                 End If
+                s.Add(key)
             End SyncLock
-            s.Add(key)
         End Sub
 
         Public Function CheckNonExistent(t As Type, ck As PKWrapper) As Boolean
-            Dim s As HashSet(Of PKWrapper) = Nothing
-            If _nonExist.TryGetValue(t, s) Then
-                Return s.Contains(ck)
-            End If
-            Return False
+            SyncLock CType(_nonExist, ICollection).SyncRoot
+                Dim s As HashSet(Of PKWrapper) = Nothing
+                If _nonExist.TryGetValue(t, s) Then
+                    Return s.Contains(ck)
+                End If
+                Return False
+            End SyncLock
         End Function
 
         Friend Sub RemoveNonExistent(t As Type, ck As PKWrapper)
-            Dim s As HashSet(Of PKWrapper) = Nothing
-            If _nonExist.TryGetValue(t, s) Then
-                s.Remove(ck)
-            End If
+            SyncLock CType(_nonExist, ICollection).SyncRoot
+                Dim s As HashSet(Of PKWrapper) = Nothing
+                If _nonExist.TryGetValue(t, s) Then
+                    s.Remove(ck)
+                End If
+            End SyncLock
         End Sub
     End Class
 

@@ -1,52 +1,111 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="Worm.ObjectMappingEngine">
-    <Position X="6.75" Y="3" Width="2.5" />
+    <Position X="10.75" Y="0.5" Width="2.5" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
       <Compartment Name="Methods" Collapsed="true" />
     </Compartments>
     <NestedTypes>
-      <Delegate Name="Worm.ObjectMappingEngine.ResolveEntity" Collapsed="true">
+      <Delegate Name="Worm.ObjectMappingEngine.ResolveSchemaForSingleType" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
         </TypeIdentifier>
       </Delegate>
-      <Delegate Name="Worm.ObjectMappingEngine.ResolveEntityName" Collapsed="true">
+      <Delegate Name="Worm.ObjectMappingEngine.ResolveEntityNameForHierarchy" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Delegate Name="Worm.ObjectMappingEngine.CreateEntityDelegate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Delegate Name="Worm.ObjectMappingEngine.ConvertVersionToIntDelegate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Delegate Name="Worm.ObjectMappingEngine.GetTypeDelegate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Enum Name="Worm.ObjectMappingEngine.JoinFieldType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Delegate Name="Worm.ObjectMappingEngine.ObjectLoadedDelegate" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
         </TypeIdentifier>
       </Delegate>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>sMLQGCAggAUGZAKmEtQQxQvBAJgQEJBEASEAQAFEkAA=</HashCode>
+      <HashCode>IFCQMgwgBBE2JAIWEpQQ4YNDESgQAbGMSSWESABBAEA=</HashCode>
       <FileName>Mapping\MappingEngine.vb</FileName>
     </TypeIdentifier>
-    <Lollipop Position="0.2" />
   </Class>
-  <Class Name="Worm.Database.SQLGenerator">
-    <Position X="3.75" Y="2" Width="2" />
+  <Class Name="Worm.Database.MSSQL2005Generator">
+    <Position X="0.75" Y="1.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAACAAAAQACAAEABCCAAAAEAAAACA=</HashCode>
+      <FileName>StmtGenerators\db\MSSQL\SQL2005Generator.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.StmtGenerator">
+    <Position X="10" Y="4.5" Width="2" />
     <Compartments>
       <Compartment Name="Methods" Collapsed="true" />
     </Compartments>
     <NestedTypes>
-      <Struct Name="Worm.Database.SQLGenerator.TableUpdate" Collapsed="true">
+      <Delegate Name="Worm.StmtGenerator.GetCustomTableNameDelegate" Collapsed="true">
         <TypeIdentifier>
-          <NewMemberFileName>StmtGenerators\db\DbSchema.vb</NewMemberFileName>
+          <NewMemberFileName>StmtGenerators\StmtGenerator.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AMAABAAEEAEAAAQQBAAABIAACgAAAJCCDAEQEAQAAgQ=</HashCode>
+      <FileName>StmtGenerators\StmtGenerator.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Database.DbGenerator">
+    <Position X="6.75" Y="3.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Worm.Database.DbGenerator.TableUpdate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>StmtGenerators\db\DbGenerator.vb</NewMemberFileName>
         </TypeIdentifier>
       </Struct>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>BMQAhEAo6YkARAFgFAYABAxAIAtBMIqIhmEAUQAApgA=</HashCode>
-      <FileName>StmtGenerators\db\DbSchema.vb</FileName>
+      <HashCode>BMQAAEAMQAAAAAEQhCYQBYRAIgNFMIAAjgABQQQAIgA=</HashCode>
+      <FileName>StmtGenerators\db\DbGenerator.vb</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="Worm.Database.MSSQL2005Generator">
-    <Position X="0.5" Y="2.5" Width="2.25" />
+  <Class Name="Worm.Database.SQL2000Generator">
+    <Position X="4" Y="2.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Delegate Name="Worm.Database.SQL2000Generator.ConvertDelegate(Of T, T2)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>StmtGenerators\db\MSSQL\SQL2000Generator.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+    </NestedTypes>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAAAAACAAAAAEAAAAAA=</HashCode>
-      <FileName>StmtGenerators\db\SQL2005Schema.vb</FileName>
+      <HashCode>BMAABAAINIEAAAFQBAYAAARACAAAAIIIBAEREAAAACA=</HashCode>
+      <FileName>StmtGenerators\db\MSSQL\SQL2000Generator.vb</FileName>
     </TypeIdentifier>
+    <Lollipop Position="0.2" />
   </Class>
   <Font Name="Tahoma" Size="8.25" />
 </ClassDiagram>

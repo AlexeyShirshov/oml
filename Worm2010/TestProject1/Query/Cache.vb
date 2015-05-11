@@ -175,6 +175,10 @@ Imports System.Collections.ObjectModel
             Assert.IsNotNull(q)
 
             Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
+            Assert.IsFalse(q.LastExecutionResult.CacheHit)
+
+            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
+            Assert.IsTrue(q.LastExecutionResult.CacheHit)
 
             mgr.BeginTransaction()
             Try
@@ -186,6 +190,7 @@ Imports System.Collections.ObjectModel
                 End Using
 
                 Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
+                Assert.IsFalse(q.LastExecutionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try

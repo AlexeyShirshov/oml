@@ -1093,5 +1093,11 @@ Namespace Entities
                 End Using
             End Set
         End Property
+
+        Public Event ChangesRejected(sender As ICachedEntity, args As EventArgs) Implements ICachedEntity.ChangesRejected
+
+        Public Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
+            RaiseEvent ChangesRejected(Me, args)
+        End Sub
     End Class
 End Namespace

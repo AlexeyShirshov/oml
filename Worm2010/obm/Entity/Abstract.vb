@@ -189,6 +189,7 @@ Namespace Entities
         Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+        Event ChangesRejected(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Function BeginEdit() As IDisposable
         Function BeginAlter() As IDisposable
         Sub CheckEditOrThrow()
@@ -197,6 +198,7 @@ Namespace Entities
         Sub RaiseAdded(ByVal args As EventArgs)
         Sub RaiseDeleted(ByVal args As EventArgs)
         Sub RaiseUpdated(ByVal args As EventArgs)
+        Sub RaiseChangesRejected(args As EventArgs)
     End Interface
 
     Public Interface ICachedEntityEx
@@ -482,5 +484,8 @@ Namespace Entities
         End Function
     End Class
 
+    Public Interface ISaveBehavior
+        ReadOnly Property HasNewObjects As Boolean
+    End Interface
 End Namespace
 

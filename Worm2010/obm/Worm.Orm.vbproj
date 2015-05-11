@@ -183,6 +183,7 @@
     <Compile Include="DbMS\SP\SPBase.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
+    <Compile Include="Managers\db\ModificationsTracker.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
     <Compile Include="QueryCmd\db\MSSQLQueryCmd.vb" />
