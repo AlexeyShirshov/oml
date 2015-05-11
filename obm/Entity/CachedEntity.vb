@@ -1561,7 +1561,7 @@ l1:
             End If
             Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(Me, Nothing)
             Dim pks2 As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(obj, Nothing)
-            For i As Integer = 0 To pks.count - 1
+            For i As Integer = 0 To pks.Count - 1
                 Dim pk As PKDesc = pks(i)
                 If pk.PropertyAlias <> pks2(i).PropertyAlias OrElse Not pk.Value.Equals(pks2(i).Value) Then
                     Return False
@@ -1715,6 +1715,12 @@ l1:
                     mc.Manager.RejectChanges(Me)
                 End If
             End Using
+        End Sub
+
+        Public Event ChangesRejected(sender As ICachedEntity, args As EventArgs) Implements ICachedEntity.ChangesRejected
+
+        Public Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
+            RaiseEvent ChangesRejected(Me, args)
         End Sub
     End Class
 

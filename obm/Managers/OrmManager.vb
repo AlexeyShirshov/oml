@@ -3402,6 +3402,9 @@ l1:
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         'Using _cache.SyncSave
+        If obj.ObjectState = ObjectState.None Then
+            Return False
+        End If
 
         Dim oldObj As ICachedEntity = Nothing
         Dim hasErrors As Boolean = True
@@ -4648,9 +4651,7 @@ l1:
                 End If
 
 #If TraceSetState Then
-                    If mo isnot Nothing then
-                        SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
-                    end if
+                    e.SetObjectStateClear(olds)
 #Else
                 e.SetObjectStateClear(olds)
 #End If
@@ -4682,6 +4683,8 @@ l1:
                         ll.IsLoaded = False
                     End If
                     '_loaded_members = New BitArray(_loaded_members.Count)
+                ElseIf oc IsNot Nothing AndAlso olds <> ObjectState.None Then
+                    Throw New InvalidOperationException("State must be reverted to None")
                 End If
 
                 'ElseIf state = Obm.ObjectState.Deleted Then
@@ -4692,6 +4695,7 @@ l1:
                 '    End SyncLock
                 'Else
                 '    Throw New OrmObjectException(ObjName & "Rejecting changes in the state " & _state.ToString & " is not allowed")
+                e.RaiseChangesRejected(EventArgs.Empty)
             End If
             'Invariant(mgr)
         End Using

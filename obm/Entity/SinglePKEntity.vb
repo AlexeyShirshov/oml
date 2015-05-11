@@ -11,6 +11,7 @@ Imports System.Linq
 Imports System.Threading
 
 #Const TraceSetState = False
+#Const TraceRemoveCopy = True
 
 Namespace Entities
 
@@ -1298,12 +1299,19 @@ Namespace Entities
         'Protected Overridable Sub RemoveOriginalCopy(ByVal cache As CacheBase) Implements IUndoChanges.RemoveOriginalCopy
         '    _copy = Nothing
         'End Sub
-
+#If TraceRemoveCopy Then
+        Private _remCopyStack As String
+#End If
         Protected Property OriginalCopy() As ICachedEntity Implements IUndoChanges.OriginalCopy
             Get
                 Return _copy
             End Get
             Set(ByVal value As ICachedEntity)
+#If TraceRemoveCopy Then
+                If value Is Nothing AndAlso _copy IsNot Nothing Then
+                    _remCopyStack = Environment.StackTrace
+                End If
+#End If
                 _copy = value
             End Set
         End Property

@@ -663,8 +663,8 @@ Namespace Database
         End Sub
 
         Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal contextInfo As IDictionary, _
-    ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
-    ByRef selectedProperties As List(Of SelectExpression)) As String
+            ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
+            ByRef selectedProperties As List(Of SelectExpression)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")

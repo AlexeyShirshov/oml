@@ -167,7 +167,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Protected Class QueryOrmStoredProcSimple(Of T2 As {_IEntity, New})
+        Public Class QueryOrmStoredProcSimple(Of T2 As {_IEntity, New})
             Inherits QueryEntityStoredProcBase(Of T2)
 
             Private _name As String

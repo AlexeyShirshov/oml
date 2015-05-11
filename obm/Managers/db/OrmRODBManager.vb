@@ -158,6 +158,13 @@ Namespace Database
 
                 Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.ObjName & " should be in Created state")
 
+                Dim sb = TryCast(obj, ISaveBehavior)
+                If sb IsNot Nothing Then
+                    If sb.HasNewObjects Then
+                        Return False
+                    End If
+                End If
+
                 Dim oldl As Boolean = obj.IsLoaded
                 Dim err As Boolean = True
                 Try

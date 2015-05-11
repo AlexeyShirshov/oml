@@ -443,6 +443,9 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         Dim pos As Integer = 0
         Using New CSScopeMgrLite(_sl)
             pos = CType(_l, IList).IndexOf(o)
+            If pos < 0 Then
+                Return
+            End If
             CType(_l, IList).RemoveAt(pos)
         End Using
         RaiseEvent CollectionChanged(Me, New NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, o, pos))
@@ -453,7 +456,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     Private Overloads Sub RemoveAt(idx As Integer) Implements IListEdit.RemoveAt
         Dim o = Nothing
         Using New CSScopeMgrLite(_sl)
-            If idx >= _l.Count Then
+            If idx >= _l.Count OrElse idx < 0 Then
                 Return
             End If
             o = _l(idx)

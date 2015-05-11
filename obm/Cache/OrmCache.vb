@@ -274,6 +274,7 @@ Namespace Cache
         Const UpdateTypeLock = "%G(qjg'oqgiu13rgfasd"
         Const InvalidateLock = "913bh5g9nh04nvgtr0924ng"
         Const SortGroupFilterLock = "N(4nfasd*)Gf"
+        Const AddedDeleted = "qoegnq"
 #Region " general routines "
 
         'Protected Friend ReadOnly Property Filters() As IDictionary
@@ -805,16 +806,16 @@ Namespace Cache
             End Using
         End Sub
 #End If
-        Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, _
+        Protected Friend Function UpdateCacheDeferred(ByVal mpe As ObjectMappingEngine, _
             ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As OrderByClause, ByVal g As GroupExpression) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
 
 #If DebugLocks Then
-                        Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+                        Using SyncHelper.AcquireDynamicLock_Debug(AddedDeleted,"d:\temp\")
 #Else
-                Using SyncHelper.AcquireDynamicLock("qoegnq")
+                Using SyncHelper.AcquireDynamicLock(AddedDeleted)
 #End If
                     wasAdded = _addedTypes.ContainsKey(t)
                     wasDeleted = _deletedTypes.ContainsKey(t)
@@ -855,8 +856,8 @@ Namespace Cache
 #Else
                             Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
 #End If
-                            If _updateTypes.Remove(t, Me) Then
-                                Return False
+                                If _updateTypes.Remove(t, Me) Then
+                                    Return False
                                 End If
                             End Using
                         End If
@@ -868,36 +869,54 @@ Namespace Cache
                     For Each fl As IEntityFilter In f.GetAllFilters
                         Dim tmpl As OrmFilterTemplate = CType(fl.Template, OrmFilterTemplate)
                         Dim fields As List(Of String) = Nothing
-                        Dim rt As Type = tmpl.ObjectSource.GetRealType(schema)
+                        Dim rt As Type = tmpl.ObjectSource.GetRealType(mpe)
                         If GetUpdatedFields(rt, fields) Then
                             If fields.Contains(tmpl.PropertyAlias) Then
-                                Dim b As Boolean = _filteredFields.Remove(rt, tmpl.PropertyAlias, Me)
-                                'b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, rt))
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+                                Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
 
-                                If b Then
-                                    _sortedFields.Remove(rt, tmpl.PropertyAlias, Me)
-                                    RemoveUpdatedFields(rt, tmpl.PropertyAlias)
-                                    Return False
-                                End If
+                                    Dim b As Boolean = _filteredFields.Remove(rt, tmpl.PropertyAlias, Me)
+                                    'b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, rt))
+
+                                    If b Then
+                                        _sortedFields.Remove(rt, tmpl.PropertyAlias, Me)
+                                        RemoveUpdatedFields(rt, tmpl.PropertyAlias)
+                                        Return False
+                                    End If
+                                End Using
                             End If
                         End If
                     Next
                 End If
 
                 If s IsNot Nothing Then
+                    If Not s.CanEvaluate(mpe) Then
+                        Return False
+                    End If
+
                     For Each sort As SortExpression In s
                         For Each ee As IEntityPropertyExpression In GetEntityExpressions(sort)
-                            Dim t As Type = ee.ObjectProperty.Entity.GetRealType(schema)
+                            Dim t As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
                             Dim fields As List(Of String) = Nothing
                             If GetUpdatedFields(t, fields) Then
                                 Dim prop As String = ee.ObjectProperty.PropertyAlias
                                 If fields.Contains(prop) Then
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+                                    Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
+
                                     If _sortedFields.Remove(t, prop, Me) Then
                                         _filteredFields.Remove(t, prop, Me)
                                         'ResetFieldDepends(New Pair(Of String, Type)(prop, t))
                                         RemoveUpdatedFields(t, prop)
                                         Return False
-                                    End If
+                                        End If
+                                    End Using
                                 End If
                             End If
                         Next
@@ -1080,9 +1099,9 @@ Namespace Cache
             Next
 
 #If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+            Using SyncHelper.AcquireDynamicLock_Debug(AddedDeleted,"d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("qoegnq")
+            Using SyncHelper.AcquireDynamicLock(AddedDeleted)
 #End If
                 If addType IsNot Nothing Then
                     _addedTypes(addType) = addType

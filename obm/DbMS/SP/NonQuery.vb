@@ -56,7 +56,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Protected Class NonQueryStoredProcSimple
+        Public Class NonQueryStoredProcSimple
             Inherits NonQueryStoredProcBase
 
             Private _name As String
@@ -141,6 +141,7 @@ Namespace Database.Storedprocs
         Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String)
             'Using New SetManagerHelper(mgr, mgr.GetCreateManager, Nothing)
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing)
+            p.CommandTimeout = mgr.CommandTimeout
             p.GetResult(mgr)
             'End Using
         End Sub
@@ -159,6 +160,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params)
+            p.CommandTimeout = mgr.CommandTimeout
             p.GetResult(mgr)
         End Sub
 
@@ -174,6 +176,7 @@ Namespace Database.Storedprocs
             Dim out As New List(Of OutParam)
             out.Add(New OutParam(outParamName, DbTypeConvertor.ToDbType(GetType(T)), 1000))
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
+            p.CommandTimeout = mgr.CommandTimeout
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return CType(dic(outParamName), T)
         End Function
@@ -193,6 +196,7 @@ Namespace Database.Storedprocs
                 out.Add(New OutParam(pn.Trim, DbTypeConvertor.ToDbType(GetType(Integer)), 1000))
             Next
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
+            p.CommandTimeout = mgr.CommandTimeout
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return dic
         End Function
@@ -203,6 +207,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params, outParams)
+            p.CommandTimeout = mgr.CommandTimeout
             Return CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         End Function
 
@@ -212,6 +217,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params, outParams)
+            'p.CommandTimeout = mgr.CommandTimeout
             Return CType(p.GetResult(crMgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         End Function
 
@@ -222,6 +228,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params, cache, outParams)
+            p.CommandTimeout = mgr.CommandTimeout
             Return CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         End Function
 
@@ -232,6 +239,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim p As New NonQueryStoredProcSimple(name, ss, params, cache, outParams)
+            'p.CommandTimeout = mgr.CommandTimeout
             Return CType(p.GetResult(crMgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         End Function
 
@@ -251,6 +259,7 @@ Namespace Database.Storedprocs
             Dim out As New List(Of OutParam)
             out.Add(New OutParam(outParamName, DbTypeConvertor.ToDbType(GetType(T)), 1000))
             Dim p As New NonQueryStoredProcSimple(name, ss, params, out)
+            p.CommandTimeout = mgr.CommandTimeout
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return CType(dic(outParamName), T)
         End Function

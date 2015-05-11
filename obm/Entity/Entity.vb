@@ -4,6 +4,8 @@ Imports Worm.Query
 Imports System.Collections.Generic
 Imports System.Linq
 
+#Const TraceSetState = False
+
 Namespace Entities
 
     <Serializable()> _
@@ -349,8 +351,14 @@ Namespace Entities
             End Get
         End Property
 
+#If TraceSetState Then
+        Private _setStateStack As String
+#End If
         Protected Sub SetObjectStateClear(ByVal value As ObjectState) Implements _IEntity.SetObjectStateClear
             _state = value
+#If TraceSetState Then
+            _setStateStack = Environment.StackTrace
+#End If
         End Sub
 
         Protected Overridable Sub SetObjectState(ByVal value As ObjectState) Implements _IEntity.SetObjectState
@@ -364,7 +372,7 @@ Namespace Entities
                 End If
 
                 Dim olds As ObjectState = _state
-                _state = value
+                SetObjectStateClear(value)
                 'Debug.Assert(_state = value)
 
 #If DEBUG Then
