@@ -130,10 +130,24 @@ Namespace Database.Storedprocs
             End Function
         End Class
 
+        Public Shared Function GetManager(cm As ICreateManager, ctx As Object) As IGetManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            If mgr Is Nothing Then
+                If cm IsNot Nothing Then
+                    Return New GetManagerDisposable(cm.CreateManager(ctx), Nothing)
+                Else
+                    Return Nothing
+                End If
+            Else
+                'don't dispose
+                Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            End If
+        End Function
+
         Public Shared Sub Exec(ByVal getMgr As ICreateManager, ByVal name As String)
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Exec(mgr, name)
+            Using gm = GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Exec(CType(gm.Manager, OrmReadOnlyDBManager), name)
                 End Using
             End Using
         End Sub
@@ -147,9 +161,9 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Shared Sub Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Exec(mgr, name, paramNames, params)
+            Using gm = GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Exec(CType(gm.Manager, OrmReadOnlyDBManager), name, paramNames, params)
                 End Using
             End Using
         End Sub
@@ -165,9 +179,9 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParamName As String) As T
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return Exec(Of T)(mgr, name, outParamName)
+            Using gm = GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return Exec(Of T)(CType(gm.Manager, OrmReadOnlyDBManager), name, outParamName)
                 End Using
             End Using
         End Function
@@ -182,9 +196,9 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParams As String) As Dictionary(Of String, Object)
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return Exec(mgr, name, outParams)
+            Using gm = GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return Exec(CType(gm.Manager, OrmReadOnlyDBManager), name, outParams)
                 End Using
             End Using
         End Function
@@ -244,9 +258,9 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(Of T)(ByVal getMgr As ICreateManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return Exec(Of T)(mgr, name, outParamName, paramNames, params)
+            Using gm = GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return Exec(Of T)(CType(gm.Manager, OrmReadOnlyDBManager), name, outParamName, paramNames, params)
                 End Using
             End Using
         End Function

@@ -517,7 +517,8 @@ l1:
                         pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, o.GetEntitySchema(_mgr.MappingEngine)), ICachedEntity))
                         pp.Second.SetObjectState(o.ObjectState)
                         copies.Add(pp)
-                    ElseIf o.ObjectState = ObjectState.None Then
+                    ElseIf (o.ObjectState = ObjectState.None OrElse o.ObjectState = ObjectState.NotLoaded) Then
+                        saved.Add(New Pair(Of ObjectState, _ICachedEntity)(o.ObjectState, o))
                         Continue For
                     End If
 

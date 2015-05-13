@@ -494,25 +494,37 @@ Namespace Misc
         Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
             Return FindElements(mgr, False, sort)
         End Function
-
+        Protected Function GetManager(cm As ICreateManager) As IGetManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            If mgr Is Nothing Then
+                If cm IsNot Nothing Then
+                    Return New GetManagerDisposable(cm.CreateManager(Me), Nothing)
+                Else
+                    Return Nothing
+                End If
+            Else
+                'don't dispose
+                Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            End If
+        End Function
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager, ByVal sort As OrderByClause) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Return FindElements(mgr, False, sort)
+            Using gm = GetManager(getMgr)
+                Return FindElements(gm.Manager, False, sort)
             End Using
         End Function
 
         Public Overloads Function FindElements(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Return FindElements(mgr, False, Nothing)
+            Using gm = GetManager(getMgr)
+                Return FindElements(gm.Manager, False, Nothing)
             End Using
         End Function
 
         Public Function FindElementsLoadOnlyNames(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             _getMgr = getMgr
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Return FindElements(mgr, True, Nothing)
+            Using gm = GetManager(getMgr)
+                Return FindElements(gm.Manager, True, Nothing)
             End Using
         End Function
 
