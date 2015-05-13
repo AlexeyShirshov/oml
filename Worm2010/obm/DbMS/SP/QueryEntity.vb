@@ -83,9 +83,9 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shadows Function GetResult(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return GetResult(CType(mgr, OrmReadOnlyDBManager))
+            Using gm = NonQueryStoredProcBase.GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return GetResult(CType(gm.Manager, OrmReadOnlyDBManager))
                 End Using
             End Using
         End Function

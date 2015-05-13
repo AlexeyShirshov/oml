@@ -31,9 +31,9 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Shadows Function GetResult(ByVal getMgr As ICreateManager) As T
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Me), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return GetResult(mgr)
+            Using gm = NonQueryStoredProcBase.GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return GetResult(CType(gm.Manager, OrmReadOnlyDBManager))
                 End Using
             End Using
         End Function
@@ -110,9 +110,9 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Shadows Function Exec(ByVal getMgr As ICreateManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Using mgr As OrmReadOnlyDBManager = CType(getMgr.CreateManager(Nothing), OrmReadOnlyDBManager)
-                Using New SetManagerHelper(mgr, getMgr, Nothing)
-                    Return Exec(mgr, name, paramNames, params)
+            Using gm = NonQueryStoredProcBase.GetManager(getMgr, Nothing)
+                Using New SetManagerHelper(gm.Manager, getMgr, Nothing)
+                    Return Exec(CType(gm.Manager, OrmReadOnlyDBManager), name, paramNames, params)
                 End Using
             End Using
         End Function

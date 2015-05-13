@@ -85,20 +85,20 @@ Public MustInherit Class DataContextBase
     End Function
 
     Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T Implements IDataContext.GetByID
-        Using mgr As OrmManager = CreateOrmManager()
+        Using gm = GetManager()
 
             Dim o As ISinglePKEntity = Nothing
 
             Select Case options
                 Case GetByIDOptions.EnsureExistsInStore
-                    o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
+                    o = gm.Manager.GetKeyEntityFromCacheOrDB(Of T)(id)
                     If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
                         o = Nothing
                     End If
                 Case GetByIDOptions.GetAsIs
-                    o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(Of T)(id)
                 Case GetByIDOptions.EnsureLoadedFromStore
-                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
+                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
                     If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
                         o = Nothing
                     End If
@@ -147,7 +147,7 @@ Public MustInherit Class DataContextBase
                 ByVal ids As IEnumerable(Of Object), _
                 ByVal options As GetByIDOptions) As ReadOnlyList(Of T) Implements IDataContext.GetByIds
 
-        Using mgr As OrmManager = CreateOrmManager()
+        Using gm = GetManager()
 
             Dim ro As New ReadOnlyList(Of T)
             Dim list As IListEdit = ro
@@ -156,24 +156,24 @@ Public MustInherit Class DataContextBase
             Select Case options
                 Case GetByIDOptions.GetAsIs
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, mgr)
+                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
                     End If
                 Case GetByIDOptions.EnsureExistsInStore
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, mgr)
+                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
                     End If
-                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, False, mgr), ReadOnlyList(Of T))
+                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, False, gm.Manager), ReadOnlyList(Of T))
                 Case GetByIDOptions.EnsureLoadedFromStore
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, mgr)
+                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
                     End If
-                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, True, mgr), ReadOnlyList(Of T))
+                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, True, gm.Manager), ReadOnlyList(Of T))
                 Case Else
                     Throw New NotImplementedException
             End Select
@@ -203,14 +203,14 @@ Public MustInherit Class DataContextBase
         Dim tp As Type = GetType(T)
         Dim o As ISinglePKEntity = Nothing
 
-        Using mgr As OrmManager = CreateOrmManager()
+        Using gm = GetManager()
             Select Case options
                 Case GetByIDOptions.EnsureExistsInStore
-                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
+                    o = gm.Manager.GetKeyEntityFromCacheOrDB(id, tp)
                 Case GetByIDOptions.GetAsIs
-                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
+                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(id, tp)
                 Case GetByIDOptions.EnsureLoadedFromStore
-                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(id, tp)
                 Case Else
                     Throw New NotImplementedException
             End Select
@@ -258,6 +258,16 @@ Public MustInherit Class DataContextBase
             End If
         End Try
         Return mgr
+    End Function
+
+    Protected Function GetManager() As IGetManager
+        Dim mgr As OrmManager = OrmManager.CurrentManager
+        If mgr Is Nothing Then
+            Return New GetManagerDisposable(CreateOrmManager(),nothing)
+        Else
+            'don't dispose
+            Return New ManagerWrapper(mgr, mgr.MappingEngine)
+        End If
     End Function
 
     Public Event CreateManagerEvent(sender As ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements ICreateManager.CreateManagerEvent

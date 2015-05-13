@@ -670,13 +670,9 @@ Namespace Query
                 Next
             End If
 
-            If CreateManager Is Nothing Then
-                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, OrmManager.CurrentManager.Cache)
-            Else
-                Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                    need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, mgr.Cache)
-                End Using
-            End If
+            Using gm = GetManager(_getMgr)
+                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, gm.Manager.Cache)
+            End Using
 
             If need2Load Then
                 Return ToEntityList(Of T)()
@@ -929,9 +925,9 @@ Namespace Query
         Public Function GetMappingEngine() As ObjectMappingEngine
             If SpecificMappingEngine IsNot Nothing Then
                 Return SpecificMappingEngine
-            ElseIf CreateManager IsNot Nothing Then
-                Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                    Return mgr.MappingEngine
+            ElseIf _getMgr IsNot Nothing Then
+                Using gm = GetManager(_getMgr)
+                    Return gm.Manager.MappingEngine
                 End Using
             Else
                 Throw New QueryCmdException("OrmManager required", Me)
@@ -3427,6 +3423,46 @@ l1:
         '    Return e
         'End Function
 
+        Protected Friend Function GetManager() As IGetManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            If mgr Is Nothing Then
+                If _getMgr IsNot Nothing Then
+                    Return New GetManagerDisposable(_getMgr.CreateManager(Me), _schema)
+                Else
+                    Return Nothing
+                End If
+            Else
+                'don't dispose
+                Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            End If
+        End Function
+        Protected Function GetManager(cm As ICreateManager) As IGetManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            If mgr Is Nothing Then
+                If cm IsNot Nothing Then
+                    Return New GetManagerDisposable(cm.CreateManager(Me), _schema)
+                Else
+                    Return Nothing
+                End If
+            Else
+                'don't dispose
+                Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            End If
+        End Function
+
+        Protected Function GetManager(cm As CreateManagerDelegate) As IGetManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            If mgr Is Nothing Then
+                If cm IsNot Nothing Then
+                    Return New GetManagerDisposable(cm(), _schema)
+                Else
+                    Return Nothing
+                End If
+            Else
+                'don't dispose
+                Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            End If
+        End Function
 #Region " ToLists "
 
         Public Function ToMatrix() As ReadonlyMatrix
@@ -3437,9 +3473,9 @@ l1:
         End Function
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToMatrix(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToMatrix(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3450,9 +3486,9 @@ l1:
 
 #Region " ToList "
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToBaseEntity(Of T)(mgr, withLoad)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToBaseEntity(Of T)(gm.Manager, withLoad)
                 End Using
             End Using
         End Function
@@ -3542,9 +3578,9 @@ l1:
         End Function
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToList(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToList(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3562,9 +3598,9 @@ l1:
         End Function
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToList(Of CreateType, ReturnType)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToList(Of CreateType, ReturnType)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3582,9 +3618,9 @@ l1:
         End Function
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToList(Of CreateReturnType)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToList(Of CreateReturnType)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3609,9 +3645,9 @@ l1:
         End Function
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToAnonymList(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToAnonymList(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3629,22 +3665,17 @@ l1:
 #Region " ToEntityList "
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
-            Dim mgr As OrmManager = getMgr()
-            Try
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToEntityList(Of T)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToEntityList(Of T)(gm.Manager)
                 End Using
-            Finally
-                If mgr IsNot Nothing Then
-                    mgr.Dispose()
-                End If
-            End Try
+            End Using
         End Function
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToEntityList(Of T)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToEntityList(Of T)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3674,7 +3705,7 @@ l1:
         End Function
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
-            'Using mgr As OrmManager = getMgr.CreateManager(Me)
+            'Using gm = GetManager(getMgr)
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
             '    Return ToOrmList(Of T)(mgr)
@@ -3683,9 +3714,9 @@ l1:
         End Function
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
-            Using mgr As OrmManager = getMgr()
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToOrmListDyn(Of T)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToOrmListDyn(Of T)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3703,7 +3734,7 @@ l1:
         End Function
 
         Public Function ToOrmList(Of CreateType As {New, _ISinglePKEntity}, ReturnType As _ISinglePKEntity)(ByVal getMgr As ICreateManager) As ReadOnlyList(Of ReturnType)
-            'Using mgr As OrmManager = getMgr.CreateManager(Me)
+            'Using gm = GetManager(getMgr)
             '    mgr.RaiseObjectCreation = True
             '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
             '    Return ToOrmList(Of CreateType, ReturnType)(mgr)
@@ -3739,9 +3770,9 @@ l1:
         End Function
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return GetExecutor(gm.Manager).ExecSimple(Of T)(gm.Manager, Me)
                 End Using
             End Using
         End Function
@@ -3767,7 +3798,7 @@ l1:
         'End Function
 
         'Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
-        '    Using mgr As OrmManager = getMgr.CreateManager(Me)
+        '    Using gm = GetManager(getMgr)
         '        'mgr.RaiseObjectCreation = True
         '        AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
         '        Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
@@ -3814,9 +3845,9 @@ l1:
         End Function
 
         Public Function Count(ByVal getMgr As ICreateManager) As Integer
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return Count(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return Count(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3868,9 +3899,9 @@ l1:
         End Function
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToDictionary(Of TKey, TValue)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToDictionary(Of TKey, TValue)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3903,9 +3934,9 @@ l1:
         End Function
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToSimpleDictionary(Of TKey, TValue)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToSimpleDictionary(Of TKey, TValue)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3919,9 +3950,9 @@ l1:
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return ToObjectList(Of T)(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToObjectList(Of T)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -3943,9 +3974,9 @@ l1:
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
 
-            Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
-                    Return ToPOCOList(Of T)(mgr)
+            Using gm = GetManager(_getMgr)
+                Using New SetManagerHelper(gm.Manager, CreateManager, _schema, ContextInfo)
+                    Return ToPOCOList(Of T)(gm.Manager)
                 End Using
             End Using
         End Function
@@ -4862,8 +4893,8 @@ l1:
             If _getMgr Is Nothing Then
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
-            Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                GetExecutor(mgr).ClearCache(mgr, Me)
+            Using gm = GetManager(_getMgr)
+                GetExecutor(gm.Manager).ClearCache(gm.Manager, Me)
             End Using
         End Sub
 
@@ -4872,8 +4903,8 @@ l1:
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
 
-            Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                GetExecutor(mgr).RenewCache(mgr, Me, v)
+            Using gm = GetManager(_getMgr)
+                GetExecutor(gm.Manager).RenewCache(gm.Manager, Me, v)
             End Using
         End Sub
 
@@ -4883,8 +4914,8 @@ l1:
                     Throw New QueryCmdException("OrmManager required", Me)
                 End If
 
-                Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                    Return GetExecutor(mgr).IsInCache(mgr, Me)
+                Using gm = GetManager(_getMgr)
+                    Return GetExecutor(gm.Manager).IsInCache(gm.Manager, Me)
                 End Using
             End Get
         End Property
@@ -4898,8 +4929,8 @@ l1:
         End Sub
 
         Public Sub ResetObjects(ByVal getMgr As ICreateManager)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                ResetObjects(mgr)
+            Using gm = GetManager(getMgr)
+                ResetObjects(gm.Manager)
             End Using
         End Sub
 
@@ -5412,14 +5443,9 @@ l1:
 
 #Region " GetByID "
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
-            If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                    Return GetByID(Of T)(id, options, mgr)
-                End Using
-            Else
-                Throw New QueryCmdException("Manager is required", Me)
-            End If
-
+            Using gm = GetManager(_getMgr)
+                Return GetByID(Of T)(id, options, gm.Manager)
+            End Using
         End Function
 
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object) As T
@@ -5640,13 +5666,9 @@ l1:
                             ByVal ids As IEnumerable(Of Object), _
                             ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
-            If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                    Return GetByIds(Of T)(ids, options, mgr)
-                End Using
-            Else
-                Throw New QueryCmdException("Manager is required", Me)
-            End If
+            Using gm = GetManager(_getMgr)
+                Return GetByIds(Of T)(ids, options, gm.Manager)
+            End Using
 
         End Function
 
@@ -5677,14 +5699,9 @@ l1:
         End Function
 
         Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
-            If _getMgr IsNot Nothing Then
-                Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                    Return GetByIDDyn(Of T)(id, options, mgr)
-                End Using
-            Else
-                Throw New QueryCmdException("Manager is required", Me)
-            End If
-
+            Using gm = GetManager(_getMgr)
+                Return GetByIDDyn(Of T)(id, options, gm.Manager)
+            End Using
         End Function
 
         Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object) As T
@@ -5772,9 +5789,9 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return BuildDictionary(Of T)(mgr, level)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return BuildDictionary(Of T)(gm.Manager, level)
                 End Using
             End Using
         End Function
@@ -5796,18 +5813,18 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return BuildDictionary(Of T)(mgr, propertyAlias, level)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return BuildDictionary(Of T)(gm.Manager, propertyAlias, level)
                 End Using
             End Using
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, _
             ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, _schema, ContextInfo)
-                    Return BuildDictionary(Of T)(mgr, propertyAlias, secondPropertyAlias, level)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return BuildDictionary(Of T)(gm.Manager, propertyAlias, secondPropertyAlias, level)
                 End Using
             End Using
         End Function
@@ -6029,12 +6046,8 @@ l1:
         End Function
 
         Public Sub SetCache(ByVal l As ICollection)
-            If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
-            End If
-
-            Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                SetCache(mgr, l)
+            Using gm = GetManager(_getMgr)
+                SetCache(gm.Manager, l)
             End Using
         End Sub
 

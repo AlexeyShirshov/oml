@@ -616,8 +616,8 @@ l1:
                 If schema Is Nothing Then
                     schema = m2mObject.GetMappingEngine
                     If schema Is Nothing AndAlso _getMgr IsNot Nothing Then
-                        Using mgr As OrmManager = _getMgr.CreateManager(Me)
-                            schema = mgr.MappingEngine
+                        Using gm = GetManager(_getMgr)
+                            schema = gm.Manager.MappingEngine
                         End Using
                     End If
 
@@ -710,9 +710,9 @@ l1:
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine, ContextInfo)
-                    LoadObjects(mgr)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, SpecificMappingEngine, ContextInfo)
+                    LoadObjects(gm.Manager)
                 End Using
             End Using
         End Sub
@@ -747,9 +747,9 @@ l1:
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
-            Using mgr As OrmManager = getMgr.CreateManager(Me)
-                Using New SetManagerHelper(mgr, getMgr, SpecificMappingEngine, ContextInfo)
-                    LoadObjects(mgr, start, length)
+            Using gm = GetManager(getMgr)
+                Using New SetManagerHelper(gm.Manager, getMgr, SpecificMappingEngine, ContextInfo)
+                    LoadObjects(gm.Manager, start, length)
                 End Using
             End Using
         End Sub
@@ -900,12 +900,8 @@ l1:
         End Sub
 
         Public Sub Reject()
-            If CreateManager Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
-            End If
-
-            Using mgr As OrmManager = CreateManager.CreateManager(Me)
-                Reject(mgr)
+            Using gm = GetManager(_getMgr)
+                Reject(gm.Manager)
             End Using
         End Sub
 
