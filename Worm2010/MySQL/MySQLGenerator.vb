@@ -6,14 +6,21 @@ Imports Worm.Expressions2
 
 Public Class MySQLGenerator
     Inherits DbGenerator
+
     'Implements ITopStatement
 
     Public Overrides Function CreateCommandBuilder(da As System.Data.Common.DbDataAdapter) As System.Data.Common.DbCommandBuilder
         Return New MySqlCommandBuilder(CType(da, MySqlDataAdapter))
     End Function
 
-    Public Overrides Function CreateConnection(connectionString As String) As System.Data.Common.DbConnection
-        Return New MySqlConnection(connectionString)
+    Public Overrides Function CreateConnection(connectionString As String, info As InfoMessageDelagate) As System.Data.Common.DbConnection
+        Dim conn As New MySqlConnection(connectionString)
+        If info IsNot Nothing Then
+            AddHandler conn.InfoMessage, Sub(s, e)
+                                             info(e)
+                                         End Sub
+        End If
+        Return conn
     End Function
 
     Public Overrides Function CreateDataAdapter() As System.Data.Common.DbDataAdapter
@@ -187,4 +194,50 @@ Public Class MySQLGenerator
             sb.AppendFormat(stmt, q.TopParam.Count, off)
         End If
     End Sub
+
+    Public Overrides Function GetLockCommand(pmgr As ICreateParam, name As String,
+                                             Optional lockTimeout As Integer? = Nothing,
+                                             Optional lockType As LockTypeEnum = Database.LockTypeEnum.Exclusive) As Common.DbCommand
+        Dim cmd = CreateDBCommand()
+        cmd.CommandType = CommandType.Text
+
+        Dim nameParam = pmgr.AddParam("name", name)
+
+        Dim lt = -1
+        If lockTimeout.HasValue Then
+            lt = lockTimeout.Value
+        End If
+        Dim timeoutParam = pmgr.AddParam("timeout", lt)
+
+        cmd.CommandText = String.Format("select getlock({0},{1})", nameParam, timeoutParam)
+
+        'cmd.Parameters.Add(CreateDBParameter(nameParam, name))
+        'cmd.Parameters.Add(CreateDBParameter(timeoutParam, lt))
+
+        Return cmd
+    End Function
+
+    Public Overrides Function ReleaseLockCommand(pmgr As ICreateParam, name As String) As Common.DbCommand
+        Dim cmd = CreateDBCommand()
+        cmd.CommandType = CommandType.Text
+        Dim nameParam = pmgr.AddParam("name", name)
+        cmd.CommandText = String.Format("select release_lock({0})", nameParam)
+
+        'cmd.Parameters.Add(CreateDBParameter(nameParam, name))
+
+        Return cmd
+    End Function
+
+    Public Overrides Function TestLockError(v As Object) As Boolean
+        If v Is Nothing OrElse v Is DBNull.Value Then
+            Return True
+        End If
+
+        Dim r As Integer
+        If Not Integer.TryParse(v.ToString, r) OrElse r < 0 Then
+            Return True
+        End If
+
+        Return False
+    End Function
 End Class

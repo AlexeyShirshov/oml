@@ -181,6 +181,7 @@
     <Compile Include="DbMS\SP\QueryEntity.vb" />
     <Compile Include="DbMS\SP\QuerySP.vb" />
     <Compile Include="DbMS\SP\SPBase.vb" />
+    <Compile Include="Managers\db\AppLockManager.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
     <Compile Include="Managers\db\ModificationsTracker.vb" />
@@ -332,7 +333,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

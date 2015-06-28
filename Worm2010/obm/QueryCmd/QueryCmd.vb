@@ -572,6 +572,9 @@ Namespace Query
         Private _rsCnt As Integer = 0
         Private _exec As IExecutor
 
+        '<NonSerialized>
+        Friend _messages As EventArgs
+
         Private _oldStart As Integer
         Private _oldLength As Integer
         Private _oldRev As Boolean
@@ -594,6 +597,11 @@ Namespace Query
         Friend _stypes As Dictionary(Of EntityUnion, Object)
 #End Region
 
+        Public ReadOnly Property Messages As EventArgs
+            Get
+                Return _messages
+            End Get
+        End Property
         Public Function Include(ByVal propertyPath As String) As QueryCmd
             Dim mpe As ObjectMappingEngine = Nothing
             Dim t As Type = Nothing

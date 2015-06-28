@@ -9,9 +9,9 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface ICreateParam
-        Function CreateParam(ByVal value As Object) As String
+        Function CreateParam(ByVal value As Object, Optional pname As String = Nothing) As String
         Function AddParam(ByVal pname As String, ByVal value As Object) As String
-        ReadOnly Property NamedParams() As Boolean
+        Property NamedParams() As Boolean
         ReadOnly Property Params() As IList(Of System.Data.Common.DbParameter)
         Function GetParameter(ByVal name As String) As System.Data.Common.DbParameter
     End Interface

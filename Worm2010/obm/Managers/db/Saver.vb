@@ -152,8 +152,10 @@ Namespace Database
         Public Event ObjectRejecting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
         Public Event ObjectRejected(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inLockList As Boolean)
         Public Event ObjectRestored(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event Commiting(ByVal sender As ObjectListSaver, commit As Boolean)
         Public Event SaveSuccessed(ByVal sender As ObjectListSaver)
         Public Event SaveFailed(ByVal sender As ObjectListSaver)
+        Public Event SaveCompleted(ByVal sender As ObjectListSaver)
         Public Event BeginRejecting(ByVal sender As ObjectListSaver)
         Public Event BeginAccepting(ByVal sender As ObjectListSaver)
         Public Event OnAdded(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal added As Boolean)
@@ -585,6 +587,7 @@ l1:
                 Try
                     If _error Then
                         If Not hasTransaction Then
+                            RaiseEvent Commiting(Me, False)
                             _mgr.Rollback()
                         End If
 
@@ -593,6 +596,7 @@ l1:
                         RaiseEvent SaveFailed(Me)
                     Else
                         If Not hasTransaction Then
+                            RaiseEvent Commiting(Me, True)
                             _mgr.Commit()
                             _commited = True
                         End If
@@ -657,6 +661,8 @@ l1:
                         Next
                         _lockList.Remove(o)
                     Loop
+
+                    RaiseEvent SaveCompleted(Me)
                 End Try
             End Try
             'End Using

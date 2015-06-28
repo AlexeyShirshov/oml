@@ -340,9 +340,14 @@ Namespace Query.Database
 
             Dim connHandler As OrmReadOnlyDBManager.ConnectionExceptionEventHandler = Nothing
             Dim cmdHandler As OrmReadOnlyDBManager.CommandExceptionEventHandler = Nothing
+            Dim addInfo = Sub(s As OrmReadOnlyDBManager, args As EventArgs)
+                              query._messages = args
+                          End Sub
             Try
                 connHandler = SubscribeToConnectionEvents(query, dbm)
                 cmdHandler = SubscribeCommandToEvents(query, dbm)
+
+                AddHandler dbm.InfoMessage, addInfo
 
                 Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
@@ -356,6 +361,8 @@ Namespace Query.Database
 
                 Return res
             Finally
+                RemoveHandler dbm.InfoMessage, addInfo
+
                 UnsubscribeFromCommandEvents(dbm, cmdHandler)
                 UnsubscribeFromConnectionEvents(dbm, connHandler)
             End Try
