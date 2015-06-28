@@ -165,8 +165,14 @@ Namespace Database
             Return New SqlCommandBuilder(CType(da, SqlDataAdapter))
         End Function
 
-        Public Overrides Function CreateConnection(ByVal connectionString As String) As System.Data.Common.DbConnection
-            Return New SqlConnection(connectionString)
+        Public Overrides Function CreateConnection(ByVal connectionString As String, info As InfoMessageDelagate) As System.Data.Common.DbConnection
+            Dim conn As New SqlConnection(connectionString)
+            If info IsNot Nothing Then
+                AddHandler conn.InfoMessage, Sub(s, e)
+                                                 info(e)
+                                             End Sub
+            End If
+            Return conn
         End Function
 
 #End Region
@@ -1084,6 +1090,18 @@ Namespace Database
                 Case Else
                     Throw New NotImplementedException(t.ToString)
             End Select
+        End Function
+
+        Public Overrides Function GetLockCommand(pmgr As ICreateParam, name As String, Optional lockTimeout As Integer? = Nothing, Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive) As Data.Common.DbCommand
+            Throw New NotImplementedException
+        End Function
+
+        Public Overrides Function ReleaseLockCommand(pmgr As ICreateParam, name As String) As Data.Common.DbCommand
+            Throw New NotImplementedException
+        End Function
+
+        Public Overrides Function TestLockError(v As Object) As Boolean
+            Throw New NotImplementedException
         End Function
     End Class
 

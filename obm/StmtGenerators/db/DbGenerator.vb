@@ -11,8 +11,25 @@ Imports Worm.Criteria.Values
 Imports Worm.Criteria
 
 Namespace Database
+
+    Public Enum LockTypeEnum
+        [Shared]
+        Update
+        IntentShared
+        IntentExclusive
+        Exclusive
+    End Enum
+
     Public MustInherit Class DbGenerator
         Inherits StmtGenerator
+
+        Public Delegate Sub InfoMessageDelagate(args As EventArgs)
+
+        Public MustOverride Function TestLockError(v As Object) As Boolean
+        Public MustOverride Function GetLockCommand(pmgr As ICreateParam, name As String,
+                                                    Optional lockTimeout As Integer? = Nothing,
+                                                    Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive) As System.Data.Common.DbCommand
+        Public MustOverride Function ReleaseLockCommand(pmgr As ICreateParam, name As String) As System.Data.Common.DbCommand
 
         Public Overridable Function SupportMultiline() As Boolean
             Return False
@@ -1534,7 +1551,7 @@ l1:
 
         Public MustOverride Function CreateCommandBuilder(ByVal da As System.Data.Common.DbDataAdapter) As System.Data.Common.DbCommandBuilder
 
-        Public MustOverride Function CreateConnection(ByVal connectionString As String) As System.Data.Common.DbConnection
+        Public MustOverride Function CreateConnection(ByVal connectionString As String, info As InfoMessageDelagate) As System.Data.Common.DbConnection
 
 #End Region
 

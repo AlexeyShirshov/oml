@@ -19,41 +19,29 @@ Namespace Database
 
         ', ByVal mpe As ObjectMappingEngine
         Public Function AddParam(ByVal pname As String, ByVal value As Object) As String Implements ICreateParam.AddParam
-            If NamedParams Then
-                Dim p As System.Data.Common.DbParameter = GetParameter(pname)
-                If p Is Nothing Then
-                    Return CreateParam(value)
-                Else
-                    If p.Value Is Nothing OrElse p.Value.Equals(value) Then
-                        Return pname
-                        'ElseIf ObjectMappingEngine.IsEntityType(value.GetType, mpe) Then
-                        '    Dim rpk As Object = Nothing
-                        '    If GetType(IKeyEntity).IsAssignableFrom(value.GetType) Then
-                        '        rpk = CType(value, IKeyEntity).Identifier
-                        '    ElseIf GetType(ICachedEntity).IsAssignableFrom(value.GetType) Then
-                        '        Dim pk() As PKDesc = CType(value, ICachedEntity).GetPKValues
-                        '        If pk.Length > 1 Then
-                        '            Throw New NotSupportedException
-                        '        End If
-                        '        rpk = pk(0).Value
-                        '    Else
-                        '        Dim pk As IList(Of EntityPropertyAttribute) = mpe.GetPrimaryKeys(value.GetType)
-                        '    End If
-                    Else
-                        Return CreateParam(value)
-                    End If
-                End If
+            Dim p As System.Data.Common.DbParameter = GetParameter(pname)
+            If p Is Nothing Then
+                Return CreateParam(value, pname)
             Else
-                Return CreateParam(value)
+                If p.Value Is Nothing OrElse p.Value.Equals(value) Then
+
+                Else
+                    p.Value = value
+                End If
+
+                Return pname
             End If
         End Function
 
-        Public Function CreateParam(ByVal value As Object) As String Implements ICreateParam.CreateParam
+        Public Function CreateParam(ByVal value As Object, Optional pname As String = Nothing) As String Implements ICreateParam.CreateParam
             If _stmt Is Nothing Then
                 Throw New InvalidOperationException("Object must be created")
             End If
 
-            Dim pname As String = _stmt.ParamName(_prefix, _params.Count + 1)
+            If String.IsNullOrEmpty(pname) OrElse Not NamedParams Then
+                pname = _stmt.ParamName(_prefix, _params.Count + 1)
+            End If
+
             _params.Add(_stmt.CreateDBParameter(pname, value))
             Return pname
         End Function
@@ -90,10 +78,13 @@ Namespace Database
         '    End Get
         'End Property
 
-        Public ReadOnly Property NamedParams() As Boolean Implements ICreateParam.NamedParams
+        Public Property NamedParams() As Boolean Implements ICreateParam.NamedParams
             Get
                 Return _named_params
             End Get
+            Set(value As Boolean)
+                _named_params = value
+            End Set
         End Property
 
         Public Sub AppendParams(ByVal collection As System.Data.Common.DbParameterCollection)

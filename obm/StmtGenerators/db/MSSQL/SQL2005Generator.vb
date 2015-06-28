@@ -5,6 +5,7 @@ Imports Worm.Expressions2
 Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Query.Database
+Imports System.Data
 
 Namespace Database
 
@@ -262,7 +263,50 @@ Namespace Database
         '        Dim p As Data.Common.DbParameter = CreateDBParameter("@" & c.FieldName, Convert.ChangeType(Nothing, GetFieldTypeByName(type, c.FieldName)))
         '        p.DbType.
         '    End Function
+        Public Overrides Function GetLockCommand(pmgr As ICreateParam, name As String,
+                                                 Optional lockTimeout As Integer? = Nothing, Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive) As Data.Common.DbCommand
+            Dim cmd = CreateDBCommand()
+            cmd.CommandType = CommandType.StoredProcedure
 
+            cmd.CommandText = "sp_getapplock"
+
+            pmgr.AddParam("Resource", name)
+            pmgr.AddParam("LockMode", lockType.ToString)
+
+            If lockTimeout.HasValue Then
+                pmgr.AddParam("LockTimeout", lockTimeout.Value)
+            End If
+
+            Dim retval = pmgr.GetParameter(pmgr.CreateParam(Nothing, "returnval"))
+            retval.Direction = Data.ParameterDirection.ReturnValue
+            retval.DbType = Data.DbType.Int32
+
+            Return cmd
+        End Function
+
+        Public Overrides Function ReleaseLockCommand(pmgr As ICreateParam, name As String) As Common.DbCommand
+            Dim cmd = CreateDBCommand()
+            cmd.CommandType = CommandType.StoredProcedure
+
+            cmd.CommandText = "sp_releaseapplock"
+
+            pmgr.AddParam("Resource", name)
+
+            Return cmd
+        End Function
+
+        Public Overrides Function TestLockError(v As Object) As Boolean
+            If v Is Nothing OrElse v Is DBNull.Value Then
+                Return True
+            End If
+
+            Dim r As Integer
+            If Not Integer.TryParse(v.ToString, r) OrElse r = 999 Then
+                Return True
+            End If
+
+            Return False
+        End Function
     End Class
 
 End Namespace

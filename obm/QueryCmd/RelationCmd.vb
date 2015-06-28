@@ -809,9 +809,14 @@ l1:
 
         Public Sub Add(ByVal o As ICachedEntity)
             If o IsNot Nothing Then
+                Dim mpe As ObjectMappingEngine = o.GetMappingEngine()
+                Dim t = Relation.Relation.Entity.GetRealType(mpe)
+                If Not t.IsAssignableFrom(o.GetType) Then
+                    Throw New ArgumentException(String.Format("Relation of type {0} can not contain {1}", t, o.GetType))
+                End If
+
                 Relation.Host.Add(o, Relation)
                 If Not IsM2M Then
-                    Dim mpe As ObjectMappingEngine = o.GetMappingEngine()
                     If mpe Is Nothing Then
                         mpe = Relation.Host.GetMappingEngine
                     End If

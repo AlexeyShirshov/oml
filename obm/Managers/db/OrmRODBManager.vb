@@ -451,6 +451,7 @@ Namespace Database
 
         Public Event ConnectionException(sender As OrmReadOnlyDBManager, args As ConnectionExceptionArgs)
         Public Event CommandException(sender As OrmReadOnlyDBManager, args As CommandExceptionArgs)
+        Public Event InfoMessage(sender As OrmReadOnlyDBManager, args As EventArgs)
 
         Public Sub New(ByVal createConnection As Func(Of Data.Common.DbConnection), ByVal mpe As ObjectMappingEngine, ByVal generator As DbGenerator, ByVal cache As CacheBase)
             MyBase.New(cache, mpe)
@@ -542,7 +543,9 @@ l1:
             If _createConn IsNot Nothing Then
                 Return _createConn()
             Else
-                Return SQLGenerator.CreateConnection(_connStr)
+                Return SQLGenerator.CreateConnection(_connStr, Sub(e)
+                                                                   RaiseEvent InfoMessage(Me, e)
+                                                               End Sub)
             End If
         End Function
 
@@ -4007,6 +4010,89 @@ l2:
                     CloseConn(b)
                 End Try
             End Using
+        End Function
+
+        Public Function AquireAppLock(name As String,
+                                      Optional lockTimeout As Integer? = Nothing,
+                                      Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive,
+                                      Optional throwOnAquireError As Boolean = True) As Integer?
+            Dim params As New ParamMgr(SQLGenerator, "p")
+            params.NamedParams = True
+
+            Using cmd As System.Data.Common.DbCommand = SQLGenerator.GetLockCommand(params, name, lockTimeout, lockType)
+                params.AppendParams(cmd.Parameters)
+
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    If cmd.CommandType = Data.CommandType.StoredProcedure Then
+                        cmd.ExecuteNonQuery()
+                        For Each retval As System.Data.Common.DbParameter In cmd.Parameters
+                            If retval.Direction = Data.ParameterDirection.ReturnValue Then
+                                If throwOnAquireError AndAlso SQLGenerator.TestLockError(retval.Value) Then
+                                    Throw New OrmManagerException(String.Format("Error during aquire app lock {0}. Result {1}", name, retval.Value))
+                                End If
+
+                                If retval.Value Is DBNull.Value OrElse retval.Value Is Nothing Then
+                                    Return Nothing
+                                Else
+                                    Dim r = CInt(retval.Value)
+
+                                    Return r
+                                End If
+                            End If
+                        Next
+                    ElseIf cmd.CommandType = Data.CommandType.Text Then
+                        Dim v = cmd.ExecuteScalar()
+
+                        If throwOnAquireError AndAlso SQLGenerator.TestLockError(v) Then
+                            Throw New OrmManagerException(String.Format("Error during aquire app lock {0}. Result {1}", name, v))
+                        End If
+
+                        If v Is DBNull.Value OrElse v Is Nothing Then
+                            Return Nothing
+                        Else
+                            Return CInt(v)
+                        End If
+                    End If
+
+                Finally
+                    CloseConn(b)
+                End Try
+            End Using
+        End Function
+
+        Public Function ReleaseAppLock(name As String) As Integer?
+            Dim params As New ParamMgr(SQLGenerator, "p")
+            params.NamedParams = True
+            Dim retval = params.GetParameter(params.CreateParam(Nothing, "returnval"))
+            retval.Direction = Data.ParameterDirection.ReturnValue
+            retval.DbType = Data.DbType.Int32
+
+            Using cmd As System.Data.Common.DbCommand = SQLGenerator.ReleaseLockCommand(params, name)
+                params.AppendParams(cmd.Parameters)
+
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    Dim v = cmd.ExecuteScalar()
+                    If v Is DBNull.Value Then
+                        If retval.Value Is DBNull.Value Then
+                            Return Nothing
+                        Else
+                            Return CInt(retval.Value)
+                        End If
+                    Else
+                        Return CInt(v)
+                    End If
+                Finally
+                    CloseConn(b)
+                End Try
+            End Using
+        End Function
+
+        Public Function CreateAppLock(name As String,
+                                      Optional lockTimeout As Integer? = Nothing,
+                                      Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive) As AppLockManager
+            Return New AppLockManager(Me, name, lockTimeout, lockType)
         End Function
     End Class
 End Namespace
