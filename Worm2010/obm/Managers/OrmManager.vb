@@ -3402,7 +3402,7 @@ l1:
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         'Using _cache.SyncSave
-        If obj.ObjectState = ObjectState.None Then
+        If Not HasChanges(obj) Then
             Return False
         End If
 

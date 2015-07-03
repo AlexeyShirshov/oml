@@ -197,6 +197,12 @@
     <Compile Include="Query\Builders\SelectBuilder.vb" />
     <Compile Include="Query\Builders\SortBuilder.vb" />
     <Compile Include="Query\Criteria\Filters\Abstract.vb" />
+    <Compile Include="Query\Criteria\Filters\AggFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\NonTemplateUnaryFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\ExpressionFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\CustomFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\TableFilter.vb" />
+    <Compile Include="Query\Criteria\Filters\EntityFilter.vb" />
     <Compile Include="Query\Criteria\Filters\FilterBase.vb" />
     <Compile Include="Query\Criteria\Filters\Templates.vb" />
     <Compile Include="Query\Builders\PredicateBuilder.vb" />
@@ -205,7 +211,15 @@
     <Compile Include="Query\Criteria\Predicates\PredicateLink.vb" />
     <Compile Include="Query\Criteria\Expressions.vb" />
     <Compile Include="Query\Criteria\Values\Abstract.vb" />
-    <Compile Include="Query\Criteria\Values\FilterValues.vb" />
+    <Compile Include="Query\Criteria\Values\BetweenValue.vb" />
+    <Compile Include="Query\Criteria\Values\InValue.vb" />
+    <Compile Include="Query\Criteria\Values\EntityValue.vb" />
+    <Compile Include="Query\Criteria\Values\DBNullValue.vb" />
+    <Compile Include="Query\Criteria\Values\LiteralValue.vb" />
+    <Compile Include="Query\Criteria\Values\ScalarValue.vb" />
+    <Compile Include="Query\Criteria\Values\ComputedValue.vb" />
+    <Compile Include="Query\Criteria\Values\CustomValue.vb" />
+    <Compile Include="Query\Criteria\Values\SubQueryCmd.vb" />
     <Compile Include="Query\Criteria\Conditions.vb" />
     <Compile Include="Query\Builders\JoinBuilder.vb" />
     <Compile Include="Query\Criteria\Joins\JoinCriteria.vb" />
@@ -221,12 +235,17 @@
     <Compile Include="Query\Expressions\helper.vb" />
     <Compile Include="Query\Expressions\Interfaces.vb" />
     <Compile Include="Query\Expressions\ParameterExpression.vb" />
-    <Compile Include="Query\Expressions\Primitive.vb" />
+    <Compile Include="Query\Expressions\Primitive\CustomExpression.vb" />
+    <Compile Include="Query\Expressions\Primitive\ExpressionsArray.vb" />
+    <Compile Include="Query\Expressions\Primitive\QueryExpression.vb" />
+    <Compile Include="Query\Expressions\Primitive\DBNullExpression.vb" />
+    <Compile Include="Query\Expressions\Primitive\LiteralExpression.vb" />
     <Compile Include="Query\Expressions\SelectedFieldExpression.vb" />
     <Compile Include="Query\Expressions\SelectExpressions.vb" />
     <Compile Include="Query\Expressions\TableExpression.vb" />
     <Compile Include="Query\Expressions\UnaryExpression.vb" />
     <Compile Include="Query\Grouping.vb" />
+    <Compile Include="Query\ICopyable.vb" />
     <Compile Include="Query\IPager.vb" />
     <Compile Include="Query\ObjectAlias.vb" />
     <Compile Include="Query\ReadonlyMatrix.vb" />
@@ -262,7 +281,7 @@
     <Compile Include="StmtGenerators\db\DbGenerator.vb" />
     <Compile Include="StmtGenerators\db\MSSQL\SQL2000Generator.vb" />
     <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
-    <Compile Include="Query\Criteria\Filters\Filters.vb" />
+    <Compile Include="Query\Criteria\Filters\QueryFilter.vb" />
     <Compile Include="Mapping\MappingEngine.vb" />
     <Compile Include="StmtGenerators\db\MSSQL\SQL2008Generator.vb" />
     <Compile Include="StmtGenerators\db\Params.vb" />
@@ -333,7 +352,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

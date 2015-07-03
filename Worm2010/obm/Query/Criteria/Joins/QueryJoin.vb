@@ -17,7 +17,7 @@ Namespace Criteria.Joins
 
     <Serializable()> _
     Public Class QueryJoin
-        Implements IQueryElement, ICloneable
+        Implements IQueryElement
 
         Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
@@ -27,6 +27,8 @@ Namespace Criteria.Joins
         Protected _src As EntityUnion
         Private _jos As EntityUnion
         Private _key As String
+        Protected Sub New()
+        End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _table = table
@@ -416,15 +418,13 @@ Namespace Criteria.Joins
         End Function
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone
-            Dim j As New QueryJoin(_table, _joinType, _condition)
-            j._src = _src
-            j.M2MKey = M2MKey
-            j.M2MObjectSource = M2MObjectSource
-            Return j
+            Return Clone()
         End Function
 
         Public Function Clone() As QueryJoin
-            Return CType(_Clone(), QueryJoin)
+            Dim j As New QueryJoin
+            CopyTo(j)
+            Return j
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare
@@ -446,6 +446,36 @@ Namespace Criteria.Joins
                 End Try
             End If
         End Sub
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, QueryJoin))
+        End Function
+
+        Public Function CopyTo(target As QueryJoin) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._joinType = _joinType
+
+            If _table IsNot Nothing Then
+                target._table = _table.Clone
+            End If
+
+            If _condition IsNot Nothing Then
+                target._condition = _condition.Clone
+            End If
+
+            If _src IsNot Nothing Then
+                target._src = _src.Clone
+            End If
+
+            If _jos IsNot Nothing Then
+                target._jos = _jos.Clone
+            End If
+
+            Return True
+        End Function
     End Class
 
 End Namespace

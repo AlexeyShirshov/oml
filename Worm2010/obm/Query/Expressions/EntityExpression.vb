@@ -9,6 +9,9 @@ Namespace Expressions2
         Private _op As ObjectProperty
         Private _eu As EntityUnion
 
+        Protected Sub New()
+
+        End Sub
         Public Sub New(ByVal op As ObjectProperty)
             _op = op
         End Sub
@@ -29,10 +32,15 @@ Namespace Expressions2
             _op = New ObjectProperty(ea, propertyAlias)
         End Sub
 
-        Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New EntityExpression(_op).SetEntity(_eu)
+        Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
+            Return Clone
         End Function
 
+        Public Function Clone() As EntityExpression
+            Dim n As New EntityExpression
+            CopyTo(n)
+            Return n
+        End Function
         'Public Property Entity() As Query.EntityUnion Implements IEntityPropertyExpression.Entity
         '    Get
         '        If _eu IsNot Nothing Then
@@ -192,5 +200,22 @@ Namespace Expressions2
         End Property
 
         Public Event FormatBehaviour(ByVal sender As IEntityPropertyExpression, ByVal args As IEntityPropertyExpression.FormatBehaviourArgs) Implements IEntityPropertyExpression.FormatBehaviour
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, EntityExpression))
+        End Function
+
+        Public Function CopyTo(target As EntityExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._op = _op.Clone
+            If _eu IsNot Nothing Then
+                target._eu = _eu.Clone
+            End If
+
+            Return True
+        End Function
     End Class
 End Namespace

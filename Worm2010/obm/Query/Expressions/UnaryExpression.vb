@@ -10,6 +10,8 @@ Namespace Expressions2
 
         Private _v As IExpression
 
+        Protected Sub New()
+        End Sub
         Public Sub New(ByVal operand As IExpression)
             _v = operand
         End Sub
@@ -49,10 +51,14 @@ Namespace Expressions2
             If e IsNot Nothing Then
                 Dim v As IComplexExpression = e.ReplaceExpression(replacement, replacer)
                 If v IsNot _v Then
-                    Return Clone(v)
+                    Dim clone = CType(_Clone(), UnaryExpressionBase)
+                    clone._v = v
+                    Return clone
                 End If
             ElseIf _v.Equals(replacement) Then
-                Return Clone(replacer)
+                Dim clone = CType(_Clone(), UnaryExpressionBase)
+                clone._v = replacer
+                Return clone
             End If
             Return Me
         End Function
@@ -80,11 +86,11 @@ Namespace Expressions2
             End Set
         End Property
 
-        Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return Clone(CloneExpression(_v))
-        End Function
+        Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
 
-        Protected MustOverride Function Clone(ByVal operand As IExpression) As IUnaryExpression
+        Protected Overridable Function _CopyTo(target As Query.ICopyable) As Boolean Implements Query.ICopyable.CopyTo
+            Return CopyTo(TryCast(target, UnaryExpressionBase))
+        End Function
 
         'Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetAddDelete
         '    Dim fdp As Cache.IDependentTypes = TryCast(Operand, IDependentTypes)
@@ -98,6 +104,18 @@ Namespace Expressions2
         'Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements Cache.IDependentTypes.GetUpdate
 
         'End Function
+
+        Private Function CopyTo(target As UnaryExpressionBase) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            If _v IsNot Nothing Then
+                target._v = CType(_v.Clone, IExpression)
+            End If
+            Return True
+        End Function
+
     End Class
 
     <Serializable()> _
@@ -131,8 +149,33 @@ Namespace Expressions2
             Return OperationType2String(_oper) & MyBase.GetStaticString(mpe)
         End Function
 
-        Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
-            Return New UnaryExpression(_oper, operand)
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As UnaryExpression
+            Dim o As IExpression = Nothing
+            If Operand IsNot Nothing Then
+                o = CType(Operand.Clone, IExpression)
+            End If
+            Return New UnaryExpression(_oper, o)
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, UnaryExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As UnaryExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+
+                If target IsNot Nothing Then
+
+                    target._oper = _oper
+                    Return True
+                End If
+            End If
+
+            Return False
         End Function
 
         Public Overrides Function MakeStatement(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,

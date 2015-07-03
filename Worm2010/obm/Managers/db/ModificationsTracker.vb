@@ -106,12 +106,12 @@ Namespace Database
         End Property
 
         Public Sub AcceptModifications(Optional acceptOuterTransaction As Boolean = False)
-            _saver.Commit()
+            _saver.Accept()
             _saver.AcceptOuterTransaction = acceptOuterTransaction
         End Sub
 
         Public Sub OmitModifications()
-            _saver.Rollback()
+            _saver.Refuse()
         End Sub
 
         Public Property OnErrorBehaviour() As OnErrorEnum
@@ -347,32 +347,37 @@ Namespace Database
             End If
         End Sub
 
+        Public Sub SaveChanges()
+            If _created Then
+                Dim rlb As Boolean = True
+                Try
+                    _disposing = True
+                    _saver.Dispose()
+                    'rlb = False
+                Finally
+                    _disposing = False
+
+                    RemoveHandler _mgr.BeginDelete, AddressOf Delete
+                    RemoveHandler _mgr.BeginUpdate, AddressOf Add
+
+                    If _saver.Error.HasValue AndAlso _saver.Error Then
+                        _Rollback()
+                    End If
+
+                End Try
+                If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
+
+                RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
+            End If
+        End Sub
+
 #Region " IDisposable Support "
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me.disposedValue Then
-                If _created Then
-                    Dim rlb As Boolean = True
-                    Try
-                        _disposing = True
-                        _saver.Dispose()
-                        'rlb = False
-                    Finally
-                        _disposing = False
 
-                        RemoveHandler _mgr.BeginDelete, AddressOf Delete
-                        RemoveHandler _mgr.BeginUpdate, AddressOf Add
-
-                        If _saver.Error.HasValue AndAlso _saver.Error Then
-                            _Rollback()
-                        End If
-
-                        Me.disposedValue = True
-                    End Try
-                    If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
-
-                    RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
-                End If
+                SaveChanges()
+                Me.disposedValue = True
 
                 If _ss IsNot Nothing Then
                     _ss.Dispose()

@@ -11,7 +11,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IFilter
-        Inherits IGetFilter, ICloneable, IQueryElement
+        Inherits IGetFilter, IQueryElement
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
             ByVal executor As Query.IExecutionContext, _
             ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String

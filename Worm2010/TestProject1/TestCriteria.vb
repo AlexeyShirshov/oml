@@ -35,7 +35,7 @@ Imports Worm.Criteria.Values
         Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim f2 As IEntityFilter = CType(cr2.Filter, IEntityFilter)
-        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t2.id = @p3 and t2.name = @p4) and t2.name in (@p5))", f2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 

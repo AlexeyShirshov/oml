@@ -358,19 +358,36 @@ Namespace Query
 
         Public Event OnModifyFilter(ByVal sender As RelationCmd, ByVal args As ModifyFilter)
 
-        Public Overrides Sub CopyTo(ByVal o As QueryCmd)
-            MyBase.CopyTo(o)
-            With CType(o, RelationCmd)
-                ._rel = _rel
-                ._desc = _desc
-            End With
-        End Sub
+        Protected Overrides Function _CopyTo(target As ICopyable) As Boolean
+            Return CopyTo(TryCast(target, RelationCmd))
+        End Function
+
+        Public Overloads Function CopyTo(ByVal o As RelationCmd) As Boolean
+            If MyBase.CopyTo(o) Then
+                If o Is Nothing Then
+                    Return False
+                End If
+
+                If _rel IsNot Nothing Then
+                    o._rel = _rel.clone
+                End If
+
+                o._desc = _desc
+            End If
+
+            Return True
+        End Function
 
         Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As RelationCmd
             Dim q As New RelationCmd
             CopyTo(q)
             Return q
         End Function
+
 
         Protected Sub Init()
             AddHandler ModifyResult, AddressOf _ModifyResult

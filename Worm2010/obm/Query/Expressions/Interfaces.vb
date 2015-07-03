@@ -61,6 +61,7 @@ Namespace Expressions2
     End Enum
 
     Public Interface IQueryElement
+        Inherits ICopyable
         Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
         Function GetDynamicString() As String
         Sub Prepare(ByVal executor As IExecutor, _

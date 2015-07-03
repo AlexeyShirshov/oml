@@ -193,10 +193,20 @@ Namespace Criteria.Conditions
         End Function
 
         Protected Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
+            Dim lc As IFilter = Nothing
+            If left IsNot Nothing Then
+                lc = left.Clone
+            End If
+
+            Dim rc As IFilter = Nothing
+            If right IsNot Nothing Then
+                rc = right.Clone
+            End If
+
             If TryCast(left, IEntityFilter) Is Nothing OrElse TryCast(right, IEntityFilter) Is Nothing Then
-                Return New Condition(left, right, [operator])
+                Return New Condition(lc, rc, [operator])
             Else
-                Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+                Return New EntityCondition(CType(lc, IEntityFilter), CType(rc, IEntityFilter), [operator])
             End If
         End Function
 
@@ -456,6 +466,29 @@ Namespace Criteria.Conditions
             End If
             Return b
         End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, Condition))
+        End Function
+
+        Private Function CopyTo(target As Condition) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._oper = _oper
+
+            If _left IsNot Nothing Then
+                target._left = _left.Clone
+            End If
+
+            If _right IsNot Nothing Then
+                target._right = _right.Clone
+            End If
+
+            Return True
+        End Function
+
     End Class
 
     <Serializable()> _

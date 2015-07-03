@@ -11,6 +11,9 @@ Namespace Expressions2
         Private _case As Boolean?
         Private _parentheses As Boolean
 
+        Protected Sub New()
+
+        End Sub
         Public Sub New(ByVal left As Object, ByVal right As Object)
             If left Is Nothing Then
                 Throw New ArgumentNullException("left")
@@ -113,9 +116,15 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Return New BinaryExpressionBase(Left, Right)
+        Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
+            Dim n As New BinaryExpressionBase
+            CopyTo(n)
+            Return n
         End Function
+
+        'Public Function Clone() As BinaryExpressionBase
+
+        'End Function
 
         Public Overridable Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
                                                   ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
@@ -152,7 +161,7 @@ Namespace Expressions2
                 Return CType(replacer, IComplexExpression)
             End If
 
-            Dim b As BinaryExpressionBase = CType(Clone(), BinaryExpressionBase)
+            Dim b As BinaryExpressionBase = CType(_Clone(), BinaryExpressionBase)
             If GetType(IComplexExpression).IsAssignableFrom(Left.GetType) Then
                 b.Left = CType(Left, IComplexExpression).ReplaceExpression(replacement, replacer)
             ElseIf replacement.Equals(Left) Then
@@ -239,6 +248,35 @@ Namespace Expressions2
                 _parentheses = value
             End Set
         End Property
+
+        Protected Overridable Function _CopyTo(target As Query.ICopyable) As Boolean Implements Query.ICopyable.CopyTo
+            Return CopyTo(TryCast(target, BinaryExpressionBase))
+        End Function
+
+        Public Function CopyTo(target As BinaryExpressionBase) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._case = _case
+            target._parentheses = _parentheses
+
+            If _v IsNot Nothing Then
+
+                Dim lc As IExpression = Nothing
+                If _v.First IsNot Nothing Then
+                    lc = CType(_v.First.Clone, IExpression)
+                End If
+
+                Dim rc As IExpression = Nothing
+                If _v.Second IsNot Nothing Then
+                    rc = CType(_v.Second.Clone, IExpression)
+                End If
+
+                target._v = New Pair(Of IExpression)(lc, rc)
+            End If
+            Return True
+        End Function
     End Class
 
     Public Class BinaryExpression
@@ -246,6 +284,10 @@ Namespace Expressions2
         Implements IEvaluable, IHashable
 
         Private _oper As BinaryOperationType
+
+        Protected Sub New()
+            MyBase.New()
+        End Sub
 
         Public Sub New(ByVal left As String, ByVal oper As BinaryOperationType, ByVal right As String)
             MyClass.New(New LiteralExpression(left), oper, New LiteralExpression(right))
@@ -278,8 +320,30 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overrides Function Clone() As Object
-            Return New BinaryExpression(Left, _oper, Right)
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As BinaryExpression
+            Dim n As New BinaryExpression
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, BinaryExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As BinaryExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+
+                If target IsNot Nothing Then
+
+                    target._oper = _oper
+                End If
+            End If
+
+            Return False
         End Function
 
         Public Function MakeDynamicString(ByVal schema As ObjectMappingEngine, _
@@ -477,6 +541,8 @@ Namespace Expressions2
                 If GetValue(mpe, obj, oschema, Left, l) AndAlso GetValue(mpe, obj, oschema, Right, r) Then
                     Return Helper.Eval(l, r, _oper, mpe, v)
                 End If
+
+                Return False
             Else
                 Throw New NotSupportedException(OperationType2String(_oper))
             End If
@@ -546,6 +612,10 @@ Namespace Expressions2
         Inherits BinaryExpressionBase
         Implements IParameterExpression
 
+        Protected Sub New()
+            MyBase.New()
+        End Sub
+
         Public Sub New(ByVal left As Object, ByVal right As Object)
             MyBase.New(left, right)
         End Sub
@@ -577,8 +647,36 @@ Namespace Expressions2
             End Get
         End Property
 
-        Public Overrides Function Clone() As Object
-            Return New BetweenExpression(CloneExpression(Left), CloneExpression(Right))
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As BetweenExpression
+            Dim n As New BetweenExpression
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, BetweenExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As BetweenExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+
+                If target IsNot Nothing Then
+
+                    If Left IsNot Nothing Then
+                        target.Left = CType(Left.Clone, IExpression)
+                    End If
+
+                    If Right IsNot Nothing Then
+                        target.Right = CType(Right.Clone, IExpression)
+                    End If
+                End If
+            End If
+
+            Return False
         End Function
 
         Public Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As IParameterExpression.ModifyValueArgs) Implements IParameterExpression.ModifyValue

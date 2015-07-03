@@ -8,19 +8,19 @@ Namespace Expressions2
     Module Helper
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
 
-        Public Function CloneExpression(ByVal exp As IExpression) As IExpression
-            Dim c As ICloneable = TryCast(exp, ICloneable)
-            If c IsNot Nothing Then
-                Return CType(c.Clone, IExpression)
-            End If
-            Return exp
-        End Function
+        'Public Function CloneExpression(ByVal exp As IExpression) As IExpression
+        '    Dim c As ICloneable = TryCast(exp, ICloneable)
+        '    If c IsNot Nothing Then
+        '        Return CType(c.Clone, IExpression)
+        '    End If
+        '    Return exp
+        'End Function
 
-        Public Function GetSelectedEntities(ByVal exp As IExpression) As ICollection(Of SelectUnion)
+        Public Function GetSelectedEntities(ByVal exp As IExpression) As IEnumerable(Of SelectUnion)
             Return GetSelectedEntities(exp.GetExpressions)
         End Function
 
-        Public Function GetSelectedEntities(ByVal exp() As IExpression) As ICollection(Of SelectUnion)
+        Public Function GetSelectedEntities(ByVal exp As IEnumerable(Of IExpression)) As IEnumerable(Of SelectUnion)
             Dim l As New List(Of SelectUnion)
             For Each e As Expressions2.IExpression In exp
                 Dim ee As Expressions2.IEntityPropertyExpression = TryCast(e, Expressions2.IEntityPropertyExpression)
@@ -41,7 +41,7 @@ Namespace Expressions2
             Return l
         End Function
 
-        Public Function GetEntityExpressions(ByVal exp As IExpression) As ICollection(Of IEntityPropertyExpression)
+        Public Function GetEntityExpressions(ByVal exp As IExpression) As IEnumerable(Of IEntityPropertyExpression)
             Dim l As New List(Of IEntityPropertyExpression)
             For Each e As Expressions2.IExpression In exp.GetExpressions
                 Dim ee As Expressions2.IEntityPropertyExpression = TryCast(e, Expressions2.IEntityPropertyExpression)

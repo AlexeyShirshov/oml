@@ -21,6 +21,9 @@ Namespace Query
         Private _tf As Pair(Of SourceFragment, String)
         Private _c As Criteria.Values.CustomValue
 
+        Protected Sub New()
+        End Sub
+
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             _op = New ObjectProperty(t, propertyAlias)
         End Sub
@@ -119,6 +122,43 @@ Namespace Query
                 _op.Entity.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Function Clone() As FieldReference
+            Dim n As New FieldReference
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, FieldReference))
+        End Function
+
+        Public Function CopyTo(target As FieldReference) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._op = _op.Clone
+
+            If _c IsNot Nothing Then
+                target._c = _c.Clone
+            End If
+
+            If _tf IsNot Nothing Then
+                Dim tbl As SourceFragment = Nothing
+                If _tf.First IsNot Nothing Then
+                    tbl = _tf.First.Clone
+                End If
+
+                target._tf = New Pair(Of SourceFragment, String)(tbl, _tf.Second)
+            End If
+
+            Return True
+        End Function
     End Class
 
     Public Class SelectUnion

@@ -602,28 +602,57 @@ Namespace Criteria.Joins
         'End Property
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Private Function _CloneF() As Core.IFilter Implements Core.IFilter.Clone
+            Return CType(_Clone(), IFilter)
+        End Function
+        Public Function Clone() As JoinFilter
             Dim c As New JoinFilter
             CopyTo(c)
             Return c
         End Function
 
-        Public Function Clone() As Core.IFilter Implements Core.IFilter.Clone
-            Return CType(_Clone(), IFilter)
+        Protected Overridable Function CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, JoinFilter))
         End Function
 
-        Protected Sub CopyTo(ByVal obj As JoinFilter)
+        Public Function CopyTo(ByVal obj As JoinFilter) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+
             With obj
                 '._e1 = _e1
                 '._e2 = _e2
-                '._oper = _oper
+                ._oper = _oper
                 '._t1 = _t1
                 '._t2 = _t2
                 '._d1 = _d1
                 '._d2 = _d2
-                ._l = _l
-                ._r = _r
+                '._l = _l
+                '._r = _r
             End With
-        End Sub
+
+            If _l IsNot Nothing Then
+                obj._l = _l.clone
+            End If
+
+            If _r IsNot Nothing Then
+                obj._r = _r.clone
+            End If
+
+            If _eu IsNot Nothing Then
+                obj._eu = _eu.Clone
+            End If
+
+            If _eu2 IsNot Nothing Then
+                obj._eu2 = _eu2.Clone
+            End If
+
+            Return True
+        End Function
 
         Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IFilterValue) As IFilter
             For Each _fl As IFilter In source.GetAllFilters()

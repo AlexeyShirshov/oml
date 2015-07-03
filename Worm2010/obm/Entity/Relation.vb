@@ -8,6 +8,8 @@ Namespace Entities
 
     <Serializable()> _
     Public Class Relation
+        Implements ICopyable
+
         Private _host As ISinglePKEntity
         Private _addedList As New List(Of ICachedEntity)
         Private _deletedList As New List(Of ICachedEntity)
@@ -33,6 +35,14 @@ Namespace Entities
         End Sub
 
         Sub New(ByVal main As ISinglePKEntity, ByVal desc As RelationDesc)
+            If main Is Nothing Then
+                Throw New ArgumentNullException("main")
+            End If
+
+            If desc Is Nothing Then
+                Throw New ArgumentNullException("desc")
+            End If
+
             _host = main
             _desc = desc
         End Sub
@@ -244,6 +254,38 @@ Namespace Entities
                 Deleted.Clear()
             End Using
         End Sub
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+        Public Function Clone() As Relation
+            Dim n As New Relation(Host, Relation)
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, Relation))
+        End Function
+
+        Public Function CopyTo(target As Relation) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._host = _host
+            target._desc = _desc
+
+            If _addedList IsNot Nothing Then
+                target._addedList = New List(Of ICachedEntity)(_addedList)
+            End If
+
+            If _deletedList IsNot Nothing Then
+                target._deletedList = New List(Of ICachedEntity)(_deletedList)
+            End If
+
+            Return True
+        End Function
     End Class
 
     <Serializable()> _

@@ -119,7 +119,7 @@ Public Class TestReject
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
-                    s.Commit()
+                    s.Accept()
                 End Using
             Finally
                 mgr.Rollback()
@@ -146,7 +146,7 @@ Public Class TestReject
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
-                    s.Commit()
+                    s.Accept()
                 End Using
             Finally
                 mgr.Rollback()
@@ -177,7 +177,7 @@ Public Class TestReject
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
-                    s.Commit()
+                    s.Accept()
                 End Using
             Finally
                 mgr.Rollback()
@@ -216,7 +216,7 @@ Public Class TestReject
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
-                    s.Commit()
+                    s.Accept()
                 End Using
             Finally
                 mgr.Rollback()
