@@ -7,7 +7,7 @@ Namespace Expressions2
     Public Class SelectExpression
         Implements Expressions2.IExpression
 
-        Private ReadOnly _exp As Expressions2.IExpression
+        Private _exp As Expressions2.IExpression
         Private _falias As String
 
         Private _attr As Field2DbRelations
@@ -450,6 +450,41 @@ Namespace Expressions2
 
             Return Object.Equals(_dst, f._dst) AndAlso _dstProp = f._dstProp AndAlso _falias = f._falias AndAlso _exp.Equals(f._exp)
         End Function
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Function Clone() As SelectExpression
+            Dim n As New SelectExpression(_exp)
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, SelectExpression))
+        End Function
+
+        Public Function CopyTo(target As SelectExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._falias = _falias
+            target._attr = _attr
+            target._dstProp = _dstProp
+            target._correctIdx = _correctIdx
+
+            If _dst IsNot Nothing Then
+                target._dst = _dst.Clone
+            End If
+
+            If _exp IsNot Nothing Then
+                target._exp = CType(_exp.Clone, IExpression)
+            End If
+
+            Return True
+        End Function
     End Class
 
     Public Class PropertyAliasExpression
@@ -548,5 +583,26 @@ Namespace Expressions2
                 _pa = value
             End Set
         End Property
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+        Public Function Clone() As PropertyAliasExpression
+            Return New PropertyAliasExpression(_pa)
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, PropertyAliasExpression))
+        End Function
+
+        Public Function CopyTo(target As PropertyAliasExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._pa = _pa
+
+            Return True
+        End Function
     End Class
 End Namespace

@@ -31,6 +31,7 @@ Namespace Database
         Private _graphDepth As Integer = 4
         Private _dontResolve As Boolean
         Private _mode As Data.IsolationLevel?
+        Private _hasTransaction As Boolean
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -171,6 +172,9 @@ Namespace Database
 
         Friend Sub New(ByVal mgr As OrmReadOnlyDBManager)
             _mgr = mgr
+            If mgr IsNot Nothing Then
+                _hasTransaction = mgr.Transaction IsNot Nothing
+            End If
         End Sub
 
         'Public Sub New()
@@ -201,6 +205,9 @@ Namespace Database
             End Get
             Friend Set(ByVal value As OrmReadOnlyDBManager)
                 _mgr = value
+                If value IsNot Nothing Then
+                    _hasTransaction = value.Transaction IsNot Nothing
+                End If
             End Set
         End Property
 
@@ -236,11 +243,11 @@ Namespace Database
 
         Property AcceptOuterTransaction As Boolean
 
-        Public Sub Commit()
+        Public Sub Accept()
             _save = True
         End Sub
 
-        Public Sub Rollback()
+        Public Sub Refuse()
             _save = False
         End Sub
 
@@ -482,14 +489,14 @@ l1:
             End Try
         End Function
 
-        Protected Sub Save()
+        Protected Sub Commit()
             If _mgr.Cache.IsReadonly Then
                 Throw New InvalidOperationException("Cache is readonly")
             End If
             _error = True
 
             RaiseEvent PreSave(Me)
-            Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing AndAlso Not AcceptOuterTransaction
+            Dim hasTransaction As Boolean = _hasTransaction AndAlso Not AcceptOuterTransaction
             Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
             Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
             _startSave = True
@@ -519,7 +526,7 @@ l1:
                         pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, o.GetEntitySchema(_mgr.MappingEngine)), ICachedEntity))
                         pp.Second.SetObjectState(o.ObjectState)
                         copies.Add(pp)
-                    ElseIf (o.ObjectState = ObjectState.None OrElse o.ObjectState = ObjectState.NotLoaded) Then
+                    ElseIf (o.ObjectState = ObjectState.None OrElse o.ObjectState = ObjectState.NotLoaded) AndAlso Not OrmManager.HasChanges(o) Then
                         saved.Add(New Pair(Of ObjectState, _ICachedEntity)(o.ObjectState, o))
                         Continue For
                     End If
@@ -649,6 +656,10 @@ l1:
                             Next
                         End If
 
+                        For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
+                            _objects.Remove(p.Second)
+                        Next
+
                         RaiseEvent SaveSuccessed(Me)
                     End If
                 Finally
@@ -710,7 +721,7 @@ l1:
                 '    Throw New InvalidOperationException("You should commit or rollback Saver")
                 'End If
                 If disposing AndAlso _save.HasValue AndAlso _save.Value Then
-                    Save()
+                    Commit()
                 End If
                 'If _disposeMgr Then
                 '    _mgr.Dispose()

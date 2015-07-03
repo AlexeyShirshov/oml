@@ -17,6 +17,9 @@ Namespace Expressions2
         Private _type As SummaryValues
         Private _custom As String
 
+        Protected Sub New()
+            MyBase.New()
+        End Sub
         Public Sub New(ByVal type As SummaryValues, ByVal exp As IExpression)
             MyBase.New(exp)
             _type = type
@@ -53,8 +56,33 @@ Namespace Expressions2
             Return _type.ToString & "$" & _custom & "$" & MyBase.GetStaticString(mpe)
         End Function
 
-        Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
-            Return New GroupExpression(_type, operand) With {._custom = _custom}
+        Public Overloads Function Clone() As GroupExpression
+            Dim n As New GroupExpression
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, GroupExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As GroupExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                target._type = _type
+                target._custom = _custom
+
+                Return True
+            End If
+
+            Return False
         End Function
     End Class
 
@@ -70,6 +98,9 @@ Namespace Expressions2
         Private _order As SortType
         Private _collation As String
 
+        Protected Sub New()
+            MyBase.New()
+        End Sub
         Public Sub New(ByVal type As SortType, ByVal exp As IExpression)
             MyBase.New(exp)
             _order = type
@@ -129,8 +160,33 @@ Namespace Expressions2
         '    End Get
         'End Property
 
-        Protected Overrides Function Clone(ByVal operand As IExpression) As IUnaryExpression
-            Return New SortExpression(_order, operand)
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As SortExpression
+            Dim n As New SortExpression()
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, SortExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As SortExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                target._order = _order
+                target._collation = _collation
+
+                Return True
+            End If
+
+            Return False
         End Function
 
         Public Function CanEval(ByVal mpe As ObjectMappingEngine) As Boolean Implements IEvaluable.CanEval

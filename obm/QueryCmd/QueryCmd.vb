@@ -25,9 +25,14 @@ Namespace Query
 
         <Serializable()> _
         Class SelectClauseDef
+            Implements ICopyable
+
             Private _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
             Private _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
 
+            Protected Sub New()
+
+            End Sub
             Public Sub New(ByVal types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?)))
                 _types = types
             End Sub
@@ -55,10 +60,41 @@ Namespace Query
                     Return _fields
                 End Get
             End Property
+
+            Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+                Return Clone()
+            End Function
+
+            Public Function Clone() As SelectClauseDef
+                Dim n As New SelectClauseDef()
+                CopyTo(n)
+                Return n
+            End Function
+            Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+                Return CopyTo(TryCast(target, SelectClauseDef))
+            End Function
+
+            Public Function CopyTo(target As SelectClauseDef) As Boolean
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                If _types IsNot Nothing Then
+                    target._types = New ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(_types)
+                End If
+
+                If _fields IsNot Nothing Then
+                    target._fields = New ReadOnlyCollection(Of SelectExpression)(_fields)
+                End If
+
+                Return True
+            End Function
         End Class
 
         <Serializable()> _
         Class FromClauseDef
+            Implements ICopyable
+
             Public ObjectSource As EntityUnion
             Public Table As SourceFragment
             Public Query As QueryCmd
@@ -106,6 +142,9 @@ Namespace Query
                 Me.ObjectSource = os
             End Sub
 
+            Protected Sub New()
+
+            End Sub
             Public ReadOnly Property QueryEU() As EntityUnion
                 Get
                     If Query IsNot Nothing Then
@@ -139,6 +178,40 @@ Namespace Query
                     Return Nothing
                 End Get
             End Property
+
+            Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+                Return Clone()
+            End Function
+
+            Public Function Clone() As FromClauseDef
+                Dim n As New FromClauseDef()
+                CopyTo(n)
+                Return n
+            End Function
+
+            Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+                Return CopyTo(TryCast(target, FromClauseDef))
+            End Function
+
+            Public Function CopyTo(target As FromClauseDef) As Boolean
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                If ObjectSource IsNot Nothing Then
+                    target.ObjectSource = ObjectSource.Clone
+                End If
+
+                If Table IsNot Nothing Then
+                    target.Table = Table.Clone
+                End If
+
+                If Query IsNot Nothing Then
+                    target.Query = Query.Clone
+                End If
+
+                Return True
+            End Function
         End Class
 
         Public Class CacheDictionaryRequiredEventArgs
@@ -4946,7 +5019,11 @@ l1:
             GetExecutor(mgr).ResetObjects(mgr, Me)
         End Sub
 
-        Public Overridable Sub CopyTo(ByVal o As QueryCmd)
+        Public Overridable Function CopyTo(ByVal o As QueryCmd) As Boolean
+            If o Is Nothing Then
+                Return False
+            End If
+
             With o
                 '._aggregates = _aggregates
                 ._appendMain = _appendMain
@@ -4954,29 +5031,17 @@ l1:
                 ._clientPage = _clientPage
                 ._distinct = _distinct
                 ._dontcache = _dontcache
-                ._sel = _sel
-                ._filter = _filter
-                ._group = _group
                 ._hint = _hint
-                ._joins = _joins
                 '._m2mKey = _m2mKey
                 '._load = _load
                 ._mark = ._mark
                 '._m2mObject = _m2mObject
-                ._order = _order
-                '._page = _page
+                ._notSimpleMode = _notSimpleMode
                 ._statementMark = _statementMark
-                ._includeFields = New Dictionary(Of String, Pair(Of Type, List(Of String)))(_includeFields)
-                ._from = _from
-                ._top = _top
-                ._rn = _rn
-                ._having = _having
                 ._er = _er
-                ._unions = _unions
                 ._resDic = _resDic
                 ._appendMain = _appendMain
                 ._getMgr = _getMgr
-                ._includeEntities = New List(Of EntityUnion)(_includeEntities)
                 ._liveTime = _liveTime
                 ._mgrMark = _mgrMark
                 ._name = _name
@@ -4984,23 +5049,110 @@ l1:
                 ._schema = _schema
                 ._cacheSort = _cacheSort
                 ._timeout = _timeout
-                ._poco = _poco
                 ._autoFields = _autoFields
                 ._context = _context
             End With
+
             If _exec IsNot Nothing Then
                 o._exec = CType(_exec.Clone, IExecutor)
             End If
-        End Sub
+
+            If _sel IsNot Nothing Then
+                o._sel = _sel.Clone
+            End If
+
+            If _filter IsNot Nothing Then
+                o._filter = _filter.Filter.Clone
+            End If
+
+            If _group IsNot Nothing Then
+                o._group = _group.Clone
+            End If
+
+            If _joins IsNot Nothing Then
+                Dim l As New List(Of QueryJoin)
+                For Each j In _joins
+                    l.Add(j.Clone)
+                Next
+                o._joins = l.ToArray
+            End If
+
+            If _order IsNot Nothing Then
+                Dim l As New List(Of SortExpression)
+                For Each j In _order
+                    l.Add(j.Clone)
+                Next
+                o._order = New OrderByClause(l)
+            End If
+
+            If _includeFields IsNot Nothing Then
+                o._includeFields = New Dictionary(Of String, Pair(Of Type, List(Of String)))(_includeFields)
+            End If
+
+            If _from IsNot Nothing Then
+                o._from = _from.Clone
+            End If
+
+            o._top = _top
+            If _rn IsNot Nothing Then
+                o._rn = _rn.Clone
+            End If
+
+            If _having IsNot Nothing Then
+                o._having = _having.Filter.Clone
+            End If
+
+            If _unions IsNot Nothing Then
+                Dim l As New List(Of Pair(Of Boolean, QueryCmd))
+                For Each j In _unions
+                    Dim q As QueryCmd = Nothing
+                    If j.Second IsNot Nothing Then
+                        q = j.Second.Clone
+                    End If
+
+                    l.Add(New Pair(Of Boolean, QueryCmd)(j.First, q))
+                Next
+                o._unions = New ReadOnlyCollection(Of Pair(Of Boolean, QueryCmd))(l)
+            End If
+
+            If _includeEntities IsNot Nothing Then
+                Dim l As New List(Of EntityUnion)
+                For Each j In _includeEntities
+                    l.Add(j.Clone)
+                Next
+                o._includeEntities = l
+            End If
+
+            If _poco IsNot Nothing Then
+                o._poco = Hashtable.Synchronized(New Hashtable(_poco))
+            End If
+
+            If _optimizeIn IsNot Nothing Then
+                o._optimizeIn = _optimizeIn.Clone
+            End If
+
+            If _optimizeOr IsNot Nothing Then
+                o._optimizeOr = New List(Of Criteria.PredicateLink)(_optimizeOr)
+            End If
+
+            If _newMaps IsNot Nothing Then
+                o._newMaps = Hashtable.Synchronized(New Hashtable(_newMaps))
+            End If
+            Return True
+        End Function
 
         Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Function Clone() As QueryCmd
             Dim q As New QueryCmd
             CopyTo(q)
             Return q
         End Function
 
-        Public Function Clone() As QueryCmd
-            Return CType(_Clone(), QueryCmd)
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, QueryCmd))
         End Function
 
         Private Function _FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
@@ -5014,7 +5166,7 @@ l1:
                         If te IsNot Nothing Then
                             Return New String() {te.SourceField}
                         Else
-                            Dim col As ICollection(Of SelectUnion) = GetSelectedEntities(se)
+                            Dim col = GetSelectedEntities(se)
                             'If col.Count <> 1 Then
                             '    Throw New QueryCmdException("", Me)
                             'End If

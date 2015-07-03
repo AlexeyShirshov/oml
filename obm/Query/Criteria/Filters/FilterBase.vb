@@ -11,6 +11,9 @@ Namespace Criteria.Core
         Private _v As IFilterValue
         Protected _eu As Query.EntityUnion
 
+        Protected Sub New()
+
+        End Sub
         Public Sub New(ByVal value As IFilterValue)
             If value Is Nothing Then
                 Throw New ArgumentNullException("value")
@@ -20,6 +23,24 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter._ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, FilterBase))
+        End Function
+        Public Function CopyTo(target As FilterBase) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            If _v IsNot Nothing Then
+                target._v = CType(_v.Clone, IFilterValue)
+            End If
+
+            If _eu IsNot Nothing Then
+                target._eu = _eu.Clone
+            End If
+
+            Return True
+        End Function
         Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
                                                    ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext,
                                                    ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
@@ -170,6 +191,24 @@ Namespace Criteria.Core
                 Return _templ
             End Get
         End Property
+
+        Protected Overrides Function _CopyTo(target As ICopyable) As Boolean
+            Return CopyTo(TryCast(target, TemplatedFilterBase))
+        End Function
+
+        Public Overloads Function CopyTo(target As TemplatedFilterBase) As Boolean
+            If MyBase.CopyTo(target) Then
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                target._templ = _templ
+
+                Return True
+            End If
+
+            Return False
+        End Function
     End Class
 
 End Namespace

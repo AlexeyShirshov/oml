@@ -215,6 +215,34 @@ Namespace Expressions
                 _v.Prepare(executor, schema, contextInfo, stmt, isAnonym)
             End If
         End Sub
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Function Clone() As UnaryExp
+            Dim vc As IFilterValue = Nothing
+            If Value IsNot Nothing Then
+                vc = CType(Value.Clone, IFilterValue)
+            End If
+            Return New UnaryExp([Alias], vc) With {._o = _o}
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, UnaryExp))
+        End Function
+
+        Public Function CopyTo(target As UnaryExp) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            If _v IsNot Nothing Then
+                target._v = CType(_v.Clone, IFilterValue)
+            End If
+
+            Return True
+        End Function
     End Class
 
     <Serializable()> _
@@ -283,6 +311,48 @@ Namespace Expressions
 
         Public Overrides Function GetHashCode() As Integer
             Return ToString.GetHashCode
+        End Function
+
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As BinaryExp
+            Dim lc As IFilterValue = Nothing
+            If Left IsNot Nothing Then
+                lc = CType(Left.Clone, IFilterValue)
+            End If
+
+            Dim rc As IFilterValue = Nothing
+            If Right IsNot Nothing Then
+                rc = CType(Right.Clone, IFilterValue)
+            End If
+
+            Return New BinaryExp(Me.Operation, lc, rc)
+        End Function
+
+        Protected Overrides Function _CopyTo(target As ICopyable) As Boolean
+            Return CopyTo(TryCast(target, BinaryExp))
+        End Function
+
+        Public Overloads Function CopyTo(target As BinaryExp) As Boolean
+            If MyBase._CopyTo(target) Then
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                If _left IsNot Nothing Then
+                    target._left = _left.Clone
+                End If
+
+                If _right IsNot Nothing Then
+                    target._right = _right.Clone
+                End If
+
+                Return True
+            End If
+
+            Return False
         End Function
     End Class
 End Namespace

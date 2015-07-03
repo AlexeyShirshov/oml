@@ -1059,7 +1059,7 @@ Imports CoreFramework.Structures
                 Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
-                    saver.Commit()
+                    saver.Accept()
                 End Using
             Finally
                 c = e.GetCmd(GetType(Entity4)).WithLoad(True).ToList(Of Entity4)(mgr)
@@ -1097,7 +1097,7 @@ Imports CoreFramework.Structures
                 Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
-                    saver.Commit()
+                    saver.Accept()
                 End Using
 
                 c = e.GetCmd(GetType(Entity4)).WithLoad(True).ToList(Of Entity4)(mgr)
@@ -1139,7 +1139,7 @@ Imports CoreFramework.Structures
                 Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
-                    saver.Commit()
+                    saver.Accept()
                 End Using
 
                 c = e.GetCmd(GetType(Entity4)).WithLoad(True).ToList(Of Entity4)(mgr)

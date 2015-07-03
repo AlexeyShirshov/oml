@@ -4,7 +4,9 @@ Imports Worm.Entities.Meta
 Imports Worm.Query
 
 Namespace Criteria.Values
+    
     Public Interface IQueryElement
+        Inherits ICopyable
         Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
         Function _ToString() As String
         Sub Prepare(ByVal executor As IExecutor, _

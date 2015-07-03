@@ -6,6 +6,8 @@ Namespace Query
 
     <Serializable()> _
     Public Class QueryAlias
+        Implements ICopyable
+
         Private _t As Type
         Private _en As String
         Private _q As Worm.Query.QueryCmd
@@ -40,6 +42,10 @@ Namespace Query
         Public Sub New(ByVal query As Worm.Query.QueryCmd, name As String)
             _q = query
             _uqName = name
+        End Sub
+
+        Protected Sub New(uniqueName As String, designate As QueryAlias)
+            _uqName = uniqueName
         End Sub
 
         Public ReadOnly Property EntityType() As Type
@@ -115,6 +121,38 @@ Namespace Query
         '    End If
         '    Return rt
         'End Function
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone
+        End Function
+
+        Public Function Clone() As QueryAlias
+            Dim n As New QueryAlias(UniqueName, Me)
+            CopyTo(n)
+            Return n
+        End Function
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, QueryAlias))
+        End Function
+
+        Public Function CopyTo(target As QueryAlias) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._t = _t
+            target._en = _en
+
+            If _q IsNot Nothing Then
+                target._q = _q.Clone
+            End If
+
+            If _tbl IsNot Nothing Then
+                target._tbl = _tbl.Clone
+            End If
+
+            Return True
+        End Function
     End Class
 
     <Serializable()> _
@@ -146,6 +184,9 @@ Namespace Query
             _a = [alias]
         End Sub
 
+        Protected Sub New()
+
+        End Sub
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, EntityUnion))
         End Function
@@ -314,12 +355,59 @@ Namespace Query
         Public Shared Widening Operator CType(entityAlias As QueryAlias) As EntityUnion
             Return New EntityUnion(entityAlias)
         End Operator
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone
+        End Function
+
+        Public Function Clone() As EntityUnion
+            Dim n As New EntityUnion()
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, EntityUnion))
+        End Function
+
+        Public Function CopyTo(target As EntityUnion) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._en = _en
+            target._t = _t
+
+            If _a IsNot Nothing Then
+                target._a = _a.clone
+            End If
+
+            Return True
+        End Function
     End Class
 
     <Serializable()> _
     Public Structure ObjectProperty
-        Public ReadOnly Entity As EntityUnion
-        Public ReadOnly PropertyAlias As String
+        Implements ICloneable
+
+        Private _e As EntityUnion
+        Private _pa As String
+        Public Property Entity As EntityUnion
+            Get
+                Return _e
+            End Get
+            Private Set(value As EntityUnion)
+                _e = value
+            End Set
+        End Property
+        Public Property PropertyAlias As String
+            Get
+                Return _pa
+            End Get
+            Private Set(value As String)
+                _pa = value
+            End Set
+        End Property
 
         Public Const PrimaryKeyReference As String = "19rfas$%*&^ldfj"
 
@@ -437,6 +525,19 @@ Namespace Query
         End Operator
 
 #End Region
+
+        Private Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+        Public Function Clone() As ObjectProperty
+            Dim n As New ObjectProperty
+            n._pa = _pa
+            If _e IsNot Nothing Then
+                n._e = _e.Clone
+            End If
+            Return n
+        End Function
+
     End Structure
 
 End Namespace

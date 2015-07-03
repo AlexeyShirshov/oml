@@ -95,6 +95,34 @@ Namespace Expressions2
         Protected Sub RaiseModifyValue(ByVal args As IParameterExpression.ModifyValueArgs)
             RaiseEvent ModifyValue(Me, args)
         End Sub
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return clone
+        End Function
+
+        Public Function Clone() As ParameterExpression
+            Dim n As New ParameterExpression
+            CopyTo(n)
+            Return n
+        End Function
+        Protected Overridable Function _CopyTo(target As Query.ICopyable) As Boolean Implements Query.ICopyable.CopyTo
+            Return CopyTo(TryCast(target, ParameterExpression))
+        End Function
+
+        Public Function CopyTo(target As ParameterExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._pname = _pname
+            target._v = _v
+
+            Return True
+        End Function
+
+        Protected Sub SetValue(v As Object)
+            _v = v
+        End Sub
     End Class
 
     <Serializable()> _
@@ -104,6 +132,9 @@ Namespace Expressions2
         Private _l As New List(Of String)
         Private _str As String
 
+        Protected Sub New()
+
+        End Sub
         Public Sub New(ByVal value As ICollection)
             MyBase.New(value)
         End Sub
@@ -207,6 +238,39 @@ Namespace Expressions2
 
         Public Overrides Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
             Return "inval"
+        End Function
+
+        Protected Overrides Function _Clone() As Object
+            Return Clone()
+        End Function
+
+        Public Overloads Function Clone() As InExpression
+            Dim n As New InExpression
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overrides Function _CopyTo(target As Query.ICopyable) As Boolean
+            Return CopyTo(TryCast(target, InExpression))
+        End Function
+
+        Public Overloads Function CopyTo(target As InExpression) As Boolean
+            If MyBase._CopyTo(target) Then
+
+                If target IsNot Nothing Then
+
+                    If Value IsNot Nothing Then
+                        Dim a As New ArrayList
+                        For Each o In Value
+                            a.Add(o)
+                        Next
+
+                        target.SetValue(a)
+                    End If
+                End If
+            End If
+
+            Return False
         End Function
     End Class
 

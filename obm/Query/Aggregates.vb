@@ -93,6 +93,24 @@ Namespace Query
         Public MustOverride Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
         Public MustOverride Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
         Public MustOverride Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Criteria.Values.IQueryElement.Prepare
+
+        Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, AggregateBase))
+        End Function
+
+        Public Function CopyTo(target As AggregateBase) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._f = _f
+            target._alias = _alias
+            target._distinct = _distinct
+
+            Return True
+        End Function
     End Class
 
     '<Serializable()> _
@@ -250,6 +268,46 @@ Namespace Query
         Public Overrides Sub Prepare(ByVal executor As IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean)
             Throw New NotImplementedException
         End Sub
+
+        Protected Overrides Function _Clone() As Object
+            Return Clone
+        End Function
+
+        Public Function Clone() As CustomFuncAggregate
+            Dim l As List(Of ScalarValue) = Nothing
+            If _params IsNot Nothing Then
+                l = New List(Of ScalarValue)
+                For Each s In _params
+                    l.Add(s.Clone)
+                Next
+            End If
+            Return New CustomFuncAggregate([Alias], _funcName, l)
+        End Function
+
+        Protected Overrides Function _CopyTo(target As ICopyable) As Boolean
+            Return CopyTo(TryCast(target, CustomFuncAggregate))
+        End Function
+
+        Public Overloads Function CopyTo(target As CustomFuncAggregate) As Boolean
+            If MyBase._CopyTo(target) Then
+
+                If target Is Nothing Then
+                    Return False
+                End If
+
+                If _params IsNot Nothing Then
+                    Dim l = New List(Of ScalarValue)
+                    For Each s In _params
+                        l.Add(s.Clone)
+                    Next
+                    target._params = l
+                End If
+
+                Return True
+            End If
+
+            Return False
+        End Function
     End Class
 
     'Public Class AggCtor

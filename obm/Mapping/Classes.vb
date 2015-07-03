@@ -97,11 +97,11 @@ Namespace Entities.Meta
             End Get
         End Property
 
-        Private Function _Clone() As Object Implements System.ICloneable.Clone
+        Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
             Return Clone()
         End Function
 
-        Public Overridable Function Clone() As Object
+        Public Function Clone() As SourceFragment
             Dim t As New SourceFragment(_schema, _table)
             Return t
         End Function

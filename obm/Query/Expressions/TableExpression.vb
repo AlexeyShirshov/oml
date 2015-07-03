@@ -11,6 +11,9 @@ Namespace Expressions2
         Private _col As String
         Private _eu As EntityUnion
 
+        Protected Sub New()
+
+        End Sub
         Public Sub New(ByVal col As String)
             _col = col
         End Sub
@@ -96,6 +99,36 @@ Namespace Expressions2
         Public Function SetEntity(ByVal eu As Query.EntityUnion) As IContextable Implements IContextable.SetEntity
             _eu = eu
             Return Me
+        End Function
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+        Public Function Clone() As TableExpression
+            Dim n As New TableExpression
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
+            Return CopyTo(TryCast(target, TableExpression))
+        End Function
+        Public Function CopyTo(target As TableExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._col = _col
+
+            If _sf IsNot Nothing Then
+                target._sf = _sf.Clone
+            End If
+
+            If _eu IsNot Nothing Then
+                target._eu = _eu.Clone
+            End If
+
+            Return True
         End Function
     End Class
 End Namespace

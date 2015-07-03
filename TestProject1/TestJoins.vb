@@ -165,9 +165,9 @@ Imports CoreFramework.Structures
         j.ReplaceFilter(f, f2)
         sb.Length = 0
         j.MakeSQLStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr, Nothing, sb)
-        Assert.AreEqual(" join table1 t2 on (t2.id = @p2 and t2.s = @p1)", sb.ToString)
+        Assert.AreEqual(" join table1 t2 on (t2.id = @p2 and t2.s = @p3)", sb.ToString)
 
-        Assert.AreEqual(2, pmgr.Params.Count)
+        Assert.AreEqual(3, pmgr.Params.Count)
 
         Assert.AreEqual(10, pmgr.GetParameter("@p2").Value)
 
@@ -328,23 +328,23 @@ End Class
 
         Assert.AreNotEqual(c, c2)
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p3 or t2.id <> @p4)", c2.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c3 As New Condition(c, f3, ConditionOperator.And)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p5)", c3.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c4 As IFilter = CType(c3.ReplaceFilter(f2, f3), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p6 or t2.id <> @p7) and t2.id <> @p8)", c4.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c5 As IFilter = CType(c3.ReplaceFilter(f3, c4), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p9 or t2.id > @p10) and ((t1.id = @p11 or t2.id <> @p12) and t2.id <> @p13))", c5.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
 
         Dim c6 As IFilter = CType(c5.ReplaceFilter(f3, Nothing), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p14 or t2.id > @p15) and (t1.id = @p16 or t2.id <> @p17))", c6.MakeQueryStmt(schema, Nothing, gen, Nothing, Nothing, almgr, pmgr))
     End Sub
 
     <TestMethod()> _

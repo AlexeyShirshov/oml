@@ -114,5 +114,35 @@ Namespace Expressions2
                 _distinct = value
             End Set
         End Property
+
+        Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Function Clone() As AggregateExpression
+            Dim n As New AggregateExpression(_t)
+            CopyTo(n)
+            Return n
+        End Function
+
+        Protected Overridable Function _CopyTo(target As Query.ICopyable) As Boolean Implements Query.ICopyable.CopyTo
+            Return CopyTo(TryCast(target, AggregateExpression))
+        End Function
+
+        Public Function CopyTo(target As AggregateExpression) As Boolean
+            If target Is Nothing Then
+                Return False
+            End If
+
+            target._t = _t
+            target._custom = _custom
+            target._distinct = _distinct
+
+            If _exp IsNot Nothing Then
+                target._exp = CType(_exp.Clone, IExpression)
+            End If
+
+            Return True
+        End Function
     End Class
 End Namespace
