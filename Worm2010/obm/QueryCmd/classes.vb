@@ -88,7 +88,7 @@ Namespace Query
 
     Public Interface IExecutionContext
         Function GetEntitySchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As IEntitySchema
-        Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal newMap As OrmObjectIndex)
+        Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByVal newMap As Collections.IndexedCollection(Of String, MapField2Column))
         Function GetFieldColumnMap(ByVal oschema As IEntitySchema, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
         Function FindColumn(ByVal mpe As ObjectMappingEngine, ByVal p As String) As String()
     End Interface
@@ -117,7 +117,7 @@ Namespace Query
             Return oschema.FieldColumnMap
         End Function
 
-        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements Query.IExecutionContext.ReplaceSchema
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Collections.IndexedCollection(Of String, MapField2Column)) Implements Query.IExecutionContext.ReplaceSchema
 
         End Sub
 
@@ -171,7 +171,7 @@ Namespace Query
             Return c
         End Function
 
-        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements IExecutionContext.ReplaceSchema
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Collections.IndexedCollection(Of String, Entities.Meta.MapField2Column)) Implements IExecutionContext.ReplaceSchema
             _f.ReplaceSchema(mpe, t, newMap)
             If _s IsNot Nothing Then
                 _s.ReplaceSchema(mpe, t, newMap)

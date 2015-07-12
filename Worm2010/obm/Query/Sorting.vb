@@ -592,7 +592,7 @@ Namespace Query
                 ByVal mpe As ObjectMappingEngine, ByVal tos As IEntitySchema) As Object
                 Dim ee As EntityExpression = CType(s.Operand, EntityExpression)
                 Dim st As Type = ee.ObjectProperty.Entity.GetRealType(mpe)
-                If xo.GetType IsNot st Then
+                If xo.GetType IsNot st AndAlso Not (st.IsAssignableFrom(xo.GetType) OrElse xo.GetType.IsAssignableFrom(st)) Then
                     If _getobj IsNot Nothing Then
                         xo = _getobj(xo, st)
                     Else

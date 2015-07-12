@@ -47,7 +47,7 @@ Namespace Cache
                 c = CType(weak_list, ReadOnlyEntityList(Of T))
             Catch ex As InvalidCastException
                 Dim l As New Generic.List(Of T)
-                Dim rt As Type = Nothing
+                Dim rt As Type = GetType(T)
                 For Each o As T In CType(weak_list, IList)
                     l.Add(o)
                     rt = o.GetType

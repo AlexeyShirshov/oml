@@ -1719,8 +1719,11 @@ l1:
                             'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
                             '    type2join = schema.GetTypeByEntityName(ot.EntityName)
                             'End If
-
-                            AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
+                            Try
+                                AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
+                            Catch ex As OrmManagerException When selectType.IsAssignableFrom(type2join) OrElse type2join.IsAssignableFrom(selectType)
+                                'do nothing
+                            End Try
                         End If
                     Else
                         Dim cf As CustomFilter = TryCast(fl, CustomFilter)
@@ -1772,7 +1775,7 @@ l1:
                                     Dim m2m As M2MRelationDesc = schema.GetM2MRelation(sortType, selectType, True)
                                     If m2m IsNot Nothing Then
                                         l.AddRange(OrmManager.MakeM2MJoin(schema, m2m, sortType))
-                                    Else
+                                    ElseIf Not (sortType.IsAssignableFrom(selectType) OrElse selectType.IsAssignableFrom(sortType)) Then
                                         Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Specify joins explicity", selectType, sortType))
                                     End If
                                 End If
@@ -6191,7 +6194,7 @@ l1:
             Return oschema
         End Function
 
-        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Entities.Meta.OrmObjectIndex) Implements IExecutionContext.ReplaceSchema
+        Public Sub ReplaceSchema(ByVal mpe As ObjectMappingEngine, ByVal t As System.Type, ByVal newMap As Collections.IndexedCollection(Of String, MapField2Column)) Implements IExecutionContext.ReplaceSchema
             If _newMaps Is Nothing Then
                 _newMaps = Hashtable.Synchronized(New Hashtable)
             End If
@@ -6200,7 +6203,7 @@ l1:
 
         Public Function GetFieldColumnMap(ByVal oschema As Entities.Meta.IEntitySchema, ByVal t As System.Type) As Collections.IndexedCollection(Of String, MapField2Column) Implements IExecutionContext.GetFieldColumnMap
             If _newMaps IsNot Nothing AndAlso _newMaps.Contains(t) Then
-                Return CType(_newMaps(t), Worm.Collections.IndexedCollection(Of String, Worm.Entities.Meta.MapField2Column))
+                Return CType(_newMaps(t), Collections.IndexedCollection(Of String, MapField2Column))
             End If
             Return oschema.FieldColumnMap
         End Function

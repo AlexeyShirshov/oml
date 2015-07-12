@@ -2782,6 +2782,10 @@ l1:
             Dim oschema As IEntitySchema = Nothing
             Dim i As Integer = 0
             For Each o As _IEntity In col
+                If o.GetType IsNot t Then
+                    Continue For
+                End If
+
                 If oschema Is Nothing Then
                     oschema = _schema.GetEntitySchema(o.GetType)
                 End If
