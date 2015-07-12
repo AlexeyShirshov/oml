@@ -18,6 +18,8 @@ Namespace Query
         Private _withHost As Boolean
 
 #Region " Ctors "
+        Private _old As EntityUnion
+
         Protected Sub New()
             Init()
         End Sub
@@ -397,16 +399,16 @@ Namespace Query
             ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary, _
             ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
-            'If selectOS Is Nothing Then
-            '    Throw New QueryCmdException("RelationCmd must not select more than one type", Me)
-            'End If
-
             Dim m2mObject As ISinglePKEntity = _rel.Host
             Dim m2mKey As String = _rel.Key
             'Dim m2mType As Type = selectOS.GetRealType(schema)
             Dim rel As RelationDesc = PrepareRel(mpe, Nothing, Nothing)
             Dim m2mEU As EntityUnion = rel.Entity
             Dim m2mType As Type = m2mEU.GetRealType(mpe)
+
+            If _old IsNot Nothing Then
+                ReplaceSchema(mpe, _old.GetRealType(mpe), mpe.GetEntitySchema(m2mEU).FieldColumnMap)
+            End If
 
             If Not AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
@@ -1061,5 +1063,19 @@ l1:
             Return False
         End Function
 
+        Public Sub ReplaceDerived(eu As EntityUnion)
+            _old = RelationDesc.Entity
+
+            From(eu).SelectEntity(eu)
+            RelationDesc.Entity = eu
+        End Sub
+
+        Public Sub ReplaceDerived(t As Type)
+            ReplaceDerived(New EntityUnion(t))
+        End Sub
+
+        Public Sub ReplaceDerived(entityName As String)
+            ReplaceDerived(New EntityUnion(entityName))
+        End Sub
     End Class
 End Namespace

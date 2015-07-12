@@ -128,6 +128,7 @@ Namespace Criteria.Core
 
                 Dim rt As Type = Template.ObjectSource.GetRealType(mpe)
                 If rt Is t Then
+l1:
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
                     Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, Template.PropertyAlias, oschema, Nothing) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, mpe, Template)
@@ -275,6 +276,8 @@ Namespace Criteria.Core
 
                     If o IsNot Nothing Then
                         Return Eval(mpe, o, mpe.GetEntitySchema(rt), joins, objEU)
+                    ElseIf rt.IsAssignableFrom(t) Then
+                        GoTo l1
                     End If
                 End If
             End If
