@@ -167,7 +167,7 @@ namespace CoreFramework.Globalization
         /// <param name="_amount"></param>
         /// <param name="_firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxt(double _amount, bool _firstCapital)
+        public static string CurrencyToTxt(double _amount, bool _firstCapital, string[] rubles, string[] copecks)
         {
             //Десять тысяч рублей 67 копеек
             long rublesAmount = (long)Math.Floor(_amount);
