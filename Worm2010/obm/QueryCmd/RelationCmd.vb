@@ -7,6 +7,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Criteria.Values
 Imports System.Collections.Generic
 Imports Worm.Expressions2
+Imports System.Linq
 
 Namespace Query
     Public Class RelationCmd
@@ -1064,10 +1065,39 @@ l1:
         End Function
 
         Public Sub ReplaceDerived(eu As EntityUnion)
-            _old = RelationDesc.Entity
+            If eu Is Nothing Then
+                Throw New ArgumentNullException("eu")
+            End If
 
-            From(eu).SelectEntity(eu)
-            RelationDesc.Entity = eu
+            If eu <> RelationDesc.Entity Then
+                _old = RelationDesc.Entity
+
+                From(eu).SelectEntity(eu)
+
+                If _rel IsNot Nothing Then
+                    Dim oldCnt = _rel.Host.GetAllRelation.Count
+                    Dim newr = _rel.Host.GetRelation(New RelationDesc(eu, RelationDesc.Column, RelationDesc.Key))
+                    Dim newRel = oldCnt < _rel.Host.GetAllRelation.Count
+                    If newRel Then
+                        _rel.CopyTo(newr)
+                    Else
+                        For Each o In _rel.Added
+                            If Not newr.Added.Contains(o) Then
+                                newr.Add(o)
+                            End If
+                        Next
+
+                        For Each o In _rel.Deleted
+                            If Not newr.Deleted.Contains(o) Then
+                                newr.Delete(o)
+                            End If
+                        Next
+                    End If
+
+                    newr.Relation.Entity = eu
+                    _rel = newr
+                End If
+            End If
         End Sub
 
         Public Sub ReplaceDerived(t As Type)
