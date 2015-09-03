@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AutoCleanup.cs" />
     <Compile Include="CommandLineParser.cs" />
+    <Compile Include="ConcurentList.cs" />
     <Compile Include="Globalization.cs" />
     <Compile Include="NumberConverter.cs" />
     <Compile Include="Pairs.cs" />
@@ -101,7 +102,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
