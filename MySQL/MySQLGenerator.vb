@@ -183,7 +183,9 @@ Public Class MySQLGenerator
             Return True
         End Get
     End Property
-
+    Public Overrides Function SupportMultiline() As Boolean
+        Return False
+    End Function
     Public Overrides Sub FormatRowNumber(mpe As ObjectMappingEngine, q As Query.QueryCmd, contextInfo As IDictionary, params As ICreateParam,
                                          almgr As IPrepareTable, sb As StringBuilder)
         If q.TopParam IsNot Nothing Then
@@ -240,4 +242,10 @@ Public Class MySQLGenerator
 
         Return False
     End Function
+
+    'Public Overrides ReadOnly Property NamedParams As Boolean
+    '    Get
+    '        Return False
+    '    End Get
+    'End Property
 End Class

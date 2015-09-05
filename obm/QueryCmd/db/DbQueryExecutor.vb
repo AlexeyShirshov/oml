@@ -1352,7 +1352,7 @@ l1:
                 s.FormatRowNumber(mpe, query, contextInfo, params, almgr, sb)
             End If
 
-            If Not String.IsNullOrEmpty(s.PlanHint) AndAlso Not String.IsNullOrEmpty(query.Hint) Then
+            If Not String.IsNullOrEmpty(query.Hint) AndAlso Not String.IsNullOrEmpty(s.PlanHint) Then
                 sb.Append(String.Format(s.PlanHint, query.Hint))
             End If
 

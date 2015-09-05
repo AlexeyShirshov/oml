@@ -101,6 +101,7 @@ Namespace Entities.Meta
 
         Private _version As String
         Private _verOper As SchemaVersionOperatorEnum
+        Private _feature As String
 
         Private _sf(-1) As SourceFieldAttribute
 
@@ -304,11 +305,14 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        'Public ReadOnly Property SourceType() As DBType
-        '    Get
-        '        Return New DBType(_type, _sz, _n)
-        '    End Get
-        'End Property
+        Public Property Feature As String
+            Get
+                Return _feature
+            End Get
+            Set(value As String)
+                _feature = value
+            End Set
+        End Property
 
         Public Function Clone() As EntityPropertyAttribute
             Return CType(_Clone(), EntityPropertyAttribute)

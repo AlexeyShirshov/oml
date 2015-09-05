@@ -23,6 +23,12 @@ Namespace Database
     Public MustInherit Class DbGenerator
         Inherits StmtGenerator
 
+        Public Overridable ReadOnly Property NamedParams As Boolean
+            Get
+                Return True
+            End Get
+        End Property
+
         Public Delegate Sub InfoMessageDelagate(args As EventArgs)
 
         Public MustOverride Function TestLockError(v As Object) As Boolean
@@ -34,7 +40,6 @@ Namespace Database
         Public Overridable Function SupportMultiline() As Boolean
             Return False
         End Function
-
         Public Overrides Function BinaryOperator2String(ByVal oper As Expressions2.BinaryOperationType) As String
             Select Case oper
                 Case Expressions2.BinaryOperationType.Equal
@@ -959,7 +964,7 @@ l1:
 
                                     upd_cmd.Append("if @lastErr = 0 ")
                                 End If
-                            Else
+                            ElseIf updated_tables.Count > 1 Then
                                 upd_cmd.Append(DeclareVariable("@lastErr", "int")).Append(EndLine)
                             End If
 

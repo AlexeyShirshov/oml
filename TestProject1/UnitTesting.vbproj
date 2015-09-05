@@ -210,6 +210,7 @@
       <SubType>ASPXCodeBehind</SubType>
     </Content>
     <Content Include="ASPHosting\Web\testhttpcache.aspx">
+      <SubType>ASPXCodeBehind</SubType>
     </Content>
     <Content Include="ASPHosting\Web\testobjects.aspx">
       <SubType>ASPXCodeBehind</SubType>
