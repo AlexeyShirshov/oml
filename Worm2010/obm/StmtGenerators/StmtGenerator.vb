@@ -39,8 +39,8 @@ Public MustInherit Class StmtGenerator
 
     Public MustOverride Sub FormStmt(ByVal dbschema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, _
                                    ByVal contextInfo As IDictionary, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, _
-                                   ByVal sb As StringBuilder, ByVal _t As Type, ByVal _tbl As SourceFragment, _
-                                   ByVal _joins() As QueryJoin, ByVal _field As String, ByVal _f As IFilter)
+                                   ByVal sb As StringBuilder, ByVal type As Type, ByVal sourceFragment As SourceFragment, _
+                                   ByVal joins() As QueryJoin, ByVal propertAlias As String, ByVal filter As IFilter)
 
     Public MustOverride Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef,
                                                     ByVal contextInfo As IDictionary, _

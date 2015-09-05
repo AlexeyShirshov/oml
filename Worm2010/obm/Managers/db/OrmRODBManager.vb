@@ -15,6 +15,8 @@ Imports Worm.Query
 Imports Worm.Expressions2
 Imports System.Threading.Tasks
 Imports System.Threading
+Imports System.Linq
+Imports System.Text.RegularExpressions
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -83,17 +85,24 @@ Namespace Database
                         Try
                             Dim prev_error As Boolean = False
                             For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, mgr.SQLGenerator.EndLine)
-                                If stmt = String.Empty Then Continue For
+                                If String.IsNullOrEmpty(stmt) Then Continue For
                                 Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
                                     Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
                                         .CommandText = stmt
-                                        Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                        For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                            .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                            p.RemoveAt(0)
-                                        Next
+                                        If mgr.SQLGenerator.NamedParams Then
+                                            For Each pn In ExtractParams(stmt)
+                                                Dim paramName = pn
+                                                .Parameters.Add(params.First(Function(it) it.ParameterName = paramName))
+                                            Next
+                                        Else
+                                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+                                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+                                                p.RemoveAt(0)
+                                            Next
+                                        End If
                                     End With
 
                                     If stmt.StartsWith("{{error}}") Then
@@ -215,17 +224,24 @@ Namespace Database
                                     End Using
                                 Else
                                     For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, mgr.SQLGenerator.EndLine)
-                                        If stmt = "" Then Continue For
+                                        If String.IsNullOrEmpty(stmt) Then Continue For
                                         Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
                                             Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                             With cmd
                                                 .CommandType = System.Data.CommandType.Text
                                                 .CommandText = stmt
-                                                Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                                For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                    .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                                    p.RemoveAt(0)
-                                                Next
+                                                If mgr.SQLGenerator.NamedParams Then
+                                                    For Each pn In ExtractParams(stmt)
+                                                        Dim paramName = pn
+                                                        .Parameters.Add(params.First(Function(it) it.ParameterName = paramName))
+                                                    Next
+                                                Else
+                                                    Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+                                                    For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                                        .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+                                                        p.RemoveAt(0)
+                                                    Next
+                                                End If
                                             End With
 
                                             Dim b As ConnAction = mgr.TestConn(cmd)
@@ -429,6 +445,13 @@ Namespace Database
                         mgr.CloseConn(r)
                     End Try
                 End Using
+            End Function
+
+            Private Iterator Function ExtractParams(stmt As String) As IEnumerable(Of String)
+                Dim r As New Regex("@\w+")
+                For Each m As Match In r.Matches(stmt)
+                    Yield m.Value
+                Next
             End Function
 
         End Class
@@ -2771,7 +2794,7 @@ l2:
                                 tp = "xml"
                             Else
                                 val = Convert.ToString(p.Value, System.Globalization.CultureInfo.InvariantCulture)
-                                If TypeOf p.Value Is String Then
+                                If TypeOf p.Value Is String OrElse TypeOf p.Value Is Date Then
                                     val = "'" & val & "'"
                                 End If
                                 tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
@@ -2784,7 +2807,11 @@ l2:
                                 End If
                             End If
                         End If
-                        sb.Append(SQLGenerator.DeclareVariable(p.ParameterName, tp))
+                        If SQLGenerator.SupportMultiline Then
+                            sb.Append(SQLGenerator.DeclareVariable(p.ParameterName, tp))
+                        Else
+                            sb.Append("declare @" & p.ParameterName)
+                        End If
                         sb.AppendLine(";set " & p.ParameterName & " = " & val)
                     End With
                 Next

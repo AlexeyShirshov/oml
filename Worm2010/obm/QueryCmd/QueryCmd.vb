@@ -1003,16 +1003,18 @@ Namespace Query
             End Set
         End Property
 
-        Public Function GetMappingEngine() As ObjectMappingEngine
+        Public Function GetMappingEngine(Optional throwIfNotFound As Boolean = False) As ObjectMappingEngine
             If SpecificMappingEngine IsNot Nothing Then
                 Return SpecificMappingEngine
             ElseIf _getMgr IsNot Nothing Then
                 Using gm = GetManager(_getMgr)
                     Return gm.Manager.MappingEngine
                 End Using
-            Else
+            ElseIf throwIfNotFound Then
                 Throw New QueryCmdException("OrmManager required", Me)
             End If
+
+            Return Nothing
         End Function
 
         Public Property CreateManager() As ICreateManager
@@ -4153,7 +4155,7 @@ l1:
 
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If pi Is Nothing Then
-                    Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(rt, mpe.Version, True, True, mpe.ConvertVersionToInt)
+                    Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(rt, mpe.Version, True, True, mpe.ConvertVersionToInt, mpe.Features)
                     For Each item As EntityPropertyAttribute In ll
                         If item.PropertyAlias = m.PropertyAlias Then
                             pi = item._pi
@@ -4850,7 +4852,7 @@ l1:
 
         Friend Function GetFieldsIdx(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
             Dim c As New OrmObjectIndex
-            Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True, mpe.ConvertVersionToInt)
+            Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True, mpe.ConvertVersionToInt, mpe.Features)
             ObjectMappingEngine.ApplyAttributes2Schema(c, ll, mpe, FromClause.Table)
             Return c
         End Function

@@ -100,6 +100,9 @@ Namespace Entities.Meta
         Private _tbl As SourceFragment
         Private _sf As New List(Of SourceField)
         Private _pt As Type
+        Private _feature As String
+        Private _availFrom As String
+        Private _availTo As String
 
         Friend PropertyInfo As Reflection.PropertyInfo
         Friend Index As Integer = -1
@@ -166,7 +169,30 @@ Namespace Entities.Meta
                 Return _newattributes
             End If
         End Function
-
+        Public Property Feature As String
+            Get
+                Return _feature
+            End Get
+            Set(value As String)
+                _feature = value
+            End Set
+        End Property
+        Public Property AvailFrom As String
+            Get
+                Return _availFrom
+            End Get
+            Set(value As String)
+                _availFrom = value
+            End Set
+        End Property
+        Public Property AvailTo As String
+            Get
+                Return _availTo
+            End Get
+            Set(value As String)
+                _availTo = value
+            End Set
+        End Property
         Public Property Table() As SourceFragment
             Get
                 Return _tbl
