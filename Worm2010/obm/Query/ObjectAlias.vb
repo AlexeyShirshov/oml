@@ -283,6 +283,10 @@ Namespace Query
         Private _ver As String
 
         Public Function GetRealType(ByVal mpe As ObjectMappingEngine) As Type
+            If mpe Is Nothing Then
+                Throw New ArgumentNullException("mpe")
+            End If
+
             If _calc Is Nothing OrElse _ver <> mpe.Version Then
                 _calc = AnyType
                 _ver = mpe.Version

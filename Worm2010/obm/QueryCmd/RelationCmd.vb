@@ -637,7 +637,9 @@ l1:
                     schema = m2mObject.GetMappingEngine
                     If schema Is Nothing AndAlso _getMgr IsNot Nothing Then
                         Using gm = GetManager(_getMgr)
-                            schema = gm.Manager.MappingEngine
+                            If gm IsNot Nothing Then
+                                schema = gm.Manager.MappingEngine
+                            End If
                         End Using
                     End If
 
@@ -722,15 +724,15 @@ l1:
         End Function
 
         Public Overloads Sub LoadObjects()
-            If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
-            End If
-
             LoadObjects(_getMgr)
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, SpecificMappingEngine, ContextInfo)
                     LoadObjects(gm.Manager)
                 End Using
@@ -759,15 +761,15 @@ l1:
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal start As Integer, ByVal length As Integer)
-            If _getMgr Is Nothing Then
-                Throw New InvalidOperationException("OrmManager required")
-            End If
-
             LoadObjects(_getMgr, start, length)
         End Sub
 
         Public Overloads Sub LoadObjects(ByVal getMgr As ICreateManager, ByVal start As Integer, ByVal length As Integer)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, SpecificMappingEngine, ContextInfo)
                     LoadObjects(gm.Manager, start, length)
                 End Using
@@ -830,17 +832,24 @@ l1:
         Public Sub Add(ByVal o As ICachedEntity)
             If o IsNot Nothing Then
                 Dim mpe As ObjectMappingEngine = o.GetMappingEngine()
-                Dim t = Relation.Relation.Entity.GetRealType(mpe)
-                If Not t.IsAssignableFrom(o.GetType) Then
-                    Throw New ArgumentException(String.Format("Relation of type {0} can not contain {1}", t, o.GetType))
+
+                If mpe Is Nothing Then
+                    mpe = Relation.Host.GetMappingEngine
+                End If
+
+                If mpe Is Nothing Then
+                    mpe = GetMappingEngine()
+                End If
+
+                If mpe IsNot Nothing Then
+                    Dim t = Relation.Relation.Entity.GetRealType(mpe)
+                    If Not t.IsAssignableFrom(o.GetType) Then
+                        Throw New ArgumentException(String.Format("Relation of type {0} can not contain {1}", t, o.GetType))
+                    End If
                 End If
 
                 Relation.Host.Add(o, Relation)
                 If Not IsM2M Then
-                    If mpe Is Nothing Then
-                        mpe = Relation.Host.GetMappingEngine
-                    End If
-
                     Dim schema As IEntitySchema = Nothing
                     If mpe IsNot Nothing Then
                         schema = mpe.GetEntitySchema(o.GetType)
@@ -926,6 +935,10 @@ l1:
 
         Public Sub Reject()
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Reject(gm.Manager)
             End Using
         End Sub

@@ -1660,7 +1660,7 @@ Public Class ObjectMappingEngine
                 End If
                 If bsch IsNot Nothing Then
                     schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
-                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe._features), bsch, mpeVersion, mpe, idic, names)
+                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing)), bsch, mpeVersion, mpe, idic, names)
                     Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
@@ -1671,7 +1671,7 @@ Public Class ObjectMappingEngine
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
                     End If
-                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe._features), mpe, idic, names)
+                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing)), mpe, idic, names)
                 End If
             Else
                 Dim tbl As SourceFragment = ea._tbl
@@ -1684,7 +1684,7 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe._features)
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             End If
         Else
@@ -1694,9 +1694,9 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe._features)
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
                 If Not ea.RawProperties AndAlso l.Count < schema.FieldColumnMap.Count Then
-                    l = GetMappedProperties(tp, mpeVersion, True, True, c2int, mpe._features)
+                    l = GetMappedProperties(tp, mpeVersion, True, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
                 End If
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             Catch ex As Exception

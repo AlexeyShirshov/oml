@@ -752,6 +752,10 @@ Namespace Query
             End If
 
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, gm.Manager.Cache)
             End Using
 
@@ -1008,7 +1012,11 @@ Namespace Query
                 Return SpecificMappingEngine
             ElseIf _getMgr IsNot Nothing Then
                 Using gm = GetManager(_getMgr)
-                    Return gm.Manager.MappingEngine
+                    If gm IsNot Nothing Then
+                        Return gm.Manager.MappingEngine
+                    ElseIf throwIfNotFound Then
+                        Throw New QueryCmdException("OrmManager required", Me)
+                    End If
                 End Using
             ElseIf throwIfNotFound Then
                 Throw New QueryCmdException("OrmManager required", Me)
@@ -3549,17 +3557,18 @@ l1:
                 Return New ManagerWrapper(mgr, mgr.MappingEngine)
             End If
         End Function
+
 #Region " ToLists "
 
         Public Function ToMatrix() As ReadonlyMatrix
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
             Return ToMatrix(_getMgr)
         End Function
 
         Public Function ToMatrix(ByVal getMgr As ICreateManager) As ReadonlyMatrix
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToMatrix(gm.Manager)
                 End Using
@@ -3567,12 +3576,20 @@ l1:
         End Function
 
         Public Function ToMatrix(ByVal mgr As OrmManager) As ReadonlyMatrix
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return GetExecutor(mgr).Exec(mgr, Me)
         End Function
 
 #Region " ToList "
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager, ByVal withLoad As Boolean) As IList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToBaseEntity(Of T)(gm.Manager, withLoad)
                 End Using
@@ -3580,10 +3597,6 @@ l1:
         End Function
 
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal withLoad As Boolean) As IList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToBaseEntity(Of T)(_getMgr, withLoad)
         End Function
 
@@ -3592,6 +3605,10 @@ l1:
         End Function
 
         Public Function ToBaseEntity(Of T As _IEntity)(ByVal mgr As OrmManager, ByVal withLoad As Boolean) As IList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             If SelectList IsNot Nothing Then
                 Throw New NotSupportedException("Multi types")
             Else
@@ -3644,6 +3661,10 @@ l1:
         End Function
 
         Public Function ToList(ByVal mgr As OrmManager) As IList
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim st As Type = GetSelectedType(mgr.MappingEngine)
             Dim t As MethodInfo = Nothing
             If GetType(AnonymousEntity).IsAssignableFrom(st) Then
@@ -3665,6 +3686,10 @@ l1:
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToList(gm.Manager)
                 End Using
@@ -3672,19 +3697,23 @@ l1:
         End Function
 
         Public Function ToList() As IList
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToList(_getMgr)
         End Function
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of ReturnType)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return GetExecutor(mgr).Exec(Of CreateType, ReturnType)(mgr, Me)
         End Function
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToList(Of CreateType, ReturnType)(gm.Manager)
                 End Using
@@ -3692,19 +3721,23 @@ l1:
         End Function
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)() As ReadOnlyEntityList(Of ReturnType)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToList(Of CreateType, ReturnType)(_getMgr)
         End Function
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of CreateReturnType)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return GetExecutor(mgr).Exec(Of CreateReturnType, CreateReturnType)(mgr, Me)
         End Function
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToList(Of CreateReturnType)(gm.Manager)
                 End Using
@@ -3712,10 +3745,6 @@ l1:
         End Function
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})() As ReadOnlyEntityList(Of CreateReturnType)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToList(Of CreateReturnType)(_getMgr)
         End Function
 #End Region
@@ -3723,6 +3752,9 @@ l1:
 #Region " ToAnonymList "
 
         Public Function ToAnonymList(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of AnonymousEntity)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
             'Dim c As New svct(Me)
             '_createType = GetType(AnonymousEntity)
             'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
@@ -3732,6 +3764,10 @@ l1:
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToAnonymList(gm.Manager)
                 End Using
@@ -3739,10 +3775,6 @@ l1:
         End Function
 
         Public Function ToAnonymList() As ReadOnlyObjectList(Of AnonymousEntity)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToAnonymList(_getMgr)
         End Function
 
@@ -3752,6 +3784,10 @@ l1:
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToEntityList(Of T)(gm.Manager)
                 End Using
@@ -3760,6 +3796,10 @@ l1:
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToEntityList(Of T)(gm.Manager)
                 End Using
@@ -3767,6 +3807,10 @@ l1:
         End Function
 
         Public Function ToEntityList(Of T As ICachedEntity)(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(T)) AndAlso CreateType Is Nothing Then
                 Return GetExecutor(mgr).Exec(Of AnonymousCachedEntity, T)(mgr, Me)
             Else
@@ -3775,10 +3819,6 @@ l1:
         End Function
 
         Public Function ToEntityList(Of T As ICachedEntity)() As ReadOnlyEntityList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToEntityList(Of T)(_getMgr)
         End Function
 
@@ -3787,6 +3827,10 @@ l1:
 #Region " ToOrmList "
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return CType(ToEntityList(Of T)(mgr), ReadOnlyList(Of T))
         End Function
 
@@ -3801,6 +3845,10 @@ l1:
 
         Public Function ToOrmListDyn(Of T As {_ISinglePKEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToOrmListDyn(Of T)(gm.Manager)
                 End Using
@@ -3808,14 +3856,14 @@ l1:
         End Function
 
         Public Function ToOrmListDyn(Of T As _ISinglePKEntity)() As ReadOnlyList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToOrmListDyn(Of T)(_getMgr)
         End Function
 
         Public Function ToOrmList(Of CreateType As {New, _ISinglePKEntity}, ReturnType As _ISinglePKEntity)(ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return CType(ToList(Of CreateType, ReturnType)(mgr), ReadOnlyList(Of ReturnType))
         End Function
 
@@ -3829,6 +3877,10 @@ l1:
         End Function
 
         Public Function ToOrmList(Of CreateReturnType As {New, _ISinglePKEntity})(ByVal mgr As OrmManager) As ReadOnlyList(Of CreateReturnType)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return CType(ToList(Of CreateReturnType)(mgr), ReadOnlyList(Of CreateReturnType))
         End Function
 
@@ -3844,6 +3896,10 @@ l1:
 #Region " ToSimpleList "
 
         Public Function ToSimpleList(Of T)(ByVal mgr As OrmManager) As IList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
             'Dim qt As Type = q.GetType
@@ -3857,6 +3913,10 @@ l1:
 
         Public Function ToSimpleList(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return GetExecutor(gm.Manager).ExecSimple(Of T)(gm.Manager, Me)
                 End Using
@@ -3864,10 +3924,6 @@ l1:
         End Function
 
         Public Function ToSimpleList(Of T)() As IList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToSimpleList(Of T)(_getMgr)
         End Function
 
@@ -3903,6 +3959,10 @@ l1:
 #Region " Count "
 
         Public Overridable Function Count(ByVal mgr As OrmManager) As Integer
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim s As OrderByClause = _order
             Dim p As Paging = _clientPage
             Dim pp As IPager = _pager
@@ -3932,6 +3992,10 @@ l1:
 
         Public Function Count(ByVal getMgr As ICreateManager) As Integer
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return Count(gm.Manager)
                 End Using
@@ -3939,16 +4003,16 @@ l1:
         End Function
 
         Public Function Count() As Integer
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return Count(_getMgr)
         End Function
 
 #End Region
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim c As New QueryCmd.svct(Me)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
                 If SelectClause Is Nothing Then
@@ -3977,15 +4041,15 @@ l1:
         End Function
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)() As IDictionary(Of TKey, IList(Of TValue))
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToDictionary(Of TKey, TValue)(_getMgr)
         End Function
 
         Public Function ToDictionary(Of TKey As ICachedEntity, TValue As ICachedEntity)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToDictionary(Of TKey, TValue)(gm.Manager)
                 End Using
@@ -3993,6 +4057,10 @@ l1:
         End Function
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal mgr As OrmManager) As IDictionary(Of TKey, IList(Of TValue))
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim m As ReadonlyMatrix = ToMatrix(mgr)
 
             Dim d As New Dictionary(Of TKey, IList(Of TValue))
@@ -4012,15 +4080,15 @@ l1:
         End Function
 
         Public Function ToSimpleDictionary(Of TKey, TValue)() As IDictionary(Of TKey, IList(Of TValue))
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToSimpleDictionary(Of TKey, TValue)(_getMgr)
         End Function
 
         Public Function ToSimpleDictionary(Of TKey, TValue)(ByVal getMgr As ICreateManager) As IDictionary(Of TKey, IList(Of TValue))
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToSimpleDictionary(Of TKey, TValue)(gm.Manager)
                 End Using
@@ -4028,22 +4096,27 @@ l1:
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)() As ReadOnlyObjectList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return ToObjectList(Of T)(_getMgr)
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return ToObjectList(Of T)(gm.Manager)
                 End Using
+
             End Using
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(T)) AndAlso CreateType Is Nothing Then
                 Return GetExecutor(mgr).ExecEntity(Of AnonymousCachedEntity, T)(mgr, Me)
             ElseIf GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso CreateType Is Nothing Then
@@ -4056,11 +4129,11 @@ l1:
         End Function
 
         Public Function ToPOCOList(Of T As {New, Class})() As IList(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, CreateManager, _schema, ContextInfo)
                     Return ToPOCOList(Of T)(gm.Manager)
                 End Using
@@ -4078,6 +4151,10 @@ l1:
         End Sub
 
         Public Function ToPOCOList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim rt As Type = GetType(T)
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
@@ -4962,65 +5039,80 @@ l1:
         End Function
 
         Public Sub ClearCache(ByVal mgr As OrmManager)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             GetExecutor(mgr).ClearCache(mgr, Me)
         End Sub
 
         Public Sub RenewCache(ByVal mgr As OrmManager, ByVal v As Boolean)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             GetExecutor(mgr).RenewCache(mgr, Me, v)
         End Sub
 
-        Public ReadOnly Property IsInCache(ByVal mgr As OrmManager) As Boolean
-            Get
-                Return GetExecutor(mgr).IsInCache(mgr, Me)
-            End Get
-        End Property
+        Public Function IsInCache(ByVal mgr As OrmManager) As Boolean
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
+            Return GetExecutor(mgr).IsInCache(mgr, Me)
+        End Function
 
         Public Sub ClearCache()
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 GetExecutor(gm.Manager).ClearCache(gm.Manager, Me)
             End Using
         End Sub
 
         Public Sub RenewCache(ByVal v As Boolean)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 GetExecutor(gm.Manager).RenewCache(gm.Manager, Me, v)
             End Using
         End Sub
 
-        Public ReadOnly Property IsInCache() As Boolean
-            Get
-                If _getMgr Is Nothing Then
+        Public Function IsInCache() As Boolean
+
+            Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
                     Throw New QueryCmdException("OrmManager required", Me)
                 End If
 
-                Using gm = GetManager(_getMgr)
-                    Return GetExecutor(gm.Manager).IsInCache(gm.Manager, Me)
-                End Using
-            End Get
-        End Property
+                Return GetExecutor(gm.Manager).IsInCache(gm.Manager, Me)
+            End Using
+
+        End Function
 
         Public Sub ResetObjects()
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             ResetObjects(_getMgr)
         End Sub
 
         Public Sub ResetObjects(ByVal getMgr As ICreateManager)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 ResetObjects(gm.Manager)
             End Using
         End Sub
 
         Public Sub ResetObjects(ByVal mgr As OrmManager)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             GetExecutor(mgr).ResetObjects(mgr, Me)
         End Sub
 
@@ -5609,6 +5701,10 @@ l1:
 #Region " GetByID "
         Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Return GetByID(Of T)(id, options, gm.Manager)
             End Using
         End Function
@@ -5832,6 +5928,10 @@ l1:
                             ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Return GetByIds(Of T)(ids, options, gm.Manager)
             End Using
 
@@ -5852,6 +5952,10 @@ l1:
         End Function
 
         Private Function GetRealType(Of T As {New, ISinglePKEntity})(ByVal mgr As OrmManager) As Type
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim selou As EntityUnion = GetSelectedOS()
             Dim tp As Type = Nothing
             If selou IsNot Nothing Then
@@ -5865,6 +5969,10 @@ l1:
 
         Public Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Return GetByIDDyn(Of T)(id, options, gm.Manager)
             End Using
         End Function
@@ -5946,15 +6054,15 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal level As Integer) As DicIndexT(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return BuildDictionary(Of T)(_getMgr, level)
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal level As Integer) As DicIndexT(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return BuildDictionary(Of T)(gm.Manager, level)
                 End Using
@@ -5962,23 +6070,19 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return BuildDictionary(Of T)(_getMgr, propertyAlias, level)
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal propertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
-            If _getMgr Is Nothing Then
-                Throw New QueryCmdException("OrmManager required", Me)
-            End If
-
             Return BuildDictionary(Of T)(_getMgr, propertyAlias, secondPropertyAlias, level)
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal getMgr As ICreateManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
             Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
                     Return BuildDictionary(Of T)(gm.Manager, propertyAlias, level)
                 End Using
@@ -5995,6 +6099,10 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, ByVal level As Integer) As DicIndexT(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             If _group Is Nothing Then
                 Dim tt As Type = GetType(T)
                 If _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
@@ -6029,6 +6137,10 @@ l1:
         End Function
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
+
             Dim tt As Type = GetType(T)
             Dim c As New QueryCmd.svct(Me)
             Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
@@ -6072,6 +6184,9 @@ l1:
 
         Public Function BuildDictionary(Of T As {New, _IEntity})(ByVal mgr As OrmManager, _
             ByVal firstPropertyAlias As String, ByVal secondPropertyAlias As String, ByVal level As Integer) As DicIndexT(Of T)
+            If mgr Is Nothing Then
+                Throw New ArgumentNullException("mgr")
+            End If
 
             If Not String.IsNullOrEmpty(secondPropertyAlias) Then
                 Dim selEU As EntityUnion = GetSelectedOS()
@@ -6212,6 +6327,10 @@ l1:
 
         Public Sub SetCache(ByVal l As ICollection)
             Using gm = GetManager(_getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
+
                 SetCache(gm.Manager, l)
             End Using
         End Sub
