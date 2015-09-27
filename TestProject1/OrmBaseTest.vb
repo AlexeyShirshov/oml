@@ -340,8 +340,7 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Modified, o2.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @lastErr int" & vbCrLf & _
-"update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
+            Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
 "declare @dbot1_rownum int" & vbCrLf & _
 "select @dbot1_rownum = @@rowcount, @lastErr = @@error" & vbCrLf & _
 "if @dbot1_rownum = 0 and @lastErr = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
@@ -380,8 +379,7 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Modified, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @lastErr int" & vbCrLf & _
-"update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
+            Dim expected As String ="update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
 "declare @dboent3_rownum int" & vbCrLf & _
 "select @dboent3_rownum = @@rowcount" & vbCrLf & _
 "if @dboent3_rownum > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"

@@ -311,9 +311,17 @@ Namespace Entities
             End Get
         End Property
 
-        Public ReadOnly Property CreateDataContext() As IDataContext Implements IEntity.CreateDataContext
+        Public ReadOnly Property GetDataContext() As IDataContext Implements IEntity.GetDataContext
             Get
-                Return New DataContext(_cm)
+                If _cm Is Nothing Then
+                    Return Nothing
+                End If
+
+                If GetType(IDataContext).IsAssignableFrom(_cm.GetType) Then
+                    Return CType(_cm, IDataContext)
+                Else
+                    Return New DataContext(_cm)
+                End If
             End Get
         End Property
 
